@@ -8,6 +8,7 @@
 #include "nsIIOService.h"
 #include "nsMimeTypes.h"
 #include "nsNetUtil.h"
+#include "nsContentUtils.h"
 #include "nsIHttpHeaderVisitor.h"
 
 NS_IMPL_ADDREF(nsViewSourceChannel)
@@ -71,8 +72,7 @@ nsViewSourceChannel::Init(nsIURI* uri)
 }
 
 nsresult
-nsViewSourceChannel::InitSrcdoc(nsIURI* aURI, const nsAString &aSrcdoc,
-                                nsIURI* aBaseURI)
+nsViewSourceChannel::InitSrcdoc(nsIURI* aURI, const nsAString &aSrcdoc)
 {
 
     nsresult rv;
@@ -85,16 +85,18 @@ nsViewSourceChannel::InitSrcdoc(nsIURI* aURI, const nsAString &aSrcdoc,
                    NS_LITERAL_STRING("about:srcdoc"));
     NS_ENSURE_SUCCESS(rv, rv);
 
-    rv = NS_NewInputStreamChannel(getter_AddRefs(mChannel), inStreamURI,
-                                  aSrcdoc, NS_LITERAL_CSTRING("text/html"),
+    rv = NS_NewInputStreamChannel(getter_AddRefs(mChannel),
+                                  inStreamURI,
+                                  aSrcdoc,
+                                  NS_LITERAL_CSTRING("text/html"),
+                                  nsContentUtils::GetSystemPrincipal(),
+                                  nsILoadInfo::SEC_NORMAL,
+                                  nsIContentPolicy::TYPE_OTHER,
                                   true);
 
     NS_ENSURE_SUCCESS(rv, rv);
     mOriginalURI = aURI;
     mIsSrcdocChannel = true;
-    nsCOMPtr<nsIInputStreamChannel> isc = do_QueryInterface(mChannel);
-    MOZ_ASSERT(isc);
-    isc->SetBaseURI(aBaseURI);
 
     mChannel->SetOriginalURI(mOriginalURI);
     mHttpChannel = do_QueryInterface(mChannel);
@@ -518,27 +520,6 @@ nsViewSourceChannel::GetIsSrcdocChannel(bool* aIsSrcdocChannel)
     return NS_OK;
 }
 
-NS_IMETHODIMP
-nsViewSourceChannel::GetBaseURI(nsIURI** aBaseURI)
-{
-  if (mIsSrcdocChannel) {
-    nsCOMPtr<nsIInputStreamChannel> isc = do_QueryInterface(mChannel);
-    if (isc) {
-      return isc->GetBaseURI(aBaseURI);
-    }
-  }
-  *aBaseURI = mBaseURI;
-  NS_IF_ADDREF(*aBaseURI);
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsViewSourceChannel::SetBaseURI(nsIURI* aBaseURI)
-{
-  mBaseURI = aBaseURI;
-  return NS_OK;
-}
-
 // nsIRequestObserver methods
 NS_IMETHODIMP
 nsViewSourceChannel::OnStartRequest(nsIRequest *aRequest, nsISupports *aContext)
@@ -624,6 +605,21 @@ nsViewSourceChannel::SetReferrer(nsIURI * aReferrer)
 {
     return !mHttpChannel ? NS_ERROR_NULL_POINTER :
         mHttpChannel->SetReferrer(aReferrer);
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::GetReferrerPolicy(uint32_t *aReferrerPolicy)
+{
+    return !mHttpChannel ? NS_ERROR_NULL_POINTER :
+        mHttpChannel->GetReferrerPolicy(aReferrerPolicy);
+}
+
+NS_IMETHODIMP
+nsViewSourceChannel::SetReferrerWithPolicy(nsIURI * aReferrer,
+                                           uint32_t aReferrerPolicy)
+{
+    return !mHttpChannel ? NS_ERROR_NULL_POINTER :
+        mHttpChannel->SetReferrerWithPolicy(aReferrer, aReferrerPolicy);
 }
 
 NS_IMETHODIMP

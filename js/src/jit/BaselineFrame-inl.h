@@ -14,6 +14,8 @@
 
 #include "vm/ScopeObject.h"
 
+#include "jsscriptinlines.h"
+
 namespace js {
 namespace jit {
 
@@ -34,7 +36,7 @@ BaselineFrame::popOffScopeChain()
 inline void
 BaselineFrame::popWith(JSContext *cx)
 {
-    if (MOZ_UNLIKELY(cx->compartment()->debugMode()))
+    if (MOZ_UNLIKELY(isDebuggee()))
         DebugScopes::onPopWith(this);
 
     MOZ_ASSERT(scopeChain()->is<DynamicWithObject>());
@@ -72,6 +74,13 @@ BaselineFrame::callObj() const
     while (!obj->is<CallObject>())
         obj = obj->enclosingScope();
     return obj->as<CallObject>();
+}
+
+inline void
+BaselineFrame::unsetIsDebuggee()
+{
+    MOZ_ASSERT(!script()->isDebuggee());
+    flags_ &= ~DEBUGGEE;
 }
 
 } // namespace jit

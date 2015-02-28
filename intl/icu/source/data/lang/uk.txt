@@ -823,7 +823,7 @@ uk{
         VALENCIA{"Валенсійська"}
         WADEGILE{"Романізація Вейда-Джайлза"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
     codePatterns{
         language{"Мова: {0}"}
         script{"Система письма: {0}"}

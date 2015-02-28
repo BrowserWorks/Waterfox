@@ -8,6 +8,7 @@
 #ifndef nsImageMap_h
 #define nsImageMap_h
 
+#include "mozilla/gfx/2D.h"
 #include "nsCOMPtr.h"
 #include "nsCoord.h"
 #include "nsTArray.h"
@@ -15,7 +16,6 @@
 #include "nsIDOMEventListener.h"
 
 class Area;
-class nsRenderingContext;
 class nsImageFrame;
 class nsIFrame;
 class nsIContent;
@@ -24,6 +24,10 @@ struct nsRect;
 class nsImageMap MOZ_FINAL : public nsStubMutationObserver,
                              public nsIDOMEventListener
 {
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+  typedef mozilla::gfx::ColorPattern ColorPattern;
+  typedef mozilla::gfx::StrokeOptions StrokeOptions;
+
 public:
   nsImageMap();
 
@@ -45,7 +49,9 @@ public:
    */
   nsIContent* GetAreaAt(uint32_t aIndex) const;
 
-  void Draw(nsIFrame* aFrame, nsRenderingContext& aRC);
+  void Draw(nsIFrame* aFrame, DrawTarget& aDrawTarget,
+            const ColorPattern& aColor,
+            const StrokeOptions& aStrokeOptions = StrokeOptions());
   
   /** 
    * Called just before the nsImageFrame releases us. 

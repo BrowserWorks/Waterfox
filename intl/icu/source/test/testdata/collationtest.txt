@@ -2464,3 +2464,15 @@
 <1 4
 <1 L
 <1 Ω
+
+** test: regression test for CollationFastLatinBuilder, ICU ticket 11388
+@ rules
+&x<<aa<<<Aa<<<AA
+% strength=secondary
+* compare
+<1 AA
+<2 Aẩ
+<2 aą
+* compare
+<1 AA
+<2 aą

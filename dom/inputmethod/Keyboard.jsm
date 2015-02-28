@@ -249,14 +249,34 @@ this.Keyboard = {
   },
 
   forwardEvent: function keyboardForwardEvent(newEventName, msg) {
-    this.formMM = msg.target.QueryInterface(Ci.nsIFrameLoaderOwner)
-                            .frameLoader.messageManager;
+    let mm = msg.target.QueryInterface(Ci.nsIFrameLoaderOwner)
+                .frameLoader.messageManager;
+    if (newEventName === 'Keyboard:FocusChange') {
+      if (msg.data.type !== 'blur') { // Focus on a new input field
+        // Set the formMM to the new message manager so that
+        // message gets to the right form now on.
+        this.formMM = mm;
+      } else { // input is blurred
+        // A blur message can't be sent to the keyboard if the focus has
+        // already been taken away at first place.
+        // This check is here to prevent problem caused by out-of-order
+        // ipc messages from two processes.
+        if (mm !== this.formMM) {
+          return false;
+        }
+      }
+    }
 
     this.sendToKeyboard(newEventName, msg.data);
+    return true;
   },
 
   handleFocusChange: function keyboardHandleFocusChange(msg) {
-    this.forwardEvent('Keyboard:FocusChange', msg);
+    let isSent = this.forwardEvent('Keyboard:FocusChange', msg);
+
+    if (!isSent) {
+      return;
+    }
 
     // Chrome event, used also to render value selectors; that's why we need
     // the info about choices / min / max here as well...

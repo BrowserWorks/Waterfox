@@ -13,7 +13,6 @@
 #include "nsIEditor.h"
 #include "nsIPresShell.h"
 #include "mozilla/dom/Selection.h"
-#include "nsISelectionPrivate.h"
 #include "nsISupportsImpl.h"
 #include "nsPlaintextEditor.h"
 #include "nsPresContext.h"
@@ -25,7 +24,7 @@ using namespace mozilla::dom;
 
 // Test for distance between caret and text that will be deleted
 nsresult
-nsTextEditRules::CheckBidiLevelForDeletion(nsISelection         *aSelection,
+nsTextEditRules::CheckBidiLevelForDeletion(Selection* aSelection,
                                            nsIDOMNode           *aSelNode, 
                                            int32_t               aSelOffset, 
                                            nsIEditor::EDirection aAction,
@@ -46,8 +45,8 @@ nsTextEditRules::CheckBidiLevelForDeletion(nsISelection         *aSelection,
   nsCOMPtr<nsIContent> content = do_QueryInterface(aSelNode);
   NS_ENSURE_TRUE(content, NS_ERROR_NULL_POINTER);
 
-  uint8_t levelBefore;
-  uint8_t levelAfter;
+  nsBidiLevel levelBefore;
+  nsBidiLevel levelAfter;
   nsRefPtr<nsFrameSelection> frameSelection =
     static_cast<Selection*>(aSelection)->GetFrameSelection();
   NS_ENSURE_TRUE(frameSelection, NS_ERROR_NULL_POINTER);
@@ -58,9 +57,9 @@ nsTextEditRules::CheckBidiLevelForDeletion(nsISelection         *aSelection,
   levelBefore = levels.mLevelBefore;
   levelAfter = levels.mLevelAfter;
 
-  uint8_t currentCaretLevel = frameSelection->GetCaretBidiLevel();
+  nsBidiLevel currentCaretLevel = frameSelection->GetCaretBidiLevel();
 
-  uint8_t levelOfDeletion;
+  nsBidiLevel levelOfDeletion;
   levelOfDeletion =
     (nsIEditor::eNext==aAction || nsIEditor::eNextWord==aAction) ?
     levelAfter : levelBefore;

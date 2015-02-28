@@ -36,14 +36,17 @@ load 374102-1.xul
 load 376137-1.html
 load 376137-2.html
 load 377592-1.svg
+load 378961.html
 load 381862.html
 load 382746-1.xul
 load 382899-1.xul
 load 383236-1.xul
 load 384037-1.xhtml
 load 384105-1.html
+asserts(0-12) load 384373.html # bug 623436
 load 384491-1.xhtml
 load 384871-1.html
+load 386642.xul
 load 387033-1.xhtml
 load 387080-1.xul
 load 391974-1.html
@@ -54,9 +57,12 @@ load 398326-1.xhtml
 load 399013.xul
 load 400779-1.xhtml
 load 402912-1.xhtml
+load 404192.xhtml
+load 407152.xul
 load 408904-1.xul
 load 412479-1.xhtml
 asserts(4) load 415394-1.xhtml # Bug 163838
+load 417509.xul
 load 420424-1.xul
 load 430356-1.xhtml
 load 431738.xhtml

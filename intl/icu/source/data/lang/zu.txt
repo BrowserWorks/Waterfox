@@ -446,7 +446,7 @@ zu{
             vaii{"Izinhlazu Zezinombolo ze-Vai"}
         }
     }
-    Version{"2.1.8.18"}
+    Version{"2.1.10.42"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

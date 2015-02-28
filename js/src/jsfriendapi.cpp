@@ -33,7 +33,6 @@
 #include "vm/ScopeObject-inl.h"
 
 using namespace js;
-using namespace JS;
 
 using mozilla::Move;
 using mozilla::PodArrayZero;
@@ -289,8 +288,9 @@ DefineHelpProperty(JSContext *cx, HandleObject obj, const char *prop, const char
     RootedAtom atom(cx, Atomize(cx, value, strlen(value)));
     if (!atom)
         return false;
-    return JS_DefineProperty(cx, obj, prop, atom, JSPROP_READONLY | JSPROP_PERMANENT,
-                             JS_PropertyStub, JS_StrictPropertyStub);
+    return JS_DefineProperty(cx, obj, prop, atom,
+                             JSPROP_READONLY | JSPROP_PERMANENT,
+                             JS_STUBGETTER, JS_STUBSETTER);
 }
 
 JS_FRIEND_API(bool)
@@ -365,7 +365,7 @@ js::IsInNonStrictPropertySet(JSContext *cx)
 {
     jsbytecode *pc;
     JSScript *script = cx->currentScript(&pc, JSContext::ALLOW_CROSS_COMPARTMENT);
-    return script && !script->strict() && (js_CodeSpec[*pc].format & JOF_SET);
+    return script && !IsStrictSetPC(pc) && (js_CodeSpec[*pc].format & JOF_SET);
 }
 
 JS_FRIEND_API(bool)
@@ -435,7 +435,7 @@ js::NotifyAnimationActivity(JSObject *obj)
 JS_FRIEND_API(uint32_t)
 js::GetObjectSlotSpan(JSObject *obj)
 {
-    return obj->fakeNativeSlotSpan();
+    return obj->as<NativeObject>().slotSpan();
 }
 
 JS_FRIEND_API(bool)
@@ -555,9 +555,14 @@ js::GetOriginalEval(JSContext *cx, HandleObject scope, MutableHandleObject eval)
 }
 
 JS_FRIEND_API(void)
-js::SetReservedSlotWithBarrier(JSObject *obj, size_t slot, const js::Value &value)
+js::SetReservedOrProxyPrivateSlotWithBarrier(JSObject *obj, size_t slot, const js::Value &value)
 {
-    obj->fakeNativeSetSlot(slot, value);
+    if (IsProxy(obj)) {
+        MOZ_ASSERT(slot == 0);
+        obj->as<ProxyObject>().setSameCompartmentPrivate(value);
+    } else {
+        obj->as<NativeObject>().setSlot(slot, value);
+    }
 }
 
 JS_FRIEND_API(bool)
@@ -784,13 +789,7 @@ FormatFrame(JSContext *cx, const ScriptFrameIter &iter, char *buf, int num,
         return buf;
 
     if (showArgs && iter.hasArgs()) {
-        BindingVector bindings(cx);
-        if (fun && fun->isInterpreted()) {
-            if (!FillBindingVector(script, &bindings))
-                return buf;
-        }
-
-
+        BindingIter bi(script);
         bool first = true;
         for (unsigned i = 0; i < iter.numActualArgs(); i++) {
             RootedValue arg(cx);
@@ -813,10 +812,12 @@ FormatFrame(JSContext *cx, const ScriptFrameIter &iter, char *buf, int num,
             JSAutoByteString nameBytes;
             const char *name = nullptr;
 
-            if (i < bindings.length()) {
-                name = nameBytes.encodeLatin1(cx, bindings[i].name());
+            if (i < iter.numFormalArgs()) {
+                MOZ_ASSERT(i == bi.argIndex());
+                name = nameBytes.encodeLatin1(cx, bi->name());
                 if (!buf)
                     return nullptr;
+                bi++;
             }
 
             if (value) {
@@ -1089,13 +1090,13 @@ JS::WasIncrementalGC(JSRuntime *rt)
 }
 
 char16_t *
-GCDescription::formatMessage(JSRuntime *rt) const
+JS::GCDescription::formatMessage(JSRuntime *rt) const
 {
     return rt->gc.stats.formatMessage();
 }
 
 char16_t *
-GCDescription::formatJSON(JSRuntime *rt, uint64_t timestamp) const
+JS::GCDescription::formatJSON(JSRuntime *rt, uint64_t timestamp) const
 {
     return rt->gc.stats.formatJSON(timestamp);
 }
@@ -1381,14 +1382,6 @@ js::GetObjectMetadata(JSObject *obj)
     return obj->getMetadata();
 }
 
-JS_FRIEND_API(void)
-js::UnsafeDefineElement(JSContext *cx, JS::HandleObject obj, uint32_t index, JS::HandleValue value)
-{
-    MOZ_ASSERT(obj->isNative());
-    MOZ_ASSERT(index < obj->as<NativeObject>().getDenseInitializedLength());
-    obj->as<NativeObject>().setDenseElementWithType(cx, index, value);
-}
-
 JS_FRIEND_API(bool)
 js_DefineOwnProperty(JSContext *cx, JSObject *objArg, jsid idArg,
                      JS::Handle<js::PropertyDescriptor> descriptor, bool *bp)
@@ -1435,8 +1428,8 @@ js::IsInRequest(JSContext *cx)
 }
 
 bool
-js::HasObjectMovedOpIfRequired(JSObject *obj) {
-    return obj->is<GlobalObject>() || !!GetObjectClass(obj)->ext.objectMovedOp;
+js::HasObjectMovedOp(JSObject *obj) {
+    return !!GetObjectClass(obj)->ext.objectMovedOp;
 }
 #endif
 

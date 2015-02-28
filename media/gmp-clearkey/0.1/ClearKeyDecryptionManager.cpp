@@ -2,13 +2,14 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <assert.h>
 #include <sstream>
 #include <stdint.h>
 #include <stdio.h>
 
 #include "ClearKeyDecryptionManager.h"
 #include "ClearKeyUtils.h"
+
+#include "mozilla/Assertions.h"
 #include "mozilla/NullPtr.h"
 
 using namespace mozilla;
@@ -79,8 +80,7 @@ private:
 };
 
 
-ClearKeyDecryptionManager::ClearKeyDecryptionManager(GMPDecryptorHost* aHost)
-  : mHost(aHost)
+ClearKeyDecryptionManager::ClearKeyDecryptionManager()
 {
   CK_LOGD("ClearKeyDecryptionManager ctor");
 }
@@ -130,9 +130,9 @@ ClearKeyDecryptionManager::CreateSession(uint32_t aPromiseId,
   }
 
   string sessionId = GetNewSessionId();
-  assert(mSessions.find(sessionId) == mSessions.end());
+  MOZ_ASSERT(mSessions.find(sessionId) == mSessions.end());
 
-  ClearKeySession* session = new ClearKeySession(sessionId, mHost, mCallback);
+  ClearKeySession* session = new ClearKeySession(sessionId, mCallback);
   session->Init(aPromiseId, aInitData, aInitDataSize);
   mSessions[sessionId] = session;
 
@@ -222,11 +222,11 @@ ClearKeyDecryptionManager::CloseSession(uint32_t aPromiseId,
   string sessionId(aSessionId, aSessionId + aSessionIdLength);
   ClearKeySession* session = mSessions[sessionId];
 
-  assert(session);
+  MOZ_ASSERT(session);
 
   const vector<KeyId>& keyIds = session->GetKeyIds();
   for (auto it = keyIds.begin(); it != keyIds.end(); it++) {
-    assert(mDecryptors.find(*it) != mDecryptors.end());
+    MOZ_ASSERT(mDecryptors.find(*it) != mDecryptors.end());
 
     if (!mDecryptors[*it]->Release()) {
       mDecryptors.erase(*it);
@@ -333,7 +333,7 @@ ClearKeyDecryptor::Decrypt(GMPBuffer* aBuffer,
     memcpy(&tmp[0], aBuffer->Data(), aBuffer->Size());
   }
 
-  assert(aMetadata->IVSize() == 8 || aMetadata->IVSize() == 16);
+  MOZ_ASSERT(aMetadata->IVSize() == 8 || aMetadata->IVSize() == 16);
   vector<uint8_t> iv(aMetadata->IV(), aMetadata->IV() + aMetadata->IVSize());
   iv.insert(iv.end(), CLEARKEY_KEY_LEN - aMetadata->IVSize(), 0);
 
@@ -376,9 +376,6 @@ ClearKeyDecryptor::ClearKeyDecryptor(GMPDecryptorCallback* aCallback,
 ClearKeyDecryptor::~ClearKeyDecryptor()
 {
   CK_LOGD("ClearKeyDecryptor dtor; key ID = %08x...", *(uint32_t*)&mKey[0]);
-  if (mThread) {
-    mThread->Join();
-  }
 }
 
 uint32_t
@@ -390,13 +387,15 @@ ClearKeyDecryptor::AddRef()
 uint32_t
 ClearKeyDecryptor::Release()
 {
-  if (!--mRefCnt) {
+  uint32_t newCount = --mRefCnt;
+  if (!newCount) {
     if (mThread) {
       mThread->Post(new DestroyTask(this));
+      mThread->Join();
     } else {
       delete this;
     }
   }
 
-  return mRefCnt;
+  return newCount;
 }

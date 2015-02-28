@@ -1,0 +1,190 @@
+﻿# Header, don't edit
+NLF v6
+# Language ID
+1051
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1250
+# RTL - anything else than RTL means LTR
+-
+#Translated by: Kypec (peter.dzugas@mahe.sk); edited by: Marián Hikaník (podnety@mojepreklady.net), Ivan Masár <helix84@centrum.sk>, 2008.
+# ^Branding
+Nullsoft Install System %s
+# ^SetupCaption
+Inštalácia programu $(^Name)
+# ^UninstallCaption
+Odinštalovanie programu $(^Name)
+# ^LicenseSubCaption
+: Licenčná zmluva
+# ^ComponentsSubCaption
+: Možnosti inštalácie
+# ^DirSubCaption
+: Inštalačný priečinok
+# ^InstallingSubCaption
+: Prebieha inštalácia
+# ^CompletedSubCaption
+: Hotovo
+# ^UnComponentsSubCaption
+: Možnosti odinštalovania
+# ^UnDirSubCaption
+: Priečinok s informáciami pre odinštalovanie
+# ^ConfirmSubCaption
+: Potvrdenie
+# ^UninstallingSubCaption
+: Prebieha odinštalácia
+# ^UnCompletedSubCaption
+: Hotovo
+# ^BackBtn
+< &Späť
+# ^NextBtn
+Ď&alej >
+# ^AgreeBtn
+&Súhlasím
+# ^AcceptBtn
+&Súhlasím s podmienkami licenčnej zmluvy
+# ^DontAcceptBtn
+N&esúhlasím s podmienkami licenčnej zmluvy
+# ^InstallBtn
+&Nainštalovať
+# ^UninstallBtn
+&Odinštalovať
+# ^CancelBtn
+Zrušiť
+# ^CloseBtn
+&Zatvoriť
+# ^BrowseBtn
+&Prehľadávať...
+# ^ShowDetailsBtn
+&Podrobnosti
+# ^ClickNext
+V inštalácii pokračujte kliknutím na tlačidlo Ďalej.
+# ^ClickInstall
+Pre spustenie inštalácie kliknite na tlačidlo Nainštalovať.
+# ^ClickUninstall
+Pre spustenie procesu odinštalovania kliknite na tlačidlo Odinštalovať.
+# ^Name
+Názov
+# ^Completed
+Hotovo
+# ^LicenseText
+Pred inštaláciou programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, kliknite na tlačidlo Súhlasím.
+# ^LicenseTextCB
+Pred inštaláciou programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, zaškrtnite nasledujúce políčko. $_CLICK
+# ^LicenseTextRB
+Pred inštaláciou programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, označte prvú z nasledujúcich možností. $_CLICK
+# ^UnLicenseText
+Pred odinštalovaním programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, kliknite na tlačidlo Súhlasím.
+# ^UnLicenseTextCB
+Pred odinštalovaním programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, zaškrtnite nasledujúce políčko. $_CLICK
+# ^UnLicenseTextRB
+Pred odinštalovaním programu si prosím dôkladne prečítajte licenčnú zmluvu $(^NameDA). Ak súhlasíte so všetkými jej podmienkami, označte prvú z nasledujúcich možností. $_CLICK
+# ^Custom
+Voliteľná
+# ^ComponentsText
+Označte súčasti programu, ktoré chcete nainštalovať a odznačte tie, ktoré nainštalovať nechcete. $_CLICK
+# ^ComponentsSubText1
+Vyberte si typ inštalácie:
+# ^ComponentsSubText2_NoInstTypes
+Vyberte si tie súčasti programu, ktoré chcete nainštalovať:
+# ^ComponentsSubText2
+Alebo označte voliteľné doplnky, ktoré chcete nainštalovať:
+# ^UnComponentsText
+Označte súčasti programu, ktoré chcete odinštalovať a odznačte tie, ktoré chcete ponechať nainštalované. $_CLICK
+# ^UnComponentsSubText1
+Zvoľte typ deinštalácie:
+# ^UnComponentsSubText2_NoInstTypes
+Vyberte súčasti, ktoré chcete odinštalovať:
+# ^UnComponentsSubText2
+Alebo označte voliteľné súčasti, ktoré chcete odinštalovať:
+# ^DirText
+$(^NameDA) bude nainštalovaný do nasledujúceho priečinka. Inštalovať do iného priečinka môžete po kliknutí na tlačidlo Prehľadávať a vybraní iného priečinka. $_CLICK
+# ^DirSubText
+Cieľový priečinok
+# ^DirBrowseText
+Zvoľte priečinok, do ktorého sa nainštaluje program $(^NameDA):
+# ^UnDirText
+Inštalátor odinštaluje program $(^NameDA) z nasledovného priečinka. Ak ho chcete odinštalovať z iného priečinka, kliknite na tlačidlo Prehľadávať a vyberte iný priečinok. $_CLICK
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+Zvoľte priečinok, z ktorého sa odinštaluje program $(^NameDA):
+# ^SpaceAvailable
+"Voľné miesto na disku: "
+# ^SpaceRequired
+"Potrebné miesto na disku: "
+# ^UninstallingText
+Program $(^NameDA) sa odinštaluje z nasledovného priečinka. $_CLICK
+# ^UninstallingSubText
+Prebieha odinštalovanie z:
+# ^FileError
+Chyba pri otváraní súboru na zápis: \r\n\r\n$0\r\n\r\n. Ak chcete inštaláciu ukončiť, kliknite na tlačidlo Ukončiť,\r\ ak chcete zápis súboru zopakovať, kliknite na tlačidlo Opakovať alebo kliknite na tlačidlo \r\nIgnorovať, ak chcete inštaláciu tohto súboru vynechať.
+# ^FileError_NoIgnore
+Chyba pri otváraní súboru na zápis: \r\n\r\n$0\r\n\r\n. Ak chcete zopakovať zápis súboru, kliknite na tlačidlo Opakovať, alebo kliknite na tlačidlo \r\nZrušiť, v prípade, že chcete inštaláciu ukončiť.
+# ^CantWrite
+"Nemožno zapísať súbor: "
+# ^CopyFailed
+Kopírovanie zlyhalo.
+# ^CopyTo
+"Kopírovať do "
+# ^Registering
+"Registruje sa: "
+# ^Unregistering
+"Vymazáva sa z registra: "
+# ^SymbolNotFound
+"Nemožno nájsť symbol: "
+# ^CouldNotLoad
+"Nemožno načítať: "
+# ^CreateFolder
+"Vytvorený priečinok: "
+# ^CreateShortcut
+"Vytvorený odkaz: "
+# ^CreatedUninstaller
+"Program pre odinštalovanie: "
+# ^Delete
+"Vymazaný súbor: "
+# ^DeleteOnReboot
+"Vymazať po reštartovaní systému: "
+# ^ErrorCreatingShortcut
+"Chyba pri vytváraní odkazu: "
+# ^ErrorCreating
+"Chyba pri vytváraní: "
+# ^ErrorDecompressing
+Chyba pri dekomprimovaní dát! Inštalátor je pravdepodobne poškodený...
+# ^ErrorRegistering
+Chyba pri registrácii súčasti
+# ^ExecShell
+"Vykonať príkaz: "
+# ^Exec
+"Spustiť: "
+# ^Extract
+"Extrahuje sa: "
+# ^ErrorWriting
+"Chyba pri zápise do súboru "
+# ^InvalidOpcode
+Inštalátor je pravdepodobne poškodený, pretože obsahuje neplatný operačný kód.
+# ^NoOLE
+"Žiadny zápis OLE pre: "
+# ^OutputFolder
+"Výstupný priečinok: "
+# ^RemoveFolder
+"Odstrániť priečinok: "
+# ^RenameOnReboot
+"Premenovať po reštartovaní systému: "
+# ^Rename
+"Premenovať: "
+# ^Skipped
+"Vynechané: "
+# ^CopyDetails
+Skopírovať podrobnosti do schránky
+# ^LogInstall
+Zaznamenať priebeh inštalácie
+# ^Byte
+B
+# ^Kilo
+K
+# ^Mega
+M
+# ^Giga
+G

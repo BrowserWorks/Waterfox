@@ -6,6 +6,7 @@
 
 #include "nsXPCOM.h"
 #include "nsXULAppAPI.h"
+#include "nsAutoPtr.h"
 
 // FIXME/cjones testing
 #if !defined(OS_WIN)
@@ -21,6 +22,8 @@
 #include "nsSetDllDirectory.h"
 #endif
 
+#include "GMPLoader.h"
+
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
 #include "sandbox/chromium/base/basictypes.h"
 #include "sandbox/win/src/sandbox.h"
@@ -30,6 +33,11 @@
 #if defined(MOZ_CONTENT_SANDBOX)
 #include "mozilla/warnonlysandbox/wosCallbacks.h"
 #endif
+#endif
+
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+#include "mozilla/Sandbox.h"
+#include "mozilla/SandboxInfo.h"
 #endif
 
 #ifdef MOZ_WIDGET_GONK
@@ -82,7 +90,49 @@ void StartSandboxCallback()
         target_service->LowerToken();
     }
 }
+
+class WinSandboxStarter : public mozilla::gmp::SandboxStarter {
+public:
+    virtual void Start(const char *aLibPath) MOZ_OVERRIDE {
+        StartSandboxCallback();
+    }
+};
 #endif
+
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+class LinuxSandboxStarter : public mozilla::gmp::SandboxStarter {
+    LinuxSandboxStarter() { }
+public:
+    static SandboxStarter* Make() {
+        if (mozilla::SandboxInfo::Get().CanSandboxMedia()) {
+            return new LinuxSandboxStarter();
+        } else {
+            // Sandboxing isn't possible, but the parent has already
+            // checked that this plugin doesn't require it.  (Bug 1074561)
+            return nullptr;
+        }
+    }
+    virtual void Start(const char *aLibPath) MOZ_OVERRIDE {
+        mozilla::SetMediaPluginSandbox(aLibPath);
+    }
+};
+#endif
+
+mozilla::gmp::SandboxStarter*
+MakeSandboxStarter()
+{
+    // Note: MacOSX creates its SandboxStarter inside xul code; it
+    // needs to change to statically link its sandbox code into
+    // plugin-container. Once it does that, we can create the
+    // SandboxStarter for it here.
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+    return new WinSandboxStarter();
+#elif defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+    return LinuxSandboxStarter::Make();
+#else
+    return nullptr;
+#endif
+}
 
 int
 content_process_main(int argc, char* argv[])
@@ -154,8 +204,16 @@ content_process_main(int argc, char* argv[])
     }
 #endif
 #endif
-
-    nsresult rv = XRE_InitChildProcess(argc, argv);
+    nsAutoPtr<mozilla::gmp::GMPLoader> loader;
+#if !defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_GONK)
+    // On desktop, the GMPLoader lives in plugin-container, so that its
+    // code can be covered by an EME/GMP vendor's voucher.
+    nsAutoPtr<mozilla::gmp::SandboxStarter> starter(MakeSandboxStarter());
+    if (XRE_GetProcessType() == GeckoProcessType_GMPlugin) {
+        loader = mozilla::gmp::CreateGMPLoader(starter);
+    }
+#endif
+    nsresult rv = XRE_InitChildProcess(argc, argv, loader);
     NS_ENSURE_SUCCESS(rv, 1);
 
     return 0;

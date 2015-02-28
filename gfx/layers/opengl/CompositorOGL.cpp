@@ -39,6 +39,7 @@
 #include "nsString.h"                   // for nsString, nsAutoCString, etc
 #include "ScopedGLHelpers.h"
 #include "GLReadTexImageHelper.h"
+#include "GLBlitTextureImageHelper.h"
 #include "TiledLayerBuffer.h"           // for TiledLayerComposer
 #include "HeapCopyOfStackArray.h"
 
@@ -86,6 +87,7 @@ CompositorOGL::CompositorOGL(nsIWidget *aWidget, int aSurfaceWidth,
   , mFrameInProgress(false)
   , mDestroyed(false)
   , mHeight(0)
+  , mCurrentProgram(nullptr)
 {
   MOZ_COUNT_CTOR(CompositorOGL);
   SetBackend(LayersBackend::LAYERS_OPENGL);
@@ -172,6 +174,12 @@ CompositorOGL::CleanupResources()
     ctx->fDeleteBuffers(1, &mQuadVBO);
     mQuadVBO = 0;
   }
+
+  mGLContext->MakeCurrent();
+
+  mBlitTextureImageHelper = nullptr;
+
+  mContextStateTracker.DestroyOGL(mGLContext);
 
   // On the main thread the Widget will be destroyed soon and calling MakeCurrent
   // after that could cause a crash (at least with GLX, see bug 1059793), unless
@@ -380,171 +388,6 @@ CompositorOGL::Initialize()
   return true;
 }
 
-static GLfloat
-WrapTexCoord(GLfloat v)
-{
-    // fmodf gives negative results for negative numbers;
-    // that is, fmodf(0.75, 1.0) == 0.75, but
-    // fmodf(-0.75, 1.0) == -0.75.  For the negative case,
-    // the result we need is 0.25, so we add 1.0f.
-    if (v < 0.0f) {
-        return 1.0f + fmodf(v, 1.0f);
-    }
-
-    return fmodf(v, 1.0f);
-}
-
-static void
-SetRects(int n,
-         Rect* aLayerRects,
-         Rect* aTextureRects,
-         GLfloat x0, GLfloat y0, GLfloat x1, GLfloat y1,
-         GLfloat tx0, GLfloat ty0, GLfloat tx1, GLfloat ty1,
-         bool flip_y /* = false */)
-{
-  if (flip_y) {
-    std::swap(ty0, ty1);
-  }
-  aLayerRects[n] = Rect(x0, y0, x1 - x0, y1 - y0);
-  aTextureRects[n] = Rect(tx0, ty0, tx1 - tx0, ty1 - ty0);
-}
-
-#ifdef DEBUG
-static inline bool
-FuzzyEqual(float a, float b)
-{
-  return fabs(a - b) < 0.0001f;
-}
-#endif
-
-static int
-DecomposeIntoNoRepeatRects(const Rect& aRect,
-                           const Rect& aTexCoordRect,
-                           Rect* aLayerRects,
-                           Rect* aTextureRects)
-{
-  Rect texCoordRect = aTexCoordRect;
-
-  // If the texture should be flipped, it will have negative height. Detect that
-  // here and compensate for it. We will flip each rect as we emit it.
-  bool flipped = false;
-  if (texCoordRect.height < 0) {
-    flipped = true;
-    texCoordRect.y += texCoordRect.height;
-    texCoordRect.height = -texCoordRect.height;
-  }
-
-  // Wrap the texture coordinates so they are within [0,1] and cap width/height
-  // at 1. We rely on this below.
-  texCoordRect = Rect(Point(WrapTexCoord(texCoordRect.x),
-                            WrapTexCoord(texCoordRect.y)),
-                      Size(std::min(texCoordRect.width, 1.0f),
-                           std::min(texCoordRect.height, 1.0f)));
-
-  NS_ASSERTION(texCoordRect.x >= 0.0f && texCoordRect.x <= 1.0f &&
-               texCoordRect.y >= 0.0f && texCoordRect.y <= 1.0f &&
-               texCoordRect.width >= 0.0f && texCoordRect.width <= 1.0f &&
-               texCoordRect.height >= 0.0f && texCoordRect.height <= 1.0f &&
-               texCoordRect.XMost() >= 0.0f && texCoordRect.XMost() <= 2.0f &&
-               texCoordRect.YMost() >= 0.0f && texCoordRect.YMost() <= 2.0f,
-               "We just wrapped the texture coordinates, didn't we?");
-
-  // Get the top left and bottom right points of the rectangle. Note that
-  // tl.x/tl.y are within [0,1] but br.x/br.y are within [0,2].
-  Point tl = texCoordRect.TopLeft();
-  Point br = texCoordRect.BottomRight();
-
-  NS_ASSERTION(tl.x >= 0.0f && tl.x <= 1.0f &&
-               tl.y >= 0.0f && tl.y <= 1.0f &&
-               br.x >= tl.x && br.x <= 2.0f &&
-               br.y >= tl.y && br.y <= 2.0f &&
-               br.x - tl.x <= 1.0f &&
-               br.y - tl.y <= 1.0f,
-               "Somehow generated invalid texture coordinates");
-
-  // Then check if we wrap in either the x or y axis.
-  bool xwrap = br.x > 1.0f;
-  bool ywrap = br.y > 1.0f;
-
-  // If xwrap is false, the texture will be sampled from tl.x .. br.x.
-  // If xwrap is true, then it will be split into tl.x .. 1.0, and
-  // 0.0 .. WrapTexCoord(br.x). Same for the Y axis. The destination
-  // rectangle is also split appropriately, according to the calculated
-  // xmid/ymid values.
-  if (!xwrap && !ywrap) {
-    SetRects(0, aLayerRects, aTextureRects,
-             aRect.x, aRect.y, aRect.XMost(), aRect.YMost(),
-             tl.x, tl.y, br.x, br.y,
-             flipped);
-    return 1;
-  }
-
-  // If we are dealing with wrapping br.x and br.y are greater than 1.0 so
-  // wrap them here as well.
-  br = Point(xwrap ? WrapTexCoord(br.x) : br.x,
-             ywrap ? WrapTexCoord(br.y) : br.y);
-
-  // If we wrap around along the x axis, we will draw first from
-  // tl.x .. 1.0 and then from 0.0 .. br.x (which we just wrapped above).
-  // The same applies for the Y axis. The midpoints we calculate here are
-  // only valid if we actually wrap around.
-  GLfloat xmid = aRect.x + (1.0f - tl.x) / texCoordRect.width * aRect.width;
-  GLfloat ymid = aRect.y + (1.0f - tl.y) / texCoordRect.height * aRect.height;
-
-  NS_ASSERTION(!xwrap ||
-               (xmid > aRect.x &&
-                xmid < aRect.XMost() &&
-                FuzzyEqual((xmid - aRect.x) + (aRect.XMost() - xmid), aRect.width)),
-               "xmid should be within [x,XMost()] and the wrapped rect should have the same width");
-  NS_ASSERTION(!ywrap ||
-               (ymid > aRect.y &&
-                ymid < aRect.YMost() &&
-                FuzzyEqual((ymid - aRect.y) + (aRect.YMost() - ymid), aRect.height)),
-               "ymid should be within [y,YMost()] and the wrapped rect should have the same height");
-
-  if (!xwrap && ywrap) {
-    SetRects(0, aLayerRects, aTextureRects,
-             aRect.x, aRect.y, aRect.XMost(), ymid,
-             tl.x, tl.y, br.x, 1.0f,
-             flipped);
-    SetRects(1, aLayerRects, aTextureRects,
-             aRect.x, ymid, aRect.XMost(), aRect.YMost(),
-             tl.x, 0.0f, br.x, br.y,
-             flipped);
-    return 2;
-  }
-
-  if (xwrap && !ywrap) {
-    SetRects(0, aLayerRects, aTextureRects,
-             aRect.x, aRect.y, xmid, aRect.YMost(),
-             tl.x, tl.y, 1.0f, br.y,
-             flipped);
-    SetRects(1, aLayerRects, aTextureRects,
-             xmid, aRect.y, aRect.XMost(), aRect.YMost(),
-             0.0f, tl.y, br.x, br.y,
-             flipped);
-    return 2;
-  }
-
-  SetRects(0, aLayerRects, aTextureRects,
-           aRect.x, aRect.y, xmid, ymid,
-           tl.x, tl.y, 1.0f, 1.0f,
-           flipped);
-  SetRects(1, aLayerRects, aTextureRects,
-           xmid, aRect.y, aRect.XMost(), ymid,
-           0.0f, tl.y, br.x, 1.0f,
-           flipped);
-  SetRects(2, aLayerRects, aTextureRects,
-           aRect.x, ymid, xmid, aRect.YMost(),
-           tl.x, 0.0f, 1.0f, br.y,
-           flipped);
-  SetRects(3, aLayerRects, aTextureRects,
-           xmid, ymid, aRect.XMost(), aRect.YMost(),
-           0.0f, 0.0f, br.x, br.y,
-           flipped);
-  return 4;
-}
-
 // |aRect| is the rectangle we want to draw to. We will draw it with
 // up to 4 draw commands if necessary to avoid wrapping.
 // |aTexCoordRect| is the rectangle from the texture that we want to
@@ -559,10 +402,10 @@ CompositorOGL::BindAndDrawQuadWithTextureRect(ShaderProgramOGL *aProg,
 {
   Rect layerRects[4];
   Rect textureRects[4];
-  int rects = DecomposeIntoNoRepeatRects(aRect,
-                                         aTexCoordRect,
-                                         layerRects,
-                                         textureRects);
+  size_t rects = DecomposeIntoNoRepeatRects(aRect,
+                                            aTexCoordRect,
+                                            &layerRects,
+                                            &textureRects);
   BindAndDrawQuads(aProg, rects, layerRects, textureRects);
 }
 
@@ -664,6 +507,8 @@ CompositorOGL::SetRenderTarget(CompositingRenderTarget *aSurface)
     = static_cast<CompositingRenderTargetOGL*>(aSurface);
   if (mCurrentRenderTarget != surface) {
     mCurrentRenderTarget = surface;
+    mContextStateTracker.PopOGLSection(gl(), "Frame");
+    mContextStateTracker.PushOGLSection(gl(), "Frame");
     surface->BindRenderTarget();
   }
 }
@@ -768,6 +613,8 @@ CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
     CompositingRenderTargetOGL::RenderTargetForWindow(this,
                                                       IntSize(width, height));
   mCurrentRenderTarget->BindRenderTarget();
+
+  mContextStateTracker.PushOGLSection(gl(), "Frame");
 #ifdef DEBUG
   mWindowRenderTarget = mCurrentRenderTarget;
 #endif
@@ -860,7 +707,7 @@ CompositorOGL::CreateFBOWithTexture(const IntRect& aRect, bool aCopyFromSource,
                               LOCAL_GL_UNSIGNED_BYTE,
                               buf);
     }
-    GLenum error = mGLContext->GetAndClearError();
+    GLenum error = mGLContext->fGetError();
     if (error != LOCAL_GL_NO_ERROR) {
       nsAutoCString msg;
       msg.AppendPrintf("Texture initialization failed! -- error 0x%x, Source %d, Source format %d,  RGBA Compat %d",
@@ -928,7 +775,8 @@ CompositorOGL::GetShaderConfigFor(Effect *aEffect,
         static_cast<TexturedEffect*>(aEffect);
     TextureSourceOGL* source = texturedEffect->mTexture->AsSourceOGL();
     MOZ_ASSERT_IF(source->GetTextureTarget() == LOCAL_GL_TEXTURE_EXTERNAL,
-                  source->GetFormat() == gfx::SurfaceFormat::R8G8B8A8);
+                  source->GetFormat() == gfx::SurfaceFormat::R8G8B8A8 ||
+                  source->GetFormat() == gfx::SurfaceFormat::R8G8B8X8);
     MOZ_ASSERT_IF(source->GetTextureTarget() == LOCAL_GL_TEXTURE_RECTANGLE_ARB,
                   source->GetFormat() == gfx::SurfaceFormat::R8G8B8A8 ||
                   source->GetFormat() == gfx::SurfaceFormat::R8G8B8X8 ||
@@ -967,6 +815,23 @@ CompositorOGL::GetShaderProgramFor(const ShaderConfigOGL &aConfig)
   mPrograms[aConfig] = shader;
   return shader;
 }
+
+void
+CompositorOGL::ActivateProgram(ShaderProgramOGL* aProg)
+{
+  if (mCurrentProgram != aProg) {
+    gl()->fUseProgram(aProg->GetProgram());
+    mCurrentProgram = aProg;
+  }
+}
+
+void
+CompositorOGL::ResetProgram()
+{
+  mCurrentProgram = nullptr;
+}
+
+
 
 static bool SetBlendMode(GLContext* aGL, gfx::CompositionOp aBlendMode, bool aIsPremultiplied = true)
 {
@@ -1110,7 +975,7 @@ CompositorOGL::DrawQuad(const Rect& aRect,
   ShaderConfigOGL config = GetShaderConfigFor(aEffectChain.mPrimaryEffect, maskType, blendMode, colorMatrix);
   config.SetOpacity(aOpacity != 1.f);
   ShaderProgramOGL *program = GetShaderProgramFor(config);
-  program->Activate();
+  ActivateProgram(program);
   program->SetProjectionMatrix(mProjMatrix);
   program->SetLayerTransform(aTransform);
 
@@ -1345,6 +1210,8 @@ CompositorOGL::EndFrame()
   }
 #endif
 
+  mContextStateTracker.PopOGLSection(gl(), "Frame");
+
   mFrameInProgress = false;
 
   if (mTarget) {
@@ -1538,7 +1405,7 @@ TemporaryRef<DataTextureSource>
 CompositorOGL::CreateDataTextureSource(TextureFlags aFlags)
 {
   RefPtr<DataTextureSource> result =
-    new TextureImageTextureSourceOGL(mGLContext, aFlags);
+    new TextureImageTextureSourceOGL(this, aFlags);
   return result;
 }
 
@@ -1593,6 +1460,18 @@ CompositorOGL::BindAndDrawQuads(ShaderProgramOGL *aProg,
   // process uniform arrays with GL_TRIANGLE_STRIP. Go figure.
   mGLContext->fDrawArrays(LOCAL_GL_TRIANGLES, 0, 6 * aQuads);
 }
+
+GLBlitTextureImageHelper*
+CompositorOGL::BlitTextureImageHelper()
+{
+    if (!mBlitTextureImageHelper) {
+        mBlitTextureImageHelper = MakeUnique<GLBlitTextureImageHelper>(this);
+    }
+
+    return mBlitTextureImageHelper.get();
+}
+
+
 
 GLuint
 CompositorOGL::GetTemporaryTexture(GLenum aTarget, GLenum aUnit)

@@ -39,13 +39,6 @@
   }                                                                     \
 }
 
-#define CONVERT_ENUM_TO_STRING(_enumType, _enum, _string)               \
-{                                                                       \
-  uint32_t index = uint32_t(_enum);                                     \
-  _string.AssignASCII(_enumType##Values::strings[index].value,          \
-                      _enumType##Values::strings[index].length);        \
-}
-
 using mozilla::ErrorResult;
 using namespace mozilla::dom;
 using namespace mozilla::dom::mobileconnection;
@@ -349,9 +342,12 @@ MobileConnection::GetNetworkSelectionMode() const
     return retVal;
   }
 
-  nsAutoString mode;
-  mMobileConnection->GetNetworkSelectionMode(mode);
-  CONVERT_STRING_TO_NULLABLE_ENUM(mode, MobileNetworkSelectionMode, retVal);
+  int32_t mode = nsIMobileConnection::NETWORK_SELECTION_MODE_UNKNOWN;
+  if (NS_SUCCEEDED(mMobileConnection->GetNetworkSelectionMode(&mode)) &&
+      mode != nsIMobileConnection::NETWORK_SELECTION_MODE_UNKNOWN) {
+    MOZ_ASSERT(mode < static_cast<int32_t>(MobileNetworkSelectionMode::EndGuard_));
+    retVal.SetValue(static_cast<MobileNetworkSelectionMode>(mode));
+  }
 
   return retVal;
 }
@@ -365,9 +361,12 @@ MobileConnection::GetRadioState() const
     return retVal;
   }
 
-  nsAutoString state;
-  mMobileConnection->GetRadioState(state);
-  CONVERT_STRING_TO_NULLABLE_ENUM(state, MobileRadioState, retVal);
+  int32_t state = nsIMobileConnection::MOBILE_RADIO_STATE_UNKNOWN;
+  if (NS_SUCCEEDED(mMobileConnection->GetRadioState(&state)) &&
+      state != nsIMobileConnection::MOBILE_RADIO_STATE_UNKNOWN) {
+    MOZ_ASSERT(state < static_cast<int32_t>(MobileRadioState::EndGuard_));
+    retVal.SetValue(static_cast<MobileRadioState>(state));
+  }
 
   return retVal;
 }
@@ -379,23 +378,20 @@ MobileConnection::GetSupportedNetworkTypes(nsTArray<MobileNetworkType>& aTypes) 
     return;
   }
 
-  char16_t** types = nullptr;
+  int32_t* types = nullptr;
   uint32_t length = 0;
 
   nsresult rv = mMobileConnection->GetSupportedNetworkTypes(&types, &length);
   NS_ENSURE_SUCCESS_VOID(rv);
 
   for (uint32_t i = 0; i < length; ++i) {
-    nsDependentString rawType(types[i]);
-    Nullable<MobileNetworkType> type = Nullable<MobileNetworkType>();
-    CONVERT_STRING_TO_NULLABLE_ENUM(rawType, MobileNetworkType, type);
+    int32_t type = types[i];
 
-    if (!type.IsNull()) {
-      aTypes.AppendElement(type.Value());
-    }
+    MOZ_ASSERT(type < static_cast<int32_t>(MobileNetworkType::EndGuard_));
+    aTypes.AppendElement(static_cast<MobileNetworkType>(type));
   }
 
-  NS_FREE_XPCOM_ALLOCATED_POINTER_ARRAY(length, types);
+  nsMemory::Free(types);
 }
 
 already_AddRefed<DOMRequest>
@@ -471,8 +467,7 @@ MobileConnection::SetPreferredNetworkType(MobilePreferredNetworkType& aType,
     return nullptr;
   }
 
-  nsAutoString type;
-  CONVERT_ENUM_TO_STRING(MobilePreferredNetworkType, aType, type);
+  int32_t type = static_cast<int32_t>(aType);
 
   nsRefPtr<DOMRequest> request = new DOMRequest(GetOwner());
   nsRefPtr<MobileConnectionCallback> requestCallback =
@@ -518,8 +513,7 @@ MobileConnection::SetRoamingPreference(MobileRoamingMode& aMode,
     return nullptr;
   }
 
-  nsAutoString mode;
-  CONVERT_ENUM_TO_STRING(MobileRoamingMode, aMode, mode);
+  int32_t mode = static_cast<int32_t>(aMode);
 
   nsRefPtr<DOMRequest> request = new DOMRequest(GetOwner());
   nsRefPtr<MobileConnectionCallback> requestCallback =
@@ -1035,8 +1029,7 @@ MobileConnection::NotifyDataError(const nsAString& aMessage)
 }
 
 NS_IMETHODIMP
-MobileConnection::NotifyCFStateChanged(bool aSuccess,
-                                       unsigned short aAction,
+MobileConnection::NotifyCFStateChanged(unsigned short aAction,
                                        unsigned short aReason,
                                        const nsAString& aNumber,
                                        unsigned short aSeconds,
@@ -1049,7 +1042,6 @@ MobileConnection::NotifyCFStateChanged(bool aSuccess,
   CFStateChangeEventInit init;
   init.mBubbles = false;
   init.mCancelable = false;
-  init.mSuccess = aSuccess;
   init.mAction = aAction;
   init.mReason = aReason;
   init.mNumber = aNumber;

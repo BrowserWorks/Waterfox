@@ -18,6 +18,7 @@
 #include "nsRect.h"
 #include "nsStringGlue.h"
 #include "nsTArray.h"
+#include "WritingModes.h"
 
 /******************************************************************************
  * virtual keycode values
@@ -75,6 +76,7 @@ private:
   friend class dom::PBrowserParent;
   friend class dom::PBrowserChild;
 
+protected:
   WidgetKeyboardEvent()
   {
   }
@@ -82,8 +84,9 @@ private:
 public:
   virtual WidgetKeyboardEvent* AsKeyboardEvent() MOZ_OVERRIDE { return this; }
 
-  WidgetKeyboardEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget)
-    : WidgetInputEvent(aIsTrusted, aMessage, aWidget, eKeyboardEventClass)
+  WidgetKeyboardEvent(bool aIsTrusted, uint32_t aMessage, nsIWidget* aWidget,
+                      EventClassID aEventClassID = eKeyboardEventClass)
+    : WidgetInputEvent(aIsTrusted, aMessage, aWidget, aEventClassID)
     , keyCode(0)
     , charCode(0)
     , location(nsIDOMKeyEvent::DOM_KEY_LOCATION_STANDARD)
@@ -194,6 +197,72 @@ public:
   }
 };
 
+
+/******************************************************************************
+ * mozilla::InternalBeforeAfterKeyboardEvent
+ *
+ * This is extended from WidgetKeyboardEvent and is mapped to DOM event
+ * "BeforeAfterKeyboardEvent".
+ *
+ * Event message: NS_KEY_BEFORE_DOWN
+ *                NS_KEY_BEFORE_UP
+ *                NS_KEY_AFTER_DOWN
+ *                NS_KEY_AFTER_UP
+ ******************************************************************************/
+class InternalBeforeAfterKeyboardEvent : public WidgetKeyboardEvent
+{
+private:
+  friend class dom::PBrowserParent;
+  friend class dom::PBrowserChild;
+
+  InternalBeforeAfterKeyboardEvent()
+  {
+  }
+
+public:
+  // Extra member for InternalBeforeAfterKeyboardEvent. Indicates whether
+  // default actions of keydown/keyup event is prevented.
+  Nullable<bool> mEmbeddedCancelled;
+
+  virtual InternalBeforeAfterKeyboardEvent* AsBeforeAfterKeyboardEvent() MOZ_OVERRIDE
+  {
+    return this;
+  }
+
+  InternalBeforeAfterKeyboardEvent(bool aIsTrusted, uint32_t aMessage,
+                                   nsIWidget* aWidget)
+    : WidgetKeyboardEvent(aIsTrusted, aMessage, aWidget, eBeforeAfterKeyboardEventClass)
+  {
+  }
+
+  virtual WidgetEvent* Duplicate() const MOZ_OVERRIDE
+  {
+    MOZ_ASSERT(mClass == eBeforeAfterKeyboardEventClass,
+               "Duplicate() must be overridden by sub class");
+    // Not copying widget, it is a weak reference.
+    InternalBeforeAfterKeyboardEvent* result =
+      new InternalBeforeAfterKeyboardEvent(false, message, nullptr);
+    result->AssignBeforeAfterKeyEventData(*this, true);
+    result->mFlags = mFlags;
+    return result;
+  }
+
+  void AssignBeforeAfterKeyEventData(
+         const InternalBeforeAfterKeyboardEvent& aEvent,
+         bool aCopyTargets)
+  {
+    AssignKeyEventData(aEvent, aCopyTargets);
+    mEmbeddedCancelled = aEvent.mEmbeddedCancelled;
+  }
+
+  void AssignBeforeAfterKeyEventData(
+         const WidgetKeyboardEvent& aEvent,
+         bool aCopyTargets)
+  {
+    AssignKeyEventData(aEvent, aCopyTargets);
+  }
+};
+
 /******************************************************************************
  * mozilla::WidgetCompositionEvent
  ******************************************************************************/
@@ -272,6 +341,20 @@ public:
   uint32_t RangeCount() const
   {
     return mRanges ? mRanges->Length() : 0;
+  }
+
+  bool CausesDOMTextEvent() const
+  {
+    return message == NS_COMPOSITION_CHANGE ||
+           message == NS_COMPOSITION_COMMIT ||
+           message == NS_COMPOSITION_COMMIT_AS_IS;
+  }
+
+  bool CausesDOMCompositionEndEvent() const
+  {
+    return message == NS_COMPOSITION_END ||
+           message == NS_COMPOSITION_COMMIT ||
+           message == NS_COMPOSITION_COMMIT_AS_IS;
   }
 };
 
@@ -387,6 +470,8 @@ public:
     bool mHasSelection;
     // true if DOM element under mouse belongs to widget
     bool mWidgetIsHit;
+    // mozilla::WritingMode value at the end (focus) of the selection
+    mozilla::WritingMode mWritingMode;
     // used by NS_QUERY_SELECTION_AS_TRANSFERABLE
     nsCOMPtr<nsITransferable> mTransferable;
   } mReply;

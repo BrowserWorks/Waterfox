@@ -3,6 +3,7 @@ var Ci = Components.interfaces;
 var Cu = Components.utils;
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/BrowserUtils.jsm");
 
 const baseURL = "http://mochi.test:8888/browser/" +
   "toolkit/components/addoncompat/tests/browser/";
@@ -81,7 +82,7 @@ function testListeners()
       // We also want to make sure that this listener doesn't fire
       // after it's removed.
       let loadWithRemoveCount = 0;
-      addLoadListener(browser, function handler1() {
+      addLoadListener(browser, function handler1(event) {
         loadWithRemoveCount++;
         is(event.target.documentURI, url1, "only fire for first url");
       });
@@ -216,9 +217,44 @@ function testSandbox()
       is(browser.contentDocument.getElementById("output").innerHTML, "hello",
          "sandbox code ran successfully");
 
+      // Now try a sandbox with expanded principals.
+      sandbox = Cu.Sandbox([browser.contentWindow],
+                           {sandboxPrototype: browser.contentWindow,
+                            wantXrays: false});
+      Cu.evalInSandbox("const unsafeWindow = window;", sandbox);
+      Cu.evalInSandbox("document.getElementById('output').innerHTML = 'hello2';", sandbox);
+
+      is(browser.contentDocument.getElementById("output").innerHTML, "hello2",
+         "EP sandbox code ran successfully");
+
       gBrowser.removeTab(tab);
       resolve();
     }, true);
+  });
+}
+
+// Test for bug 1095305. We just want to make sure that loading some
+// unprivileged content from an add-on package doesn't crash.
+function testAddonContent()
+{
+  let chromeRegistry = Components.classes["@mozilla.org/chrome/chrome-registry;1"]
+    .getService(Components.interfaces.nsIChromeRegistry);
+  let base = chromeRegistry.convertChromeURL(BrowserUtils.makeURI("chrome://addonshim1/content/"));
+
+  let res = Services.io.getProtocolHandler("resource")
+    .QueryInterface(Ci.nsIResProtocolHandler);
+  res.setSubstitution("addonshim1", base);
+
+  return new Promise(function(resolve, reject) {
+    const url = "resource://addonshim1/page.html";
+    let tab = gBrowser.addTab(url);
+    let browser = tab.linkedBrowser;
+    addLoadListener(browser, function handler() {
+      gBrowser.removeTab(tab);
+      res.setSubstitution("addonshim1", null);
+
+      resolve();
+    });
   });
 }
 
@@ -235,7 +271,8 @@ function runTests(win, funcs)
     then(testListeners).
     then(testCapturing).
     then(testObserver).
-    then(testSandbox);
+    then(testSandbox).
+    then(testAddonContent);
 }
 
 /*

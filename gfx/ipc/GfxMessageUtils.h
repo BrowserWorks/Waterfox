@@ -394,10 +394,10 @@ struct ParamTraits<nsIntPoint>
   }
 };
 
-template<>
-struct ParamTraits<mozilla::gfx::IntSize>
+template<typename T>
+struct ParamTraits<mozilla::gfx::IntSizeTyped<T> >
 {
-  typedef mozilla::gfx::IntSize paramType;
+  typedef mozilla::gfx::IntSizeTyped<T> paramType;
 
   static void Write(Message* msg, const paramType& param)
   {
@@ -741,7 +741,7 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mRootCompositionSize);
     WriteParam(aMsg, aParam.mScrollId);
     WriteParam(aMsg, aParam.mScrollParentId);
-    WriteParam(aMsg, aParam.mResolution);
+    WriteParam(aMsg, aParam.mPresShellResolution);
     WriteParam(aMsg, aParam.mCumulativeResolution);
     WriteParam(aMsg, aParam.mZoom);
     WriteParam(aMsg, aParam.mDevPixelsPerCSSPixel);
@@ -752,10 +752,11 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
     WriteParam(aMsg, aParam.mHasScrollgrab);
     WriteParam(aMsg, aParam.mUpdateScrollOffset);
     WriteParam(aMsg, aParam.mScrollGeneration);
-    WriteParam(aMsg, aParam.mTransformScale);
+    WriteParam(aMsg, aParam.mExtraResolution);
     WriteParam(aMsg, aParam.mBackgroundColor);
     WriteParam(aMsg, aParam.mDoSmoothScroll);
     WriteParam(aMsg, aParam.mSmoothScrollOffset);
+    WriteParam(aMsg, aParam.GetLineScrollAmount());
     WriteParam(aMsg, aParam.GetContentDescription());
   }
 
@@ -782,7 +783,7 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mRootCompositionSize) &&
             ReadParam(aMsg, aIter, &aResult->mScrollId) &&
             ReadParam(aMsg, aIter, &aResult->mScrollParentId) &&
-            ReadParam(aMsg, aIter, &aResult->mResolution) &&
+            ReadParam(aMsg, aIter, &aResult->mPresShellResolution) &&
             ReadParam(aMsg, aIter, &aResult->mCumulativeResolution) &&
             ReadParam(aMsg, aIter, &aResult->mZoom) &&
             ReadParam(aMsg, aIter, &aResult->mDevPixelsPerCSSPixel) &&
@@ -793,10 +794,11 @@ struct ParamTraits<mozilla::layers::FrameMetrics>
             ReadParam(aMsg, aIter, &aResult->mHasScrollgrab) &&
             ReadParam(aMsg, aIter, &aResult->mUpdateScrollOffset) &&
             ReadParam(aMsg, aIter, &aResult->mScrollGeneration) &&
-            ReadParam(aMsg, aIter, &aResult->mTransformScale) &&
+            ReadParam(aMsg, aIter, &aResult->mExtraResolution) &&
             ReadParam(aMsg, aIter, &aResult->mBackgroundColor) &&
             ReadParam(aMsg, aIter, &aResult->mDoSmoothScroll) &&
             ReadParam(aMsg, aIter, &aResult->mSmoothScrollOffset) &&
+            ReadParam(aMsg, aIter, &aResult->mLineScrollAmount) &&
             ReadContentDescription(aMsg, aIter, aResult));
   }
 };
@@ -852,8 +854,8 @@ template <>
 struct ParamTraits<mozilla::layers::CompositableType>
   : public ContiguousTypedEnumSerializer<
              mozilla::layers::CompositableType,
-             mozilla::layers::CompositableType::BUFFER_UNKNOWN,
-             mozilla::layers::CompositableType::BUFFER_COUNT>
+             mozilla::layers::CompositableType::UNKNOWN,
+             mozilla::layers::CompositableType::COUNT>
 {};
 
 template <>

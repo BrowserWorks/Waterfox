@@ -30,8 +30,8 @@ DynamicImage::Init(const char* aMimeType, uint32_t aFlags)
   return NS_OK;
 }
 
-already_AddRefed<imgStatusTracker>
-DynamicImage::GetStatusTracker()
+already_AddRefed<ProgressTracker>
+DynamicImage::GetProgressTracker()
 {
   return nullptr;
 }
@@ -43,41 +43,17 @@ DynamicImage::FrameRect(uint32_t aWhichFrame)
   return nsIntRect(0, 0, size.width, size.height);
 }
 
-uint32_t
-DynamicImage::SizeOfData()
-{
-  // We don't know the answer to this (and the same goes for the other
-  // memory-related methods) since gfxDrawable doesn't expose a way to check.
-  return 0;
-}
-
 size_t
-DynamicImage::HeapSizeOfSourceWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const
+DynamicImage::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
 {
   return 0;
 }
 
 size_t
-DynamicImage::HeapSizeOfDecodedWithComputedFallback(mozilla::MallocSizeOf aMallocSizeOf) const
+DynamicImage::SizeOfDecoded(gfxMemoryLocation aLocation,
+                            MallocSizeOf aMallocSizeOf) const
 {
-  return 0;
-}
-
-size_t
-DynamicImage::NonHeapSizeOfDecoded() const
-{
-  return 0;
-}
-
-size_t
-DynamicImage::OutOfProcessSizeOfDecoded() const
-{
-  return 0;
-}
-
-size_t
-DynamicImage::HeapSizeOfVectorImageDocument(nsACString* aDocURL) const
-{
+  // We don't know the answer since gfxDrawable doesn't expose this information.
   return 0;
 }
 
@@ -116,11 +92,9 @@ DynamicImage::OnImageDataComplete(nsIRequest* aRequest,
   return NS_OK;
 }
 
-nsresult
-DynamicImage::OnNewSourceData()
-{
-  return NS_OK;
-}
+void
+DynamicImage::OnSurfaceDiscarded()
+{ }
 
 void
 DynamicImage::SetInnerWindowID(uint64_t aInnerWindowId)
@@ -228,7 +202,7 @@ DynamicImage::GetFrame(uint32_t aWhichFrame,
 }
 
 NS_IMETHODIMP_(bool)
-DynamicImage::FrameIsOpaque(uint32_t aWhichFrame)
+DynamicImage::IsOpaque()
 {
   // XXX(seth): For performance reasons it'd be better to return true here, but
   // I'm not sure how we can guarantee it for an arbitrary gfxDrawable.

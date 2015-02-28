@@ -88,14 +88,21 @@ public:
    * @param aOutTargetGuid An out-parameter that will contain the identifier
    *        of the APZC instance that handled the event, if one was found. This
    *        argument may be null.
+   * @param aOutInputBlockId An out-parameter that will contain the identifier
+   *        of the input block that this event was added to, if there was on.
+   *        This argument may be null.
    */
   nsEventStatus NotifyInputEvent(WidgetInputEvent& aEvent,
-                                 ScrollableLayerGuid* aOutTargetGuid);
+                                 ScrollableLayerGuid* aOutTargetGuid,
+                                 uint64_t* aOutInputBlockId);
 
   void ZoomToRect(uint32_t aPresShellId, ViewID aViewId, const CSSRect& aRect);
 
   void ContentReceivedTouch(const ScrollableLayerGuid& aGuid,
+                            uint64_t aInputBlockId,
                             bool aPreventDefault);
+  void SetTargetAPZC(uint64_t aInputBlockId,
+                     const nsTArray<ScrollableLayerGuid>& aTargets);
 
   void UpdateZoomConstraints(uint32_t aPresShellId,
                              ViewID aViewId,
@@ -104,6 +111,11 @@ public:
 
   bool HitTest(const nsRect& aRect);
 
+  bool UseAsyncPanZoom() { return !!mContentController; }
+
+  void GetTextureFactoryIdentifier(TextureFactoryIdentifier* aTextureFactoryIdentifier);
+
+  inline uint64_t GetLayersId() { return mLayersId; }
 protected:
   void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
 

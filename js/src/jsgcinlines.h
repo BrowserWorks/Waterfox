@@ -379,7 +379,9 @@ class GCZonesIter
     ZonesIter zone;
 
   public:
-    explicit GCZonesIter(JSRuntime *rt) : zone(rt, WithAtoms) {
+    explicit GCZonesIter(JSRuntime *rt, ZoneSelector selector = WithAtoms)
+      : zone(rt, selector)
+    {
         if (!zone->isCollecting())
             next();
     }
@@ -390,7 +392,7 @@ class GCZonesIter
         MOZ_ASSERT(!done());
         do {
             zone.next();
-        } while (!zone.done() && !zone->isCollecting());
+        } while (!zone.done() && !zone->isCollectingFromAnyThread());
     }
 
     JS::Zone *get() const {
@@ -526,7 +528,7 @@ CheckAllocatorState(ThreadSafeContext *cx, AllocKind kind)
             rt->gc.runDebugGC();
 #endif
 
-        if (rt->interrupt) {
+        if (rt->hasPendingInterrupt()) {
             // Invoking the interrupt callback can fail and we can't usefully
             // handle that here. Just check in case we need to collect instead.
             ncx->gcIfNeeded();
@@ -607,7 +609,7 @@ AllocateObject(ThreadSafeContext *cx, AllocKind kind, size_t nDynamicSlots, Init
         obj = reinterpret_cast<JSObject *>(GCRuntime::refillFreeListFromAnyThread<allowGC>(cx, kind));
 
     if (obj)
-        obj->fakeNativeSetInitialSlots(slots);
+        obj->setInitialSlotsMaybeNonNative(slots);
     else
         js_free(slots);
 

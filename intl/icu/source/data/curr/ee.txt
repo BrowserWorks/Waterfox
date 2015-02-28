@@ -397,7 +397,7 @@ ee{
         }
         GBP{
             "£",
-            "britainga pound sterling",
+            "britainga pound",
         }
         GEK{
             "GEK",
@@ -1542,8 +1542,8 @@ ee{
             other{"frentsiga franc"}
         }
         GBP{
-            one{"britainga pound sterling"}
-            other{"britainga pound sterling"}
+            one{"britainga pound"}
+            other{"britainga pound"}
         }
         GEK{
             one{"dzɔdziaga kupon larit"}
@@ -2306,5 +2306,5 @@ ee{
         one{"{1} {0}"}
         other{"{1} {0}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

@@ -11,7 +11,6 @@
 #include "nsContainerFrame.h"
 #include "nsIImageLoadingContent.h"
 #include "nsLayoutUtils.h"
-#include "nsRenderingContext.h"
 #include "imgINotificationObserver.h"
 #include "nsSVGEffects.h"
 #include "nsSVGPathGeometryFrame.h"
@@ -62,7 +61,7 @@ public:
   NS_DECL_FRAMEARENA_HELPERS
 
   // nsISVGChildFrame interface:
-  virtual nsresult PaintSVG(nsRenderingContext *aContext,
+  virtual nsresult PaintSVG(gfxContext& aContext,
                             const gfxMatrix& aTransform,
                             const nsIntRect* aDirtyRect = nullptr) MOZ_OVERRIDE;
   virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) MOZ_OVERRIDE;
@@ -192,7 +191,9 @@ nsSVGImageFrame::AttributeChanged(int32_t         aNameSpaceID,
         aAttribute == nsGkAtoms::y ||
         aAttribute == nsGkAtoms::width ||
         aAttribute == nsGkAtoms::height) {
-      nsSVGEffects::InvalidateRenderingObservers(this);
+      nsLayoutUtils::PostRestyleEvent(
+        mContent->AsElement(), nsRestyleHint(0),
+        nsChangeHint_InvalidateRenderingObservers);
       nsSVGUtils::ScheduleReflowSVG(this);
       return NS_OK;
     }
@@ -291,7 +292,7 @@ nsSVGImageFrame::TransformContextForPainting(gfxContext* aGfxContext,
 //----------------------------------------------------------------------
 // nsISVGChildFrame methods:
 nsresult
-nsSVGImageFrame::PaintSVG(nsRenderingContext *aContext,
+nsSVGImageFrame::PaintSVG(gfxContext& aContext,
                           const gfxMatrix& aTransform,
                           const nsIntRect *aDirtyRect)
 {
@@ -318,16 +319,15 @@ nsSVGImageFrame::PaintSVG(nsRenderingContext *aContext,
   }
 
   if (mImageContainer) {
-    gfxContext* ctx = aContext->ThebesContext();
-    gfxContextAutoSaveRestore autoRestorer(ctx);
+    gfxContextAutoSaveRestore autoRestorer(&aContext);
 
     if (StyleDisplay()->IsScrollableOverflow()) {
       gfxRect clipRect = nsSVGUtils::GetClipRectForFrame(this, x, y,
                                                          width, height);
-      nsSVGUtils::SetClipRect(ctx, aTransform, clipRect);
+      nsSVGUtils::SetClipRect(&aContext, aTransform, clipRect);
     }
 
-    if (!TransformContextForPainting(ctx, aTransform)) {
+    if (!TransformContextForPainting(&aContext, aTransform)) {
       return NS_ERROR_FAILURE;
     }
 
@@ -340,7 +340,7 @@ nsSVGImageFrame::PaintSVG(nsRenderingContext *aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      ctx->PushGroup(gfxContentType::COLOR_ALPHA);
+      aContext.PushGroup(gfxContentType::COLOR_ALPHA);
     }
 
     nscoord appUnitsPerDevPx = PresContext()->AppUnitsPerDevPixel();
@@ -397,9 +397,9 @@ nsSVGImageFrame::PaintSVG(nsRenderingContext *aContext,
     }
 
     if (opacity != 1.0f || StyleDisplay()->mMixBlendMode != NS_STYLE_BLEND_NORMAL) {
-      ctx->PopGroupToSource();
-      ctx->SetOperator(gfxContext::OPERATOR_OVER);
-      ctx->Paint(opacity);
+      aContext.PopGroupToSource();
+      aContext.SetOperator(gfxContext::OPERATOR_OVER);
+      aContext.Paint(opacity);
     }
     // gfxContextAutoSaveRestore goes out of scope & cleans up our gfxContext
   }
@@ -410,6 +410,10 @@ nsSVGImageFrame::PaintSVG(nsRenderingContext *aContext,
 nsIFrame*
 nsSVGImageFrame::GetFrameForPoint(const gfxPoint& aPoint)
 {
+  if (!(GetStateBits() & NS_STATE_SVG_CLIPPATH_CHILD) && !GetHitTestFlags()) {
+    return nullptr;
+  }
+
   Rect rect;
   SVGImageElement *element = static_cast<SVGImageElement*>(mContent);
   element->GetAnimatedLengthValues(&rect.x, &rect.y,
@@ -586,14 +590,18 @@ nsSVGImageListener::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect
 
   if (aType == imgINotificationObserver::LOAD_COMPLETE) {
     mFrame->InvalidateFrame();
-    nsSVGEffects::InvalidateRenderingObservers(mFrame);
+    nsLayoutUtils::PostRestyleEvent(
+      mFrame->GetContent()->AsElement(), nsRestyleHint(0),
+      nsChangeHint_InvalidateRenderingObservers);
     nsSVGUtils::ScheduleReflowSVG(mFrame);
   }
 
   if (aType == imgINotificationObserver::FRAME_UPDATE) {
     // No new dimensions, so we don't need to call
     // nsSVGUtils::InvalidateAndScheduleBoundsUpdate.
-    nsSVGEffects::InvalidateRenderingObservers(mFrame);
+    nsLayoutUtils::PostRestyleEvent(
+      mFrame->GetContent()->AsElement(), nsRestyleHint(0),
+      nsChangeHint_InvalidateRenderingObservers);
     mFrame->InvalidateFrame();
   }
 
@@ -601,7 +609,9 @@ nsSVGImageListener::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect
     // Called once the resource's dimensions have been obtained.
     aRequest->GetImage(getter_AddRefs(mFrame->mImageContainer));
     mFrame->InvalidateFrame();
-    nsSVGEffects::InvalidateRenderingObservers(mFrame);
+    nsLayoutUtils::PostRestyleEvent(
+      mFrame->GetContent()->AsElement(), nsRestyleHint(0),
+      nsChangeHint_InvalidateRenderingObservers);
     nsSVGUtils::ScheduleReflowSVG(mFrame);
   }
 

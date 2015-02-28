@@ -23,7 +23,6 @@
 #include "nsUnicharUtils.h"
 #include "nsIDocument.h"
 #include "nsIPrincipal.h"
-#include "nsIChannelPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsIContentPolicy.h"
 #include "nsAutoPtr.h"
@@ -268,28 +267,15 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode *aDOMNode, imgRe
   nsCOMPtr<nsIDOMCSSPrimitiveValue> primitiveValue;
   nsAutoString bgStringValue;
 
-  // get Content Security Policy to pass to LoadImage
   nsCOMPtr<nsIDocument> doc(do_QueryInterface(document));
-  nsCOMPtr<nsIPrincipal> principal;
-  nsCOMPtr<nsIChannelPolicy> channelPolicy;
-  nsCOMPtr<nsIContentSecurityPolicy> csp;
-  if (doc) {
-    principal = doc->NodePrincipal();
-    nsresult rv = principal->GetCsp(getter_AddRefs(csp));
-    NS_ENSURE_SUCCESS(rv, rv);
-    if (csp) {
-      channelPolicy = do_CreateInstance("@mozilla.org/nschannelpolicy;1");
-      channelPolicy->SetContentSecurityPolicy(csp);
-      channelPolicy->SetLoadType(nsIContentPolicy::TYPE_IMAGE);
-    }
-  }
-  
+  nsCOMPtr<nsIPrincipal> principal = doc ? doc->NodePrincipal() : nullptr;
+
   while (true) {
     nsCOMPtr<nsIDOMElement> domElement(do_QueryInterface(domNode));
     // bail for the parent node of the root element or null argument
     if (!domElement)
       break;
-    
+
     nsCOMPtr<nsIDOMCSSStyleDeclaration> computedStyle;
     window->GetComputedStyle(domElement, EmptyString(),
                              getter_AddRefs(computedStyle));
@@ -308,9 +294,11 @@ nsContextMenuInfo::GetBackgroundImageRequestInternal(nsIDOMNode *aDOMNode, imgRe
           nsRefPtr<imgLoader> il = imgLoader::GetInstance();
           NS_ENSURE_TRUE(il, NS_ERROR_FAILURE);
 
-          return il->LoadImage(bgUri, nullptr, nullptr, principal, nullptr,
+          return il->LoadImage(bgUri, nullptr, nullptr,
+                               doc->GetReferrerPolicy(), principal, nullptr,
                                nullptr, nullptr, nsIRequest::LOAD_NORMAL,
-                               nullptr, channelPolicy, EmptyString(), aRequest);
+                               nullptr, nsIContentPolicy::TYPE_IMAGE,
+                               EmptyString(), aRequest);
         }
       }
 

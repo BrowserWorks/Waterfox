@@ -1734,7 +1734,7 @@ bundle_compactStrings(struct SRBRoot *bundle, UErrorCode *status) {
             bundle->f16BitUnits[0] = 0;
             utf16Length = 1;
             ++bundle->f16BitUnitsLength;
-            for (pos = -1, i = 0; i < count; ++i) {
+            for (pos = UHASH_FIRST, i = 0; i < count; ++i) {
                 array[i] = (struct SResource *)uhash_nextElement(stringSet, &pos)->key.pointer;
             }
             /* Sort the strings so that each one is immediately followed by all of its suffixes. */

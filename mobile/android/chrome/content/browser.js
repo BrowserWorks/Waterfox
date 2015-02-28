@@ -112,6 +112,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "SharedPreferences",
   ["Linkifier", "chrome://browser/content/Linkify.js"],
   ["ZoomHelper", "chrome://browser/content/ZoomHelper.js"],
   ["CastingApps", "chrome://browser/content/CastingApps.js"],
+#ifdef NIGHTLY_BUILD
+  ["WebcompatReporter", "chrome://browser/content/WebcompatReporter.js"],
+#endif
 ].forEach(function (aScript) {
   let [name, script] = aScript;
   XPCOMUtils.defineLazyGetter(window, name, function() {
@@ -127,12 +130,14 @@ XPCOMUtils.defineLazyModuleGetter(this, "SharedPreferences",
 #endif
   ["MemoryObserver", ["memory-pressure", "Memory:Dump"], "chrome://browser/content/MemoryObserver.js"],
   ["ConsoleAPI", ["console-api-log-event"], "chrome://browser/content/ConsoleAPI.js"],
-  ["FindHelper", ["FindInPage:Find", "FindInPage:Prev", "FindInPage:Next", "FindInPage:Closed", "Tab:Selected"], "chrome://browser/content/FindHelper.js"],
+  ["FindHelper", ["FindInPage:Opened", "FindInPage:Closed", "Tab:Selected"], "chrome://browser/content/FindHelper.js"],
   ["PermissionsHelper", ["Permissions:Get", "Permissions:Clear"], "chrome://browser/content/PermissionsHelper.js"],
   ["FeedHandler", ["Feeds:Subscribe"], "chrome://browser/content/FeedHandler.js"],
   ["Feedback", ["Feedback:Show"], "chrome://browser/content/Feedback.js"],
   ["SelectionHandler", ["TextSelection:Get"], "chrome://browser/content/SelectionHandler.js"],
   ["Notifications", ["Notification:Event"], "chrome://browser/content/Notifications.jsm"],
+  ["EmbedRT", ["GeckoView:ImportScript"], "chrome://browser/content/EmbedRT.js"],
+  ["Reader", ["Reader:Removed"], "chrome://browser/content/Reader.js"],
 ].forEach(function (aScript) {
   let [name, notifications, script] = aScript;
   XPCOMUtils.defineLazyGetter(window, name, function() {
@@ -192,12 +197,6 @@ const kDefaultCSSViewportWidth = 980;
 const kDefaultCSSViewportHeight = 480;
 
 const kViewportRemeasureThrottle = 500;
-
-const kDoNotTrackPrefState = Object.freeze({
-  NO_PREF: "0",
-  DISALLOW_TRACKING: "1",
-  ALLOW_TRACKING: "2",
-});
 
 let Log = Cu.import("resource://gre/modules/AndroidLog.jsm", {}).AndroidLog;
 
@@ -329,6 +328,7 @@ var BrowserApp = {
         Services.tm.mainThread.dispatch(function() {
           // Init LoginManager
           Cc["@mozilla.org/login-manager;1"].getService(Ci.nsILoginManager);
+          Services.search.init();
         }, Ci.nsIThread.DISPATCH_NORMAL);
 
 #ifdef MOZ_SAFE_BROWSING
@@ -336,6 +336,9 @@ var BrowserApp = {
           // Bug 778855 - Perf regression if we do this here. To be addressed in bug 779008.
           SafeBrowsing.init();
         }, Ci.nsIThread.DISPATCH_NORMAL);
+#endif
+#ifdef NIGHTLY_BUILD
+        WebcompatReporter.init();
 #endif
       } catch(ex) { console.log(ex); }
     }, false);
@@ -351,8 +354,8 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Tab:Selected", false);
     Services.obs.addObserver(this, "Tab:Closed", false);
     Services.obs.addObserver(this, "Session:Back", false);
-    Services.obs.addObserver(this, "Session:ShowHistory", false);
     Services.obs.addObserver(this, "Session:Forward", false);
+    Services.obs.addObserver(this, "Session:Navigate", false);
     Services.obs.addObserver(this, "Session:Reload", false);
     Services.obs.addObserver(this, "Session:Stop", false);
     Services.obs.addObserver(this, "SaveAs:PDF", false);
@@ -378,6 +381,7 @@ var BrowserApp = {
     Services.obs.addObserver(this, "Webapps:Load", false);
     Services.obs.addObserver(this, "Webapps:AutoUninstall", false);
     Services.obs.addObserver(this, "sessionstore-state-purge-complete", false);
+    Messaging.addListener(this.getHistory.bind(this), "Session:GetHistory");
 
     function showFullScreenWarning() {
       NativeWindow.toast.show(Strings.browser.GetStringFromName("alertFullScreenToast"), "short");
@@ -422,7 +426,6 @@ var BrowserApp = {
     Cu.import("resource://gre/modules/Webapps.jsm");
     DOMApplicationRegistry.allAppsLaunchable = true;
     RemoteDebugger.init();
-    Reader.init();
     UserAgentOverrides.init();
     DesktopUserAgent.init();
     CastingApps.init();
@@ -469,7 +472,7 @@ var BrowserApp = {
     if (this._startupStatus)
       this.onAppUpdated();
 
-    if (!ParentalControls.isAllowed(ParentalControls.INSTALL_EXTENSIONS)) {
+    if (!ParentalControls.isAllowed(ParentalControls.INSTALL_EXTENSION)) {
       // Disable extension installs
       Services.prefs.setIntPref("extensions.enabledScopes", 1);
       Services.prefs.setIntPref("extensions.autoDisableScopes", 1);
@@ -848,32 +851,30 @@ var BrowserApp = {
       Services.prefs.clearUserPref("plugins.click_to_play");
     }
 
+    // Migrate the "privacy.donottrackheader.value" pref. See bug 1042135.
+    if (Services.prefs.prefHasUserValue("privacy.donottrackheader.value")) {
+      // Make sure the doNotTrack value conforms to the conversion from
+      // three-state to two-state. (This reverts a setting of "please track me"
+      // to the default "don't say anything").
+      if (Services.prefs.getBoolPref("privacy.donottrackheader.enabled") &&
+          (Services.prefs.getIntPref("privacy.donottrackheader.value") != 1)) {
+        Services.prefs.clearUserPref("privacy.donottrackheader.enabled");
+      }
+
+      // This pref has been removed, so always clear it.
+      Services.prefs.clearUserPref("privacy.donottrackheader.value");
+    }
+
     // Set the search activity default pref on app upgrade if it has not been set already.
     if (this._startupStatus === "upgrade" &&
         !Services.prefs.prefHasUserValue("searchActivity.default.migrated")) {
       Services.prefs.setBoolPref("searchActivity.default.migrated", true);
       SearchEngines.migrateSearchActivityDefaultPref();
     }
-  },
 
-  shutdown: function shutdown() {
-    NativeWindow.uninit();
-    LightWeightThemeWebInstaller.uninit();
-    FormAssistant.uninit();
-    IndexedDB.uninit();
-    ViewportHandler.uninit();
-    XPInstallObserver.uninit();
-    HealthReportStatusListener.uninit();
-    CharacterEncoding.uninit();
-    SearchEngines.uninit();
-    RemoteDebugger.uninit();
-    Reader.uninit();
-    UserAgentOverrides.uninit();
-    DesktopUserAgent.uninit();
-    ExternalApps.uninit();
-    CastingApps.uninit();
-    Distribution.uninit();
-    Tabs.uninit();
+    if (this._startupStatus === "upgrade") {
+      Reader.migrateCache().catch(e => Cu.reportError("Error migrating Reader cache: " + e));
+    }
   },
 
   // This function returns false during periods where the browser displayed document is
@@ -1290,21 +1291,6 @@ var BrowserApp = {
           pref.value = MasterPassword.enabled;
           prefs.push(pref);
           continue;
-        // Handle do-not-track preference
-        case "privacy.donottrackheader":
-          pref.type = "string";
-
-          let enableDNT = Services.prefs.getBoolPref("privacy.donottrackheader.enabled");
-          if (!enableDNT) {
-            pref.value = kDoNotTrackPrefState.NO_PREF;
-          } else {
-            let dntState = Services.prefs.getIntPref("privacy.donottrackheader.value");
-            pref.value = (dntState === 0) ? kDoNotTrackPrefState.ALLOW_TRACKING :
-                                            kDoNotTrackPrefState.DISALLOW_TRACKING;
-          }
-
-          prefs.push(pref);
-          continue;
 #ifdef MOZ_CRASHREPORTER
         // Crash reporter submit pref must be fetched from nsICrashReporter service.
         case "datareporting.crashreporter.submitEnabled":
@@ -1384,27 +1370,6 @@ var BrowserApp = {
           MasterPassword.removePassword(json.value);
         else
           MasterPassword.setPassword(json.value);
-        return;
-
-      // "privacy.donottrackheader" is not "real" pref name, it's used in the setting menu.
-      case "privacy.donottrackheader":
-        switch (json.value) {
-          // Don't tell anything about tracking me
-          case kDoNotTrackPrefState.NO_PREF:
-            Services.prefs.setBoolPref("privacy.donottrackheader.enabled", false);
-            Services.prefs.clearUserPref("privacy.donottrackheader.value");
-            break;
-          // Accept tracking me
-          case kDoNotTrackPrefState.ALLOW_TRACKING:
-            Services.prefs.setBoolPref("privacy.donottrackheader.enabled", true);
-            Services.prefs.setIntPref("privacy.donottrackheader.value", 0);
-            break;
-          // Not accept tracking me
-          case kDoNotTrackPrefState.DISALLOW_TRACKING:
-            Services.prefs.setBoolPref("privacy.donottrackheader.enabled", true);
-            Services.prefs.setIntPref("privacy.donottrackheader.value", 1);
-            break;
-        }
         return;
 
       // Enabling or disabling suggestions will prevent future prompts
@@ -1578,19 +1543,44 @@ var BrowserApp = {
         browser.goForward();
         break;
 
+      case "Session:Navigate":
+          let index = JSON.parse(aData);
+          browser.gotoIndex(index);
+          break;
+
       case "Session:Reload": {
         let flags = Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_PROXY | Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_CACHE;
 
         // Check to see if this is a message to enable/disable mixed content blocking.
         if (aData) {
-          let allowMixedContent = JSON.parse(aData).allowMixedContent;
-          if (allowMixedContent) {
-            // Set a flag to disable mixed content blocking.
-            flags = Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_MIXED_CONTENT;
-          } else {
-            // Set mixedContentChannel to null to re-enable mixed content blocking.
-            let docShell = browser.webNavigation.QueryInterface(Ci.nsIDocShell);
-            docShell.mixedContentChannel = null;
+          let data = JSON.parse(aData);
+          if (data.contentType === "mixed") {
+            if (data.allowContent) {
+              // Set a flag to disable mixed content blocking.
+              flags = Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_MIXED_CONTENT;
+            } else {
+              // Set mixedContentChannel to null to re-enable mixed content blocking.
+              let docShell = browser.webNavigation.QueryInterface(Ci.nsIDocShell);
+              docShell.mixedContentChannel = null;
+            }
+          } else if (data.contentType === "tracking") {
+            if (data.allowContent) {
+              // Convert document URI into the format used by
+              // nsChannelClassifier::ShouldEnableTrackingProtection
+              // (any scheme turned into https is correct)
+              let normalizedUrl = Services.io.newURI("https://" + browser.currentURI.hostPort, null, null);
+              // Add the current host in the 'trackingprotection' consumer of
+              // the permission manager using a normalized URI. This effectively
+              // places this host on the tracking protection white list.
+              Services.perms.add(normalizedUrl, "trackingprotection", Services.perms.ALLOW_ACTION);
+              Telemetry.addData("TRACKING_PROTECTION_EVENTS", 1);
+            } else {
+              // Remove the current host from the 'trackingprotection' consumer
+              // of the permission manager. This effectively removes this host
+              // from the tracking protection white list (any list actually).
+              Services.perms.remove(browser.currentURI.host, "trackingprotection");
+              Telemetry.addData("TRACKING_PROTECTION_EVENTS", 2);
+            }
           }
         }
 
@@ -1610,12 +1600,6 @@ var BrowserApp = {
       case "Session:Stop":
         browser.stop();
         break;
-
-      case "Session:ShowHistory": {
-        let data = JSON.parse(aData);
-        this.showHistory(data.fromIndex, data.toIndex, data.selIndex);
-        break;
-      }
 
       case "Tab:Load": {
         let data = JSON.parse(aData);
@@ -1936,18 +1920,6 @@ var BrowserApp = {
     return this.defaultBrowserWidth = width;
   },
 
-  get layersTileWidth() {
-    delete this.layersTileWidth;
-    let width = Services.prefs.getIntPref("layers.tile-width");
-    return this.layersTileWidth = width;
-  },
-
-  get layersTileHeight() {
-    delete this.layersTileHeight;
-    let height = Services.prefs.getIntPref("layers.tile-height");
-    return this.layersTileHeight = height;
-  },
-
   // nsIAndroidBrowserApp
   get selectedTab() {
     return this._selectedTab;
@@ -1990,30 +1962,26 @@ var BrowserApp = {
     this._prefObservers = newPrefObservers;
   },
 
-  // This method will print a list from fromIndex to toIndex, optionally
+  // This method will return a list of history items from fromIndex to toIndex, optionally
   // selecting selIndex(if fromIndex<=selIndex<=toIndex)
-  showHistory: function(fromIndex, toIndex, selIndex) {
+  getHistory: function(data) {
+    let fromIndex = data.fromIndex;
+    let toIndex = data.toIndex;
+    let selIndex = data.selIndex;
     let browser = this.selectedBrowser;
     let hist = browser.sessionHistory;
     let listitems = [];
     for (let i = toIndex; i >= fromIndex; i--) {
       let entry = hist.getEntryAtIndex(i, false);
       let item = {
-        label: entry.title || entry.URI.spec,
+        title: entry.title || entry.URI.spec,
+        url: entry.URI.spec,
         selected: (i == selIndex)
       };
       listitems.push(item);
     }
 
-    let p = new Prompt({
-      window: browser.contentWindow
-    }).setSingleChoiceItems(listitems).show(function(data) {
-        let selected = data.button;
-        if (selected == -1)
-          return;
-
-        browser.gotoIndex(toIndex-selected);
-    });
+    return { "historyItems" : listitems };
   },
 };
 
@@ -2024,14 +1992,6 @@ var NativeWindow = {
     Services.obs.addObserver(this, "Toast:Click", false);
     Services.obs.addObserver(this, "Toast:Hidden", false);
     this.contextmenus.init();
-  },
-
-  uninit: function() {
-    Services.obs.removeObserver(this, "Menu:Clicked");
-    Services.obs.removeObserver(this, "Doorhanger:Reply");
-    Services.obs.removeObserver(this, "Toast:Click", false);
-    Services.obs.removeObserver(this, "Toast:Hidden", false);
-    this.contextmenus.uninit();
   },
 
   loadDex: function(zipFile, implClass) {
@@ -2215,10 +2175,6 @@ var NativeWindow = {
 
     init: function() {
       BrowserApp.deck.addEventListener("contextmenu", this.show.bind(this), false);
-    },
-
-    uninit: function() {
-      BrowserApp.deck.removeEventListener("contextmenu", this.show.bind(this), false);
     },
 
     add: function() {
@@ -2879,12 +2835,6 @@ var LightWeightThemeWebInstaller = {
     BrowserApp.deck.addEventListener("ResetBrowserThemePreview", this, false, true);
   },
 
-  uninit: function() {
-    BrowserApp.deck.removeEventListener("InstallBrowserTheme", this, false, true);
-    BrowserApp.deck.removeEventListener("PreviewBrowserTheme", this, false, true);
-    BrowserApp.deck.removeEventListener("ResetBrowserThemePreview", this, false, true);
-  },
-
   handleEvent: function (event) {
     switch (event.type) {
       case "InstallBrowserTheme":
@@ -2990,6 +2940,8 @@ var LightWeightThemeWebInstaller = {
 
 var DesktopUserAgent = {
   DESKTOP_UA: null,
+  TCO_DOMAIN: "t.co",
+  TCO_REPLACE: / Gecko.*/,
 
   init: function ua_init() {
     Services.obs.addObserver(this, "DesktopMode:Change", false);
@@ -3002,31 +2954,41 @@ var DesktopUserAgent = {
                         .replace(/Gecko\/[0-9\.]+/, "Gecko/20100101");
   },
 
-  uninit: function ua_uninit() {
-    Services.obs.removeObserver(this, "DesktopMode:Change");
-  },
-
   onRequest: function(channel, defaultUA) {
+#ifdef NIGHTLY_BUILD
+    if (this.TCO_DOMAIN == channel.URI.host) {
+      // Force the referrer
+      channel.referrer = channel.URI;
+
+      // Send a bot-like UA to t.co to get a real redirect. We strip off the
+      // "Gecko/x.y Firefox/x.y" part
+      return defaultUA.replace(this.TCO_REPLACE, "");
+    }
+#endif
+
     let channelWindow = this._getWindowForRequest(channel);
     let tab = BrowserApp.getTabForWindow(channelWindow);
-    if (tab == null)
-      return null;
+    if (tab) {
+      return this.getUserAgentForTab(tab);
+    }
 
-    return this.getUserAgentForTab(tab);
+    return null;
   },
 
   getUserAgentForWindow: function ua_getUserAgentForWindow(aWindow) {
     let tab = BrowserApp.getTabForWindow(aWindow.top);
-    if (tab)
+    if (tab) {
       return this.getUserAgentForTab(tab);
+    }
 
     return null;
   },
 
   getUserAgentForTab: function ua_getUserAgentForTab(aTab) {
     // Send desktop UA if "Request Desktop Site" is enabled.
-    if (aTab.desktopMode)
+    if (aTab.desktopMode) {
       return this.DESKTOP_UA;
+    }
 
     return null;
   },
@@ -3063,8 +3025,9 @@ var DesktopUserAgent = {
     if (aTopic === "DesktopMode:Change") {
       let args = JSON.parse(aData);
       let tab = BrowserApp.getTabForId(args.tabId);
-      if (tab != null)
+      if (tab) {
         tab.reloadWithMode(args.desktopMode);
+      }
     }
   }
 };
@@ -3161,8 +3124,8 @@ nsBrowserAccess.prototype = {
     return browser ? browser.contentWindow : null;
   },
 
-  openURIInFrame: function browser_openURIInFrame(aURI, aOpener, aWhere, aContext) {
-    let browser = this._getBrowser(aURI, aOpener, aWhere, aContext);
+  openURIInFrame: function browser_openURIInFrame(aURI, aParams, aWhere, aContext) {
+    let browser = this._getBrowser(aURI, null, aWhere, aContext);
     return browser ? browser.QueryInterface(Ci.nsIFrameLoaderOwner) : null;
   },
 
@@ -3198,8 +3161,6 @@ function Tab(aURL, aParams) {
   this._fixedMarginTop = 0;
   this._fixedMarginRight = 0;
   this._fixedMarginBottom = 0;
-  this._readerEnabled = false;
-  this._readerActive = false;
   this.userScrollPos = { x: 0, y: 0 };
   this.viewportExcludesHorizontalMargins = true;
   this.viewportExcludesVerticalMargins = true;
@@ -3288,9 +3249,6 @@ Tab.prototype = {
     }
 
     this.browser.stop();
-
-    let frameLoader = this.browser.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader;
-    frameLoader.renderMode = Ci.nsIFrameLoader.RENDER_MODE_ASYNC_SCROLL;
 
     // only set tab uri if uri is valid
     let uri = null;
@@ -3583,7 +3541,7 @@ Tab.prototype = {
 
   setDisplayPort: function(aDisplayPort) {
     let zoom = this._zoom;
-    let resolution = aDisplayPort.resolution;
+    let resolution = this.restoredSessionZoom() || aDisplayPort.resolution;
     if (zoom <= 0 || resolution <= 0)
       return;
 
@@ -3637,7 +3595,6 @@ Tab.prototype = {
                                           displayPortMargins.top,
                                           displayPortMargins.right,
                                           displayPortMargins.bottom,
-                                          BrowserApp.layersTileWidth, BrowserApp.layersTileHeight,
                                           element, 0);
     }
     this._oldDisplayPortMargins = displayPortMargins;
@@ -3960,6 +3917,8 @@ Tab.prototype = {
           if (contentDocument.body) {
             new AboutReader(contentDocument, this.browser.contentWindow);
           }
+          // Update the page action to show the "reader active" icon.
+          Reader.updatePageAction(this);
         }
 
         break;
@@ -4032,7 +3991,8 @@ Tab.prototype = {
             type: "Link:Favicon",
             tabID: this.id,
             href: resolveGeckoURI(target.href),
-            size: maxSize
+            size: maxSize,
+            mime: target.getAttribute("type") || ""
           };
           Messaging.sendRequest(json);
         } else if (list.indexOf("[alternate]") != -1 && aEvent.type == "DOMLinkAdded") {
@@ -4262,43 +4222,35 @@ Tab.prototype = {
           this.tilesData = null;
         }
 
-        if (!Reader.isEnabledForParseOnLoad)
+        // Don't try to parse the document if reader mode is disabled,
+        // or if the page is already in reader mode.
+        if (!Reader.isEnabledForParseOnLoad || this.readerActive) {
           return;
+        }
+
+        // Reader mode is disabled until proven enabled.
+        this.savedArticle = null;
+        Reader.updatePageAction(this);
 
         // Once document is fully loaded, parse it
-        Reader.parseDocumentFromTab(this.id, function (article) {
+        Reader.parseDocumentFromTab(this).then(article => {
           // The loaded page may have changed while we were parsing the document. 
           // Make sure we've got the current one.
-          let uri = this.browser.currentURI;
-          let tabURL = uri.specIgnoringRef;
-          // Do nothing if there's no article or the page in this tab has
-          // changed
-          if (article == null || (article.url != tabURL)) {
-            // Don't clear the article for about:reader pages since we want to
-            // use the article from the previous page
-            if (!tabURL.startsWith("about:reader")) {
-              this.savedArticle = null;
-              this.readerEnabled = false;
-              this.readerActive = false;
-            } else {
-              this.readerActive = true;
-            }
+          let currentURL = this.browser.currentURI.specIgnoringRef;
+
+          // Do nothing if there's no article or the page in this tab has changed.
+          if (article == null || (article.url != currentURL)) {
             return;
           }
 
           this.savedArticle = article;
+          Reader.updatePageAction(this);
 
           Messaging.sendRequest({
             type: "Content:ReaderEnabled",
             tabID: this.id
           });
-
-          if(this.readerActive)
-            this.readerActive = false;
-
-          if(!this.readerEnabled)
-            this.readerEnabled = true;
-        }.bind(this));
+        }).catch(e => Cu.reportError("Error parsing document from tab: " + e));
       }
     }
   },
@@ -4428,6 +4380,9 @@ Tab.prototype = {
       ExternalApps.updatePageActionUri(fixedURI);
     }
 
+    let webNav = contentWin.QueryInterface(Ci.nsIInterfaceRequestor)
+        .getInterface(Ci.nsIWebNavigation);
+
     let message = {
       type: "Content:LocationChange",
       tabID: this.id,
@@ -4435,7 +4390,12 @@ Tab.prototype = {
       userRequested: this.userRequested || "",
       baseDomain: baseDomain,
       contentType: (contentType ? contentType : ""),
-      sameDocument: sameDocument
+      sameDocument: sameDocument,
+
+      historyIndex: webNav.sessionHistory.index,
+      historySize: webNav.sessionHistory.count,
+      canGoBack: webNav.canGoBack,
+      canGoForward: webNav.canGoForward,
     };
 
     Messaging.sendRequest(message);
@@ -4486,27 +4446,6 @@ Tab.prototype = {
   onStatusChange: function(aBrowser, aWebProgress, aRequest, aStatus, aMessage) {
   },
 
-  _sendHistoryEvent: function(aMessage, aParams) {
-    let message = {
-      type: "SessionHistory:" + aMessage,
-      tabID: this.id,
-    };
-
-    // Restore zoom only when moving in session history, not for new page loads.
-    this._restoreZoom = aMessage != "New";
-
-    if (aParams) {
-      if ("url" in aParams)
-        message.url = aParams.url;
-      if ("index" in aParams)
-        message.index = aParams.index;
-      if ("numEntries" in aParams)
-        message.numEntries = aParams.numEntries;
-    }
-
-    Messaging.sendRequest(message);
-  },
-
   _getGeckoZoom: function() {
     let res = {x: {}, y: {}};
     let cwu = this.browser.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
@@ -4529,17 +4468,22 @@ Tab.prototype = {
     return null;
   },
 
+  _updateZoomFromHistoryEvent: function(aHistoryEventName) {
+    // Restore zoom only when moving in session history, not for new page loads.
+    this._restoreZoom = aHistoryEventName !== "New";
+  },
+
   OnHistoryNewEntry: function(aUri) {
-    this._sendHistoryEvent("New", { url: aUri.spec });
+    this._updateZoomFromHistoryEvent("New");
   },
 
   OnHistoryGoBack: function(aUri) {
-    this._sendHistoryEvent("Back");
+    this._updateZoomFromHistoryEvent("Back");
     return true;
   },
 
   OnHistoryGoForward: function(aUri) {
-    this._sendHistoryEvent("Forward");
+    this._updateZoomFromHistoryEvent("Forward");
     return true;
   },
 
@@ -4550,12 +4494,12 @@ Tab.prototype = {
   },
 
   OnHistoryGotoIndex: function(aIndex, aUri) {
-    this._sendHistoryEvent("Goto", { index: aIndex });
+    this._updateZoomFromHistoryEvent("Goto");
     return true;
   },
 
   OnHistoryPurge: function(aNumEntries) {
-    this._sendHistoryEvent("Purge", { numEntries: aNumEntries });
+    this._updateZoomFromHistoryEvent("Purge");
     return true;
   },
 
@@ -4850,24 +4794,8 @@ Tab.prototype = {
     }
   },
 
-  set readerEnabled(isReaderEnabled) {
-    this._readerEnabled = isReaderEnabled;
-    if (this.getActive())
-      Reader.updatePageAction(this);
-  },
-
-  get readerEnabled() {
-    return this._readerEnabled;
-  },
-
-  set readerActive(isReaderActive) {
-    this._readerActive = isReaderActive;
-    if (this.getActive())
-      Reader.updatePageAction(this);
-  },
-
   get readerActive() {
-    return this._readerActive;
+    return this.browser.currentURI.spec.startsWith("about:reader");
   },
 
   // nsIBrowserTab
@@ -5258,7 +5186,7 @@ var BrowserEventHandler = {
     let win = BrowserApp.selectedBrowser.contentWindow;
     try {
       let cwu = win.top.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowUtils);
-      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH);
+      cwu.sendMouseEventToWindow(aName, aX, aY, 0, 1, 0, true, 0, Ci.nsIDOMMouseEvent.MOZ_SOURCE_TOUCH, false);
     } catch(e) {
       Cu.reportError(e);
     }
@@ -5529,21 +5457,6 @@ var FormAssistant = {
     BrowserApp.deck.addEventListener("pageshow", this, false);
 
     LoginManagerParent.init();
-  },
-
-  uninit: function() {
-    Services.obs.removeObserver(this, "FormAssist:AutoComplete");
-    Services.obs.removeObserver(this, "FormAssist:Blocklisted");
-    Services.obs.removeObserver(this, "FormAssist:Hidden");
-    Services.obs.removeObserver(this, "FormAssist:Remove");
-    Services.obs.removeObserver(this, "invalidformsubmit");
-    Services.obs.removeObserver(this, "PanZoom:StateChange");
-
-    BrowserApp.deck.removeEventListener("focus", this);
-    BrowserApp.deck.removeEventListener("blur", this);
-    BrowserApp.deck.removeEventListener("click", this);
-    BrowserApp.deck.removeEventListener("input", this);
-    BrowserApp.deck.removeEventListener("pageshow", this);
   },
 
   observe: function(aSubject, aTopic, aData) {
@@ -5894,17 +5807,6 @@ let HealthReportStatusListener = {
     }
   },
 
-  uninit: function () {
-    Services.obs.removeObserver(this, "HealthReport:RequestSnapshot");
-    Services.prefs.removeObserver(this.PREF_ACCEPT_LANG, this);
-    Services.prefs.removeObserver(this.PREF_BLOCKLIST_ENABLED, this);
-    if (this.PREF_TELEMETRY_ENABLED) {
-      Services.prefs.removeObserver(this.PREF_TELEMETRY_ENABLED, this);
-    }
-
-    AddonManager.removeAddonListener(this);
-  },
-
   observe: function (aSubject, aTopic, aData) {
     switch (aTopic) {
       case "HealthReport:RequestSnapshot":
@@ -6071,13 +5973,6 @@ var XPInstallObserver = {
     AddonManager.addInstallListener(XPInstallObserver);
   },
 
-  uninit: function xpi_uninit() {
-    Services.obs.removeObserver(XPInstallObserver, "addon-install-blocked");
-    Services.obs.removeObserver(XPInstallObserver, "addon-install-started");
-
-    AddonManager.removeInstallListener(XPInstallObserver);
-  },
-
   observe: function xpi_observer(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "addon-install-started":
@@ -6085,8 +5980,7 @@ var XPInstallObserver = {
         break;
       case "addon-install-blocked":
         let installInfo = aSubject.QueryInterface(Ci.amIWebInstallInfo);
-        let win = installInfo.originator;
-        let tab = BrowserApp.getTabForWindow(win.top);
+        let tab = BrowserApp.getTabForBrowser(installInfo.browser);
         if (!tab)
           return;
 
@@ -6255,11 +6149,6 @@ var ViewportHandler = {
   init: function init() {
     addEventListener("DOMMetaAdded", this, false);
     Services.obs.addObserver(this, "Window:Resize", false);
-  },
-
-  uninit: function uninit() {
-    removeEventListener("DOMMetaAdded", this, false);
-    Services.obs.removeObserver(this, "Window:Resize");
   },
 
   handleEvent: function handleEvent(aEvent) {
@@ -6582,12 +6471,6 @@ var IndexedDB = {
     Services.obs.addObserver(this, this._quotaCancel, false);
   },
 
-  uninit: function IndexedDB_uninit() {
-    Services.obs.removeObserver(this, this._permissionsPrompt);
-    Services.obs.removeObserver(this, this._quotaPrompt);
-    Services.obs.removeObserver(this, this._quotaCancel);
-  },
-
   observe: function IndexedDB_observe(subject, topic, data) {
     if (topic != this._permissionsPrompt &&
         topic != this._quotaPrompt &&
@@ -6684,11 +6567,6 @@ var CharacterEncoding = {
     this.sendState();
   },
 
-  uninit: function uninit() {
-    Services.obs.removeObserver(this, "CharEncoding:Get");
-    Services.obs.removeObserver(this, "CharEncoding:Set");
-  },
-
   observe: function observe(aSubject, aTopic, aData) {
     switch (aTopic) {
       case "CharEncoding:Get":
@@ -6766,14 +6644,28 @@ var IdentityHandler = {
   IDENTITY_MODE_IDENTIFIED: "identified",
 
   // The following mixed content modes are only used if "security.mixed_content.block_active_content"
-  // is enabled. Even though the mixed content state and identitity state are orthogonal,
-  // our Java frontend coalesces them into one indicator.
+  // is enabled. Our Java frontend coalesces them into one indicator.
+
+  // No mixed content information. No mixed content icon is shown.
+  MIXED_MODE_UNKNOWN: "unknown",
 
   // Blocked active mixed content. Shield icon is shown, with a popup option to load content.
-  IDENTITY_MODE_MIXED_CONTENT_BLOCKED: "mixed_content_blocked",
+  MIXED_MODE_CONTENT_BLOCKED: "mixed_content_blocked",
 
   // Loaded active mixed content. Yellow triangle icon is shown.
-  IDENTITY_MODE_MIXED_CONTENT_LOADED: "mixed_content_loaded",
+  MIXED_MODE_CONTENT_LOADED: "mixed_content_loaded",
+
+  // The following tracking content modes are only used if "privacy.trackingprotection.enabled"
+  // is enabled. Our Java frontend coalesces them into one indicator.
+
+  // No tracking content information. No tracking content icon is shown.
+  TRACKING_MODE_UNKNOWN: "unknown",
+
+  // Blocked active tracking content. Shield icon is shown, with a popup option to load content.
+  TRACKING_MODE_CONTENT_BLOCKED: "tracking_content_blocked",
+
+  // Loaded active tracking content. Yellow triangle icon is shown.
+  TRACKING_MODE_CONTENT_LOADED: "tracking_content_loaded",
 
   // Cache the most recent SSLStatus and Location seen in getIdentityStrings
   _lastStatus : null,
@@ -6816,21 +6708,43 @@ var IdentityHandler = {
    * Determines the identity mode corresponding to the icon we show in the urlbar.
    */
   getIdentityMode: function getIdentityMode(aState) {
-    if (aState & Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT)
-      return this.IDENTITY_MODE_MIXED_CONTENT_BLOCKED;
+    if (aState & Ci.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL) {
+      return this.IDENTITY_MODE_IDENTIFIED;
+    }
+
+    if (aState & Ci.nsIWebProgressListener.STATE_IS_SECURE) {
+      return this.IDENTITY_MODE_DOMAIN_VERIFIED;
+    }
+
+    return this.IDENTITY_MODE_UNKNOWN;
+  },
+
+  getMixedMode: function getMixedMode(aState) {
+    if (aState & Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT) {
+      return this.MIXED_MODE_CONTENT_BLOCKED;
+    }
 
     // Only show an indicator for loaded mixed content if the pref to block it is enabled
     if ((aState & Ci.nsIWebProgressListener.STATE_LOADED_MIXED_ACTIVE_CONTENT) &&
-         Services.prefs.getBoolPref("security.mixed_content.block_active_content"))
-      return this.IDENTITY_MODE_MIXED_CONTENT_LOADED;
+         Services.prefs.getBoolPref("security.mixed_content.block_active_content")) {
+      return this.MIXED_MODE_CONTENT_LOADED;
+    }
 
-    if (aState & Ci.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL)
-      return this.IDENTITY_MODE_IDENTIFIED;
+    return this.MIXED_MODE_UNKNOWN;
+  },
 
-    if (aState & Ci.nsIWebProgressListener.STATE_IS_SECURE)
-      return this.IDENTITY_MODE_DOMAIN_VERIFIED;
+  getTrackingMode: function getTrackingMode(aState) {
+    if (aState & Ci.nsIWebProgressListener.STATE_BLOCKED_TRACKING_CONTENT) {
+      return this.TRACKING_MODE_CONTENT_BLOCKED;
+    }
 
-    return this.IDENTITY_MODE_UNKNOWN;
+    // Only show an indicator for loaded tracking content if the pref to block it is enabled
+    if ((aState & Ci.nsIWebProgressListener.STATE_LOADED_TRACKING_CONTENT) &&
+         Services.prefs.getBoolPref("privacy.trackingprotection.enabled")) {
+      return this.TRACKING_MODE_CONTENT_LOADED;
+    }
+
+    return this.TRACKING_MODE_UNKNOWN;
   },
 
   /**
@@ -6858,14 +6772,22 @@ var IdentityHandler = {
     }
     this._lastLocation = locationObj;
 
-    let mode = this.getIdentityMode(aState);
-    let result = { mode: mode };
+    let identityMode = this.getIdentityMode(aState);
+    let mixedMode = this.getMixedMode(aState);
+    let trackingMode = this.getTrackingMode(aState);
+    let result = {
+      mode: {
+        identity: identityMode,
+        mixed: mixedMode,
+        tracking: trackingMode
+      }
+    };
 
     // Don't show identity data for pages with an unknown identity or if any
     // mixed content is loaded (mixed display content is loaded by default).
-    if (mode == this.IDENTITY_MODE_UNKNOWN ||
-        aState & Ci.nsIWebProgressListener.STATE_IS_BROKEN)
+    if (identityMode == this.IDENTITY_MODE_UNKNOWN || aState & Ci.nsIWebProgressListener.STATE_IS_BROKEN) {
       return result;
+    }
 
     // Ideally we'd just make this a Java string
     result.encrypted = Strings.browser.GetStringFromName("identity.encrypted2");
@@ -6892,9 +6814,6 @@ var IdentityHandler = {
 
       return result;
     }
-    
-    // Otherwise, we don't know the cert owner
-    result.owner = Strings.browser.GetStringFromName("identity.ownerUnknown3");
 
     // Cache the override service the first time we need to check it
     if (!this._overrideService)
@@ -7009,17 +6928,6 @@ var SearchEngines = {
         SearchEngines.addEngine(aElement);
       }
     });
-  },
-
-  uninit: function uninit() {
-    Services.obs.removeObserver(this, "SearchEngines:Add");
-    Services.obs.removeObserver(this, "SearchEngines:GetVisible");
-    Services.obs.removeObserver(this, "SearchEngines:Remove");
-    Services.obs.removeObserver(this, "SearchEngines:RestoreDefaults");
-    Services.obs.removeObserver(this, "SearchEngines:SetDefault");
-    Services.obs.removeObserver(this, "browser-search-engine-modified");
-    if (this._contextMenuId != null)
-      NativeWindow.contextmenus.remove(this._contextMenuId);
   },
 
   // Fetch list of search engines. all ? All engines : Visible engines only.
@@ -7323,11 +7231,6 @@ var RemoteDebugger = {
     }
   },
 
-  uninit: function rd_uninit() {
-    Services.prefs.removeObserver("devtools.debugger.", this);
-    this._stop();
-  },
-
   _getPort: function _rd_getPort() {
     return Services.prefs.getIntPref("devtools.debugger.remote-port");
   },
@@ -7420,562 +7323,6 @@ var Telemetry = {
   },
 };
 
-let Reader = {
-  // Version of the cache database schema
-  DB_VERSION: 1,
-
-  DEBUG: 0,
-
-  READER_ADD_SUCCESS: 0,
-  READER_ADD_FAILED: 1,
-  READER_ADD_DUPLICATE: 2,
-
-  // Don't try to parse the page if it has too many elements (for memory and
-  // performance reasons)
-  MAX_ELEMS_TO_PARSE: 3000,
-
-  isEnabledForParseOnLoad: false,
-
-  init: function Reader_init() {
-    this.log("Init()");
-    this._requests = {};
-
-    this.isEnabledForParseOnLoad = this.getStateForParseOnLoad();
-
-    Services.obs.addObserver(this, "Reader:Add", false);
-    Services.obs.addObserver(this, "Reader:Remove", false);
-
-    Services.prefs.addObserver("reader.parse-on-load.", this, false);
-  },
-
-  pageAction: {
-    readerModeCallback: function(){
-      Messaging.sendRequest({
-        type: "Reader:Click",
-      });
-    },
-
-    readerModeActiveCallback: function(){
-      Messaging.sendRequest({
-        type: "Reader:LongClick",
-      });
-
-      UITelemetry.addEvent("save.1", "pageaction", null, "reader");
-    },
-  },
-
-  updatePageAction: function(tab) {
-    if (this.pageAction.id) {
-      PageActions.remove(this.pageAction.id);
-      delete this.pageAction.id;
-    }
-
-    if (tab.readerActive) {
-      this.pageAction.id = PageActions.add({
-        title: Strings.browser.GetStringFromName("readerMode.exit"),
-        icon: "drawable://reader_active",
-        clickCallback: this.pageAction.readerModeCallback,
-        important: true
-      });
-
-      // Only start a reader session if the viewer is in the foreground. We do
-      // not track background reader viewers.
-      UITelemetry.startSession("reader.1", null);
-      return;
-    }
-
-    // Only stop a reader session if the foreground viewer is not visible.
-    UITelemetry.stopSession("reader.1", "", null);
-
-    if (tab.readerEnabled) {
-      this.pageAction.id = PageActions.add({
-        title: Strings.browser.GetStringFromName("readerMode.enter"),
-        icon: "drawable://reader",
-        clickCallback:this.pageAction.readerModeCallback,
-        longClickCallback: this.pageAction.readerModeActiveCallback,
-        important: true
-      });
-    }
-  },
-
-  observe: function(aMessage, aTopic, aData) {
-    switch(aTopic) {
-      case "Reader:Add": {
-        let args = JSON.parse(aData);
-        if ('fromAboutReader' in args) {
-          // Ignore adds initiated from aboutReader menu banner
-          break;
-        }
-
-        let tabID = null;
-        let url, urlWithoutRef;
-
-        if ('tabID' in args) {
-          tabID = args.tabID;
-
-          let tab = BrowserApp.getTabForId(tabID);
-          let currentURI = tab.browser.currentURI;
-
-          url = currentURI.spec;
-          urlWithoutRef = currentURI.specIgnoringRef;
-        } else if ('url' in args) {
-          let uri = Services.io.newURI(args.url, null, null);
-          url = uri.spec;
-          urlWithoutRef = uri.specIgnoringRef;
-        } else {
-          throw new Error("Reader:Add requires a tabID or an URL as argument");
-        }
-
-        let sendResult = function(result, article) {
-          article = article || {};
-          this.log("Reader:Add success=" + result + ", url=" + url + ", title=" + article.title + ", excerpt=" + article.excerpt);
-
-          Messaging.sendRequest({
-            type: "Reader:Added",
-            result: result,
-            title: truncate(article.title, MAX_TITLE_LENGTH),
-            url: truncate(url, MAX_URI_LENGTH),
-            length: article.length,
-            excerpt: article.excerpt
-          });
-        }.bind(this);
-
-        let handleArticle = function(article) {
-          if (!article) {
-            sendResult(this.READER_ADD_FAILED, null);
-            return;
-          }
-
-          this.storeArticleInCache(article, function(success) {
-            let result = (success ? this.READER_ADD_SUCCESS : this.READER_ADD_FAILED);
-            sendResult(result, article);
-          }.bind(this));
-        }.bind(this);
-
-        this.getArticleFromCache(urlWithoutRef, function (article) {
-          // If the article is already in reading list, bail
-          if (article) {
-            sendResult(this.READER_ADD_DUPLICATE, null);
-            return;
-          }
-
-          if (tabID != null) {
-            this.getArticleForTab(tabID, urlWithoutRef, handleArticle);
-          } else {
-            this.parseDocumentFromURL(urlWithoutRef, handleArticle);
-          }
-        }.bind(this));
-        break;
-      }
-
-      case "Reader:Remove": {
-        let args = JSON.parse(aData);
-
-        if (!("url" in args)) {
-          throw new Error("Reader:Remove requires URL as an argument");
-        }
-
-        this.removeArticleFromCache(args.url, function(success) {
-          this.log("Reader:Remove success=" + success + ", url=" + args.url);
-          if (success && args.notify) {
-            Messaging.sendRequest({
-              type: "Reader:Removed",
-              url: args.url
-            });
-          }
-        }.bind(this));
-        break;
-      }
-
-      case "nsPref:changed": {
-        if (aData.startsWith("reader.parse-on-load.")) {
-          this.isEnabledForParseOnLoad = this.getStateForParseOnLoad();
-        }
-        break;
-      }
-    }
-  },
-
-  getStateForParseOnLoad: function Reader_getStateForParseOnLoad() {
-    let isEnabled = Services.prefs.getBoolPref("reader.parse-on-load.enabled");
-    let isForceEnabled = Services.prefs.getBoolPref("reader.parse-on-load.force-enabled");
-    // For low-memory devices, don't allow reader mode since it takes up a lot of memory.
-    // See https://bugzilla.mozilla.org/show_bug.cgi?id=792603 for details.
-    return isForceEnabled || (isEnabled && !BrowserApp.isOnLowMemoryPlatform);
-  },
-
-  parseDocumentFromURL: function Reader_parseDocumentFromURL(url, callback) {
-    // If there's an on-going request for the same URL, simply append one
-    // more callback to it to be called when the request is done.
-    if (url in this._requests) {
-      let request = this._requests[url];
-      request.callbacks.push(callback);
-      return;
-    }
-
-    let request = { url: url, callbacks: [callback] };
-    this._requests[url] = request;
-
-    try {
-      this.log("parseDocumentFromURL: " + url);
-
-      // First, try to find a cached parsed article in the DB
-      this.getArticleFromCache(url, function(article) {
-        if (article) {
-          this.log("Page found in cache, return article immediately");
-          this._runCallbacksAndFinish(request, article);
-          return;
-        }
-
-        if (!this._requests) {
-          this.log("Reader has been destroyed, abort");
-          return;
-        }
-
-        // Article hasn't been found in the cache DB, we need to
-        // download the page and parse the article out of it.
-        this._downloadAndParseDocument(url, request);
-      }.bind(this));
-    } catch (e) {
-      this.log("Error parsing document from URL: " + e);
-      this._runCallbacksAndFinish(request, null);
-    }
-  },
-
-  getArticleForTab: function Reader_getArticleForTab(tabId, url, callback) {
-    let tab = BrowserApp.getTabForId(tabId);
-    if (tab) {
-      let article = tab.savedArticle;
-      if (article && article.url == url) {
-        this.log("Saved article found in tab");
-        callback(article);
-        return;
-      }
-    }
-
-    this.parseDocumentFromURL(url, callback);
-  },
-
-  parseDocumentFromTab: function(tabId, callback) {
-    try {
-      this.log("parseDocumentFromTab: " + tabId);
-
-      let tab = BrowserApp.getTabForId(tabId);
-      let url = tab.browser.contentWindow.location.href;
-      let uri = Services.io.newURI(url, null, null);
-
-      if (!this._shouldCheckUri(uri)) {
-        callback(null);
-        return;
-      }
-
-      // First, try to find a cached parsed article in the DB
-      this.getArticleFromCache(url, function(article) {
-        if (article) {
-          this.log("Page found in cache, return article immediately");
-          callback(article);
-          return;
-        }
-
-        let doc = tab.browser.contentWindow.document;
-        this._readerParse(uri, doc, function (article) {
-          if (!article) {
-            this.log("Failed to parse page");
-            callback(null);
-            return;
-          }
-
-          callback(article);
-        }.bind(this));
-      }.bind(this));
-    } catch (e) {
-      this.log("Error parsing document from tab: " + e);
-      callback(null);
-    }
-  },
-
-  getArticleFromCache: function Reader_getArticleFromCache(url, callback) {
-    this._getCacheDB(function(cacheDB) {
-      if (!cacheDB) {
-        callback(false);
-        return;
-      }
-
-      let transaction = cacheDB.transaction(cacheDB.objectStoreNames);
-      let articles = transaction.objectStore(cacheDB.objectStoreNames[0]);
-
-      let request = articles.get(url);
-
-      request.onerror = function(event) {
-        this.log("Error getting article from the cache DB: " + url);
-        callback(null);
-      }.bind(this);
-
-      request.onsuccess = function(event) {
-        this.log("Got article from the cache DB: " + event.target.result);
-        callback(event.target.result);
-      }.bind(this);
-    }.bind(this));
-  },
-
-  storeArticleInCache: function Reader_storeArticleInCache(article, callback) {
-    this._getCacheDB(function(cacheDB) {
-      if (!cacheDB) {
-        callback(false);
-        return;
-      }
-
-      let transaction = cacheDB.transaction(cacheDB.objectStoreNames, "readwrite");
-      let articles = transaction.objectStore(cacheDB.objectStoreNames[0]);
-
-      let request = articles.add(article);
-
-      request.onerror = function(event) {
-        this.log("Error storing article in the cache DB: " + article.url);
-        callback(false);
-      }.bind(this);
-
-      request.onsuccess = function(event) {
-        this.log("Stored article in the cache DB: " + article.url);
-        callback(true);
-      }.bind(this);
-    }.bind(this));
-  },
-
-  removeArticleFromCache: function Reader_removeArticleFromCache(url, callback) {
-    this._getCacheDB(function(cacheDB) {
-      if (!cacheDB) {
-        callback(false);
-        return;
-      }
-
-      let transaction = cacheDB.transaction(cacheDB.objectStoreNames, "readwrite");
-      let articles = transaction.objectStore(cacheDB.objectStoreNames[0]);
-
-      let request = articles.delete(url);
-
-      request.onerror = function(event) {
-        this.log("Error removing article from the cache DB: " + url);
-        callback(false);
-      }.bind(this);
-
-      request.onsuccess = function(event) {
-        this.log("Removed article from the cache DB: " + url);
-        callback(true);
-      }.bind(this);
-    }.bind(this));
-  },
-
-  uninit: function Reader_uninit() {
-    Services.prefs.removeObserver("reader.parse-on-load.", this);
-
-    Services.obs.removeObserver(this, "Reader:Add");
-    Services.obs.removeObserver(this, "Reader:Remove");
-
-    let requests = this._requests;
-    for (let url in requests) {
-      let request = requests[url];
-      if (request.browser) {
-        let browser = request.browser;
-        browser.parentNode.removeChild(browser);
-      }
-    }
-    delete this._requests;
-
-    if (this._cacheDB) {
-      this._cacheDB.close();
-      delete this._cacheDB;
-    }
-  },
-
-  log: function(msg) {
-    if (this.DEBUG)
-      dump("Reader: " + msg);
-  },
-
-  _shouldCheckUri: function Reader_shouldCheckUri(uri) {
-    if ((uri.prePath + "/") === uri.spec) {
-      this.log("Not parsing home page: " + uri.spec);
-      return false;
-    }
-
-    if (!(uri.schemeIs("http") || uri.schemeIs("https") || uri.schemeIs("file"))) {
-      this.log("Not parsing URI scheme: " + uri.scheme);
-      return false;
-    }
-
-    return true;
-  },
-
-  _readerParse: function Reader_readerParse(uri, doc, callback) {
-    let numTags = doc.getElementsByTagName("*").length;
-    if (numTags > this.MAX_ELEMS_TO_PARSE) {
-      this.log("Aborting parse for " + uri.spec + "; " + numTags + " elements found");
-      callback(null);
-      return;
-    }
-
-    let worker = new ChromeWorker("readerWorker.js");
-    worker.onmessage = function (evt) {
-      let article = evt.data;
-
-      // Append URL to the article data. specIgnoringRef will ignore any hash
-      // in the URL.
-      if (article) {
-        article.url = uri.specIgnoringRef;
-        let flags = Ci.nsIDocumentEncoder.OutputSelectionOnly | Ci.nsIDocumentEncoder.OutputAbsoluteLinks;
-        article.title = Cc["@mozilla.org/parserutils;1"].getService(Ci.nsIParserUtils)
-                                                        .convertToPlainText(article.title, flags, 0);
-      }
-
-      callback(article);
-    };
-
-    try {
-      worker.postMessage({
-        uri: {
-          spec: uri.spec,
-          host: uri.host,
-          prePath: uri.prePath,
-          scheme: uri.scheme,
-          pathBase: Services.io.newURI(".", null, uri).spec
-        },
-        doc: new XMLSerializer().serializeToString(doc)
-      });
-    } catch (e) {
-      dump("Reader: could not build Readability arguments: " + e);
-      callback(null);
-    }
-  },
-
-  _runCallbacksAndFinish: function Reader_runCallbacksAndFinish(request, result) {
-    delete this._requests[request.url];
-
-    request.callbacks.forEach(function(callback) {
-      callback(result);
-    });
-  },
-
-  _downloadDocument: function Reader_downloadDocument(url, callback) {
-    // We want to parse those arbitrary pages safely, outside the privileged
-    // context of chrome. We create a hidden browser element to fetch the
-    // loaded page's document object then discard the browser element.
-
-    let browser = document.createElement("browser");
-    browser.setAttribute("type", "content");
-    browser.setAttribute("collapsed", "true");
-    browser.setAttribute("disablehistory", "true");
-
-    document.documentElement.appendChild(browser);
-    browser.stop();
-
-    browser.webNavigation.allowAuth = false;
-    browser.webNavigation.allowImages = false;
-    browser.webNavigation.allowJavascript = false;
-    browser.webNavigation.allowMetaRedirects = true;
-    browser.webNavigation.allowPlugins = false;
-
-    browser.addEventListener("DOMContentLoaded", function (event) {
-      let doc = event.originalTarget;
-
-      // ignore on frames and other documents
-      if (doc != browser.contentDocument)
-        return;
-
-      this.log("Done loading: " + doc);
-      if (doc.location.href == "about:blank") {
-        callback(null);
-
-        // Request has finished with error, remove browser element
-        browser.parentNode.removeChild(browser);
-        return;
-      }
-
-      callback(doc);
-    }.bind(this));
-
-    browser.loadURIWithFlags(url, Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
-                             null, null, null);
-
-    return browser;
-  },
-
-  _downloadAndParseDocument: function Reader_downloadAndParseDocument(url, request) {
-    try {
-      this.log("Needs to fetch page, creating request: " + url);
-
-      request.browser = this._downloadDocument(url, function(doc) {
-        this.log("Finished loading page: " + doc);
-
-        if (!doc) {
-          this.log("Error loading page");
-          this._runCallbacksAndFinish(request, null);
-          return;
-        }
-
-        this.log("Parsing response with Readability");
-
-        let uri = Services.io.newURI(url, null, null);
-        this._readerParse(uri, doc, function (article) {
-          // Delete reference to the browser element as we've finished parsing.
-          let browser = request.browser;
-          if (browser) {
-            browser.parentNode.removeChild(browser);
-            delete request.browser;
-          }
-
-          if (!article) {
-            this.log("Failed to parse page");
-            this._runCallbacksAndFinish(request, null);
-            return;
-          }
-
-          this.log("Parsing has been successful");
-
-          this._runCallbacksAndFinish(request, article);
-        }.bind(this));
-      }.bind(this));
-    } catch (e) {
-      this.log("Error downloading and parsing document: " + e);
-      this._runCallbacksAndFinish(request, null);
-    }
-  },
-
-  _getCacheDB: function Reader_getCacheDB(callback) {
-    if (this._cacheDB) {
-      callback(this._cacheDB);
-      return;
-    }
-
-    let request = window.indexedDB.open("about:reader", this.DB_VERSION);
-
-    request.onerror = function(event) {
-      this.log("Error connecting to the cache DB");
-      this._cacheDB = null;
-      callback(null);
-    }.bind(this);
-
-    request.onsuccess = function(event) {
-      this.log("Successfully connected to the cache DB");
-      this._cacheDB = event.target.result;
-      callback(this._cacheDB);
-    }.bind(this);
-
-    request.onupgradeneeded = function(event) {
-      this.log("Database schema upgrade from " +
-           event.oldVersion + " to " + event.newVersion);
-
-      let cacheDB = event.target.result;
-
-      // Create the articles object store
-      this.log("Creating articles object store");
-      cacheDB.createObjectStore("articles", { keyPath: "url" });
-
-      this.log("Database upgrade done: " + this.DB_VERSION);
-    }.bind(this);
-  }
-};
-
 var ExternalApps = {
   _contextMenuId: null,
 
@@ -8006,13 +7353,6 @@ var ExternalApps = {
       return apps.length == 1 ? Strings.browser.formatStringFromName("helperapps.openWithApp2", [apps[0].name], 1) :
                                 Strings.browser.GetStringFromName("helperapps.openWithList2");
     }, this.filter, this.openExternal);
-  },
-
-  uninit: function helper_uninit() {
-    if (this._contextMenuId !== null) {
-      NativeWindow.contextmenus.remove(this._contextMenuId);
-    }
-    this._contextMenuId = null;
   },
 
   filter: {
@@ -8133,6 +7473,7 @@ var Distribution = {
   _file: null,
 
   init: function dc_init() {
+    Services.obs.addObserver(this, "Distribution:Changed", false);
     Services.obs.addObserver(this, "Distribution:Set", false);
     Services.obs.addObserver(this, "prefservice:after-app-defaults", false);
     Services.obs.addObserver(this, "Campaign:Set", false);
@@ -8144,14 +7485,17 @@ var Distribution = {
     this.readJSON(this._file, this.update);
   },
 
-  uninit: function dc_uninit() {
-    Services.obs.removeObserver(this, "Distribution:Set");
-    Services.obs.removeObserver(this, "prefservice:after-app-defaults");
-    Services.obs.removeObserver(this, "Campaign:Set");
-  },
-
   observe: function dc_observe(aSubject, aTopic, aData) {
     switch (aTopic) {
+      case "Distribution:Changed":
+        // Re-init the search service.
+        try {
+          Services.search._asyncReInit();
+        } catch (e) {
+          console.log("Unable to reinit search service.");
+        }
+        // Fall through.
+
       case "Distribution:Set":
         // Reload the default prefs so we can observe "prefservice:after-app-defaults"
         Services.prefs.QueryInterface(Ci.nsIObserver).observe(null, "reload-default-prefs", null);
@@ -8208,7 +7552,7 @@ var Distribution = {
     defaults.setCharPref("distribution.id", global["id"]);
     defaults.setCharPref("distribution.version", global["version"]);
 
-    let locale = Services.prefs.getCharPref("general.useragent.locale");
+    let locale = BrowserApp.getUALocalePref();
     let aboutString = Cc["@mozilla.org/supports-string;1"].createInstance(Ci.nsISupportsString);
     aboutString.data = global["about." + locale] || global["about"];
     defaults.setComplexValue("distribution.about", Ci.nsISupportsString, aboutString);
@@ -8296,19 +7640,6 @@ var Tabs = {
 
     BrowserApp.deck.addEventListener("pageshow", this, false);
     BrowserApp.deck.addEventListener("TabOpen", this, false);
-  },
-
-  uninit: function() {
-    if (!this._enableTabExpiration) {
-      // If _enableTabExpiration is true then we won't have this
-      // observer registered any more.
-      Services.obs.removeObserver(this, "memory-pressure");
-    }
-
-    Services.obs.removeObserver(this, "Session:Prefetch");
-
-    BrowserApp.deck.removeEventListener("pageshow", this);
-    BrowserApp.deck.removeEventListener("TabOpen", this);
   },
 
   observe: function(aSubject, aTopic, aData) {

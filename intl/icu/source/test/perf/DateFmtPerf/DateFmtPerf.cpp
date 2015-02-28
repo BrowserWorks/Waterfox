@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2002-2011,International Business Machines
+* Copyright (c) 2002-2014,International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 **********************************************************************
@@ -42,6 +42,21 @@ UPerfFunction* DateFormatPerfTest::runIndexedTest(int32_t index, UBool exec,cons
         TESTCASE(8,NumFmt100000);
         TESTCASE(9,Collation10000);
         TESTCASE(10,Collation100000);
+        TESTCASE(11, DIFCreate250);
+        TESTCASE(12, DIFCreate10000);
+        TESTCASE(13, TimeZoneCreate250);
+        TESTCASE(14, TimeZoneCreate10000);
+        TESTCASE(15, DTPatternGeneratorCreate250);
+        TESTCASE(16, DTPatternGeneratorCreate10000);
+        TESTCASE(17, DTPatternGeneratorCopy250);
+        TESTCASE(18, DTPatternGeneratorCopy10000);
+        TESTCASE(19, DTPatternGeneratorBestValue250);
+        TESTCASE(20, DTPatternGeneratorBestValue10000);
+        TESTCASE(21,DateFmtCopy250);
+        TESTCASE(22,DateFmtCopy10000);
+        TESTCASE(23,DateFmtCreate250);
+        TESTCASE(24,DateFmtCreate10000);
+
 
         default: 
             name = ""; 
@@ -106,6 +121,64 @@ UPerfFunction* DateFormatPerfTest::Collation100000(){
     return func;
 }
 
+
+UPerfFunction *DateFormatPerfTest::DIFCreate250() {
+    DIFCreateFunction* func = new DIFCreateFunction(250, locale);
+    return func;
+}
+
+UPerfFunction *DateFormatPerfTest::DIFCreate10000() {
+    DIFCreateFunction* func = new DIFCreateFunction(10000, locale);
+    return func;
+}
+
+UPerfFunction *DateFormatPerfTest::TimeZoneCreate250() {
+    return new TimeZoneCreateFunction(250, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::TimeZoneCreate10000() {
+    return new TimeZoneCreateFunction(10000, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorCreate250() {
+    return new DTPatternGeneratorCreateFunction(250, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorCreate10000() {
+    return new DTPatternGeneratorCreateFunction(10000, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorCopy250() {
+    return new DTPatternGeneratorCopyFunction(250, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorCopy10000() {
+    return new DTPatternGeneratorCopyFunction(10000, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorBestValue250() {
+    return new DTPatternGeneratorBestValueFunction(250, locale);
+}
+
+UPerfFunction *DateFormatPerfTest::DTPatternGeneratorBestValue10000() {
+    return new DTPatternGeneratorBestValueFunction(10000, locale);
+}
+
+UPerfFunction* DateFormatPerfTest::DateFmtCopy250(){
+    return new DateFmtCopyFunction(250, locale);
+}
+
+UPerfFunction* DateFormatPerfTest::DateFmtCopy10000(){
+    return new DateFmtCopyFunction(10000, locale);
+}
+
+UPerfFunction* DateFormatPerfTest::DateFmtCreate250(){
+    return new DateFmtCreateFunction(250, locale);
+}
+
+UPerfFunction* DateFormatPerfTest::DateFmtCreate10000(){
+    return new DateFmtCreateFunction(10000, locale);
+}
 
 
 int main(int argc, const char* argv[]){

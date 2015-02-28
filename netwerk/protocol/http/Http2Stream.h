@@ -10,6 +10,8 @@
 #include "nsAHttpTransaction.h"
 #include "nsISupportsPriority.h"
 
+class nsStandardURL;
+
 namespace mozilla {
 namespace net {
 
@@ -47,9 +49,15 @@ public:
 
   virtual nsresult ReadSegments(nsAHttpSegmentReader *,  uint32_t, uint32_t *);
   virtual nsresult WriteSegments(nsAHttpSegmentWriter *, uint32_t, uint32_t *);
-  virtual bool DeferCleanupOnSuccess() { return false; }
+  virtual bool DeferCleanup(nsresult status) { return false; }
+
+  // The consumer stream is the synthetic pull stream hooked up to this stream
+  // http2PushedStream overrides it
+  virtual Http2Stream *GetConsumerStream() { return nullptr; };
 
   const nsAFlatCString &Origin() const { return mOrigin; }
+  const nsAFlatCString &Host() const { return mHeaderHost; }
+  const nsAFlatCString &Path() const { return mHeaderPath; }
 
   bool RequestBlockedOnRead()
   {
@@ -124,6 +132,15 @@ public:
   virtual bool HasSink() { return true; }
 
   virtual ~Http2Stream();
+
+  Http2Session *Session() { return mSession; }
+
+  static nsresult MakeOriginURL(const nsACString &origin,
+                                nsRefPtr<nsStandardURL> &url);
+
+  static nsresult MakeOriginURL(const nsACString &scheme,
+                                const nsACString &origin,
+                                nsRefPtr<nsStandardURL> &url);
 
 protected:
   static void CreatePushHashKey(const nsCString &scheme,

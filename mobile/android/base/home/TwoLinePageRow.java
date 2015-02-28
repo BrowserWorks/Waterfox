@@ -129,12 +129,14 @@ public class TwoLinePageRow extends LinearLayout
         if (pageUrl == null) {
             return;
         }
-        final String tabUrl;
         if (tab == null) {
             return;
         }
-        tabUrl = tab.getURL();
-        if (!pageUrl.equals(tabUrl)) {
+
+        // Return early if the page URL doesn't match the current tab URL,
+        // or the old tab URL.
+        final String tabUrl = tab.getURL();
+        if (!pageUrl.equals(tabUrl) && !pageUrl.equals(data)) {
             return;
         }
 
@@ -251,7 +253,7 @@ public class TwoLinePageRow extends LinearLayout
         mFavicon.clearImage();
         Favicons.cancelFaviconLoad(mLoadFaviconJobId);
 
-        // Displayed RecentTabsPanel urls may refer to pages openned in readermode, so we
+        // Displayed RecentTabsPanel URLs may refer to pages opened in reader mode, so we
         // remove the about:reader prefix to ensure the Favicon loads properly.
         final String pageURL = AboutPages.isAboutReader(url) ?
             ReaderModeUtils.getUrlFromAboutReader(url) : url;

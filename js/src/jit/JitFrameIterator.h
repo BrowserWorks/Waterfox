@@ -45,6 +45,7 @@ enum FrameType
     // An unwound JS frame is a JS frame signalling that its callee frame has been
     // turned into an exit frame (see EnsureExitFrame). Used by Ion bailouts and
     // Baseline exception unwinding.
+    JitFrame_Unwound_BaselineJS,
     JitFrame_Unwound_IonJS,
 
     // Like Unwound_IonJS, but the caller is a baseline stub frame.
@@ -178,10 +179,6 @@ class JitFrameIterator
         return returnAddressToFp_;
     }
 
-    // Returns the resume address. As above, except taking
-    // BaselineDebugModeOSRInfo into account, if present.
-    uint8_t *resumeAddressToFp() const;
-
     // Previous frame information extracted from the current frame.
     inline size_t prevFrameLocalSize() const;
     inline FrameType prevType() const;
@@ -275,7 +272,7 @@ class RInstructionResults
     bool initialized_;
 
   public:
-    RInstructionResults(JitFrameLayout *fp);
+    explicit RInstructionResults(JitFrameLayout *fp);
     RInstructionResults(RInstructionResults&& src);
 
     RInstructionResults& operator=(RInstructionResults&& rhs);
@@ -299,24 +296,33 @@ struct MaybeReadFallback
         NoGC_MagicOptimizedOut
     };
 
+    enum FallbackConsequence {
+        Fallback_Invalidate,
+        Fallback_DoNothing
+    };
+
     JSContext *maybeCx;
     JitActivation *activation;
     JitFrameIterator *frame;
     const NoGCValue unreadablePlaceholder_;
+    const FallbackConsequence consequence;
 
-    MaybeReadFallback(const Value &placeholder = UndefinedValue())
+    explicit MaybeReadFallback(const Value &placeholder = UndefinedValue())
       : maybeCx(nullptr),
         activation(nullptr),
         frame(nullptr),
-        unreadablePlaceholder_(noGCPlaceholder(placeholder))
+        unreadablePlaceholder_(noGCPlaceholder(placeholder)),
+        consequence(Fallback_Invalidate)
     {
     }
 
-    MaybeReadFallback(JSContext *cx, JitActivation *activation, JitFrameIterator *frame)
+    MaybeReadFallback(JSContext *cx, JitActivation *activation, JitFrameIterator *frame,
+                      FallbackConsequence consequence = Fallback_Invalidate)
       : maybeCx(cx),
         activation(activation),
         frame(frame),
-        unreadablePlaceholder_(NoGC_UndefinedValue)
+        unreadablePlaceholder_(NoGC_UndefinedValue),
+        consequence(consequence)
     {
     }
 
@@ -379,6 +385,7 @@ class SnapshotIterator
 
     Value allocationValue(const RValueAllocation &a);
     bool allocationReadable(const RValueAllocation &a);
+    void writeAllocationValuePayload(const RValueAllocation &a, Value v);
     void warnUnreadableAllocation();
 
   public:
@@ -493,6 +500,8 @@ class SnapshotIterator
         return fallback.unreadablePlaceholder();
     }
 
+    void traceAllocation(JSTracer *trc);
+
     void readCommonFrameSlots(Value *scopeChain, Value *rval) {
         if (scopeChain)
             *scopeChain = read();
@@ -578,7 +587,7 @@ class InlineFrameIterator
 
   private:
     void findNextFrame();
-    JSObject *computeScopeChain(Value scopeChainValue) const;
+    JSObject *computeScopeChain(Value scopeChainValue, bool *hasCallObj = nullptr) const;
 
   public:
     InlineFrameIterator(ThreadSafeContext *cx, const JitFrameIterator *iter);
@@ -610,7 +619,7 @@ class InlineFrameIterator
 
     template <class ArgOp, class LocalOp>
     void readFrameArgsAndLocals(ThreadSafeContext *cx, ArgOp &argOp, LocalOp &localOp,
-                                JSObject **scopeChain, Value *rval,
+                                JSObject **scopeChain, bool *hasCallObj, Value *rval,
                                 ArgumentsObject **argsObj, Value *thisv,
                                 ReadFrameArgsBehavior behavior,
                                 MaybeReadFallback &fallback) const
@@ -622,7 +631,7 @@ class InlineFrameIterator
         s.readCommonFrameSlots(&scopeChainValue, rval);
 
         if (scopeChain)
-            *scopeChain = computeScopeChain(scopeChainValue);
+            *scopeChain = computeScopeChain(scopeChainValue, hasCallObj);
 
         // Read arguments, which only function frames have.
         if (isFunctionFrame()) {
@@ -686,12 +695,13 @@ class InlineFrameIterator
     }
 
     template <class Op>
-    void unaliasedForEachActual(ThreadSafeContext *cx, Op op,
+    void unaliasedForEachActual(JSContext *cx, Op op,
                                 ReadFrameArgsBehavior behavior,
                                 MaybeReadFallback &fallback) const
     {
         Nop nop;
-        readFrameArgsAndLocals(cx, op, nop, nullptr, nullptr, nullptr, nullptr, behavior, fallback);
+        readFrameArgsAndLocals(cx, op, nop, nullptr, nullptr, nullptr,
+                               nullptr, nullptr, behavior, fallback);
     }
 
     JSScript *script() const {

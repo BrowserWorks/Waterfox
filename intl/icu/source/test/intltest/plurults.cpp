@@ -125,10 +125,14 @@ void PluralRulesTest::testAPI(/*char *par*/)
     logln("\n start default locale test case ..\n");
 
     PluralRules defRule(status);
-    LocalPointer<PluralRules> test(new PluralRules(status));
-    LocalPointer<PluralRules> newEnPlural(test->forLocale(Locale::getEnglish(), status));
+    LocalPointer<PluralRules> test(new PluralRules(status), status);
     if(U_FAILURE(status)) {
         dataerrln("ERROR: Could not create PluralRules (default) - exitting");
+        return;
+    }
+    LocalPointer<PluralRules> newEnPlural(test->forLocale(Locale::getEnglish(), status), status);
+    if(U_FAILURE(status)) {
+        dataerrln("ERROR: Could not create PluralRules (English) - exitting");
         return;
     }
 

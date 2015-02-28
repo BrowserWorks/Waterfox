@@ -169,4 +169,12 @@ private:
         DVAR_NO,
         DNAME_NO
     };
+
+#if !UCONFIG_NO_COLLATION
+    /**
+     * Check on registered collators.
+     * @param expectExtra if non-null, the locale ID of an 'extra' locale that is registered.
+     */
+    void checkRegisteredCollators(const char *expectExtra = NULL);
+#endif
 };

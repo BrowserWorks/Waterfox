@@ -77,9 +77,9 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 
 // Basic Shapes
 #define NS_STYLE_BASIC_SHAPE_POLYGON       0
-//#define NS_STYLE_BASIC_SHAPE_CIRCLE      1
-//#define NS_STYLE_BASIC_SHAPE_ELLIPSE     2
-//#define NS_STYLE_BASIC_SHAPE_INSET       3
+#define NS_STYLE_BASIC_SHAPE_CIRCLE        1
+#define NS_STYLE_BASIC_SHAPE_ELLIPSE       2
+#define NS_STYLE_BASIC_SHAPE_INSET         3
 
 // box-shadow
 #define NS_STYLE_BOX_SHADOW_INSET         0
@@ -121,6 +121,10 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_USER_MODIFY_READ_WRITE  1
 #define NS_STYLE_USER_MODIFY_WRITE_ONLY  2
 
+// -moz-window-dragging
+#define NS_STYLE_WINDOW_DRAGGING_DRAG    0
+#define NS_STYLE_WINDOW_DRAGGING_NO_DRAG 1
+
 // box-align
 #define NS_STYLE_BOX_ALIGN_STRETCH     0
 #define NS_STYLE_BOX_ALIGN_START       1
@@ -150,6 +154,9 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_ORIENT_HORIZONTAL 0
 #define NS_STYLE_ORIENT_VERTICAL   1
 #define NS_STYLE_ORIENT_AUTO       2
+
+#define NS_RADIUS_FARTHEST_SIDE 0
+#define NS_RADIUS_CLOSEST_SIDE  1
 
 // stack-sizing
 #define NS_STYLE_STACK_SIZING_IGNORE         0
@@ -392,7 +399,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // See nsStyleVisibility
 #define NS_STYLE_DIRECTION_LTR                  0
 #define NS_STYLE_DIRECTION_RTL                  1
-#define NS_STYLE_DIRECTION_INHERIT              2
 
 // See nsStyleVisibility
 #define NS_STYLE_WRITING_MODE_HORIZONTAL_TB     0
@@ -437,6 +443,7 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER    35
 #define NS_STYLE_DISPLAY_RUBY_TEXT              36
 #define NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER    37
+#define NS_STYLE_DISPLAY_CONTENTS               38
 
 // See nsStylePosition
 #define NS_STYLE_ALIGN_CONTENT_FLEX_START       0
@@ -706,6 +713,10 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 // See nsStyleVisibility.mImageOrientationType
 #define NS_STYLE_IMAGE_ORIENTATION_FLIP         0
 #define NS_STYLE_IMAGE_ORIENTATION_FROM_IMAGE   1
+
+// See nsStyleDisplay
+#define NS_STYLE_ISOLATION_AUTO                 0
+#define NS_STYLE_ISOLATION_ISOLATE              1
 
 // See nsStylePosition.mObjectFit
 #define NS_STYLE_OBJECT_FIT_FILL                0
@@ -1051,6 +1062,10 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_COUNTER_SPEAKAS_WORDS      2
 #define NS_STYLE_COUNTER_SPEAKAS_SPELL_OUT  3
 #define NS_STYLE_COUNTER_SPEAKAS_OTHER      255 // refer to another style
+
+// See nsStyleDisplay::mScrollBehavior
+#define NS_STYLE_SCROLL_BEHAVIOR_AUTO       0
+#define NS_STYLE_SCROLL_BEHAVIOR_SMOOTH     1
 
 /*****************************************************************************
  * Constants for media features.                                             *

@@ -14,7 +14,7 @@ include protocol PContentPermissionRequest;
 include protocol PFilePicker;
 include protocol PIndexedDBPermissionRequest;
 include protocol PRenderFrame;
-include protocol POfflineCacheUpdate;
+include protocol PPluginWidget;
 include DOMTypes;
 include JavaScriptTypes;
 include URIParams;
@@ -69,7 +69,7 @@ union MaybeNativeKeyBinding
   void_t;
 };
 
-prio(normal upto high) intr protocol PBrowser
+prio(normal upto urgent) intr protocol PBrowser
 {
     manager PContent or PContentBridge;
 
@@ -79,13 +79,26 @@ prio(normal upto high) intr protocol PBrowser
     manages PFilePicker;
     manages PIndexedDBPermissionRequest;
     manages PRenderFrame;
-    manages POfflineCacheUpdate;
+    manages PPluginWidget;
 
 both:
     AsyncMessage(nsString aMessage, ClonedMessageData aData, CpowEntry[] aCpows,
                  Principal aPrincipal);
 
+    /**
+     * Create a layout frame (encapsulating a remote layer tree) for
+     * the page that is currently loaded in the <browser>.
+     */
+    PRenderFrame();
+
 parent:
+    /*
+     * Creates a new remoted nsIWidget connection for windowed plugins
+     * in e10s mode. This is always initiated from the child in response
+     * to windowed plugin creation.
+     */
+    sync PPluginWidget();
+
     /**
      * When child sends this message, parent should move focus to
      * the next or previous focusable element.
@@ -141,7 +154,7 @@ parent:
      *  preference   Native widget preference for IME updates
      *  seqno        Current seqno value on the chrome side
      */
-    sync NotifyIMEFocus(bool focus)
+    prio(urgent) sync NotifyIMEFocus(bool focus)
       returns (nsIMEUpdatePreference preference, uint32_t seqno);
 
     /**
@@ -157,8 +170,9 @@ parent:
      *  for insertion, offset == end
      *  for deletion, offset == newEnd
      */
-    NotifyIMETextChange(uint32_t offset, uint32_t end, uint32_t newEnd,
-                        bool causedByComposition);
+    prio(urgent) async NotifyIMETextChange(uint32_t offset, uint32_t end,
+                                           uint32_t newEnd,
+                                           bool causedByComposition);
 
     /**
      * Notifies chrome that there is a IME compostion rect updated
@@ -168,8 +182,10 @@ parent:
      *  caretOffset  The offset of caret position
      *  caretRect    The rect of IME caret
      */
-    NotifyIMESelectedCompositionRect(uint32_t offset, nsIntRect[] rect,
-                                     uint32_t caretOffset, nsIntRect caretRect);
+    prio(urgent) async NotifyIMESelectedCompositionRect(uint32_t offset,
+                                                        nsIntRect[] rect,
+                                                        uint32_t caretOffset,
+                                                        nsIntRect caretRect);
 
     /**
      * Notifies chrome that there has been a change in selection
@@ -180,22 +196,22 @@ parent:
      *  focus        Offset where the caret is
      *  causedByComposition true if the change is caused by composition
      */
-    NotifyIMESelection(uint32_t seqno, uint32_t anchor, uint32_t focus,
-                       bool causedByComposition);
+    prio(urgent) async NotifyIMESelection(uint32_t seqno, uint32_t anchor,
+                                          uint32_t focus, bool causedByComposition);
 
     /**
      * Notifies chrome to refresh its text cache 
      *
      *  text         The entire content of the text field
      */
-    NotifyIMETextHint(nsString text);
+    prio(urgent) async NotifyIMETextHint(nsString text);
 
     /**
      * Notifies IME of mouse button event on a character in focused editor.
      *
      * Returns true if the mouse button event is consumd by IME.
      */
-    sync NotifyIMEMouseButtonEvent(IMENotification notification)
+    prio(urgent) sync NotifyIMEMouseButtonEvent(IMENotification notification)
       returns (bool consumedByIME);
 
     /**
@@ -209,7 +225,7 @@ parent:
      *  if cancel is PR_FALSE,
      *    widget should return the current composition text
      */
-    sync EndIMEComposition(bool cancel) returns (nsString composition);
+    prio(urgent) sync EndIMEComposition(bool cancel) returns (nsString composition);
 
     /**
      * Request that the parent process move focus to the browser's frame. If
@@ -217,16 +233,17 @@ parent:
      */
     RequestFocus(bool canRaise);
 
-    sync GetInputContext() returns (int32_t IMEEnabled, int32_t IMEOpen,
-                                    intptr_t NativeIMEContext);
+    prio(urgent) sync GetInputContext() returns (int32_t IMEEnabled,
+                                                 int32_t IMEOpen,
+                                                 intptr_t NativeIMEContext);
 
-    SetInputContext(int32_t IMEEnabled,
-                    int32_t IMEOpen,
-                    nsString type,
-                    nsString inputmode,
-                    nsString actionHint,
-                    int32_t cause,
-                    int32_t focusChange);
+    prio(urgent) async SetInputContext(int32_t IMEEnabled,
+                                       int32_t IMEOpen,
+                                       nsString type,
+                                       nsString inputmode,
+                                       nsString actionHint,
+                                       int32_t cause,
+                                       int32_t focusChange);
 
     sync IsParentWindowMainWidgetVisible() returns (bool visible);
 
@@ -307,47 +324,6 @@ parent:
     PIndexedDBPermissionRequest(Principal principal);
 
     /**
-     * Create a layout frame (encapsulating a remote layer tree) for
-     * the page that is currently loaded in the <browser>.
-     */
-    sync PRenderFrame()
-        returns (ScrollingBehavior scrolling,
-                 TextureFactoryIdentifier textureFactoryIdentifier, uint64_t layersId,
-                 bool success);
-
-    /** 
-     * Starts an offline application cache update.
-     * @param manifestURI
-     *   URI of the manifest to fetch, the application cache group ID
-     * @param documentURI
-     *   URI of the document that referred the manifest
-     * @param stickDocument
-     *   True if the update was initiated by a document load that referred
-     *   a manifest.
-     *   False if the update was initiated by applicationCache.update() call.
-     *
-     *   Tells the update to carry the documentURI to a potential separate 
-     *   update of implicit (master) items.
-     *
-     *   Why this argument? If the document was not found in an offline cache 
-     *   before load and refers a manifest and this manifest itself has not 
-     *   been changed since the last fetch, we will not do the application 
-     *   cache group update. But we must cache the document (identified by the
-     *   documentURI). This argument will ensure that a previously uncached 
-     *   document will get cached and that we don't re-cache a document that 
-     *   has already been cached (stickDocument=false).
-     */
-    POfflineCacheUpdate(URIParams manifestURI, URIParams documentURI,
-                        bool stickDocument);
-
-    /**
-     * Sets "offline-app" permission for the principal.  Called when we hit
-     * a web app with the manifest attribute in <html> and
-     * offline-apps.allow_by_default is set to true.
-     */
-    SetOfflinePermission(Principal principal);
-
-    /**
      * window.open from inside <iframe mozbrowser> is special.  When the child
      * process calls window.open, it creates a new PBrowser (in its own
      * process), then calls BrowserFrameOpenWindow on it.
@@ -375,7 +351,14 @@ parent:
      * batched and only processed for panning and zooming if content does not
      * preventDefault.
      */
-    ContentReceivedTouch(ScrollableLayerGuid aGuid, bool aPreventDefault);
+    ContentReceivedTouch(ScrollableLayerGuid aGuid, uint64_t aInputBlockId, bool aPreventDefault);
+
+    /**
+     * Notifies the APZ code of the results of the gecko hit-test for a
+     * particular input block. Each target corresponds to one touch point in the
+     * touch event.
+     */
+    SetTargetAPZC(uint64_t aInputBlockId, ScrollableLayerGuid[] aTargets);
 
     /**
      * Updates the zoom constraints for a scrollable frame in this tab.
@@ -398,6 +381,8 @@ parent:
 
     ReplyKeyEvent(WidgetKeyboardEvent event);
 
+    DispatchAfterKeyboardEvent(WidgetKeyboardEvent event);
+
     sync RequestNativeKeyBindings(WidgetKeyboardEvent event)
         returns (MaybeNativeKeyBinding bindings);
 
@@ -410,6 +395,11 @@ parent:
      */
     async RemotePaintIsReady();
 
+    sync GetRenderFrameInfo(PRenderFrame aRenderFrame)
+        returns (ScrollingBehavior scrolling,
+                 TextureFactoryIdentifier textureFactoryIdentifier,
+                 uint64_t layersId);
+
 child:
     /**
      * Notify the remote browser that it has been Show()n on this
@@ -420,7 +410,11 @@ child:
      * content processes always render to a virtual <0, 0> top-left
      * point.
      */
-    Show(nsIntSize size);
+    Show(nsIntSize size,
+         ScrollingBehavior scrolling,
+         TextureFactoryIdentifier textureFactoryIdentifier,
+         uint64_t layersId,
+         nullable PRenderFrame renderFrame);
 
     LoadURL(nsCString uri);
 
@@ -436,7 +430,7 @@ child:
     AcknowledgeScrollUpdate(ViewID aScrollId, uint32_t aScrollGeneration);
     HandleDoubleTap(CSSPoint point, ScrollableLayerGuid aGuid);
     HandleSingleTap(CSSPoint point, ScrollableLayerGuid aGuid);
-    HandleLongTap(CSSPoint point, ScrollableLayerGuid aGuid);
+    HandleLongTap(CSSPoint point, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     HandleLongTapUp(CSSPoint point, ScrollableLayerGuid aGuid);
     NotifyAPZStateChange(ViewID aViewId, APZStateChange aChange, int aArg);
 
@@ -447,6 +441,8 @@ child:
     Activate();
 
     Deactivate();
+
+    ParentActivated(bool aActivated);
 
     /**
      * @see nsIDOMWindowUtils sendMouseEvent.
@@ -462,10 +458,8 @@ child:
     RealMouseEvent(WidgetMouseEvent event);
     RealKeyEvent(WidgetKeyboardEvent event, MaybeNativeKeyBinding keyBinding);
     MouseWheelEvent(WidgetWheelEvent event);
-    RealTouchEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid);
-    // We use a separate message for touchmove events only to apply
-    // compression to them.
-    RealTouchMoveEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid) compress;
+    RealTouchEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
+    RealTouchMoveEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
 
     /**
      * @see nsIDOMWindowUtils sendKeyEvent.

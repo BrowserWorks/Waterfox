@@ -616,25 +616,14 @@ RegExpShared::execute(JSContext *cx, HandleLinearString input, size_t start,
         }
 
         if (result == RegExpRunStatus_Error) {
-            // The RegExp engine might exit with an exception if an interrupt
-            // was requested. If this happens, break out and retry the regexp
-            // in the bytecode interpreter, which can execute while tolerating
-            // future interrupts. Otherwise, if we keep getting interrupted we
-            // will never finish executing the regexp.
-            bool interrupted;
-            {
-                JSRuntime::AutoLockForInterrupt lock(cx->runtime());
-                interrupted = cx->runtime()->interrupt;
-            }
-
-            if (interrupted) {
-                if (!InvokeInterruptCallback(cx))
-                    return RegExpRunStatus_Error;
-                break;
-            }
-
-            js_ReportOverRecursed(cx);
-            return RegExpRunStatus_Error;
+            // An 'Error' result is returned if a stack overflow guard or
+            // interrupt guard failed. If CheckOverRecursed doesn't throw, break
+            // out and retry the regexp in the bytecode interpreter, which can
+            // execute while tolerating future interrupts. Otherwise, if we keep
+            // getting interrupted we will never finish executing the regexp.
+            if (!jit::CheckOverRecursed(cx))
+                return RegExpRunStatus_Error;
+            break;
         }
 
         if (result == RegExpRunStatus_Success_NotFound)
@@ -785,7 +774,7 @@ RegExpCompartment::sweep(JSRuntime *rt)
         // the RegExpShared if it was accidentally marked earlier but wasn't
         // marked by the current trace.
         bool keep = shared->marked() &&
-                    !IsStringAboutToBeFinalizedFromAnyThread(shared->source.unsafeGet());
+                    IsStringMarkedFromAnyThread(&shared->source);
         for (size_t i = 0; i < ArrayLength(shared->compilationArray); i++) {
             RegExpShared::RegExpCompilation &compilation = shared->compilationArray[i];
             if (compilation.jitCode &&

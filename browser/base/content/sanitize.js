@@ -74,7 +74,7 @@ Sanitizer.prototype = {
       itemsToClear.splice(openWindowsIndex, 1);
       let item = this.items.openWindows;
 
-      function onWindowsCleaned() {
+      let ok = item.clear(() => {
         try {
           let clearedPromise = this.sanitize(itemsToClear);
           clearedPromise.then(deferred.resolve, deferred.reject);
@@ -83,9 +83,7 @@ Sanitizer.prototype = {
           Cu.reportError(error);
           deferred.reject(error);
         }
-      }
-
-      let ok = item.clear(onWindowsCleaned.bind(this));
+      });
       // When cancelled, reject immediately
       if (!ok) {
         deferred.reject("Sanitizer canceled closing windows");
@@ -408,17 +406,31 @@ Sanitizer.prototype = {
       clear: function ()
       {
         // Clear site-specific permissions like "Allow this site to open popups"
+        // we ignore the "end" range and hope it is now() - none of the
+        // interfaces used here support a true range anyway.
+        let startDateMS = this.range == null ? null : this.range[0] / 1000;
         var pm = Components.classes["@mozilla.org/permissionmanager;1"]
                            .getService(Components.interfaces.nsIPermissionManager);
-        pm.removeAll();
+        if (startDateMS == null) {
+          pm.removeAll();
+        } else {
+          pm.removeAllSince(startDateMS);
+        }
 
         // Clear site-specific settings like page-zoom level
         var cps = Components.classes["@mozilla.org/content-pref/service;1"]
                             .getService(Components.interfaces.nsIContentPrefService2);
-        cps.removeAllDomains(null);
+        if (startDateMS == null) {
+          cps.removeAllDomains(null);
+        } else {
+          cps.removeAllDomainsSince(startDateMS, null);
+        }
 
         // Clear "Never remember passwords for this site", which is not handled by
         // the permission manager
+        // (Note the login manager doesn't support date ranges yet, and bug
+        //  1058438 is calling for loginSaving stuff to end up in the
+        // permission manager)
         var pwmgr = Components.classes["@mozilla.org/login-manager;1"]
                               .getService(Components.interfaces.nsILoginManager);
         var hosts = pwmgr.getAllDisabledHosts();
@@ -426,7 +438,8 @@ Sanitizer.prototype = {
           pwmgr.setLoginSavingEnabled(host, true);
         }
 
-        // Clear site security settings
+        // Clear site security settings - no support for ranges in this
+        // interface either, so we clearAll().
         var sss = Cc["@mozilla.org/ssservice;1"]
                     .getService(Ci.nsISiteSecurityService);
         sss.clearAll();

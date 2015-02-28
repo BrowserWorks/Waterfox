@@ -397,7 +397,7 @@ en{
         }
         GBP{
             "£",
-            "British Pound Sterling",
+            "British Pound",
         }
         GEK{
             "GEK",
@@ -1586,8 +1586,8 @@ en{
             other{"French francs"}
         }
         GBP{
-            one{"British pound sterling"}
-            other{"British pounds sterling"}
+            one{"British pound"}
+            other{"British pounds"}
         }
         GEK{
             one{"Georgian kupon larit"}
@@ -2394,5 +2394,5 @@ en{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.87"}
+    Version{"2.1.10.42"}
 }

@@ -228,6 +228,12 @@ this.PermissionsTable =  { geolocation: {
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
                            },
+                           "homescreen-webapps-manage": {
+                             app: DENY_ACTION,
+                             trusted: DENY_ACTION,
+                             privileged: ALLOW_ACTION,
+                             certified: ALLOW_ACTION
+                           },
                            "backgroundservice": {
                              app: DENY_ACTION,
                              trusted: DENY_ACTION,
@@ -300,8 +306,7 @@ this.PermissionsTable =  { geolocation: {
                              privileged: ALLOW_ACTION,
                              certified: ALLOW_ACTION,
                              substitute: [
-                               "indexedDB-unlimited",
-                               "default-persistent-storage"
+                               "indexedDB-unlimited"
                              ]
                            },
                            "background-sensors": {
@@ -493,6 +498,17 @@ this.PermissionsTable =  { geolocation: {
                              trusted: DENY_ACTION,
                              privileged: DENY_ACTION,
                              certified: ALLOW_ACTION
+                           },
+                           "tv": {
+                             app: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
+                           },
+                           "before-after-keyboard-event": {
+                             app: DENY_ACTION,
+                             trusted: DENY_ACTION,
+                             privileged: DENY_ACTION,
+                             certified: ALLOW_ACTION
                            }
                          };
 
@@ -628,7 +644,7 @@ this.AllPossiblePermissions = [];
     }
   }
   AllPossiblePermissions =
-    AllPossiblePermissions.concat(["offline-app", "pin-app"]);
+    AllPossiblePermissions.concat(["indexedDB", "offline-app", "pin-app"]);
 })();
 
 this.isExplicitInPermissionsTable = function(aPermName, aIntStatus) {

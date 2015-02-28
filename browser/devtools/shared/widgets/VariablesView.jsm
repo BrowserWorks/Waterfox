@@ -18,6 +18,13 @@ const PAGE_SIZE_MAX_JUMPS = 30;
 const SEARCH_ACTION_MAX_DELAY = 300; // ms
 const ITEM_FLASH_DURATION = 300 // ms
 
+/**
+ * The method name to use for ES6 iteration. If symbols are enabled in
+ * this build, use Symbol.iterator; otherwise "@@iterator".
+ */
+const JS_HAS_SYMBOLS = typeof Symbol === "function";
+const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
+
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
@@ -987,7 +994,7 @@ VariablesView.prototype = {
    * Gets the parent node holding this view.
    * @return nsIDOMNode
    */
-  get boxObject() this._list.boxObject.QueryInterface(Ci.nsIScrollBoxObject),
+  get boxObject() this._list.boxObject,
 
   /**
    * Gets the parent node holding this view.
@@ -3056,10 +3063,10 @@ Property.prototype = Heritage.extend(Variable.prototype, {
 /**
  * A generator-iterator over the VariablesView, Scopes, Variables and Properties.
  */
-VariablesView.prototype["@@iterator"] =
-Scope.prototype["@@iterator"] =
-Variable.prototype["@@iterator"] =
-Property.prototype["@@iterator"] = function*() {
+VariablesView.prototype[ITERATOR_SYMBOL] =
+Scope.prototype[ITERATOR_SYMBOL] =
+Variable.prototype[ITERATOR_SYMBOL] =
+Property.prototype[ITERATOR_SYMBOL] = function*() {
   yield* this._store;
 };
 
@@ -3575,6 +3582,17 @@ VariablesView.stringifiers.byObjectKind = {
 
     let {preview} = aGrip;
     let props = [];
+
+    if (aGrip.class == "Promise" && aGrip.promiseState) {
+      let { state, value, reason } = aGrip.promiseState;
+      props.push("<state>: " + VariablesView.getString(state));
+      if (state == "fulfilled") {
+        props.push("<value>: " + VariablesView.getString(value, { concise: true }));
+      } else if (state == "rejected") {
+        props.push("<reason>: " + VariablesView.getString(reason, { concise: true }));
+      }
+    }
+
     for (let key of Object.keys(preview.ownProperties || {})) {
       let value = preview.ownProperties[key];
       let valueString = "";

@@ -9,6 +9,7 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include <sys/statfs.h>
 
 #include <arpa/inet.h>
 #include <linux/types.h>
@@ -77,13 +78,17 @@ USING_MTP_NAMESPACE
 #define ICS_SYS_MTP_DIRECTORY "/sys/devices/virtual/android_usb/android0/f_mtp"
 #define ICS_SYS_USB_STATE     "/sys/devices/virtual/android_usb/android0/state"
 
+#undef USE_DEBUG    // MozMtpDatabase.h also defines USE_DEBUG
 #define USE_DEBUG 0
 
 #undef LOG
+#undef LOGW
+#undef ERR
 #define LOG(args...)  __android_log_print(ANDROID_LOG_INFO,  "AutoMounter", ## args)
 #define LOGW(args...) __android_log_print(ANDROID_LOG_WARN,  "AutoMounter", ## args)
 #define ERR(args...)  __android_log_print(ANDROID_LOG_ERROR, "AutoMounter", ## args)
 
+#undef DBG
 #if USE_DEBUG
 #define DBG(args...)  __android_log_print(ANDROID_LOG_DEBUG, "AutoMounter" , ## args)
 #else
@@ -98,6 +103,7 @@ namespace system {
 
 #define USB_FUNC_ADB    "adb"
 #define USB_FUNC_MTP    "mtp"
+#define USB_FUNC_NONE   "none"
 #define USB_FUNC_RNDIS  "rndis"
 #define USB_FUNC_UMS    "mass_storage"
 
@@ -212,7 +218,7 @@ public:
       mMode(AUTOMOUNTER_DISABLE)
   {
     VolumeManager::RegisterStateObserver(&mVolumeManagerStateObserver);
-    Volume::RegisterObserver(&mVolumeEventObserver);
+    Volume::RegisterVolumeObserver(&mVolumeEventObserver, "AutoMounter");
 
     // It's possible that the VolumeManager is already in the READY state,
     // so we call CheckVolumeSettings here to cover that case. Otherwise,
@@ -225,15 +231,7 @@ public:
 
   ~AutoMounter()
   {
-    VolumeManager::VolumeArray::size_type numVolumes = VolumeManager::NumVolumes();
-    VolumeManager::VolumeArray::index_type volIndex;
-    for (volIndex = 0; volIndex < numVolumes; volIndex++) {
-      RefPtr<Volume> vol = VolumeManager::GetVolume(volIndex);
-      if (vol) {
-        vol->UnregisterObserver(&mVolumeEventObserver);
-      }
-    }
-    Volume::UnregisterObserver(&mVolumeEventObserver);
+    Volume::UnregisterVolumeObserver(&mVolumeEventObserver, "AutoMounter");
     VolumeManager::UnregisterStateObserver(&mVolumeManagerStateObserver);
   }
 
@@ -254,7 +252,6 @@ public:
     for (i = 0; i < numVolumes; i++) {
       RefPtr<Volume> vol = VolumeManager::GetVolume(i);
       if (vol) {
-        vol->RegisterObserver(&mVolumeEventObserver);
         // We need to pick up the intial value of the
         // ums.volume.NAME.enabled setting.
         AutoMounterSetting::CheckVolumeSettings(vol->Name());
@@ -270,7 +267,7 @@ public:
 
   void ConfigureUsbFunction(const char* aUsbFunc);
 
-  void StartMtpServer();
+  bool StartMtpServer();
   void StopMtpServer();
 
   void StartUmsSharing();
@@ -533,6 +530,13 @@ SetUsbFunction(const char* aUsbFunc)
   char oldSysUsbConfig[PROPERTY_VALUE_MAX];
   property_get(SYS_USB_CONFIG, oldSysUsbConfig, "");
 
+  if (strcmp(oldSysUsbConfig, USB_FUNC_NONE) == 0) {
+    // It's quite possible that sys.usb.config may have the value "none". We
+    // convert that to an empty string here, and at the end we convert the
+    // empty string back to "none".
+    oldSysUsbConfig[0] = '\0';
+  }
+
   if (IsUsbFunctionEnabled(oldSysUsbConfig, aUsbFunc)) {
     // The function is already configured. Nothing else to do.
     DBG("SetUsbFunction('%s') - already set - nothing to do", aUsbFunc);
@@ -578,20 +582,52 @@ SetUsbFunction(const char* aUsbFunc)
     }
   }
 
-  LOG("SetUsbFunction(%s) %s to '%s'", aUsbFunc, SYS_USB_CONFIG, newSysUsbConfig);
+  // If the persisted function didn't have mass_storage (this happens on
+  // the nexus 4/5, then we can get to here and have oldSysUsbConfig equal
+  // to newSysUsbConfig. So we need to check for that.
+
+  if (strcmp(oldSysUsbConfig, newSysUsbConfig) == 0) {
+    DBG("SetUsbFunction('%s') %s is already set to '%s' - nothing to do",
+        aUsbFunc, SYS_USB_CONFIG, newSysUsbConfig);
+    return;
+  }
+
+  if (newSysUsbConfig[0] == '\0') {
+    // Convert the empty string back to the string "none"
+    strlcpy(newSysUsbConfig, USB_FUNC_NONE, sizeof(newSysUsbConfig));
+  }
+  LOG("SetUsbFunction(%s) %s from '%s' to '%s'", aUsbFunc, SYS_USB_CONFIG,
+      oldSysUsbConfig, newSysUsbConfig);
   property_set(SYS_USB_CONFIG, newSysUsbConfig);
 }
 
-void
+bool
 AutoMounter::StartMtpServer()
 {
   if (sMozMtpServer) {
     // Mtp Server is already running - nothing to do
-    return;
+    return true;
   }
   LOG("Starting MtpServer");
+
+  // For debugging, Change the #if 0 to #if 1, and then attach gdb during
+  // the 5 second interval below. Otherwise, configuring MTP will cause adb
+  // (and thus gdb) to get bounced.
+#if 0
+  LOG("Sleeping");
+  PRTime now = PR_Now();
+  PRTime stopTime = now + 5000000;
+  while (PR_Now() < stopTime) {
+    LOG("Sleeping...");
+    sleep(1);
+  }
+  LOG("Sleep done");
+#endif
+
   sMozMtpServer = new MozMtpServer();
-  sMozMtpServer->Run();
+  if (!sMozMtpServer->Init()) {
+    return false;
+  }
 
   VolumeArray::index_type volIndex;
   VolumeArray::size_type  numVolumes = VolumeManager::NumVolumes();
@@ -600,6 +636,9 @@ AutoMounter::StartMtpServer()
     nsRefPtr<MozMtpStorage> storage = new MozMtpStorage(vol, sMozMtpServer);
     mMozMtpStorage.AppendElement(storage);
   }
+
+  sMozMtpServer->Run();
+  return true;
 }
 
 void
@@ -677,7 +716,15 @@ AutoMounter::UpdateState()
     DBG("UpdateState: USB functions: '%s'", functionsStr);
 
     bool  usbConfigured = IsUsbConfigured();
-    umsAvail = (access(ICS_SYS_UMS_DIRECTORY, F_OK) == 0);
+
+    // On the Nexus 4/5, it advertises that the UMS usb function is available,
+    // but we have a further requirement that mass_storage be in the
+    // persist.sys.usb.config property.
+    char persistSysUsbConfig[PROPERTY_VALUE_MAX];
+    property_get(PERSIST_SYS_USB_CONFIG, persistSysUsbConfig, "");
+    if (IsUsbFunctionEnabled(persistSysUsbConfig, USB_FUNC_UMS)) {
+      umsAvail = (access(ICS_SYS_UMS_DIRECTORY, F_OK) == 0);
+    }
     if (umsAvail) {
       umsConfigured = usbConfigured && strstr(functionsStr, USB_FUNC_UMS) != nullptr;
       umsEnabled = (mMode == AUTOMOUNTER_ENABLE_UMS) ||
@@ -736,8 +783,13 @@ AutoMounter::UpdateState()
           // and start the MTP server. This particular codepath will not
           // normally be taken, but it could happen if you stop and restart
           // b2g while sys.usb.config is set to enable mtp.
-          StartMtpServer();
-          SetState(STATE_MTP_STARTED);
+          if (StartMtpServer()) {
+            SetState(STATE_MTP_STARTED);
+          } else {
+            // Unable to start MTP. Go back to UMS.
+            SetUsbFunction(USB_FUNC_UMS);
+            SetState(STATE_UMS_CONFIGURING);
+          }
         } else {
           // We need to configure USB to use mtp. Wait for it to be configured
           // before we start the MTP server.
@@ -763,8 +815,13 @@ AutoMounter::UpdateState()
       if (mtpEnabled && mtpConfigured) {
         // The USB layer has been configured. Now we can go ahead and start
         // the MTP server.
-        StartMtpServer();
-        SetState(STATE_MTP_STARTED);
+        if (StartMtpServer()) {
+          SetState(STATE_MTP_STARTED);
+        } else {
+          // Unable to start MTP. Go back to UMS.
+          SetUsbFunction(USB_FUNC_UMS);
+          SetState(STATE_UMS_CONFIGURING);
+        }
         break;
       }
       if (rndisConfigured) {
@@ -893,6 +950,39 @@ AutoMounter::UpdateState()
     if (!vol->MediaPresent()) {
       // No media - nothing we can do
       continue;
+    }
+
+    if (vol->State() == nsIVolume::STATE_CHECKMNT) {
+      // vold reports the volume is "Mounted". Need to check if the volume is
+      // accessible by statfs(). Once it can be accessed, set the volume as
+      // STATE_MOUNTED, otherwise, post a delay task of UpdateState to check it
+      // again.
+      struct statfs fsbuf;
+      int rc = MOZ_TEMP_FAILURE_RETRY(statfs(vol->MountPoint().get(), &fsbuf));
+      if (rc == -1) {
+        // statfs() failed. Stay in STATE_CHECKMNT. Any failures here
+        // are probably non-recoverable, so we need to wait until
+        // something else changes the state back to IDLE/UNMOUNTED, etc.
+        ERR("statfs failed for '%s': errno = %d (%s)", vol->NameStr(), errno, strerror(errno));
+        continue;
+      }
+      static int delay = 250;
+      if (fsbuf.f_blocks == 0) {
+        if (delay <= 4000) {
+          LOG("UpdateState: Volume '%s' is inaccessible, checking again in %d msec", vol->NameStr(), delay);
+          MessageLoopForIO::current()->
+            PostDelayedTask(FROM_HERE,
+                            NewRunnableMethod(this, &AutoMounter::UpdateState),
+                            delay);
+          delay *= 2;
+        } else {
+          LOG("UpdateState: Volume '%s' is inaccessible, giving up", vol->NameStr());
+        }
+        continue;
+      } else {
+        delay = 250;
+        vol->SetState(nsIVolume::STATE_MOUNTED);
+      }
     }
 
     if ((tryToShare && vol->IsSharingEnabled()) ||
@@ -1149,68 +1239,9 @@ public:
 static StaticRefPtr<UsbCableObserver> sUsbCableObserver;
 static StaticRefPtr<AutoMounterSetting> sAutoMounterSetting;
 
-static void
-InitVolumeConfig()
-{
-  // This function uses /system/etc/volume.cfg to add additional volumes
-  // to the Volume Manager.
-  //
-  // This is useful on devices like the Nexus 4, which have no physical sd card
-  // or dedicated partition.
-  //
-  // The format of the volume.cfg file is as follows:
-  // create volume-name mount-point
-  // Blank lines and lines starting with the hash character "#" will be ignored.
-
-  nsCOMPtr<nsIVolumeService> vs = do_GetService(NS_VOLUMESERVICE_CONTRACTID);
-  NS_ENSURE_TRUE_VOID(vs);
-
-  ScopedCloseFile fp;
-  int n = 0;
-  char line[255];
-  char *command, *vol_name_cstr, *mount_point_cstr, *save_ptr;
-  const char *filename = "/system/etc/volume.cfg";
-  if (!(fp = fopen(filename, "r"))) {
-    LOG("Unable to open volume configuration file '%s' - ignoring", filename);
-    return;
-  }
-  while(fgets(line, sizeof(line), fp)) {
-    const char *delim = " \t\n";
-    n++;
-
-    if (line[0] == '#')
-      continue;
-    if (!(command = strtok_r(line, delim, &save_ptr))) {
-      // Blank line - ignore
-      continue;
-    }
-    if (!strcmp(command, "create")) {
-      if (!(vol_name_cstr = strtok_r(nullptr, delim, &save_ptr))) {
-        ERR("No vol_name in %s line %d",  filename, n);
-        continue;
-      }
-      if (!(mount_point_cstr = strtok_r(nullptr, delim, &save_ptr))) {
-        ERR("No mount point for volume '%s'. %s line %d", vol_name_cstr, filename, n);
-        continue;
-      }
-      nsString  mount_point = NS_ConvertUTF8toUTF16(mount_point_cstr);
-      nsString vol_name = NS_ConvertUTF8toUTF16(vol_name_cstr);
-      nsresult rv;
-      rv = vs->CreateFakeVolume(vol_name, mount_point);
-      NS_ENSURE_SUCCESS_VOID(rv);
-      rv = vs->SetFakeVolumeState(vol_name, nsIVolume::STATE_MOUNTED);
-      NS_ENSURE_SUCCESS_VOID(rv);
-    }
-    else {
-      ERR("Unrecognized command: '%s'", command);
-    }
-  }
-}
-
 void
 InitAutoMounter()
 {
-  InitVolumeConfig();
   InitVolumeManager();
   sAutoMounterSetting = new AutoMounterSetting();
 

@@ -36,6 +36,9 @@
 #include "hash.h"
 #include "uresimp.h"
 #include "ureslocs.h"
+#include "shareddateformatsymbols.h"
+#include "unicode/calendar.h"
+#include "unifiedcache.h"
 
 // *****************************************************************************
 // class DateFormatSymbols
@@ -146,6 +149,32 @@ typedef enum LastResortSize {
 
 U_NAMESPACE_BEGIN
 
+SharedDateFormatSymbols::~SharedDateFormatSymbols() {
+}
+
+template<> U_I18N_API
+const SharedDateFormatSymbols *
+        LocaleCacheKey<SharedDateFormatSymbols>::createObject(
+                const void */*unusedContext*/, UErrorCode &status) const {
+    char type[256];
+    Calendar::getCalendarTypeFromLocale(fLoc, type, UPRV_LENGTHOF(type), status);
+    if (U_FAILURE(status)) {
+        return NULL;
+    }
+    SharedDateFormatSymbols *shared
+            = new SharedDateFormatSymbols(fLoc, type, status);
+    if (shared == NULL) {
+        status = U_MEMORY_ALLOCATION_ERROR;
+        return NULL;
+    }
+    if (U_FAILURE(status)) {
+        delete shared;
+        return NULL;
+    }
+    shared->addRef();
+    return shared;
+}
+
 UOBJECT_DEFINE_RTTI_IMPLEMENTATION(DateFormatSymbols)
 
 #define kSUPPLEMENTAL "supplementalData"
@@ -190,6 +219,23 @@ static inline UnicodeString* newUnicodeStringArray(size_t count) {
 }
 
 //------------------------------------------------------
+
+DateFormatSymbols * U_EXPORT2
+DateFormatSymbols::createForLocale(
+        const Locale& locale, UErrorCode &status) {
+    const SharedDateFormatSymbols *shared = NULL;
+    UnifiedCache::getByLocale(locale, shared, status);
+    if (U_FAILURE(status)) {
+        return NULL;
+    }
+    DateFormatSymbols *result = new DateFormatSymbols(shared->get());
+    shared->removeRef();
+    if (result == NULL) {
+        status = U_MEMORY_ALLOCATION_ERROR;
+        return NULL;
+    }
+    return result;
+}
 
 DateFormatSymbols::DateFormatSymbols(const Locale& locale,
                                      UErrorCode& status)
@@ -294,6 +340,11 @@ DateFormatSymbols::createZoneStrings(const UnicodeString *const * otherStrings)
  */
 void
 DateFormatSymbols::copyData(const DateFormatSymbols& other) {
+    UErrorCode status = U_ZERO_ERROR;
+    U_LOCALE_BASED(locBased, *this);
+    locBased.setLocaleIDs(
+        other.getLocale(ULOC_VALID_LOCALE, status),
+        other.getLocale(ULOC_ACTUAL_LOCALE, status));
     assignArray(fEras, fErasCount, other.fEras, other.fErasCount);
     assignArray(fEraNames, fEraNamesCount, other.fEraNames, other.fEraNamesCount);
     assignArray(fNarrowEras, fNarrowErasCount, other.fNarrowEras, other.fNarrowErasCount);

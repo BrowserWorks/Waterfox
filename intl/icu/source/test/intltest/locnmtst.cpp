@@ -73,10 +73,11 @@ void LocaleDisplayNamesTest::runIndexedTest(int32_t index, UBool exec, const cha
         TESTCASE(5, TestUldnWithKeywordsAndEverything);
         TESTCASE(6, TestUldnComponents);
         TESTCASE(7, TestRootEtc);
-        TESTCASE(8, TestKeywords);
-        TESTCASE(9, TestUntranslatedKeywords);
-        TESTCASE(10, TestPrivateUse);
-        TESTCASE(11, TestUldnDisplayContext);
+        TESTCASE(8, TestCurrencyKeyword);
+        TESTCASE(9, TestUnknownCurrencyKeyword);
+        TESTCASE(10, TestUntranslatedKeywords);
+        TESTCASE(11, TestPrivateUse);
+        TESTCASE(12, TestUldnDisplayContext);
 #endif
         default:
             name = "";
@@ -112,7 +113,17 @@ void LocaleDisplayNamesTest::TestWithKeywordsAndEverything() {
   test_assert_equal(target, temp);
 }
 
-void LocaleDisplayNamesTest::TestKeywords() {
+void LocaleDisplayNamesTest::TestCurrencyKeyword() {
+  UnicodeString temp;
+  LocaleDisplayNames *ldn = LocaleDisplayNames::createInstance(Locale::getUS());
+  const char *locname = "ja@currency=JPY";
+  const char *target = "Japanese (Japanese Yen)";
+  ldn->localeDisplayName(locname, temp);
+  delete ldn;
+  test_assert_equal(target, temp);
+}
+
+void LocaleDisplayNamesTest::TestUnknownCurrencyKeyword() {
   UnicodeString temp;
   LocaleDisplayNames *ldn = LocaleDisplayNames::createInstance(Locale::getUS());
   const char *locname = "de@currency=XYZ";

@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (C) 2008-2012, International Business Machines Corporation and
+* Copyright (C) 2008-2014, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -481,7 +481,7 @@ DateIntervalInfo::getBestSkeleton(const UnicodeString& skeleton,
     bestMatchDistanceInfo = 0;
     int8_t fieldLength = sizeof(skeletonFieldWidth)/sizeof(skeletonFieldWidth[0]);
 
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* elem = NULL;
     while ( (elem = fIntervalPatterns->nextElement(pos)) != NULL ) {
         const UHashTok keyTok = elem->key;
@@ -586,7 +586,7 @@ DateIntervalInfo::deleteHash(Hashtable* hTable)
     if ( hTable == NULL ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     while ( (element = hTable->nextElement(pos)) != NULL ) {
         const UHashTok valueTok = element->value;
@@ -649,7 +649,7 @@ DateIntervalInfo::copyHash(const Hashtable* source,
     if ( U_FAILURE(status) ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     if ( source ) {
         while ( (element = source->nextElement(pos)) != NULL ) {

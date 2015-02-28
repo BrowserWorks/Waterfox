@@ -12,8 +12,8 @@
 "filename": "gcc.tar.xz"
 },
 {
-"size": 168202,
-"digest": "5520f53fc10fcb569f235aff5c78ea5b69c878a8439b95aa758de2b83fc9f09bd4758c5fd701d84c58776386e210f3f30e5c9da6fdd8358d7dd371c764179339",
+"size": 166506,
+"digest": "f3c214fd571f21d64937584645212f8d7c2d12c9016be613bd2bc9cecd80b3d52a741423cc1ca69bd85fb924c3d0572c85a1734d12db1616df37abcc397e9252",
 "algorithm": "sha512",
 "filename": "sccache.tar.bz2"
 }

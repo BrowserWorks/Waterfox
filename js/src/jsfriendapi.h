@@ -30,7 +30,7 @@ class JSAtom;
 struct JSErrorFormatString;
 class JSLinearString;
 struct JSJitInfo;
-struct JSErrorReport;
+class JSErrorReport;
 
 namespace JS {
 template <class T>
@@ -258,26 +258,24 @@ namespace js {
  * Helper Macros for creating JSClasses that function as proxies.
  *
  * NB: The macro invocation must be surrounded by braces, so as to
- *     allow for potention JSClass extensions.
+ *     allow for potential JSClass extensions.
  */
-#define PROXY_MAKE_EXT(outerObject, innerObject, iteratorObject,        \
-                       isWrappedNative, objectMoved)                    \
+#define PROXY_MAKE_EXT(outerObject, innerObject, isWrappedNative,       \
+                       objectMoved)                                     \
     {                                                                   \
         outerObject,                                                    \
         innerObject,                                                    \
-        iteratorObject,                                                 \
         isWrappedNative,                                                \
         js::proxy_WeakmapKeyDelegate,                                   \
         objectMoved                                                     \
     }
 
-#define PROXY_CLASS_WITH_EXT(name, extraSlots, flags, ext)                              \
+#define PROXY_CLASS_WITH_EXT(name, flags, ext)                                          \
     {                                                                                   \
         name,                                                                           \
         js::Class::NON_NATIVE |                                                         \
             JSCLASS_IS_PROXY |                                                          \
             JSCLASS_IMPLEMENTS_BARRIERS |                                               \
-            JSCLASS_HAS_RESERVED_SLOTS(js::PROXY_MINIMUM_SLOTS + (extraSlots)) |        \
             flags,                                                                      \
         JS_PropertyStub,         /* addProperty */                                      \
         JS_DeletePropertyStub,   /* delProperty */                                      \
@@ -310,18 +308,17 @@ namespace js {
             js::proxy_SetGenericAttributes,                                             \
             js::proxy_DeleteGeneric,                                                    \
             js::proxy_Watch, js::proxy_Unwatch,                                         \
-            js::proxy_Slice,                                                            \
+            js::proxy_GetElements,                                                      \
             nullptr,             /* enumerate       */                                  \
             nullptr,             /* thisObject      */                                  \
         }                                                                               \
     }
 
-#define PROXY_CLASS_DEF(name, extraSlots, flags)                        \
-  PROXY_CLASS_WITH_EXT(name, extraSlots, flags,                         \
+#define PROXY_CLASS_DEF(name, flags)                                    \
+  PROXY_CLASS_WITH_EXT(name, flags,                                     \
                        PROXY_MAKE_EXT(                                  \
                          nullptr, /* outerObject */                     \
                          nullptr, /* innerObject */                     \
-                         nullptr, /* iteratorObject */                  \
                          false,   /* isWrappedNative */                 \
                          js::proxy_ObjectMoved                          \
                        ))
@@ -399,8 +396,8 @@ proxy_Watch(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::HandleObje
 extern JS_FRIEND_API(bool)
 proxy_Unwatch(JSContext *cx, JS::HandleObject obj, JS::HandleId id);
 extern JS_FRIEND_API(bool)
-proxy_Slice(JSContext *cx, JS::HandleObject proxy, uint32_t begin, uint32_t end,
-            JS::HandleObject result);
+proxy_GetElements(JSContext *cx, JS::HandleObject proxy, uint32_t begin, uint32_t end,
+                  ElementAdder *adder);
 
 /*
  * A class of objects that return source code on demand.
@@ -571,11 +568,13 @@ public:
     static const uint32_t FIXED_SLOTS_SHIFT = 27;
 };
 
+// This layout is shared by all objects except for Typed Objects (which still
+// have a shape and type).
 struct Object {
     shadow::Shape      *shape;
     shadow::TypeObject *type;
     JS::Value          *slots;
-    JS::Value          *_1;
+    void               *_1;
 
     size_t numFixedSlots() const { return shape->slotInfo >> Shape::FIXED_SLOTS_SHIFT; }
     JS::Value *fixedSlots() const {
@@ -588,10 +587,6 @@ struct Object {
             return fixedSlots()[slot];
         return slots[slot - nfixed];
     }
-
-    // Reserved slots with index < MAX_FIXED_SLOTS are guaranteed to
-    // be fixed slots.
-    static const uint32_t MAX_FIXED_SLOTS = 16;
 };
 
 struct Function {
@@ -773,15 +768,12 @@ GetOriginalEval(JSContext *cx, JS::HandleObject scope,
 inline void *
 GetObjectPrivate(JSObject *obj)
 {
+    MOZ_ASSERT(GetObjectClass(obj)->flags & JSCLASS_HAS_PRIVATE);
     const shadow::Object *nobj = reinterpret_cast<const shadow::Object*>(obj);
     void **addr = reinterpret_cast<void**>(&nobj->fixedSlots()[nobj->numFixedSlots()]);
     return *addr;
 }
 
-/*
- * Get a slot that is both reserved for object's clasp *and* is fixed (fits
- * within the maximum capacity for the object's fixed slots).
- */
 inline const JS::Value &
 GetReservedSlot(JSObject *obj, size_t slot)
 {
@@ -790,23 +782,17 @@ GetReservedSlot(JSObject *obj, size_t slot)
 }
 
 JS_FRIEND_API(void)
-SetReservedSlotWithBarrier(JSObject *obj, size_t slot, const JS::Value &value);
+SetReservedOrProxyPrivateSlotWithBarrier(JSObject *obj, size_t slot, const JS::Value &value);
 
 inline void
 SetReservedSlot(JSObject *obj, size_t slot, const JS::Value &value)
 {
     MOZ_ASSERT(slot < JSCLASS_RESERVED_SLOTS(GetObjectClass(obj)));
     shadow::Object *sobj = reinterpret_cast<shadow::Object *>(obj);
-    if (sobj->slotRef(slot).isMarkable()
-#ifdef JSGC_GENERATIONAL
-        || value.isMarkable()
-#endif
-       )
-    {
-        SetReservedSlotWithBarrier(obj, slot, value);
-    } else {
+    if (sobj->slotRef(slot).isMarkable() || value.isMarkable())
+        SetReservedOrProxyPrivateSlotWithBarrier(obj, slot, value);
+    else
         sobj->slotRef(slot) = value;
-    }
 }
 
 JS_FRIEND_API(uint32_t)
@@ -956,7 +942,7 @@ CopyFlatStringChars(char16_t *dest, JSFlatString *s, size_t len)
 }
 
 JS_FRIEND_API(bool)
-GetPropertyKeys(JSContext *cx, JSObject *obj, unsigned flags, JS::AutoIdVector *props);
+GetPropertyKeys(JSContext *cx, JS::HandleObject obj, unsigned flags, JS::AutoIdVector *props);
 
 JS_FRIEND_API(bool)
 AppendUnique(JSContext *cx, JS::AutoIdVector &base, JS::AutoIdVector &others);
@@ -1253,8 +1239,6 @@ const void *GetDOMProxyHandlerFamily();
 uint32_t GetDOMProxyExpandoSlot();
 DOMProxyShadowsCheck GetDOMProxyShadowsCheck();
 
-} /* namespace js */
-
 /* Implemented in jsdate.cpp. */
 
 /*
@@ -1262,10 +1246,12 @@ DOMProxyShadowsCheck GetDOMProxyShadowsCheck();
  * out-of-band for js_DateGet*)
  */
 extern JS_FRIEND_API(bool)
-js_DateIsValid(JSObject* obj);
+DateIsValid(JSContext *cx, JSObject* obj);
 
 extern JS_FRIEND_API(double)
-js_DateGetMsecSinceEpoch(JSObject *obj);
+DateGetMsecSinceEpoch(JSContext *cx, JSObject *obj);
+
+} /* namespace js */
 
 /* Implemented in jscntxt.cpp. */
 
@@ -2576,12 +2562,9 @@ SetObjectMetadata(JSContext *cx, JS::HandleObject obj, JS::HandleObject metadata
 JS_FRIEND_API(JSObject *)
 GetObjectMetadata(JSObject *obj);
 
-JS_FRIEND_API(void)
-UnsafeDefineElement(JSContext *cx, JS::HandleObject obj, uint32_t index, JS::HandleValue value);
-
 JS_FRIEND_API(bool)
-SliceSlowly(JSContext* cx, JS::HandleObject obj, JS::HandleObject receiver,
-            uint32_t begin, uint32_t end, JS::HandleObject result);
+GetElementsWithAdder(JSContext *cx, JS::HandleObject obj, JS::HandleObject receiver,
+                     uint32_t begin, uint32_t end, js::ElementAdder *adder);
 
 JS_FRIEND_API(bool)
 ForwardToNative(JSContext *cx, JSNative native, const JS::CallArgs &args);
@@ -2670,6 +2653,15 @@ typedef long
 extern JS_FRIEND_API(void)
 SetJitExceptionHandler(JitExceptionHandler handler);
 #endif
+
+/*
+ * Get the object underlying the object environment (in the ES
+ * NewObjectEnvironment) sense for a given function.  If the function is not
+ * scripted or does not have an object environment, just returns the function's
+ * parent.
+ */
+extern JS_FRIEND_API(JSObject *)
+GetObjectEnvironmentObjectForFunction(JSFunction *fun);
 
 } /* namespace js */
 

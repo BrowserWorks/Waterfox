@@ -41,11 +41,11 @@ CodeGeneratorX86Shared::CodeGeneratorX86Shared(MIRGenerator *gen, LIRGraph *grap
 bool
 CodeGeneratorX86Shared::generatePrologue()
 {
+    MOZ_ASSERT(masm.framePushed() == 0);
     MOZ_ASSERT(!gen->compilingAsmJS());
 
     // Note that this automatically sets MacroAssembler::framePushed().
     masm.reserveStack(frameSize());
-
     return true;
 }
 
@@ -346,14 +346,29 @@ CodeGeneratorX86Shared::visitAsmJSPassStackArg(LAsmJSPassStackArg *ins)
 bool
 CodeGeneratorX86Shared::visitOutOfLineLoadTypedArrayOutOfBounds(OutOfLineLoadTypedArrayOutOfBounds *ool)
 {
-    if (ool->dest().isFloat()) {
-        if (ool->isFloat32Load())
-            masm.loadConstantFloat32(float(GenericNaN()), ool->dest().fpu());
-        else
-            masm.loadConstantDouble(GenericNaN(), ool->dest().fpu());
-    } else {
+    switch (ool->viewType()) {
+      case AsmJSHeapAccess::Float32:
+        masm.loadConstantFloat32(float(GenericNaN()), ool->dest().fpu());
+        break;
+      case AsmJSHeapAccess::Float64:
+        masm.loadConstantDouble(GenericNaN(), ool->dest().fpu());
+        break;
+      case AsmJSHeapAccess::Float32x4:
+        masm.loadConstantFloat32x4(SimdConstant::SplatX4(float(GenericNaN())), ool->dest().fpu());
+        break;
+      case AsmJSHeapAccess::Int32x4:
+        masm.loadConstantInt32x4(SimdConstant::SplatX4(0), ool->dest().fpu());
+        break;
+      case AsmJSHeapAccess::Int8:
+      case AsmJSHeapAccess::Uint8:
+      case AsmJSHeapAccess::Int16:
+      case AsmJSHeapAccess::Uint16:
+      case AsmJSHeapAccess::Int32:
+      case AsmJSHeapAccess::Uint32:
+      case AsmJSHeapAccess::Uint8Clamped:
         Register destReg = ool->dest().gpr();
         masm.mov(ImmWord(0), destReg);
+        break;
     }
     masm.jmp(ool->rejoin());
     return true;
@@ -441,7 +456,7 @@ CodeGeneratorX86Shared::bailout(const T &binder, LSnapshot *snapshot)
     // bailing out from.
     InlineScriptTree *tree = snapshot->mir()->block()->trackedTree();
     OutOfLineBailout *ool = new(alloc()) OutOfLineBailout(snapshot);
-    if (!addOutOfLineCode(ool, BytecodeSite(tree, tree->script()->code())))
+    if (!addOutOfLineCode(ool, new(alloc()) BytecodeSite(tree, tree->script()->code())))
         return false;
 
     binder(masm, ool->entry());
@@ -2209,8 +2224,7 @@ CodeGeneratorX86Shared::visitFloat32x4ToInt32x4(LFloat32x4ToInt32x4 *ins)
 bool
 CodeGeneratorX86Shared::visitSimdValueInt32x4(LSimdValueInt32x4 *ins)
 {
-    MSimdValueX4 *mir = ins->mir();
-    MOZ_ASSERT(mir->type() == MIRType_Int32x4);
+    MOZ_ASSERT(ins->mir()->type() == MIRType_Int32x4);
 
     FloatRegister output = ToFloatRegister(ins->output());
     if (AssemblerX86Shared::HasSSE41()) {
@@ -2235,12 +2249,10 @@ CodeGeneratorX86Shared::visitSimdValueInt32x4(LSimdValueInt32x4 *ins)
 bool
 CodeGeneratorX86Shared::visitSimdValueFloat32x4(LSimdValueFloat32x4 *ins)
 {
-    MSimdValueX4 *mir = ins->mir();
-    MOZ_ASSERT(mir->type() == MIRType_Float32x4);
+    MOZ_ASSERT(ins->mir()->type() == MIRType_Float32x4);
 
-    FloatRegister output = ToFloatRegister(ins->output());
     FloatRegister r0 = ToFloatRegister(ins->getOperand(0));
-    MOZ_ASSERT(r0 == output); // defineReuseInput(0)
+    MOZ_ASSERT(r0 == ToFloatRegister(ins->output())); // defineReuseInput(0)
 
     FloatRegister r1 = ToFloatRegister(ins->getTemp(0));
     FloatRegister r2 = ToFloatRegister(ins->getOperand(2));
@@ -2291,6 +2303,8 @@ CodeGeneratorX86Shared::visitSimdExtractElementI(LSimdExtractElementI *ins)
     if (lane == LaneX) {
         // The value we want to extract is in the low double-word
         masm.moveLowInt32(input, output);
+    } else if (AssemblerX86Shared::HasSSE41()) {
+        masm.pextrd(lane, input, output);
     } else {
         uint32_t mask = MacroAssembler::ComputeShuffleMask(lane);
         masm.shuffleInt32(mask, input, ScratchSimdReg);
@@ -2389,8 +2403,282 @@ CodeGeneratorX86Shared::visitSimdSignMaskX4(LSimdSignMaskX4 *ins)
 }
 
 bool
+CodeGeneratorX86Shared::visitSimdSwizzleI(LSimdSwizzleI *ins)
+{
+    FloatRegister input = ToFloatRegister(ins->input());
+    FloatRegister output = ToFloatRegister(ins->output());
+
+    uint32_t x = ins->laneX();
+    uint32_t y = ins->laneY();
+    uint32_t z = ins->laneZ();
+    uint32_t w = ins->laneW();
+
+    uint32_t mask = MacroAssembler::ComputeShuffleMask(x, y, z, w);
+    masm.shuffleInt32(mask, input, output);
+    return true;
+}
+
+bool
+CodeGeneratorX86Shared::visitSimdSwizzleF(LSimdSwizzleF *ins)
+{
+    FloatRegister input = ToFloatRegister(ins->input());
+    FloatRegister output = ToFloatRegister(ins->output());
+
+    uint32_t x = ins->laneX();
+    uint32_t y = ins->laneY();
+    uint32_t z = ins->laneZ();
+    uint32_t w = ins->laneW();
+
+    if (AssemblerX86Shared::HasSSE3()) {
+        if (ins->lanesMatch(0, 0, 2, 2)) {
+            masm.movsldup(input, output);
+            return true;
+        }
+        if (ins->lanesMatch(1, 1, 3, 3)) {
+            masm.movshdup(input, output);
+            return true;
+        }
+    }
+
+    // TODO Here and below, arch specific lowering could identify this pattern
+    // and use defineReuseInput to avoid this move (bug 1084404)
+    if (ins->lanesMatch(2, 3, 2, 3)) {
+        masm.movaps(input, output);
+        masm.movhlps(input, output);
+        return true;
+    }
+
+    if (ins->lanesMatch(0, 1, 0, 1)) {
+        masm.movaps(input, output);
+        masm.movlhps(input, output);
+        return true;
+    }
+
+    if (ins->lanesMatch(0, 0, 1, 1)) {
+        masm.movaps(input, output);
+        masm.unpcklps(input, output);
+        return true;
+    }
+
+    if (ins->lanesMatch(2, 2, 3, 3)) {
+        masm.movaps(input, output);
+        masm.unpckhps(input, output);
+        return true;
+    }
+
+    uint32_t mask = MacroAssembler::ComputeShuffleMask(x, y, z, w);
+    masm.shuffleFloat32(mask, input, output);
+    return true;
+}
+
+bool
+CodeGeneratorX86Shared::visitSimdShuffle(LSimdShuffle *ins)
+{
+    FloatRegister lhs = ToFloatRegister(ins->lhs());
+    FloatRegister rhs = ToFloatRegister(ins->rhs());
+    FloatRegister out = ToFloatRegister(ins->output());
+    MOZ_ASSERT(out == lhs); // define reuse input
+
+    uint32_t x = ins->laneX();
+    uint32_t y = ins->laneY();
+    uint32_t z = ins->laneZ();
+    uint32_t w = ins->laneW();
+
+    // Check that lanes come from LHS in majority:
+    unsigned numLanesFromLHS = (x < 4) + (y < 4) + (z < 4) + (w < 4);
+    MOZ_ASSERT(numLanesFromLHS >= 2);
+
+    // When reading this method, remember that shufps takes the two first
+    // inputs of the destination operand (right operand) and the two last
+    // inputs of the source operand (left operand).
+    //
+    // Legend for explanations:
+    // - L: LHS
+    // - R: RHS
+    // - T: temporary
+
+    uint32_t mask;
+
+    // If all lanes came from a single vector, we should have constructed a
+    // MSimdSwizzle instead.
+    MOZ_ASSERT(numLanesFromLHS < 4);
+
+    // If all values stay in their lane, this is a blend.
+    if (AssemblerX86Shared::HasSSE41()) {
+        if (x % 4 == 0 && y % 4 == 1 && z % 4 == 2 && w % 4 == 3) {
+            masm.blendps(rhs, out, masm.blendpsMask(x >= 4, y >= 4, z >= 4, w >= 4));
+            return true;
+        }
+    }
+
+    // One element of the second, all other elements of the first
+    if (numLanesFromLHS == 3) {
+        unsigned firstMask = -1, secondMask = -1;
+
+        // register-register movss preserves the high lanes.
+        if (ins->lanesMatch(4, 1, 2, 3)) {
+            masm.movss(rhs, out);
+            return true;
+        }
+
+        // SSE4.1 insertps can handle any single element.
+        unsigned numLanesUnchanged = (x == 0) + (y == 1) + (z == 2) + (w == 3);
+        if (AssemblerX86Shared::HasSSE41() && numLanesUnchanged == 3) {
+            SimdLane srcLane;
+            SimdLane dstLane;
+            if (x >= 4) {
+                srcLane = SimdLane(x - 4);
+                dstLane = LaneX;
+            } else if (y >= 4) {
+                srcLane = SimdLane(y - 4);
+                dstLane = LaneY;
+            } else if (z >= 4) {
+                srcLane = SimdLane(z - 4);
+                dstLane = LaneZ;
+            } else {
+                MOZ_ASSERT(w >= 4);
+                srcLane = SimdLane(w - 4);
+                dstLane = LaneW;
+            }
+            masm.insertps(rhs, out, masm.insertpsMask(srcLane, dstLane));
+            return true;
+        }
+
+        FloatRegister rhsCopy = ToFloatRegister(ins->temp());
+
+        if (x < 4 && y < 4) {
+            if (w >= 4) {
+                w %= 4;
+                // T = (Rw Rw Lz Lz) = shufps(firstMask, lhs, rhs)
+                firstMask = MacroAssembler::ComputeShuffleMask(w, w, z, z);
+                // (Lx Ly Lz Rw) = (Lx Ly Tz Tx) = shufps(secondMask, T, lhs)
+                secondMask = MacroAssembler::ComputeShuffleMask(x, y, LaneZ, LaneX);
+            } else {
+                MOZ_ASSERT(z >= 4);
+                z %= 4;
+                // T = (Rz Rz Lw Lw) = shufps(firstMask, lhs, rhs)
+                firstMask = MacroAssembler::ComputeShuffleMask(z, z, w, w);
+                // (Lx Ly Rz Lw) = (Lx Ly Tx Tz) = shufps(secondMask, T, lhs)
+                secondMask = MacroAssembler::ComputeShuffleMask(x, y, LaneX, LaneZ);
+            }
+
+            masm.shufps(firstMask, lhs, rhsCopy);
+            masm.shufps(secondMask, rhsCopy, lhs);
+            return true;
+        }
+
+        MOZ_ASSERT(z < 4 && w < 4);
+
+        if (y >= 4) {
+            y %= 4;
+            // T = (Ry Ry Lx Lx) = shufps(firstMask, lhs, rhs)
+            firstMask = MacroAssembler::ComputeShuffleMask(y, y, x, x);
+            // (Lx Ry Lz Lw) = (Tz Tx Lz Lw) = shufps(secondMask, lhs, T)
+            secondMask = MacroAssembler::ComputeShuffleMask(LaneZ, LaneX, z, w);
+        } else {
+            MOZ_ASSERT(x >= 4);
+            x %= 4;
+            // T = (Rx Rx Ly Ly) = shufps(firstMask, lhs, rhs)
+            firstMask = MacroAssembler::ComputeShuffleMask(x, x, y, y);
+            // (Rx Ly Lz Lw) = (Tx Tz Lz Lw) = shufps(secondMask, lhs, T)
+            secondMask = MacroAssembler::ComputeShuffleMask(LaneX, LaneZ, z, w);
+        }
+
+        masm.shufps(firstMask, lhs, rhsCopy);
+        masm.shufps(secondMask, lhs, rhsCopy);
+        masm.movaps(rhsCopy, out);
+        return true;
+    }
+
+    // Two elements from one vector, two other elements from the other
+    MOZ_ASSERT(numLanesFromLHS == 2);
+
+    // TODO Here and below, symmetric case would be more handy to avoid a move,
+    // but can't be reached because operands would get swapped (bug 1084404).
+    if (ins->lanesMatch(2, 3, 6, 7)) {
+        masm.movaps(rhs, ScratchSimdReg);
+        masm.movhlps(lhs, ScratchSimdReg);
+        masm.movaps(ScratchSimdReg, out);
+        return true;
+    }
+
+    if (ins->lanesMatch(0, 1, 4, 5)) {
+        masm.movlhps(rhs, lhs);
+        return true;
+    }
+
+    if (ins->lanesMatch(0, 4, 1, 5)) {
+        masm.unpcklps(rhs, lhs);
+        return true;
+    }
+
+    // TODO swapped case would be better (bug 1084404)
+    if (ins->lanesMatch(4, 0, 5, 1)) {
+        masm.movaps(rhs, ScratchSimdReg);
+        masm.unpcklps(lhs, ScratchSimdReg);
+        masm.movaps(ScratchSimdReg, out);
+        return true;
+    }
+
+    if (ins->lanesMatch(2, 6, 3, 7)) {
+        masm.unpckhps(rhs, lhs);
+        return true;
+    }
+
+    // TODO swapped case would be better (bug 1084404)
+    if (ins->lanesMatch(6, 2, 7, 3)) {
+        masm.movaps(rhs, ScratchSimdReg);
+        masm.unpckhps(lhs, ScratchSimdReg);
+        masm.movaps(ScratchSimdReg, out);
+        return true;
+    }
+
+    // In one shufps
+    if (x < 4 && y < 4) {
+        mask = MacroAssembler::ComputeShuffleMask(x, y, z % 4, w % 4);
+        masm.shufps(mask, rhs, out);
+        return true;
+    }
+
+    // At creation, we should have explicitly swapped in this case.
+    MOZ_ASSERT(!(z >= 4 && w >= 4));
+
+    // In two shufps, for the most generic case:
+    uint32_t firstMask[4], secondMask[4];
+    unsigned i = 0, j = 2, k = 0;
+
+#define COMPUTE_MASK(lane)       \
+    if (lane >= 4) {             \
+        firstMask[j] = lane % 4; \
+        secondMask[k++] = j++;   \
+    } else {                     \
+        firstMask[i] = lane;     \
+        secondMask[k++] = i++;   \
+    }
+
+    COMPUTE_MASK(x)
+    COMPUTE_MASK(y)
+    COMPUTE_MASK(z)
+    COMPUTE_MASK(w)
+#undef COMPUTE_MASK
+
+    MOZ_ASSERT(i == 2 && j == 4 && k == 4);
+
+    mask = MacroAssembler::ComputeShuffleMask(firstMask[0], firstMask[1],
+                                              firstMask[2], firstMask[3]);
+    masm.shufps(mask, rhs, lhs);
+
+    mask = MacroAssembler::ComputeShuffleMask(secondMask[0], secondMask[1],
+                                              secondMask[2], secondMask[3]);
+    masm.shufps(mask, lhs, lhs);
+    return true;
+}
+
+bool
 CodeGeneratorX86Shared::visitSimdBinaryCompIx4(LSimdBinaryCompIx4 *ins)
 {
+    static const SimdConstant allOnes = SimdConstant::SplatX4(-1);
+
     FloatRegister lhs = ToFloatRegister(ins->lhs());
     Operand rhs = ToOperand(ins->rhs());
     MOZ_ASSERT(ToFloatRegister(ins->output()) == lhs);
@@ -2404,22 +2692,41 @@ CodeGeneratorX86Shared::visitSimdBinaryCompIx4(LSimdBinaryCompIx4 *ins)
         masm.packedEqualInt32x4(rhs, lhs);
         return true;
       case MSimdBinaryComp::lessThan:
-        // scr := rhs
+        // src := rhs
         if (rhs.kind() == Operand::FPREG)
             masm.moveAlignedInt32x4(ToFloatRegister(ins->rhs()), ScratchSimdReg);
         else
             masm.loadAlignedInt32x4(rhs, ScratchSimdReg);
 
-        // scr := scr > lhs (i.e. lhs < rhs)
+        // src := src > lhs (i.e. lhs < rhs)
         // Improve by doing custom lowering (rhs is tied to the output register)
         masm.packedGreaterThanInt32x4(ToOperand(ins->lhs()), ScratchSimdReg);
         masm.moveAlignedInt32x4(ScratchSimdReg, lhs);
         return true;
       case MSimdBinaryComp::notEqual:
+        // Ideally for notEqual, greaterThanOrEqual, and lessThanOrEqual, we
+        // should invert the comparison by, e.g. swapping the arms of a select
+        // if that's what it's used in.
+        masm.loadConstantInt32x4(allOnes, ScratchSimdReg);
+        masm.packedEqualInt32x4(rhs, lhs);
+        masm.bitwiseXorX4(Operand(ScratchSimdReg), lhs);
+        return true;
       case MSimdBinaryComp::greaterThanOrEqual:
+        // src := rhs
+        if (rhs.kind() == Operand::FPREG)
+            masm.moveAlignedInt32x4(ToFloatRegister(ins->rhs()), ScratchSimdReg);
+        else
+            masm.loadAlignedInt32x4(rhs, ScratchSimdReg);
+        masm.packedGreaterThanInt32x4(ToOperand(ins->lhs()), ScratchSimdReg);
+        masm.loadConstantInt32x4(allOnes, lhs);
+        masm.bitwiseXorX4(Operand(ScratchSimdReg), lhs);
+        return true;
       case MSimdBinaryComp::lessThanOrEqual:
-        // These operations are not part of the spec. so are not implemented.
-        break;
+        // lhs <= rhs is equivalent to !(rhs < lhs), which we compute here.
+        masm.loadConstantInt32x4(allOnes, ScratchSimdReg);
+        masm.packedGreaterThanInt32x4(rhs, lhs);
+        masm.bitwiseXorX4(Operand(ScratchSimdReg), lhs);
+        return true;
     }
     MOZ_CRASH("unexpected SIMD op");
 }
@@ -2434,16 +2741,16 @@ CodeGeneratorX86Shared::visitSimdBinaryCompFx4(LSimdBinaryCompFx4 *ins)
     MSimdBinaryComp::Operation op = ins->operation();
     switch (op) {
       case MSimdBinaryComp::equal:
-        masm.cmpps(rhs, lhs, 0x0);
+        masm.cmpeqps(rhs, lhs);
         return true;
       case MSimdBinaryComp::lessThan:
-        masm.cmpps(rhs, lhs, 0x1);
+        masm.cmpltps(rhs, lhs);
         return true;
       case MSimdBinaryComp::lessThanOrEqual:
-        masm.cmpps(rhs, lhs, 0x2);
+        masm.cmpleps(rhs, lhs);
         return true;
       case MSimdBinaryComp::notEqual:
-        masm.cmpps(rhs, lhs, 0x4);
+        masm.cmpneqps(rhs, lhs);
         return true;
       case MSimdBinaryComp::greaterThanOrEqual:
       case MSimdBinaryComp::greaterThan:
@@ -2483,6 +2790,9 @@ CodeGeneratorX86Shared::visitSimdBinaryArithIx4(LSimdBinaryArithIx4 *ins)
         // we can do max with a single instruction only if we have SSE4.1
         // using the PMINSD instruction.
         break;
+      case MSimdBinaryArith::MinNum:
+      case MSimdBinaryArith::MaxNum:
+        break;
     }
     MOZ_CRASH("unexpected SIMD op");
 }
@@ -2508,19 +2818,75 @@ CodeGeneratorX86Shared::visitSimdBinaryArithFx4(LSimdBinaryArithFx4 *ins)
       case MSimdBinaryArith::Div:
         masm.packedDivFloat32(rhs, lhs);
         return true;
-      case MSimdBinaryArith::Max:
-        // TODO: standardization of float32x4.min/max needs to define the
-        // semantics for particular values: if both input operands are -0 or 0,
-        // or one operand is NaN, the return value will be the "second operand"
-        // in the instruction.
-        // See also bug 1068028, which is about fixing semantics once the
-        // specification is stable.
+      case MSimdBinaryArith::Max: {
+        masm.movaps(lhs, ScratchSimdReg);
+        masm.cmpunordps(rhs, ScratchSimdReg);
+
+        FloatRegister tmp = ToFloatRegister(ins->temp());
+        masm.movaps(rhs, tmp);
+        masm.maxps(Operand(lhs), tmp);
         masm.maxps(rhs, lhs);
+
+        masm.andps(tmp, lhs);
+        masm.orps(ScratchSimdReg, lhs); // or in the all-ones NaNs
         return true;
-      case MSimdBinaryArith::Min:
-        // See comment above.
+      }
+      case MSimdBinaryArith::Min: {
+        FloatRegister rhsCopy = ScratchSimdReg;
+        masm.movaps(rhs, rhsCopy);
+        masm.minps(Operand(lhs), rhsCopy);
         masm.minps(rhs, lhs);
+        masm.orps(rhsCopy, lhs); // NaN or'd with arbitrary bits is NaN
         return true;
+      }
+      case MSimdBinaryArith::MinNum: {
+        FloatRegister tmp = ToFloatRegister(ins->temp());
+        masm.loadConstantInt32x4(SimdConstant::SplatX4(int32_t(0x80000000)), ScratchSimdReg);
+        masm.movdqa(ScratchSimdReg, tmp);
+
+        FloatRegister mask = ScratchSimdReg;
+        masm.pcmpeqd(Operand(lhs), mask);
+        masm.andps(tmp, mask);
+
+        masm.movaps(lhs, tmp);
+        masm.minps(rhs, tmp);
+        masm.orps(mask, tmp);
+
+        masm.movaps(rhs, mask);
+        masm.cmpneqps(Operand(mask), mask);
+
+        // Emulates blendv
+        masm.andps(Operand(mask), lhs);
+        masm.andnps(Operand(tmp), mask);
+        masm.orps(Operand(mask), lhs);
+        return true;
+      }
+      case MSimdBinaryArith::MaxNum: {
+        FloatRegister mask = ScratchSimdReg;
+        masm.loadConstantInt32x4(SimdConstant::SplatX4(0), mask);
+        masm.pcmpeqd(Operand(lhs), mask);
+
+        FloatRegister tmp = ToFloatRegister(ins->temp());
+        masm.loadConstantInt32x4(SimdConstant::SplatX4(int32_t(0x80000000)), tmp);
+        masm.andps(tmp, mask);
+
+        masm.movaps(lhs, tmp);
+        masm.maxps(rhs, tmp);
+        masm.andnps(Operand(tmp), mask);
+
+        // Ensure tmp always contains the temporary result
+        mask = tmp;
+        tmp = ScratchSimdReg;
+
+        masm.movaps(rhs, mask);
+        masm.cmpneqps(Operand(mask), mask);
+
+        // Emulates blendv
+        masm.andps(Operand(mask), lhs);
+        masm.andnps(Operand(tmp), mask);
+        masm.orps(Operand(mask), lhs);
+        return true;
+      }
     }
     MOZ_CRASH("unexpected SIMD op");
 }
@@ -2619,9 +2985,8 @@ CodeGeneratorX86Shared::visitSimdBinaryBitwiseX4(LSimdBinaryBitwiseX4 *ins)
 bool
 CodeGeneratorX86Shared::visitSimdShift(LSimdShift *ins)
 {
-    FloatRegister vec = ToFloatRegister(ins->vector());
     FloatRegister out = ToFloatRegister(ins->output());
-    MOZ_ASSERT(vec == out); // defineReuseInput(0);
+    MOZ_ASSERT(ToFloatRegister(ins->vector()) == out); // defineReuseInput(0);
 
     // TODO: If the shift count is greater than 31, this will just zero all
     // lanes by default for lsh and ursh, and set the count to 32 for rsh
@@ -2672,8 +3037,6 @@ CodeGeneratorX86Shared::visitSimdSelect(LSimdSelect *ins)
     FloatRegister onFalse = ToFloatRegister(ins->rhs());
 
     MOZ_ASSERT(onTrue == ToFloatRegister(ins->output()));
-    // The onFalse argument is not destroyed but due to limitations of the
-    // register allocator its life ends at the start of the operation.
     masm.bitwiseAndX4(Operand(mask), onTrue);
     masm.bitwiseAndNotX4(Operand(onFalse), mask);
     masm.bitwiseOrX4(Operand(mask), onTrue);
@@ -2850,6 +3213,14 @@ JitRuntime::generateForkJoinGetSliceStub(JSContext *cx)
 #endif
 
     return code;
+}
+
+bool
+CodeGeneratorX86Shared::visitMemoryBarrier(LMemoryBarrier *ins)
+{
+    if (ins->type() & MembarStoreLoad)
+        masm.storeLoadFence();
+    return true;
 }
 
 } // namespace jit

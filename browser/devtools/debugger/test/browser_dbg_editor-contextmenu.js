@@ -8,12 +8,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  let gTab, gDebuggee, gPanel, gDebugger;
+  let gTab, gPanel, gDebugger;
   let gEditor, gSources, gContextMenu;
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -21,7 +20,7 @@ function test() {
     gContextMenu = gDebugger.document.getElementById("sourceEditorContextMenu");
 
     waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1).then(performTest).then(null, info);
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 
   function performTest() {
@@ -29,7 +28,7 @@ function test() {
       "Should only be getting stack frames while paused.");
     is(gSources.itemCount, 2,
       "Found the expected number of sources.");
-    is(gEditor.getText().indexOf("debugger"), 172,
+    is(gEditor.getText().indexOf("debugger"), 166,
       "The correct source was loaded initially.");
     is(gSources.selectedValue, gSources.values[1],
       "The correct source is selected.");

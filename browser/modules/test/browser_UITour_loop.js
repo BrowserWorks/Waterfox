@@ -11,15 +11,93 @@ let loopPanel = document.getElementById("loop-notification-panel");
 
 Components.utils.import("resource:///modules/UITour.jsm");
 const { LoopRooms } = Components.utils.import("resource:///modules/loop/LoopRooms.jsm", {});
+const { MozLoopServiceInternal } = Cu.import("resource:///modules/loop/MozLoopService.jsm", {});
 
 function test() {
   UITourTest();
 }
 
 let tests = [
-  taskify(function* test_menu_show_hide() {
+  taskify(function* test_gettingStartedClicked_linkOpenedWithExpectedParams() {
+    Services.prefs.setBoolPref("loop.gettingStarted.seen", false);
+    Services.prefs.setCharPref("loop.gettingStarted.url", "http://example.com");
     ise(loopButton.open, false, "Menu should initially be closed");
-    yield gContentAPI.showMenu("loop");
+    loopButton.click();
+
+    yield waitForConditionPromise(() => {
+      return loopButton.open;
+    }, "Menu should be visible after showMenu()");
+
+    gContentAPI.registerPageID("hello-tour_OpenPanel_testPage");
+    yield new Promise(resolve => {
+      gContentAPI.ping(() => resolve());
+    });
+
+    let loopDoc = document.getElementById("loop-notification-panel").children[0].contentDocument;
+    let gettingStartedButton = loopDoc.getElementById("fte-button");
+    ok(gettingStartedButton, "Getting Started button should be found");
+
+    let newTabPromise = waitForConditionPromise(() => {
+      return gBrowser.currentURI.path.contains("utm_source=firefox-browser");
+    }, "New tab with utm_content=testPageNewID should have opened");
+
+    gettingStartedButton.click();
+    yield newTabPromise;
+    ok(gBrowser.currentURI.path.contains("utm_content=hello-tour_OpenPanel_testPage"),
+        "Expected URL opened (" + gBrowser.currentURI.path + ")");
+    yield gBrowser.removeCurrentTab();
+
+    checkLoopPanelIsHidden();
+  }),
+  taskify(function* test_gettingStartedClicked_linkOpenedWithExpectedParams2() {
+    Services.prefs.setBoolPref("loop.gettingStarted.seen", false);
+    // Force a refresh of the loop panel since going from seen -> unseen doesn't trigger
+    // automatic re-rendering.
+    let loopWin = document.getElementById("loop-notification-panel").children[0].contentWindow;
+    var event = new loopWin.CustomEvent("GettingStartedSeen");
+    loopWin.dispatchEvent(event);
+
+    UITour.pageIDsForSession.clear();
+    Services.prefs.setCharPref("loop.gettingStarted.url", "http://example.com");
+    ise(loopButton.open, false, "Menu should initially be closed");
+    loopButton.click();
+
+    yield waitForConditionPromise(() => {
+      return loopButton.open;
+    }, "Menu should be visible after showMenu()");
+
+
+    gContentAPI.registerPageID("hello-tour_OpenPanel_testPageOldId");
+    yield new Promise(resolve => {
+      gContentAPI.ping(() => resolve());
+    });
+    // Set the time of the page ID to 10 hours earlier, so that it is considered "expired".
+    UITour.pageIDsForSession.set("hello-tour_OpenPanel_testPageOldId",
+                                   {lastSeen: Date.now() - (10 * 60 * 60 * 1000)});
+
+    let loopDoc = loopWin.document;
+    let gettingStartedButton = loopDoc.getElementById("fte-button");
+    ok(gettingStartedButton, "Getting Started button should be found");
+
+    let newTabPromise = waitForConditionPromise(() => {
+      Services.console.logStringMessage(gBrowser.currentURI.path);
+      return gBrowser.currentURI.path.contains("utm_source=firefox-browser");
+    }, "New tab with utm_content=testPageNewID should have opened");
+
+    gettingStartedButton.click();
+    yield newTabPromise;
+    ok(!gBrowser.currentURI.path.contains("utm_content=hello-tour_OpenPanel_testPageOldId"),
+       "Expected URL opened without the utm_content parameter (" +
+        gBrowser.currentURI.path + ")");
+    yield gBrowser.removeCurrentTab();
+
+    checkLoopPanelIsHidden();
+  }),
+  taskify(function* test_menu_show_hide() {
+    // The targets to highlight only appear after getting started is launched.
+    Services.prefs.setBoolPref("loop.gettingStarted.seen", true);
+    ise(loopButton.open, false, "Menu should initially be closed");
+    gContentAPI.showMenu("loop");
 
     yield waitForConditionPromise(() => {
       return loopButton.open;
@@ -39,7 +117,7 @@ let tests = [
   }),
   // Test the menu was cleaned up in teardown.
   taskify(function* setup_menu_cleanup() {
-    yield gContentAPI.showMenu("loop");
+    gContentAPI.showMenu("loop");
 
     yield waitForConditionPromise(() => {
       return loopButton.open;
@@ -52,13 +130,20 @@ let tests = [
     checkLoopPanelIsHidden();
   }),
   function test_availableTargets(done) {
-    gContentAPI.showMenu("loop", () => {
-      gContentAPI.getConfiguration("availableTargets", (data) => {
-        for (let targetName of ["loop-newRoom", "loop-roomList", "loop-signInUpLink"]) {
-          isnot(data.targets.indexOf(targetName), -1, targetName + " should exist");
-        }
-        done();
-      });
+    gContentAPI.showMenu("loop");
+    gContentAPI.getConfiguration("availableTargets", (data) => {
+      for (let targetName of ["loop-newRoom", "loop-roomList", "loop-signInUpLink"]) {
+        isnot(data.targets.indexOf(targetName), -1, targetName + " should exist");
+      }
+      done();
+    });
+  },
+  function test_getConfigurationLoop(done) {
+    let gettingStartedSeen = Services.prefs.getBoolPref("loop.gettingStarted.seen");
+    gContentAPI.getConfiguration("loop", (data) => {
+      is(data.gettingStartedSeen, gettingStartedSeen,
+         "The configuration property should equal that of the pref");
+      done();
     });
   },
   function test_hideMenuHidesAnnotations(done) {
@@ -87,6 +172,53 @@ let tests = [
       });
     });
   },
+  taskify(function* test_panelTabChangeNotifications() {
+    // First make sure the Loop panel looks like we're logged in to have more than
+    // just one tab to switch to.
+    const fxASampleToken = {
+      token_type: "bearer",
+      access_token: "1bad3e44b12f77a88fe09f016f6a37c42e40f974bc7a8b432bb0d2f0e37e1752",
+      scope: "profile"
+    };
+    const fxASampleProfile = {
+      email: "test@example.com",
+      uid: "abcd1234"
+    };
+    MozLoopServiceInternal.fxAOAuthTokenData = fxASampleToken;
+    MozLoopServiceInternal.fxAOAuthProfile = fxASampleProfile;
+    yield MozLoopServiceInternal.notifyStatusChanged("login");
+
+    // Show the Loop menu.
+    yield showMenuPromise("loop");
+
+    // Listen for and test the notifications that will arrive from now on.
+    let tabChangePromise = new Promise(resolve => {
+      gContentAPI.observe((event, params) => {
+        is(event, "Loop:PanelTabChanged", "Check Loop:PanelTabChanged notification");
+        is(params, "contacts", "Check the tab name param");
+
+        gContentAPI.observe((event, params) => {
+          is(event, "Loop:PanelTabChanged", "Check Loop:PanelTabChanged notification");
+          is(params, "rooms", "Check the tab name param");
+
+          gContentAPI.observe((event, params) => {
+            ok(false, "No more notifications should have arrived");
+          });
+          resolve();
+        });
+      });
+    });
+
+    // Switch to the contacts tab.
+    yield window.LoopUI.openCallPanel(null, "contacts");
+
+    // Logout. The panel tab will switch back to 'rooms'.
+    MozLoopServiceInternal.fxAOAuthTokenData =
+      MozLoopServiceInternal.fxAOAuthProfile = null;
+    yield MozLoopServiceInternal.notifyStatusChanged();
+
+    yield tabChangePromise;
+  }),
   function test_notifyLoopChatWindowOpenedClosed(done) {
     gContentAPI.observe((event, params) => {
       is(event, "Loop:ChatWindowOpened", "Check Loop:ChatWindowOpened notification");
@@ -97,11 +229,10 @@ let tests = [
           gContentAPI.observe((event, params) => {
             ok(false, "No more notifications should have arrived");
           });
-          done();
         });
-        executeSoon(() => document.querySelector("#pinnedchats > chatbox").close());
+        done();
       });
-
+      document.querySelector("#pinnedchats > chatbox").close();
     });
     LoopRooms.open("fakeTourRoom");
   },
@@ -120,7 +251,7 @@ let tests = [
           chat.close();
           done();
         });
-        executeSoon(() => chat.content.contentDocument.querySelector(".btn-copy").click());
+        chat.content.contentDocument.querySelector(".btn-copy").click();
       });
     });
     setupFakeRoom();
@@ -152,7 +283,7 @@ let tests = [
           composeEmailCalled = true;
           chatWin.navigator.wrappedJSObject.mozLoop.composeEmail = oldComposeEmail;
         };
-        executeSoon(() => chatWin.document.querySelector(".btn-email").click());
+        chatWin.document.querySelector(".btn-email").click();
       });
     });
     LoopRooms.open("fakeTourRoom");
@@ -216,20 +347,20 @@ let tests = [
   taskify(function* test_resumeViaMenuPanel_roomClosedTabClosed() {
     Services.prefs.setBoolPref("loop.gettingStarted.resumeOnFirstJoin", true);
 
-    info("Create a fake room and then add a fake non-owner participant");
+    // Create a fake room and then add a fake non-owner participant
     let roomsMap = setupFakeRoom();
     roomsMap.get("fakeTourRoom").participants = [{
       owner: false,
     }];
 
-    info("Set the tour URL to a page that's not open yet");
+    // Set the tour URL to a page that's not open yet
     Services.prefs.setCharPref("loop.gettingStarted.url", gBrowser.currentURI.prePath);
 
     let newTabPromise = waitForConditionPromise(() => {
       return gBrowser.currentURI.path.contains("incomingConversation=waiting");
     }, "New tab with incomingConversation=waiting should have opened");
 
-    info("Now open the menu while that non-owner is in the fake room to trigger resuming the tour");
+    // Now open the menu while that non-owner is in the fake room to trigger resuming the tour
     yield showMenuPromise("loop");
 
     yield newTabPromise;
@@ -261,8 +392,6 @@ function setupFakeRoom() {
 
 if (Services.prefs.getBoolPref("loop.enabled")) {
   loopButton = window.LoopUI.toolbarButton.node;
-  // The targets to highlight only appear after getting started is launched.
-  Services.prefs.setBoolPref("loop.gettingStarted.seen", true);
 
   registerCleanupFunction(() => {
     Services.prefs.clearUserPref("loop.gettingStarted.resumeOnFirstJoin");

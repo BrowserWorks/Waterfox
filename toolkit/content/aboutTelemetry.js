@@ -122,8 +122,8 @@ let GeneralData = {
     table.appendChild(caption);
 
     let headings = document.createElement("tr");
-    this.appendColumn(headings, "th", "Name");
-    this.appendColumn(headings, "th", "Value");
+    this.appendColumn(headings, "th", bundle.GetStringFromName("generalDataHeadingName") + "\t");
+    this.appendColumn(headings, "th", bundle.GetStringFromName("generalDataHeadingValue") + "\t");
     table.appendChild(headings);
 
     let row = document.createElement("tr");

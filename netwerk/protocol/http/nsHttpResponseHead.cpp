@@ -192,6 +192,12 @@ nsHttpResponseHead::AssignDefaultStatusText()
     case 206:
         mStatusText.AssignLiteral("Partial Content");
         break;
+    case 207:
+        mStatusText.AssignLiteral("Multi-Status");
+        break;
+    case 208:
+        mStatusText.AssignLiteral("Already Reported");
+        break;
     case 300:
         mStatusText.AssignLiteral("Multiple Choices");
         break;
@@ -372,6 +378,11 @@ nsHttpResponseHead::ComputeCurrentAge(uint32_t now,
 
     *result = 0;
 
+    if (requestTime > now) {
+        // for calculation purposes lets not allow the request to happen in the future
+        requestTime = now;
+    }
+
     if (NS_FAILED(GetDateValue(&dateValue))) {
         LOG(("nsHttpResponseHead::ComputeCurrentAge [this=%p] "
              "Date response header not set!\n", this));
@@ -387,8 +398,6 @@ nsHttpResponseHead::ComputeCurrentAge(uint32_t now,
     // Compute corrected received age
     if (NS_SUCCEEDED(GetAgeValue(&ageValue)))
         *result = std::max(*result, ageValue);
-
-    MOZ_ASSERT(now >= requestTime, "bogus request time");
 
     // Compute current age
     *result += (now - requestTime);

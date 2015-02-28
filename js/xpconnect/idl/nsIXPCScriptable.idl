@@ -31,7 +31,7 @@ interface nsIXPConnectWrappedNative;
  * boolean to PR_TRUE before making the call.  Implementations may skip writing
  * to *_retval unless they want to return PR_FALSE.
  */
-[uuid(d945a647-a60e-462d-9635-c79d5fa694ce)]
+[uuid(e7dee706-1286-4a22-954b-f0d8a9821bc9)]
 interface nsIXPCScriptable : nsISupports
 {
     /* bitflags used for 'flags' (only 32 bits available!) */
@@ -45,7 +45,7 @@ interface nsIXPCScriptable : nsISupports
     const uint32_t WANT_SETPROPERTY                 = 1 <<  6;
     const uint32_t WANT_ENUMERATE                   = 1 <<  7;
     const uint32_t WANT_NEWENUMERATE                = 1 <<  8;
-    const uint32_t WANT_NEWRESOLVE                  = 1 <<  9;
+    const uint32_t WANT_RESOLVE                     = 1 <<  9;
     const uint32_t WANT_CONVERT                     = 1 << 10;
     const uint32_t WANT_FINALIZE                    = 1 << 11;
     // unused bit here!
@@ -115,9 +115,9 @@ interface nsIXPCScriptable : nsISupports
                         in JSContextPtr cx, in JSObjectPtr obj,
                         in uint32_t enum_op, in JSValPtr statep, out jsid idp);
 
-    boolean newResolve(in nsIXPConnectWrappedNative wrapper,
-                      in JSContextPtr cx, in JSObjectPtr obj, in jsid id,
-                      out JSObjectPtr objp);
+    boolean resolve(in nsIXPConnectWrappedNative wrapper,
+                    in JSContextPtr cx, in JSObjectPtr obj, in jsid id,
+                    out boolean resolvedp);
 
     boolean convert(in nsIXPConnectWrappedNative wrapper,
                    in JSContextPtr cx, in JSObjectPtr obj,
@@ -146,8 +146,8 @@ interface nsIXPCScriptable : nsISupports
 #include "nsAutoPtr.h"
 
 #define NS_XPCCLASSINFO_IID \
-{ 0x9a5b0342, 0x0f70, 0x4d31, \
- { 0xb7, 0xd7, 0x29, 0x68, 0xa5, 0x70, 0x4b, 0xd8 } }
+{ 0x43b67f01, 0xd4ce, 0x4b82, \
+ { 0xb3, 0xf8, 0xeb, 0xf2, 0x13, 0x60, 0xfb, 0x7e } }
 
 class NS_NO_VTABLE nsXPCClassInfo : public nsIClassInfo,
                                     public nsIXPCScriptable
@@ -159,8 +159,6 @@ public:
   NS_IMETHOD_(MozExternalRefCountType) Release() = 0;
 
   virtual void PreserveWrapper(nsISupports *aNative) = 0;
-
-  virtual uint32_t GetInterfacesBitmap() = 0;
 };
 
 NS_DEFINE_STATIC_IID_ACCESSOR(nsXPCClassInfo, NS_XPCCLASSINFO_IID)

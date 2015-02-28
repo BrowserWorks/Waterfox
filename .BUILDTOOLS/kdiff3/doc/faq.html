@@ -1,0 +1,131 @@
+<html><head><title>Chapter 5. Questions and Answers</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="index.html" title="The KDiff3 Handbook"><link rel="prev" href="kpart.html" title="Using KDiff3 as a KPart"><link rel="next" href="credits.html" title="Chapter 6. Credits and License"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Questions and Answers</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="kpart.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="credits.html">Next</a></div><div class="navCenter"> </div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="faq"></a>Chapter 5. Questions and Answers</h2></div></div></div><p>This document may have been updated since your installation.
+You can find the latest version at <a href="http://docs.kde.org/" target="_top">http://docs.kde.org/</a>.</p><div class="qandaset"><dl><dt>5.1. <a href="faq.html#id2543976">
+   Why is it called "KDiff3"?
+</a></dt><dt>5.2. <a href="faq.html#id2543822">
+   Why did I release it under GPL?
+</a></dt><dt>5.3. <a href="faq.html#id2543836">
+   Some buttons and functions are missing. What's wrong?
+</a></dt><dt>5.4. <a href="faq.html#id2543852">
+   Often lines that are similar but not identical appear next to each other
+   but sometimes not. Why?
+</a></dt><dt>5.5. <a href="faq.html#id2543877">
+   Why must all conflicts be solved before the merge result can be saved?
+</a></dt><dt>5.6. <a href="faq.html#id2543896">
+   How can I synchronise the diff and merge views, so that all views show the same text position?
+</a></dt><dt>5.7. <a href="faq.html#id2543916">
+   Why does the editor in the merge result window not have an "undo"-function?
+</a></dt><dt>5.8. <a href="faq.html#id2543932">
+   When I removed some text, then suddenly "&lt;No src line&gt;" appeared
+   and cannot be deleted. What does that mean and how can one remove this?
+</a></dt><dt>5.9. <a href="faq.html#id2543352">
+   Why doesn't KDiff3 support syntax-highlighting?
+</a></dt><dt>5.10. <a href="faq.html#id2543373">
+   Can I use KDiff3 to compare OpenOffice.Org, Word, Excel, PDF-, etc. files?
+</a></dt><dt>5.11. <a href="faq.html#id2543445">
+   Where has the the directory option "List only deltas" gone?
+</a></dt><dt>5.12. <a href="faq.html#id2543464">
+   How can I make a big selection in the diff input window
+   because scrolling takes so long?
+</a></dt><dt>5.13. <a href="faq.html#id2543486">
+   There is so much information here, but your question is still not answered?
+</a></dt></dl><table border="0" summary="Q and A Set"><col align="left" width="1%"><tbody><tr class="question"><td align="left" valign="top"><a name="id2543976"></a><a name="id2543978"></a><b>5.1.</b></td><td align="left" valign="top"><p>
+   Why is it called "<span class="application">KDiff3</span>"?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   Tools named "KDiff" and "KDiff2" (now called "Kompare") already exist. Also "KDiff3" should suggest
+   that it can merge like the "diff3"-tool in the Diff-Tool collection.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543822"></a><a name="id2543823"></a><b>5.2.</b></td><td align="left" valign="top"><p>
+   Why did I release it under GPL?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   I'm using GPL programs for a very long time now and learned very much
+   by  having a look at many of the sources. Hence this is my "Thank You"
+   to   all  programmers that also did so or will do the same.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543836"></a><a name="id2543837"></a><b>5.3.</b></td><td align="left" valign="top"><p>
+   Some buttons and functions are missing. What's wrong?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   You compiled from source but you probably didn't specify the correct KDE-prefix
+   with configure. By default configure wants to install in /usr/local but then KDE can't
+   find the user-interface ressource file (i.e. kdiff3ui.rc). The README-file contains
+   more information about the correct prefix.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543852"></a><a name="id2543853"></a><b>5.4.</b></td><td align="left" valign="top"><p>
+   Often lines that are similar but not identical appear next to each other
+   but sometimes not. Why?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   Lines where only the amount of white space characters is different
+   are   treated as "equal" at first, while just one different non-white character
+   causes the lines to be "different". If similar lines appear next to each
+   other, this actually is coincidence but this fortunately is often the case.
+   See also <a href="interpretinginformation.html#manualdiffhelp" title="Manually Aligning Lines">Manual Diff Help</a>.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543877"></a><a name="id2543878"></a><b>5.5.</b></td><td align="left" valign="top"><p>
+   Why must all conflicts be solved before the merge result can be saved?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   For each equal or different section the editor in the merge result
+   window    remembers where it begins or ends. This is needed so that conflicts
+   can  be solved manually by simply selecting the source button (A, B or C).
+   This  information is lost while saving as text and it is too much effort to
+   create  a special file format that supports saving and restoring all necessary
+   information.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543896"></a><a name="id2543897"></a><b>5.6.</b></td><td align="left" valign="top"><p>
+   How can I synchronise the diff and merge views, so that all views show the same text position?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+  Click into the summary column left of the text. (<a href="merging.html#synchronise_views" title="Setting The Current Group And Synchronising Merge And Diff View Position">See also here.</a>)
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543916"></a><a name="id2543918"></a><b>5.7.</b></td><td align="left" valign="top"><p>
+   Why does the editor in the merge result window not have an "undo"-function?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+  This was too much effort until now. You can always
+  restore a version from one source (A, B or C) by clicking the respective
+  button. For big editing the use of another editor is recommended anyway.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543932"></a><a name="id2543933"></a><b>5.8.</b></td><td align="left" valign="top"><p>
+   When I removed some text, then suddenly "&lt;No src line&gt;" appeared
+   and cannot be deleted. What does that mean and how can one remove this?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   For each equal or different section the editor in the merge result
+   window    remembers where it begins or ends. "&lt;No src line&gt;" means
+   that    there is nothing left in a section, not even a new line character.
+   This  can happen either while merging automatically or by editing. This is
+   no problem,   since this hint won't appear in the saved file. If you want
+   the orignal source  back just select the section (click on the left summary
+   column) and then click the source button with the needed contents (A/B or
+   C).
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543352"></a><a name="id2543353"></a><b>5.9.</b></td><td align="left" valign="top"><p>
+   Why doesn't <span class="application">KDiff3</span> support syntax-highlighting?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   <span class="application">KDiff3</span> already uses many colors for difference highlighting. More
+   highlighting    would be confusing. Use another editor for this.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543373"></a><a name="id2543374"></a><b>5.10.</b></td><td align="left" valign="top"><p>
+   Can I use <span class="application">KDiff3</span> to compare OpenOffice.Org, Word, Excel, PDF-, <span class="abbrev">etc.</span> files?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   Although <span class="application">KDiff3</span> will analyse any kind of file the result will probably
+   not be very satisfactory for you.
+</p><p>
+   <span class="application">KDiff3</span> was made to compare pure text files. OpenOffice, Word, Excel etc.
+   store much more information in the files (about fonts, pictures, pages,
+   colors etc.) which <span class="application">KDiff3</span> doesn't know about. So <span class="application">KDiff3</span> will 
+   show you the contents of the file interpreted as pure text, but 
+   this might be unreadable or at least it will look very odd.
+</p><p>
+   Since most programs nowadays store their contents in XML-format, you might 
+   be able to read it as pure text. So if the change was only small,
+   <span class="application">KDiff3</span> still might help you.
+</p><p>
+   The best solution if you only want to compare the text (without embedded 
+   objects like pictures) is to use "Select All" and "Copy" in your program 
+   to copy the interesting text to the clipoard and then in <span class="application">KDiff3</span> paste the 
+   text into either diff input window. 
+   (See also <a href="selections.html" title="Select, Copy And Paste">Select, Copy And Paste</a>.)
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543445"></a><a name="id2543446"></a><b>5.11.</b></td><td align="left" valign="top"><p>
+   Where has the the directory option "List only deltas" gone?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   There are now several <a href="dirmergevisible.html#selectingvisiblefiles" title="Selecting Listed Files">"Show"-options</a> in the directory menu.
+   Disabling "Show identical files" will achieve what enabling "List only deltas" used to do.
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543464"></a><a name="id2543465"></a><b>5.12.</b></td><td align="left" valign="top"><p>
+   How can I make a big selection in the diff input window
+   because scrolling takes so long?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   Start the selection as usual (click and hold the left mouse button). 
+   Then use the navigation keys (e.g. page up, page down) while holding the left mouse button down.
+   (See also <a href="selections.html" title="Select, Copy And Paste">Select, Copy And Paste</a>.)
+</p></td></tr><tr class="question"><td align="left" valign="top"><a name="id2543486"></a><a name="id2543488"></a><b>5.13.</b></td><td align="left" valign="top"><p>
+   There is so much information here, but your question is still not answered?
+</p></td></tr><tr class="answer"><td align="left" valign="top"><b></b></td><td align="left" valign="top"><p>
+   Please send me your question. I appreciate every comment.
+</p></td></tr></tbody></table></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="kpart.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="credits.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Using <span class="application">KDiff3</span> as a KPart </div><div class="navRight"> Credits and License</div><div class="navCenter"><a accesskey="u" href="index.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

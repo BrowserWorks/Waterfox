@@ -5,6 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 EXPORTS += [
+    'ContextStateTracker.h',
     'DrawMode.h',
     'gfx2DGlue.h',
     'gfx3DMatrix.h',
@@ -48,6 +49,7 @@ EXPORTS += [
     'gfxTypes.h',
     'gfxUserFontSet.h',
     'gfxUtils.h',
+    'gfxVR.h',
     'GraphicsFilter.h',
     'RoundedRect.h',
 ]
@@ -196,6 +198,7 @@ if CONFIG['INTEL_ARCHITECTURE']:
     SOURCES['gfxAlphaRecoverySSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
 
 SOURCES += [
+    'ContextStateTracker.cpp',
     # Includes mac system header conflicting with point/size,
     # and includes glxXlibSurface.h which drags in Xrender.h
     'gfxASurface.cpp',
@@ -241,6 +244,7 @@ UNIFIED_SOURCES += [
     'gfxTextRun.cpp',
     'gfxUserFontSet.cpp',
     'gfxUtils.cpp',
+    'gfxVR.cpp',
     'nsUnicodeRange.cpp',
 ]
 
@@ -291,5 +295,5 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] in ('gtk2', 'gtk3', 'qt'):
 
 DEFINES['GRAPHITE2_STATIC'] = True
 
-if CONFIG['OS_TARGET'] == 'WINNT':
+if CONFIG['GKMEDIAS_SHARED_LIBRARY']:
     DEFINES['OTS_DLL'] = True

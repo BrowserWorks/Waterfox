@@ -92,6 +92,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
             </div>
           );
         }
+        case ROOM_STATES.JOINING:
         case ROOM_STATES.JOINED:
         case ROOM_STATES.SESSION_CONNECTED: {
           return (
@@ -113,14 +114,20 @@ loop.standaloneRoomViews = (function(mozL10n) {
           );
         }
         case ROOM_STATES.ENDED: {
-          return (
-            <div className="ended-conversation">
-              <sharedViews.FeedbackView
-                feedbackStore={this.props.feedbackStore}
-                onAfterFeedbackReceived={this.onFeedbackSent}
-              />
-            </div>
-          );
+          if (this.props.roomUsed)
+            return (
+              <div className="ended-conversation">
+                <sharedViews.FeedbackView
+                  feedbackStore={this.props.feedbackStore}
+                  onAfterFeedbackReceived={this.onFeedbackSent}
+                />
+              </div>
+            );
+
+          // In case the room was not used (no one was here), we
+          // bypass the feedback form.
+          this.onFeedbackSent();
+          return null;
         }
         case ROOM_STATES.FAILED: {
           return (
@@ -242,7 +249,6 @@ loop.standaloneRoomViews = (function(mozL10n) {
         publishVideo: true,
         style: {
           audioLevelDisplayMode: "off",
-          bugDisplayMode: "off",
           buttonDisplayMode: "off",
           nameDisplayMode: "off",
           videoDisabledDisplayMode: "off"
@@ -284,7 +290,7 @@ loop.standaloneRoomViews = (function(mozL10n) {
     },
 
     /**
-     * Watches for when we transition to JOINED room state, so we can request
+     * Watches for when we transition to MEDIA_WAIT room state, so we can request
      * user media access.
      *
      * @param  {Object} nextProps (Unused)
@@ -358,7 +364,8 @@ loop.standaloneRoomViews = (function(mozL10n) {
                                   joinRoom={this.joinRoom}
                                   helper={this.props.helper}
                                   activeRoomStore={this.props.activeRoomStore}
-                                  feedbackStore={this.props.feedbackStore} />
+                                  feedbackStore={this.props.feedbackStore}
+                                  roomUsed={this.state.used} />
           <div className="video-layout-wrapper">
             <div className="conversation room-conversation">
               <h2 className="room-name">{this.state.roomName}</h2>

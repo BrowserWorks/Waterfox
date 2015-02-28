@@ -7,20 +7,19 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_recursion-stack.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gFrames, gClassicFrames;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gFrames = gDebugger.DebuggerView.StackFrames;
     gClassicFrames = gDebugger.DebuggerView.StackFramesClassicList;
 
     waitForSourceAndCaretAndScopes(gPanel, ".html", 1).then(performTest);
-    gDebuggee.evalCall();
+    callInTab(gTab, "evalCall");
   });
 }
 
@@ -42,7 +41,7 @@ function performTest() {
   is(gFrames.getItemAtIndex(1).attachment.title,
     "(eval)", "Newest frame name should be correct.");
   is(gFrames.getItemAtIndex(1).attachment.url,
-    TAB_URL, "Newest frame url should be correct.");
+     TAB_URL, "Newest frame url should be correct.");
   is(gClassicFrames.getItemAtIndex(1).attachment.depth,
     1, "Newest frame name is mirrored correctly.");
 
@@ -103,7 +102,6 @@ function performTest() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gFrames = null;

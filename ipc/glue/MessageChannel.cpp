@@ -583,6 +583,19 @@ MessageChannel::ShouldDeferMessage(const Message& aMsg)
     return mSide == ParentSide && aMsg.transaction_id() != mCurrentTransaction;
 }
 
+// Predicate that is true for messages that should be consolidated if 'compress' is set.
+class MatchingKinds {
+    typedef IPC::Message Message;
+    Message::msgid_t mType;
+    int32_t mRoutingId;
+public:
+    MatchingKinds(Message::msgid_t aType, int32_t aRoutingId) :
+        mType(aType), mRoutingId(aRoutingId) {}
+    bool operator()(const Message &msg) {
+        return msg.type() == mType && msg.routing_id() == mRoutingId;
+    }
+};
+
 void
 MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
 {
@@ -604,15 +617,22 @@ MessageChannel::OnMessageReceivedFromLink(const Message& aMsg)
     // Prioritized messages cannot be compressed.
     MOZ_ASSERT(!aMsg.compress() || aMsg.priority() == IPC::Message::PRIORITY_NORMAL);
 
-    bool compress = (aMsg.compress() && !mPending.empty() &&
-                     mPending.back().type() == aMsg.type() &&
-                     mPending.back().routing_id() == aMsg.routing_id());
+    bool compress = (aMsg.compress() && !mPending.empty());
     if (compress) {
-        // This message type has compression enabled, and the back of the
-        // queue was the same message type and routed to the same destination.
-        // Replace it with the newer message.
-        MOZ_ASSERT(mPending.back().compress());
-        mPending.pop_back();
+        // Check the message queue for another message with this type/destination.
+        auto it = std::find_if(mPending.rbegin(), mPending.rend(),
+                               MatchingKinds(aMsg.type(), aMsg.routing_id()));
+        if (it != mPending.rend()) {
+            // This message type has compression enabled, and the queue holds
+            // a message with the same message type and routed to the same destination.
+            // Erase it.  Note that, since we always compress these redundancies, There Can
+            // Be Only One.
+            MOZ_ASSERT((*it).compress());
+            mPending.erase((++it).base());
+        } else {
+            // No other messages with the same type/destination exist.
+            compress = false;
+        }
     }
 
     bool shouldWakeUp = AwaitingInterruptReply() ||
@@ -692,34 +712,6 @@ MessageChannel::Send(Message* aMsg, Message* aReply)
     return true;
 }
 
-struct AutoDeferMessages
-{
-    typedef IPC::Message Message;
-
-    std::deque<Message>& mQueue;
-    mozilla::Vector<Message> mDeferred;
-
-    AutoDeferMessages(std::deque<Message>& queue) : mQueue(queue) {}
-    ~AutoDeferMessages() {
-        if (mDeferred.empty()) {
-            return;
-        }
-
-        // We'd like to use queue.insert, but that copies, and
-        // std::make_move_iterator is not available in stlport.
-        Message dummy;
-        for (size_t i = mDeferred.length(); i != 0; --i) {
-            mQueue.push_front(dummy);
-            Message& first = mQueue.front();
-            first = Move(mDeferred[i-1]);
-        }
-    }
-
-    void Defer(Message&& aMsg) {
-        mDeferred.append(Move(aMsg));
-    }
-};
-
 bool
 MessageChannel::SendAndWait(Message* aMsg, Message* aReply)
 {
@@ -739,16 +731,28 @@ MessageChannel::SendAndWait(Message* aMsg, Message* aReply)
 
     mLink->SendMessage(msg.forget());
 
-    AutoDeferMessages defer(mPending);
-
     while (true) {
-        while (!mPending.empty()) {
-            Message msg = Move(mPending.front());
-            mPending.pop_front();
-            if (ShouldDeferMessage(msg))
-                defer.Defer(Move(msg));
-            else
-                ProcessPendingRequest(msg);
+        // Loop until there aren't any more priority messages to process.
+        for (;;) {
+            mozilla::Vector<Message> toProcess;
+
+            for (MessageQueue::iterator it = mPending.begin(); it != mPending.end(); ) {
+                Message &msg = *it;
+                if (!ShouldDeferMessage(msg)) {
+                    toProcess.append(Move(msg));
+                    it = mPending.erase(it);
+                    continue;
+                }
+                it++;
+            }
+
+            if (toProcess.empty())
+                break;
+
+            // Processing these messages could result in more messages, so we
+            // loop around to check for more afterwards.
+            for (auto it = toProcess.begin(); it != toProcess.end(); it++)
+                ProcessPendingRequest(*it);
         }
 
         // See if we've received a reply.
@@ -871,7 +875,7 @@ MessageChannel::Call(Message* aMsg, Message* aReply)
         // If the message is not Interrupt, we can dispatch it as normal.
         if (!recvd.is_interrupt()) {
             {
-                AutoEnterTransaction transaction(this, &recvd);
+                AutoEnterTransaction transaction(this, recvd);
                 MonitorAutoUnlock unlock(*mMonitor);
                 CxxStackFrame frame(*this, IN_MESSAGE, &recvd);
                 DispatchMessage(recvd);
@@ -959,7 +963,7 @@ MessageChannel::InterruptEventOccurred()
 }
 
 bool
-MessageChannel::ProcessPendingRequest(const Message& aUrgent)
+MessageChannel::ProcessPendingRequest(const Message &aUrgent)
 {
     AssertWorkerThread();
     mMonitor->AssertCurrentThreadOwns();
@@ -977,7 +981,7 @@ MessageChannel::ProcessPendingRequest(const Message& aUrgent)
     {
         // In order to send the parent RPC messages and guarantee it will
         // wake up, we must re-use its transaction.
-        AutoEnterTransaction transaction(this, &aUrgent);
+        AutoEnterTransaction transaction(this, aUrgent);
 
         MonitorAutoUnlock unlock(*mMonitor);
         DispatchMessage(aUrgent);
@@ -1041,7 +1045,7 @@ MessageChannel::OnMaybeDequeueOne()
     {
         // We should not be in a transaction yet if we're not blocked.
         MOZ_ASSERT(mCurrentTransaction == 0);
-        AutoEnterTransaction transaction(this, &recvd);
+        AutoEnterTransaction transaction(this, recvd);
 
         MonitorAutoUnlock unlock(*mMonitor);
 

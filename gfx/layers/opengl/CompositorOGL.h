@@ -6,6 +6,7 @@
 #ifndef MOZILLA_GFX_COMPOSITOROGL_H
 #define MOZILLA_GFX_COMPOSITOROGL_H
 
+#include "ContextStateTracker.h"
 #include "gfx2DGlue.h"
 #include "GLContextTypes.h"             // for GLContext, etc
 #include "GLDefs.h"                     // for GLuint, LOCAL_GL_TEXTURE_2D, etc
@@ -53,7 +54,7 @@ class GLManagerCompositor;
 class TextureSource;
 struct Effect;
 struct EffectChain;
-
+class GLBlitTextureImageHelper;
 /**
  * Interface for pools of temporary gl textures for the compositor.
  * The textures are fully owned by the pool, so the latter is responsible
@@ -254,9 +255,16 @@ public:
   virtual nsIWidget* GetWidget() const MOZ_OVERRIDE { return mWidget; }
 
   GLContext* gl() const { return mGLContext; }
+  /**
+   * Clear the program state. This must be called
+   * before operating on the GLContext directly. */
+  void ResetProgram();
+
   gfx::SurfaceFormat GetFBOFormat() const {
     return gfx::SurfaceFormat::R8G8B8A8;
   }
+
+  GLBlitTextureImageHelper* BlitTextureImageHelper();
 
   /**
    * The compositor provides with temporary textures for use with direct
@@ -279,6 +287,7 @@ private:
   nsIWidget *mWidget;
   nsIntSize mWidgetSize;
   nsRefPtr<GLContext> mGLContext;
+  UniquePtr<GLBlitTextureImageHelper> mBlitTextureImageHelper;
   gfx::Matrix4x4 mProjMatrix;
 
   /** The size of the surface we are rendering to */
@@ -366,6 +375,7 @@ private:
                                       const gfx::Rect& aTexCoordRect,
                                       TextureSource *aTexture);
 
+  void ActivateProgram(ShaderProgramOGL *aProg);
   void CleanupResources();
 
   /**
@@ -387,6 +397,8 @@ private:
 
   RefPtr<CompositorTexturePoolOGL> mTexturePool;
 
+  ContextStateTrackerOGL mContextStateTracker;
+
   bool mDestroyed;
 
   /**
@@ -396,6 +408,7 @@ private:
   GLint mHeight;
 
   FenceHandle mReleaseFenceHandle;
+  ShaderProgramOGL *mCurrentProgram;
 };
 
 }

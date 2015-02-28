@@ -44,6 +44,10 @@ NS_EXPORT int android_sdk_version;
 }
 #endif
 
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
+#include "mozilla/SandboxInfo.h"
+#endif
+
 // Slot for NS_InitXPCOM2 to pass information to nsSystemInfo::Init.
 // Only set to nonzero (potentially) if XP_UNIX.  On such systems, the
 // system call to discover the appropriate value is not thread-safe,
@@ -351,6 +355,23 @@ nsSystemInfo::Init()
     SetPropertyAsAString(NS_LITERAL_STRING("version"), b2g_version);
   }
 #endif
+
+#if defined(XP_LINUX) && defined(MOZ_SANDBOX)
+  SandboxInfo sandInfo = SandboxInfo::Get();
+
+  SetPropertyAsBool(NS_LITERAL_STRING("hasSeccompBPF"),
+                    sandInfo.Test(SandboxInfo::kHasSeccompBPF));
+
+  if (sandInfo.Test(SandboxInfo::kEnabledForContent)) {
+    SetPropertyAsBool(NS_LITERAL_STRING("canSandboxContent"),
+                      sandInfo.CanSandboxContent());
+  }
+
+  if (sandInfo.Test(SandboxInfo::kEnabledForMedia)) {
+    SetPropertyAsBool(NS_LITERAL_STRING("canSandboxMedia"),
+                      sandInfo.CanSandboxMedia());
+  }
+#endif // XP_LINUX && MOZ_SANDBOX
 
   return NS_OK;
 }

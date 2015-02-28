@@ -65,6 +65,8 @@ public class AndroidFxAccount {
 
   protected static final List<String> ANDROID_AUTHORITIES = Collections.unmodifiableList(Arrays.asList(BrowserContract.AUTHORITY));
 
+  private static final String PREF_KEY_LAST_SYNCED_TIMESTAMP = "lastSyncedTimestamp";
+
   protected final Context context;
   protected final AccountManager accountManager;
   protected final Account account;
@@ -96,7 +98,7 @@ public class AndroidFxAccount {
    * {@link AccountPickler#pickle}, and is identical to calling it directly.
    * <p>
    * Note that pickling is different from bundling, which involves operations on a
-   * {@link android.os.Bundle Bundle} object of miscellaenous data associated with the account.
+   * {@link android.os.Bundle Bundle} object of miscellaneous data associated with the account.
    * See {@link #persistBundle} and {@link #unbundle} for more.
    */
   public void pickle(final String filename) {
@@ -514,14 +516,14 @@ public class AndroidFxAccount {
    * <b>For debugging only!</b>
    */
   public void dump() {
-    if (!FxAccountConstants.LOG_PERSONAL_INFORMATION) {
+    if (!FxAccountUtils.LOG_PERSONAL_INFORMATION) {
       return;
     }
     ExtendedJSONObject o = toJSONObject();
     ArrayList<String> list = new ArrayList<String>(o.keySet());
     Collections.sort(list);
     for (String key : list) {
-      FxAccountConstants.pii(LOG_TAG, key + ": " + o.get(key));
+      FxAccountUtils.pii(LOG_TAG, key + ": " + o.get(key));
     }
   }
 
@@ -564,5 +566,23 @@ public class AndroidFxAccount {
         Long.valueOf(FxAccountConstants.ACCOUNT_DELETED_INTENT_VERSION));
     intent.putExtra(FxAccountConstants.ACCOUNT_DELETED_INTENT_ACCOUNT_KEY, account.name);
     return intent;
+  }
+
+  public void setLastSyncedTimestamp(long now) {
+    try {
+      getSyncPrefs().edit().putLong(PREF_KEY_LAST_SYNCED_TIMESTAMP, now).commit();
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception setting last synced time; ignoring.", e);
+    }
+  }
+
+  public long getLastSyncedTimestamp() {
+    final long neverSynced = -1L;
+    try {
+      return getSyncPrefs().getLong(PREF_KEY_LAST_SYNCED_TIMESTAMP, neverSynced);
+    } catch (Exception e) {
+      Logger.warn(LOG_TAG, "Got exception getting last synced time; ignoring.", e);
+      return neverSynced;
+    }
   }
 }

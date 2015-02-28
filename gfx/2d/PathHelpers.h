@@ -8,6 +8,8 @@
 
 #include "2D.h"
 #include "mozilla/Constants.h"
+#include "mozilla/TypedEnum.h"
+#include "UserData.h"
 
 namespace mozilla {
 namespace gfx {
@@ -129,6 +131,88 @@ void EllipseToBezier(T* aSink, const Point &aOrigin, const Size &aRadius)
 }
 
 /**
+ * Appends a path represending a rectangle to the path being built by
+ * aPathBuilder.
+ *
+ * aRect           The rectangle to append.
+ * aDrawClockwise  If set to true, the path will start at the left of the top
+ *                 left edge and draw clockwise. If set to false the path will
+ *                 start at the right of the top left edge and draw counter-
+ *                 clockwise.
+ */
+GFX2D_API void AppendRectToPath(PathBuilder* aPathBuilder,
+                                const Rect& aRect,
+                                bool aDrawClockwise = true);
+
+inline TemporaryRef<Path> MakePathForRect(const DrawTarget& aDrawTarget,
+                                          const Rect& aRect,
+                                          bool aDrawClockwise = true)
+{
+  RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder();
+  AppendRectToPath(builder, aRect, aDrawClockwise);
+  return builder->Finish();
+}
+
+struct RectCornerRadii {
+  Size radii[RectCorner::Count];
+
+  RectCornerRadii() {}
+
+  explicit RectCornerRadii(Float radius) {
+    for (int i = 0; i < RectCorner::Count; i++) {
+      radii[i].SizeTo(radius, radius);
+    }
+  }
+
+  explicit RectCornerRadii(Float radiusX, Float radiusY) {
+    for (int i = 0; i < RectCorner::Count; i++) {
+      radii[i].SizeTo(radiusX, radiusY);
+    }
+  }
+
+  RectCornerRadii(Float tl, Float tr, Float br, Float bl) {
+    radii[RectCorner::TopLeft].SizeTo(tl, tl);
+    radii[RectCorner::TopRight].SizeTo(tr, tr);
+    radii[RectCorner::BottomRight].SizeTo(br, br);
+    radii[RectCorner::BottomLeft].SizeTo(bl, bl);
+  }
+
+  RectCornerRadii(const Size& tl, const Size& tr,
+                  const Size& br, const Size& bl) {
+    radii[RectCorner::TopLeft] = tl;
+    radii[RectCorner::TopRight] = tr;
+    radii[RectCorner::BottomRight] = br;
+    radii[RectCorner::BottomLeft] = bl;
+  }
+
+  const Size& operator[](size_t aCorner) const {
+    return radii[aCorner];
+  }
+
+  Size& operator[](size_t aCorner) {
+    return radii[aCorner];
+  }
+
+  void Scale(Float aXScale, Float aYScale) {
+    for (int i = 0; i < RectCorner::Count; i++) {
+      radii[i].Scale(aXScale, aYScale);
+    }
+  }
+
+  const Size TopLeft() const { return radii[RectCorner::TopLeft]; }
+  Size& TopLeft() { return radii[RectCorner::TopLeft]; }
+
+  const Size TopRight() const { return radii[RectCorner::TopRight]; }
+  Size& TopRight() { return radii[RectCorner::TopRight]; }
+
+  const Size BottomRight() const { return radii[RectCorner::BottomRight]; }
+  Size& BottomRight() { return radii[RectCorner::BottomRight]; }
+
+  const Size BottomLeft() const { return radii[RectCorner::BottomLeft]; }
+  Size& BottomLeft() { return radii[RectCorner::BottomLeft]; }
+};
+
+/**
  * Appends a path represending a rounded rectangle to the path being built by
  * aPathBuilder.
  *
@@ -142,8 +226,18 @@ void EllipseToBezier(T* aSink, const Point &aOrigin, const Size &aRadius)
  */
 GFX2D_API void AppendRoundedRectToPath(PathBuilder* aPathBuilder,
                                        const Rect& aRect,
-                                       const Size(& aCornerRadii)[4],
+                                       const RectCornerRadii& aRadii,
                                        bool aDrawClockwise = true);
+
+inline TemporaryRef<Path> MakePathForRoundedRect(const DrawTarget& aDrawTarget,
+                                                 const Rect& aRect,
+                                                 const RectCornerRadii& aRadii,
+                                                 bool aDrawClockwise = true)
+{
+  RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder();
+  AppendRoundedRectToPath(builder, aRect, aRadii, aDrawClockwise);
+  return builder->Finish();
+}
 
 /**
  * Appends a path represending an ellipse to the path being built by
@@ -156,12 +250,77 @@ GFX2D_API void AppendEllipseToPath(PathBuilder* aPathBuilder,
                                    const Point& aCenter,
                                    const Size& aDimensions);
 
-static inline bool
-UserToDevicePixelSnapped(Rect& aRect, const Matrix& aTransform)
+inline TemporaryRef<Path> MakePathForEllipse(const DrawTarget& aDrawTarget,
+                                             const Point& aCenter,
+                                             const Size& aDimensions)
 {
-  Point p1 = aTransform * aRect.TopLeft();
-  Point p2 = aTransform * aRect.TopRight();
-  Point p3 = aTransform * aRect.BottomRight();
+  RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder();
+  AppendEllipseToPath(builder, aCenter, aDimensions);
+  return builder->Finish();
+}
+
+/**
+ * If aDrawTarget's transform only contains a translation, and if this line is
+ * a horizontal or vertical line, this function will snap the line's vertices
+ * to align with the device pixel grid so that stroking the line with a one
+ * pixel wide stroke will result in a crisp line that is not antialiased over
+ * two pixels across its width.
+ *
+ * @return Returns true if this function snaps aRect's vertices, else returns
+ *   false.
+ */
+GFX2D_API bool SnapLineToDevicePixelsForStroking(Point& aP1, Point& aP2,
+                                                 const DrawTarget& aDrawTarget);
+
+/**
+ * This function paints each edge of aRect separately, snapping the edges using
+ * SnapLineToDevicePixelsForStroking. Stroking the edges as separate paths
+ * helps ensure not only that the stroke spans a single row of device pixels if
+ * possible, but also that the ends of stroke dashes start and end on device
+ * pixels too.
+ */
+GFX2D_API void StrokeSnappedEdgesOfRect(const Rect& aRect,
+                                        DrawTarget& aDrawTarget,
+                                        const ColorPattern& aColor,
+                                        const StrokeOptions& aStrokeOptions);
+
+extern UserDataKey sDisablePixelSnapping;
+
+/**
+ * If aDrawTarget's transform only contains a translation or, if
+ * aAllowScaleOr90DegreeRotate is true, and/or a scale/90 degree rotation, this
+ * function will convert aRect to device space and snap it to device pixels.
+ * This function returns true if aRect is modified, otherwise it returns false.
+ *
+ * Note that the snapping is such that filling the rect using a DrawTarget
+ * which has the identity matrix as its transform will result in crisp edges.
+ * (That is, aRect will have integer values, aligning its edges between pixel
+ * boundaries.)  If on the other hand you stroking the rect with an odd valued
+ * stroke width then the edges of the stroke will be antialiased (assuming an
+ * AntialiasMode that does antialiasing).
+ */
+inline bool UserToDevicePixelSnapped(Rect& aRect, const DrawTarget& aDrawTarget,
+                                     bool aAllowScaleOr90DegreeRotate = false)
+{
+  if (aDrawTarget.GetUserData(&sDisablePixelSnapping)) {
+    return false;
+  }
+
+  Matrix mat = aDrawTarget.GetTransform();
+
+  const Float epsilon = 0.0000001f;
+#define WITHIN_E(a,b) (fabs((a)-(b)) < epsilon)
+  if (!aAllowScaleOr90DegreeRotate &&
+      (!WITHIN_E(mat._11, 1.f) || !WITHIN_E(mat._22, 1.f) ||
+       !WITHIN_E(mat._12, 0.f) || !WITHIN_E(mat._21, 0.f))) {
+    // We have non-translation, but only translation is allowed.
+    return false;
+  }
+#undef WITHIN_E
+
+  Point p1 = mat * aRect.TopLeft();
+  Point p2 = mat * aRect.TopRight();
+  Point p3 = mat * aRect.BottomRight();
 
   // Check that the rectangle is axis-aligned. For an axis-aligned rectangle,
   // two opposite corners define the entire rectangle. So check if
@@ -180,6 +339,22 @@ UserToDevicePixelSnapped(Rect& aRect, const Matrix& aTransform)
   }
 
   return false;
+}
+
+/**
+ * This function has the same behavior as UserToDevicePixelSnapped except that
+ * aRect is not transformed to device space.
+ */
+inline void MaybeSnapToDevicePixels(Rect& aRect, const DrawTarget& aDrawTarget,
+                                    bool aIgnoreScale = false)
+{
+  if (UserToDevicePixelSnapped(aRect, aDrawTarget, aIgnoreScale)) {
+    // Since UserToDevicePixelSnapped returned true we know there is no
+    // rotation/skew in 'mat', so we can just use TransformBounds() here.
+    Matrix mat = aDrawTarget.GetTransform();
+    mat.Invert();
+    aRect = mat.TransformBounds(aRect);
+  }
 }
 
 } // namespace gfx

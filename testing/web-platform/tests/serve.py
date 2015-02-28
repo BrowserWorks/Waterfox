@@ -1,13 +1,13 @@
  # -*- coding: utf-8 -*-
 import argparse
 import json
-import logging
 import os
 import signal
 import socket
 import sys
 import threading
 import time
+import traceback
 import urllib2
 import uuid
 from collections import defaultdict
@@ -18,6 +18,8 @@ repo_root = os.path.abspath(os.path.split(__file__)[0])
 sys.path.insert(1, os.path.join(repo_root, "tools", "wptserve"))
 from wptserve import server as wptserve, handlers
 from wptserve.router import any_method
+from wptserve.logger import set_logger
+
 sys.path.insert(1, os.path.join(repo_root, "tools", "pywebsocket", "src"))
 from mod_pywebsocket import standalone as pywebsocket
 
@@ -38,12 +40,12 @@ subdomains = [u"www",
               u"天気の良い日",
               u"élève"]
 
-logger = None
-
-def default_logger(level):
+def setup_logger(level):
+    import logging
+    global logger
     logger = logging.getLogger("web-platform-tests")
     logging.basicConfig(level=getattr(logging, level.upper()))
-    return logger
+    set_logger(logger)
 
 def open_socket(port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -67,16 +69,20 @@ class ServerProc(object):
         self.daemon = None
         self.stop = Event()
 
-    def start(self, init_func, config, paths, port, bind_hostname):
-        self.proc = Process(target=self.create_daemon, args=(init_func, config, paths, port, bind_hostname))
+    def start(self, init_func, host, port, paths, bind_hostname, external_config):
+        self.proc = Process(target=self.create_daemon,
+                            args=(init_func, host, port, paths, bind_hostname, external_config))
         self.proc.daemon = True
         self.proc.start()
 
-    def create_daemon(self, init_func, config, paths, port, bind_hostname):
+    def create_daemon(self, init_func, host, port, paths, bind_hostname, external_config):
         try:
-            self.daemon = init_func(config, paths, port, bind_hostname)
+            self.daemon = init_func(host, port, paths, bind_hostname, external_config)
         except socket.error:
             print >> sys.stderr, "Socket error on port %s" % port
+            raise
+        except:
+            print >> sys.stderr, traceback.format_exc()
             raise
 
         if self.daemon:
@@ -98,22 +104,24 @@ class ServerProc(object):
     def is_alive(self):
         return self.proc.is_alive()
 
-def check_subdomains(config, paths, subdomains, bind_hostname):
+def check_subdomains(host, paths, bind_hostname):
     port = get_port()
+    subdomains = get_subdomains(host)
+
     wrapper = ServerProc()
-    wrapper.start(start_http_server, config, paths, port, bind_hostname)
+    wrapper.start(start_http_server, host, port, paths, bind_hostname, None)
 
     connected = False
     for i in range(10):
         try:
-            urllib2.urlopen("http://%s:%d/" % (config["host"], port))
+            urllib2.urlopen("http://%s:%d/" % (host, port))
             connected = True
             break
         except urllib2.URLError:
             time.sleep(1)
 
     if not connected:
-        logger.critical("Failed to connect to test server on http://%s:%s You may need to edit /etc/hosts or similar" % (config["host"], port))
+        logger.critical("Failed to connect to test server on http://%s:%s You may need to edit /etc/hosts or similar" % (host, port))
         sys.exit(1)
 
     for subdomain, (punycode, host) in subdomains.iteritems():
@@ -126,16 +134,13 @@ def check_subdomains(config, paths, subdomains, bind_hostname):
 
     wrapper.wait()
 
-def get_subdomains(config):
+def get_subdomains(host):
     #This assumes that the tld is ascii-only or already in punycode
-    host = config["host"]
     return {subdomain: (subdomain.encode("idna"), host)
             for subdomain in subdomains}
 
-def start_servers(config, paths, ports, bind_hostname):
+def start_servers(host, ports, paths, bind_hostname, external_config):
     servers = defaultdict(list)
-
-    host = config["host"]
 
     for scheme, ports in ports.iteritems():
         assert len(ports) == {"http":2}.get(scheme, 1)
@@ -147,23 +152,23 @@ def start_servers(config, paths, ports, bind_hostname):
                          "wss":start_wss_server}[scheme]
 
             server_proc = ServerProc()
-            server_proc.start(init_func, config, paths, port, bind_hostname)
+            server_proc.start(init_func, host, port, paths, bind_hostname, external_config)
             servers[scheme].append((port, server_proc))
 
     return servers
 
-def start_http_server(config, paths, port, bind_hostname):
-    return wptserve.WebTestHttpd(host=config["host"],
+def start_http_server(host, port, paths, bind_hostname, external_config):
+    return wptserve.WebTestHttpd(host=host,
                                  port=port,
                                  doc_root=paths["doc_root"],
                                  routes=routes,
                                  rewrites=rewrites,
                                  bind_hostname=bind_hostname,
-                                 config=config,
+                                 config=external_config,
                                  use_ssl=False,
                                  certificate=None)
 
-def start_https_server(config, paths, port, bind_hostname):
+def start_https_server(host, port, paths, bind_hostname):
     return
 
 class WebSocketDaemon(object):
@@ -211,15 +216,15 @@ class WebSocketDaemon(object):
             self.started = False
         self.server = None
 
-def start_ws_server(config, paths, port, bind_hostname):
-    return WebSocketDaemon(config["host"],
+def start_ws_server(host, port, paths, bind_hostname, external_config):
+    return WebSocketDaemon(host,
                            str(port),
                            repo_root,
                            paths["ws_doc_root"],
                            "debug",
                            bind_hostname)
 
-def start_wss_server(config, paths, port, bind_hostname):
+def start_wss_server(host, port, path, bind_hostname, external_config):
     return
 
 def get_ports(config):
@@ -233,38 +238,40 @@ def get_ports(config):
             rv[scheme].append(port)
     return rv
 
-def normalise_config(config, domains, ports):
+def normalise_config(config, ports):
+    host = config["external_host"] if config["external_host"] else config["host"]
+    domains = get_subdomains(host)
+
+    for key, value in domains.iteritems():
+        domains[key] = ".".join(value)
+
+    domains[""] = host
+
     ports_ = {}
     for scheme, ports_used in ports.iteritems():
         ports_[scheme] = ports_used
 
-    domains_ = domains.copy()
-
-    for key, value in domains_.iteritems():
-        domains_[key] = ".".join(value)
-
-    domains_[""] = config["host"]
-
-    return {"host":config["host"],
-            "domains":domains_,
+    return {"host": host,
+            "domains": domains,
             "ports": ports_}
 
 def start(config):
+    host = config["host"]
+    domains = get_subdomains(host)
     ports = get_ports(config)
-    domains = get_subdomains(config)
     bind_hostname = config["bind_hostname"]
 
     paths = {"doc_root": config["doc_root"],
              "ws_doc_root": config["ws_doc_root"]}
 
     if config["check_subdomains"]:
-        check_subdomains(config, paths, domains, bind_hostname)
+        check_subdomains(host, paths, bind_hostname)
 
-    config_ = normalise_config(config, domains, ports)
+    external_config = normalise_config(config, ports)
 
-    servers = start_servers(config_, paths, ports, bind_hostname)
+    servers = start_servers(host, ports, paths, bind_hostname, external_config)
 
-    return config_, servers
+    return external_config, servers
 
 
 def iter_procs(servers):
@@ -317,12 +324,10 @@ def load_config(default_path, override_path=None):
     return rv
 
 def main():
-    global logger
-
     config = load_config("config.default.json",
                          "config.json")
 
-    logger = default_logger(config["log_level"])
+    setup_logger(config["log_level"])
 
     config_, servers = start(config)
 

@@ -58,7 +58,6 @@ const char js_break_str[]           = "break";
 const char js_case_str[]            = "case";
 const char js_catch_str[]           = "catch";
 const char js_class_str[]           = "class";
-const char js_close_str[]           = "close";
 const char js_const_str[]           = "const";
 const char js_continue_str[]        = "continue";
 const char js_debugger_str[]        = "debugger";
@@ -157,7 +156,7 @@ JSRuntime::initializeAtoms(JSContext *cx)
     if (!wellKnownSymbols)
         return false;
 
-    ImmutablePropertyNamePtr *descriptions = &commonNames->Symbol_iterator;
+    ImmutablePropertyNamePtr *descriptions = commonNames->wellKnownSymbolDescriptions();
     ImmutableSymbolPtr *symbols = reinterpret_cast<ImmutableSymbolPtr *>(wellKnownSymbols);
     for (size_t i = 0; i < JS::WellKnownSymbolLimit; i++) {
         JS::Symbol *symbol = JS::Symbol::new_(cx, JS::SymbolCode(i), descriptions[i]);

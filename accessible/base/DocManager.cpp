@@ -8,8 +8,10 @@
 #include "ApplicationAccessible.h"
 #include "ARIAMap.h"
 #include "DocAccessible-inl.h"
+#include "DocAccessibleChild.h"
 #include "nsAccessibilityService.h"
 #include "RootAccessibleWrap.h"
+#include "xpcAccessibleDocument.h"
 
 #ifdef A11Y_LOG
 #include "Logging.h"
@@ -27,6 +29,8 @@
 #include "nsServiceManagerUtils.h"
 #include "nsIWebProgress.h"
 #include "nsCoreUtils.h"
+#include "nsXULAppAPI.h"
+#include "mozilla/dom/ContentChild.h"
 
 using namespace mozilla;
 using namespace mozilla::a11y;
@@ -37,7 +41,7 @@ using namespace mozilla::dom;
 ////////////////////////////////////////////////////////////////////////////////
 
 DocManager::DocManager()
-  : mDocAccessibleCache(2)
+  : mDocAccessibleCache(2), mXPCDocumentCache(0)
 {
 }
 
@@ -70,6 +74,34 @@ DocManager::FindAccessibleInCache(nsINode* aNode) const
                                     static_cast<void*>(&arg));
 
   return arg.mAccessible;
+}
+
+void
+DocManager::NotifyOfDocumentShutdown(DocAccessible* aDocument,
+                                     nsIDocument* aDOMDocument)
+{
+  xpcAccessibleDocument* xpcDoc = mXPCDocumentCache.GetWeak(aDocument);
+  if (xpcDoc) {
+    xpcDoc->Shutdown();
+    mXPCDocumentCache.Remove(aDocument);
+  }
+
+  mDocAccessibleCache.Remove(aDOMDocument);
+  RemoveListeners(aDOMDocument);
+}
+
+xpcAccessibleDocument*
+DocManager::GetXPCDocument(DocAccessible* aDocument)
+{
+  if (!aDocument)
+    return nullptr;
+
+  xpcAccessibleDocument* xpcDoc = mXPCDocumentCache.GetWeak(aDocument);
+  if (!xpcDoc) {
+    xpcDoc = new xpcAccessibleDocument(aDocument);
+    mXPCDocumentCache.Put(aDocument, xpcDoc);
+  }
+  return xpcDoc;
 }
 
 #ifdef DEBUG
@@ -418,6 +450,12 @@ DocManager::CreateDocOrRootAccessible(nsIDocument* aDocument)
     docAcc->FireDelayedEvent(nsIAccessibleEvent::EVENT_REORDER,
                              ApplicationAcc());
 
+    if (IPCAccessibilityActive()) {
+      DocAccessibleChild* ipcDoc = new DocAccessibleChild(docAcc);
+      docAcc->SetIPCDoc(ipcDoc);
+    auto contentChild = dom::ContentChild::GetSingleton();
+    contentChild->SendPDocAccessibleConstructor(ipcDoc, nullptr, 0);
+    }
   } else {
     parentDocAcc->BindChildDocument(docAcc);
   }

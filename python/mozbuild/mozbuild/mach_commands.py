@@ -269,6 +269,8 @@ class Build(MachCommandBase):
     @Command('build', category='build', description='Build the tree.')
     @CommandArgument('--jobs', '-j', default='0', metavar='jobs', type=int,
         help='Number of concurrent jobs to run. Default is the number of CPUs.')
+    @CommandArgument('-C', '--directory', default=None,
+        help='Change to a subdirectory of the build directory first.')
     @CommandArgument('what', default=None, nargs='*', help=BUILD_WHAT_HELP)
     @CommandArgument('-X', '--disable-extra-make-dependencies',
                      default=False, action='store_true',
@@ -276,7 +278,7 @@ class Build(MachCommandBase):
     @CommandArgument('-v', '--verbose', action='store_true',
         help='Verbose output for what commands the build is running.')
     def build(self, what=None, disable_extra_make_dependencies=None, jobs=0,
-        verbose=False):
+        directory=None, verbose=False):
         import which
         from mozbuild.controller.building import BuildMonitor
         from mozbuild.util import resolve_target_to_make
@@ -291,6 +293,17 @@ class Build(MachCommandBase):
         with BuildOutputManager(self.log_manager, monitor) as output:
             monitor.start()
 
+            if directory is not None and not what:
+                print('Can only use -C/--directory with an explicit target '
+                    'name.')
+                return 1
+
+            if directory is not None:
+                disable_extra_make_dependencies=True
+                directory = mozpath.normsep(directory)
+                if directory.startswith('/'):
+                    directory = directory[1:]
+
             if what:
                 top_make = os.path.join(self.topobjdir, 'Makefile')
                 if not os.path.exists(top_make):
@@ -303,8 +316,13 @@ class Build(MachCommandBase):
                 for target in what:
                     path_arg = self._wrap_path_argument(target)
 
-                    make_dir, make_target = resolve_target_to_make(self.topobjdir,
-                        path_arg.relpath())
+                    if directory is not None:
+                        make_dir = os.path.join(self.topobjdir, directory)
+                        make_target = target
+                    else:
+                        make_dir, make_target = \
+                            resolve_target_to_make(self.topobjdir,
+                                path_arg.relpath())
 
                     if make_dir is None and make_target is None:
                         return 1
@@ -648,12 +666,28 @@ class GTestCommands(MachCommandBase):
         help='Output test results in a format that can be parsed by TBPL.')
     @CommandArgument('--shuffle', '-s', action='store_true',
         help='Randomize the execution order of tests.')
-    def gtest(self, shuffle, jobs, gtest_filter, tbpl_parser):
+
+    @CommandArgumentGroup('debugging')
+    @CommandArgument('--debug', action='store_true', group='debugging',
+        help='Enable the debugger. Not specifying a --debugger option will result in the default debugger being used. The following arguments have no effect without this.')
+    @CommandArgument('--debugger', default=None, type=str, group='debugging',
+        help='Name of debugger to use.')
+    @CommandArgument('--debugger-args', default=None, metavar='params', type=str,
+        group='debugging',
+        help='Command-line arguments to pass to the debugger itself; split as the Bourne shell would.')
+
+    def gtest(self, shuffle, jobs, gtest_filter, tbpl_parser, debug, debugger,
+              debugger_args):
 
         # We lazy build gtest because it's slow to link
         self._run_make(directory="testing/gtest", target='gtest', ensure_exit_code=True)
 
         app_path = self.get_binary_path('app')
+        args = [app_path, '-unittest'];
+
+        if debug:
+            args = self.prepend_debugger_args(args, debugger, debugger_args)
+
         cwd = os.path.join(self.topobjdir, '_tests', 'gtest')
 
         if not os.path.isdir(cwd):
@@ -664,6 +698,10 @@ class GTestCommands(MachCommandBase):
         # https://code.google.com/p/googletest/wiki/AdvancedGuide#Running_Test_Programs:_Advanced_Options
         gtest_env = {b'GTEST_FILTER': gtest_filter}
 
+        xre_path = os.path.join(self.topobjdir, "dist", "bin")
+        gtest_env["MOZ_XRE_DIR"] = xre_path
+        gtest_env["MOZ_GMP_PATH"] = os.path.join(xre_path, "gmp-fake", "1.0")
+
         gtest_env[b"MOZ_RUN_GTEST"] = b"True"
 
         if shuffle:
@@ -673,7 +711,7 @@ class GTestCommands(MachCommandBase):
             gtest_env[b"MOZ_TBPL_PARSER"] = b"True"
 
         if jobs == 1:
-            return self.run_process([app_path, "-unittest"],
+            return self.run_process(args=args,
                                     append_env=gtest_env,
                                     cwd=cwd,
                                     ensure_exit_code=False,
@@ -709,6 +747,43 @@ class GTestCommands(MachCommandBase):
             exit_code = 255
 
         return exit_code
+
+    def prepend_debugger_args(self, args, debugger, debugger_args):
+        '''
+        Given an array with program arguments, prepend arguments to run it under a
+        debugger.
+
+        :param args: The executable and arguments used to run the process normally.
+        :param debugger: The debugger to use, or empty to use the default debugger.
+        :param debugger_args: Any additional parameters to pass to the debugger.
+        '''
+
+        import mozdebug
+
+        if not debugger:
+            # No debugger name was provided. Look for the default ones on
+            # current OS.
+            debugger = mozdebug.get_default_debugger_name(mozdebug.DebuggerSearch.KeepLooking)
+
+        debuggerInfo = mozdebug.get_debugger_info(debugger, debugger_args)
+        if not debuggerInfo:
+            print("Could not find a suitable debugger in your PATH.")
+            return 1
+
+        # Parameters come from the CLI. We need to convert them before
+        # their use.
+        if debugger_args:
+            import pymake.process
+            argv, badchar = pymake.process.clinetoargv(debugger_args, os.getcwd())
+            if badchar:
+                print("The --debugger_args you passed require a real shell to parse them.")
+                print("(We can't handle the %r character.)" % (badchar,))
+                return 1
+            debugger_args = argv;
+
+        # Prepend the debugger args.
+        args = [debuggerInfo.path] + debuggerInfo.args + args
+        return args
 
 @CommandProvider
 class ClangCommands(MachCommandBase):
@@ -790,14 +865,14 @@ class RunProgram(MachCommandBase):
     @Command('run', category='post-build',
         description='Run the compiled program, possibly under a debugger or DMD.')
     @CommandArgument('params', nargs='...', group=prog_group,
-        help='Command-line arguments to be passed through to the program. Not specifying a -profile or -P option will result in a temporary profile being used.')
+        help='Command-line arguments to be passed through to the program. Not specifying a --profile or -P option will result in a temporary profile being used.')
     @CommandArgumentGroup(prog_group)
-    @CommandArgument('-remote', '-r', action='store_true', group=prog_group,
-        help='Do not pass the -no-remote argument by default.')
-    @CommandArgument('-background', '-b', action='store_true', group=prog_group,
-        help='Do not pass the -foreground argument by default on Mac.')
-    @CommandArgument('-noprofile', '-n', action='store_true', group=prog_group,
-        help='Do not pass the -profile argument by default.')
+    @CommandArgument('--remote', '-r', action='store_true', group=prog_group,
+        help='Do not pass the --no-remote argument by default.')
+    @CommandArgument('--background', '-b', action='store_true', group=prog_group,
+        help='Do not pass the --foreground argument by default on Mac.')
+    @CommandArgument('--noprofile', '-n', action='store_true', group=prog_group,
+        help='Do not pass the --profile argument by default.')
 
     @CommandArgumentGroup('debugging')
     @CommandArgument('--debug', action='store_true', group='debugging',
@@ -824,11 +899,9 @@ class RunProgram(MachCommandBase):
         help='The maximum depth of stack traces. The default and maximum is 24.')
     @CommandArgument('--show-dump-stats', action='store_true', group='DMD',
         help='Show stats when doing dumps.')
-    @CommandArgument('--mode', choices=['normal', 'test'], group='DMD',
-        help='Mode of operation. The default is normal.')
     def run(self, params, remote, background, noprofile, debug, debugger,
         debugparams, slowscript, dmd, sample_below, max_frames,
-        show_dump_stats, mode):
+        show_dump_stats):
 
         try:
             binpath = self.get_binary_path('app')
@@ -849,7 +922,9 @@ class RunProgram(MachCommandBase):
         if not background and sys.platform == 'darwin':
             args.append('-foreground')
 
-        if '-profile' not in params and '-P' not in params and not noprofile:
+        no_profile_option_given = \
+            all(p not in params for p in ['-profile', '--profile', '-P'])
+        if no_profile_option_given and not noprofile:
             path = os.path.join(self.topobjdir, 'tmp', 'scratch_user')
             if not os.path.isdir(path):
                 os.makedirs(path)
@@ -898,8 +973,6 @@ class RunProgram(MachCommandBase):
                 dmd_params.append('--max-frames=' + max_frames)
             if show_dump_stats:
                 dmd_params.append('--show-dump-stats=yes')
-            if mode:
-                dmd_params.append('--mode=' + mode)
 
             if dmd_params:
                 dmd_env_var = " ".join(dmd_params)

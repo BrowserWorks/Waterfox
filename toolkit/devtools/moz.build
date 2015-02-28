@@ -34,6 +34,7 @@ EXTRA_JS_MODULES.devtools += [
     'event-emitter.js',
     'event-parsers.js',
     'output-parser.js',
+    'path.js',
     'touch-events.js',
     'worker-loader.js',
 ]
@@ -44,4 +45,8 @@ EXTRA_JS_MODULES.devtools += [
     'LayoutHelpers.jsm',
     'Loader.jsm',
     'Require.jsm',
+]
+
+EXTRA_JS_MODULES.devtools.server.actors += [
+    'server/actors/highlighter.css'
 ]

@@ -67,7 +67,9 @@ static RedirEntry kRedirMap[] = {
       nsIAboutModule::ALLOW_SCRIPT },
     { "networking", "chrome://global/content/aboutNetworking.xhtml",
        nsIAboutModule::ALLOW_SCRIPT },
-    { "webrtc", "chrome://global/content/aboutWebrtc.xhtml",
+    { "webrtc", "chrome://global/content/aboutwebrtc/aboutWebrtc.xhtml",
+       nsIAboutModule::ALLOW_SCRIPT },
+    { "media", "chrome://global/content/aboutMedia.xhtml",
        nsIAboutModule::ALLOW_SCRIPT },
     // about:srcdoc is unresolvable by specification.  It is included here
     // because the security manager would disallow srcdoc iframes otherwise.
@@ -78,7 +80,9 @@ static RedirEntry kRedirMap[] = {
 static const int kRedirTotal = mozilla::ArrayLength(kRedirMap);
 
 NS_IMETHODIMP
-nsAboutRedirector::NewChannel(nsIURI *aURI, nsIChannel **result)
+nsAboutRedirector::NewChannel(nsIURI* aURI,
+                              nsILoadInfo* aLoadInfo,
+                              nsIChannel** result)
 {
     NS_ENSURE_ARG_POINTER(aURI);
     NS_ASSERTION(result, "must not be null");

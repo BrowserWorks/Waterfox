@@ -9,25 +9,30 @@
 
 #include "mozilla/Types.h"
 
+// This defines the entry points for a content process to start
+// sandboxing itself.  See also common/SandboxInfo.h for what parts of
+// sandboxing are enabled/supported.
+
+#ifdef ANDROID
+// Defined in libmozsandbox and referenced by linking against it.
+#define MOZ_SANDBOX_EXPORT MOZ_EXPORT
+#else
+// Defined in plugin-container and referenced by libraries it loads.
+#define MOZ_SANDBOX_EXPORT MOZ_EXPORT __attribute__((weak))
+#endif
+
 namespace mozilla {
 
-// The Set*Sandbox() functions must not be called if the corresponding
-// CanSandbox*() function has returned false; if sandboxing is
-// attempted, any failure to enable it is fatal.
-//
-// If sandboxing is disabled for a process type with the corresponding
-// environment variable, Set*Sandbox() does nothing and CanSandbox*()
-// returns true.
-
 #ifdef MOZ_CONTENT_SANDBOX
-// Disabled by setting env var MOZ_DISABLE_CONTENT_SANDBOX.
-MOZ_EXPORT bool CanSandboxContentProcess();
-MOZ_EXPORT void SetContentProcessSandbox();
+// Call only if SandboxInfo::CanSandboxContent() returns true.
+// (No-op if MOZ_DISABLE_CONTENT_SANDBOX is set.)
+MOZ_SANDBOX_EXPORT void SetContentProcessSandbox();
 #endif
+
 #ifdef MOZ_GMP_SANDBOX
-// Disabled by setting env var MOZ_DISABLE_GMP_SANDBOX.
-MOZ_EXPORT bool CanSandboxMediaPlugin();
-MOZ_EXPORT void SetMediaPluginSandbox(const char *aFilePath);
+// Call only if SandboxInfo::CanSandboxMedia() returns true.
+// (No-op if MOZ_DISABLE_GMP_SANDBOX is set.)
+MOZ_SANDBOX_EXPORT void SetMediaPluginSandbox(const char *aFilePath);
 #endif
 
 } // namespace mozilla

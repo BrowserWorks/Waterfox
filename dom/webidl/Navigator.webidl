@@ -19,7 +19,7 @@
  */
 
 // http://www.whatwg.org/specs/web-apps/current-work/#the-navigator-object
-[HeaderFile="Navigator.h", NeedNewResolve]
+[HeaderFile="Navigator.h", NeedResolve]
 interface Navigator {
   // objects implementing this interface also implement the interfaces given below
 };
@@ -322,6 +322,11 @@ partial interface Navigator {
 };
 #endif // MOZ_GAMEPAD
 
+partial interface Navigator {
+  [Throws, Pref="dom.vr.enabled"]
+  Promise<sequence<VRDevice>> getVRDevices();
+};
+
 #ifdef MOZ_B2G_BT
 partial interface Navigator {
   [Throws, CheckPermissions="bluetooth"]
@@ -354,9 +359,13 @@ partial interface Navigator {
 
 #ifdef MOZ_MEDIA_NAVIGATOR
 callback NavigatorUserMediaSuccessCallback = void (MediaStream stream);
-callback NavigatorUserMediaErrorCallback = void (DOMString error);
+callback NavigatorUserMediaErrorCallback = void (MediaStreamError error);
 
 partial interface Navigator {
+  [Throws, Func="Navigator::HasUserMediaSupport"]
+  readonly attribute MediaDevices mediaDevices;
+
+  // Deprecated. Use mediaDevices.getUserMedia instead.
   [Throws, Func="Navigator::HasUserMediaSupport"]
   void mozGetUserMedia(MediaStreamConstraints constraints,
                        NavigatorUserMediaSuccessCallback successCallback,
@@ -388,3 +397,17 @@ partial interface Navigator {
   boolean sendBeacon(DOMString url,
                      optional (ArrayBufferView or Blob or DOMString or FormData)? data = null);
 };
+
+partial interface Navigator {
+  [Pref="dom.tv.enabled", CheckPermissions="tv", Func="Navigator::HasTVSupport"]
+  readonly attribute TVManager? tv;
+};
+
+#ifdef MOZ_EME
+partial interface Navigator {
+  [Pref="media.eme.enabled", Throws, NewObject]
+  Promise<MediaKeySystemAccess>
+  requestMediaKeySystemAccess(DOMString keySystem,
+                              optional sequence<MediaKeySystemOptions> supportedConfigurations);
+};
+#endif

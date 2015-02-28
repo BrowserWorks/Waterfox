@@ -90,7 +90,9 @@ nsViewSourceHandler::NewURI(const nsACString &aSpec,
 }
 
 NS_IMETHODIMP
-nsViewSourceHandler::NewChannel(nsIURI* uri, nsIChannel* *result)
+nsViewSourceHandler::NewChannel2(nsIURI* uri,
+                                 nsILoadInfo* aLoadInfo,
+                                 nsIChannel** result)
 {
     NS_ENSURE_ARG_POINTER(uri);
     nsViewSourceChannel *channel = new nsViewSourceChannel();
@@ -108,9 +110,15 @@ nsViewSourceHandler::NewChannel(nsIURI* uri, nsIChannel* *result)
     return NS_OK;
 }
 
+NS_IMETHODIMP
+nsViewSourceHandler::NewChannel(nsIURI* uri, nsIChannel* *result)
+{
+    return NewChannel2(uri, nullptr, result);
+}
+
 nsresult
 nsViewSourceHandler::NewSrcdocChannel(nsIURI* uri, const nsAString &srcdoc,
-                                      nsIURI* baseURI, nsIChannel* *result)
+                                      nsIChannel* *result)
 {
     NS_ENSURE_ARG_POINTER(uri);
     nsViewSourceChannel *channel = new nsViewSourceChannel();
@@ -118,7 +126,7 @@ nsViewSourceHandler::NewSrcdocChannel(nsIURI* uri, const nsAString &srcdoc,
         return NS_ERROR_OUT_OF_MEMORY;
     NS_ADDREF(channel);
 
-    nsresult rv = channel->InitSrcdoc(uri, srcdoc, baseURI);
+    nsresult rv = channel->InitSrcdoc(uri, srcdoc);
     if (NS_FAILED(rv)) {
         NS_RELEASE(channel);
         return rv;

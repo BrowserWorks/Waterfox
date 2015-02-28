@@ -2,13 +2,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+from urlparse import urlparse
 import mozinfo
 import moznetwork
 import optparse
 import os
 import tempfile
 
-from automationutils import addCommonOptions, isURL
 from mozprofile import DEFAULT_PORTS
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -434,6 +434,35 @@ class MochitestOptions(optparse.OptionParser):
           "dest": "gmp_path",
           "help": "Path to fake GMP plugin. Will be deduced from the binary if not passed.",
         }],
+        [["--xre-path"],
+        { "action": "store",
+          "type": "string", 
+          "dest": "xrePath",
+          "default": None,    # individual scripts will set a sane default
+          "help": "absolute path to directory containing XRE (probably xulrunner)",
+        }],
+        [["--symbols-path"],
+        { "action": "store", 
+          "type": "string", 
+          "dest": "symbolsPath",
+          "default": None,
+          "help": "absolute path to directory containing breakpad symbols, or the URL of a zip file containing symbols",
+        }],
+        [["--debugger"],
+        { "action": "store", 
+          "dest": "debugger",
+          "help": "use the given debugger to launch the application",
+        }],
+        [["--debugger-args"],
+        { "action": "store",
+          "dest": "debuggerArgs",
+          "help": "pass the given args to the debugger _before_ the application on the command line",
+        }],
+        [["--debugger-interactive"],
+        { "action": "store_true",
+          "dest": "debuggerInteractive",
+          "help": "prevents the test harness from redirecting stdout and stderr for interactive debuggers",
+        }],
     ]
 
     def __init__(self, **kwargs):
@@ -445,7 +474,6 @@ class MochitestOptions(optparse.OptionParser):
             if "default" in value and isinstance(value["default"], list):
                 value["default"] = []
             self.add_option(*option, **value)
-        addCommonOptions(self)
         self.set_usage(self.__doc__)
 
     def verifyOptions(self, options, mochitest):
@@ -504,7 +532,7 @@ class MochitestOptions(optparse.OptionParser):
         if options.certPath:
             options.certPath = mochitest.getFullPath(options.certPath)
 
-        if options.symbolsPath and not isURL(options.symbolsPath):
+        if options.symbolsPath and len(urlparse(options.symbolsPath).scheme) < 2:
             options.symbolsPath = mochitest.getFullPath(options.symbolsPath)
 
         # Set server information on the options object
@@ -612,7 +640,8 @@ class MochitestOptions(optparse.OptionParser):
 
         options.leakThresholds = {
             "default": options.defaultLeakThreshold,
-            "tab": 10000, # See dependencies of bug 1051230.
+            "tab": 2000000, # See dependencies of bug 1051230.
+            "geckomediaplugin": 20000, # GMP rarely gets a log, but when it does, it leaks a little.
         }
 
         # Bug 1051230 - Leak logging does not yet work for tab processes on desktop.

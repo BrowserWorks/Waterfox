@@ -16,7 +16,7 @@ class FakeMediaStreamGraph : public MediaStreamGraph
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(FakeMediaStreamGraph)
 public:
   FakeMediaStreamGraph()
-    : MediaStreamGraph()
+    : MediaStreamGraph(16000)
   {
   }
 
@@ -51,6 +51,7 @@ public:
   virtual void AddListener(MediaStreamListener* aListener) MOZ_OVERRIDE;
   virtual void RemoveListener(MediaStreamListener* aListener) MOZ_OVERRIDE;
   virtual void Destroy();
+  void OnPreviewStateChange(bool aActive);
 
   void Invalidate();
 
@@ -67,6 +68,7 @@ protected:
   int32_t mInvalidatePending;
   uint32_t mDiscardedFrames;
   bool mRateLimit;
+  bool mTrackCreated;
   nsRefPtr<FakeMediaStreamGraph> mFakeMediaStreamGraph;
 };
 

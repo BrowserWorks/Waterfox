@@ -21,7 +21,6 @@
 #include "mozilla/dom/ErrorEventBinding.h"
 #include "mozilla/dom/IDBOpenDBRequestBinding.h"
 #include "mozilla/dom/ScriptSettings.h"
-#include "mozilla/dom/UnionTypes.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
 #include "nsIScriptContext.h"
@@ -100,11 +99,10 @@ IDBRequest::Create(IDBDatabase* aDatabase,
   aDatabase->AssertIsOnOwningThread();
 
   nsRefPtr<IDBRequest> request = new IDBRequest(aDatabase);
+  CaptureCaller(request->mFilename, &request->mLineNo);
 
   request->mTransaction = aTransaction;
   request->SetScriptOwner(aDatabase->GetScriptOwner());
-
-  request->CaptureCaller();
 
   return request.forget();
 }
@@ -139,6 +137,26 @@ IDBRequest::Create(IDBIndex* aSourceAsIndex,
   request->mSourceAsIndex = aSourceAsIndex;
 
   return request.forget();
+}
+
+// static
+void
+IDBRequest::CaptureCaller(nsAString& aFilename, uint32_t* aLineNo)
+{
+  MOZ_ASSERT(aFilename.IsEmpty());
+  MOZ_ASSERT(aLineNo);
+
+  ThreadsafeAutoJSContext cx;
+
+  const char* filename = nullptr;
+  uint32_t lineNo = 0;
+  if (!nsJSUtils::GetCallingLocation(cx, &filename, &lineNo)) {
+    *aLineNo = 0;
+    return;
+  }
+
+  aFilename.Assign(NS_ConvertUTF8toUTF16(filename));
+  *aLineNo = lineNo;
 }
 
 void
@@ -228,25 +246,13 @@ IDBRequest::GetErrorCode() const
 #endif // DEBUG
 
 void
-IDBRequest::CaptureCaller()
+IDBRequest::GetCallerLocation(nsAString& aFilename, uint32_t* aLineNo) const
 {
-  AutoJSContext cx;
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(aLineNo);
 
-  const char* filename = nullptr;
-  uint32_t lineNo = 0;
-  if (!nsJSUtils::GetCallingLocation(cx, &filename, &lineNo)) {
-    return;
-  }
-
-  mFilename.Assign(NS_ConvertUTF8toUTF16(filename));
-  mLineNo = lineNo;
-}
-
-void
-IDBRequest::FillScriptErrorEvent(ErrorEventInit& aEventInit) const
-{
-  aEventInit.mLineno = mLineNo;
-  aEventInit.mFilename = mFilename;
+  aFilename = mFilename;
+  *aLineNo = mLineNo;
 }
 
 IDBRequestReadyState
@@ -302,7 +308,6 @@ IDBRequest::SetResultCallback(ResultCallback* aCallback)
 
   // See if our window is still valid.
   if (NS_WARN_IF(NS_FAILED(CheckInnerWindowCorrectness()))) {
-    IDB_REPORT_INTERNAL_ERR();
     SetError(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
     return;
   }
@@ -425,7 +430,7 @@ IDBOpenDBRequest::CreateForWindow(IDBFactory* aFactory,
   MOZ_ASSERT(aScriptOwner);
 
   nsRefPtr<IDBOpenDBRequest> request = new IDBOpenDBRequest(aFactory, aOwner);
-  request->CaptureCaller();
+  CaptureCaller(request->mFilename, &request->mLineNo);
 
   request->SetScriptOwner(aScriptOwner);
 
@@ -442,7 +447,7 @@ IDBOpenDBRequest::CreateForJS(IDBFactory* aFactory,
   MOZ_ASSERT(aScriptOwner);
 
   nsRefPtr<IDBOpenDBRequest> request = new IDBOpenDBRequest(aFactory, nullptr);
-  request->CaptureCaller();
+  CaptureCaller(request->mFilename, &request->mLineNo);
 
   request->SetScriptOwner(aScriptOwner);
 

@@ -54,7 +54,7 @@ interface nsITabParent;
  
 typedef unsigned long nsLoadFlags;
 
-[scriptable, builtinclass, uuid(23157a63-26fd-44a0-a0f9-fdc64dcc004c)]
+[scriptable, builtinclass, uuid(c2756385-bc54-417b-9ae4-c5a40053a2a3)]
 interface nsIDocShell : nsIDocShellTreeItem
 {
   /**
@@ -132,6 +132,7 @@ interface nsIDocShell : nsIDocShellTreeItem
    *
    * @param aURI            - The URI to load.
    * @param aReferrer       - Referring URI
+   * @param aReferrerPolicy - Referrer policy
    * @param aOwner          - Owner (security principal) 
    * @param aInheritOwner   - Flag indicating whether the owner of the current
    *                          document should be inherited if aOwner is null.
@@ -157,6 +158,7 @@ interface nsIDocShell : nsIDocShellTreeItem
    */
   [noscript]void internalLoad(in nsIURI aURI,
                               in nsIURI aReferrer,
+                              in unsigned long aReferrerPolicy,
                               in nsISupports aOwner,
                               in uint32_t aFlags,
                               in wstring aWindowTarget,
@@ -673,6 +675,14 @@ interface nsIDocShell : nsIDocShellTreeItem
   [infallible] attribute boolean recordProfileTimelineMarkers;
 
   /**
+   * Return a DOMHighResTimeStamp representing the number of
+   * milliseconds from an arbitrary point in time.  The reference
+   * point is shared by all DocShells and is also used by timestamps
+   * on markers.
+   */
+  DOMHighResTimeStamp now();
+
+  /**
    * Returns and flushes the profile timeline markers gathered by the docShell
    */
   [implicit_jscontext]
@@ -1017,6 +1027,14 @@ interface nsIDocShell : nsIDocShellTreeItem
 
   // URLSearchParams for the window.location is owned by the docShell.
   [noscript,notxpcom] URLSearchParams getURLSearchParams();
+
+  /**
+   * Notify DocShell when the browser is about to start executing JS, and after
+   * that execution has stopped.  This only occurs when the Timeline devtool
+   * is collecting information.
+   */
+  [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStart();
+  [noscript,notxpcom,nostdcall] void notifyJSRunToCompletionStop();
 
   /**
    * This attribute determines whether a document which is not about:blank has

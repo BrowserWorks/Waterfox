@@ -1,0 +1,191 @@
+﻿# Header, don't edit
+NLF v6
+# Start editing here
+# Language ID
+1123
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1256
+# RTL - anything else than RTL means LTR
+RTL
+# Translation by Pakhtosoft (www.pakhtosoft.com)
+# ^Branding
+%s نلسافټ لګاو غونډال
+# ^SetupCaption
+امسته $(^Name)
+# ^UninstallCaption
+نالګاو $(^Name)
+# ^LicenseSubCaption
+: منښتليک تړون
+# ^ComponentsSubCaption
+: لګاو غوراوي
+# ^DirSubCaption
+: لګاو پوښۍ
+# ^InstallingSubCaption
+: لګيږي
+# ^CompletedSubCaption
+: بشپړ
+# ^UnComponentsSubCaption
+: نالګاو غوراوي
+# ^UnDirSubCaption
+: نالګاو پوښۍ
+# ^ConfirmSubCaption
+: باورول
+# ^UninstallingSubCaption
+: نالګيږي
+# ^UnCompletedSubCaption
+: بشپړ
+# ^BackBtn
+< &وروسته
+# ^NextBtn
+&مخکښې >
+# ^AgreeBtn
+زه &منم
+# ^AcceptBtn
+زه &د منښتليک توکي منم
+# ^DontAcceptBtn
+زه &د منښتليک توکي نه منم
+# ^InstallBtn
+&لګول
+# ^UninstallBtn
+&نالګول
+# ^CancelBtn
+بندول
+# ^CloseBtn
+&بندول
+# ^BrowseBtn
+...چ&ڼل
+# ^ShowDetailsBtn
+خبرتياوې &ښودل
+# ^ClickNext
+.مخکښې تلو لپاره مخکښې ټک وهئ
+# ^ClickInstall
+.لګاو پېلولو لپاره لګول ټک وهئ
+# ^ClickUninstall
+.نالګاو پېلولو لپاره نالګول ټک وهئ
+# ^Name
+نوم
+# ^Completed
+بشپړ
+# ^LicenseText
+.د لګولو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، زه منم ټک وهئ $(^NameDA) د
+# ^LicenseTextCB
+$_CLICK .د لګولو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، لاندې خوښبکس ټک وهئ $(^NameDA) د
+# ^LicenseTextRB
+$_CLICK .د لګولو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، لاندې لمړی غوراوی خوښ کړئ $(^NameDA) د
+# ^UnLicenseText
+.د نالګاو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، زه منم ټک وهئ $(^NameDA) د
+# ^UnLicenseTextCB
+$_CLICK .د نالګاو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، لاندې خوښبکس ټک وهئ $(^NameDA) د
+# ^UnLicenseTextRB
+$_CLICK .د نالګاو نه مخکښې منښتليک وګورئ. که چېرې تاسې د منښتليک ټول توکي منئ، لاندې لمړی غوراوي خوښ کړئ $(^NameDA) د
+# ^Custom
+دوديز
+# ^ComponentsText
+$_CLICK .کوم رغتوکي چې لګول غواړئ خوښ يې کړئ او کوم رغتوکي چې نه غواړئ ويې لګوئ مه يې خوښوئ
+# ^ComponentsSubText1
+:د لګاو ډول وټاکئ
+# ^ComponentsSubText2_NoInstTypes
+:د لګولو لپاره رغتوکي خوښ کړئ
+# ^ComponentsSubText2
+:يا، هغه غوراويز رغتوکي چې لګول يې غواړئ وټاکئ
+# ^UnComponentsText
+$_CLICK .کوم رغتوکي چې نالګول غواړئ خوښ يې کړئ او کوم رغتوکي چې نه غواړئ ويې نالګوئ مه يې خوښوئ
+# ^UnComponentsSubText1
+:د نالګاو ډول وټاکئ
+# ^UnComponentsSubText2_NoInstTypes
+:د نالګولو لپاره رغتوکي وټاکئ
+# ^UnComponentsSubText2
+:يا، هغه غوراويز رغتوکي چې نالګول يې غواړئ وټاکئ
+# ^DirText
+$_CLICK .په لاندې پوښۍ کښې ولګوي. په بلې پوښۍ کښې يې د لګولو لپاره، چڼل ټک وهئ او بله پوښۍ وټاکئ $(^NameDA) امسته به
+# ^DirSubText
+موخه پوښۍ
+# ^DirBrowseText
+:پکښې لګول غواړئ وټاکئ $(^NameDA) هغه پوښۍ چې
+# ^UnDirText
+$_CLICK .د لاندې پوښۍ نه ونالګوي. د بلې پوښۍ نې د نالګولو لپاره، چڼل ټک وهئ او بله پوښۍ وټاکئ $(^NameDA) امسته به
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+:ترې نالګول غواړئ وټاکئ $(^NameDA) هغه پوښۍ چې
+# ^SpaceAvailable
+" :شته تشه"
+# ^SpaceRequired
+" :اړينه تشه"
+# ^UninstallingText
+$_CLICK .به د لاندې پوښۍ نه ونالګول شي $(^NameDA)
+# ^UninstallingSubText
+:نالګيږي له
+# ^FileError
+:د ليکلو لپاره د دوتنې پرانيستلو کښې ستونزه \r\n\r\n$0\r\n\r\n،د لګاو د بندولو لپاره بندول ټک وهئ\r\nبياهڅه د بيا هڅې کولو لپاره، يا\r\n.پرېږده د دې دوتنې پرېښودلو لپاره
+# ^FileError_NoIgnore
+:د ليکلو لپاره د دوتنې پرانيستلو کښې ستونزه \r\n\r\n$0\r\n\r\nد بيا هڅې کولو لپاره بياهڅه ټک وهئ، يا\r\n.بندول د لګاو د بندولو لپاره
+# ^CantWrite
+" :نشي ليکلی"
+# ^CopyFailed
+لمېسلو پاتېينه
+# ^CopyTo
+"ته لمېسل "
+# ^Registering
+" :نومکښليږي"
+# ^Unregistering
+" :نانومکښليږي"
+# ^SymbolNotFound
+" :پېلام نشي پېدا کولی"
+# ^CouldNotLoad
+" :نشي راوستلی"
+# ^CreateFolder
+" :پوښۍ جوړول"
+# ^CreateShortcut
+" :لنډلاری جوړول"
+# ^CreatedUninstaller
+" :جوړ شوی نالګاند"
+# ^Delete
+" :دوتنې ړنګول"
+# ^DeleteOnReboot
+" :پر بياپېلات ړنګول"
+# ^ErrorCreatingShortcut
+" :د لنډاري جوړولو ستونزه"
+# ^ErrorCreating
+" :جوړولو ستونزه"
+# ^ErrorDecompressing
+اومتوک نازېرلو ستونزه! اندرغل لګاند؟
+# ^ErrorRegistering
+د ډلل نومکښلو ستونزه
+# ^ExecShell
+" :اکزک شل"
+# ^Exec
+" :پېلول"
+# ^Extract
+" :وېستل"
+# ^ErrorWriting
+"وېستل: دوتنې کښې ليکلو ستونزه "
+# ^InvalidOpcode
+اندرغل لګاند: ناسم اپکوډ
+# ^NoOLE
+"No OLE for: "
+# ^OutputFolder
+" :وتنې پوښۍ"
+# ^RemoveFolder
+" :پوښې ړنګول"
+# ^RenameOnReboot
+" :پر بياپېلات بيانومول"
+# ^Rename
+" :بيانومول"
+# ^Skipped
+" :پرېښودلي"
+# ^CopyDetails
+خبرتياوې ټوټې ډړې ته لمېسل
+# ^LogInstall
+د لګاو بهير خبرالول
+# ^Byte
+ب
+# ^Kilo
+ک
+# ^Mega
+م
+# ^Giga
+ګ

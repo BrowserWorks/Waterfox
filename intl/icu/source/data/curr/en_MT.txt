@@ -11,7 +11,7 @@ en_MT{
     Currencies{
         GBP{
             "GB£",
-            "British Pound Sterling",
+            "British Pound",
         }
     }
     Version{"2.1.8.19"}

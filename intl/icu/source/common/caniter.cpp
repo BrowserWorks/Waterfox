@@ -294,7 +294,7 @@ void U_EXPORT2 CanonicalIterator::permute(UnicodeString &source, UBool skipZeros
     for (i = 0; i < source.length(); i += U16_LENGTH(cp)) {
         cp = source.char32At(i);
         const UHashElement *ne = NULL;
-        int32_t el = -1;
+        int32_t el = UHASH_FIRST;
         UnicodeString subPermuteString = source;
 
         // optimization:
@@ -359,7 +359,7 @@ UnicodeString* CanonicalIterator::getEquivalents(const UnicodeString &segment, i
     // TODO: optimize by not permuting any class zero.
 
     const UHashElement *ne = NULL;
-    int32_t el = -1;
+    int32_t el = UHASH_FIRST;
     //Iterator it = basic.iterator();
     ne = basic.nextElement(el);
     //while (it.hasNext())
@@ -370,7 +370,7 @@ UnicodeString* CanonicalIterator::getEquivalents(const UnicodeString &segment, i
         permutations.removeAll();
         permute(item, CANITER_SKIP_ZEROES, &permutations, status);
         const UHashElement *ne2 = NULL;
-        int32_t el2 = -1;
+        int32_t el2 = UHASH_FIRST;
         //Iterator it2 = permutations.iterator();
         ne2 = permutations.nextElement(el2);
         //while (it2.hasNext())
@@ -416,7 +416,7 @@ UnicodeString* CanonicalIterator::getEquivalents(const UnicodeString &segment, i
     }
     //result.toArray(finalResult);
     result_len = 0;
-    el = -1;
+    el = UHASH_FIRST;
     ne = result.nextElement(el);
     while(ne != NULL) {
         finalResult[result_len++] = *((UnicodeString *)(ne->value.pointer));
@@ -463,7 +463,7 @@ Hashtable *CanonicalIterator::getEquivalents2(Hashtable *fillinResult, const UCh
             UnicodeString prefix(segment, i);
             prefix += cp2;
 
-            int32_t el = -1;
+            int32_t el = UHASH_FIRST;
             const UHashElement *ne = remainder.nextElement(el);
             while (ne != NULL) {
                 UnicodeString item = *((UnicodeString *)(ne->value.pointer));

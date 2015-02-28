@@ -143,30 +143,29 @@ UIABridge::ClearFocus()
 }
 
 static void
-DumpChildInfo(nsCOMPtr<nsIAccessible>& aChild)
+DumpChildInfo(nsRefPtr<Accessible>& aChild)
 {
 #ifdef DEBUG
   if (!aChild) {
     return;
   }
   nsString str;
-  aChild->GetName(str);
+  aChild->Name(str);
   BridgeLog("name: %ls", str.BeginReading());
-  aChild->GetDescription(str);
+  aChild->Description(str);
   BridgeLog("description: %ls", str.BeginReading());
 #endif
 }
 
 static bool
-ChildHasFocus(nsCOMPtr<nsIAccessible>& aChild)
+ChildHasFocus(nsRefPtr<Accessible>& aChild)
 {
-  Accessible* access = (Accessible*)aChild.get();
   BridgeLog("Focus element flags: editable:%d focusable:%d readonly:%d",
-    ((access->NativeState() & mozilla::a11y::states::EDITABLE) > 0),
-    ((access->NativeState() & mozilla::a11y::states::FOCUSABLE) > 0),
-    ((access->NativeState() & mozilla::a11y::states::READONLY) > 0));
-  return (((access->NativeState() & mozilla::a11y::states::EDITABLE) > 0) &&
-           ((access->NativeState() & mozilla::a11y::states::READONLY) == 0));
+    ((aChild->NativeState() & mozilla::a11y::states::EDITABLE) > 0),
+    ((aChild->NativeState() & mozilla::a11y::states::FOCUSABLE) > 0),
+    ((aChild->NativeState() & mozilla::a11y::states::READONLY) > 0));
+  return (((aChild->NativeState() & mozilla::a11y::states::EDITABLE) > 0) &&
+           ((aChild->NativeState() & mozilla::a11y::states::READONLY) == 0));
 }
 
 HRESULT
@@ -177,8 +176,7 @@ UIABridge::FocusChangeEvent()
     return UIA_E_ELEMENTNOTAVAILABLE;
   }
 
-  nsCOMPtr<nsIAccessible> child;
-  mAccessible->GetFocusedChild(getter_AddRefs(child));
+  nsRefPtr<Accessible> child = mAccessible->FocusedChild();
   if (!child) {
     return S_OK;
   }
@@ -221,8 +219,7 @@ UIABridge::GetFocus(IRawElementProviderFragment ** retVal)
     return UIA_E_ELEMENTNOTAVAILABLE;
   }
 
-  nsCOMPtr<nsIAccessible> child;
-  nsresult rv = mAccessible->GetFocusedChild(getter_AddRefs(child));
+  nsRefPtr<Accessible> child = mAccessible->FocusedChild();
   if (!child) {
     BridgeLog("mAccessible->GetFocusedChild failed.");
     return S_OK;
@@ -493,10 +490,10 @@ UIATextElement::SetFocusInternal(LONG_PTR aAccessible)
   LogFunction();
 #if defined(ACCESSIBILITY)
   NS_ASSERTION(mAccessItem, "Bad accessible pointer");
-  if (mAccessItem == (nsIAccessible*)aAccessible) {
+  if (mAccessItem == (Accessible*)aAccessible) {
     return E_UNEXPECTED;
   }
-  mAccessItem = (nsIAccessible*)aAccessible;
+  mAccessItem = (Accessible*)aAccessible;
   return S_OK;
 #endif
   return E_FAIL;
@@ -560,15 +557,14 @@ UIATextElement::get_BoundingRectangle(UiaRect * retVal)
   }
 
   // bounds are in physical pixels
-  int32_t docX = 0, docY = 0, docWidth = 0, docHeight = 0;
-  mAccessItem->GetBounds(&docX, &docY, &docWidth, &docHeight);
-  
-  retVal->left = (float)docX;
-  retVal->top = (float)docY;
-  retVal->width = (float)docWidth;
-  retVal->height = (float)docHeight;
+  nsIntRect rect = mAccessItem->Bounds();
 
-  BridgeLog("get_BoundingRectangle: left=%d top=%d right=%d bottom=%d", docX, docY, docX + docWidth, docY + docHeight);
+  retVal->left = rect.x;
+  retVal->top = rect.y;
+  retVal->width = rect.width;
+  retVal->height = rect.height;
+
+  BridgeLog("get_BoundingRectangle: left=%d top=%d right=%d bottom=%d", rect.x, rect.y, rect.x + rect.width, rect.y + rect.height);
   return S_OK;
 }
 
@@ -696,12 +692,10 @@ UIATextElement::GetPropertyValue(PROPERTYID idProp, VARIANT * pRetVal)
     case UIA_LabeledByPropertyId:
       break;
 
-    case UIA_HasKeyboardFocusPropertyId: 
+    case UIA_HasKeyboardFocusPropertyId:
     {
       if (mAccessItem) {
-        uint32_t state, extraState;
-        if (NS_SUCCEEDED(mAccessItem->GetState(&state, &extraState)) &&
-            (state & nsIAccessibleStates::STATE_FOCUSED)) {
+        if (mAccessItem->NativeState() & mozilla::a11y::states::FOCUSED) {
           pRetVal->vt = VT_BOOL;
           pRetVal->boolVal = VARIANT_TRUE;
           return S_OK;

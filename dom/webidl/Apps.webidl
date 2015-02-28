@@ -32,6 +32,7 @@ interface DOMApplication : EventTarget {
   readonly attribute DOMString installOrigin;
   readonly attribute DOMTimeStamp installTime;
   readonly attribute boolean removable;
+  readonly attribute boolean enabled;
 
   [Cached, Pure]
   readonly attribute sequence<DOMString> receipts;
@@ -79,6 +80,9 @@ interface DOMApplication : EventTarget {
     DOMRequest removeReceipt(optional DOMString receipt);
     DOMRequest replaceReceipt(optional DOMString oldReceipt,
                               optional DOMString newReceipt);
+
+    // Export this app as a shareable Blob.
+    Promise<Blob> export();
 };
 
 [JSImplementation="@mozilla.org/webapps/manager;1",
@@ -90,6 +94,12 @@ interface DOMApplicationsManager : EventTarget {
   void applyDownload(DOMApplication app);
   DOMRequest uninstall(DOMApplication app);
 
+  Promise<DOMApplication> import(Blob blob);
+  Promise<any> extractManifest(Blob blob);
+
+  void setEnabled(DOMApplication app, boolean state);
+
   attribute EventHandler oninstall;
   attribute EventHandler onuninstall;
+  attribute EventHandler onenabledstatechange;
 };

@@ -1,0 +1,349 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 2.30 Beta 22
+; Translated by Laanõ Valdis 
+; 
+; 
+; 
+;
+
+00000000 = "Voro"
+00000001 = "võro kiil'"
+00000002 = ""
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "7-Zipi konfiguriir'mine"
+
+; Info Page
+01000100 = "Tiidüs"
+01000103 = "7-Zip om vaba tarkvara. Syski, ku 7-Zip teile miildüs ja tiiq tahat timä edendämist tugõda, sys võit 7-Zip projekti jaos veitse rahha andaq."
+01000105 = "Rahaga tugõminõ"
+
+; Folders Page
+01000200 = "Kaustaq"
+01000210 = "&Tüükaust"
+01000211 = "&Süsteemi temp-kaust"
+01000212 = "&S'oo kaust"
+01000213 = "&Myni tynõ kaust:"
+01000214 = "Tarvita ainult mant võetavidõ draivõ jaos"
+
+01000281 = "Annaq kotus aotiidsi arhiivisalvi jaos."
+
+; System Page
+01000300 = "Süsteem'"
+01000301 = "Integreeriq 7-Zip shelli kontektsimenüüde"
+
+; Language Page
+01000400 = "Kiil'"
+01000401 = "Kiil':"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "7-Zipi käsoq"
+02000103 = "Tiiq vallalõ"
+02000104 = "Tege ärqmärgit arhiivi vallalõ."
+02000105 = "Korja salvi vällä..."
+02000106 = "Korjas salvõq ärqmärgit arhiivist vällä."
+02000107 = "Panõq arhiivi mano..."
+02000108 = "Pand ärqmärgit as'aq arhiivi mano."
+02000109 = "Kontrolliq arhiivi"
+0200010A = "Kontroll' ärqmärgit arhiivi terviklikkust."
+
+; Properties
+02000203 = "Rada"
+02000204 = "Nimi"
+02000205 = "Laend'"
+02000206 = "Kaust"
+02000207 = "Suurus"
+02000208 = "Suurus pakitult"
+02000209 = "Atribuudiq"
+0200020A = "Luud"
+0200020B = "Putut"
+0200020C = "Muudõt"
+0200020D = "Ütine"
+0200020E = "Seletüs"
+0200020F = "Käkit"
+02000210 = "Poolitõt inne"
+02000211 = "Poolitõt peräst"
+02000212 = "Synaraamat"
+02000213 = "CRC"
+02000214 = "Tüüp"
+02000215 = "Anti"
+02000216 = "Meetod"
+02000217 = "Süsteem'"
+02000218 = "Sal'visüsteem"
+02000219 = "Tarvitaja"
+0200021A = "Rühm"
+
+; Status bar 
+02000301 = "{0} objekt(i) ärq märgit"
+02000302 = "{0} objekt(i) ärq märgit"
+
+; List Context Menu
+02000401 = "&Tulbaq..."
+
+02000411 = "&Tiiq vallalõ"
+02000412 = "&Korjaq vällä..."
+
+; ToolBar
+02000501 = "Korjaq vällä"
+
+; Messages 
+02000601 = "Värskindämisopõratsioonõ ei toeta s'oo arhiivi jaos."
+02000602 = "Saa-õiq arhiivi värskindädäq {0}"
+02000603 = "Saa-õiq kausta luvvaq '{0}'"
+02000604 = "Programm' ei toeq arhiivi formaati."
+02000605 = "Viga"
+02000606 = "Ülearvo pall'o asjo"
+02000607 = "S'ollõ salvõnime laendigaq olõ-õiq üttegi rakõndust köüdet"
+02000608 = "Viko es löüdäq"
+
+; Dialogs
+02000702 = "Hää külh"
+02000705 = "&Jah"
+02000707 = "Jah &kyigilõ"
+02000709 = "&Ei"
+0200070B = "Ei k&yigilõ"
+
+02000710 = "Jätäq kats'ki"
+02000711 = "&Jätäq kats'ki"
+02000713 = "&Panõq kinniq"
+02000714 = "Piäq kinniq"
+
+02000720 = "Abi"
+
+; Extract dialog
+02000800 = "Korjaq vällä"
+02000801 = "&Korjaq vällä kausta:"
+02000802 = "Salasyna"
+
+02000810 = "Raaq"
+02000811 = "Tävvelikuq raanimeq"
+02000812 = "Suhtõlidsõq raanimeq"
+02000813 = "Raanimmildäq"
+
+02000820 = "Ülekirotaminõ"
+02000821 = "Küsüq inne ülekirotamist"
+02000822 = "Kirota üle ilma küsümädäq"
+02000823 = "Jätäq olõmanolõvaq salvõq vaihõlõ"
+02000824 = "Nimetä automaatsõlt ümbre"
+
+02000830 = "Salvõq"
+02000831 = "&Ärqmärgit salvõq"
+02000832 = "&Kyik' salvõq"
+
+02000881 = "Annaq kottus, kohe salvi vällä kor'ata."
+
+02000890 = "Korja vällä"
+
+; Overwrite dialog
+02000900 = "Asõmõlõ pandmisõ küsümine"
+02000901 = "Tsiht'kaustan om joba töödeldäv salv' olõman."
+02000902 = "Kas saq tahat olõmanolõva salvõ asõmõlõ pandaq"
+02000903 = "s'oo salvõ?"
+
+02000911 = "A&uto ümbrenimetämine"
+
+02000982 = "{0} baiti"
+02000983 = "muudõt"
+
+; Messages dialog
+02000A00 = "Diagnostikasynomiq"
+
+02000A80 = "Synnom"
+
+02000A91 = "Tugõmadaq pak'mismeetod salvõlõ '{0}'."
+02000A92 = "Teedüseviga salvõn '{0}'. Salv' om viganõ."
+02000A93 = "CRC salvõn '{0}' läts' summa. Salv' om viganõ."
+
+; Password dialog
+02000B00 = "Annaq salasyna"
+02000B01 = "Annaq salasyna:"
+
+; Progress dialog
+02000C00 = "Tüütlemine"
+
+; Compress dialog
+02000D00 = "Panõq arhiivi mano"
+02000D01 = "&Arhiiv':"
+02000D02 = "&Värskindüsresiim':"
+02000D03 = "Arhiiivi &formaat':"
+02000D04 = "Pak'mis&meetod':"
+02000D05 = "Luuq &ütine arhiiv'"
+02000D06 = "&Paramiitreq:"
+02000D07 = "Saa valliq"
+02000D08 = "Luuq SF&X arhiiv'"
+
+02000D81 = "Pak'maldaq"
+02000D82 = "Normaalpak'minõ"
+02000D83 = "Maksimaalpak'minõ"
+
+02000D90 = "Näütäq"
+
+02000DA1 = "Panõq mano ja vaihtaq salvi"
+02000DA2 = "Värskindäq ja panõq mano salvi"
+02000DA3 = "Värskindäq olõmanolõvit salvi"
+02000DA4 = "Sünkroniseeriq salvi"
+
+02000DB1 = "Kyik' salvõq"
+
+02000DC0 = "Paki kokko"
+
+; Columns dialog
+02000E00 = "Tulbaq"
+02000E01 = "Märgiq ärq tulbaq, midä tahat s'oon kaustan nättäväs tetäq. Tulpõ järekõrra muutmisõs tarvitaq Move Up ja  Move Down nupp'õ."
+02000E02 = "Ärqmärgit tulp piässi olõma"
+02000E03 = "pikslit &lag'a."
+
+02000E10 = "Liiguq &üles"
+02000E11 = "Liiguq &alla"
+02000E12 = "&Näütäq"
+02000E13 = "Näüdäku-&õiq"
+02000E14 = "Sätiq"
+
+02000E81 = "Päälkiri"
+02000E82 = "Lakk'us"
+
+; Testing
+02000F90 = "Kontrolli"
+
+
+; File Manager
+
+03000000 = "7-Zip salvimajandaja"
+
+; Menu
+03000102 = "&Salv'"
+03000103 = "&Toimõndaq"
+03000104 = "&Näütäq"
+03000105 = "Tüü&riistaq"
+03000106 = "&Abi"
+
+; File
+03000210 = "Tiiq &vallalõ"
+03000211 = "Tiiq vallalõ &seen"
+03000212 = "Tiiq vallalõ v&älän"
+03000220 = "&Näütäq"
+03000221 = "&Toimõndaq"
+03000230 = "Nimetäq &ümbre"
+03000231 = "K&opiq ..."
+03000232 = "N&õstaq ..."
+03000233 = "K&istutaq"
+03000240 = "&Umahusõq"
+03000250 = "Luuq &kaust"
+03000251 = "&Luuq salv'"
+03000260 = "Lõ&põtus"
+
+; Edit
+03000310 = "&Võtaq tagasi"
+03000311 = "Võtku-&õiq tagasi"
+03000320 = "&Lõikaq vällä"
+03000321 = "K&opiq"
+03000322 = "&Panõq paika"
+03000323 = "&Kistutaq"
+03000330 = "Märgiq k&yik' ärq"
+03000331 = "Märk'ku-õiq &midägi"
+03000332 = "Märgiq vastap&ite"
+03000333 = "Märgiq &ärq..."
+03000334 = "Märk'ku-õi&q..."
+03000335 = "Märgiq &tüübi perrä"
+03000336 = "Märk'ku-õiq t&üübi perrä"
+
+; View
+03000410 = "&Suurõq ikooniq"
+03000411 = "Väikoq &ikooniq"
+03000412 = "&Nimekiri"
+03000413 = "&Detailiq"
+03000420 = "Sort'maldaq"
+03000430 = "Tiiq vallalõ juur'kaust"
+03000431 = "Üts samm ülespoolõ"
+03000432 = "Kaustaaolugu..."
+03000440 = "&Värskindäq"
+
+; Tools
+03000510 = "&Tim'mine..."
+
+; Help
+03000610 = "&Sisokõrd..."
+03000620 = "&Tiidüs 7-Zip kotsilõ..."
+
+; Options Dialog
+
+03010000 = "Tim'mine"
+
+; Plugins
+03010100 = "Lisaprogrammiq"
+03010101 = "&Lisprogrammiq:"
+03010110 = "Saa valliq..."
+
+; Edit
+03010200 = "Toimõndaja"
+03010201 = "&Toimõndaja:"
+
+; System
+03010300 = "Süsteem'"
+03010302 = "Köüdäq 7-Zip salvõtüüpegaq:"
+03010310 = "Lisaprogramm'"
+
+; Strings
+
+03020201 = "Kopiq"
+03020202 = "Nõstaq"
+03020203 = "Kopiq kausta:"
+03020204 = "Nõstaq kausta:"
+03020205 = "Kopi..."
+03020206 = "Nõsta..."
+03020207 = "Sääntsehe kausta saa-õiq kopiq vai nõsta."
+03020208 = "Opõratsiooni ei toetaq."
+
+03020210 = "Salvõ kistutamisõ küsümine"
+03020211 = "Kausta kistutamisõ küsümine"
+03020212 = "Mitmõ salvõ kistutamisõ küsümine"
+03020213 = "Kas saq tõtõstõ tahat kistutadaq salvõ '{0}'?"
+03020214 = "Kas saq tõtõstõ tahat kistutadaq kausta '{0}' ja kykkõ, miä timä seen om?"
+03020215 = "Kas saq tõtõstõ tahat naaq {0} asja ärq kistutadaq?"
+03020216 = "Kistuta..."
+03020217 = "Viga salvõ vai kausta kistutamisõ man"
+
+03020220 = "Nimetä ümbre..."
+03020221 = "Viga salvõ vai kausta ümbrenimetämisel"
+
+03020230 = "Kausta luuminõ"
+03020231 = "Kausta nimi:"
+03020232 = "Vahtsõnõ kaust"
+03020233 = "Viga kausta luumisõ man"
+
+03020240 = "Salvõ luuminõ"
+03020241 = "Salvõ nimi:"
+03020242 = "Vahtsõnõ salv'"
+03020243 = "Viga salvõ luumisõ man"
+
+03020250 = "Märgiq ärq"
+03020251 = "Märk'ku-õiq ärq"
+03020252 = "Mask':"
+
+03020260 = "Kausto aolugu"
+
+03020280 = "Salvõ '{0}' om muudõt. \nKas saq tahat tedä arhiivin värskindädäq?"
+03020281 = "Saa-õiq värskindädäq salvõ\n'{0}'"
+03020282 = "Saa-õiq toimõndajat tüüle pandaq."
+03020283 = "Tii vallalõ..."
+
+03020300 = "Puutrõ"
+03020301 = "Võrk"
+
+; Computer
+03031100 = "Suurus"
+03031101 = "Vapa ruumi"
+03031102 = "Klastrõ suurus"
+03031103 = "Silt'"
+
+; Network
+03031200 = "Lokaalnõ nimi"
+03031201 = "Teenussõpak'ja"
+
+;!@LangEnd@!

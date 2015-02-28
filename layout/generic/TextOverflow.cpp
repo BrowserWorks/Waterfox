@@ -12,6 +12,7 @@
 #include "nsCaret.h"
 #include "nsContentUtils.h"
 #include "nsCSSAnonBoxes.h"
+#include "nsFontMetrics.h"
 #include "nsGfxScrollFrame.h"
 #include "nsIScrollableFrame.h"
 #include "nsLayoutUtils.h"
@@ -34,10 +35,7 @@ public:
     : mFrame(aFrame) {}
   virtual already_AddRefed<gfxContext> GetRefContext() MOZ_OVERRIDE
   {
-    nsRefPtr<nsRenderingContext> rc =
-      mFrame->PresContext()->PresShell()->CreateReferenceRenderingContext();
-    nsRefPtr<gfxContext> ctx = rc->ThebesContext();
-    return ctx.forget();
+    return mFrame->PresContext()->PresShell()->CreateReferenceRenderingContext();
   }
 private:
   nsIFrame* mFrame;
@@ -212,7 +210,7 @@ nsDisplayTextOverflowMarker::Paint(nsDisplayListBuilder* aBuilder,
   nsLayoutUtils::PaintTextShadow(mFrame, aCtx, mRect, mVisibleRect,
                                  foregroundColor, PaintTextShadowCallback,
                                  (void*)this);
-  aCtx->SetColor(foregroundColor);
+  aCtx->ThebesContext()->SetColor(foregroundColor);
   PaintTextToContext(aCtx, nsPoint(0, 0));
 }
 
@@ -238,8 +236,7 @@ nsDisplayTextOverflowMarker::PaintTextToContext(nsRenderingContext* aCtx,
     nsRefPtr<nsFontMetrics> fm;
     nsLayoutUtils::GetFontMetricsForFrame(mFrame, getter_AddRefs(fm),
       nsLayoutUtils::FontSizeInflationFor(mFrame));
-    aCtx->SetFont(fm);
-    nsLayoutUtils::DrawString(mFrame, aCtx, mStyle->mString.get(),
+    nsLayoutUtils::DrawString(mFrame, *fm, aCtx, mStyle->mString.get(),
                               mStyle->mString.Length(), pt);
   }
 }
@@ -758,14 +755,13 @@ TextOverflow::Marker::SetupString(nsIFrame* aFrame)
       mWidth = 0;
     }
   } else {
-    nsRefPtr<nsRenderingContext> rc =
-      aFrame->PresContext()->PresShell()->CreateReferenceRenderingContext();
+    nsRenderingContext rc(
+      aFrame->PresContext()->PresShell()->CreateReferenceRenderingContext());
     nsRefPtr<nsFontMetrics> fm;
     nsLayoutUtils::GetFontMetricsForFrame(aFrame, getter_AddRefs(fm),
       nsLayoutUtils::FontSizeInflationFor(aFrame));
-    rc->SetFont(fm);
-    mWidth = nsLayoutUtils::GetStringWidth(aFrame, rc, mStyle->mString.get(),
-                                           mStyle->mString.Length());
+    mWidth = nsLayoutUtils::AppUnitWidthOfStringBidi(mStyle->mString, aFrame,
+                                                     *fm, rc);
   }
   mIntrinsicISize = mWidth;
   mInitialized = true;

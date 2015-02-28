@@ -9,7 +9,7 @@ const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
   Task.spawn(function() {
-    let [tab, debuggee, panel] = yield initDebugger(TAB_URL);
+    let [tab,, panel] = yield initDebugger(TAB_URL);
     let win = panel.panelWin;
     let frames = win.DebuggerController.StackFrames;
     let framesView = win.DebuggerView.StackFrames;
@@ -21,7 +21,7 @@ function test() {
     function checkView(selectedFrame, selectedSource, caretLine, editorText) {
       is(win.gThreadClient.state, "paused",
         "Should only be getting stack frames while paused.");
-      is(framesView.itemCount, 4,
+      is(framesView.itemCount, 2,
         "Should have four frames.");
       is(framesView.selectedDepth, selectedFrame,
         "The correct frame is selected in the widget.");
@@ -38,15 +38,15 @@ function test() {
     is(sources._cache.size, 2, "There should be two cached sources in the cache.");
 
     // Allow this generator function to yield first.
-    executeSoon(() => debuggee.firstCall());
-    yield waitForSourceAndCaretAndScopes(panel, "-02.js", 1);
-    checkView(0, 1, 1, [/secondCall/, 118]);
+    callInTab(tab, "firstCall");
+    yield waitForSourceAndCaretAndScopes(panel, "-02.js", 6);
+    checkView(0, 1, 6, [/secondCall/, 118]);
 
     // Change the selected frame and eval inside it.
     let updatedFrame = waitForDebuggerEvents(panel, events.FETCHED_SCOPES);
-    framesView.selectedDepth = 3; // oldest frame
+    framesView.selectedDepth = 1; // oldest frame
     yield updatedFrame;
-    checkView(3, 0, 5, [/firstCall/, 118]);
+    checkView(1, 0, 5, [/firstCall/, 118]);
 
     let updatedView = waitForDebuggerEvents(panel, events.FETCHED_SCOPES);
     try {
@@ -58,7 +58,7 @@ function test() {
     }
 
     yield updatedView;
-    checkView(3, 0, 5, [/firstCall/, 118]);
+    checkView(1, 0, 5, [/firstCall/, 118]);
     ok(true, "Evaluating while in a user-selected frame works properly.");
 
     yield resumeDebuggerThenCloseAndFinish(panel);

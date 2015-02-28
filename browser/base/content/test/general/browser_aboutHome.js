@@ -381,6 +381,56 @@ let gTests = [
   }
 },
 {
+  desc: "Clicking suggestion list while composing",
+  setup: function() {},
+  run: function()
+  {
+    return Task.spawn(function* () {
+      // Start composition and type "x"
+      let input = gBrowser.contentDocument.getElementById("searchText");
+      input.focus();
+      EventUtils.synthesizeComposition({ type: "compositionstart", data: "" });
+      EventUtils.synthesizeComposition({ type: "compositionupdate", data: "x" });
+      EventUtils.synthesizeCompositionChange({
+        composition: {
+          string: "x",
+          clauses: [
+            { length: 1, attr: EventUtils.COMPOSITION_ATTR_RAWINPUT }
+          ]
+        },
+        caret: { start: 1, length: 0 }
+      });
+
+      // Wait for the search suggestions to become visible.
+      let table =
+        gBrowser.contentDocument.getElementById("searchSuggestionTable");
+      let deferred = Promise.defer();
+      let observer = new MutationObserver(() => {
+        if (input.getAttribute("aria-expanded") == "true") {
+          observer.disconnect();
+          ok(!table.hidden, "Search suggestion table unhidden");
+          deferred.resolve();
+        }
+      });
+      observer.observe(input, {
+        attributes: true,
+        attributeFilter: ["aria-expanded"],
+      });
+      yield deferred.promise;
+
+      // Click the second suggestion.
+      let expectedURL = Services.search.currentEngine.
+                        getSubmission("xbar", null, "homepage").
+                        uri.spec;
+      let loadPromise = waitForDocLoadAndStopIt(expectedURL);
+      let row = table.children[1];
+      EventUtils.sendMouseEvent({ type: "mousedown" }, row, gBrowser.contentWindow);
+      yield loadPromise;
+      ok(input.value == "xbar", "Suggestion is selected");
+    });
+  }
+},
+{
   desc: "Cmd+k should focus the search box in the page when the search box in the toolbar is absent",
   setup: function () {
     // Remove the search bar from toolbar
@@ -439,7 +489,7 @@ let gTests = [
     info("Waiting for popup to open");
     EventUtils.synthesizeMouseAtCenter(searchIcon, {}, gBrowser.selectedBrowser.contentWindow);
     yield promiseWaitForEvent(panel, "popupshown");
-    ok("Saw popup open");
+    info("Saw popup open");
 
     let promise = promisePrefsOpen();
     let item = window.document.getElementById("abouthome-search-panel-manage");
@@ -631,26 +681,35 @@ function promiseWaitForEvent(node, type, capturing) {
   });
 }
 
-function promisePrefsOpen() {
-  info("Waiting for the preferences window to open...");
-  let deferred = Promise.defer();
-  let winWatcher = Cc["@mozilla.org/embedcomp/window-watcher;1"].
-                   getService(Ci.nsIWindowWatcher);
-  winWatcher.registerNotification(function onWin(subj, topic, data) {
-    if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
-      subj.addEventListener("load", function onLoad() {
-        subj.removeEventListener("load", onLoad);
-        is(subj.document.documentURI, "chrome://browser/content/preferences/preferences.xul", "Should have seen the prefs window");
-        winWatcher.unregisterNotification(onWin);
-        executeSoon(() => {
-          subj.close();
-          deferred.resolve();
-        });
+let promisePrefsOpen = Task.async(function*() {
+  if (Services.prefs.getBoolPref("browser.preferences.inContent")) {
+    info("Waiting for the preferences tab to open...");
+    let event = yield promiseWaitForEvent(gBrowser.tabContainer, "TabOpen", true);
+    let tab = event.target;
+    yield promiseTabLoadEvent(tab);
+    is(tab.linkedBrowser.currentURI.spec, "about:preferences#search", "Should have seen the prefs tab");
+    gBrowser.removeTab(tab);
+  } else {
+    info("Waiting for the preferences window to open...");
+    yield new Promise(resolve => {
+      let winWatcher = Cc["@mozilla.org/embedcomp/window-watcher;1"].
+                       getService(Ci.nsIWindowWatcher);
+      winWatcher.registerNotification(function onWin(subj, topic, data) {
+        if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
+          subj.addEventListener("load", function onLoad() {
+            subj.removeEventListener("load", onLoad);
+            is(subj.document.documentURI, "chrome://browser/content/preferences/preferences.xul", "Should have seen the prefs window");
+            winWatcher.unregisterNotification(onWin);
+            executeSoon(() => {
+              subj.close();
+              resolve();
+            });
+          });
+        }
       });
-    }
-  });
-  return deferred.promise;
-}
+    });
+  }
+});
 
 function promiseNewEngine(basename) {
   info("Waiting for engine to be added: " + basename);

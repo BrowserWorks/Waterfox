@@ -11,6 +11,11 @@
  */
 ksh{
     Version{"2.1.7.53"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         acceleration{
             g-force{

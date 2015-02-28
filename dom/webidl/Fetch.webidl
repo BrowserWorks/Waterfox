@@ -8,10 +8,9 @@
  */
 
 typedef object JSON;
-// FIXME(nsm): Bug 1071290: Blobs can't be passed as unions in workers.
 // FIXME(nsm): Bug 739173: FormData is not available in workers.
-// typedef (ArrayBuffer or ArrayBufferView or Blob or FormData or ScalarValueString or URLSearchParams) BodyInit;
-typedef (ArrayBuffer or ArrayBufferView or ScalarValueString or URLSearchParams) BodyInit;
+// typedef (ArrayBuffer or ArrayBufferView or Blob or FormData or USVString or URLSearchParams) BodyInit;
+typedef (ArrayBuffer or ArrayBufferView or Blob or USVString or URLSearchParams) BodyInit;
 
 [NoInterfaceObject, Exposed=(Window,Worker)]
 interface Body {
@@ -25,7 +24,7 @@ interface Body {
   [Throws]
   Promise<JSON> json();
   [Throws]
-  Promise<ScalarValueString> text();
+  Promise<USVString> text();
 };
 
 [NoInterfaceObject, Exposed=(Window,Worker)]

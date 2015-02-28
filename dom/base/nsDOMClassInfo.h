@@ -46,7 +46,6 @@ struct nsDOMClassInfoData
   const nsIID **mInterfaces;
   uint32_t mScriptableFlags : 31; // flags must not use more than 31 bits!
   uint32_t mHasClassInterface : 1;
-  uint32_t mInterfacesBitmap;
   bool mChromeOnly : 1;
   bool mAllowXBL : 1;
   bool mDisabled : 1;
@@ -137,15 +136,8 @@ protected:
   {
   }
 
-  virtual uint32_t GetInterfacesBitmap() MOZ_OVERRIDE
-  {
-    return mData->mInterfacesBitmap;
-  }
-
   static nsresult RegisterClassProtos(int32_t aDOMClassInfoID);
   static nsresult RegisterExternalClasses();
-  nsresult ResolveConstructor(JSContext *cx, JSObject *obj,
-                              JSObject **objp);
 
   static nsIXPConnect *sXPConnect;
 
@@ -282,9 +274,9 @@ public:
   {
     return NS_OK;
   }
-  NS_IMETHOD NewResolve(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
-                        JSObject *obj, jsid id, JSObject **objp,
-                        bool *_retval) MOZ_OVERRIDE;
+  NS_IMETHOD Resolve(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
+                     JSObject *obj, jsid id, bool *resolvedp,
+                     bool *_retval) MOZ_OVERRIDE;
   NS_IMETHOD Call(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
                   JSObject *obj, const JS::CallArgs &args, bool *_retval) MOZ_OVERRIDE;
 

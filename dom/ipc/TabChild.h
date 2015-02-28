@@ -34,6 +34,7 @@
 #include "mozilla/EventForwards.h"
 #include "mozilla/layers/CompositorTypes.h"
 #include "nsIWebBrowserChrome3.h"
+#include "mozilla/dom/ipc/IdType.h"
 
 class nsICachedFileDescriptorListener;
 class nsIDOMWindowUtils;
@@ -49,6 +50,10 @@ class ActiveElementManager;
 
 namespace widget {
 struct AutoCacheNativeKeyCommands;
+}
+
+namespace plugins {
+class PluginWidgetChild;
 }
 
 namespace dom {
@@ -254,7 +259,7 @@ class TabChild MOZ_FINAL : public TabChildBase,
     typedef mozilla::layers::ActiveElementManager ActiveElementManager;
 
 public:
-    static std::map<uint64_t, nsRefPtr<TabChild> >& NestedTabChildMap();
+    static std::map<TabId, nsRefPtr<TabChild>>& NestedTabChildMap();
 
 public:
     /** 
@@ -266,26 +271,13 @@ public:
 
     /** Return a TabChild with the given attributes. */
     static already_AddRefed<TabChild>
-    Create(nsIContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
+    Create(nsIContentChild* aManager, const TabId& aTabId, const TabContext& aContext, uint32_t aChromeFlags);
 
     bool IsRootContentDocument();
 
-    const uint64_t Id() const {
-        return mUniqueId;
-    }
-
-    static uint64_t
-    GetTabChildId(TabChild* aTabChild)
-    {
-        MOZ_ASSERT(NS_IsMainThread());
-        if (aTabChild->Id() != 0) {
-            return aTabChild->Id();
-        }
-        static uint64_t sId = 0;
-        sId++;
-        aTabChild->mUniqueId = sId;
-        NestedTabChildMap()[sId] = aTabChild;
-        return sId;
+    const TabId GetTabId() const {
+      MOZ_ASSERT(mUniqueId != 0);
+      return mUniqueId;
     }
 
     NS_DECL_ISUPPORTS_INHERITED
@@ -324,7 +316,11 @@ public:
     virtual bool RecvCacheFileDescriptor(const nsString& aPath,
                                          const FileDescriptor& aFileDescriptor)
                                          MOZ_OVERRIDE;
-    virtual bool RecvShow(const nsIntSize& size) MOZ_OVERRIDE;
+    virtual bool RecvShow(const nsIntSize& aSize,
+                          const ScrollingBehavior& aScrolling,
+                          const TextureFactoryIdentifier& aTextureFactoryIdentifier,
+                          const uint64_t& aLayersId,
+                          PRenderFrameChild* aRenderFrame) MOZ_OVERRIDE;
     virtual bool RecvUpdateDimensions(const nsIntRect& rect,
                                       const nsIntSize& size,
                                       const ScreenOrientation& orientation) MOZ_OVERRIDE;
@@ -336,7 +332,8 @@ public:
     virtual bool RecvHandleSingleTap(const CSSPoint& aPoint,
                                      const mozilla::layers::ScrollableLayerGuid& aGuid) MOZ_OVERRIDE;
     virtual bool RecvHandleLongTap(const CSSPoint& aPoint,
-                                   const mozilla::layers::ScrollableLayerGuid& aGuid) MOZ_OVERRIDE;
+                                   const mozilla::layers::ScrollableLayerGuid& aGuid,
+                                   const uint64_t& aInputBlockId) MOZ_OVERRIDE;
     virtual bool RecvHandleLongTapUp(const CSSPoint& aPoint,
                                      const mozilla::layers::ScrollableLayerGuid& aGuid) MOZ_OVERRIDE;
     virtual bool RecvNotifyAPZStateChange(const ViewID& aViewId,
@@ -356,9 +353,11 @@ public:
                                   const MaybeNativeKeyBinding& aBindings) MOZ_OVERRIDE;
     virtual bool RecvMouseWheelEvent(const mozilla::WidgetWheelEvent& event) MOZ_OVERRIDE;
     virtual bool RecvRealTouchEvent(const WidgetTouchEvent& aEvent,
-                                    const ScrollableLayerGuid& aGuid) MOZ_OVERRIDE;
+                                    const ScrollableLayerGuid& aGuid,
+                                    const uint64_t& aInputBlockId) MOZ_OVERRIDE;
     virtual bool RecvRealTouchMoveEvent(const WidgetTouchEvent& aEvent,
-                                        const ScrollableLayerGuid& aGuid) MOZ_OVERRIDE;
+                                        const ScrollableLayerGuid& aGuid,
+                                        const uint64_t& aInputBlockId) MOZ_OVERRIDE;
     virtual bool RecvKeyEvent(const nsString& aType,
                               const int32_t&  aKeyCode,
                               const int32_t&  aCharCode,
@@ -413,13 +412,6 @@ public:
     DeallocPIndexedDBPermissionRequestChild(
                                        PIndexedDBPermissionRequestChild* aActor)
                                        MOZ_OVERRIDE;
-
-    virtual POfflineCacheUpdateChild* AllocPOfflineCacheUpdateChild(
-            const URIParams& manifestURI,
-            const URIParams& documentURI,
-            const bool& stickDocument) MOZ_OVERRIDE;
-    virtual bool
-    DeallocPOfflineCacheUpdateChild(POfflineCacheUpdateChild* offlineCacheUpdate) MOZ_OVERRIDE;
 
     virtual nsIWebNavigation* WebNavigation() MOZ_OVERRIDE { return mWebNav; }
     virtual nsIWidget* WebWidget() MOZ_OVERRIDE { return mWidget; }
@@ -493,19 +485,29 @@ public:
 
     virtual bool RecvUIResolutionChanged() MOZ_OVERRIDE;
 
+    /**
+     * Native widget remoting protocol for use with windowed plugins with e10s.
+     */
+    PPluginWidgetChild* AllocPPluginWidgetChild() MOZ_OVERRIDE;
+    bool DeallocPPluginWidgetChild(PPluginWidgetChild* aActor) MOZ_OVERRIDE;
+    already_AddRefed<nsIWidget> CreatePluginWidget(nsIWidget* aParent);
+
 protected:
     virtual ~TabChild();
 
-    virtual PRenderFrameChild* AllocPRenderFrameChild(ScrollingBehavior* aScrolling,
-                                                      TextureFactoryIdentifier* aTextureFactoryIdentifier,
-                                                      uint64_t* aLayersId,
-                                                      bool* aSuccess) MOZ_OVERRIDE;
+    virtual PRenderFrameChild* AllocPRenderFrameChild() MOZ_OVERRIDE;
     virtual bool DeallocPRenderFrameChild(PRenderFrameChild* aFrame) MOZ_OVERRIDE;
     virtual bool RecvDestroy() MOZ_OVERRIDE;
     virtual bool RecvSetUpdateHitRegion(const bool& aEnabled) MOZ_OVERRIDE;
     virtual bool RecvSetIsDocShellActive(const bool& aIsActive) MOZ_OVERRIDE;
 
     virtual bool RecvRequestNotifyAfterRemotePaint();
+
+    virtual bool RecvParentActivated(const bool& aActivated) MOZ_OVERRIDE;
+
+#ifdef MOZ_WIDGET_GONK
+    void MaybeRequestPreinitCamera();
+#endif
 
 private:
     /**
@@ -516,7 +518,10 @@ private:
      *
      * |aIsBrowserElement| indicates whether we're a browser (but not an app).
      */
-    TabChild(nsIContentChild* aManager, const TabContext& aContext, uint32_t aChromeFlags);
+    TabChild(nsIContentChild* aManager,
+             const TabId& aTabId,
+             const TabContext& aContext,
+             uint32_t aChromeFlags);
 
     nsresult Init();
 
@@ -534,12 +539,18 @@ private:
 
     enum FrameScriptLoading { DONT_LOAD_SCRIPTS, DEFAULT_LOAD_SCRIPTS };
     bool InitTabChildGlobal(FrameScriptLoading aScriptLoading = DEFAULT_LOAD_SCRIPTS);
-    bool InitRenderingState();
+    bool InitRenderingState(const ScrollingBehavior& aScrolling,
+                            const TextureFactoryIdentifier& aTextureFactoryIdentifier,
+                            const uint64_t& aLayersId,
+                            PRenderFrameChild* aRenderFrame);
     void DestroyWindow();
     void SetProcessNameToAppName();
 
     // Call RecvShow(nsIntSize(0, 0)) and block future calls to RecvShow().
-    void DoFakeShow();
+    void DoFakeShow(const ScrollingBehavior& aScrolling,
+                    const TextureFactoryIdentifier& aTextureFactoryIdentifier,
+                    const uint64_t& aLayersId,
+                    PRenderFrameChild* aRenderFrame);
 
     // These methods are used for tracking synthetic mouse events
     // dispatched for compatibility.  On each touch event, we
@@ -564,8 +575,21 @@ private:
     void SendPendingTouchPreventedResponse(bool aPreventDefault,
                                            const ScrollableLayerGuid& aGuid);
 
+    void SendSetTargetAPZCNotification(const WidgetTouchEvent& aEvent,
+                                       const mozilla::layers::ScrollableLayerGuid& aGuid,
+                                       const uint64_t& aInputBlockId);
+
+    void SetTabId(const TabId& aTabId)
+    {
+      MOZ_ASSERT(mUniqueId == 0);
+
+      mUniqueId = aTabId;
+      NestedTabChildMap()[mUniqueId] = this;
+    }
+
     class CachedFileDescriptorInfo;
     class CachedFileDescriptorCallbackRunnable;
+    class DelayedDeleteRunnable;
 
     TextureFactoryIdentifier mTextureFactoryIdentifier;
     nsCOMPtr<nsIWebNavigation> mWebNav;
@@ -598,6 +622,7 @@ private:
     bool mUpdateHitRegion;
     bool mPendingTouchPreventedResponse;
     ScrollableLayerGuid mPendingTouchPreventedGuid;
+    uint64_t mPendingTouchPreventedBlockId;
     void FireSingleTapEvent(LayoutDevicePoint aPoint);
 
     bool mTouchEndCancelled;
@@ -606,8 +631,8 @@ private:
     bool mIgnoreKeyPressEvent;
     nsRefPtr<ActiveElementManager> mActiveElementManager;
     bool mHasValidInnerSize;
-    uint64_t mUniqueId;
     bool mDestroyed;
+    TabId mUniqueId;
 
     DISALLOW_EVIL_CONSTRUCTORS(TabChild);
 };

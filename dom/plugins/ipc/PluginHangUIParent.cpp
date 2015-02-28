@@ -69,7 +69,7 @@ private:
 namespace mozilla {
 namespace plugins {
 
-PluginHangUIParent::PluginHangUIParent(PluginModuleParent* aModule,
+PluginHangUIParent::PluginHangUIParent(PluginModuleChromeParent* aModule,
                                        const int32_t aHangUITimeoutPref,
                                        const int32_t aChildTimeoutPref)
   : mMutex("mozilla::plugins::PluginHangUIParent::mMutex"),
@@ -300,7 +300,7 @@ PluginHangUIParent::UnwatchHangUIChildProcess(bool aWait)
     // it is okay to clear mRegWait; Windows is telling us that the wait's
     // callback is running but will be cleaned up once the callback returns.
     if (::UnregisterWaitEx(mRegWait, completionEvent) ||
-        !aWait && ::GetLastError() == ERROR_IO_PENDING) {
+        (!aWait && ::GetLastError() == ERROR_IO_PENDING)) {
       mRegWait = nullptr;
       if (aWait) {
         // We must temporarily unlock mMutex while waiting for the registered
@@ -356,6 +356,7 @@ PluginHangUIParent::RecvUserResponse(const unsigned int& aResponse)
     mModule->TerminateChildProcess(mMainThreadMessageLoop);
     responseCode = 1;
   } else if(aResponse & HANGUI_USER_RESPONSE_CONTINUE) {
+    mModule->OnHangUIContinue();
     // User clicked Continue
     responseCode = 2;
   } else {

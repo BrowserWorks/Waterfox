@@ -12,6 +12,7 @@
 #include "unicode/utypes.h"
 #include "unicode/errorcode.h"
 #include "unicode/localpointer.h"
+#include "charstr.h"
 #include "itutil.h"
 #include "strtest.h"
 #include "loctest.h"
@@ -262,15 +263,12 @@ void LocalPointerTest::runIndexedTest(int32_t index, UBool exec, const char *&na
     if(exec) {
         logln("TestSuite LocalPointerTest: ");
     }
-    switch (index) {
-        TESTCASE(0, TestLocalPointer);
-        TESTCASE(1, TestLocalArray);
-        TESTCASE(2, TestLocalXyzPointer);
-        TESTCASE(3, TestLocalXyzPointerNull);
-        default:
-            name="";
-            break; // needed to end the loop
-    }
+    TESTCASE_AUTO_BEGIN;
+    TESTCASE_AUTO(TestLocalPointer);
+    TESTCASE_AUTO(TestLocalArray);
+    TESTCASE_AUTO(TestLocalXyzPointer);
+    TESTCASE_AUTO(TestLocalXyzPointerNull);
+    TESTCASE_AUTO_END;
 }
 
 // Exercise every LocalPointer and LocalPointerBase method.
@@ -300,6 +298,43 @@ void LocalPointerTest::TestLocalPointer() {
     s.adoptInstead(new UnicodeString());
     if(s->length()!=0) {
         errln("LocalPointer adoptInstead(empty) failure");
+    }
+
+    // LocalPointer(p, errorCode) sets U_MEMORY_ALLOCATION_ERROR if p==NULL.
+    UErrorCode errorCode = U_ZERO_ERROR;
+    LocalPointer<CharString> cs(new CharString("some chars", errorCode), errorCode);
+    if(cs.isNull() && U_SUCCESS(errorCode)) {
+        errln("LocalPointer(p, errorCode) failure");
+        return;
+    }
+    errorCode = U_ZERO_ERROR;
+    cs.adoptInsteadAndCheckErrorCode(new CharString("different chars", errorCode), errorCode);
+    if(cs.isNull() && U_SUCCESS(errorCode)) {
+        errln("adoptInsteadAndCheckErrorCode(p, errorCode) failure");
+        return;
+    }
+    // Incoming failure: Keep the current object and delete the input object.
+    errorCode = U_ILLEGAL_ARGUMENT_ERROR;
+    cs.adoptInsteadAndCheckErrorCode(new CharString("unused", errorCode), errorCode);
+    if(cs.isValid() && strcmp(cs->data(), "different chars") != 0) {
+        errln("adoptInsteadAndCheckErrorCode(p, U_FAILURE) did not retain the old object");
+        return;
+    }
+    errorCode = U_ZERO_ERROR;
+    cs.adoptInsteadAndCheckErrorCode(NULL, errorCode);
+    if(errorCode != U_MEMORY_ALLOCATION_ERROR) {
+        errln("adoptInsteadAndCheckErrorCode(NULL, errorCode) did not set U_MEMORY_ALLOCATION_ERROR");
+        return;
+    }
+    if(cs.isValid()) {
+        errln("adoptInsteadAndCheckErrorCode(NULL, errorCode) kept the object");
+        return;
+    }
+    errorCode = U_ZERO_ERROR;
+    LocalPointer<CharString> null(NULL, errorCode);
+    if(errorCode != U_MEMORY_ALLOCATION_ERROR) {
+        errln("LocalPointer(NULL, errorCode) did not set U_MEMORY_ALLOCATION_ERROR");
+        return;
     }
 }
 

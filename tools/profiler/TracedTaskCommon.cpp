@@ -12,7 +12,7 @@ namespace tasktracer {
 
 TracedTaskCommon::TracedTaskCommon()
   : mSourceEventId(0)
-  , mSourceEventType(SourceEventType::UNKNOWN)
+  , mSourceEventType(SourceEventType::Unknown)
 {
   Init();
 }
@@ -34,7 +34,9 @@ void
 TracedTaskCommon::SetTraceInfo()
 {
   TraceInfo* info = GetOrCreateTraceInfo();
-  NS_ENSURE_TRUE_VOID(info);
+  if (!info) {
+    return;
+  }
 
   info->mCurTraceSourceId = mSourceEventId;
   info->mCurTraceSourceType = mSourceEventType;
@@ -45,10 +47,12 @@ void
 TracedTaskCommon::ClearTraceInfo()
 {
   TraceInfo* info = GetOrCreateTraceInfo();
-  NS_ENSURE_TRUE_VOID(info);
+  if (!info) {
+    return;
+  }
 
   info->mCurTraceSourceId = 0;
-  info->mCurTraceSourceType = SourceEventType::UNKNOWN;
+  info->mCurTraceSourceType = SourceEventType::Unknown;
   info->mCurTaskId = 0;
 }
 
@@ -103,13 +107,6 @@ FakeTracedTask::FakeTracedTask(int* aVptr)
   LogVirtualTablePtr(mTaskId, mSourceEventId, aVptr);
 }
 
-FakeTracedTask::FakeTracedTask(const FakeTracedTask& aTask)
-{
-  mTaskId = aTask.mTaskId;
-  mSourceEventId = aTask.mSourceEventId;
-  mSourceEventType = aTask.mSourceEventType;
-}
-
 void
 FakeTracedTask::BeginFakeTracedTask()
 {
@@ -125,19 +122,17 @@ FakeTracedTask::EndFakeTracedTask()
 }
 
 AutoRunFakeTracedTask::AutoRunFakeTracedTask(FakeTracedTask* aFakeTracedTask)
-  : mInitialized(false)
+  : mFakeTracedTask(aFakeTracedTask)
 {
-  if (aFakeTracedTask) {
-    mInitialized = true;
-    mFakeTracedTask = *aFakeTracedTask;
-    mFakeTracedTask.BeginFakeTracedTask();
+  if (mFakeTracedTask) {
+    mFakeTracedTask->BeginFakeTracedTask();
   }
 }
 
 AutoRunFakeTracedTask::~AutoRunFakeTracedTask()
 {
-  if (mInitialized) {
-    mFakeTracedTask.EndFakeTracedTask();
+  if (mFakeTracedTask) {
+    mFakeTracedTask->EndFakeTracedTask();
   }
 }
 
@@ -167,10 +162,10 @@ CreateTracedTask(Task* aTask)
  * CreateFakeTracedTask() returns a FakeTracedTask tracking the event which is
  * not dispatched from its parent task directly, such as timer events.
  */
-FakeTracedTask*
+already_AddRefed<FakeTracedTask>
 CreateFakeTracedTask(int* aVptr)
 {
-  nsAutoPtr<FakeTracedTask> task(new FakeTracedTask(aVptr));
+  nsRefPtr<FakeTracedTask> task(new FakeTracedTask(aVptr));
   return task.forget();
 }
 

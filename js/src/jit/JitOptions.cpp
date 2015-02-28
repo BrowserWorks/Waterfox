@@ -64,7 +64,7 @@ JitOptions::JitOptions()
     SET_DEFAULT(checkRangeAnalysis, false);
 
     // Toggle whether eager scalar replacement is globally disabled.
-    SET_DEFAULT(disableScalarReplacement, true); // experimental
+    SET_DEFAULT(disableScalarReplacement, false);
 
     // Toggle whether global value numbering is globally disabled.
     SET_DEFAULT(disableGvn, false);
@@ -80,6 +80,9 @@ JitOptions::JitOptions()
 
     // Toggles whether Range Analysis is globally disabled.
     SET_DEFAULT(disableRangeAnalysis, false);
+
+    // Toggles whether sink code motion is globally disabled.
+    SET_DEFAULT(disableSink, true);
 
     // Toggles whether Loop Unrolling is globally disabled.
     SET_DEFAULT(disableLoopUnrolling, true);

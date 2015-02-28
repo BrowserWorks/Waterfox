@@ -11,7 +11,6 @@
 #include "nsIFrame.h"
 #include "nsIWidget.h"
 #include "nsReadableUtils.h"
-#include "nsRenderingContext.h"
 #include "nsIDOMWindow.h"
 #include "nsIContent.h"
 
@@ -133,37 +132,4 @@ inFlasher::ScrollElementIntoView(nsIDOMElement *aElement)
                                    nsIPresShell::SCROLL_OVERFLOW_HIDDEN);
 
   return NS_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// inFlasher
-
-void
-inFlasher::DrawOutline(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight,
-                       nsRenderingContext* aRenderContext,
-                       bool aDrawBegin, bool aDrawEnd)
-{
-  aRenderContext->SetColor(mColor);
-
-  DrawLine(aX, aY, aWidth, DIR_HORIZONTAL, BOUND_OUTER, aRenderContext);
-  if (aDrawBegin) {
-    DrawLine(aX, aY, aHeight, DIR_VERTICAL, BOUND_OUTER, aRenderContext);
-  }
-  DrawLine(aX, aY+aHeight, aWidth, DIR_HORIZONTAL, BOUND_INNER, aRenderContext);
-  if (aDrawEnd) {
-    DrawLine(aX+aWidth, aY, aHeight, DIR_VERTICAL, BOUND_INNER, aRenderContext);
-  }
-}
-
-void
-inFlasher::DrawLine(nscoord aX, nscoord aY, nscoord aLength,
-                    bool aDir, bool aBounds,
-                    nsRenderingContext* aRenderContext)
-{
-  nscoord thickTwips = nsPresContext::CSSPixelsToAppUnits(mThickness);
-  if (aDir) { // horizontal
-    aRenderContext->FillRect(aX, aY+(aBounds?0:-thickTwips), aLength, thickTwips);
-  } else { // vertical
-    aRenderContext->FillRect(aX+(aBounds?0:-thickTwips), aY, thickTwips, aLength);
-  }
 }

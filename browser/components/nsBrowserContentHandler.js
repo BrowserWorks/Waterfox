@@ -48,7 +48,7 @@ function shouldLoadURI(aURI) {
     return true;
 
   dump("*** Preventing external load of chrome: URI into browser window\n");
-  dump("    Use -chrome <uri> instead\n");
+  dump("    Use --chrome <uri> instead\n");
   return false;
 }
 
@@ -342,86 +342,6 @@ nsBrowserContentHandler.prototype = {
       cmdLine.preventDefault = true;
     }
 
-    try {
-      var remoteCommand = cmdLine.handleFlagWithParam("remote", true);
-    }
-    catch (e) {
-      throw NS_ERROR_ABORT;
-    }
-
-    if (remoteCommand != null) {
-      try {
-        var a = /^\s*(\w+)\(([^\)]*)\)\s*$/.exec(remoteCommand);
-        var remoteVerb;
-        if (a) {
-          remoteVerb = a[1].toLowerCase();
-          var remoteParams = [];
-          var sepIndex = a[2].lastIndexOf(",");
-          if (sepIndex == -1)
-            remoteParams[0] = a[2];
-          else {
-            remoteParams[0] = a[2].substring(0, sepIndex);
-            remoteParams[1] = a[2].substring(sepIndex + 1);
-          }
-        }
-
-        switch (remoteVerb) {
-        case "openurl":
-        case "openfile":
-          // openURL(<url>)
-          // openURL(<url>,new-window)
-          // openURL(<url>,new-tab)
-
-          // First param is the URL, second param (if present) is the "target"
-          // (tab, window)
-          var url = remoteParams[0];
-          var target = nsIBrowserDOMWindow.OPEN_DEFAULTWINDOW;
-          if (remoteParams[1]) {
-            var targetParam = remoteParams[1].toLowerCase()
-                                             .replace(/^\s*|\s*$/g, "");
-            if (targetParam == "new-tab")
-              target = nsIBrowserDOMWindow.OPEN_NEWTAB;
-            else if (targetParam == "new-window")
-              target = nsIBrowserDOMWindow.OPEN_NEWWINDOW;
-            else {
-              // The "target" param isn't one of our supported values, so
-              // assume it's part of a URL that contains commas.
-              url += "," + remoteParams[1];
-            }
-          }
-
-          var uri = resolveURIInternal(cmdLine, url);
-          handURIToExistingBrowser(uri, target, cmdLine);
-          break;
-
-        case "xfedocommand":
-          // xfeDoCommand(openBrowser)
-          if (remoteParams[0].toLowerCase() != "openbrowser")
-            throw NS_ERROR_ABORT;
-
-          // Passing defaultArgs, so use NO_EXTERNAL_URIS
-          openWindow(null, this.chromeURL, "_blank",
-                     "chrome,dialog=no,all" + this.getFeatures(cmdLine),
-                     this.defaultArgs, NO_EXTERNAL_URIS);
-          break;
-
-        default:
-          // Somebody sent us a remote command we don't know how to process:
-          // just abort.
-          throw "Unknown remote command.";
-        }
-
-        cmdLine.preventDefault = true;
-      }
-      catch (e) {
-        Components.utils.reportError(e);
-        // If we had a -remote flag but failed to process it, throw
-        // NS_ERROR_ABORT so that the xremote code knows to return a failure
-        // back to the handling code.
-        throw NS_ERROR_ABORT;
-      }
-    }
-
     var uriparam;
     try {
       while ((uriparam = cmdLine.handleFlagWithParam("new-window", false))) {
@@ -536,16 +456,16 @@ nsBrowserContentHandler.prototype = {
 #endif
   },
 
-  helpInfo : "  -browser           Open a browser window.\n" +
-             "  -new-window  <url> Open <url> in a new window.\n" +
-             "  -new-tab     <url> Open <url> in a new tab.\n" +
-             "  -private-window <url> Open <url> in a new private window.\n" +
+  helpInfo : "  --browser          Open a browser window.\n" +
+             "  --new-window <url> Open <url> in a new window.\n" +
+             "  --new-tab <url>    Open <url> in a new tab.\n" +
+             "  --private-window <url> Open <url> in a new private window.\n" +
 #ifdef XP_WIN
-             "  -preferences       Open Options dialog.\n" +
+             "  --preferences      Open Options dialog.\n" +
 #else
-             "  -preferences       Open Preferences dialog.\n" +
+             "  --preferences      Open Preferences dialog.\n" +
 #endif
-             "  -search     <term> Search <term> with your default search engine.\n",
+             "  --search <term>    Search <term> with your default search engine.\n",
 
   /* nsIBrowserHandler */
 
@@ -592,6 +512,10 @@ nsBrowserContentHandler.prototype = {
             overridePage = Services.urlFormatter.formatURLPref("startup.homepage_override_url");
             if (prefb.prefHasUserValue("app.update.postupdate"))
               overridePage = getPostUpdateOverridePage(overridePage);
+
+            // Temporary exclusion of the Loop tour page for users who have already used Loop.
+            if (Services.prefs.getBoolPref("loop.gettingStarted.seen"))
+              overridePage = "";
 
             overridePage = overridePage.replace("%OLD_VERSION%", old_mstone);
             break;

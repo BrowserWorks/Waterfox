@@ -16,7 +16,6 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <sched.h>
 
 #include "nsAppShell.h"
 #include "nsWindow.h"
@@ -925,9 +924,10 @@ Java_org_mozilla_gecko_gfx_NativePanZoomController_handleTouchEvent(JNIEnv* env,
     }
 
     ScrollableLayerGuid guid;
-    nsEventStatus status = controller->ReceiveInputEvent(input, &guid);
+    uint64_t blockId;
+    nsEventStatus status = controller->ReceiveInputEvent(input, &guid, &blockId);
     if (status != nsEventStatus_eConsumeNoDefault) {
-        nsAppShell::gAppShell->PostEvent(AndroidGeckoEvent::MakeApzInputEvent(input, guid));
+        nsAppShell::gAppShell->PostEvent(AndroidGeckoEvent::MakeApzInputEvent(input, guid, blockId));
     }
     return true;
 }
@@ -1029,7 +1029,7 @@ Java_org_mozilla_gecko_ANRReporter_getNativeStack(JNIEnv* jenv, jclass)
         if (PR_IntervalNow() - startTime >= timeout) {
             return nullptr;
         }
-        sched_yield();
+        usleep(100000ul); // Sleep for 100ms
         profile = ProfilePtr(profiler_get_profile());
     }
 

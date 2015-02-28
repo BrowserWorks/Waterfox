@@ -84,54 +84,16 @@ InterpreterFrame::initExecuteFrame(JSContext *cx, JSScript *script, AbstractFram
     prevpc_ = nullptr;
     prevsp_ = nullptr;
 
-    MOZ_ASSERT_IF(evalInFramePrev, isDebuggerFrame());
+    MOZ_ASSERT_IF(evalInFramePrev, isDebuggerEvalFrame());
     evalInFramePrev_ = evalInFramePrev;
+
+    if (script->isDebuggee())
+        setIsDebuggee();
 
 #ifdef DEBUG
     Debug_SetValueRangeToCrashOnTouch(&rval_, 1);
 #endif
 }
-
-template <InterpreterFrame::TriggerPostBarriers doPostBarrier>
-void
-InterpreterFrame::copyFrameAndValues(JSContext *cx, Value *vp, InterpreterFrame *otherfp,
-                                     const Value *othervp, Value *othersp)
-{
-    MOZ_ASSERT(othervp == otherfp->generatorArgsSnapshotBegin());
-    MOZ_ASSERT(othersp >= otherfp->slots());
-    MOZ_ASSERT(othersp <= otherfp->generatorSlotsSnapshotBegin() + otherfp->script()->nslots());
-
-    /* Copy args, InterpreterFrame, and slots. */
-    const Value *srcend = otherfp->generatorArgsSnapshotEnd();
-    Value *dst = vp;
-    for (const Value *src = othervp; src < srcend; src++, dst++) {
-        *dst = *src;
-        if (doPostBarrier)
-            HeapValue::writeBarrierPost(*dst, dst);
-    }
-
-    *this = *otherfp;
-    argv_ = vp + 2;
-    unsetPushedSPSFrame();
-    if (doPostBarrier)
-        writeBarrierPost();
-
-    srcend = othersp;
-    dst = slots();
-    for (const Value *src = otherfp->slots(); src < srcend; src++, dst++) {
-        *dst = *src;
-        if (doPostBarrier)
-            HeapValue::writeBarrierPost(*dst, dst);
-    }
-}
-
-/* Note: explicit instantiation for js_NewGenerator located in jsiter.cpp. */
-template
-void InterpreterFrame::copyFrameAndValues<InterpreterFrame::NoPostBarrier>(
-                                    JSContext *, Value *, InterpreterFrame *, const Value *, Value *);
-template
-void InterpreterFrame::copyFrameAndValues<InterpreterFrame::DoPostBarrier>(
-                                    JSContext *, Value *, InterpreterFrame *, const Value *, Value *);
 
 void
 InterpreterFrame::writeBarrierPost()
@@ -227,7 +189,6 @@ InterpreterFrame::prologue(JSContext *cx)
 {
     RootedScript script(cx, this->script());
 
-    MOZ_ASSERT(!isGeneratorFrame());
     MOZ_ASSERT(cx->interpreterRegs().pc == script->code());
 
     if (isEvalFrame()) {
@@ -265,18 +226,16 @@ InterpreterFrame::prologue(JSContext *cx)
 void
 InterpreterFrame::epilogue(JSContext *cx)
 {
-    MOZ_ASSERT(!isYielding());
-
     RootedScript script(cx, this->script());
     probes::ExitScript(cx, script, script->functionNonDelazifying(), hasPushedSPSFrame());
 
     if (isEvalFrame()) {
         if (isStrictEvalFrame()) {
             MOZ_ASSERT_IF(hasCallObj(), scopeChain()->as<CallObject>().isForEval());
-            if (MOZ_UNLIKELY(cx->compartment()->debugMode()))
+            if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
                 DebugScopes::onPopStrictEvalScope(this);
         } else if (isDirectEvalFrame()) {
-            if (isDebuggerFrame())
+            if (isDebuggerEvalFrame())
                 MOZ_ASSERT(!scopeChain()->is<ScopeObject>());
         } else {
             /*
@@ -286,7 +245,7 @@ InterpreterFrame::epilogue(JSContext *cx)
              * indirect eval frames scoped to an object carrying the introduced
              * bindings.
              */
-            if (isDebuggerFrame()) {
+            if (isDebuggerEvalFrame()) {
                 MOZ_ASSERT(scopeChain()->is<GlobalObject>() ||
                            scopeChain()->enclosingScope()->is<GlobalObject>());
             } else {
@@ -297,19 +256,22 @@ InterpreterFrame::epilogue(JSContext *cx)
     }
 
     if (isGlobalFrame()) {
-        MOZ_ASSERT(!scopeChain()->is<ScopeObject>());
+        MOZ_ASSERT(!scopeChain()->is<ScopeObject>() ||
+                   (scopeChain()->is<DynamicWithObject>() &&
+                    !scopeChain()->as<DynamicWithObject>().isSyntactic()));
         return;
     }
 
     MOZ_ASSERT(isNonEvalFunctionFrame());
 
-    if (fun()->isHeavyweight())
-        MOZ_ASSERT_IF(hasCallObj(),
+    if (fun()->isHeavyweight()) {
+        MOZ_ASSERT_IF(hasCallObj() && !fun()->isGenerator(),
                       scopeChain()->as<CallObject>().callee().nonLazyScript() == script);
-    else
+    } else {
         AssertDynamicScopeMatchesStaticScope(cx, script, scopeChain());
+    }
 
-    if (MOZ_UNLIKELY(cx->compartment()->debugMode()))
+    if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
         DebugScopes::onPopCall(this, cx);
 
     if (isConstructing() && thisValue().isObject() && returnValue().isPrimitive())
@@ -341,7 +303,7 @@ InterpreterFrame::popBlock(JSContext *cx)
 void
 InterpreterFrame::popWith(JSContext *cx)
 {
-    if (MOZ_UNLIKELY(cx->compartment()->debugMode()))
+    if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
         DebugScopes::onPopWith(this);
 
     MOZ_ASSERT(scopeChain()->is<DynamicWithObject>());
@@ -385,21 +347,23 @@ InterpreterFrame::markValues(JSTracer *trc, Value *sp, jsbytecode *pc)
 {
     MOZ_ASSERT(sp >= slots());
 
-    NestedScopeObject *staticScope;
+    JSScript *script = this->script();
+    size_t nfixed = script->nfixed();
+    size_t nlivefixed = script->nbodyfixed();
 
-    staticScope = script()->getStaticScope(pc);
-    while (staticScope && !staticScope->is<StaticBlockObject>())
-        staticScope = staticScope->enclosingNestedScope();
+    if (nfixed != nlivefixed) {
+        NestedScopeObject *staticScope = script->getStaticScope(pc);
+        while (staticScope && !staticScope->is<StaticBlockObject>())
+            staticScope = staticScope->enclosingNestedScope();
 
-    size_t nfixed = script()->nfixed();
-    size_t nlivefixed;
-
-    if (staticScope) {
-        StaticBlockObject &blockObj = staticScope->as<StaticBlockObject>();
-        nlivefixed = blockObj.localOffset() + blockObj.numVariables();
-    } else {
-        nlivefixed = script()->nbodyfixed();
+        if (staticScope) {
+            StaticBlockObject &blockObj = staticScope->as<StaticBlockObject>();
+            nlivefixed = blockObj.localOffset() + blockObj.numVariables();
+        }
     }
+
+    MOZ_ASSERT(nlivefixed <= nfixed);
+    MOZ_ASSERT(nlivefixed >= script->nbodyfixed());
 
     if (nfixed == nlivefixed) {
         // All locals are live.
@@ -410,7 +374,7 @@ InterpreterFrame::markValues(JSTracer *trc, Value *sp, jsbytecode *pc)
 
         // Clear dead block-scoped locals.
         while (nfixed > nlivefixed)
-            unaliasedLocal(--nfixed, DONT_CHECK_ALIASING).setMagic(JS_UNINITIALIZED_LEXICAL);
+            unaliasedLocal(--nfixed).setMagic(JS_UNINITIALIZED_LEXICAL);
 
         // Mark live locals.
         markValues(trc, 0, nlivefixed);
@@ -747,9 +711,8 @@ FrameIter::operator++()
       case DONE:
         MOZ_CRASH("Unexpected state");
       case INTERP:
-        if (interpFrame()->isDebuggerFrame() && interpFrame()->evalInFramePrev()) {
+        if (interpFrame()->isDebuggerEvalFrame() && interpFrame()->evalInFramePrev()) {
             AbstractFramePtr eifPrev = interpFrame()->evalInFramePrev();
-            MOZ_ASSERT(!eifPrev.isRematerializedFrame());
 
             // Eval-in-frame can cross contexts and works across saved frame
             // chains.
@@ -760,7 +723,7 @@ FrameIter::operator++()
 
             popInterpreterFrame();
 
-            while (isIon() || abstractFramePtr() != eifPrev) {
+            while (!hasUsableAbstractFramePtr() || abstractFramePtr() != eifPrev) {
                 if (data_.state_ == JIT)
                     popJitFrame();
                 else
@@ -891,22 +854,6 @@ FrameIter::isNonEvalFunctionFrame() const
     MOZ_CRASH("Unexpected state");
 }
 
-bool
-FrameIter::isGeneratorFrame() const
-{
-    switch (data_.state_) {
-      case DONE:
-        break;
-      case INTERP:
-        return interpFrame()->isGeneratorFrame();
-      case JIT:
-        return false;
-      case ASMJS:
-        return false;
-    }
-    MOZ_CRASH("Unexpected state");
-}
-
 JSAtom *
 FrameIter::functionDisplayAtom() const
 {
@@ -955,6 +902,13 @@ FrameIter::scriptFilename() const
     }
 
     MOZ_CRASH("Unexpected state");
+}
+
+const char16_t *
+FrameIter::scriptDisplayURL() const
+{
+    ScriptSource *ss = scriptSource();
+    return ss->hasDisplayURL() ? ss->displayURL() : nullptr;
 }
 
 unsigned
@@ -1009,7 +963,7 @@ FrameIter::isConstructing() const
 }
 
 bool
-FrameIter::ensureHasRematerializedFrame(ThreadSafeContext *cx)
+FrameIter::ensureHasRematerializedFrame(JSContext *cx)
 {
     MOZ_ASSERT(isIon());
     return !!activation()->asJit()->getRematerializedFrame(cx, data_.jitFrames_);
@@ -1383,23 +1337,6 @@ AbstractFramePtr::hasPushedSPSFrame() const
     return asBaselineFrame()->hasPushedSPSFrame();
 }
 
-#ifdef DEBUG
-void
-js::CheckLocalUnaliased(MaybeCheckAliasing checkAliasing, JSScript *script, uint32_t i)
-{
-    if (!checkAliasing)
-        return;
-
-    MOZ_ASSERT(i < script->nfixed());
-    if (i < script->bindings.numVars()) {
-        MOZ_ASSERT(!script->varIsAliased(i));
-    } else {
-        // FIXME: The callers of this function do not easily have the PC of the
-        // current frame, and so they do not know the block scope.
-    }
-}
-#endif
-
 jit::JitActivation::JitActivation(JSContext *cx, bool active)
   : Activation(cx, Jit),
     active_(active),
@@ -1508,7 +1445,7 @@ jit::JitActivation::clearRematerializedFrames()
 }
 
 jit::RematerializedFrame *
-jit::JitActivation::getRematerializedFrame(ThreadSafeContext *cx, const JitFrameIterator &iter, size_t inlineDepth)
+jit::JitActivation::getRematerializedFrame(JSContext *cx, const JitFrameIterator &iter, size_t inlineDepth)
 {
     // Only allow rematerializing from the same thread.
     MOZ_ASSERT(cx->perThreadData == cx_->perThreadData);
@@ -1585,13 +1522,12 @@ jit::JitActivation::maybeIonFrameRecovery(JitFrameLayout *fp)
 }
 
 void
-jit::JitActivation::maybeTakeIonFrameRecovery(JitFrameLayout *fp, RInstructionResults *results)
+jit::JitActivation::removeIonFrameRecovery(JitFrameLayout *fp)
 {
     RInstructionResults *elem = maybeIonFrameRecovery(fp);
     if (!elem)
         return;
 
-    *results = mozilla::Move(*elem);
     ionRecovery_.erase(elem);
 }
 
@@ -1624,11 +1560,7 @@ AsmJSActivation::AsmJSActivation(JSContext *cx, AsmJSModule &module)
     module.activation() = this;
 
     prevAsmJS_ = cx->mainThread().asmJSActivationStack_;
-
-    {
-        JSRuntime::AutoLockForInterrupt lock(cx->runtime());
-        cx->mainThread().asmJSActivationStack_ = this;
-    }
+    cx->mainThread().asmJSActivationStack_ = this;
 
     // Now that the AsmJSActivation is fully initialized, make it visible to
     // asynchronous profiling.
@@ -1651,7 +1583,6 @@ AsmJSActivation::~AsmJSActivation()
     JSContext *cx = cx_->asJSContext();
     MOZ_ASSERT(cx->mainThread().asmJSActivationStack_ == this);
 
-    JSRuntime::AutoLockForInterrupt lock(cx->runtime());
     cx->mainThread().asmJSActivationStack_ = prevAsmJS_;
 }
 
@@ -1675,7 +1606,6 @@ void
 Activation::registerProfiling()
 {
     MOZ_ASSERT(isProfiling());
-    JSRuntime::AutoLockForInterrupt lock(cx_->asJSContext()->runtime());
     cx_->perThreadData->profilingActivation_ = this;
 }
 
@@ -1683,7 +1613,6 @@ void
 Activation::unregisterProfiling()
 {
     MOZ_ASSERT(isProfiling());
-    JSRuntime::AutoLockForInterrupt lock(cx_->asJSContext()->runtime());
     MOZ_ASSERT(cx_->perThreadData->profilingActivation_ == this);
     cx_->perThreadData->profilingActivation_ = prevProfiling_;
 }

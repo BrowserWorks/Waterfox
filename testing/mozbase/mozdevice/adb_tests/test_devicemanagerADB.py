@@ -36,6 +36,7 @@
 
 import os
 import re
+import socket
 import sys
 import tempfile
 import unittest
@@ -174,9 +175,7 @@ class TestOther(DeviceManagerADBTestCase):
         self.assertEquals(type(self.dm.getCurrentTime()), int)
 
     def test_get_info(self):
-        self.assertEquals(self.dm.getInfo(), {})
-        # Commented since it is too nosiy
-        #self.assertEquals(self.dm.getInfo("all"), dict)
+        self.assertEquals(type(self.dm.getInfo()), dict)
 
     def test_list_devices(self):
         self.assertEquals(len(list(self.dm.devices())), 1)
@@ -190,8 +189,16 @@ class TestOther(DeviceManagerADBTestCase):
         self.assertEquals(output, ['Mozilla', '/'])
 
     def test_port_forwarding(self):
-        # I don't really know how to test this properly
-        self.assertEquals(self.dm.forward("tcp:2828", "tcp:2828"), 0)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("", 0))
+        port = s.getsockname()[1]
+        s.close()
+        # If successful then no exception is raised
+        self.dm.forward("tcp:%s" % port, "tcp:2828")
+
+    def test_port_forwarding_error(self):
+        self.assertRaises(DMError, self.dm.forward, "", "")
+
 
 if __name__ == '__main__':
     dm = DeviceManagerADB()

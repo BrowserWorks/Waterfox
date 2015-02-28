@@ -81,7 +81,7 @@ tzm{
         }
         GBP{
             "£",
-            "Junih Usterlini Ubriṭani",
+            "Junih Ubriṭani",
         }
         GHC{
             "GHC",
@@ -236,5 +236,5 @@ tzm{
             "Ḍular Uzimbabwi",
         }
     }
-    Version{"2.1.6.69"}
+    Version{"2.1.10.42"}
 }

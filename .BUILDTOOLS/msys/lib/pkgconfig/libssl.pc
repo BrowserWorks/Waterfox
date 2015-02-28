@@ -1,0 +1,11 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: OpenSSL
+Description: Secure Sockets Layer and cryptography libraries
+Version: 0.9.8e
+Requires: 
+Libs: -L${libdir} -lssl -lcrypto -Wl,--enable-auto-import
+Cflags: -I${includedir} 

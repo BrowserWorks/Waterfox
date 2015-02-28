@@ -20,10 +20,24 @@ XPCOMUtils.defineLazyModuleGetter(this, "console",
 
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizableUI",
                                   "resource:///modules/CustomizableUI.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "DebuggerServer",
+                                  "resource://gre/modules/devtools/dbg-server.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "DebuggerClient",
+                                  "resource://gre/modules/devtools/dbg-client.jsm");
 
 const EventEmitter = devtools.require("devtools/toolkit/event-emitter");
 const FORBIDDEN_IDS = new Set(["toolbox", ""]);
 const MAX_ORDINAL = 99;
+
+const bundle = Services.strings.createBundle("chrome://browser/locale/devtools/toolbox.properties");
+
+/**
+ * The method name to use for ES6 iteration. If symbols are enabled in this
+ * build, use Symbol.iterator; otherwise "@@iterator".
+ */
+const JS_HAS_SYMBOLS = typeof Symbol === "function";
+const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
 
 /**
  * DevTools is a class that represents a set of developer tools, it holds a
@@ -486,7 +500,7 @@ DevTools.prototype = {
   /**
    * Iterator that yields each of the toolboxes.
    */
-  '@@iterator': function*() {
+  *[ITERATOR_SYMBOL]() {
     for (let toolbox of this._toolboxes) {
       yield toolbox;
     }
@@ -586,6 +600,7 @@ let gDevToolsBrowser = {
     let remoteEnabled = chromeEnabled && devtoolsRemoteEnabled &&
                         Services.prefs.getBoolPref("devtools.debugger.chrome-enabled");
     toggleCmd("Tools:BrowserToolbox", remoteEnabled);
+    toggleCmd("Tools:BrowserContentToolbox", remoteEnabled && win.gMultiProcessBrowser);
 
     // Enable Error Console?
     let consoleEnabled = Services.prefs.getBoolPref("devtools.errorconsole.enabled");
@@ -681,6 +696,61 @@ let gDevToolsBrowser = {
     }
   },
 
+  _getContentProcessTarget: function () {
+    // Create a DebuggerServer in order to connect locally to it
+    if (!DebuggerServer.initialized) {
+      DebuggerServer.init();
+      DebuggerServer.addBrowserActors();
+    }
+
+    let transport = DebuggerServer.connectPipe();
+    let client = new DebuggerClient(transport);
+
+    let deferred = promise.defer();
+    client.connect(() => {
+      client.mainRoot.listProcesses(response => {
+        // Do nothing if there is only one process, the parent process.
+        let contentProcesses = response.processes.filter(p => (!p.parent));
+        if (contentProcesses.length < 1) {
+          let msg = bundle.GetStringFromName("toolbox.noContentProcess.message");
+          Services.prompt.alert(null, "", msg);
+          deferred.reject("No content processes available.");
+          return;
+        }
+        // Otherwise, arbitrary connect to the unique content process.
+        client.attachProcess(contentProcesses[0].id)
+              .then(response => {
+                let options = {
+                  form: response.form,
+                  client: client,
+                  chrome: true
+                };
+                return devtools.TargetFactory.forRemoteTab(options);
+              })
+              .then(target => {
+                // Ensure closing the connection in order to cleanup
+                // the debugger client and also the server created in the
+                // content process
+                target.on("close", () => {
+                  client.close();
+                });
+                deferred.resolve(target);
+              });
+      });
+    });
+
+    return deferred.promise;
+  },
+
+  openContentProcessToolbox: function () {
+    this._getContentProcessTarget()
+        .then(target => {
+          // Display a new toolbox, in a new window, with debugger by default
+          return gDevTools.showToolbox(target, "jsdebugger",
+                                       devtools.Toolbox.HostType.WINDOW);
+        });
+  },
+
   /**
    * Install WebIDE widget
    */
@@ -699,8 +769,8 @@ let gDevToolsBrowser = {
     CustomizableUI.createWidget({
       id: "webide-button",
       shortcutId: "key_webide",
-      label: "devtools-webide-button.label",
-      tooltiptext: "devtools-webide-button.tooltiptext",
+      label: "devtools-webide-button2.label",
+      tooltiptext: "devtools-webide-button2.tooltiptext",
       defaultArea: defaultArea,
       onCommand: function(aEvent) {
         gDevToolsBrowser.openWebIDE();

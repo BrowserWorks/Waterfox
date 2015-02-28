@@ -42,7 +42,7 @@ TransliterationRuleData::TransliterationRuleData(const TransliterationRuleData& 
     UErrorCode status = U_ZERO_ERROR;
     int32_t i = 0;
     variableNames.setValueDeleter(uprv_deleteUObject);
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement *e;
     while ((e = other.variableNames.nextElement(pos)) != 0) {
         UnicodeString* value =

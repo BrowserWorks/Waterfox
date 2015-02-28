@@ -1,0 +1,91 @@
+#!/bin/sh
+# Extract the initialization actions from source files.
+#
+#  Copyright (C) 1996, 97, 98, 99, 2000, 2001, 2002 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this software; see the file COPYING.  If not, write to
+# the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+# Boston, MA 02111-1307 USA
+
+# Commentary:
+
+# Usage: guile-snarf [-o OUTFILE] [CPP-ARGS ...]
+ 
+# Initialization actions are extracted to OUTFILE or to standard
+# output when no OUTFILE has been specified or when OUTFILE is "-".
+# The C preprocessor is called with CPP-ARGS (which usually include a
+# input file) and the output is filtered for the actions.
+# 
+# If there are errors during processing, OUTFILE is deleted and the
+# program exits with non-zero status.
+# 
+# During snarfing, the pre-processor macro SCM_MAGIC_SNARFER is
+# defined.  You can use this to avoid including snarfer output files
+# that don't yet exist by writing code like this:
+# 
+#   #ifndef SCM_MAGIC_SNARFER
+#   #include "foo.x"
+#   #endif
+# 
+# If the environment variable CPP is set, use its value instead of the
+# C pre-processor determined at Guile configure-time: "gcc -E".
+
+# Code:
+
+## funcs
+
+modern_snarf ()                         # writes stdout
+{
+    ## Apparently, AIX's preprocessor is unhappy if you try to #include an
+    ## empty file.
+    echo "/* cpp arguments: $@ */" ;
+    ${cpp} -DSCM_MAGIC_SNARF_INITS -DSCM_MAGIC_SNARFER "$@" > ${temp} && cpp_ok_p=true
+    grep "^ *\^ *\^" ${temp} | sed -e "s/^ *\^ *\^//"
+}
+
+## main
+
+# process command line
+if [ x"$1" = x--help ] ; then
+    gawk '/^#.Commentary:/,/^#.Code:/' $0 | grep -v Code: \
+        | sed -e 1,2d -e 's/^. *//g'
+    exit 0
+fi
+if [ x"$1" = x-o ]
+    then outfile="$2" ; shift ; shift ;
+    else  outfile="-" ;
+fi
+
+# set vars and handler -- handle CPP override
+cpp_ok_p=false
+temp="/tmp/snarf.$$"
+if [ x"$CPP" = x ] ; then cpp="gcc -E" ; else cpp="$CPP" ; fi
+
+trap "rm -f $temp" 0 1 2 15
+
+if [ ! "$outfile" = "-" ] ; then
+    modern_snarf "$@" > $outfile
+else
+    modern_snarf "$@"
+fi
+
+# zonk outfile if errors occurred
+if $cpp_ok_p ; then
+    exit 0
+else
+    [ ! "$outfile" = "-" ] && rm -f $outfile
+    exit 1
+fi
+
+# guile-snarf ends here

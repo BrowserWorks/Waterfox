@@ -27,7 +27,10 @@ namespace {
 const char kPermissionString[] = IDB_PREFIX;
 
 const char kPermissionPromptTopic[] = TOPIC_PREFIX "prompt";
+
+#ifdef DEBUG
 const char kPermissionResponseTopic[] = TOPIC_PREFIX "response";
+#endif
 
 #undef TOPIC_PREFIX
 #undef IDB_PREFIX
@@ -99,13 +102,11 @@ PermissionRequestBase::PermissionValueForIntPermission(uint32_t aIntPermission)
 {
   AssertSanity();
 
-  // The 'indexedDB' permission is unusual in that the default action is to
-  // allow access. Switch that here to make the logic clearer.
   switch (aIntPermission) {
     case kPermissionDefault:
-      return kPermissionAllowed;
-    case kPermissionAllowed:
       return kPermissionPrompt;
+    case kPermissionAllowed:
+      return kPermissionAllowed;
     case kPermissionDenied:
       return kPermissionDenied;
     default:
@@ -177,13 +178,11 @@ PermissionRequestBase::SetExplicitPermission(nsIPrincipal* aPrincipal,
     return;
   }
 
-  nsresult rv = aIntPermission == kPermissionAllowed ?
-    permMan->RemoveFromPrincipal(aPrincipal, kPermissionString) :
-    permMan->AddFromPrincipal(aPrincipal,
-                              kPermissionString,
-                              aIntPermission,
-                              nsIPermissionManager::EXPIRE_NEVER,
-                              /* aExpireTime */ 0);
+  nsresult rv = permMan->AddFromPrincipal(aPrincipal,
+                                          kPermissionString,
+                                          aIntPermission,
+                                          nsIPermissionManager::EXPIRE_NEVER,
+                                          /* aExpireTime */ 0);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return;
   }

@@ -1,0 +1,9 @@
+#! /bin/sh
+# Copyright (C) 2003, Earnie Boyd
+#   mailto:earnie@users.sf.net
+# This file is a part of Minimal SYStem (MSYS)
+#   http://www.mingw.org/msys.shtml
+# File: cls
+
+#Clear the screen
+echo -ne "\033[2J"

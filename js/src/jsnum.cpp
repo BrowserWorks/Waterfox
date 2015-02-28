@@ -542,9 +542,11 @@ num_toSource(JSContext *cx, unsigned argc, Value *vp)
 }
 #endif
 
-ToCStringBuf::ToCStringBuf() :dbuf(nullptr)
+ToCStringBuf::ToCStringBuf() : dbuf(nullptr)
 {
-    JS_STATIC_ASSERT(sbufSize >= DTOSTR_STANDARD_BUFFER_SIZE);
+    static_assert(sbufSize >= DTOSTR_STANDARD_BUFFER_SIZE,
+                  "builtin space must be large enough to store even the "
+                  "longest string produced by a conversion");
 }
 
 ToCStringBuf::~ToCStringBuf()
@@ -1452,24 +1454,33 @@ CharsToNumber(ThreadSafeContext *cx, const CharT *chars, size_t length, double *
     const CharT *end = chars + length;
     const CharT *bp = SkipSpace(chars, end);
 
-    /* ECMA doesn't allow signed hex numbers (bug 273467). */
-    if (end - bp >= 2 && bp[0] == '0' && (bp[1] == 'x' || bp[1] == 'X')) {
-        /*
-         * It's probably a hex number.  Accept if there's at least one hex
-         * digit after the 0x, and if no non-whitespace characters follow all
-         * the hex digits.
-         */
-        const CharT *endptr;
-        double d;
-        if (!GetPrefixInteger(cx, bp + 2, end, 16, &endptr, &d) ||
-            endptr == bp + 2 ||
-            SkipSpace(endptr, end) != end)
-        {
-            *result = GenericNaN();
-        } else {
-            *result = d;
+    /* ECMA doesn't allow signed non-decimal numbers (bug 273467). */
+    if (end - bp >= 2 && bp[0] == '0') {
+        int radix = 0;
+        if (bp[1] == 'b' || bp[1] == 'B')
+            radix = 2;
+        else if (bp[1] == 'o' || bp[1] == 'O')
+            radix = 8;
+        else if (bp[1] == 'x' || bp[1] == 'X')
+            radix = 16;
+
+        if (radix != 0) {
+            /*
+             * It's probably a non-decimal number. Accept if there's at least one digit after
+             * the 0b|0o|0x, and if no non-whitespace characters follow all the digits.
+             */
+            const CharT *endptr;
+            double d;
+            if (!GetPrefixInteger(cx, bp + 2, end, radix, &endptr, &d) ||
+                endptr == bp + 2 ||
+                SkipSpace(endptr, end) != end)
+            {
+                *result = GenericNaN();
+            } else {
+                *result = d;
+            }
+            return true;
         }
-        return true;
     }
 
     /*

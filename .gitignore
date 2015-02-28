@@ -16,7 +16,6 @@ ID
 **/.dir-locals.el
 
 # User files that may appear at the root
-/configure
 /config.cache
 /config.log
 /.clang_complete
@@ -33,7 +32,6 @@ security/manager/.nss.checkout
 */_OPT.OBJ/
 
 # SpiderMonkey configury
-js/src/configure
 js/src/autom4te.cache
 # SpiderMonkey test result logs
 js/src/tests/results-*.html

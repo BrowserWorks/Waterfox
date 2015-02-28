@@ -8,18 +8,15 @@ package org.mozilla.gecko.tabs;
 import org.mozilla.gecko.AppConstants.Versions;
 import org.mozilla.gecko.GeckoApp;
 import org.mozilla.gecko.GeckoAppShell;
-import org.mozilla.gecko.GeckoAppShell.AppStateListener;
 import org.mozilla.gecko.GeckoApplication;
-import org.mozilla.gecko.GeckoProfile;
-import org.mozilla.gecko.LightweightTheme;
-import org.mozilla.gecko.LightweightThemeDrawable;
 import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
-import org.mozilla.gecko.RestrictedProfiles;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.PropertyAnimator;
 import org.mozilla.gecko.animation.ViewHelper;
+import org.mozilla.gecko.lwt.LightweightTheme;
+import org.mozilla.gecko.lwt.LightweightThemeDrawable;
 import org.mozilla.gecko.util.HardwareUtils;
 import org.mozilla.gecko.widget.GeckoPopupMenu;
 import org.mozilla.gecko.widget.IconTabWidget;
@@ -27,13 +24,13 @@ import org.mozilla.gecko.widget.IconTabWidget;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewStub;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -49,7 +46,6 @@ public class TabsPanel extends LinearLayout
     public static enum Panel {
         NORMAL_TABS,
         PRIVATE_TABS,
-        REMOTE_TABS
     }
 
     public static interface PanelView {
@@ -83,18 +79,17 @@ public class TabsPanel extends LinearLayout
     private final GeckoApp mActivity;
     private final LightweightTheme mTheme;
     private RelativeLayout mHeader;
-    private PanelViewContainer mPanelsContainer;
+    private TabsLayoutContainer mTabsContainer;
     private PanelView mPanel;
     private PanelView mPanelNormal;
     private PanelView mPanelPrivate;
-    private PanelView mPanelRemote;
     private RelativeLayout mFooter;
     private TabsLayoutChangeListener mLayoutChangeListener;
-    private final AppStateListener mAppStateListener;
 
     private IconTabWidget mTabWidget;
     private static ImageButton mMenuButton;
     private static ImageButton mAddTab;
+    private ImageButton mNavBackButton;
 
     private Panel mCurrentPanel;
     private boolean mIsSideBar;
@@ -121,26 +116,7 @@ public class TabsPanel extends LinearLayout
 
         inflateLayout(context);
         initialize();
-
-        mAppStateListener = new AppStateListener() {
-            @Override
-            public void onResume() {
-                if (mPanel == mPanelRemote) {
-                    // Refresh the remote panel.
-                    mPanelRemote.show();
-                }
-            }
-
-            @Override
-            public void onOrientationChanged() {
-                // Remote panel is already refreshed by chrome refresh.
-            }
-
-            @Override
-            public void onPause() {}
-        };
     }
-
 
     private void inflateLayout(Context context) {
         if (NewTabletUI.isEnabled(context)) {
@@ -152,16 +128,13 @@ public class TabsPanel extends LinearLayout
 
     private void initialize() {
         mHeader = (RelativeLayout) findViewById(R.id.tabs_panel_header);
-        mPanelsContainer = (PanelViewContainer) findViewById(R.id.tabs_container);
+        mTabsContainer = (TabsLayoutContainer) findViewById(R.id.tabs_container);
 
         mPanelNormal = (PanelView) findViewById(R.id.normal_tabs);
         mPanelNormal.setTabsPanel(this);
 
         mPanelPrivate = (PanelView) findViewById(R.id.private_tabs_panel);
         mPanelPrivate.setTabsPanel(this);
-
-        mPanelRemote = (PanelView) findViewById(R.id.remote_tabs);
-        mPanelRemote.setTabsPanel(this);
 
         // Only applies to v11+ in landscape.
         // We ship a stub to avoid a compiler error when referencing the
@@ -183,13 +156,6 @@ public class TabsPanel extends LinearLayout
         mTabWidget.addTab(R.drawable.tabs_normal, R.string.tabs_normal);
         mTabWidget.addTab(R.drawable.tabs_private, R.string.tabs_private);
 
-        if (RestrictedProfiles.isAllowed(mContext, RestrictedProfiles.Restriction.DISALLOW_MODIFY_ACCOUNTS)) {
-            // The initial icon is not the animated icon, because on Android
-            // 4.4.2, the animation starts immediately (and can start at other
-            // unpredictable times). See Bug 1015974.
-            mTabWidget.addTab(R.drawable.tabs_synced, R.string.tabs_synced);
-        }
-
         mTabWidget.setTabSelectionListener(this);
 
         mMenuButton = (ImageButton) findViewById(R.id.menu);
@@ -199,13 +165,20 @@ public class TabsPanel extends LinearLayout
                 showMenu();
             }
         });
+
+        if(NewTabletUI.isEnabled(getContext())) {
+            ViewStub backButtonStub = (ViewStub) findViewById(R.id.nav_back_stub);
+            mNavBackButton = (ImageButton) backButtonStub.inflate( );
+            mNavBackButton.setOnClickListener(new Button.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    mActivity.onBackPressed();
+                }
+            });
+        }
     }
 
     public void showMenu() {
-        if (mCurrentPanel == Panel.REMOTE_TABS) {
-            return;
-        }
-
         final Menu menu = mPopupMenu.getMenu();
 
         // Each panel has a "+" shortcut button, so don't show it for that panel.
@@ -235,10 +208,8 @@ public class TabsPanel extends LinearLayout
     public void onTabChanged(int index) {
         if (index == 0) {
             show(Panel.NORMAL_TABS);
-        } else if (index == 1) {
-            show(Panel.PRIVATE_TABS);
         } else {
-            show(Panel.REMOTE_TABS);
+            show(Panel.PRIVATE_TABS);
         }
     }
 
@@ -279,19 +250,23 @@ public class TabsPanel extends LinearLayout
         return mActivity.onOptionsItemSelected(item);
     }
 
-    private static int getPanelsContainerHeight(PanelViewContainer panelsContainer) {
-        Resources resources = panelsContainer.getContext().getResources();
+    private static int getTabContainerHeight(TabsLayoutContainer tabsContainer) {
+        Resources resources = tabsContainer.getContext().getResources();
 
-        PanelView panelView = panelsContainer.getCurrentPanelView();
-        if (panelView != null && !panelView.shouldExpand()) {
-            return resources.getDimensionPixelSize(R.dimen.tabs_tray_horizontal_height);
+        int screenHeight = resources.getDisplayMetrics().heightPixels;
+        int actionBarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
+
+        if(NewTabletUI.isEnabled(tabsContainer.getContext())){
+            return screenHeight - actionBarHeight;
         }
 
-        int actionBarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
-        int screenHeight = resources.getDisplayMetrics().heightPixels;
+        PanelView panelView = tabsContainer.getCurrentPanelView();
+        if (panelView != null && !panelView.shouldExpand()) {
+            return resources.getDimensionPixelSize(R.dimen.tabs_layout_horizontal_height);
+        }
 
         Rect windowRect = new Rect();
-        panelsContainer.getWindowVisibleDisplayFrame(windowRect);
+        tabsContainer.getWindowVisibleDisplayFrame(windowRect);
         int windowHeight = windowRect.bottom - windowRect.top;
 
         // The web content area should have at least 1.5x the height of the action bar.
@@ -305,14 +280,12 @@ public class TabsPanel extends LinearLayout
     public void onAttachedToWindow() {
         super.onAttachedToWindow();
         mTheme.addListener(this);
-        mActivity.addAppStateListener(mAppStateListener);
     }
 
     @Override
     public void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         mTheme.removeListener(this);
-        mActivity.removeAppStateListener(mAppStateListener);
     }
 
     @Override
@@ -338,9 +311,8 @@ public class TabsPanel extends LinearLayout
         onLightweightThemeChanged();
     }
 
-    // Panel View Container holds the ListView
-    static class PanelViewContainer extends FrameLayout {
-        public PanelViewContainer(Context context, AttributeSet attrs) {
+    static class TabsLayoutContainer extends FrameLayout {
+        public TabsLayoutContainer(Context context, AttributeSet attrs) {
             super(context, attrs);
         }
 
@@ -361,7 +333,7 @@ public class TabsPanel extends LinearLayout
         @Override
         protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
             if (!GeckoAppShell.getGeckoInterface().hasTabsSideBar()) {
-                int heightSpec = MeasureSpec.makeMeasureSpec(getPanelsContainerHeight(PanelViewContainer.this), MeasureSpec.EXACTLY);
+                int heightSpec = MeasureSpec.makeMeasureSpec(getTabContainerHeight(TabsLayoutContainer.this), MeasureSpec.EXACTLY);
                 super.onMeasure(widthMeasureSpec, heightSpec);
             } else {
                 super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -443,39 +415,25 @@ public class TabsPanel extends LinearLayout
             case PRIVATE_TABS:
                 mPanel = mPanelPrivate;
                 break;
-            case REMOTE_TABS:
-                mPanel = mPanelRemote;
-                break;
 
             default:
                 throw new IllegalArgumentException("Unknown panel type " + panelToShow);
         }
         mPanel.show();
 
-        if (mCurrentPanel == Panel.REMOTE_TABS) {
-            // The footer is only defined in the sidebar, for landscape v11+ views.
-            if (mFooter != null) {
-                mFooter.setVisibility(View.GONE);
-            }
+        if (mFooter != null) {
+            mFooter.setVisibility(View.VISIBLE);
+        }
 
-            mAddTab.setVisibility(View.INVISIBLE);
+        mAddTab.setVisibility(View.VISIBLE);
+        mAddTab.setImageLevel(index);
 
-            mMenuButton.setVisibility(View.GONE);
+        if (!HardwareUtils.hasMenuButton()) {
+            mMenuButton.setVisibility(View.VISIBLE);
+            mMenuButton.setEnabled(true);
+            mPopupMenu.setAnchor(mMenuButton);
         } else {
-            if (mFooter != null)
-                mFooter.setVisibility(View.VISIBLE);
-
-            mAddTab.setVisibility(View.VISIBLE);
-            mAddTab.setImageLevel(index);
-
-
-            if (!HardwareUtils.hasMenuButton()) {
-                mMenuButton.setVisibility(View.VISIBLE);
-                mMenuButton.setEnabled(true);
-                mPopupMenu.setAnchor(mMenuButton);
-            } else {
-                mPopupMenu.setAnchor(mAddTab);
-            }
+            mPopupMenu.setAnchor(mAddTab);
         }
 
         if (isSideBar()) {
@@ -483,7 +441,7 @@ public class TabsPanel extends LinearLayout
                 dispatchLayoutChange(getWidth(), getHeight());
         } else {
             int actionBarHeight = mContext.getResources().getDimensionPixelSize(R.dimen.browser_toolbar_height);
-            int height = actionBarHeight + getPanelsContainerHeight(mPanelsContainer);
+            int height = actionBarHeight + getTabContainerHeight(mTabsContainer);
             dispatchLayoutChange(getWidth(), height);
         }
         mHeaderVisible = true;
@@ -502,7 +460,7 @@ public class TabsPanel extends LinearLayout
     public void refresh() {
         removeAllViews();
 
-        LayoutInflater.from(mContext).inflate(R.layout.tabs_panel, this);
+        inflateLayout(mContext);
         initialize();
 
         if (mVisible)
@@ -541,13 +499,13 @@ public class TabsPanel extends LinearLayout
             final int tabsPanelWidth = getWidth();
             if (mVisible) {
                 ViewHelper.setTranslationX(mHeader, -tabsPanelWidth);
-                ViewHelper.setTranslationX(mPanelsContainer, -tabsPanelWidth);
+                ViewHelper.setTranslationX(mTabsContainer, -tabsPanelWidth);
 
                 // The footer view is only present on the sidebar, v11+.
                 ViewHelper.setTranslationX(mFooter, -tabsPanelWidth);
             }
             final int translationX = (mVisible ? 0 : -tabsPanelWidth);
-            animator.attach(mPanelsContainer, PropertyAnimator.Property.TRANSLATION_X, translationX);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_X, translationX);
             animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_X, translationX);
             animator.attach(mFooter, PropertyAnimator.Property.TRANSLATION_X, translationX);
 
@@ -557,16 +515,16 @@ public class TabsPanel extends LinearLayout
             final int translationY = (mVisible ? 0 : -toolbarHeight);
             if (mVisible) {
                 ViewHelper.setTranslationY(mHeader, -toolbarHeight);
-                ViewHelper.setTranslationY(mPanelsContainer, -toolbarHeight);
-                ViewHelper.setAlpha(mPanelsContainer, 0.0f);
+                ViewHelper.setTranslationY(mTabsContainer, -toolbarHeight);
+                ViewHelper.setAlpha(mTabsContainer, 0.0f);
             }
-            animator.attach(mPanelsContainer, PropertyAnimator.Property.ALPHA, mVisible ? 1.0f : 0.0f);
-            animator.attach(mPanelsContainer, PropertyAnimator.Property.TRANSLATION_Y, translationY);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.ALPHA, mVisible ? 1.0f : 0.0f);
+            animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_Y, translationY);
             animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_Y, translationY);
         }
 
         mHeader.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mPanelsContainer.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        mTabsContainer.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
 
     public void finishTabsAnimation() {
@@ -575,10 +533,10 @@ public class TabsPanel extends LinearLayout
         }
 
         mHeader.setLayerType(View.LAYER_TYPE_NONE, null);
-        mPanelsContainer.setLayerType(View.LAYER_TYPE_NONE, null);
+        mTabsContainer.setLayerType(View.LAYER_TYPE_NONE, null);
 
-        // If the tray is now hidden, call hide() on current panel and unset it as the current panel
-        // to avoid hide() being called again when the tray is opened next.
+        // If the tabs panel is now hidden, call hide() on current panel and unset it as the current panel
+        // to avoid hide() being called again when the layout is opened next.
         if (!mVisible && mPanel != null) {
             mPanel.hide();
             mPanel = null;
@@ -592,18 +550,5 @@ public class TabsPanel extends LinearLayout
     private void dispatchLayoutChange(int width, int height) {
         if (mLayoutChangeListener != null)
             mLayoutChangeListener.onTabsLayoutChange(width, height);
-    }
-
-    /**
-     * Fetch the Drawable icon corresponding to the given panel.
-     * @param panel to fetch icon for.
-     * @return Drawable instance, or null if no icon is being displayed, or the icon does not exist.
-     */
-    public Drawable getIconDrawable(Panel panel) {
-        return mTabWidget.getIconDrawable(panel.ordinal());
-    }
-
-    public void setIconDrawable(Panel panel, int resource) {
-        mTabWidget.setIconDrawable(panel.ordinal(), resource);
     }
 }

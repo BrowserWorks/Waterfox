@@ -37,7 +37,7 @@ public class testShareLink extends AboutHomeTest {
         openAboutHomeTab(AboutHomeTabs.READING_LIST);
 
         inputAndLoadUrl(url);
-        verifyPageTitle(urlTitle); // Waiting for page title to ensure the page is loaded
+        verifyPageTitle(urlTitle, url); // Waiting for page title to ensure the page is loaded
 
         selectMenuItem(StringHelper.SHARE_LABEL);
         if (Build.VERSION.SDK_INT >= 14) {
@@ -47,7 +47,7 @@ public class testShareLink extends AboutHomeTest {
             waitForText("Share via");
         }
 
-        // Get list of current avaliable share activities and verify them
+        // Get list of current available share activities and verify them
         shareOptions = getShareOptions();
         ArrayList<String> displayedOptions = getShareOptionsList();
         for (String option:shareOptions) {
@@ -149,7 +149,7 @@ public class testShareLink extends AboutHomeTest {
         /**
          * Adding a wait for the page title to make sure the Awesomebar will be dismissed
          * Because of Bug 712370 the Awesomescreen will be dismissed when the Share Menu is closed
-         * so there is no need for handeling this different depending on where the share menu was invoced from
+         * so there is no need for handling this different depending on where the share menu was invoked from
          * TODO: Look more into why the delay is needed here now and it was working before
          */
         waitForText(urlTitle);
@@ -248,7 +248,7 @@ public class testShareLink extends AboutHomeTest {
             public boolean test() {
                 ArrayList<View> views = mSolo.getCurrentViews();
                 for (View view : views) {
-                    // List may be displayed in different view formats. 
+                    // List may be displayed in different view formats.
                     // On JB, GridView is common; on ICS-, ListView is common.
                     if (view instanceof ListView ||
                         view instanceof GridView) {

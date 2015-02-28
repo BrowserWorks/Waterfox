@@ -167,7 +167,7 @@ IdentifierInfo &IdentifierInfo::setIdentifier(const UnicodeString &identifier, U
     // We also compute any commonalities among the alternates.
     if (uhash_count(fScriptSetSet) > 0) {
         fCommonAmongAlternates->setAll();
-        for (int32_t it = -1;;) {
+        for (int32_t it = UHASH_FIRST;;) {
             const UHashElement *nextHashEl = uhash_nextElement(fScriptSetSet, &it);
             if (nextHashEl == NULL) {
                 break;
@@ -179,7 +179,7 @@ IdentifierInfo &IdentifierInfo::setIdentifier(const UnicodeString &identifier, U
             } else {
                 fCommonAmongAlternates->intersect(*next);
                 // [[Arab Syrc Thaa]; [Arab Syrc]] => [[Arab Syrc]]
-                for (int32_t otherIt = -1;;) {
+                for (int32_t otherIt = UHASH_FIRST;;) {
                     const UHashElement *otherHashEl = uhash_nextElement(fScriptSetSet, &otherIt);
                     if (otherHashEl == NULL) {
                         break;
@@ -269,7 +269,7 @@ UBool IdentifierInfo::containsWithAlternates(const ScriptSet &container, const S
     if (!container.contains(containee)) {
         return FALSE;
     }
-    for (int32_t iter = -1; ;) {
+    for (int32_t iter = UHASH_FIRST; ;) {
         const UHashElement *hashEl = uhash_nextElement(fScriptSetSet, &iter);
         if (hashEl == NULL) {
             break;
@@ -287,7 +287,7 @@ UnicodeString &IdentifierInfo::displayAlternates(UnicodeString &dest, const UHas
     if (U_FAILURE(status)) {
         return dest;
     }
-    for (int32_t pos = -1; ;) {
+    for (int32_t pos = UHASH_FIRST; ;) {
         const UHashElement *el = uhash_nextElement(alternates, &pos);
         if (el == NULL) {
             break;

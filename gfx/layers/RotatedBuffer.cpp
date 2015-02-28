@@ -364,7 +364,7 @@ RotatedContentBuffer::EnsureBufferOnWhite()
   }
 
   NS_WARN_IF_FALSE(mDTBufferOnWhite, "no buffer");
-  return mDTBufferOnWhite;
+  return !!mDTBufferOnWhite;
 }
 
 bool
@@ -537,7 +537,7 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
   nsIntRect drawBounds = result.mRegionToDraw.GetBounds();
   RefPtr<DrawTarget> destDTBuffer;
   RefPtr<DrawTarget> destDTBufferOnWhite;
-  uint32_t bufferFlags = canHaveRotation ? ALLOW_REPEAT : 0;
+  uint32_t bufferFlags = 0;
   if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
     bufferFlags |= BUFFER_COMPONENT_ALPHA;
   }
@@ -627,7 +627,9 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
             destBufferRect = ComputeBufferRect(neededRegion.GetBounds());
             CreateBuffer(result.mContentType, destBufferRect, bufferFlags,
                          &destDTBuffer, &destDTBufferOnWhite);
-            if (!destDTBuffer) {
+            if (!destDTBuffer ||
+                (!destDTBufferOnWhite && (bufferFlags & BUFFER_COMPONENT_ALPHA))) {
+              gfxCriticalError() << "Failed 1 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
               return result;
             }
           }
@@ -647,7 +649,9 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
     // The buffer's not big enough, so allocate a new one
     CreateBuffer(result.mContentType, destBufferRect, bufferFlags,
                  &destDTBuffer, &destDTBufferOnWhite);
-    if (!destDTBuffer) {
+    if (!destDTBuffer ||
+        (!destDTBufferOnWhite && (bufferFlags & BUFFER_COMPONENT_ALPHA))) {
+      gfxCriticalError() << "Failed 2 buffer db=" << hexa(destDTBuffer.get()) << " dw=" << hexa(destDTBufferOnWhite.get()) << " for " << destBufferRect.x << ", " << destBufferRect.y << ", " << destBufferRect.width << ", " << destBufferRect.height;
       return result;
     }
   }
@@ -673,12 +677,11 @@ RotatedContentBuffer::BeginPaint(PaintedLayer* aLayer,
       destDTBuffer->SetTransform(Matrix());
 
       if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
-        NS_ASSERTION(destDTBufferOnWhite, "Must have a white buffer!");
-        destDTBufferOnWhite->SetTransform(mat);
-        if (!EnsureBufferOnWhite()) {
+        if (!destDTBufferOnWhite || !EnsureBufferOnWhite()) {
           return result;
         }
         MOZ_ASSERT(mDTBufferOnWhite, "Have we got a Thebes buffer for some reason?");
+        destDTBufferOnWhite->SetTransform(mat);
         DrawBufferWithRotation(destDTBufferOnWhite, BUFFER_WHITE, 1.0, CompositionOp::OP_SOURCE);
         destDTBufferOnWhite->SetTransform(Matrix());
       }

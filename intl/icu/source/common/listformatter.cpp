@@ -178,12 +178,6 @@ static ListFormatInternal* loadListFormatInternal(
     rb = ures_getByKeyWithFallback(rb, "listPattern", rb, &errorCode);
     rb = ures_getByKeyWithFallback(rb, style, rb, &errorCode);
 
-    // TODO(Travis Keep): This is a hack until fallbacks can be added for
-    // listPattern/duration and listPattern/duration-narrow in CLDR.
-    if (errorCode == U_MISSING_RESOURCE_ERROR) {
-        errorCode = U_ZERO_ERROR;
-        rb = ures_getByKeyWithFallback(rb, "standard", rb, &errorCode);
-    }
     if (U_FAILURE(errorCode)) {
         ures_close(rb);
         return NULL;
@@ -254,9 +248,10 @@ ListFormatter::~ListFormatter() {
  * On entry offset is an offset into first or -1 if offset unspecified.
  * On exit offset is offset of second in result if recordOffset was set
  * Otherwise if it was >=0 it is set to point into result where it used
- * to point into first.
+ * to point into first. On exit, result is the join of first and second
+ * according to pat. Any previous value of result gets replaced.
  */
-static void joinStrings(
+static void joinStringsAndReplace(
         const SimplePatternFormatter& pat,
         const UnicodeString& first,
         const UnicodeString& second,
@@ -269,7 +264,7 @@ static void joinStrings(
     }
     const UnicodeString *params[2] = {&first, &second};
     int32_t offsets[2];
-    pat.format(
+    pat.formatAndReplace(
             params,
             UPRV_LENGTHOF(params),
             result,
@@ -325,69 +320,43 @@ UnicodeString& ListFormatter::format(
         appendTo.append(items[0]);
         return appendTo;
     }
-    if (nItems == 2) {
-        if (index == 0) {
-            offset = 0;
-        }
-        joinStrings(
-                data->twoPattern,
-                items[0],
-                items[1],
-                appendTo,
-                index == 1,
-                offset,
-                errorCode);
-        return appendTo;
-    }
-    UnicodeString temp[2];
+    UnicodeString result(items[0]);
     if (index == 0) {
         offset = 0;
     }
-    joinStrings(
-            data->startPattern,
-            items[0],
+    joinStringsAndReplace(
+            nItems == 2 ? data->twoPattern : data->startPattern,
+            result,
             items[1],
-            temp[0],
+            result,
             index == 1,
             offset,
             errorCode);
-    int32_t i;
-    int32_t pos = 0;
-    int32_t npos = 0;
-    UBool startsWithZeroPlaceholder =
-            data->middlePattern.startsWithPlaceholder(0);
-    for (i = 2; i < nItems - 1; ++i) {
-         if (!startsWithZeroPlaceholder) {
-             npos = (pos + 1) & 1;
-             temp[npos].remove();
-         }
-         joinStrings(
-                 data->middlePattern,
-                 temp[pos],
-                 items[i],
-                 temp[npos],
-                 index == i,
-                 offset,
-                 errorCode);
-         pos = npos;
+    if (nItems > 2) {
+        for (int32_t i = 2; i < nItems - 1; ++i) {
+             joinStringsAndReplace(
+                     data->middlePattern,
+                     result,
+                     items[i],
+                     result,
+                     index == i,
+                     offset,
+                     errorCode);
+        }
+        joinStringsAndReplace(
+                data->endPattern,
+                result,
+                items[nItems - 1],
+                result,
+                index == nItems - 1,
+                offset,
+                errorCode);
     }
-    if (!data->endPattern.startsWithPlaceholder(0)) {
-        npos = (pos + 1) & 1;
-        temp[npos].remove();
-    }
-    joinStrings(
-            data->endPattern,
-            temp[pos],
-            items[nItems - 1],
-            temp[npos],
-            index == nItems - 1,
-            offset,
-            errorCode);
     if (U_SUCCESS(errorCode)) {
         if (offset >= 0) {
             offset += appendTo.length();
         }
-        appendTo += temp[npos];
+        appendTo += result;
     }
     return appendTo;
 }

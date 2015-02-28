@@ -162,9 +162,11 @@ TelephonyIPCService::EnumerateCalls(nsITelephonyListener *aListener)
 
 NS_IMETHODIMP
 TelephonyIPCService::Dial(uint32_t aClientId, const nsAString& aNumber,
-                           bool aIsEmergency, nsITelephonyCallback *aCallback)
+                          bool aIsEmergency,
+                          nsITelephonyDialCallback *aCallback)
 {
-  return SendRequest(nullptr, aCallback,
+  nsCOMPtr<nsITelephonyCallback> callback = do_QueryInterface(aCallback);
+  return SendRequest(nullptr, callback,
                      DialRequest(aClientId, nsString(aNumber), aIsEmergency));
 }
 
@@ -253,6 +255,13 @@ TelephonyIPCService::SeparateCall(uint32_t aClientId, uint32_t aCallIndex)
 }
 
 NS_IMETHODIMP
+TelephonyIPCService::HangUpConference(uint32_t aClientId,
+                                      nsITelephonyCallback *aCallback)
+{
+  return SendRequest(nullptr, aCallback, HangUpConferenceRequest(aClientId));
+}
+
+NS_IMETHODIMP
 TelephonyIPCService::HoldConference(uint32_t aClientId)
 {
   if (!mPTelephonyChild) {
@@ -298,6 +307,14 @@ TelephonyIPCService::StopTone(uint32_t aClientId)
 
   mPTelephonyChild->SendStopTone(aClientId);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+TelephonyIPCService::SendUSSD(uint32_t aClientId, const nsAString& aUssd,
+                              nsITelephonyCallback *aCallback)
+{
+  return SendRequest(nullptr, aCallback,
+                     USSDRequest(aClientId, nsString(aUssd)));
 }
 
 NS_IMETHODIMP

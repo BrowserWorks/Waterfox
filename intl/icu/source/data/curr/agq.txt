@@ -81,7 +81,7 @@ agq{
         }
         GBP{
             "£",
-            "Bɔ̀ŋ Sɨ̀telè è Bèletì",
+            "Bɔ̀ŋ è Bèletì",
         }
         GHC{
             "GHC",
@@ -232,5 +232,5 @@ agq{
             "Dɔlà è Zìmbagbɛ̀",
         }
     }
-    Version{"2.1.6.69"}
+    Version{"2.1.10.42"}
 }

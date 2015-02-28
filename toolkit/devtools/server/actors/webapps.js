@@ -18,19 +18,22 @@ let { ActorPool } = require("devtools/server/actors/common");
 let { DebuggerServer } = require("devtools/server/main");
 let Services = require("Services");
 
-let AppFramesMock = null;
+// Comma separated list of permissions that a sideloaded app can't ask for
+const UNSAFE_PERMISSIONS = Services.prefs.getCharPref("devtools.apps.forbidden-permissions");
 
-exports.setAppFramesMock = function (mock) {
-  AppFramesMock = mock;
-}
+let FramesMock = null;
 
-DevToolsUtils.defineLazyGetter(this, "AppFrames", () => {
+exports.setFramesMock = function (mock) {
+  FramesMock = mock;
+};
+
+DevToolsUtils.defineLazyGetter(this, "Frames", () => {
   // Offer a way for unit test to provide a mock
-  if (AppFramesMock) {
-    return AppFramesMock;
+  if (FramesMock) {
+    return FramesMock;
   }
   try {
-    return Cu.import("resource://gre/modules/AppFrames.jsm", {}).AppFrames;
+    return Cu.import("resource://gre/modules/Frames.jsm", {}).Frames;
   } catch(e) {}
   return null;
 });
@@ -244,6 +247,11 @@ WebappsActor.prototype = {
     let reg = DOMApplicationRegistry;
     let self = this;
 
+    if (aId in reg.webapps && !reg.webapps[aId].sideloaded &&
+        !this._isUnrestrictedAccessAllowed()) {
+      throw new Error("Replacing non-sideloaded apps is not permitted.");
+    }
+
     // Clean up the deprecated manifest cache if needed.
     if (aId in reg._manifestCache) {
       delete reg._manifestCache[aId];
@@ -256,6 +264,7 @@ WebappsActor.prototype = {
     aApp.basePath = reg.getWebAppsBasePath();
     aApp.localId = (aId in reg.webapps) ? reg.webapps[aId].localId
                                         : reg._nextLocalId();
+    aApp.sideloaded = true;
 
     reg.webapps[aId] = aApp;
     reg.updatePermissionsForApp(aId);
@@ -383,24 +392,21 @@ WebappsActor.prototype = {
         return AppsUtils.loadJSONAsync(manFile);
       }
     }
-    function checkSideloading(aManifest) {
-      return self._getAppType(aManifest.type);
-    }
-    function writeManifest(aAppType) {
+    function writeManifest(resolution) {
       // Move manifest.webapp to the destination directory.
       // The destination directory for this app.
       let installDir = DOMApplicationRegistry._getAppDir(aId);
       if (aManifest) {
         let manFile = OS.Path.join(installDir.path, "manifest.webapp");
         return DOMApplicationRegistry._writeFile(manFile, JSON.stringify(aManifest)).then(() => {
-          return aAppType;
+          return resolution;
         });
       } else {
         let manFile = aDir.clone();
         manFile.append("manifest.webapp");
         manFile.moveTo(installDir, "manifest.webapp");
       }
-      return null;
+      return promise.resolve(resolution);
     }
     function readMetadata(aAppType) {
       if (aMetadata) {
@@ -413,7 +419,7 @@ WebappsActor.prototype = {
           throw("Error parsing metadata.json.");
         }
         if (!aMetadata.origin) {
-          throw("Missing 'origin' property in metadata.json");
+          throw("Missing 'origin' property in metadata.json.");
         }
         return { metadata: aMetadata, appType: aAppType };
       });
@@ -421,9 +427,8 @@ WebappsActor.prototype = {
     let runnable = {
       run: function run() {
         try {
+          let metadata, appType;
           readManifest().
-            then(writeManifest).
-            then(checkSideloading).
             then(readMetadata).
             then(function ({ metadata, appType }) {
               let origin = metadata.origin;
@@ -438,6 +443,8 @@ WebappsActor.prototype = {
                 receipts: aReceipts,
               };
 
+              return writeManifest(app);
+            }).then(function (app) {
               self._registerApp(deferred, app, aId, aDir);
             }, function (error) {
               self._sendError(deferred, error, aId);
@@ -483,6 +490,19 @@ WebappsActor.prototype = {
             manifest = JSON.parse(jsonString);
           } catch(e) {
             self._sendError(deferred, "Error Parsing manifest.webapp: " + e, aId);
+            return;
+          }
+
+          // Completely forbid pushing apps asking for unsafe permissions
+          if ("permissions" in manifest) {
+            let list = UNSAFE_PERMISSIONS.split(",");
+            let hasOne = list.some(p => p.trim() in manifest.permissions);
+            if (hasOne) {
+              self._sendError(deferred, "Installing apps with any of these " +
+                                        "permissions is forbidden: " +
+                                        UNSAFE_PERMISSIONS, aId);
+              return;
+            }
           }
 
           let appType = self._getAppType(manifest.type);
@@ -503,6 +523,14 @@ WebappsActor.prototype = {
               self._sendError(deferred, "Invalid origin in webapp's manifest", aId);
             }
             id = uri.prePath.substring(6);
+          }
+
+          // Prevent overriding preinstalled apps
+          if (id in DOMApplicationRegistry.webapps &&
+              DOMApplicationRegistry.webapps[id].removable === false &&
+              !self._isUnrestrictedAccessAllowed()) {
+            self._sendError(deferred, "The application " + id + " can't be overridden.");
+            return;
           }
 
           // Only after security checks are made and after final app id is computed
@@ -586,9 +614,9 @@ WebappsActor.prototype = {
 
     // Check that we are not overriding a preinstalled application.
     if (appId in reg.webapps && reg.webapps[appId].removable === false) {
-      return { error: "badParameterType",
-               message: "The application " + appId + " can't be overriden."
-             }
+      return { error: "installationFailed",
+               message: "The application " + appId + " can't be overridden."
+             };
     }
 
     let appDir = FileUtils.getDir("TmpD", ["b2g", appId], false, false);
@@ -680,38 +708,36 @@ WebappsActor.prototype = {
       return { error: "appNotFound" };
     }
 
-    return this._isAppAllowedForURL(app.manifestURL).then(allowed => {
-      if (!allowed) {
-        return { error: "forbidden" };
-      }
-      return reg.getManifestFor(manifestURL).then(function (manifest) {
-        app.manifest = manifest;
-        return { app: app };
-      });
+    if (!this._isAppAllowedForURL(app.manifestURL)) {
+      return { error: "forbidden" };
+    }
+
+    return reg.getManifestFor(manifestURL).then(function (manifest) {
+      app.manifest = manifest;
+      return { app: app };
     });
   },
 
-  _areCertifiedAppsAllowed: function wa__areCertifiedAppsAllowed() {
+  _isUnrestrictedAccessAllowed: function() {
     let pref = "devtools.debugger.forbid-certified-apps";
     return !Services.prefs.getBoolPref(pref);
   },
 
-  _isAppAllowedForManifest: function wa__isAppAllowedForManifest(aManifest) {
-    if (this._areCertifiedAppsAllowed()) {
+  _isAppAllowed: function(aApp) {
+    if (this._isUnrestrictedAccessAllowed()) {
       return true;
     }
-    let type = this._getAppType(aManifest.type);
-    return type !== Ci.nsIPrincipal.APP_STATUS_CERTIFIED;
+    return aApp.sideloaded;
   },
 
   _filterAllowedApps: function wa__filterAllowedApps(aApps) {
-    return aApps.filter(app => this._isAppAllowedForManifest(app.manifest));
+    return aApps.filter(app => this._isAppAllowed(app));
   },
 
   _isAppAllowedForURL: function wa__isAppAllowedForURL(aManifestURL) {
-    return this._findManifestByURL(aManifestURL).then(manifest => {
-      return this._isAppAllowedForManifest(manifest);
-    });
+    let reg = DOMApplicationRegistry;
+    let app = reg.getAppByManifestURL(aManifestURL);
+    return this._isAppAllowed(app);
   },
 
   uninstall: function wa_actorUninstall(aRequest) {
@@ -719,8 +745,12 @@ WebappsActor.prototype = {
 
     let manifestURL = aRequest.manifestURL;
     if (!manifestURL) {
-      return Promise.resolve({ error: "missingParameter",
-                         message: "missing parameter manifestURL" });
+      return { error: "missingParameter",
+               message: "missing parameter manifestURL" };
+    }
+
+    if (!this._isAppAllowedForURL(manifestURL)) {
+      return { error: "forbidden" };
     }
 
     return DOMApplicationRegistry.uninstall(manifestURL);
@@ -860,8 +890,10 @@ WebappsActor.prototype = {
 
   _appFrames: function () {
     // Try to filter on b2g and mulet
-    if (AppFrames) {
-      return AppFrames.list();
+    if (Frames) {
+      return Frames.list().filter(frame => {
+        return frame.getAttribute('mozapp');
+      });
     } else {
       return [];
     }
@@ -880,17 +912,12 @@ WebappsActor.prototype = {
       if (apps.indexOf(manifestURL) != -1) {
         continue;
       }
-
-      appPromises.push(this._isAppAllowedForURL(manifestURL).then(allowed => {
-        if (allowed) {
-          apps.push(manifestURL);
-        }
-      }));
+      if (this._isAppAllowedForURL(manifestURL)) {
+        apps.push(manifestURL);
+      }
     }
 
-    return promise.all(appPromises).then(() => {
-      return { apps: apps };
-    });
+    return { apps: apps };
   },
 
   getAppActor: function ({ manifestURL }) {
@@ -925,38 +952,36 @@ WebappsActor.prototype = {
       return notFoundError;
     }
 
-    return this._isAppAllowedForURL(manifestURL).then(allowed => {
-      if (!allowed) {
-        return notFoundError;
-      }
+    if (!this._isAppAllowedForURL(manifestURL)) {
+      return notFoundError;
+    }
 
-      // Only create a new actor, if we haven't already
-      // instanciated one for this connection.
-      let map = this._appActorsMap;
-      let mm = appFrame.QueryInterface(Ci.nsIFrameLoaderOwner)
-                       .frameLoader
-                       .messageManager;
-      let actor = map.get(mm);
-      if (!actor) {
-        let onConnect = actor => {
-          map.set(mm, actor);
-          return { actor: actor };
-        };
-        let onDisconnect = mm => {
-          map.delete(mm);
-        };
-        return DebuggerServer.connectToChild(this.conn, appFrame, onDisconnect)
-                             .then(onConnect);
-      }
+    // Only create a new actor, if we haven't already
+    // instanciated one for this connection.
+    let map = this._appActorsMap;
+    let mm = appFrame.QueryInterface(Ci.nsIFrameLoaderOwner)
+                     .frameLoader
+                     .messageManager;
+    let actor = map.get(mm);
+    if (!actor) {
+      let onConnect = actor => {
+        map.set(mm, actor);
+        return { actor: actor };
+      };
+      let onDisconnect = mm => {
+        map.delete(mm);
+      };
+      return DebuggerServer.connectToChild(this.conn, appFrame, onDisconnect)
+                           .then(onConnect);
+    }
 
-      return { actor: actor };
-    });
+    return { actor: actor };
   },
 
   watchApps: function () {
     // For now, app open/close events are only implement on b2g
-    if (AppFrames) {
-      AppFrames.addObserver(this);
+    if (Frames) {
+      Frames.addObserver(this);
     }
     Services.obs.addObserver(this, "webapps-installed", false);
     Services.obs.addObserver(this, "webapps-uninstall", false);
@@ -965,8 +990,8 @@ WebappsActor.prototype = {
   },
 
   unwatchApps: function () {
-    if (AppFrames) {
-      AppFrames.removeObserver(this);
+    if (Frames) {
+      Frames.removeObserver(this);
     }
     Services.obs.removeObserver(this, "webapps-installed", false);
     Services.obs.removeObserver(this, "webapps-uninstall", false);
@@ -974,8 +999,9 @@ WebappsActor.prototype = {
     return {};
   },
 
-  onAppFrameCreated: function (frame, isFirstAppFrame) {
-    if (!isFirstAppFrame) {
+  onFrameCreated: function (frame, isFirstAppFrame) {
+    let mozapp = frame.getAttribute('mozapp');
+    if (!mozapp || !isFirstAppFrame) {
       return;
     }
 
@@ -985,18 +1011,17 @@ WebappsActor.prototype = {
       return;
     }
 
-    this._isAppAllowedForURL(manifestURL).then(allowed => {
-      if (allowed) {
-        this.conn.send({ from: this.actorID,
-                         type: "appOpen",
-                         manifestURL: manifestURL
-                       });
-      }
-    });
+    if (this._isAppAllowedForURL(manifestURL)) {
+      this.conn.send({ from: this.actorID,
+                       type: "appOpen",
+                       manifestURL: manifestURL
+                     });
+    }
   },
 
-  onAppFrameDestroyed: function (frame, isLastAppFrame) {
-    if (!isLastAppFrame) {
+  onFrameDestroyed: function (frame, isLastAppFrame) {
+    let mozapp = frame.getAttribute('mozapp');
+    if (!mozapp || !isLastAppFrame) {
       return;
     }
 
@@ -1006,14 +1031,12 @@ WebappsActor.prototype = {
       return;
     }
 
-    this._isAppAllowedForURL(manifestURL).then(allowed => {
-      if (allowed) {
-        this.conn.send({ from: this.actorID,
-                         type: "appClose",
-                         manifestURL: manifestURL
-                       });
-      }
-    });
+    if (this._isAppAllowedForURL(manifestURL)) {
+      this.conn.send({ from: this.actorID,
+                       type: "appClose",
+                       manifestURL: manifestURL
+                     });
+    }
   },
 
   observe: function (subject, topic, data) {

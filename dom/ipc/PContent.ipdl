@@ -14,6 +14,7 @@ include protocol PCompositor;
 include protocol PContentBridge;
 include protocol PCycleCollectWithLogs;
 include protocol PCrashReporter;
+include protocol PDocAccessible;
 include protocol PExternalHelperApp;
 include protocol PDeviceStorageRequest;
 include protocol PFileDescriptorSet;
@@ -24,6 +25,9 @@ include protocol PImageBridge;
 include protocol PMemoryReportRequest;
 include protocol PMobileConnection;
 include protocol PNecko;
+include protocol PPluginModule;
+include protocol PPrinting;
+include protocol POfflineCacheUpdate;
 include protocol PScreenManager;
 include protocol PSharedBufferManager;
 include protocol PSms;
@@ -39,6 +43,7 @@ include JavaScriptTypes;
 include InputStreamParams;
 include PTabContext;
 include URIParams;
+include PluginTypes;
 include ProtocolTypes;
 
 // Workaround to prevent error if PContentChild.cpp & PContentBridgeParent.cpp
@@ -66,6 +71,8 @@ using mozilla::dom::NativeThreadId from "mozilla/dom/TabMessageUtils.h";
 using mozilla::dom::quota::PersistenceType from "mozilla/dom/quota/PersistenceType.h";
 using mozilla::hal::ProcessPriority from "mozilla/HalTypes.h";
 using gfxIntSize from "nsSize.h";
+using mozilla::dom::TabId from "mozilla/dom/ipc/IdType.h";
+using mozilla::dom::ContentParentId from "mozilla/dom/ipc/IdType.h";
 
 union ChromeRegistryItem
 {
@@ -314,13 +321,20 @@ struct VolumeInfo {
   bool isUnmounting;
 };
 
+struct ClipboardCapabilities {
+  bool supportsSelectionClipboard;
+  bool supportsFindClipboard;
+};
+
 union MaybeFileDesc {
     FileDescriptor;
     void_t;
 };
 
-prio(normal upto high) intr protocol PContent
+prio(normal upto urgent) intr protocol PContent
 {
+    parent spawns PPluginModule;
+
     parent opens PCompositor;
     parent opens PSharedBufferManager;
     parent opens PImageBridge;
@@ -333,6 +347,7 @@ prio(normal upto high) intr protocol PContent
     manages PCellBroadcast;
     manages PCrashReporter;
     manages PCycleCollectWithLogs;
+    manages PDocAccessible;
     manages PDeviceStorageRequest;
     manages PFileSystemRequest;
     manages PExternalHelperApp;
@@ -342,6 +357,8 @@ prio(normal upto high) intr protocol PContent
     manages PMemoryReportRequest;
     manages PMobileConnection;
     manages PNecko;
+    manages POfflineCacheUpdate;
+    manages PPrinting;
     manages PScreenManager;
     manages PSms;
     manages PSpeechSynthesis;
@@ -378,8 +395,8 @@ both:
     // access to (in the form of a TabChild).
     //
     // Keep the last 3 attributes in sync with GetProcessAttributes!
-    async PBrowser(IPCTabContext context, uint32_t chromeFlags,
-                   uint64_t id, bool isForApp, bool isForBrowser);
+    async PBrowser(TabId tabId, IPCTabContext context, uint32_t chromeFlags,
+                   ContentParentId cpId, bool isForApp, bool isForBrowser);
 
     async PBlob(BlobConstructorParams params);
 
@@ -433,6 +450,8 @@ child:
     NotifyAlertsObserver(nsCString topic, nsString data);
 
     GeolocationUpdate(GeoPosition somewhere);
+
+    GeolocationError(uint16_t errorCode);
 
     UpdateDictionaryList(nsString[] dictionaries);
 
@@ -490,7 +509,24 @@ child:
      */
     OnAppThemeChanged();
 
+    /**
+     * Control the Gecko Profiler in the child process.
+     */
+    async StartProfiler(uint32_t aEntries, double aInterval, nsCString[] aFeatures,
+                        nsCString[] aThreadNameFilters);
+    async StopProfiler();
+    intr GetProfile()
+      returns (nsCString aProfile);
+
 parent:
+    /**
+     * Tell the parent process a new accessible document has been created.
+     * aParentDoc is the accessible document it was created in if any, and
+     * aParentAcc is the id of the accessible in that document the new document
+     * is a child of.
+     */
+    PDocAccessible(nullable PDocAccessible aParentDoc, uint64_t aParentAcc);
+
     /**
      * Tell the content process some attributes of itself.  This is
      * among the first information queried by content processes after
@@ -505,14 +541,39 @@ parent:
      * Keep the return values in sync with PBrowser()!
      */
     sync GetProcessAttributes()
-        returns (uint64_t id, bool isForApp, bool isForBrowser);
+        returns (ContentParentId cpId, bool isForApp, bool isForBrowser);
     sync GetXPCOMProcessAttributes()
-        returns (bool isOffline, nsString[] dictionaries);
+        returns (bool isOffline, nsString[] dictionaries,
+                 ClipboardCapabilities clipboardCaps);
 
     sync CreateChildProcess(IPCTabContext context,
-                            ProcessPriority priority)
-        returns (uint64_t id, bool isForApp, bool isForBrowser);
-    intr BridgeToChildProcess(uint64_t id);
+                            ProcessPriority priority,
+                            TabId openerTabId)
+        returns (ContentParentId cpId, bool isForApp, bool isForBrowser, TabId tabId);
+    intr BridgeToChildProcess(ContentParentId cpId);
+
+    /**
+     * This call connects the content process to a plugin process. While this
+     * call runs, a new PluginModuleParent will be created in the ContentChild
+     * via bridging. The corresponding PluginModuleChild will live in the plugin
+     * process. We use intr semantics here to ensure that the PluginModuleParent
+     * allocation message is dispatched before LoadPlugin returns.
+     */
+    intr LoadPlugin(uint32_t pluginId);
+
+    /**
+     * This call returns the set of plugins loaded in the chrome
+     * process. However, in many cases this set will not have changed since the
+     * last FindPlugins message. Consequently, the chrome process increments an
+     * epoch number every time the set of plugins changes. The content process
+     * sends up the last epoch it observed. If the epochs are the same, the
+     * chrome process returns no plugins. Otherwise it returns a complete list.
+     *
+     * |pluginEpoch| is the epoch last observed by the content
+     * process. |newPluginEpoch| is the current epoch in the chrome process. If
+     * |pluginEpoch == newPluginEpoch|, then |plugins| will be left empty.
+     */
+    sync FindPlugins(uint32_t pluginEpoch) returns (PluginTag[] plugins, uint32_t newPluginEpoch);
 
     async PJavaScript();
 
@@ -536,6 +597,8 @@ parent:
     PMobileConnection(uint32_t clientId);
 
     PNecko();
+
+    PPrinting();
 
     prio(high) sync PScreenManager()
         returns (uint32_t numberOfScreens,
@@ -719,6 +782,22 @@ parent:
 
     sync OpenAnonymousTemporaryFile() returns (FileDescriptor aFD);
 
+    /**
+     * Keygen requires us to call it after a <keygen> element is parsed and
+     * before one is submitted. This is urgent because an extension might use
+     * a CPOW to synchronously submit a keygen element.
+     */
+    prio(urgent) sync FormProcessValue(nsString oldValue,
+                                       nsString challenge,
+                                       nsString keytype,
+                                       nsString keyparams)
+        returns (nsString newValue);
+
+    /**
+     * Called to provide the options for <keygen> elements.
+     */
+    sync FormProvideContent() returns (nsString aAttribute, nsString[] aContent);
+
     // Use only for testing!
     sync GetFileReferences(PersistenceType persistenceType,
                            nsCString origin,
@@ -726,6 +805,48 @@ parent:
                            int64_t fileId)
       returns (int32_t refCnt, int32_t dBRefCnt, int32_t sliceRefCnt,
                bool result);
+
+    /**
+     * Tell the chrome process there is an creation of PBrowser.
+     * return a system-wise unique Id.
+     */
+    sync AllocateTabId(TabId openerTabId, IPCTabContext context, ContentParentId cpId)
+        returns (TabId tabId);
+    async DeallocateTabId(TabId tabId);
+
+    /**
+     * Starts an offline application cache update.
+     * @param manifestURI
+     *   URI of the manifest to fetch, the application cache group ID
+     * @param documentURI
+     *   URI of the document that referred the manifest
+     * @param stickDocument
+     *   True if the update was initiated by a document load that referred
+     *   a manifest.
+     *   False if the update was initiated by applicationCache.update() call.
+     *
+     *   Tells the update to carry the documentURI to a potential separate
+     *   update of implicit (master) items.
+     *
+     *   Why this argument? If the document was not found in an offline cache
+     *   before load and refers a manifest and this manifest itself has not
+     *   been changed since the last fetch, we will not do the application
+     *   cache group update. But we must cache the document (identified by the
+     *   documentURI). This argument will ensure that a previously uncached
+     *   document will get cached and that we don't re-cache a document that
+     *   has already been cached (stickDocument=false).
+     * @param tabId
+     *   To identify which tab owns the app.
+     */
+    POfflineCacheUpdate(URIParams manifestURI, URIParams documentURI,
+                        bool stickDocument, TabId tabId);
+
+    /**
+     * Sets "offline-app" permission for the principal.  Called when we hit
+     * a web app with the manifest attribute in <html> and
+     * offline-apps.allow_by_default is set to true.
+     */
+    SetOfflinePermission(Principal principal);
 
 both:
      AsyncMessage(nsString aMessage, ClonedMessageData aData,

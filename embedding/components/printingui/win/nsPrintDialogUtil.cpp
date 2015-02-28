@@ -6,7 +6,7 @@
 /* -------------------------------------------------------------------
 To Build This:
 
-  You need to add this to the the makefile.win in mozilla/content/base/src:
+  You need to add this to the the makefile.win in mozilla/dom/base:
 
 	.\$(OBJDIR)\nsFlyOwnPrintDialog.obj	\
 
@@ -682,7 +682,7 @@ static UINT CALLBACK PrintHookProc(HWND hdlg, UINT uiMsg, WPARAM wParam, LPARAM 
 //   This function assumes that aPrintName has already been converted from 
 //   unicode
 //
-static HGLOBAL CreateGlobalDevModeAndInit(const nsXPIDLString& aPrintName, nsIPrintSettings* aPS)
+HGLOBAL CreateGlobalDevModeAndInit(const nsXPIDLString& aPrintName, nsIPrintSettings* aPS)
 {
   HGLOBAL hGlobalDevMode = nullptr;
 

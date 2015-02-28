@@ -46,7 +46,7 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     };
 
   private:
-    MBasicBlock(MIRGraph &graph, CompileInfo &info, const BytecodeSite &site, Kind kind);
+    MBasicBlock(MIRGraph &graph, CompileInfo &info, const BytecodeSite *site, Kind kind);
     bool init();
     void copySlots(MBasicBlock *from);
     bool inherit(TempAllocator &alloc, BytecodeAnalysis *analysis, MBasicBlock *pred,
@@ -107,14 +107,14 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Creates a new basic block for a MIR generator. If |pred| is not nullptr,
     // its slots and stack depth are initialized from |pred|.
     static MBasicBlock *New(MIRGraph &graph, BytecodeAnalysis *analysis, CompileInfo &info,
-                            MBasicBlock *pred, const BytecodeSite &site, Kind kind);
+                            MBasicBlock *pred, const BytecodeSite *site, Kind kind);
     static MBasicBlock *NewPopN(MIRGraph &graph, CompileInfo &info,
-                                MBasicBlock *pred, const BytecodeSite &site, Kind kind, uint32_t popn);
+                                MBasicBlock *pred, const BytecodeSite *site, Kind kind, uint32_t popn);
     static MBasicBlock *NewWithResumePoint(MIRGraph &graph, CompileInfo &info,
-                                           MBasicBlock *pred, const BytecodeSite &site,
+                                           MBasicBlock *pred, const BytecodeSite *site,
                                            MResumePoint *resumePoint);
     static MBasicBlock *NewPendingLoopHeader(MIRGraph &graph, CompileInfo &info,
-                                             MBasicBlock *pred, const BytecodeSite &site,
+                                             MBasicBlock *pred, const BytecodeSite *site,
                                              unsigned loopStateSlots);
     static MBasicBlock *NewSplitEdge(MIRGraph &graph, CompileInfo &info, MBasicBlock *pred);
     static MBasicBlock *NewAsmJS(MIRGraph &graph, CompileInfo &info,
@@ -286,6 +286,15 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     // Move an instruction. Movement may cross block boundaries.
     void moveBefore(MInstruction *at, MInstruction *ins);
 
+    enum IgnoreTop {
+        IgnoreNone = 0,
+        IgnoreRecover = 1 << 0
+    };
+
+    // Locate the top of the |block|, where it is safe to insert a new
+    // instruction.
+    MInstruction *safeInsertTop(MDefinition *ins = nullptr, IgnoreTop ignore = IgnoreNone);
+
     // Removes an instruction with the intention to discard it.
     void discard(MInstruction *ins);
     void discardLastIns();
@@ -367,6 +376,8 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
         MOZ_ASSERT(hasLastIns());
         return instructions_.rbegin()->toControlInstruction();
     }
+    // Find or allocate an optimized out constant.
+    MConstant *optimizedOutConstant(TempAllocator &alloc);
     MPhiIterator phisBegin() const {
         return phis_.begin();
     }
@@ -531,6 +542,10 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
         MOZ_ASSERT(!outerResumePoint_);
         outerResumePoint_ = outer;
     }
+    void clearOuterResumePoint() {
+        discardResumePoint(outerResumePoint_);
+        outerResumePoint_ = nullptr;
+    }
     MResumePoint *callerResumePoint() {
         return entryResumePoint() ? entryResumePoint()->caller() : nullptr;
     }
@@ -590,18 +605,18 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
 
     // Track bailouts by storing the current pc in MIR instruction added at this
     // cycle. This is also used for tracking calls when profiling.
-    void updateTrackedSite(const BytecodeSite &site) {
-        MOZ_ASSERT(site.tree() == trackedSite_.tree());
+    void updateTrackedSite(const BytecodeSite *site) {
+        MOZ_ASSERT(site->tree() == trackedSite_->tree());
         trackedSite_ = site;
     }
-    const BytecodeSite &trackedSite() const {
+    const BytecodeSite *trackedSite() const {
         return trackedSite_;
     }
     jsbytecode *trackedPc() const {
-        return trackedSite_.pc();
+        return trackedSite_ ? trackedSite_->pc() : nullptr;
     }
     InlineScriptTree *trackedTree() const {
-        return trackedSite_.tree();
+        return trackedSite_ ? trackedSite_->tree() : nullptr;
     }
 
   private:
@@ -643,9 +658,9 @@ class MBasicBlock : public TempObject, public InlineListNode<MBasicBlock>
     Vector<MBasicBlock *, 1, JitAllocPolicy> immediatelyDominated_;
     MBasicBlock *immediateDominator_;
 
-    BytecodeSite trackedSite_;
+    const BytecodeSite *trackedSite_;
 
-#if defined (JS_ION_PERF)
+#if defined(JS_ION_PERF) || defined(DEBUG)
     unsigned lineno_;
     unsigned columnIndex_;
 

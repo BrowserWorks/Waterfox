@@ -52,6 +52,10 @@ def main(argv):
                   action='store_true', help='show command lines of failed tests')
     op.add_option('-o', '--show-output', dest='show_output', action='store_true',
                   help='show output from js shell')
+    op.add_option('-F', '--failed-only', dest='failed_only', action='store_true',
+                  help="if --show-output is given, only print output for failed tests")
+    op.add_option('--no-show-failed', dest='no_show_failed', action='store_true',
+                  help="don't print output for failed tests (no-op with --show-output)")
     op.add_option('-x', '--exclude', dest='exclude', action='append',
                   help='exclude given test dir or path')
     op.add_option('--slow', dest='run_slow', action='store_true',
@@ -117,6 +121,8 @@ def main(argv):
                   help='The test chunk to run.')
     op.add_option('--total-chunks', type=int, default=1,
                   help='The total number of test chunks.')
+    op.add_option('--ignore-timeouts', dest='ignore_timeouts', metavar='FILE',
+                  help='Ignore timeouts of tests listed in [FILE]')
 
     options, args = op.parse_args(argv)
     if len(args) < 1:
@@ -212,6 +218,16 @@ def main(argv):
                 new_test = test.copy()
                 new_test.jitflags.extend(jitflags)
                 job_list.append(new_test)
+
+    if options.ignore_timeouts:
+        read_all = False
+        try:
+            with open(options.ignore_timeouts) as f:
+                options.ignore_timeouts = set([line.strip('\n') for line in f.readlines()])
+        except IOError:
+            sys.exit("Error reading file: " + options.ignore_timeouts)
+    else:
+        options.ignore_timeouts = set()
 
     prefix = [which(args[0])] + shlex.split(options.shell_args)
     prolog = os.path.join(jittests.LIB_DIR, 'prolog.js')

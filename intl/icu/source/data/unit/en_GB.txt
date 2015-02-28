@@ -9,6 +9,11 @@
 en_GB{
     %%Parent{"en_001"}
     Version{"2.1.8.19"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         acceleration{
             meter-per-second-squared{

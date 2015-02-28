@@ -286,8 +286,11 @@ public:
 
     // Look up a font in the cache. Returns an addrefed pointer, or null
     // if there's nothing matching in the cache
-    already_AddRefed<gfxFont> Lookup(const gfxFontEntry *aFontEntry,
-                                     const gfxFontStyle *aStyle);
+    already_AddRefed<gfxFont>
+    Lookup(const gfxFontEntry* aFontEntry,
+           const gfxFontStyle* aStyle,
+           const gfxCharacterMap* aUnicodeRangeMap = nullptr);
+
     // We created a new font (presumably because Lookup returned null);
     // put it in the cache. The font's refcount should be nonzero. It is
     // allowable to add a new font even if there is one already in the
@@ -346,8 +349,12 @@ protected:
     struct Key {
         const gfxFontEntry* mFontEntry;
         const gfxFontStyle* mStyle;
-        Key(const gfxFontEntry* aFontEntry, const gfxFontStyle* aStyle)
-            : mFontEntry(aFontEntry), mStyle(aStyle) {}
+        const gfxCharacterMap* mUnicodeRangeMap;
+        Key(const gfxFontEntry* aFontEntry, const gfxFontStyle* aStyle,
+            const gfxCharacterMap* aUnicodeRangeMap)
+            : mFontEntry(aFontEntry), mStyle(aStyle),
+              mUnicodeRangeMap(aUnicodeRangeMap)
+        {}
     };
 
     class HashEntry : public PLDHashEntryHdr {
@@ -364,7 +371,8 @@ protected:
         bool KeyEquals(const KeyTypePointer aKey) const;
         static KeyTypePointer KeyToPointer(KeyType aKey) { return &aKey; }
         static PLDHashNumber HashKey(const KeyTypePointer aKey) {
-            return mozilla::HashGeneric(aKey->mStyle->Hash(), aKey->mFontEntry);
+            return mozilla::HashGeneric(aKey->mStyle->Hash(), aKey->mFontEntry,
+                                        aKey->mUnicodeRangeMap);
         }
         enum { ALLOW_MEMMOVE = true };
 
@@ -942,6 +950,12 @@ public:
                 gfxTextRunFactory::TEXT_ORIENT_HORIZONTAL;
     }
 
+    bool UseCenterBaseline() const {
+        uint32_t orient = GetFlags() & gfxTextRunFactory::TEXT_ORIENT_MASK;
+        return orient == gfxTextRunFactory::TEXT_ORIENT_VERTICAL_MIXED ||
+               orient == gfxTextRunFactory::TEXT_ORIENT_VERTICAL_UPRIGHT;
+    }
+
     bool IsRightToLeft() const {
         return (GetFlags() & gfxTextRunFactory::TEXT_IS_RTL) != 0;
     }
@@ -1264,6 +1278,9 @@ class gfxFont {
     friend class gfxHarfBuzzShaper;
     friend class gfxGraphiteShaper;
 
+protected:
+    typedef mozilla::gfx::DrawTarget DrawTarget;
+
 public:
     nsrefcnt AddRef(void) {
         NS_PRECONDITION(int32_t(mRefCnt) >= 0, "illegal refcnt");
@@ -1418,7 +1435,8 @@ public:
 
     // Return Azure GlyphRenderingOptions for drawing this font.
     virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
-      GetGlyphRenderingOptions() { return nullptr; }
+      GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr)
+    { return nullptr; }
 
     gfxFloat SynthesizeSpaceWidth(uint32_t aCh);
 
@@ -1561,7 +1579,7 @@ public:
                                uint32_t aStart, uint32_t aEnd,
                                BoundingBoxType aBoundingBoxType,
                                gfxContext *aContextForTightBoundingBox,
-                               Spacing *aSpacing);
+                               Spacing *aSpacing, uint16_t aOrientation);
     /**
      * Line breaks have been changed at the beginning and/or end of a substring
      * of the text. Reshaping may be required; glyph updating is permitted.
@@ -1604,9 +1622,19 @@ public:
 
     gfxFontEntry *GetFontEntry() const { return mFontEntry.get(); }
     bool HasCharacter(uint32_t ch) {
-        if (!mIsValid)
+        if (!mIsValid ||
+            (mUnicodeRangeMap && !mUnicodeRangeMap->test(ch))) {
             return false;
+        }
         return mFontEntry->HasCharacter(ch); 
+    }
+
+    const gfxCharacterMap* GetUnicodeRangeMap() const {
+        return mUnicodeRangeMap.get();
+    }
+
+    void SetUnicodeRangeMap(gfxCharacterMap* aUnicodeRangeMap) {
+        mUnicodeRangeMap = aUnicodeRangeMap;
     }
 
     uint16_t GetUVSGlyph(uint32_t aCh, uint32_t aVS) {
@@ -1695,7 +1723,7 @@ public:
 
     virtual FontType GetType() const = 0;
 
-    virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont> GetScaledFont(mozilla::gfx::DrawTarget *aTarget)
+    virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont> GetScaledFont(DrawTarget* aTarget)
     { return gfxPlatform::GetPlatform()->GetScaledFontForFont(aTarget, this); }
 
     bool KerningDisabled() {
@@ -1806,7 +1834,7 @@ protected:
 
     // The return value is interpreted as a horizontal advance in 16.16 fixed
     // point format.
-    virtual int32_t GetGlyphWidth(gfxContext *aCtx, uint16_t aGID) {
+    virtual int32_t GetGlyphWidth(DrawTarget& aDrawTarget, uint16_t aGID) {
         return -1;
     }
 
@@ -2003,6 +2031,10 @@ protected:
     nsAutoPtr<gfxFontShaper>   mHarfBuzzShaper;
     nsAutoPtr<gfxFontShaper>   mGraphiteShaper;
 
+    // if a userfont with unicode-range specified, contains map of *possible*
+    // ranges supported by font
+    nsRefPtr<gfxCharacterMap> mUnicodeRangeMap;
+
     mozilla::RefPtr<mozilla::gfx::ScaledFont> mAzureScaledFont;
 
     // For vertical metrics, created on demand.
@@ -2063,6 +2095,7 @@ struct TextRunDrawParams {
     gfxFont::Spacing        *spacing;
     gfxTextRunDrawCallbacks *callbacks;
     gfxTextContextPaint     *runContextPaint;
+    mozilla::gfx::Color      fontSmoothingBGColor;
     gfxFloat                 direction;
     double                   devPerApp;
     DrawMode                 drawMode;

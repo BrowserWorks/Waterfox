@@ -1,0 +1,43 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2001
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## Explicitly look in srcdir for benefit of non-GNU makes.
+
+
+%CONFIG_H%: %STAMP%
+## Recover from removal of CONFIG_HEADER
+	@if test ! -f $@; then \
+	  rm -f %STAMP%; \
+	  $(MAKE) %STAMP%; \
+	else :; fi
+
+
+%STAMP%: $(srcdir)/%CONFIG_HIN% $(top_builddir)/config.status
+	@rm -f %STAMP%
+	cd $(top_builddir) && $(SHELL) ./config.status %CONFIG_H_PATH%
+
+
+$(srcdir)/%CONFIG_HIN%: %MAINTAINER-MODE% $(top_srcdir)/%CONFIGURE-AC% $(ACLOCAL_M4) %FILES%
+	cd $(top_srcdir) && $(AUTOHEADER)
+## Autoheader has the bad habit of not changing the time stamp if
+## config.hin is unchanged, which breaks Make targets.  Since what
+## must not changed gratuitiously is config.h, which is already handled
+## by config.status, there is no reason to make things complex for
+## config.hin.
+	touch $(srcdir)/%CONFIG_HIN%

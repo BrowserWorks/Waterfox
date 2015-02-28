@@ -13,10 +13,6 @@ en_AU{
             "BYR",
             "Belarusian Rouble",
         }
-        GBP{
-            "£",
-            "British Pound",
-        }
         RUB{
             "RUB",
             "Russian Rouble",
@@ -47,10 +43,6 @@ en_AU{
             one{"euro"}
             other{"euro"}
         }
-        GBP{
-            one{"British pound"}
-            other{"British pounds"}
-        }
         MGA{
             one{"Malagasy ariary"}
             other{"Malagasy ariarys"}
@@ -80,5 +72,5 @@ en_AU{
             other{"(unknown currency)"}
         }
     }
-    Version{"2.1.8.19"}
+    Version{"2.1.10.42"}
 }

@@ -1,0 +1,191 @@
+﻿# Header, don't edit
+NLF v6
+# Language ID
+1063
+# Font and size - dash (-) means default
+-
+-
+# Codepage - dash (-) means ANSI code page
+1257
+# RTL - anything else than RTL means LTR
+-
+# Translation by Vytautas Krivickas (Vytautas)
+# Updated by Danielius Scepanskis (Daan daniel@takas.lt) 2004.03.24
+# ^Branding
+Nullsoft instaliavimo sistema %s
+# ^SetupCaption
+$(^Name) Įdiegimas
+# ^UninstallCaption
+$(^Name) Šalinti
+# ^LicenseSubCaption
+: Naudojimo sutartis
+# ^ComponentsSubCaption
+: Įdiegimo nustatymai
+# ^DirSubCaption
+: Įdiegimo katalogas
+# ^InstallingSubCaption
+: Įdiegiama
+# ^CompletedSubCaption
+: Baigta
+# ^UnComponentsSubCaption
+: Ištrinimo nustatymai
+# ^UnDirSubCaption
+: Ištrinimo katalogas
+# ^ConfirmSubCaption
+: Patvirtinimas
+# ^UninstallingSubCaption
+: Panaikinama
+# ^UnCompletedSubCaption
+: Baigta
+# ^BackBtn
+< &Atgal
+# ^NextBtn
+&Toliau >
+# ^AgreeBtn
+Aš &sutinku
+# ^AcceptBtn
+Aš &sutinku su naudojimo sutarties sąlygomis
+# ^DontAcceptBtn
+Aš &nesutinku su naudojimo sutarties sąlygomis
+# ^InstallBtn
+&Įdiegti
+# ^UninstallBtn
+&Panaikinti
+# ^CancelBtn
+Nutraukti
+# ^CloseBtn
+&Uždaryti
+# ^BrowseBtn
+P&asirinkti...
+# ^ShowDetailsBtn
+Parodyti &detales
+# ^ClickNext
+Paspauskite toliau
+# ^ClickInstall
+Paspauskite įdiegti
+# ^ClickUninstall
+Paspauskite ištrinti
+# ^Name
+Vardas
+# ^Completed
+Baigta
+# ^LicenseText
+Prašome perskaityti sutartį prieš įdiegdami $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, spauskite Sutinku.
+# ^LicenseTextCB
+Prašome perskaityti sutartį prieš įdiegdami $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, padėkite varnelę tam skirtame laukelyje. $_CLICK
+# ^LicenseTextRB
+Prašome perskaityti sutartį prieš įdiegdami $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, pasirinkite pirmą pasirinkimą esantį žemiau. $_CLICK
+# ^UnLicenseText
+Prašome perskaityti sutartį prieš ištrinant $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, spauskite Sutinku.
+# ^UnLicenseTextCB
+Prašome perskaityti sutartį prieš ištrinant $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, padėkite varnelę tam skirtame laukelyje. $_CLICK
+# ^UnLicenseTextRB
+Prašome perskaityti sutartį prieš ištrinant $(^NameDA). Jei jūs sutinkate su nurodytomis sąlygomis, pasirinkite pirmą pasirinkimą esantį žemiau.  $_CLICK
+# ^Custom
+Kitoks
+# ^ComponentsText
+Padėkite varneles laukeliuose komponentų kuriuos norite įdiegti ir nuimkite nuo kurių nenorite įdiegti. $_CLICK
+# ^ComponentsSubText1
+Pasirinkite įdiegimo būdą:
+# ^ComponentsSubText2_NoInstTypes
+Pasirinkite komponentus, kuriuos įdiegti:
+# ^ComponentsSubText2
+Arba, pasirinkite neprivalomus komponentus, kuriuos jūs norite įdiegti:
+# ^UnComponentsText
+Padėkite varneles laukeliuose komponentų kuriuos norite pašalinti ir nuimkite nuo kurių nenorite pašalinti. $_CLICK
+# ^UnComponentsSubText1
+Pasirinkite šalinimo būdą:
+# ^UnComponentsSubText2_NoInstTypes
+Pasirinkite komponentus, kuriuos šalinti:
+# ^UnComponentsSubText2
+Arba, pasirinkite neprivalomus komponentus, kuriuos jūs norite pašalinti:
+# ^DirText
+Įdiegimas dabar įdiegs $(^NameDA) šiame kataloge. Jeigu norite pakeisti šį katalogą, paspauskite Pasirinkti. $_CLICK
+# ^DirSubText
+Įdiegimo katalogas
+# ^DirBrowseText
+Pasirinkite katalogą, kur įdiegti $(^NameDA):
+# ^UnDirText
+Įdiegimas dabar pašalins $(^NameDA) iš šio katalogo. Jeigu norite pakeisti šį katalogą paspauskite Pasirinkti. $_CLICK
+# ^UnDirSubText
+""
+# ^UnDirBrowseText
+Pasirinkite katalogą iš kurio pašalinti $(^NameDA):
+# ^SpaceAvailable
+Yra vietos: 
+# ^SpaceRequired
+Reikia vietos: 
+# ^UninstallingText
+$(^NameDA) dabar bus pašalintas iš šio katalogo. $_CLICK
+# ^UninstallingSubText
+Trinama iš:
+# ^FileError
+Klaida atidarant failą įrašymui: \r\n\t"$0"\r\nPaspauskite Nutraukti, jei norite nutraukti įdiegimą,\r\nPakartoti, jei norite pabandyti dar kartą įrašyti failą, ar\r\nIgnoruoti, jei norite praleisti šį failą
+# ^FileError_NoIgnore
+Klaida atidarant failą įrašymui: \r\n\t"$0"\r\nPaspauskite Pakartoti, jei norite pabandyti dar kartą įrašyti failą, ar\r\nNutraukti, jei norite nutraukti įdiegimą.
+# ^CantWrite
+"Negalima įrašyti: "
+# ^CopyFailed
+Kopijavimas nepavyko
+# ^CopyTo
+Kopijuoti į 
+# ^Registering
+"Užregistruojama: "
+# ^Unregistering
+"Išregistruojama: "
+# ^SymbolNotFound
+Nerastas simbolis: 
+# ^CouldNotLoad
+Negaliu įkrauti: 
+# ^CreateFolder
+Sukurti katalogą: 
+# ^CreateShortcut
+Sukurti nuorodą: 
+# ^CreatedUninstaller
+Sukurti panaikinimo programą:
+# ^Delete
+Ištrinti failą: 
+# ^DeleteOnReboot
+"Ištrinti perkraunant: "
+# ^ErrorCreatingShortcut
+"Klaida kuriant nuorodą: "
+# ^ErrorCreating
+"Klaida kuriant: "
+# ^ErrorDecompressing
+Klaida išskleidžiant duomenis! Sugadintas įdiegimo failas?
+# ^ErrorRegistering
+Klaida užregistruojant DLL
+# ^ExecShell
+"VykdytiShell: "
+# ^Exec
+"Vykdyti: "
+# ^Extract
+"Išskleisti: "
+# ^ErrorWriting
+Išskleisti: klaida įrašant į failą
+# ^InvalidOpcode
+Įdiegimo failas sugadintas: neteisingas opkodas
+# ^NoOLE
+"Nėra OLE dėl: "
+# ^OutputFolder
+"Paskirties katalogas: "
+# ^RemoveFolder
+"Panaikinti katalogą: "
+# ^RenameOnReboot
+"Pervardinti perkraunant: "
+# ^Rename
+"Pervardinti: "
+# ^Skipped
+"Praleista: "
+# ^CopyDetails
+Kopijuoti detales į atmintį
+# ^LogInstall
+Įrašyti įdiegimo detales
+# ^Byte
+B
+# ^Kilo
+K
+# ^Mega
+M
+# ^Giga
+G

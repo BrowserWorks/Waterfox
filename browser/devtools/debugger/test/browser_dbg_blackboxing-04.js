@@ -9,16 +9,16 @@
 const TAB_URL = EXAMPLE_URL + "doc_blackboxing.html";
 const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js"
 
-let gTab, gDebuggee, gPanel, gDebugger;
-let gFrames;
+let gTab, gPanel, gDebugger;
+let gFrames, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gFrames = gDebugger.DebuggerView.StackFrames;
+    gSources = gDebugger.DebuggerView.Sources;
 
     waitForSourceShown(gPanel, BLACKBOXME_URL)
       .then(blackBoxSources)
@@ -32,9 +32,10 @@ function test() {
 
 function blackBoxSources() {
   let finished = waitForThreadEvents(gPanel, "blackboxchange", 3);
-  toggleBlackBoxing(gPanel, EXAMPLE_URL + "code_blackboxing_one.js");
-  toggleBlackBoxing(gPanel, EXAMPLE_URL + "code_blackboxing_two.js");
-  toggleBlackBoxing(gPanel, EXAMPLE_URL + "code_blackboxing_three.js");
+
+  toggleBlackBoxing(gPanel, getSourceActor(gSources, EXAMPLE_URL + "code_blackboxing_one.js"));
+  toggleBlackBoxing(gPanel, getSourceActor(gSources, EXAMPLE_URL + "code_blackboxing_two.js"));
+  toggleBlackBoxing(gPanel, getSourceActor(gSources, EXAMPLE_URL + "code_blackboxing_three.js"));
   return finished;
 }
 
@@ -46,16 +47,14 @@ function testBlackBoxStack() {
       "And 'one', 'two', and 'three' should each have their own black boxed frame.");
   });
 
-  // Spin the event loop before causing the debuggee to pause, to allow
-  // this function to return first.
-  executeSoon(() => gDebuggee.one());
+  callInTab(gTab, "one");
   return finished;
 }
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gFrames = null;
+  gSources = null;
 });

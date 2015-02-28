@@ -960,7 +960,7 @@ TimeZoneFormatTest::TestISOFormat(void) {
 
     // Formatting
     UErrorCode status = U_ZERO_ERROR;
-    LocalPointer<SimpleDateFormat> sdf(new SimpleDateFormat(status));
+    LocalPointer<SimpleDateFormat> sdf(new SimpleDateFormat(status), status);
     if (U_FAILURE(status)) {
         dataerrln("Fail new SimpleDateFormat: %s", u_errorName(status));
         return;

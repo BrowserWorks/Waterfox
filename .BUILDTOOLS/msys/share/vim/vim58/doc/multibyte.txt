@@ -1,0 +1,581 @@
+*multibyte.txt* For Vim version 5.8.  Last change: 2000 Jun 07
+
+
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar et al.
+
+
+Multi-byte support				*multibyte* *multi-byte*
+
+						*Chinese* *Japanese* *Korean*
+There are languages which have many characters that can not be represented
+using one byte (one octet).  These are Chinese (simplified or traditional),
+Japanese and Korean.  These languages uses more than one byte to represent a
+character.
+
+This is limited information on the support in Vim to edit files that use more
+than one byte per character.  Actually, only two-byte codes are currently
+supported.
+
+Also see |+multi_byte| and |'fileencoding'|.
+
+1. Introduction				|multibyte-intro|
+2. Compiling				|multibyte-compiling|
+3. Display (X fontset support)		|multibyte-display|
+4. Input (XIM support)			|multibyte-input|
+5. UTF-8 in XFree86 xterm		|UTF8-xterm|
+
+==============================================================================
+1. Introduction						*multibyte-intro*
+
+LOCALE
+							*locale-multibyte*
+There are a number of languages in the world.  And there are different
+cultures and environments at least as much as the number of languages.	A
+linguistic environment corresponding to an area is called "|locale|".  The
+POSIX standard defines a concept of |locale|, which includes a lot of
+information about |charset|, collating order for sorting, date format,
+currency format and so on.
+
+Your system need to support the |locale| system and the language |locale| of
+your choice.  Some system has a few language |locale|s, so the |locale| of the
+language which you want to use may not be on your system.  If so, you have to
+add the language |locale|.  But on some systems, it is not possible to add
+other |locale|s.  In this case, install X |locale|s by installing X compiled
+with X_LOCALE.  Add "-DX_LOCALE" to the CFLAGS if your X lib support X_LOCALE.
+For example, When you are using Linux system and you want to use Japanese, set
+up your system one of the followings.
+    - libc5     + X compiled with X_LOCALE
+    - glibc-2.0 + libwcsmbs + X compiled without X_LOCALE
+    - glibc-2.1 + locale-ja + X compiled without X_LOCALE
+
+The location in which the |locale|s are installed varies system to system.
+For example, "/usr/share/locale", "/usr/lib/locale", etc.  See your system's
+setlocale() man page.
+
+					*locale-name* *$LANG-multibyte*
+The format of |locale| name is:
+    language[_territory[. codeset]]
+Territory means the country, codeset means the |charset|.  For example, the
+|locale| name "ja_JP.eucJP" means the language is Japanese, the country is
+Japan, the codeset is EUC-JP.  But it also could be "ja", "ja_JP.EUC",
+"ja_JP.ujis", etc.  And unfortunately, the |locale| name for a specific
+language, territory and codeset is not unified and depends on your system.
+This name is used for the LANG environment value.  When you want to use Korean
+and the |locale| name is "ko", do this:
+    sh:  export LANG=ko
+    csh: setenv LANG ko
+
+Examples of locale name:
+    |charset|	    language		  |locale-name|
+    GB2312	    Chinese (simplified)  zh_CN.EUC, zh_CN.GB2312
+    Big5	    Chinese (traditional) zh_TW.BIG5, zh_TW.Big5
+    CNS-11643	    Chinese (traditional) zh_TW
+    EUC-JP	    Japanese		  ja, ja_JP.EUC, ja_JP.ujis, ja_JP.eucJP
+    Shift_JIS	    Japanese		  ja_JP.SJIS, ja_JP.Shift_JIS
+    EUC-KR	    Korean		  ko, ko_KR.EUC
+
+Even if your system does not have the multibyte language |locale| of your
+choice, or does not have a enough implementation of the locale, Vim can
+somehow handle the multibyte languages.  Add "--enable-broken-locale" flag at
+compile time.
+
+
+CODED CHARACTER SET (CCS)
+					*coded-character-set* *CCS*
+|CCS| is a mapping from a set of characters to a set of integers.  For
+example, ((65, A), (66, B), (67, C)) is a |CCS| and ((0x41, A), (0x42, B),
+(0x43, C)) is also a |CCS|.  Examples of |CCS| are ISO 10646, US-ASCII,
+ISO-8859 series, JIS X 0208, JIS X 0201, KS C 5601 (KS X 1001) and KS C 5636
+(KS X 1003).
+
+The term "integer" means code point or character number and is different from
+octets or bit combination.
+
+Typically, a |CCS| is a character table.  Representing the column/line as
+hexadecimal number becomes the code point of the character.  For example,
+US-ASCII CCS has 8x16 character table, the column number start with 0 and end
+with 7, the line number start with 0 end with F.  The code point of the
+character at 4/1 is 0x41.
+
+
+CHARACTER ENCODING SCHEME (CES)
+
+					*character-encode-scheme* *CES*
+|CES| is a mapping from a sequence of elements in one or more |CCS|es to a
+sequence of octets.  Examples of |CES| are EUC-JP, EUC-KR, EUC-CN (GB 2312),
+EUC-TW (CNS-11643), ISO-2022-JP, ISO-2022-KR, ISO-2022-CN, UTF-8, etc.
+
+
+CHARSET
+							*charset*
+|charset| is a method of converting a sequence of octets into a sequence of
+characters, the combination of one or more |CCS|es and a |CES|.  For example,
+ISO-2022-JP |charset| is the combination of ASCII, JIS X 0201, JIS X 0208
+|CCS|es and ISO-2022-JP |CES|.  Examples of |charset| are US-ASCII, ISO-8859
+series, GB2312, EUC-JP, EUC-KR, Shift_JIS, Big5, UTF-8, etc.
+
+Note that this is not a term used by other standards bodies, such as ISO, but
+a term defined in RFC 2130.  The term "codeset" in POSIX has the same meaning
+as |charset| here.  |charset| does not mean character set (a set of
+characters) and the term "character repertoire" means a collection of distinct
+characters.  There are historical reasons, see RFC 2130.
+
+						*charset-conversion*
+One language could have some |charset|s.  For example, Japanese has
+ISO-2022-JP, EUC-JP and Shift_JIS |charset|s.  ISO-2022-JP |charset| is used
+mainly for internet messages, because it is encoded in 7-bit scheme.  EUC-JP
+is mainly used on Unix, Shift_JIS is mainly used on Windows and MacOS.
+
+Vim does not convert automatically to the locale's |charset| at display time.
+So, if a file's |charset| differs from your locale's |charset|, the file is
+not displayed correctly.  So, you must know the file's |charset| by any way:
+guessing, using some utilities, etc, and convert the |charset| to the locale's
+|charset| manually.
+
+Useful utilities for converting the |charset|:
+    Japanese:	    nkf
+	Nkf is "Network Kanji code conversion Filter".  One of the most unique
+	facility of nkf is the guess of the input Kanji code.  So, you don't
+	need to know what the inputting file's |charset| is.  When convert to
+	EUC-JP from ISO-2022-JP or Shift_JIS, simply do the following command
+	in Vim:
+	    :%!nkf -e
+	Nkf can be found at:
+	http://www.sfc.wide.ad.jp/~max/FreeBSD/ports/distfiles/nkf-1.62.tar.gz
+    Chinese:	    hc
+	Hc is "Hanzi Converter".  Hc convert a GB file to a Big5 file, or Big5
+	file to GB file.  Hc can be found at:
+	ftp://ftp.cuhk.hk/pub/chinese/ifcss/software/unix/convert/hc-30.tar.gz
+    Korean:	    hmconv
+	Hmconv is Korean code conversion utility especially for E-mail. It can
+	convert between EUC-KR and ISO-2022-KR.  Hmconv can be found at:
+	ftp://ftp.kaist.ac.kr/pub/hangul/code/hmconv/hmconv1.0pl3
+    Multilingual:   lv
+	Lv is a Powerful Multilingual File Viewer.  And it can be worked as
+	|charset| converter.  Supported |charset|: ISO-2022-CN, ISO-2022-JP,
+	ISO-2022-KR, EUC-CN, EUC-JP, EUC-KR, EUC-TW, UTF-7, UTF-8, ISO-8859
+	series, Shift_JIS, Big5 and HZ. Lv can be found at:
+	http://www.ff.iij4u.or.jp/~nrt/freeware/lv4493.tar.gz
+
+
+X LOGICAL FONT DESCRIPTION (XLFD)
+							*XLFD*
+XLFD is the X font name and contains the information about the font size,
+|CCS|, etc.  The name is in this format:
+
+FOUNDRY-FAMILY-WEIGHT-SLANT-WIDTH-STYLE-PIXEL-POINT-X-Y-SPACE-AVE-CR-CE
+
+Each field means:
+
+- FOUNDRY:  FOUNDRY field.  The company that created the font.
+- FAMILY:   FAMILY_NAME field.  Basic font family name.  (helvetica, gothic,
+	    times, etc)
+- WEIGHT:   WEIGHT_NAME field.  How thick the letters are.  (light, medium,
+	    bold, etc)
+- SLANT:    SLANT field.
+		r:  Roman
+		i:  Italic
+		o:  Oblique
+		ri: Reverse Italic
+		ro: Reverse Oblique
+		ot: Other
+		number:	Scaled font
+- WIDTH:    SETWIDTH_NAME field.  Width of characters.  (normal, condensed,
+	    narrow, double wide)
+- STYLE:    ADD_STYLE_NAME field.  Extra info to describe font.  (Serif, Sans
+	    Serif, Informal, Decorated, etc)
+- PIXEL:    PIXEL_SIZE field.  Height, in pixels, of characters.
+- POINT:    POINT_SIZE field.  Ten times height of characters in points.
+- X:	    RESOLUTION_X field.  X resolution (dots per inch).
+- Y:	    RESOLUTION_Y field.  Y resolution (dots per inch).
+- SPACE:    SPACING field.
+		p:  Proportional
+		m:  Monospaced
+		c:  CharCell
+- AVE:	    AVERAGE_WIDTH field.  Ten times average width in pixels.
+- CR:	    CHARSET_REGISTRY field.  Indicates the name of the font |CCS| name.
+- CE:	    CHARSET_ENCODING field.  In some CCSes, such as ISO-8859 series,
+	    this field is the part of |CCS| name.  In other CCSes, such as JIS
+	    X 0208, if this field is 0, code points has the same value as GL,
+	    and GR if 1.
+
+For example, in case of a 14 dots font corresponding to JIS X 0208, it is
+written like:
+    -misc-fixed-medium-r-normal--16-110-100-100-c-160-jisx0208.1990-0
+
+
+X FONTSET
+						*fontset* *xfontset*
+A |CCS| typically associated with one font.  The languages which must manage
+multiple |CCS|es needs to manage multiple font.  In X11R5, for the
+internationalization of output API, FontSet was introduced.  By using this,
+Xlib takes care of switching of fonts and the display.  Till X11R4, the
+application themselves had to manage this.
+
+|locale| database has the information about the |charset| of the |locale|,
+which |CCS|(es) is needed and which |CES| the locale uses.  When you use the
+locale which must manage multiple |CCS|es, you have to specify the each
+|CCS|'s font in 'guifontset' option.
+
+Example:
+    |charset| language		    |CCS|es
+    GB2312    Chinese (simplified)  ISO-8859-1 and GB 2312
+    Big5      Chinese (traditional) ISO-8859-1 and Big5
+    CNS-11643 Chinese (traditional) ISO-8859-1, CNS 11643-1 and CNS 11643-2
+    EUC-JP    Japanese		    JIS X 0201 and JIS X 0208
+    EUC-KR    Korean		    ISO-8859-1 and KS C 5601 (KS X 1001)
+
+The |XLFD| contains the information of |CCS|.  So, by searching in fonts.dir,
+you can find the |CCS|'s font.  The fonts.dir is in the fonts directory (e.g.
+/usr/X11R6/lib/X11/fonts/*), the format of the file is:
+    First line:	the number of fonts which are contained in this fonts.dir
+    other line:	FILENAME  |XLFD|
+Or, you can search fonts using xlsfonts command.  For example, when you're
+searching for the font for KS C 5601:
+>   xlsfonts | grep ksc5601
+will show you the list of it.
+
+						*base_font_name_list*
+In 'guifontset' option and ~/.Xdefaults, you specify the
+|base_font_name_list|, which is a list of |XLFD| font names that Xlib uses to
+load the fonts needed for the |locale|.  The base font names are a
+comma-separated list.
+
+For example, when you use the ja_JP.eucJP |locale|, which require JIS X 0201
+and JIS X 0208 |CCS|es.  You could supply a |base_font_name_list| that
+explicitly specifies the charsets, like:
+
+guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140-jisx0208.1983-0,
+    \-misc-fixed-medium-r-normal--14-130-75-75-c-70-jisx0201.1976-0
+
+Alternatively, the user could supply a base font name list that omits the
+|CCS| name, letting Xlib select font characters required for the locale. For
+example:
+
+guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140,
+    \-misc-fixed-medium-r-normal--14-130-75-75-c-70
+
+Alternatively, the user could supply a single base font name that allows Xlib
+to select from all available fonts.  For example:
+
+guifontset=-misc-fixed-medium-r-normal--14-*
+
+Alternatively, the user could specify the alias name.  See fonts.alias in
+the fonts directory.
+
+guifontset=k14,r14
+
+Note that in East Asian fonts, the standard character cell is square.  When
+mixing Latin font and East Asian font, East Asian font width should be twice
+the Latin font width.  And GVIM needs fixed width font.
+
+
+X INPUT METHOD (XIM)				*XIM* *xim* *x-input-method*
+
+XIM (X Input Method) is an international input module for X.  There are two
+kind of structures, Xlib unit type and |IM-server| (Input-Method server) type.
+|IM-server| type is suitable for complex inputting, like CJK inputting.
+
+- IM-server
+							*IM-server*
+  In |IM-server| type input structures, the input event is handled by either
+  of the two ways: FrontEnd system and BackEnd system.  In the FrontEnd
+  system, input events are snatched by the |IM-server| first, then |IM-server|
+  give the application the result of input.  On the other hand, the BackEnd
+  system works reverse order.  MS Windows adopt BackEnd system.  In X, most of
+  |IM-server|s adopt FrontEnd system.  The demerit of BackEnd system is the
+  large overhead in communication, but it provides safe synchronization with
+  no restrictions on applications.
+
+  For example, there are xwnmo and kinput2 Japanese |IM-server|, both are
+  FrontEnd system.  Xwnmo is distributed with Wnn (see below), kinput2 can be
+  found at: ftp://ftp.sra.co.jp/pub/x11/kinput2/
+
+  For Chinese, there's a great XIM server named "xcin", you can input both
+  Traditional and Simplified Chinese characters.  And it can accept other
+  locale if you make a correct input table.  Xcin can be found at:
+  http://xcin.linux.org.tw/
+
+- Conversion Server
+							*conversion-server*
+  Some system needs additional server: conversion server.  Most of Japanese
+  |IM-server|s need it, Kana-Kanji conversion server.  For Chinese inputting,
+  it depends on the method of inputting, in some methods, PinYin or ZhuYin to
+  HanZi conversion server is needed.  For Korean inputting, if you want to
+  input Hanja, Hangul-Hanja conversion server is needed.
+
+  For example, the Japanese inputting process is divided into 2 steps.  First
+  we pre-input Hira-gana, second Kana-Kanji conversion.  There are so many
+  Kanji characters (6349 Kanji characters are defined in JIS X 0208) and the
+  number of Hira-gana characters are 76.  So, first, we pre-input text as
+  pronounced in Hira-gana, second, we convert Hira-gana to Kanji or Kata-Kana,
+  if needed.  There are some Kana-Kanji conversion server: jserver
+  (distributed with Wnn, see below) and canna. Canna can be found at:
+  ftp://ftp.nec.co.jp/pub/Canna/
+
+There is a good input system: Wnn4.2.  Wnn 4.2 contains,
+    xwnmo (|multilingualized| |IM-server|)
+    jserver (Japanese Kana-Kanji conversion server)
+    cserver (Chinese PinYin or ZhuYin to simplified HanZi conversion server)
+    tserver (Chinese PinYin or ZhuYin to traditional HanZi conversion server)
+    kserver (Hangul-Hanja conversion server)
+Wnn 4.2 can be found at:
+    ftp://ftp.FreeBSD.ORG/pub/FreeBSD/ports/distfiles/Wnn4.2.tar.gz
+
+
+- Input Style
+							*xim-input-style*
+  When inputting CJK, there needs four areas.
+
+      1. The area to perform display of input in the midst
+      2. The area to display input mode.
+      3. The area to display the next candidate for the selection.
+      4. The area to display other tools.
+
+  The third area is needed when converting.  For example, in Japanese
+  inputting, multiple Kanji characters could have the same pronunciation, so
+  a sequence of Hira-gana characters could map to a distinct sequence of Kanji
+  characters.
+
+  The first and second areas are defined in international input of X with the
+  names of "Preedit Area", "Status Area" respectively.  The third and fourth
+  areas are not defined and are left to be managed by the |IM-server|.  In the
+  international input, four input styles have been defined using combinations
+  of Preedit Area and Status Area: |OnTheSpot|, |OffTheSpot|, |OverTheSpot|
+  and |Root|.
+
+  Currently, GUI Vim support three style, |OverTheSpot|, |OffTheSpot| and
+  |Root|.
+
+*.  on-the-spot						*OnTheSpot*
+    Preedit Area and Status Area are performed by the client application in
+    the area of application.  The client application is directed by the
+    |IM-server| to display all pre-edit data at the location of text
+    insertion. The client registers callbacks invoked by the input method
+    during pre-editing.
+*.  over-the-spot					*OverTheSpot*
+    Status Area is created in a fixed position within the area of application,
+    in case of Vim, the position is the additional status line.  Preedit Area
+    is made at present input position of application.  The input method
+    displays pre-edit data in a window which it brings up directly over the
+    text insertion position.
+*.  off-the-spot					*OffTheSpot*
+    Preedit Area and Status Area are performed in the area of application, in
+    case of Vim, the area is additional status line.  The client application
+    provides display windows for the pre-edit data to the input method which
+    displays into them directly.
+*.  root-window						*Root*
+    Preedit Area and Status Area are performed outside of the area of
+    application.  The input method displays all pre-edit data in a separate
+    area of the screen in a window specific to the input method.
+
+
+LOCALIZATION, INTERNATIONALIZATION AND MULTILINGUALIZATION
+
+					*localized* *Localization* *L10N*
+Localization (L10N)		To fit a system or an application with a
+				specific language.
+			    *internationalized* *Internationalization* *I18N*
+Internationalization (I18N)	To enable a system or an application to fit
+				with a specific language according to the
+				|locale|.
+			    *multilingualized* *Multilingualization* *M17N*
+Multilingualization (M17N)	To enable a system or an application to be
+				able to use multiple languages at the same
+				time.
+For example, JVim (Japanized version Vim 3.0) is a |localized| application for
+Japanese.  Cxterm (|localized| xterm for Chinese), kterm (|localized| xterm
+for Japanese) and hanterm (|localized| xterm for Korean) is also a |localized|
+application.  Gnome is an |internationalized| application.  It can be
+|localized| for many languages according to the |locale|.  Mule (Multilingual
+Enhancement for GNU Emacs) is a |multilingualized| application.  It can handle
+multiple |charset|s and can maintain a mixture of languages in a single
+buffer.
+
+Vim is an |internationalized| application.  So, you can change the language
+specifying the |locale| and some options at start time.
+
+==============================================================================
+2. Compiling						*multibyte-compiling*
+
+-.  Before you start to compile Vim, be sure that your system has the language
+    |locale| of your choice.  You might need to add "-DX_LOCALE" to CFLAGS.
+
+-.  Compiling Vim:
+>	./configure --with-x --enable-multibyte --enable-fontset --enable-xim
+>	make
+
+-.  You can use multi-byte in the Vim GUI, which fully supports the
+    |+multi_byte| feature.  If you only use console Vim, low-level multibyte
+    input/output depends on your console.  For example, if you run Vim in an
+    xterm, you should use a |localized| xterm or an xterm which support |XIM|.
+    |localized| xterms are kterm (Kanji term) or hanterm (for Korean) for
+    example.  Known |XIM| supporting xterms are Eterm (Enlightened terminal)
+    and rxvt.
+
+==============================================================================
+3. Display						*multibyte-display*
+
+Note that Display and Input are independent.  It is possible to see your
+language even though you have no input method for it.
+
+Multibyte output uses |xfontset| feature.
+
+-.  Be sure that your system has the fonts corresponding to the |CCS|es, which
+    the |locale| needs to manage.  See: |xfontset|.
+
+-.  Following are requirements to use multibyte language.
+
+    If needed, insert the lines below in your $HOME/.Xdefaults file.
+    The GTK+ version of GUI Vim does not use .Xdefaults, thus this change is
+    not needed for the GTK+ version.
+
+    These 3 lines are specific for Vim:
+
+	Vim.font: |base_font_name_list|
+	Vim*fontSet: |base_font_name_list|
+	Vim*fontList: your_language_font:
+
+	Note: Vim.font is for text area.
+	      Vim*fontSet is for menu.
+	      Vim*fontList is for menu (for Motif GUI)
+
+	For example, when you are using Japanese and 14 dots font,
+
+>	Vim.font: -misc-fixed-medium-r-normal--14-*
+>	Vim*fontSet: -misc-fixed-medium-r-normal--14-*
+>	Vim*fontList: -misc-fixed-medium-r-normal--14-*
+>
+	or
+
+>	Vim.font: k14,r14
+>	Vim.fontSet: k14,r14
+>	Vim.fontList: k14
+
+    You should set the 'guifontset' option to display a multi-byte language.
+    Example:
+
+	:set guifontset=|base_font_name_list|
+
+	For example, when you are using Japanese and 14 dots font,
+
+>	set guifontset=-misc-fixed-medium-r-normal--14-*
+
+	or
+
+>	set guifontset=k14,r14
+
+	Note: You can not use IM unless you specify 'guifontset'.
+	      Therefore, Latin users, you have to also use 'guifontset'
+	      if you use IM.
+
+    You should not set 'guifont'. If it is set, Vim ignores 'guifontset'.
+    It means Vim runs without fontset support, you can see only English. The
+    multi-byte characters are displayed corrupted.
+
+    After the |+xfontset| feature is enabled as explained above, Vim does not
+    allow using 'font'.  For example, if you use:
+>      :set guifontset=eng_font,your_font
+    in your .gvimrc, then you should use for highlighting:
+>      :hi Comment font=another_eng_font,another_your_font
+    If you would do
+>      :hi Comment font=another_eng_font
+    VIM will also try to use it as a fontset. So, if it cannot display your
+    |locale| dependent codeset, you will see a error message.
+
+-.  In your .vimrc, add this
+>	set fileencoding=korea
+    You can change "korea" to the some other name such as japan, taiwan.
+    See |'fileencoding'| for the supported encodings.
+
+-.  If a file's charset is different from your |locale|'s charset, you need to
+    convert the charset.  See |charset-conversion|.
+
+==============================================================================
+4. Input (XIM, X Input Method support)			*multibyte-input*
+
+Note that Display and Input are independent.  It is possible to see your
+language even though you have no input method for it.  But when your Display
+method doesn't match your Input method, the text will be displayed wrong.
+
+-.  To input your language you should run the |IM-server| which supports your
+    language and |conversion-server| if needed.  Multibyte input uses |XIM|
+    feature.
+
+    Next 3 lines are common for all X applications which uses |XIM|.
+    If you already use |XIM|, don't care.
+
+>	*international: True
+>	*.inputMethod: your_input_server_name
+>	*.preeditType: your_input_style
+
+	Note: input_server_name is your |IM-server| name (check your
+	      |IM-server| manual).
+	      your_input_style is one of |OverTheSpot|, |OffTheSpot|, |Root|.
+	      See also |xim-input-style|.
+	      *international may not necessary if you use X11R6.
+	      *.inputMethod and *.preeditType is a optional if you use X11R6.
+
+	For example, when you are using kinput2 as |IM-server|,
+
+>	*international: True
+>	*.inputMethod: kinput2
+>	*.preeditType: OverTheSpot
+
+    When using |OverTheSpot|, GUI Vim always connects to the IM Server even in
+    Normal mode, so you can input your language with commands like "f" and
+    "r".  But when using one of the other two methods, GUI Vim connects to the
+    IM Server only if it is not in Normal mode.
+
+    If your IM Server does not support |OverTheSpot|, and if you want to use
+    your language with some Normal mode command like "f" or "r", then you
+    should use a |localized| xterm  or an xterm which supports |XIM|
+
+-.  If needed, you can set the XMODIFIERS env. var.
+
+	sh:  export XMODIFIERS="@im=input_server_name"
+	csh: setenv XMODIFIERS "@im=input_server_name"
+
+	For example, when you are using kinput2 as |IM-server| and sh,
+
+>	export XMODIFIERS="@im=kinput2"
+
+
+Contributions specifically for the multi-byte features by:
+	Chi-Deok Hwang <hwang@mizi.co.kr>
+	Sung-Hyun Nam <namsh@lgic.co.kr>
+	K.Nagano <nagano@atese.advantest.co.jp>
+	Taro Muraoka  <koron@tka.att.ne.jp>
+	Yasuhiro Matsumoto <mattn@mail.goo.ne.jp>
+
+==============================================================================
+5. UTF-8 in XFree86 xterm				*UTF8-xterm*
+
+This is a short explanation of how to use UTF-8 character encoding in the
+xterm that comes with XFree86 by Thomas Dickey (text by Markus Kuhn).
+
+NOTE: Editing and viewing UTF-8 text in Vim does not work as expected yet!
+
+Get the latest xterm version which has now UTF-8 support:
+
+	http://www.clark.net/pub/dickey/xterm/xterm.tar.gz
+
+Compile it with "./configure --enable-wide-chars ; make"
+
+Also get the ISO 10646-1 version of the 6x13 font, which is available on
+
+	http://www.cl.cam.ac.uk/~mgk25/download/ucs-fonts.tar.gz
+
+and install the font as described in the README file.
+
+Now start xterm with
+
+>  xterm -u8 -fn -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1
+
+and you will have a working UTF-8 terminal emulator. Try both
+
+>  cat utf-8-demo.txt
+>  vim utf-8-demo.txt
+
+with the demo text that comes with ucs-fonts.tar.gz in order to see
+whether there are any problems with UTF-8 in your xterm.

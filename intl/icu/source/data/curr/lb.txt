@@ -357,7 +357,7 @@ lb{
         }
         GBP{
             "£",
-            "Britescht Pond Sterling",
+            "Britescht Pond",
         }
         GEK{
             "GEK",
@@ -1470,8 +1470,8 @@ lb{
             other{"Franséisch Frang"}
         }
         GBP{
-            one{"Britescht Pond Sterling"}
-            other{"Britesch Pond Sterling"}
+            one{"Britescht Pond"}
+            other{"Britesch Pond"}
         }
         GEK{
             one{"Georgesche Kupon Larit"}
@@ -2226,5 +2226,5 @@ lb{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

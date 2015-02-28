@@ -1,0 +1,348 @@
+
+/* -*- Mode: Text -*-
+
+# Automated Options copyright 1992-2002 Bruce Korb
+
+# Automated Options is free software.
+# You may redistribute it and/or modify it under the terms of the
+# GNU General Public License, as published by the Free Software
+# Foundation; either version 2, or (at your option) any later version.
+
+# Automated Options is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with Automated Options.  See the file "COPYING".  If not,
+# write to:  The Free Software Foundation, Inc.,
+#            59 Temple Place - Suite 330,
+#            Boston,  MA  02111-1307, USA.
+
+# As a special exception, Bruce Korb gives permission for additional
+# uses of the text contained in his release of AutoOpts.
+
+# The exception is that, if you link the AutoOpts library with other
+# files to produce an executable, this does not by itself cause the
+# resulting executable to be covered by the GNU General Public License.
+# Your use of that executable is in no way restricted on account of
+# linking the AutoOpts library code into it.
+
+# This exception does not however invalidate any other reasons why
+# the executable file might be covered by the GNU General Public License.
+
+# This exception applies only to the code released by Bruce Korb under
+# the name AutoOpts.  If you copy code from other sources under the
+# General Public License into a copy of AutoOpts, as the General Public
+# License permits, the exception does not apply to the code that you add
+# in this way.  To avoid misleading anyone as to the status of such
+# modified files, you must delete this exception notice from them.
+
+# If you write modifications of your own for AutoOpts, it is your choice
+# whether to permit this exception to apply to your modifications.
+# If you do not wish that, delete this exception notice.
+
+ */
+
+#ifndef HAVE_STD_OPT_DOC
+#define HAVE_STD_OPT_DOC 1
+flag = {
+    name        = autoopts_std_options;
+    documentation;
+    descrip =
+'The following options are commonly used and are provided and supported
+by AutoOpts:';
+};
+#endif
+
+#ifdef  ALL_STD_OPTS
+#define DEBUG
+#define VERBOSE
+#define WARN
+#define BRIEF
+#define QUIET
+#define SILENT
+#define DRY_RUN
+#define OUTPUT
+#define INPUT
+#define DIRECTORY
+#define INTERACTIVE
+#endif
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Levels of user entertainment
+ *
+ *  DEBUG output
+ */
+#ifdef  DEBUG_FLAG
+#define DEBUG
+#endif
+
+#ifdef DEBUG
+flag = {
+    name    = DEBUG;
+#ifdef DEBUG_FLAG
+    value   = D;
+#endif
+#ifdef DEBUG_LEVEL
+    arg_type = number;
+#endif
+    descrip = 'run program with debugging info';
+    doc =
+    "Specifying this option will cause the program to display debugging\n"
+    "information.  The information should be helpful to a developer in\n"
+    "debugging this program.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  VERBOSE output
+ */
+#ifdef  VERBOSE_FLAG
+#define VERBOSE 1
+#endif
+
+#ifdef VERBOSE
+flag = {
+    name    = verbose;
+#ifdef VERBOSE_FLAG
+    value   = V;
+#endif
+#ifdef VERBOSE_LEVEL
+    arg_type = number;
+#endif
+#ifdef VERBOSE_ENUM
+    arg-type = keyword;
+    keyword  = silent, quiet, brief, informative, verbose;
+    arg-default = brief;
+#endif
+    descrip = 'run program with progress info';
+    doc =
+    "Specifying this option will cause the program to display lots of\n"
+    "progress information.  You will be able to see that the program\n"
+    "is working and it may help you debug your use of the tool.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  WARNING output
+ */
+#ifdef WARN_LEVEL
+#define WARN
+#endif
+#ifdef  WARN_FLAG
+#define WARN
+#endif
+
+#ifdef WARN
+flag = {
+    name    = warn;
+#ifdef WARN_FLAG
+    value   = w;
+#endif
+#ifdef WARN_LEVEL
+    arg_type = number;
+    descrip  = 'specify a warning-level threshhold';
+    disable  = no;
+    doc =
+    "Specifying this option will allow you to specify the warning level\n"
+    "for the messages you want to see.  `--no-warn' will disable\n"
+    "warnings entirely.";
+#else
+    descrip  = 'disable warning output';
+    doc =
+    "Specifying this option will cause the program to disable\n"
+    "warning messages.";
+#endif
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  BRIEF output
+ */
+#ifdef  BRIEF_FLAG
+#define BRIEF
+#endif
+
+#ifdef BRIEF
+flag = {
+    name    = brief;
+#ifdef BRIEF_FLAG
+    value   = b;
+#endif
+    descrip = 'run with minimal info output';
+    doc =
+    "Specifying this option will cause the program to disable most progress\n"
+    "information.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  QUIET/SILENT output
+ */
+#ifdef  QUIET_FLAG
+#define QUIET
+#endif
+#ifdef  SILENT_FLAG
+#define SILENT
+#endif
+
+#ifdef QUIET_SILENT
+#define QUIET
+#define SILENT
+#else
+
+#ifdef QUIET
+#ifdef SILENT
+#define QUIET_SILENT
+#endif
+#endif
+#endif
+
+#ifdef QUIET
+flag = {
+    name    = quiet;
+#ifdef QUIET_FLAG
+    value   = q;
+#endif
+#ifdef QUIET_SILENT
+    equivalence = quiet;
+#endif
+#ifdef QUIET_LEVEL
+    arg_type = number;
+#endif
+    descrip = 'run without unnecessary output';
+    doc =
+    "Specifying this option will cause the program to disable progress\n"
+    "information.";
+};
+#endif
+
+#ifdef SILENT
+flag = {
+    name    = silent;
+#ifdef SILENT_FLAG
+    value   = s;
+#endif
+#ifdef QUIET_SILENT
+    equivalence = quiet;
+#endif
+#ifdef SILENT_LEVEL
+    arg_type = number;
+#endif
+    descrip = 'run without unnecessary output';
+    doc =
+    "Specifying this option will cause the program to disable progress\n"
+    "information.";
+};
+#endif
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ *  Operational mode
+ *
+ *  DRY_RUN
+ */
+#ifdef  DRY_RUN_FLAG
+#define DRY_RUN
+#endif
+
+#ifdef DRY_RUN
+flag = {
+    name    = DRY_RUN;
+#ifdef DRY_RUN_FLAG
+    value   = d;
+#endif
+    descrip = 'program will make no changes';
+    doc =
+    "Specifying this option will cause the program to run without\n"
+    "altering any of the normal output files.  Instead, it will\n"
+    "display what it would otherwise have done.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  INTERACTIVE OPERATION
+ */
+#ifdef INTERACTIVE_FLAG
+#define INTERACTIVE
+#endif
+
+#ifdef INTERACTIVE
+flag = {
+    name      = interactive;
+    arg_type  = string;
+#ifdef INTERACTIVE_FLAG
+    value     = I;        /* flag style option character */
+#endif
+    descrip   = "prompt for confirmation";
+    doc =
+    "Specifying this option will cause the program to query you for\n"
+    "confirmation before doing anything destructive.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  INPUT/OUTPUT files
+ */
+#ifdef INPUT_FLAG
+#define INPUT
+#endif
+
+#ifdef INPUT
+flag = {
+    name      = input;
+    arg_type  = string;
+#ifdef INPUT_FLAG
+    value     = i;        /* flag style option character */
+#endif
+    descrip   = "redirect input from file";
+    doc =
+    "This option specifies the file to use for program input.";
+};
+#endif
+
+#ifdef OUTPUT_FLAG
+#define OUTPUT
+#endif
+
+#ifdef OUTPUT
+flag = {
+    name      = output;
+    arg_type  = string;
+#ifdef OUTPUT_FLAG
+    value     = o;        /* flag style option character */
+#endif
+    descrip   = "redirect output to file";
+    doc =
+    "This option specifies the file to use for program output.";
+};
+#endif
+
+/* * * * * * * *
+ *
+ *  INPUT/OUTPUT directory
+ */
+#ifdef DIRECTORY_FLAG
+#define DIRECTORY
+#endif
+
+#ifdef DIRECTORY
+flag = {
+    name      = directory;
+    arg_type  = string;
+#ifdef DIRECTORY_FLAG
+    value     = d;        /* flag style option character */
+#endif
+    descrip   = "use specified dir for I/O";
+    doc =
+    "This option specifies the directory to use for program input and output.";
+};
+#endif

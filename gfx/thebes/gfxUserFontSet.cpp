@@ -14,6 +14,7 @@
 #include "nsIPrincipal.h"
 #include "nsIZipReader.h"
 #include "gfxFontConstants.h"
+#include "mozilla/Preferences.h"
 #include "mozilla/Services.h"
 #include "mozilla/gfx/2D.h"
 #include "gfxPlatformFontList.h"
@@ -106,8 +107,6 @@ private:
     off_t        mOff;
 };
 
-// TODO: support for unicode ranges not yet implemented
-
 gfxUserFontEntry::gfxUserFontEntry(gfxUserFontSet* aFontSet,
              const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
              uint32_t aWeight,
@@ -135,6 +134,11 @@ gfxUserFontEntry::gfxUserFontEntry(gfxUserFontSet* aFontSet,
     mItalic = (aItalicStyle & (NS_FONT_STYLE_ITALIC | NS_FONT_STYLE_OBLIQUE)) != 0;
     mFeatureSettings.AppendElements(aFeatureSettings);
     mLanguageOverride = aLanguageOverride;
+
+    if (aUnicodeRanges &&
+        Preferences::GetBool("layout.css.unicode-range.enabled")) {
+        mCharacterMap = new gfxCharacterMap(*aUnicodeRanges);
+    }
 }
 
 gfxUserFontEntry::~gfxUserFontEntry()
@@ -159,9 +163,9 @@ gfxUserFontEntry::Matches(const nsTArray<gfxFontFaceSrc>& aFontFaceSrcList,
            mItalic == isItalic &&
            mFeatureSettings == aFeatureSettings &&
            mLanguageOverride == aLanguageOverride &&
-           mSrcList == aFontFaceSrcList;
-           // XXX once we support unicode-range (bug 475891),
-           // we'll need to compare that here as well
+           mSrcList == aFontFaceSrcList &&
+           ((!aUnicodeRanges && !mCharacterMap) ||
+            (aUnicodeRanges && mCharacterMap && mCharacterMap->Equals(aUnicodeRanges)));
 }
 
 gfxFont*
@@ -413,7 +417,7 @@ gfxUserFontEntry::LoadNextSrc()
                                                             mItalic);
             mFontSet->SetLocalRulesUsed();
             if (fe) {
-                LOG(("fontset (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
+                LOG(("userfonts (%p) [src %d] loaded local: (%s) for (%s) gen: %8.8x\n",
                      mFontSet, mSrcIndex,
                      NS_ConvertUTF16toUTF8(currSrc.mLocalName).get(),
                      NS_ConvertUTF16toUTF8(mFamilyName).get(),
@@ -430,7 +434,7 @@ gfxUserFontEntry::LoadNextSrc()
                 SetLoadState(STATUS_LOADED);
                 return;
             } else {
-                LOG(("fontset (%p) [src %d] failed local: (%s) for (%s)\n",
+                LOG(("userfonts (%p) [src %d] failed local: (%s) for (%s)\n",
                      mFontSet, mSrcIndex,
                      NS_ConvertUTF16toUTF8(currSrc.mLocalName).get(),
                      NS_ConvertUTF16toUTF8(mFamilyName).get()));
@@ -647,7 +651,7 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
             nsAutoCString fontURI;
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
             LOG(("userfonts (%p) [src %d] loaded uri: (%s) for (%s) gen: %8.8x\n",
-                 this, mSrcIndex, fontURI.get(),
+                 mFontSet, mSrcIndex, fontURI.get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get(),
                  uint32_t(mFontSet->mGeneration)));
         }
@@ -662,7 +666,7 @@ gfxUserFontEntry::LoadPlatformFont(const uint8_t* aFontData, uint32_t& aLength)
             mSrcList[mSrcIndex].mURI->GetSpec(fontURI);
             LOG(("userfonts (%p) [src %d] failed uri: (%s) for (%s)"
                  " error making platform font\n",
-                 this, mSrcIndex, fontURI.get(),
+                 mFontSet, mSrcIndex, fontURI.get(),
                  NS_ConvertUTF16toUTF8(mFamilyName).get()));
         }
 #endif
@@ -868,37 +872,20 @@ gfxUserFontSet::AddUserFontEntry(const nsAString& aFamilyName,
 }
 
 gfxUserFontEntry*
-gfxUserFontSet::FindUserFontEntry(gfxFontFamily* aFamily,
-                                  const gfxFontStyle& aFontStyle,
-                                  bool& aNeedsBold)
-{
-    gfxUserFontFamily* family = static_cast<gfxUserFontFamily*>(aFamily);
-    gfxFontEntry* fe = family->FindFontForStyle(aFontStyle, aNeedsBold);
-
-    NS_ASSERTION(!fe || fe->mIsUserFontContainer,
-                 "should only have userfont entries in userfont families");
-
-    if (!fe || !fe->mIsUserFontContainer) {
-        return nullptr;
-    }
-
-    gfxUserFontEntry* userFontEntry = static_cast<gfxUserFontEntry*> (fe);
-    return userFontEntry;
-}
-
-gfxUserFontEntry*
 gfxUserFontSet::FindUserFontEntryAndLoad(gfxFontFamily* aFamily,
                                          const gfxFontStyle& aFontStyle,
                                          bool& aNeedsBold,
                                          bool& aWaitForUserFont)
 {
     aWaitForUserFont = false;
-    gfxUserFontEntry* userFontEntry =
-        FindUserFontEntry(aFamily, aFontStyle, aNeedsBold);
-
-    if (!userFontEntry) {
+    gfxFontEntry* fe = aFamily->FindFontForStyle(aFontStyle, aNeedsBold);
+    NS_ASSERTION(!fe || fe->mIsUserFontContainer,
+                 "should only have userfont entries in userfont families");
+    if (!fe) {
         return nullptr;
     }
+
+    gfxUserFontEntry* userFontEntry = static_cast<gfxUserFontEntry*>(fe);
 
     // start the load if it hasn't been loaded
     userFontEntry->Load();

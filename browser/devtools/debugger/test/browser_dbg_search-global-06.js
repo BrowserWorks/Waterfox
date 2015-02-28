@@ -8,13 +8,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources, gSearchView, gSearchBox;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -32,7 +31,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 }
 
@@ -50,12 +49,12 @@ function doSearch() {
     // Some operations are synchronously dispatched on the main thread,
     // to avoid blocking UI, thus giving the impression of faster searching.
     executeSoon(() => {
-      info("Current source url:\n" + gSources.selectedValue);
+      info("Current source url:\n" + getSelectedSourceURL(gSources));
       info("Debugger editor text:\n" + gEditor.getText());
 
-      ok(isCaretPos(gPanel, 1),
+      ok(isCaretPos(gPanel, 6),
         "The editor shouldn't have jumped to a matching line yet.");
-      ok(gSources.selectedValue.contains("-02.js"),
+      ok(getSelectedSourceURL(gSources).contains("-02.js"),
         "The current source shouldn't have changed after a global search.");
       is(gSources.visibleItems.length, 2,
         "Not all the sources are shown after the global search.");
@@ -79,7 +78,7 @@ function testFocusLost() {
 
   gDebugger.DebuggerView.editor.focus();
 
-  info("Current source url:\n" + gSources.selectedValue);
+  info("Current source url:\n" + getSelectedSourceURL(gSources));
   info("Debugger editor text:\n" + gEditor.getText());
 
   is(gSearchView.itemCount, 0,
@@ -111,7 +110,6 @@ function testEscape() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

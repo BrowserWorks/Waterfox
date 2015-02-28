@@ -9,6 +9,7 @@
 #include "mozilla/net/ChannelEventQueue.h"
 #include "WyciwygChannelChild.h"
 #include "mozilla/dom/TabChild.h"
+#include "mozilla/dom/ContentChild.h"
 
 #include "nsCharsetSource.h"
 #include "nsStringStream.h"
@@ -22,6 +23,7 @@
 #include "nsProxyRelease.h"
 
 using namespace mozilla::ipc;
+using namespace mozilla::dom;
 
 namespace mozilla {
 namespace net {
@@ -91,25 +93,31 @@ WyciwygChannelChild::Init(nsIURI* uri)
   SerializeURI(uri, serializedUri);
 
   // propagate loadInfo
-  mozilla::ipc::PrincipalInfo principalInfo;
+  mozilla::ipc::PrincipalInfo requestingPrincipalInfo;
+  mozilla::ipc::PrincipalInfo triggeringPrincipalInfo;
   uint32_t securityFlags;
   uint32_t policyType;
   if (mLoadInfo) {
     mozilla::ipc::PrincipalToPrincipalInfo(mLoadInfo->LoadingPrincipal(),
-                                           &principalInfo);
+                                           &requestingPrincipalInfo);
+    mozilla::ipc::PrincipalToPrincipalInfo(mLoadInfo->TriggeringPrincipal(),
+                                           &triggeringPrincipalInfo);
     securityFlags = mLoadInfo->GetSecurityFlags();
     policyType = mLoadInfo->GetContentPolicyType();
   }
   else {
     // use default values if no loadInfo is provided
     mozilla::ipc::PrincipalToPrincipalInfo(nsContentUtils::GetSystemPrincipal(),
-                                           &principalInfo);
+                                           &requestingPrincipalInfo);
+    mozilla::ipc::PrincipalToPrincipalInfo(nsContentUtils::GetSystemPrincipal(),
+                                           &triggeringPrincipalInfo);
     securityFlags = nsILoadInfo::SEC_NORMAL;
     policyType = nsIContentPolicy::TYPE_OTHER;
   }
 
   SendInit(serializedUri,
-           principalInfo,
+           requestingPrincipalInfo,
+           triggeringPrincipalInfo,
            securityFlags,
            policyType);
   return NS_OK;
@@ -673,7 +681,11 @@ WyciwygChannelChild::WriteToCacheEntry(const nsAString & aData)
 
   if (!mSentAppData) {
     mozilla::dom::TabChild* tabChild = GetTabChild(this);
-    SendAppData(IPC::SerializedLoadContext(this), tabChild);
+
+    PBrowserOrId browser = static_cast<ContentChild*>(Manager()->Manager())
+                           ->GetBrowserOrId(tabChild);
+
+    SendAppData(IPC::SerializedLoadContext(this), browser);
     mSentAppData = true;
   }
 

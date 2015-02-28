@@ -283,6 +283,16 @@ MInstruction::stealResumePoint(MInstruction *ins)
     resumePoint_->replaceInstruction(this);
 }
 
+void
+MInstruction::moveResumePointAsEntry()
+{
+    MOZ_ASSERT(isNop());
+    block()->clearEntryResumePoint();
+    block()->setEntryResumePoint(resumePoint_);
+    resumePoint_->resetInstruction();
+    resumePoint_ = nullptr;
+}
+
 static bool
 MaybeEmulatesUndefined(MDefinition *op)
 {
@@ -543,6 +553,22 @@ MDefinition::justReplaceAllUsesWith(MDefinition *dom)
     dom->uses_.takeElements(uses_);
 }
 
+void
+MDefinition::optimizeOutAllUses(TempAllocator &alloc)
+{
+    for (MUseIterator i(usesBegin()), e(usesEnd()); i != e;) {
+        MUse *use = *i++;
+        MConstant *constant = use->consumer()->block()->optimizedOutConstant(alloc);
+
+        // Update the resume point operand to use the optimized-out constant.
+        use->setProducerUnchecked(constant);
+        constant->addUseUnchecked(use);
+    }
+
+    // Remove dangling pointers.
+    this->uses_.clear();
+}
+
 bool
 MDefinition::emptyResultTypeSet() const
 {
@@ -801,6 +827,14 @@ MSimdSplatX4::foldsTo(TempAllocator &alloc)
     }
 
     return MSimdConstant::New(alloc, cst, type());
+}
+
+MDefinition *
+MSimdSwizzle::foldsTo(TempAllocator &alloc)
+{
+    if (lanesMatch(0, 1, 2, 3))
+        return input();
+    return this;
 }
 
 MCloneLiteral *
@@ -1821,6 +1855,41 @@ MMinMax::trySpecializeFloat32(TempAllocator &alloc)
 
     specialization_ = MIRType_Float32;
     setResultType(MIRType_Float32);
+}
+
+MDefinition *
+MMinMax::foldsTo(TempAllocator &alloc)
+{
+    if (!lhs()->isConstant() && !rhs()->isConstant())
+        return this;
+
+    MDefinition *operand = lhs()->isConstant() ? rhs() : lhs();
+    MConstant *constant = lhs()->isConstant() ? lhs()->toConstant() : rhs()->toConstant();
+
+    if (operand->isToDouble() && operand->getOperand(0)->type() == MIRType_Int32) {
+        const js::Value &val = constant->value();
+
+        // min(int32, cte >= INT32_MAX) = int32
+        if (val.isDouble() && val.toDouble() >= INT32_MAX && !isMax()) {
+            MLimitedTruncate *limit =
+                MLimitedTruncate::New(alloc, operand->getOperand(0), MDefinition::NoTruncate);
+            block()->insertBefore(this, limit);
+            MToDouble *toDouble = MToDouble::New(alloc, limit);
+            block()->insertBefore(this, toDouble);
+            return toDouble;
+        }
+
+        // max(int32, cte <= INT32_MIN) = int32
+        if (val.isDouble() && val.toDouble() <= INT32_MIN && isMax()) {
+            MLimitedTruncate *limit =
+                MLimitedTruncate::New(alloc, operand->getOperand(0), MDefinition::NoTruncate);
+            block()->insertBefore(this, limit);
+            MToDouble *toDouble = MToDouble::New(alloc, limit);
+            block()->insertBefore(this, toDouble);
+            return toDouble;
+        }
+    }
+    return this;
 }
 
 bool
@@ -2969,13 +3038,94 @@ MCompare::tryFold(bool *result)
 }
 
 bool
-MCompare::evaluateConstantOperands(bool *result)
+MCompare::evaluateConstantOperands(TempAllocator &alloc, bool *result)
 {
     if (type() != MIRType_Boolean && type() != MIRType_Int32)
         return false;
 
     MDefinition *left = getOperand(0);
     MDefinition *right = getOperand(1);
+
+    if (compareType() == Compare_Double) {
+        // Optimize "MCompare MConstant (MToDouble SomethingInInt32Range).
+        // In most cases the MToDouble was added, because the constant is
+        // a double.
+        // e.g. v < 9007199254740991, where v is an int32 is always true.
+        if (!lhs()->isConstant() && !rhs()->isConstant())
+            return false;
+
+        MDefinition *operand = left->isConstant() ? right : left;
+        MConstant *constant = left->isConstant() ? left->toConstant() : right->toConstant();
+        MOZ_ASSERT(constant->value().isDouble());
+        double cte = constant->value().toDouble();
+
+        if (operand->isToDouble() && operand->getOperand(0)->type() == MIRType_Int32) {
+            bool replaced = false;
+            switch (jsop_) {
+              case JSOP_LT:
+                if (cte > INT32_MAX || cte < INT32_MIN) {
+                    *result = !((constant == lhs()) ^ (cte < INT32_MIN));
+                    replaced = true;
+                }
+                break;
+              case JSOP_LE:
+                if (constant == lhs()) {
+                    if (cte > INT32_MAX || cte <= INT32_MIN) {
+                        *result = (cte <= INT32_MIN);
+                        replaced = true;
+                    }
+                } else {
+                    if (cte >= INT32_MAX || cte < INT32_MIN) {
+                        *result = (cte >= INT32_MIN);
+                        replaced = true;
+                    }
+                }
+                break;
+              case JSOP_GT:
+                if (cte > INT32_MAX || cte < INT32_MIN) {
+                    *result = !((constant == rhs()) ^ (cte < INT32_MIN));
+                    replaced = true;
+                }
+                break;
+              case JSOP_GE:
+                if (constant == lhs()) {
+                    if (cte >= INT32_MAX || cte < INT32_MIN) {
+                        *result = (cte >= INT32_MAX);
+                        replaced = true;
+                    }
+                } else {
+                    if (cte > INT32_MAX || cte <= INT32_MIN) {
+                        *result = (cte <= INT32_MIN);
+                        replaced = true;
+                    }
+                }
+                break;
+              case JSOP_STRICTEQ: // Fall through.
+              case JSOP_EQ:
+                if (cte > INT32_MAX || cte < INT32_MIN) {
+                    *result = false;
+                    replaced = true;
+                }
+                break;
+              case JSOP_STRICTNE: // Fall through.
+              case JSOP_NE:
+                if (cte > INT32_MAX || cte < INT32_MIN) {
+                    *result = true;
+                    replaced = true;
+                }
+                break;
+              default:
+                MOZ_CRASH("Unexpected op.");
+            }
+            if (replaced) {
+                MLimitedTruncate *limit =
+                    MLimitedTruncate::New(alloc, operand->getOperand(0), MDefinition::NoTruncate);
+                limit->setGuardUnchecked();
+                block()->insertBefore(this, limit);
+                return true;
+            }
+        }
+    }
 
     if (!left->isConstant() || !right->isConstant())
         return false;
@@ -3085,7 +3235,7 @@ MCompare::foldsTo(TempAllocator &alloc)
 {
     bool result;
 
-    if (tryFold(&result) || evaluateConstantOperands(&result)) {
+    if (tryFold(&result) || evaluateConstantOperands(alloc, &result)) {
         if (type() == MIRType_Int32)
             return MConstant::New(alloc, Int32Value(result));
 
@@ -4125,9 +4275,29 @@ jit::AddObjectsForPropertyRead(MDefinition *obj, PropertyName *name,
 }
 
 static bool
+PropertyTypeIncludes(TempAllocator &alloc, types::HeapTypeSetKey property,
+                     MDefinition *value, MIRType implicitType)
+{
+    // If implicitType is not MIRType_None, it is an additional type which the
+    // property implicitly includes. In this case, make a new type set which
+    // explicitly contains the type.
+    types::TypeSet *types = property.maybeTypes();
+    if (implicitType != MIRType_None) {
+        types::Type newType = types::Type::PrimitiveType(ValueTypeFromMIRType(implicitType));
+        if (types)
+            types = types->clone(alloc.lifoAlloc());
+        else
+            types = alloc.lifoAlloc()->new_<types::TemporaryTypeSet>();
+        types->addType(newType, alloc.lifoAlloc());
+    }
+
+    return TypeSetIncludes(types, value->type(), value->resultTypeSet());
+}
+
+static bool
 TryAddTypeBarrierForWrite(TempAllocator &alloc, types::CompilerConstraintList *constraints,
                           MBasicBlock *current, types::TemporaryTypeSet *objTypes,
-                          PropertyName *name, MDefinition **pvalue)
+                          PropertyName *name, MDefinition **pvalue, MIRType implicitType)
 {
     // Return whether pvalue was modified to include a type barrier ensuring
     // that writing the value to objTypes/id will not require changing type
@@ -4151,7 +4321,7 @@ TryAddTypeBarrierForWrite(TempAllocator &alloc, types::CompilerConstraintList *c
         if (!property.maybeTypes() || property.couldBeConstant(constraints))
             return false;
 
-        if (TypeSetIncludes(property.maybeTypes(), (*pvalue)->type(), (*pvalue)->resultTypeSet()))
+        if (PropertyTypeIncludes(alloc, property, *pvalue, implicitType))
             return false;
 
         // This freeze is not required for correctness, but ensures that we
@@ -4234,18 +4404,20 @@ AddTypeGuard(TempAllocator &alloc, MBasicBlock *current, MDefinition *obj,
 
 // Whether value can be written to property without changing type information.
 bool
-jit::CanWriteProperty(types::CompilerConstraintList *constraints,
-                      types::HeapTypeSetKey property, MDefinition *value)
+jit::CanWriteProperty(TempAllocator &alloc, types::CompilerConstraintList *constraints,
+                      types::HeapTypeSetKey property, MDefinition *value,
+                      MIRType implicitType /* = MIRType_None */)
 {
     if (property.couldBeConstant(constraints))
         return false;
-    return TypeSetIncludes(property.maybeTypes(), value->type(), value->resultTypeSet());
+    return PropertyTypeIncludes(alloc, property, value, implicitType);
 }
 
 bool
 jit::PropertyWriteNeedsTypeBarrier(TempAllocator &alloc, types::CompilerConstraintList *constraints,
                                    MBasicBlock *current, MDefinition **pobj,
-                                   PropertyName *name, MDefinition **pvalue, bool canModify)
+                                   PropertyName *name, MDefinition **pvalue,
+                                   bool canModify, MIRType implicitType)
 {
     // If any value being written is not reflected in the type information for
     // objects which obj could represent, a type barrier is needed when writing
@@ -4275,14 +4447,15 @@ jit::PropertyWriteNeedsTypeBarrier(TempAllocator &alloc, types::CompilerConstrai
 
         jsid id = name ? NameToId(name) : JSID_VOID;
         types::HeapTypeSetKey property = object->property(id);
-        if (!CanWriteProperty(constraints, property, *pvalue)) {
+        if (!CanWriteProperty(alloc, constraints, property, *pvalue, implicitType)) {
             // Either pobj or pvalue needs to be modified to filter out the
             // types which the value could have but are not in the property,
             // or a VM call is required. A VM call is always required if pobj
             // and pvalue cannot be modified.
             if (!canModify)
                 return true;
-            success = TryAddTypeBarrierForWrite(alloc, constraints, current, types, name, pvalue);
+            success = TryAddTypeBarrierForWrite(alloc, constraints, current, types, name, pvalue,
+                                                implicitType);
             break;
         }
     }
@@ -4307,7 +4480,7 @@ jit::PropertyWriteNeedsTypeBarrier(TempAllocator &alloc, types::CompilerConstrai
 
         jsid id = name ? NameToId(name) : JSID_VOID;
         types::HeapTypeSetKey property = object->property(id);
-        if (CanWriteProperty(constraints, property, *pvalue))
+        if (CanWriteProperty(alloc, constraints, property, *pvalue, implicitType))
             continue;
 
         if ((property.maybeTypes() && !property.maybeTypes()->empty()) || excluded)

@@ -1,0 +1,101 @@
+# acheaders -- autoscan's mapping from headers to Autoconf macros
+# Copyright 1992, 1993, 1994, 1996, 1999, 2000, 2001
+# Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# FIXME: The case of AC_HEADER_STDC + AC_CHECK_HEADERS headers is
+# unclear to me --akim.
+
+# Ones that have their own macros.
+X11/Xlib.h	AC_PATH_X
+alloca.h        AC_FUNC_ALLOCA
+dirent.h	AC_HEADER_DIRENT
+float.h		AC_HEADER_STDC
+float.h		AC_CHECK_HEADERS
+ndir.h		AC_HEADER_DIRENT
+stdarg.h	AC_HEADER_STDC
+stddef.h	AC_HEADER_STDC
+stddef.h	AC_CHECK_HEADERS
+stdlib.h	AC_HEADER_STDC
+stdlib.h	AC_CHECK_HEADERS
+string.h	AC_HEADER_STDC
+string.h	AC_CHECK_HEADERS
+sys/dir.h	AC_HEADER_DIRENT
+sys/mkdev.h	AC_HEADER_MAJOR
+sys/ndir.h	AC_HEADER_DIRENT
+sys/wait.h	AC_HEADER_SYS_WAIT
+
+# Others, checked with AC_CHECK_HEADERS.
+OS.h
+argz.h
+arpa/inet.h
+# errno.h is portable.
+fcntl.h
+fenv.h
+fs_info.h
+inttypes.h
+langinfo.h
+libintl.h
+limits.h
+locale.h
+mach/mach.h
+malloc.h
+memory.h
+mntent.h
+mnttab.h
+netdb.h
+netinet/in.h
+nl_types.h
+nlist.h
+paths.h
+sgtty.h
+shadow.h
+stdint.h
+stdio_ext.h
+strings.h
+sys/acl.h
+sys/file.h
+sys/filsys.h
+sys/fs/s5param.h
+sys/fs_types.h
+sys/fstyp.h
+sys/ioctl.h
+sys/mntent.h
+sys/mount.h
+sys/param.h
+sys/socket.h
+sys/statfs.h
+sys/statvfs.h
+sys/systeminfo.h
+sys/time.h
+sys/timeb.h
+sys/vfs.h
+sys/window.h
+syslog.h
+termio.h
+termios.h
+unistd.h
+utime.h
+utmp.h
+utmpx.h
+values.h
+wchar.h
+wctype.h
+
+# Local Variables:
+# mode: shell-script
+# End:

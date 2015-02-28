@@ -377,6 +377,11 @@ public:
     , _41(a41), _42(a42), _43(a43), _44(a44)
   {}
 
+  Matrix4x4(const Matrix4x4& aOther)
+  {
+    memcpy(this, &aOther, sizeof(*this));
+  }
+
   Float _11, _12, _13, _14;
   Float _21, _22, _23, _24;
   Float _31, _32, _33, _34;
@@ -541,6 +546,11 @@ public:
                        aX,   aY,   aZ, 1.0f);
   }
 
+  static Matrix4x4 Translation(const Point3D& aP)
+  {
+    return Translation(aP.x, aP.y, aP.z);
+  }
+
   /**
    * Apply a translation to this matrix.
    *
@@ -560,7 +570,7 @@ public:
    * this method would be preferred since it only involves 12 floating-point
    * multiplications.)
    */
-  Matrix4x4 &Translate(Float aX, Float aY, Float aZ)
+  Matrix4x4 &PreTranslate(Float aX, Float aY, Float aZ)
   {
     _41 += aX * _11 + aY * _21 + aZ * _31;
     _42 += aX * _12 + aY * _22 + aZ * _32;
@@ -568,6 +578,10 @@ public:
     _44 += aX * _14 + aY * _24 + aZ * _34;
 
     return *this;
+  }
+
+  Matrix4x4 &PreTranslate(const Point3D& aPoint) {
+    return PreTranslate(aPoint.x, aPoint.y, aPoint.z);
   }
 
   /**
@@ -600,6 +614,10 @@ public:
     return *this;
   }
 
+  Matrix4x4 &PostTranslate(const Point3D& aPoint) {
+    return PostTranslate(aPoint.x, aPoint.y, aPoint.z);
+  }
+
   static Matrix4x4 Scaling(Float aScaleX, Float aScaleY, float aScaleZ)
   {
     return Matrix4x4(aScaleX, 0.0f, 0.0f, 0.0f,
@@ -611,7 +629,7 @@ public:
   /**
    * Similar to PreTranslate, but applies a scale instead of a translation.
    */
-  Matrix4x4 &Scale(Float aX, Float aY, Float aZ)
+  Matrix4x4 &PreScale(Float aX, Float aY, Float aZ)
   {
     _11 *= aX;
     _12 *= aX;
@@ -665,10 +683,23 @@ public:
   Matrix4x4 &ChangeBasis(Float aX, Float aY, Float aZ)
   {
     // Translate to the origin before applying this matrix
-    Translate(-aX, -aY, -aZ);
+    PreTranslate(-aX, -aY, -aZ);
 
     // Translate back into position after applying this matrix
     PostTranslate(aX, aY, aZ);
+
+    return *this;
+  }
+
+  Matrix4x4& Transpose() {
+    std::swap(_12, _21);
+    std::swap(_13, _31);
+    std::swap(_14, _41);
+
+    std::swap(_23, _32);
+    std::swap(_24, _42);
+
+    std::swap(_34, _43);
 
     return *this;
   }
@@ -777,42 +808,6 @@ public:
               (*this)[i][j] /= (*this)[3][3];
          }
       }
-  }
-
-  void ScalePost(Float aX, Float aY, Float aZ)
-  {
-    _11 *= aX;
-    _21 *= aX;
-    _31 *= aX;
-    _41 *= aX;
-
-    _12 *= aY;
-    _22 *= aY;
-    _32 *= aY;
-    _42 *= aY;
-
-    _13 *= aZ;
-    _23 *= aZ;
-    _33 *= aZ;
-    _43 *= aZ;
-  }
-
-  void TranslatePost(Float aX, Float aY, Float aZ)
-  {
-      _11 += _14 * aX;
-      _21 += _24 * aX;
-      _31 += _34 * aX;
-      _41 += _44 * aX;
-
-      _12 += _14 * aY;
-      _22 += _24 * aY;
-      _32 += _34 * aY;
-      _42 += _44 * aY;
-
-      _13 += _14 * aZ;
-      _23 += _24 * aZ;
-      _33 += _34 * aZ;
-      _43 += _44 * aZ;
   }
 
   bool FuzzyEqual(const Matrix4x4& o) const

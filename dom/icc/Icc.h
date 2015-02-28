@@ -6,7 +6,6 @@
 #define mozilla_dom_Icc_h
 
 #include "mozilla/dom/MozIccBinding.h" // For IccCardState
-#include "mozilla/dom/UnionTypes.h"
 #include "mozilla/DOMEventTargetHelper.h"
 
 class nsIIccInfo;
@@ -16,6 +15,7 @@ namespace mozilla {
 namespace dom {
 
 class DOMRequest;
+class OwningMozIccInfoOrMozGsmIccInfoOrMozCdmaIccInfo;
 
 class Icc MOZ_FINAL : public DOMEventTargetHelper
 {
@@ -98,16 +98,6 @@ public:
   UpdateContact(const JSContext* aCx, const nsAString& aContactType,
                 JS::Handle<JS::Value> aContact, const nsAString& aPin2,
                 ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
-  IccOpenChannel(const nsAString& aAid, ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
-  IccExchangeAPDU(const JSContext* aCx, int32_t aChannel,
-                  JS::Handle<JS::Value> aApdu, ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
-  IccCloseChannel(int32_t aChannel, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
   MatchMvno(const nsAString& aMvnoType, const nsAString& aMatchData,

@@ -441,7 +441,8 @@ void TimeUnitTest::test10219Plurals() {
             }
             UnicodeString actual;
             Formattable fmt;
-            LocalPointer<TimeUnitAmount> tamt(new TimeUnitAmount(values[j], TimeUnit::UTIMEUNIT_MINUTE, status));
+            LocalPointer<TimeUnitAmount> tamt(
+                new TimeUnitAmount(values[j], TimeUnit::UTIMEUNIT_MINUTE, status), status);
             if (U_FAILURE(status)) {
                 dataerrln("generating TimeUnitAmount Object failed: %s", u_errorName(status));
                 return;

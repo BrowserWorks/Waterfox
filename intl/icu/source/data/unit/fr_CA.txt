@@ -8,6 +8,11 @@
 // ***************************************************************************
 fr_CA{
     Version{"2.1.8.19"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         acceleration{
             g-force{

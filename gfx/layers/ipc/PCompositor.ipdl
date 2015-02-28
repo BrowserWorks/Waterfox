@@ -73,6 +73,7 @@ parent:
   sync Resume();
 
   async NotifyChildCreated(uint64_t id);
+  async AdoptChild(uint64_t id);
 
   // Make a snapshot of the content that would have been drawn to our
   // render target at the time this message is received.  If the size
@@ -86,6 +87,10 @@ parent:
   // Make sure any pending composites are started immediately and
   // block until they are completed.
   sync FlushRendering();
+
+  // Get the size of the tiles. This number should not change at runtime.
+  sync GetTileSize()
+    returns (int32_t tileWidth, int32_t tileHeight);
 
   sync StartFrameTimeRecording(int32_t bufferSize)
     returns (uint32_t startIndex);

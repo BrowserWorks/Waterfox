@@ -34,6 +34,8 @@
 #include "nsProxyRelease.h"
 #include "nsPIDOMWindow.h"
 #include "nsPerformance.h"
+#include "nsINetworkInterceptController.h"
+#include "mozIThirdPartyUtil.h"
 
 #include <algorithm>
 
@@ -55,7 +57,7 @@ HttpBaseChannel::HttpBaseChannel()
   , mResponseHeadersModified(false)
   , mAllowPipelining(true)
   , mAllowSTS(true)
-  , mForceAllowThirdPartyCookie(false)
+  , mThirdPartyFlags(0)
   , mUploadStreamHasHeaders(false)
   , mInheritApplicationCache(true)
   , mChooseApplicationCache(false)
@@ -69,16 +71,24 @@ HttpBaseChannel::HttpBaseChannel()
   , mResponseTimeoutEnabled(true)
   , mAllRedirectsSameOrigin(true)
   , mAllRedirectsPassTimingAllowCheck(true)
+  , mForceNoIntercept(false)
   , mSuspendCount(0)
   , mProxyResolveFlags(0)
   , mContentDispositionHint(UINT32_MAX)
   , mHttpHandler(gHttpHandler)
+  , mReferrerPolicy(REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE)
   , mRedirectCount(0)
   , mForcePending(false)
 {
   LOG(("Creating HttpBaseChannel @%x\n", this));
 
-  // Subfields of unions cannot be targeted in an initializer list
+  // Subfields of unions cannot be targeted in an initializer list.
+#ifdef MOZ_VALGRIND
+  // Zero the entire unions so that Valgrind doesn't complain when we send them
+  // to another process.
+  memset(&mSelfAddr, 0, sizeof(NetAddr));
+  memset(&mPeerAddr, 0, sizeof(NetAddr));
+#endif
   mSelfAddr.raw.family = PR_AF_UNSPEC;
   mPeerAddr.raw.family = PR_AF_UNSPEC;
 }
@@ -617,6 +627,15 @@ HttpBaseChannel::SetApplyConversion(bool value)
   return NS_OK;
 }
 
+nsresult
+HttpBaseChannel::DoApplyContentConversions(nsIStreamListener* aNextListener,
+                                           nsIStreamListener** aNewNextListener)
+{
+  return DoApplyContentConversions(aNextListener,
+                                   aNewNextListener,
+                                   mListenerContext);
+}
+
 NS_IMETHODIMP
 HttpBaseChannel::DoApplyContentConversions(nsIStreamListener* aNextListener,
                                            nsIStreamListener** aNewNextListener,
@@ -637,10 +656,7 @@ HttpBaseChannel::DoApplyContentConversions(nsIStreamListener* aNextListener,
   }
 
   nsAutoCString contentEncoding;
-  char *cePtr, *val;
-  nsresult rv;
-
-  rv = mResponseHead->GetHeader(nsHttp::Content_Encoding, contentEncoding);
+  nsresult rv = mResponseHead->GetHeader(nsHttp::Content_Encoding, contentEncoding);
   if (NS_FAILED(rv) || contentEncoding.IsEmpty())
     return NS_OK;
 
@@ -650,9 +666,9 @@ HttpBaseChannel::DoApplyContentConversions(nsIStreamListener* aNextListener,
   // being a stack with the last converter created being the first one
   // to accept the raw network data.
 
-  cePtr = contentEncoding.BeginWriting();
+  char* cePtr = contentEncoding.BeginWriting();
   uint32_t count = 0;
-  while ((val = nsCRT::strtok(cePtr, HTTP_LWS ",", &cePtr))) {
+  while (char* val = nsCRT::strtok(cePtr, HTTP_LWS ",", &cePtr)) {
     if (++count > 16) {
       // That's ridiculous. We only understand 2 different ones :)
       // but for compatibility with old code, we will just carry on without
@@ -890,14 +906,37 @@ HttpBaseChannel::GetReferrer(nsIURI **referrer)
 NS_IMETHODIMP
 HttpBaseChannel::SetReferrer(nsIURI *referrer)
 {
+  return SetReferrerWithPolicy(referrer, REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE);
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::GetReferrerPolicy(uint32_t *referrerPolicy)
+{
+  NS_ENSURE_ARG_POINTER(referrerPolicy);
+  *referrerPolicy = mReferrerPolicy;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetReferrerWithPolicy(nsIURI *referrer,
+                                       uint32_t referrerPolicy)
+{
   ENSURE_CALLED_BEFORE_CONNECT();
 
   // clear existing referrer, if any
   mReferrer = nullptr;
   mRequestHead.ClearHeader(nsHttp::Referer);
+  mReferrerPolicy = REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE;
 
-  if (!referrer)
-      return NS_OK;
+  if (!referrer) {
+    return NS_OK;
+  }
+
+  // Don't send referrer at all when the meta referrer setting is "no-referrer"
+  if (referrerPolicy == REFERRER_POLICY_NO_REFERRER) {
+    mReferrerPolicy = REFERRER_POLICY_NO_REFERRER;
+    return NS_OK;
+  }
 
   // 0: never send referer
   // 1: send referer for direct user action
@@ -920,12 +959,14 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
 
   // check referrer blocking pref
   uint32_t referrerLevel;
-  if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI)
+  if (mLoadFlags & LOAD_INITIAL_DOCUMENT_URI) {
     referrerLevel = 1; // user action
-  else
+  } else {
     referrerLevel = 2; // inline content
-  if (userReferrerLevel < referrerLevel)
+  }
+  if (userReferrerLevel < referrerLevel) {
     return NS_OK;
+  }
 
   nsCOMPtr<nsIURI> referrerGrip;
   nsresult rv;
@@ -983,8 +1024,7 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
     rv = referrer->SchemeIs(*scheme, &match);
     if (NS_FAILED(rv)) return rv;
   }
-  if (!match)
-    return NS_OK; // kick out....
+  if (!match) return NS_OK; // kick out....
 
   //
   // Handle secure referrals.
@@ -994,26 +1034,50 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
   //
   rv = referrer->SchemeIs("https", &match);
   if (NS_FAILED(rv)) return rv;
+
   if (match) {
     rv = mURI->SchemeIs("https", &match);
     if (NS_FAILED(rv)) return rv;
-    if (!match)
-      return NS_OK;
 
-    if (!gHttpHandler->SendSecureXSiteReferrer()) {
-      nsAutoCString referrerHost;
-      nsAutoCString host;
+    // It's ok to send referrer for https-to-http scenarios if the referrer
+    // policy is "unsafe-url" or "origin".
+    if (referrerPolicy != REFERRER_POLICY_UNSAFE_URL &&
+        referrerPolicy != REFERRER_POLICY_ORIGIN) {
 
-      rv = referrer->GetAsciiHost(referrerHost);
-      if (NS_FAILED(rv)) return rv;
+      // in other referrer policies, https->http is not allowed...
+      if (!match) return NS_OK;
 
-      rv = mURI->GetAsciiHost(host);
-      if (NS_FAILED(rv)) return rv;
+      // ...and https->https is possibly only allowed if the hosts match.
+      if (!gHttpHandler->SendSecureXSiteReferrer()) {
+        nsAutoCString referrerHost;
+        nsAutoCString host;
 
-      // GetAsciiHost returns lowercase hostname.
-      if (!referrerHost.Equals(host))
-        return NS_OK;
+        rv = referrer->GetAsciiHost(referrerHost);
+        if (NS_FAILED(rv)) return rv;
+
+        rv = mURI->GetAsciiHost(host);
+        if (NS_FAILED(rv)) return rv;
+
+        // GetAsciiHost returns lowercase hostname.
+        if (!referrerHost.Equals(host))
+          return NS_OK;
+      }
     }
+  }
+
+  // for cross-origin-based referrer changes (not just host-based), figure out
+  // if the referrer is being sent cross-origin.
+  nsCOMPtr<nsIURI> loadingURI;
+  bool isCrossOrigin = true;
+  if (mLoadInfo) {
+    mLoadInfo->LoadingPrincipal()->GetURI(getter_AddRefs(loadingURI));
+  }
+  if (loadingURI) {
+    nsIScriptSecurityManager* ssm = nsContentUtils::GetSecurityManager();
+    rv = ssm->CheckSameOriginURI(loadingURI, mURI, false);
+    isCrossOrigin = NS_FAILED(rv);
+  } else {
+    NS_WARNING("no loading principal available via loadInfo, assumming load is cross-origin");
   }
 
   nsCOMPtr<nsIURI> clone;
@@ -1023,6 +1087,7 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
   //  (2) keep a reference to it after returning from this function
   //
   // Use CloneIgnoringRef to strip away any fragment per RFC 2616 section 14.36
+  // and Referrer Policy section 6.3.5.
   rv = referrer->CloneIgnoringRef(getter_AddRefs(clone));
   if (NS_FAILED(rv)) return rv;
 
@@ -1068,10 +1133,21 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
   }
 
   // strip away any userpass; we don't want to be giving out passwords ;-)
+  // This is required by Referrer Policy stripping algorithm.
   rv = clone->SetUserPass(EmptyCString());
   if (NS_FAILED(rv)) return rv;
 
   nsAutoCString spec;
+
+  // site-specified referrer trimming may affect the trim level
+  // "unsafe-url" behaves like "origin" (send referrer in the same situations) but
+  // "unsafe-url" sends the whole referrer and origin removes the path.
+  // "origin-when-cross-origin" trims the referrer only when the request is
+  // cross-origin.
+  if (referrerPolicy == REFERRER_POLICY_ORIGIN ||
+      (isCrossOrigin && referrerPolicy == REFERRER_POLICY_ORIGIN_WHEN_XORIGIN)) {
+    userReferrerTrimmingPolicy = 2;
+  }
 
   // check how much referer to send
   switch (userReferrerTrimmingPolicy) {
@@ -1108,8 +1184,11 @@ HttpBaseChannel::SetReferrer(nsIURI *referrer)
   }
 
   // finally, remember the referrer URI and set the Referer header.
+  rv = SetRequestHeader(NS_LITERAL_CSTRING("Referer"), spec, false);
+  if (NS_FAILED(rv)) return rv;
+
   mReferrer = clone;
-  mRequestHead.SetHeader(nsHttp::Referer, spec);
+  mReferrerPolicy = referrerPolicy;
   return NS_OK;
 }
 
@@ -1324,6 +1403,36 @@ HttpBaseChannel::RedirectTo(nsIURI *newURI)
 //-----------------------------------------------------------------------------
 
 NS_IMETHODIMP
+HttpBaseChannel::GetTopWindowURI(nsIURI **aTopWindowURI)
+{
+  nsresult rv = NS_OK;
+  nsCOMPtr<mozIThirdPartyUtil> util;
+  // Only compute the top window URI once. In e10s, this must be computed in the
+  // child. The parent gets the top window URI through HttpChannelOpenArgs.
+  if (!mTopWindowURI) {
+    util = do_GetService(THIRDPARTYUTIL_CONTRACTID);
+    if (!util) {
+      return NS_ERROR_NOT_AVAILABLE;
+    }
+    nsCOMPtr<nsIDOMWindow> win;
+    nsresult rv = util->GetTopWindowForChannel(this, getter_AddRefs(win));
+    if (NS_SUCCEEDED(rv)) {
+      rv = util->GetURIFromWindow(win, getter_AddRefs(mTopWindowURI));
+#if DEBUG
+      if (mTopWindowURI) {
+        nsCString spec;
+        rv = mTopWindowURI->GetSpec(spec);
+        LOG(("HttpChannelBase::Setting topwindow URI spec %s [this=%p]\n",
+             spec.get(), this));
+      }
+#endif
+    }
+  }
+  NS_IF_ADDREF(*aTopWindowURI = mTopWindowURI);
+  return rv;
+}
+
+NS_IMETHODIMP
 HttpBaseChannel::GetDocumentURI(nsIURI **aDocumentURI)
 {
   NS_ENSURE_ARG_POINTER(aDocumentURI);
@@ -1421,9 +1530,25 @@ HttpBaseChannel::SetCookie(const char *aCookieHeader)
 }
 
 NS_IMETHODIMP
+HttpBaseChannel::GetThirdPartyFlags(uint32_t  *aFlags)
+{
+  *aFlags = mThirdPartyFlags;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+HttpBaseChannel::SetThirdPartyFlags(uint32_t aFlags)
+{
+  ENSURE_CALLED_BEFORE_ASYNC_OPEN();
+
+  mThirdPartyFlags = aFlags;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 HttpBaseChannel::GetForceAllowThirdPartyCookie(bool *aForce)
 {
-  *aForce = mForceAllowThirdPartyCookie;
+  *aForce = !!(mThirdPartyFlags & nsIHttpChannelInternal::THIRD_PARTY_FORCE_ALLOW);
   return NS_OK;
 }
 
@@ -1432,7 +1557,11 @@ HttpBaseChannel::SetForceAllowThirdPartyCookie(bool aForce)
 {
   ENSURE_CALLED_BEFORE_ASYNC_OPEN();
 
-  mForceAllowThirdPartyCookie = aForce;
+  if (aForce)
+    mThirdPartyFlags |= nsIHttpChannelInternal::THIRD_PARTY_FORCE_ALLOW;
+  else
+    mThirdPartyFlags &= ~nsIHttpChannelInternal::THIRD_PARTY_FORCE_ALLOW;
+
   return NS_OK;
 }
 
@@ -1664,6 +1793,12 @@ HttpBaseChannel::GetLastModifiedTime(PRTime* lastModifiedTime)
   return NS_OK;
 }
 
+NS_IMETHODIMP
+HttpBaseChannel::ForceNoIntercept()
+{
+  mForceNoIntercept = true;
+  return NS_OK;
+}
 
 //-----------------------------------------------------------------------------
 // HttpBaseChannel::nsISupportsPriority
@@ -1765,6 +1900,19 @@ HttpBaseChannel::GetPrincipal(bool requireAppId)
   }
 
   return mPrincipal;
+}
+
+bool
+HttpBaseChannel::ShouldIntercept()
+{
+  nsCOMPtr<nsINetworkInterceptController> controller;
+  GetCallback(controller);
+  bool shouldIntercept = false;
+  if (controller && !mForceNoIntercept) {
+    nsresult rv = controller->ShouldPrepareForIntercept(mURI, &shouldIntercept);
+    NS_ENSURE_SUCCESS(rv, false);
+  }
+  return shouldIntercept;
 }
 
 // nsIRedirectHistory
@@ -1993,7 +2141,7 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
   }
   // convey the referrer if one was used for this channel to the next one
   if (mReferrer)
-    httpChannel->SetReferrer(mReferrer);
+    httpChannel->SetReferrerWithPolicy(mReferrer, mReferrerPolicy);
   // convey the mAllowPipelining and mAllowSTS flags
   httpChannel->SetAllowPipelining(mAllowPipelining);
   httpChannel->SetAllowSTS(mAllowSTS);
@@ -2013,9 +2161,8 @@ HttpBaseChannel::SetupReplacementChannel(nsIURI       *newURI,
 
   nsCOMPtr<nsIHttpChannelInternal> httpInternal = do_QueryInterface(newChannel);
   if (httpInternal) {
-    // convey the mForceAllowThirdPartyCookie flag
-    httpInternal->SetForceAllowThirdPartyCookie(mForceAllowThirdPartyCookie);
-    // convey the spdy flag
+    // Convey third party cookie and spdy flags.
+    httpInternal->SetThirdPartyFlags(mThirdPartyFlags);
     httpInternal->SetAllowSpdy(mAllowSpdy);
 
     // update the DocumentURI indicator since we are being redirected.

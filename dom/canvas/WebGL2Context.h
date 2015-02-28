@@ -33,7 +33,7 @@ public:
     // -------------------------------------------------------------------------
     // IMPLEMENT nsWrapperCache
 
-    virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+    virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
 
 
     // -------------------------------------------------------------------------
@@ -66,7 +66,11 @@ public:
     void TexStorage2D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height);
     void TexStorage3D(GLenum target, GLsizei levels, GLenum internalformat, GLsizei width, GLsizei height,
                       GLsizei depth);
-
+    void TexImage3D(GLenum target, GLint level, GLenum internalformat,
+                    GLsizei width, GLsizei height, GLsizei depth,
+                    GLint border, GLenum format, GLenum type,
+                    const Nullable<dom::ArrayBufferView> &pixels,
+                    ErrorResult& rv);
     void TexSubImage3D(GLenum target, GLint level,
                        GLint xoffset, GLint yoffset, GLint zoffset,
                        GLsizei width, GLsizei height, GLsizei depth,
@@ -160,16 +164,18 @@ public:
 
     bool ValidateClearBuffer(const char* info, GLenum buffer, GLint drawbuffer, size_t elemCount);
 
+
     // -------------------------------------------------------------------------
     // Query Objects - WebGL2ContextQueries.cpp
-    // TODO(djg): Implemented in WebGLContext
-    /* already_AddRefed<WebGLQuery> CreateQuery();
+
+    already_AddRefed<WebGLQuery> CreateQuery();
     void DeleteQuery(WebGLQuery* query);
     bool IsQuery(WebGLQuery* query);
     void BeginQuery(GLenum target, WebGLQuery* query);
     void EndQuery(GLenum target);
-    JS::Value GetQuery(JSContext*, GLenum target, GLenum pname); */
+    already_AddRefed<WebGLQuery> GetQuery(GLenum target, GLenum pname);
     void GetQueryParameter(JSContext*, WebGLQuery* query, GLenum pname, JS::MutableHandleValue retval);
+
 
     // -------------------------------------------------------------------------
     // Sampler Objects - WebGL2ContextSamplers.cpp
@@ -200,6 +206,7 @@ public:
 
     // -------------------------------------------------------------------------
     // Transform Feedback - WebGL2ContextTransformFeedback.cpp
+
     already_AddRefed<WebGLTransformFeedback> CreateTransformFeedback();
     void DeleteTransformFeedback(WebGLTransformFeedback* tf);
     bool IsTransformFeedback(WebGLTransformFeedback* tf);
@@ -241,14 +248,13 @@ public:
 */
 
 private:
-
     WebGL2Context();
 
     bool ValidateSizedInternalFormat(GLenum internalFormat, const char* info);
     bool ValidateTexStorage(GLenum target, GLsizei levels, GLenum internalformat,
                                 GLsizei width, GLsizei height, GLsizei depth,
                                 const char* info);
-
+    JS::Value GetTexParameterInternal(const TexTarget& target, GLenum pname) MOZ_OVERRIDE;
 };
 
 } // namespace mozilla

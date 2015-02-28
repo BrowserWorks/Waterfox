@@ -1,3 +1,5 @@
+/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set sw=2 sts=2 ts=8 et tw=80 : */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -14,7 +16,9 @@
 #include "nsIDocument.h"
 #include "nsIDOMDocument.h"
 #include "nsIDOMWindow.h"
+#include "nsIHttpChannelInternal.h"
 #include "nsIIOService.h"
+#include "nsIParentChannel.h"
 #include "nsIPermissionManager.h"
 #include "nsIProtocolHandler.h"
 #include "nsIScriptError.h"
@@ -23,6 +27,7 @@
 #include "nsISecurityEventSink.h"
 #include "nsIWebProgressListener.h"
 #include "nsPIDOMWindow.h"
+#include "nsXULAppAPI.h"
 
 #include "mozilla/Preferences.h"
 
@@ -56,6 +61,9 @@ nsresult
 nsChannelClassifier::ShouldEnableTrackingProtection(nsIChannel *aChannel,
                                                     bool *result)
 {
+    // Should only be called in the parent process.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+
     NS_ENSURE_ARG(result);
     *result = false;
 
@@ -76,20 +84,24 @@ nsChannelClassifier::ShouldEnableTrackingProtection(nsIChannel *aChannel,
         return NS_OK;
     }
 
-    nsCOMPtr<nsIDOMWindow> win;
-    rv = thirdPartyUtil->GetTopWindowForChannel(aChannel, getter_AddRefs(win));
-    NS_ENSURE_SUCCESS(rv, rv);
-
-    nsCOMPtr<nsIURI> uri;
-    rv = thirdPartyUtil->GetURIFromWindow(win, getter_AddRefs(uri));
-    NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIIOService> ios = do_GetService(NS_IOSERVICE_CONTRACTID, &rv);
     NS_ENSURE_SUCCESS(rv, rv);
 
+    nsCOMPtr<nsIHttpChannelInternal> chan = do_QueryInterface(aChannel, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIURI> uri;
+    rv = chan->GetTopWindowURI(getter_AddRefs(uri));
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    if (!uri) {
+      LOG(("nsChannelClassifier[%p]: No window URI\n", this));
+    }
+
     const char ALLOWLIST_EXAMPLE_PREF[] = "channelclassifier.allowlist_example";
     if (!uri && Preferences::GetBool(ALLOWLIST_EXAMPLE_PREF, false)) {
-      LOG(("nsChannelClassifier[%p]: Allowlisting test domain", this));
+      LOG(("nsChannelClassifier[%p]: Allowlisting test domain\n", this));
       rv = ios->NewURI(NS_LITERAL_CSTRING("http://allowlisted.example.com"),
                        nullptr, nullptr, getter_AddRefs(uri));
       NS_ENSURE_SUCCESS(rv, rv);
@@ -141,7 +153,35 @@ nsChannelClassifier::ShouldEnableTrackingProtection(nsIChannel *aChannel,
     }
 
     // Tracking protection will be disabled so update the security state
-    // of the document and fire a secure change event.
+    // of the document and fire a secure change event. If we can't get the
+    // window for the channel, then the shield won't show up so we can't send
+    // an event to the securityUI anyway.
+    return NotifyTrackingProtectionDisabled(aChannel);
+}
+
+// static
+nsresult
+nsChannelClassifier::NotifyTrackingProtectionDisabled(nsIChannel *aChannel)
+{
+    // Can be called in EITHER the parent or child process.
+    nsCOMPtr<nsIParentChannel> parentChannel;
+    NS_QueryNotificationCallbacks(aChannel, parentChannel);
+    if (parentChannel) {
+      // This channel is a parent-process proxy for a child process request.
+      // Tell the child process channel to do this instead.
+      parentChannel->NotifyTrackingProtectionDisabled();
+      return NS_OK;
+    }
+
+    nsresult rv;
+    nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
+        do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIDOMWindow> win;
+    rv = thirdPartyUtil->GetTopWindowForChannel(aChannel, getter_AddRefs(win));
+    NS_ENSURE_SUCCESS(rv, rv);
+
     nsCOMPtr<nsPIDOMWindow> pwin = do_QueryInterface(win, &rv);
     NS_ENSURE_SUCCESS(rv, NS_OK);
     nsCOMPtr<nsIDocShell> docShell = pwin->GetDocShell();
@@ -172,6 +212,9 @@ nsChannelClassifier::ShouldEnableTrackingProtection(nsIChannel *aChannel,
 nsresult
 nsChannelClassifier::Start(nsIChannel *aChannel)
 {
+    // Should only be called in the parent process.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+
     // Don't bother to run the classifier on a load that has already failed.
     // (this might happen after a redirect)
     nsresult status;
@@ -267,6 +310,9 @@ nsChannelClassifier::Start(nsIChannel *aChannel)
 void
 nsChannelClassifier::MarkEntryClassified(nsresult status)
 {
+    // Should only be called in the parent process.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+
     // Don't cache tracking classifications because we support allowlisting.
     if (status == NS_ERROR_TRACKING_URI || mIsAllowListed) {
         return;
@@ -297,6 +343,9 @@ nsChannelClassifier::MarkEntryClassified(nsresult status)
 bool
 nsChannelClassifier::HasBeenClassified(nsIChannel *aChannel)
 {
+    // Should only be called in the parent process.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+
     nsCOMPtr<nsICachingChannel> cachingChannel =
         do_QueryInterface(aChannel);
     if (!cachingChannel) {
@@ -327,16 +376,26 @@ nsChannelClassifier::HasBeenClassified(nsIChannel *aChannel)
     return tag.EqualsLiteral("1");
 }
 
+// static
 nsresult
 nsChannelClassifier::SetBlockedTrackingContent(nsIChannel *channel)
 {
+  // Can be called in EITHER the parent or child process.
+  nsCOMPtr<nsIParentChannel> parentChannel;
+  NS_QueryNotificationCallbacks(channel, parentChannel);
+  if (parentChannel) {
+    // This channel is a parent-process proxy for a child process request. The
+    // actual channel will be notified via the status passed to
+    // nsIRequest::Cancel and do this for us.
+    return NS_OK;
+  }
+
   nsresult rv;
   nsCOMPtr<nsIDOMWindow> win;
   nsCOMPtr<mozIThirdPartyUtil> thirdPartyUtil =
     do_GetService(THIRDPARTYUTIL_CONTRACTID, &rv);
   NS_ENSURE_SUCCESS(rv, NS_OK);
-  rv = thirdPartyUtil->GetTopWindowForChannel(
-    mSuspendedChannel, getter_AddRefs(win));
+  rv = thirdPartyUtil->GetTopWindowForChannel(channel, getter_AddRefs(win));
   NS_ENSURE_SUCCESS(rv, NS_OK);
   nsCOMPtr<nsPIDOMWindow> pwin = do_QueryInterface(win, &rv);
   NS_ENSURE_SUCCESS(rv, NS_OK);
@@ -382,6 +441,9 @@ nsChannelClassifier::SetBlockedTrackingContent(nsIChannel *channel)
 NS_IMETHODIMP
 nsChannelClassifier::OnClassifyComplete(nsresult aErrorCode)
 {
+    // Should only be called in the parent process.
+    MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
+
     if (mSuspendedChannel) {
         MarkEntryClassified(aErrorCode);
 

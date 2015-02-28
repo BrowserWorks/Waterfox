@@ -405,10 +405,9 @@ metaZones:table(nofallback){
             001{"Indian/Chagos"}
         }
         Indochina{
-            001{"Asia/Saigon"}
+            001{"Asia/Bangkok"}
             KH{"Asia/Phnom_Penh"}
             LA{"Asia/Vientiane"}
-            TH{"Asia/Bangkok"}
         }
         Indonesia_Central{
             001{"Asia/Makassar"}
@@ -1621,11 +1620,11 @@ metaZones:table(nofallback){
             {
                 "America_Eastern",
                 "1970-01-01 00:00",
-                "2014-11-02 06:00",
+                "2015-11-01 06:00",
             }
             {
                 "Atlantic",
-                "2014-11-02 06:00",
+                "2015-11-01 06:00",
                 "9999-12-31 23:59",
             }
         }
@@ -2875,13 +2874,6 @@ metaZones:table(nofallback){
         "Asia:Kamchatka"{
             {
                 "Kamchatka",
-                "1970-01-01 00:00",
-                "2010-03-27 14:00",
-            }
-            {
-                "Magadan",
-                "2010-03-27 14:00",
-                "9999-12-31 23:59",
             }
         }
         "Asia:Karachi"{
@@ -3097,6 +3089,8 @@ metaZones:table(nofallback){
         "Asia:Saigon"{
             {
                 "Indochina",
+                "1975-06-12 16:00",
+                "9999-12-31 23:59",
             }
         }
         "Asia:Sakhalin"{
@@ -3739,11 +3733,6 @@ metaZones:table(nofallback){
             {
                 "Samara",
                 "1991-10-20 00:00",
-                "2010-03-27 22:00",
-            }
-            {
-                "Moscow",
-                "2010-03-27 22:00",
                 "9999-12-31 23:59",
             }
         }
@@ -3982,6 +3971,13 @@ metaZones:table(nofallback){
         "Pacific:Auckland"{
             {
                 "New_Zealand",
+            }
+        }
+        "Pacific:Bougainville"{
+            {
+                "Papua_New_Guinea",
+                "1970-01-01 00:00",
+                "2014-12-27 16:00",
             }
         }
         "Pacific:Chatham"{

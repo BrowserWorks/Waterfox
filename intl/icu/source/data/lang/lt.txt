@@ -993,7 +993,7 @@ lt{
         VALENCIA{"Valenciečiai"}
         WADEGILE{"Wade-Giles Romanization"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
     codePatterns{
         language{"Kalba: {0}"}
         script{"Rašmenys: {0}"}

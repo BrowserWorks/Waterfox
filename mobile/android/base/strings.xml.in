@@ -96,6 +96,7 @@
   <string name="share_image_failed">&share_image_failed;</string>
   <string name="save_as_pdf">&save_as_pdf;</string>
   <string name="find_in_page">&find_in_page;</string>
+  <string name="find_matchcase">&find_matchcase;</string>
   <string name="desktop_mode">&desktop_mode;</string>
   <string name="page">&page;</string>
   <string name="tools">&tools;</string>
@@ -181,10 +182,8 @@
   <string name="pref_cookies_not_accept_foreign">&pref_cookies_not_accept_foreign;</string>
   <string name="pref_cookies_disabled">&pref_cookies_disabled;</string>
 
-  <string name="pref_donottrack_menu">&pref_donottrack_menu;</string>
-  <string name="pref_donottrack_disallow_tracking">&pref_donottrack_disallow_tracking;</string>
-  <string name="pref_donottrack_allow_tracking">&pref_donottrack_allow_tracking;</string>
-  <string name="pref_donottrack_no_pref">&pref_donottrack_no_pref;</string>
+  <string name="pref_donottrack_title">&pref_donottrack_title;</string>
+  <string name="pref_donottrack_summary">&pref_donottrack_summary;</string>
 
   <string name="pref_char_encoding">&pref_char_encoding;</string>
   <string name="pref_char_encoding_on">&pref_char_encoding_on;</string>
@@ -207,6 +206,8 @@
   <string name="pref_font_size_set">&pref_font_size_set;</string>
   <string name="pref_font_size_adjust_char">&pref_font_size_adjust_char;</string>
   <string name="pref_font_size_preview_text">&pref_font_size_preview_text;</string>
+  <string name="pref_media_autoplay_enabled">&pref_media_autoplay_enabled;</string>
+  <string name="pref_media_autoplay_enabled_summary">&pref_media_autoplay_enabled_summary;</string>
   <string name="pref_reflow_on_zoom">&pref_reflow_on_zoom4;</string>
   <string name="pref_restore">&pref_restore;</string>
   <string name="pref_restore_always">&pref_restore_always;</string>
@@ -296,8 +297,9 @@
   <string name="site_settings_no_settings">&site_settings_no_settings;</string>
 
   <string name="reading_list_added">&reading_list_added;</string>
-  <string name="reading_list_failed">&reading_list_failed;</string>
   <string name="reading_list_duplicate">&reading_list_duplicate;</string>
+  <string name="reading_list_time_minutes">&reading_list_time_minutes2;</string>
+  <string name="reading_list_time_over_an_hour">&reading_list_time_over_an_hour;</string>
 
   <string name="page_action_dropmarker_description">&page_action_dropmarker_description;</string>
 
@@ -345,6 +347,7 @@
   <string name="button_yes">&button_yes;</string>
   <string name="button_no">&button_no;</string>
 
+  <string name="home_title">&home_title;</string>
   <string name="home_top_sites_title">&home_top_sites_title;</string>
   <string name="home_top_sites_add">&home_top_sites_add;</string>
   <string name="home_history_title">&home_history_title;</string>
@@ -356,6 +359,7 @@
   <string name="home_last_tabs_empty">&home_last_tabs_empty;</string>
   <string name="home_open_all">&home_open_all;</string>
   <string name="home_most_recent_empty">&home_most_recent_empty;</string>
+  <string name="home_most_recent_emptyhint">&home_most_recent_emptyhint2;</string>
   <string name="home_reading_list_empty">&home_reading_list_empty;</string>
   <string name="home_reading_list_hint">&home_reading_list_hint2;</string>
   <string name="home_reading_list_hint_accessible">&home_reading_list_hint_accessible;</string>
@@ -391,7 +395,6 @@
        profile/bookmarks.inc (see bug 964946). Don't expose the URLs to L10N. -->
   <string name="bookmarkdefaults_title_aboutfirefox">@bookmarks_aboutBrowser@</string>
   <string name="bookmarkdefaults_url_aboutfirefox">about:firefox</string>
-  <string name="bookmarkdefaults_favicon_aboutfirefox">chrome/chrome/content/branding/favicon64.png</string>
 
   <!-- Icon is automatically generated from R.drawable.bookmarkdefaults_favicon_addons -->
   <string name="bookmarkdefaults_title_addons">@bookmarks_addons@</string>
@@ -408,9 +411,15 @@
   <!-- Site identity popup -->
   <string name="identity_connected_to">&identity_connected_to;</string>
   <string name="identity_run_by">&identity_run_by;</string>
+  <string name="identity_no_info">&identity_no_info;</string>
+  <string name="identity_not_encrypted">&identity_not_encrypted;</string>
   <string name="loaded_mixed_content_message">&loaded_mixed_content_message;</string>
   <string name="blocked_mixed_content_message_top">&blocked_mixed_content_message_top;</string>
   <string name="blocked_mixed_content_message_bottom">&blocked_mixed_content_message_bottom;</string>
+  <string name="loaded_tracking_content_message_top">&loaded_tracking_content_message_top;</string>
+  <string name="loaded_tracking_content_message_bottom">&loaded_tracking_content_message_bottom;</string>
+  <string name="blocked_tracking_content_message_top">&blocked_tracking_content_message_top2;</string>
+  <string name="blocked_tracking_content_message_bottom">&blocked_tracking_content_message_bottom2;</string>
   <string name="learn_more">&learn_more;</string>
   <string name="enable_protection">&enable_protection;</string>
   <string name="disable_protection">&disable_protection;</string>
@@ -430,8 +439,6 @@
   <string name="webapp_generic_name">&webapp_generic_name;</string>
 
   <string name="searchable_description">&searchable_description;</string>
-
-  <string name="devtools_remote_debugging_forward">&devtools_remote_debugging_forward;</string>
 
   <!-- Updater notifications -->
   <string name="updater_start_title">&updater_start_title2;</string>

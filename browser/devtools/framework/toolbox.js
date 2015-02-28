@@ -53,11 +53,12 @@ loader.lazyGetter(this, "InspectorFront", () => require("devtools/server/actors/
 // (By default, supported target is only local tab)
 const ToolboxButtons = [
   { id: "command-button-pick",
-    isTargetSupported: target => !target.isAddon },
+    isTargetSupported: target =>
+      target.getTrait("highlightable")
+  },
   { id: "command-button-frames",
-    isTargetSupported: target => (
-      !target.isAddon && target.activeTab && target.activeTab.traits.frames
-    )
+    isTargetSupported: target =>
+      ( target.activeTab && target.activeTab.traits.frames )
   },
   { id: "command-button-splitconsole",
     isTargetSupported: target => !target.isAddon },
@@ -116,6 +117,7 @@ function Toolbox(target, selectedTool, hostType, hostOptions) {
   }
   this._defaultToolId = selectedTool;
 
+  this._hostOptions = hostOptions;
   this._host = this._createHost(hostType, hostOptions);
 
   EventEmitter.decorate(this);
@@ -272,7 +274,7 @@ Toolbox.prototype = {
       let domReady = () => {
         this.isReady = true;
 
-        this._listFrames();
+        let framesPromise = this._listFrames();
 
         this.closeButton = this.doc.getElementById("toolbox-close");
         this.closeButton.addEventListener("command", this.destroy, true);
@@ -289,8 +291,12 @@ Toolbox.prototype = {
         this._addKeysToWindow();
         this._addReloadKeys();
         this._addHostListeners();
-        this._addZoomKeys();
-        this._loadInitialZoom();
+        if (this._hostOptions && this._hostOptions.zoom === false) {
+          this._disableZoomKeys();
+        } else {
+          this._addZoomKeys();
+          this._loadInitialZoom();
+        }
 
         this.webconsolePanel = this.doc.querySelector("#toolbox-panel-webconsole");
         this.webconsolePanel.height =
@@ -313,7 +319,8 @@ Toolbox.prototype = {
 
           promise.all([
             splitConsolePromise,
-            buttonsPromise
+            buttonsPromise,
+            framesPromise
           ]).then(() => {
             this.emit("ready");
             deferred.resolve();
@@ -450,6 +457,20 @@ Toolbox.prototype = {
 
     let resetKey = this.doc.getElementById("toolbox-zoom-reset-key");
     resetKey.addEventListener("command", this.zoomReset.bind(this), true);
+  },
+
+  _disableZoomKeys: function() {
+    let inKey = this.doc.getElementById("toolbox-zoom-in-key");
+    inKey.setAttribute("disabled", "true");
+
+    let inKey2 = this.doc.getElementById("toolbox-zoom-in-key2");
+    inKey2.setAttribute("disabled", "true");
+
+    let outKey = this.doc.getElementById("toolbox-zoom-out-key");
+    outKey.setAttribute("disabled", "true");
+
+    let resetKey = this.doc.getElementById("toolbox-zoom-reset-key");
+    resetKey.setAttribute("disabled", "true");
   },
 
   /**
@@ -695,6 +716,13 @@ Toolbox.prototype = {
       if (!button) {
         return false;
       }
+
+      // Disable tilt in E10S mode. Removing it from the list of toolbox buttons
+      // allows a bunch of tests to pass without modification.
+      if (this.target.isMultiProcess && options.id === "command-button-tilt") {
+        return false;
+      }
+
       return {
         id: options.id,
         button: button,
@@ -702,7 +730,7 @@ Toolbox.prototype = {
         visibilityswitch: "devtools." + options.id + ".enabled",
         isTargetSupported: options.isTargetSupported ? options.isTargetSupported
                                                      : target => target.isLocalTab
-      }
+      };
     }).filter(button=>button);
   },
 
@@ -728,6 +756,22 @@ Toolbox.prototype = {
         }
       }
     });
+
+    // Tilt is handled separately because it is disabled in E10S mode. Because
+    // we have removed tilt from toolboxButtons we have to deal with it here.
+    let tiltEnabled = !this.target.isMultiProcess &&
+                      Services.prefs.getBoolPref("devtools.command-button-tilt.enabled");
+    let tiltButton = this.doc.getElementById("command-button-tilt");
+    // Remote toolboxes don't add the button to the DOM at all
+    if (!tiltButton) {
+      return;
+    }
+
+    if (tiltEnabled) {
+      tiltButton.removeAttribute("hidden");
+    } else {
+      tiltButton.setAttribute("hidden", "true");
+    }
   },
 
   /**
@@ -1206,21 +1250,24 @@ Toolbox.prototype = {
       toolName = toolboxStrings("toolbox.defaultTitle");
     }
     let title = toolboxStrings("toolbox.titleTemplate",
-                               toolName, this.target.url || this.target.name);
+                               toolName,
+                               this.target.isAddon ?
+                               this.target.name :
+                               this.target.url || this.target.name);
     this._host.setTitle(title);
   },
 
   _listFrames: function (event) {
-    if (!this._target.form || !this._target.form.actor) {
+    if (!this._target.activeTab || !this._target.activeTab.traits.frames) {
       // We are not targetting a regular TabActor
       // it can be either an addon or browser toolbox actor
-      return;
+      return promise.resolve();
     }
     let packet = {
       to: this._target.form.actor,
       type: "listFrames"
     };
-    this._target.client.request(packet, resp => {
+    return this._target.client.request(packet, resp => {
       this._updateFrames(null, { frames: resp.frames });
     });
   },

@@ -267,12 +267,38 @@ BrowserTabList.prototype._getSelectedBrowser = function(aWindow) {
   return aWindow.gBrowser ? aWindow.gBrowser.selectedBrowser : null;
 };
 
+/**
+ * Produces an iterable (in this case a generator) to enumerate all available
+ * browser tabs.
+ */
+BrowserTabList.prototype._getBrowsers = function*() {
+  // Iterate over all navigator:browser XUL windows.
+  for (let win of allAppShellDOMWindows(DebuggerServer.chromeWindowType)) {
+    // For each tab in this XUL window, ensure that we have an actor for
+    // it, reusing existing actors where possible. We actually iterate
+    // over 'browser' XUL elements, and BrowserTabActor uses
+    // browser.contentWindow as the debuggee global.
+    for (let browser of this._getChildren(win)) {
+      yield browser;
+    }
+  }
+};
+
 BrowserTabList.prototype._getChildren = function(aWindow) {
-  return aWindow.gBrowser.browsers;
+  let children = aWindow.gBrowser ? aWindow.gBrowser.browsers : [];
+  return children ? children : [];
+};
+
+BrowserTabList.prototype._isRemoteBrowser = function(browser) {
+  return browser.getAttribute("remote") == "true";
 };
 
 BrowserTabList.prototype.getList = function() {
   let topXULWindow = Services.wm.getMostRecentWindow(DebuggerServer.chromeWindowType);
+  let selectedBrowser = null;
+  if (topXULWindow) {
+    selectedBrowser = this._getSelectedBrowser(topXULWindow);
+  }
 
   // As a sanity check, make sure all the actors presently in our map get
   // picked up when we iterate over all windows' tabs.
@@ -286,40 +312,25 @@ BrowserTabList.prototype.getList = function() {
 
   let actorPromises = [];
 
-  // Iterate over all navigator:browser XUL windows.
-  for (let win of allAppShellDOMWindows(DebuggerServer.chromeWindowType)) {
-    let selectedBrowser = this._getSelectedBrowser(win);
-    if (!selectedBrowser) {
-      continue;
+  for (let browser of this._getBrowsers()) {
+    // Do we have an existing actor for this browser? If not, create one.
+    let actor = this._actorByBrowser.get(browser);
+    if (actor) {
+      actorPromises.push(actor.update());
+      foundCount++;
+    } else if (this._isRemoteBrowser(browser)) {
+      actor = new RemoteBrowserTabActor(this._connection, browser);
+      this._actorByBrowser.set(browser, actor);
+      actorPromises.push(actor.connect());
+    } else {
+      actor = new BrowserTabActor(this._connection, browser,
+                                  browser.getTabBrowser());
+      this._actorByBrowser.set(browser, actor);
+      actorPromises.push(promise.resolve(actor));
     }
 
-    // For each tab in this XUL window, ensure that we have an actor for
-    // it, reusing existing actors where possible. We actually iterate
-    // over 'browser' XUL elements, and BrowserTabActor uses
-    // browser.contentWindow as the debuggee global.
-    for (let browser of this._getChildren(win)) {
-      // Do we have an existing actor for this browser? If not, create one.
-      let actor = this._actorByBrowser.get(browser);
-      if (actor) {
-        actorPromises.push(promise.resolve(actor));
-        foundCount++;
-      } else if (browser.isRemoteBrowser) {
-        actor = new RemoteBrowserTabActor(this._connection, browser);
-        this._actorByBrowser.set(browser, actor);
-        let promise = actor.connect().then((form) => {
-          actor._form = form;
-          return actor;
-        });
-        actorPromises.push(promise);
-      } else {
-        actor = new BrowserTabActor(this._connection, browser, win.gBrowser);
-        this._actorByBrowser.set(browser, actor);
-        actorPromises.push(promise.resolve(actor));
-      }
-
-      // Set the 'selected' properties on all actors correctly.
-      actor.selected = (win === topXULWindow && browser === selectedBrowser);
-    }
+    // Set the 'selected' properties on all actors correctly.
+    actor.selected = browser === selectedBrowser;
   }
 
   if (this._testing && initialMapSize !== foundCount)
@@ -738,9 +749,18 @@ TabActor.prototype = {
     return null;
   },
 
+  /**
+   * This is called by BrowserTabList.getList for existing tab actors prior to
+   * calling |form| below.  It can be used to do any async work that may be
+   * needed to assemble the form.
+   */
+  update: function() {
+    return promise.resolve(this);
+  },
+
   form: function BTA_form() {
     dbg_assert(!this.exited,
-               "grip() shouldn't be called on exited browser actor.");
+               "form() shouldn't be called on exited browser actor.");
     dbg_assert(this.actorID,
                "tab should have an actorID.");
 
@@ -837,7 +857,7 @@ TabActor.prototype = {
   _appendExtraActors: appendExtraActors,
 
   /**
-   * Does the actual work of attching to a tab.
+   * Does the actual work of attaching to a tab.
    */
   _attach: function BTA_attach() {
     if (this._attached) {
@@ -961,7 +981,7 @@ TabActor.prototype = {
       return {
         id: id,
         url: window.location.href,
-        title: window.title,
+        title: window.document.title,
         parentID: parentID
       };
     });
@@ -1493,7 +1513,7 @@ TabActor.prototype = {
    * is here because the Style Editor and Inspector share style sheet actors.
    *
    * @param DOMStyleSheet styleSheet
-   *        The style sheet to creat an actor for.
+   *        The style sheet to create an actor for.
    * @return StyleSheetActor actor
    *         The actor for this style sheet.
    *
@@ -1508,7 +1528,17 @@ TabActor.prototype = {
     this._tabPool.addActor(actor);
 
     return actor;
-  }
+  },
+
+  removeActorByName: function BTA_removeActor(aName) {
+    if (aName in this._extraActors) {
+      const actor = this._extraActors[aName];
+      if (this._tabActorPool.has(actor)) {
+        this._tabActorPool.removeActor(actor);
+      }
+      delete this._extraActors[aName];
+    }
+  },
 };
 
 /**
@@ -1531,7 +1561,7 @@ exports.TabActor = TabActor;
  * <browser> tab. Most of the implementation comes from TabActor.
  *
  * @param aConnection DebuggerServerConnection
- *        The conection to the client.
+ *        The connection to the client.
  * @param aBrowser browser
  *        The browser instance that contains this tab.
  * @param aTabBrowser tabbrowser
@@ -1562,6 +1592,13 @@ Object.defineProperty(BrowserTabActor.prototype, "docShell", {
 
 Object.defineProperty(BrowserTabActor.prototype, "title", {
   get: function() {
+    // On Fennec, we can check the session store data for zombie tabs
+    if (this._browser.__SS_restore) {
+      let sessionStore = this._browser.__SS_data;
+      // Get the last selected entry
+      let entry = sessionStore.entries[sessionStore.index - 1];
+      return entry.title;
+    }
     let title = this.contentDocument.title || this._browser.contentTitle;
     // If contentTitle is empty (e.g. on a not-yet-restored tab), but there is a
     // tabbrowser (i.e. desktop Firefox, but not Fennec), we can use the label
@@ -1576,6 +1613,24 @@ Object.defineProperty(BrowserTabActor.prototype, "title", {
   },
   enumerable: true,
   configurable: false
+});
+
+Object.defineProperty(BrowserTabActor.prototype, "url", {
+  get: function() {
+    // On Fennec, we can check the session store data for zombie tabs
+    if (this._browser.__SS_restore) {
+      let sessionStore = this._browser.__SS_data;
+      // Get the last selected entry
+      let entry = sessionStore.entries[sessionStore.index - 1];
+      return entry.url;
+    }
+    if (this.webNavigation.currentURI) {
+      return this.webNavigation.currentURI.spec;
+    }
+    return null;
+  },
+  enumerable: true,
+  configurable: true
 });
 
 Object.defineProperty(BrowserTabActor.prototype, "browser", {
@@ -1617,7 +1672,28 @@ function RemoteBrowserTabActor(aConnection, aBrowser)
 
 RemoteBrowserTabActor.prototype = {
   connect: function() {
-    return DebuggerServer.connectToChild(this._conn, this._browser);
+    let connect = DebuggerServer.connectToChild(this._conn, this._browser);
+    return connect.then(form => {
+      this._form = form;
+      return this;
+    });
+  },
+
+  get _mm() {
+    return this._browser.QueryInterface(Ci.nsIFrameLoaderOwner).frameLoader
+           .messageManager;
+  },
+
+  update: function() {
+    let deferred = promise.defer();
+    let onFormUpdate = msg => {
+      this._mm.removeMessageListener("debug:form", onFormUpdate);
+      this._form = msg.json;
+      deferred.resolve(this);
+    };
+    this._mm.addMessageListener("debug:form", onFormUpdate);
+    this._mm.sendAsyncMessage("debug:form");
+    return deferred.promise;
   },
 
   form: function() {
@@ -1628,6 +1704,8 @@ RemoteBrowserTabActor.prototype = {
     this._browser = null;
   },
 };
+
+exports.RemoteBrowserTabActor = RemoteBrowserTabActor;
 
 function BrowserAddonList(aConnection)
 {
@@ -1734,6 +1812,11 @@ BrowserAddonActor.prototype = {
       url: this.url,
       debuggable: this._addon.isDebuggable,
       consoleActor: this._consoleActor.actorID,
+
+      traits: {
+        highlightable: false,
+        networkMonitor: false,
+      },
     };
   },
 

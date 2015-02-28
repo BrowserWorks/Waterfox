@@ -1072,16 +1072,13 @@ Proxy::HandleEvent(nsIDOMEvent* aEvent)
     AutoSafeJSContext cx;
     JSAutoRequest ar(cx);
 
-    JS::Rooted<JSObject*> scope(cx, xpc::UnprivilegedJunkScope());
-    JSAutoCompartment ac(cx, scope);
-
     JS::Rooted<JS::Value> value(cx);
-    if (!WrapNewBindingObject(cx, mXHR, &value)) {
+    if (!GetOrCreateDOMReflectorNoWrap(cx, mXHR, &value)) {
       return NS_ERROR_FAILURE;
     }
 
-    scope = js::UncheckedUnwrap(&value.toObject());
-    JSAutoCompartment ac2(cx, scope);
+    JS::Rooted<JSObject*> scope(cx, &value.toObject());
+    JSAutoCompartment ac(cx, scope);
 
     runnable->Dispatch(cx);
   }
@@ -1279,6 +1276,10 @@ EventRunnable::WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate)
       mProxy->mSeenUploadLoadStart = false;
     }
     else {
+      if (!mProxy->mSeenLoadStart) {
+        // We've already dispatched premature abort events.
+        return true;
+      }
       mProxy->mSeenLoadStart = false;
     }
   }
@@ -2171,7 +2172,7 @@ XMLHttpRequest::Send(File& aBody, ErrorResult& aRv)
   }
 
   JS::Rooted<JS::Value> value(cx);
-  if (!WrapNewBindingObject(cx, &aBody, &value)) {
+  if (!GetOrCreateDOMReflector(cx, &aBody, &value)) {
     aRv.Throw(NS_ERROR_FAILURE);
     return;
   }
@@ -2404,7 +2405,9 @@ XMLHttpRequest::UpdateState(const StateData& aStateData,
                             bool aUseCachedArrayBufferResponse)
 {
   if (aUseCachedArrayBufferResponse) {
-    MOZ_ASSERT(JS_IsArrayBufferObject(mStateData.mResponse.toObjectOrNull()));
+    MOZ_ASSERT(mStateData.mResponse.isObject() &&
+               JS_IsArrayBufferObject(&mStateData.mResponse.toObject()));
+
     JS::Rooted<JS::Value> response(mWorkerPrivate->GetJSContext(),
                                    mStateData.mResponse);
     mStateData = aStateData;

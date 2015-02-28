@@ -19,10 +19,21 @@ public:
     void TestNoPlaceholders();
     void TestOnePlaceholder();
     void TestManyPlaceholders();
+    void TestTooFewPlaceholderValues();
+    void TestBadArguments();
     void TestGetPatternWithNoPlaceholders();
-    void TestOptimization();
+    void TestFormatReplaceNoOptimization();
+    void TestFormatReplaceNoOptimizationLeadingText();
+    void TestFormatReplaceOptimization();
+    void TestFormatReplaceNoOptimizationLeadingPlaceholderUsedTwice();
+    void TestFormatReplaceOptimizationNoOffsets();
+    void TestFormatReplaceNoOptimizationNoOffsets();
     void runIndexedTest(int32_t index, UBool exec, const char *&name, char *par=0);
 private:
+    void verifyOffsets(
+            const int32_t *expected,
+            const int32_t *actual,
+            int32_t count);
 };
 
 void SimplePatternFormatterTest::runIndexedTest(int32_t index, UBool exec, const char* &name, char* /*par*/) {
@@ -30,8 +41,15 @@ void SimplePatternFormatterTest::runIndexedTest(int32_t index, UBool exec, const
   TESTCASE_AUTO(TestNoPlaceholders);
   TESTCASE_AUTO(TestOnePlaceholder);
   TESTCASE_AUTO(TestManyPlaceholders);
+  TESTCASE_AUTO(TestTooFewPlaceholderValues);
+  TESTCASE_AUTO(TestBadArguments);
   TESTCASE_AUTO(TestGetPatternWithNoPlaceholders);
-  TESTCASE_AUTO(TestOptimization);
+  TESTCASE_AUTO(TestFormatReplaceNoOptimization);
+  TESTCASE_AUTO(TestFormatReplaceNoOptimizationLeadingText);
+  TESTCASE_AUTO(TestFormatReplaceOptimization);
+  TESTCASE_AUTO(TestFormatReplaceNoOptimizationLeadingPlaceholderUsedTwice);
+  TESTCASE_AUTO(TestFormatReplaceOptimizationNoOffsets);
+  TESTCASE_AUTO(TestFormatReplaceNoOptimizationNoOffsets);
   TESTCASE_AUTO_END;
 }
 
@@ -58,13 +76,15 @@ void SimplePatternFormatterTest::TestOnePlaceholder() {
     UErrorCode status = U_ZERO_ERROR;
     SimplePatternFormatter fmt;
     fmt.compile("{0} meter", status);
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
     assertEquals("PlaceholderCount", 1, fmt.getPlaceholderCount());
     UnicodeString appendTo;
     assertEquals(
             "format",
             "1 meter",
             fmt.format("1", appendTo, status));
-    assertSuccess("Status", status);
 
     // assignment
     SimplePatternFormatter s;
@@ -90,8 +110,9 @@ void SimplePatternFormatterTest::TestManyPlaceholders() {
     SimplePatternFormatter fmt;
     fmt.compile(
             "Templates {2}{1}{5} and {4} are out of order.", status);
-    assertSuccess("Status", status);
-    assertFalse("startsWithPlaceholder", fmt.startsWithPlaceholder(2));
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
     assertEquals("PlaceholderCount", 6, fmt.getPlaceholderCount());
     UnicodeString values[] = {
             "freddy", "tommy", "frog", "billy", "leg", "{0}"};
@@ -103,38 +124,24 @@ void SimplePatternFormatterTest::TestManyPlaceholders() {
     assertEquals(
             "format",
             "Prefix: Templates frogtommy{0} and leg are out of order.",
-            fmt.format(
+            fmt.formatAndAppend(
                     params,
                     UPRV_LENGTHOF(params),
                     appendTo,
                     offsets,
                     UPRV_LENGTHOF(offsets),
                     status));
-    assertSuccess("Status", status);
-    for (int32_t i = 0; i < UPRV_LENGTHOF(expectedOffsets); ++i) {
-        if (expectedOffsets[i] != offsets[i]) {
-            errln("Expected %d, got %d", expectedOffsets[i], offsets[i]);
-        }
+    if (!assertSuccess("Status", status)) {
+        return;
     }
+    verifyOffsets(expectedOffsets, offsets, UPRV_LENGTHOF(expectedOffsets));
     appendTo.remove();
-
-    // Not having enough placeholder params results in error.
-    fmt.format(
-            params,
-            UPRV_LENGTHOF(params) - 1,
-            appendTo,
-            offsets,
-            UPRV_LENGTHOF(offsets),
-            status);
-    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
-        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
-    }
 
     // Ensure we don't write to offsets array beyond its length.
     status = U_ZERO_ERROR;
     offsets[UPRV_LENGTHOF(offsets) - 1] = 289;
     appendTo.remove();
-    fmt.format(
+    fmt.formatAndAppend(
             params,
             UPRV_LENGTHOF(params),
             appendTo,
@@ -150,7 +157,7 @@ void SimplePatternFormatterTest::TestManyPlaceholders() {
     assertEquals(
             "Assignment",
             "Templates frogtommy{0} and leg are out of order.",
-            s.format(
+            s.formatAndAppend(
                     params,
                     UPRV_LENGTHOF(params),
                     appendTo,
@@ -164,7 +171,7 @@ void SimplePatternFormatterTest::TestManyPlaceholders() {
     assertEquals(
             "Copy constructor",
             "Templates frogtommy{0} and leg are out of order.",
-            r.format(
+            r.formatAndAppend(
                     params,
                     UPRV_LENGTHOF(params),
                     appendTo,
@@ -195,42 +202,264 @@ void SimplePatternFormatterTest::TestManyPlaceholders() {
     assertSuccess("Status", status);
 }
 
+void SimplePatternFormatterTest::TestTooFewPlaceholderValues() {
+    SimplePatternFormatter fmt("{0} and {1}");
+    UnicodeString appendTo;
+    UnicodeString firstValue;
+    UnicodeString *params[] = {&firstValue};
+
+    UErrorCode status = U_ZERO_ERROR;
+    fmt.format(
+            firstValue, appendTo, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+
+    status = U_ZERO_ERROR;
+    fmt.formatAndAppend(
+            params, UPRV_LENGTHOF(params), appendTo, NULL, 0, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+
+    status = U_ZERO_ERROR;
+    fmt.formatAndReplace(
+            params, UPRV_LENGTHOF(params), appendTo, NULL, 0, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+}
+
+void SimplePatternFormatterTest::TestBadArguments() {
+    SimplePatternFormatter fmt("pickle");
+    UnicodeString appendTo;
+    UErrorCode status = U_ZERO_ERROR;
+
+    // These succeed
+    fmt.formatAndAppend(
+            NULL, 0, appendTo, NULL, 0, status);
+    fmt.formatAndReplace(
+            NULL, 0, appendTo, NULL, 0, status);
+    assertSuccess("", status);
+    status = U_ZERO_ERROR;
+
+    // fails
+    fmt.formatAndAppend(
+            NULL, 1, appendTo, NULL, 0, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+    status = U_ZERO_ERROR;
+   
+    // fails
+    fmt.formatAndAppend(
+            NULL, 0, appendTo, NULL, 1, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+    status = U_ZERO_ERROR;
+
+    // fails because appendTo used as a parameter value
+    const UnicodeString *params[] = {&appendTo};
+    fmt.formatAndAppend(
+            params, UPRV_LENGTHOF(params), appendTo, NULL, 0, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+    status = U_ZERO_ERROR;
+
+   
+    // fails
+    fmt.formatAndReplace(
+            NULL, 1, appendTo, NULL, 0, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+    status = U_ZERO_ERROR;
+   
+    // fails
+    fmt.formatAndReplace(
+            NULL, 0, appendTo, NULL, 1, status);
+    if (status != U_ILLEGAL_ARGUMENT_ERROR) {
+        errln("Expected U_ILLEGAL_ARGUMENT_ERROR");
+    }
+}
+
 void SimplePatternFormatterTest::TestGetPatternWithNoPlaceholders() {
     SimplePatternFormatter fmt("{0} has no {1} placeholders.");
     assertEquals(
             "", " has no  placeholders.", fmt.getPatternWithNoPlaceholders());
 }
 
-void SimplePatternFormatterTest::TestOptimization() {
+void SimplePatternFormatterTest::TestFormatReplaceNoOptimization() {
     UErrorCode status = U_ZERO_ERROR;
     SimplePatternFormatter fmt;
     fmt.compile("{2}, {0}, {1} and {3}", status);
-    assertSuccess("Status", status);
-    assertTrue("startsWithPlaceholder", fmt.startsWithPlaceholder(2));
-    assertFalse("startsWithPlaceholder", fmt.startsWithPlaceholder(0));
-    UnicodeString values[] = {
-            "freddy", "frog", "leg", "by"};
-    UnicodeString *params[] = {
-           &values[0], &values[1], &values[2], &values[3]}; 
-    int32_t offsets[4];
-    int32_t expectedOffsets[4] = {5, 13, 0, 22};
-
-    // The pattern starts with {2}, so format should append the result of
-    // the rest of the pattern to values[2], the value for {2}.
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    UnicodeString result("original");
+    int offsets[4];
+    UnicodeString freddy("freddy");
+    UnicodeString frog("frog");
+    UnicodeString by("by");
+    const UnicodeString *params[] = {&result, &freddy, &frog, &by};
     assertEquals(
-            "format",
-            "leg, freddy, frog and by",
-            fmt.format(
+            "",
+            "frog, original, freddy and by",
+            fmt.formatAndReplace(
                     params,
                     UPRV_LENGTHOF(params),
-                    values[2],
+                    result,
                     offsets,
                     UPRV_LENGTHOF(offsets),
                     status));
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    int32_t expectedOffsets[] = {6, 16, 0, 27};
+    verifyOffsets(expectedOffsets, offsets, UPRV_LENGTHOF(expectedOffsets));
+}
+
+void SimplePatternFormatterTest::TestFormatReplaceNoOptimizationLeadingText() {
+    UErrorCode status = U_ZERO_ERROR;
+    SimplePatternFormatter fmt;
+    fmt.compile("boo {2}, {0}, {1} and {3}", status);
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    UnicodeString result("original");
+    int offsets[4];
+    UnicodeString freddy("freddy");
+    UnicodeString frog("frog");
+    UnicodeString by("by");
+    const UnicodeString *params[] = {&freddy, &frog, &result, &by};
+    assertEquals(
+            "",
+            "boo original, freddy, frog and by",
+            fmt.formatAndReplace(
+                    params,
+                    UPRV_LENGTHOF(params),
+                    result,
+                    offsets,
+                    UPRV_LENGTHOF(offsets),
+                    status));
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    int32_t expectedOffsets[] = {14, 22, 4, 31};
+    verifyOffsets(expectedOffsets, offsets, UPRV_LENGTHOF(expectedOffsets));
+}
+
+void SimplePatternFormatterTest::TestFormatReplaceOptimization() {
+    UErrorCode status = U_ZERO_ERROR;
+    SimplePatternFormatter fmt;
+    fmt.compile("{2}, {0}, {1} and {3}", status);
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    UnicodeString result("original");
+    int offsets[4];
+    UnicodeString freddy("freddy");
+    UnicodeString frog("frog");
+    UnicodeString by("by");
+    const UnicodeString *params[] = {&freddy, &frog, &result, &by};
+    assertEquals(
+            "",
+            "original, freddy, frog and by",
+            fmt.formatAndReplace(
+                    params,
+                    UPRV_LENGTHOF(params),
+                    result,
+                    offsets,
+                    UPRV_LENGTHOF(offsets),
+                    status));
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    int32_t expectedOffsets[] = {10, 18, 0, 27};
+    verifyOffsets(expectedOffsets, offsets, UPRV_LENGTHOF(expectedOffsets));
+}
+
+void SimplePatternFormatterTest::TestFormatReplaceNoOptimizationLeadingPlaceholderUsedTwice() {
+    UErrorCode status = U_ZERO_ERROR;
+    SimplePatternFormatter fmt;
+    fmt.compile("{2}, {0}, {1} and {3} {2}", status);
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    UnicodeString result("original");
+    int offsets[4];
+    UnicodeString freddy("freddy");
+    UnicodeString frog("frog");
+    UnicodeString by("by");
+    const UnicodeString *params[] = {&freddy, &frog, &result, &by};
+    assertEquals(
+            "",
+            "original, freddy, frog and by original",
+            fmt.formatAndReplace(
+                    params,
+                    UPRV_LENGTHOF(params),
+                    result,
+                    offsets,
+                    UPRV_LENGTHOF(offsets),
+                    status));
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    int32_t expectedOffsets[] = {10, 18, 30, 27};
+    verifyOffsets(expectedOffsets, offsets, UPRV_LENGTHOF(expectedOffsets));
+}
+
+void SimplePatternFormatterTest::TestFormatReplaceOptimizationNoOffsets() {
+    UErrorCode status = U_ZERO_ERROR;
+    SimplePatternFormatter fmt;
+    fmt.compile("{2}, {0}, {1} and {3}", status);
+    if (!assertSuccess("Status", status)) {
+        return;
+    }
+    UnicodeString result("original");
+    UnicodeString freddy("freddy");
+    UnicodeString frog("frog");
+    UnicodeString by("by");
+    const UnicodeString *params[] = {&freddy, &frog, &result, &by};
+    assertEquals(
+            "",
+            "original, freddy, frog and by",
+            fmt.formatAndReplace(
+                    params,
+                    UPRV_LENGTHOF(params),
+                    result,
+                    NULL,
+                    0,
+                    status));
     assertSuccess("Status", status);
-    for (int32_t i = 0; i < UPRV_LENGTHOF(expectedOffsets); ++i) {
-        if (expectedOffsets[i] != offsets[i]) {
-            errln("Expected %d, got %d", expectedOffsets[i], offsets[i]);
+}
+
+void SimplePatternFormatterTest::TestFormatReplaceNoOptimizationNoOffsets() {
+    UErrorCode status = U_ZERO_ERROR;
+    SimplePatternFormatter fmt("Placeholders {0} and {1}");
+    UnicodeString result("previous:");
+    UnicodeString frog("frog");
+    const UnicodeString *params[] = {&result, &frog};
+    assertEquals(
+            "",
+            "Placeholders previous: and frog",
+            fmt.formatAndReplace(
+                    params,
+                    UPRV_LENGTHOF(params),
+                    result,
+                    NULL,
+                    0,
+                    status));
+    assertSuccess("Status", status);
+}
+
+void SimplePatternFormatterTest::verifyOffsets(
+        const int32_t *expected, const int32_t *actual, int32_t count) {
+    for (int32_t i = 0; i < count; ++i) {
+        if (expected[i] != actual[i]) {
+            errln("Expected %d, got %d", expected[i], actual[i]);
         }
     }
 }
@@ -238,3 +467,4 @@ void SimplePatternFormatterTest::TestOptimization() {
 extern IntlTest *createSimplePatternFormatterTest() {
     return new SimplePatternFormatterTest();
 }
+

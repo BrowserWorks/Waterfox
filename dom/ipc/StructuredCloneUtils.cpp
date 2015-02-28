@@ -10,6 +10,7 @@
 #include "nsIMutable.h"
 #include "nsIXPConnect.h"
 
+#include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/File.h"
 #include "nsContentUtils.h"
@@ -64,7 +65,7 @@ Read(JSContext* aCx, JSStructuredCloneReader* aReader, uint32_t aTag,
       MOZ_ASSERT(global);
 
       nsRefPtr<File> newBlob = new File(global, blob->Impl());
-      if (!WrapNewBindingObject(aCx, newBlob, &val)) {
+      if (!GetOrCreateDOMReflector(aCx, newBlob, &val)) {
         return nullptr;
       }
     }

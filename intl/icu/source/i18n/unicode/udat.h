@@ -961,6 +961,38 @@ udat_format(    const    UDateFormat*    format,
                         UFieldPosition* position,
                         UErrorCode*     status);
 
+#ifndef U_HIDE_DRAFT_API
+/**
+* Format a date using an UDateFormat.
+* The date will be formatted using the conventions specified in {@link #udat_open }
+* @param format The formatter to use
+* @param calendar The calendar to format. The calendar instance might be
+*                 mutated when fields are not fully calculated yet, although
+*                 this function won't change the logical date and time held
+*                 by the instance.
+* @param result A pointer to a buffer to receive the formatted number.
+* @param capacity The maximum size of result.
+* @param position A pointer to a UFieldPosition.  On input, position->field
+* is read.  On output, position->beginIndex and position->endIndex indicate
+* the beginning and ending indices of field number position->field, if such
+* a field exists.  This parameter may be NULL, in which case no field
+* position data is returned.
+* @param status A pointer to an UErrorCode to receive any errors
+* @return The total buffer size needed; if greater than resultLength, the output was truncated.
+* @see udat_format
+* @see udat_parseCalendar
+* @see UFieldPosition
+* @draft ICU 55
+*/
+U_DRAFT int32_t U_EXPORT2
+udat_formatCalendar(    const UDateFormat*  format,
+                        UCalendar*      calendar,
+                        UChar*          result,
+                        int32_t         capacity,
+                        UFieldPosition* position,
+                        UErrorCode*     status);
+#endif  /* U_HIDE_DRAFT_API */
+
 /**
 * Parse a string into an date/time using a UDateFormat.
 * The date will be parsed using the conventions specified in {@link #udat_open }.

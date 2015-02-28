@@ -87,6 +87,11 @@ public:
     return mSelectionCaretsEndElement;
   }
 
+  mozilla::dom::Element* GetCustomContentContainer() const
+  {
+    return mCustomContentContainer;
+  }
+
   /** SetHasFocus tells the CanvasFrame to draw with focus ring
    *  @param aHasFocus true to show focus ring, false to hide it
    */
@@ -138,6 +143,7 @@ protected:
   nsCOMPtr<mozilla::dom::Element> mTouchCaretElement;
   nsCOMPtr<mozilla::dom::Element> mSelectionCaretsStartElement;
   nsCOMPtr<mozilla::dom::Element> mSelectionCaretsEndElement;
+  nsCOMPtr<mozilla::dom::Element> mCustomContentContainer;
 };
 
 /**
@@ -208,7 +214,7 @@ public:
 
   NS_DISPLAY_DECL_NAME("CanvasBackgroundColor", TYPE_CANVAS_BACKGROUND_COLOR)
 #ifdef MOZ_DUMP_PAINTING
-  virtual void WriteDebugInfo(nsACString& aTo) MOZ_OVERRIDE;
+  virtual void WriteDebugInfo(std::stringstream& aStream) MOZ_OVERRIDE;
 #endif
 
 private:

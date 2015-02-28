@@ -38,10 +38,14 @@
 #include "PrivateBrowsingChannel.h"
 #include "mozilla/net/DNS.h"
 #include "nsITimedChannel.h"
+#include "nsIHttpChannel.h"
 #include "nsISecurityConsoleMessage.h"
+#include "nsCOMArray.h"
 
 extern PRLogModuleInfo *gHttpLog;
 class nsPerformance;
+class nsISecurityConsoleMessage;
+class nsIPrincipal;
 
 namespace mozilla {
 namespace net {
@@ -120,12 +124,17 @@ public:
   NS_IMETHOD GetApplyConversion(bool *value);
   NS_IMETHOD SetApplyConversion(bool value);
   NS_IMETHOD GetContentEncodings(nsIUTF8StringEnumerator** aEncodings);
+  NS_IMETHOD DoApplyContentConversions(nsIStreamListener *aNextListener,
+                                       nsIStreamListener **aNewNextListener,
+                                       nsISupports *aCtxt);
 
   // HttpBaseChannel::nsIHttpChannel
   NS_IMETHOD GetRequestMethod(nsACString& aMethod);
   NS_IMETHOD SetRequestMethod(const nsACString& aMethod);
   NS_IMETHOD GetReferrer(nsIURI **referrer);
   NS_IMETHOD SetReferrer(nsIURI *referrer);
+  NS_IMETHOD GetReferrerPolicy(uint32_t *referrerPolicy);
+  NS_IMETHOD SetReferrerWithPolicy(nsIURI *referrer, uint32_t referrerPolicy);
   NS_IMETHOD GetRequestHeader(const nsACString& aHeader, nsACString& aValue);
   NS_IMETHOD SetRequestHeader(const nsACString& aHeader,
                               const nsACString& aValue, bool aMerge);
@@ -153,6 +162,8 @@ public:
   NS_IMETHOD GetRequestVersion(uint32_t *major, uint32_t *minor);
   NS_IMETHOD GetResponseVersion(uint32_t *major, uint32_t *minor);
   NS_IMETHOD SetCookie(const char *aCookieHeader);
+  NS_IMETHOD GetThirdPartyFlags(uint32_t *aForce);
+  NS_IMETHOD SetThirdPartyFlags(uint32_t aForce);
   NS_IMETHOD GetForceAllowThirdPartyCookie(bool *aForce);
   NS_IMETHOD SetForceAllowThirdPartyCookie(bool aForce);
   NS_IMETHOD GetCanceled(bool *aCanceled);
@@ -177,6 +188,8 @@ public:
   NS_IMETHOD AddRedirect(nsIPrincipal *aRedirect);
   NS_IMETHOD ForcePending(bool aForcePending);
   NS_IMETHOD GetLastModifiedTime(PRTime* lastModifiedTime);
+  NS_IMETHOD ForceNoIntercept();
+  NS_IMETHOD GetTopWindowURI(nsIURI **aTopWindowURI);
 
   inline void CleanRedirectCacheChainIfNecessary()
   {
@@ -231,6 +244,11 @@ public: /* Necko internal use only... */
     static bool ShouldRewriteRedirectToGET(uint32_t httpStatus,
                                            nsHttpRequestHead::ParsedMethodType method);
 
+    // Like nsIEncodedChannel::DoApplyConversions except context is set to
+    // mListenerContext.
+    nsresult DoApplyContentConversions(nsIStreamListener *aNextListener,
+                                       nsIStreamListener **aNewNextListener);
+
 protected:
   nsCOMArray<nsISecurityConsoleMessage> mSecurityConsoleMessages;
 
@@ -242,10 +260,6 @@ protected:
   void ReleaseListeners();
 
   nsPerformance* GetPerformance();
-
-  NS_IMETHOD DoApplyContentConversions(nsIStreamListener *aNextListener,
-                                     nsIStreamListener **aNewNextListener,
-                                     nsISupports *aCtxt);
 
   void AddCookiesToRequest();
   virtual nsresult SetupReplacementChannel(nsIURI *,
@@ -275,6 +289,10 @@ protected:
   // Returns the channel principal. If requireAppId is true, then returns
   // null if the principal has unknown appId.
   nsIPrincipal *GetPrincipal(bool requireAppId);
+
+  // Returns true if this channel should intercept the network request and prepare
+  // for a possible synthesized response instead.
+  bool ShouldIntercept();
 
   friend class PrivateBrowsingChannel<HttpBaseChannel>;
 
@@ -328,7 +346,7 @@ protected:
   uint32_t                          mResponseHeadersModified    : 1;
   uint32_t                          mAllowPipelining            : 1;
   uint32_t                          mAllowSTS                   : 1;
-  uint32_t                          mForceAllowThirdPartyCookie : 1;
+  uint32_t                          mThirdPartyFlags            : 3;
   uint32_t                          mUploadStreamHasHeaders     : 1;
   uint32_t                          mInheritApplicationCache    : 1;
   uint32_t                          mChooseApplicationCache     : 1;
@@ -348,6 +366,9 @@ protected:
   // pass the Resource Timing timing-allow-check
   uint32_t                          mAllRedirectsPassTimingAllowCheck : 1;
 
+  // True if this channel should skip any interception checks
+  uint32_t                          mForceNoIntercept           : 1;
+
   // Current suspension depth for this channel object
   uint32_t                          mSuspendCount;
 
@@ -363,6 +384,8 @@ protected:
   nsAutoPtr<nsString>               mContentDispositionFilename;
 
   nsRefPtr<nsHttpHandler>           mHttpHandler;  // keep gHttpHandler alive
+
+  uint32_t                          mReferrerPolicy;
 
   // Performance tracking
   // The initiator type (for this resource) - how was the resource referenced in
@@ -389,6 +412,7 @@ protected:
   nsCOMPtr<nsIPrincipal>            mPrincipal;
 
   bool                              mForcePending;
+  nsCOMPtr<nsIURI>                  mTopWindowURI;
 };
 
 // Share some code while working around C++'s absurd inability to handle casting

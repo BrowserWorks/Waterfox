@@ -18,9 +18,11 @@
 #include "nsIContentViewerContainer.h"
 #include "nsIDOMStorageManager.h"
 #include "nsDocLoader.h"
+#include "mozilla/UniquePtr.h"
 #include "mozilla/WeakPtr.h"
 #include "mozilla/TimeStamp.h"
 #include "GeckoProfiler.h"
+#include "mozilla/dom/ProfileTimelineMarkerBinding.h"
 
 // Helper Classes
 #include "nsCOMPtr.h"
@@ -256,14 +258,86 @@ public:
     // is no longer applied
     void NotifyAsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos);
 
+    // Objects of this type can be added to the timeline.  The class
+    // can also be subclassed to let a given marker creator provide
+    // custom details.
+    class TimelineMarker
+    {
+    public:
+        TimelineMarker(nsDocShell* aDocShell, const char* aName,
+                       TracingMetadata aMetaData)
+            : mName(aName)
+            , mMetaData(aMetaData)
+        {
+            MOZ_COUNT_CTOR(TimelineMarker);
+            MOZ_ASSERT(aName);
+            aDocShell->Now(&mTime);
+        }
+
+        TimelineMarker(nsDocShell* aDocShell, const char* aName,
+                       TracingMetadata aMetaData,
+                       const nsAString& aCause)
+            : mName(aName)
+            , mMetaData(aMetaData)
+            , mCause(aCause)
+        {
+            MOZ_COUNT_CTOR(TimelineMarker);
+            MOZ_ASSERT(aName);
+            aDocShell->Now(&mTime);
+        }
+
+        virtual ~TimelineMarker()
+        {
+            MOZ_COUNT_DTOR(TimelineMarker);
+        }
+
+        // Check whether two markers should be considered the same,
+        // for the purpose of pairing start and end markers.  Normally
+        // this definition suffices.
+        virtual bool Equals(const TimelineMarker* other)
+        {
+            return strcmp(mName, other->mName) == 0;
+        }
+
+        // Add details specific to this marker type to aMarker.  The
+        // standard elements have already been set.
+        virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker)
+        {
+        }
+
+        const char* GetName() const
+        {
+            return mName;
+        }
+
+        TracingMetadata GetMetaData() const
+        {
+            return mMetaData;
+        }
+
+        DOMHighResTimeStamp GetTime() const
+        {
+            return mTime;
+        }
+
+        const nsString& GetCause() const
+        {
+            return mCause;
+        }
+
+    private:
+        const char* mName;
+        TracingMetadata mMetaData;
+        DOMHighResTimeStamp mTime;
+        nsString mCause;
+    };
+
     // Add new profile timeline markers to this docShell. This will only add
     // markers if the docShell is currently recording profile timeline markers.
     // See nsIDocShell::recordProfileTimelineMarkers
     void AddProfileTimelineMarker(const char* aName,
                                   TracingMetadata aMetaData);
-    void AddProfileTimelineMarker(const char* aName,
-                                  ProfilerBacktrace* aCause,
-                                  TracingMetadata aMetaData);
+    void AddProfileTimelineMarker(mozilla::UniquePtr<TimelineMarker> &aMarker);
 
     // Global counter for how many docShells are currently recording profile
     // timeline markers
@@ -307,6 +381,7 @@ protected:
     virtual nsresult DoURILoad(nsIURI * aURI,
                                nsIURI * aReferrer,
                                bool aSendReferrer,
+                               uint32_t aReferrerPolicy,
                                nsISupports * aOwner,
                                const char * aTypeHint,
                                const nsAString & aFileName,
@@ -329,11 +404,6 @@ protected:
 
     nsresult ScrollToAnchor(nsACString & curHash, nsACString & newHash,
                             uint32_t aLoadType);
-
-    // Tries to serialize a given variant using structured clone.  This only
-    // works if the variant is backed by a JSVal.
-    nsresult SerializeJSValVariant(JSContext *aCx, nsIVariant *aData,
-                                   nsAString &aResult);
 
     // Returns true if would have called FireOnLocationChange,
     // but did not because aFireOnLocationChange was false on entry.
@@ -360,6 +430,7 @@ protected:
                     bool aCloneSHChildren);
 
     virtual void SetReferrerURI(nsIURI * aURI);
+    virtual void SetReferrerPolicy(uint32_t referrerPolicy);
 
     // Session History
     virtual bool ShouldAddToSessionHistory(nsIURI * aURI);
@@ -373,8 +444,12 @@ protected:
                                          nsISupports* aOwner,
                                          bool aCloneChildren,
                                          nsISHEntry ** aNewEntry);
-    nsresult DoAddChildSHEntry(nsISHEntry* aNewEntry, int32_t aChildOffset,
-                               bool aCloneChildren);
+    nsresult AddChildSHEntryToParent(nsISHEntry* aNewEntry, int32_t aChildOffset,
+                                     bool aCloneChildren);
+
+    nsresult AddChildSHEntryInternal(nsISHEntry* aCloneRef, nsISHEntry* aNewEntry,
+                                     int32_t aChildOffset, uint32_t loadType,
+                                     bool aCloneChildren);
 
     NS_IMETHOD LoadHistoryEntry(nsISHEntry * aEntry, uint32_t aLoadType);
     NS_IMETHOD PersistLayoutHistoryState();
@@ -750,6 +825,7 @@ protected:
     // mCurrentURI should be marked immutable on set if possible.
     nsCOMPtr<nsIURI>           mCurrentURI;
     nsCOMPtr<nsIURI>           mReferrerURI;
+    uint32_t                   mReferrerPolicy;
     nsRefPtr<nsGlobalWindow>   mScriptGlobal;
     nsCOMPtr<nsISHistory>      mSessionHistory;
     nsCOMPtr<nsIGlobalHistory2> mGlobalHistory;
@@ -948,26 +1024,14 @@ private:
     nsWeakPtr mOpener;
     nsWeakPtr mOpenedRemote;
 
-    // Storing profile timeline markers and if/when recording started
-    mozilla::TimeStamp mProfileTimelineStartTime;
-    struct InternalProfileTimelineMarker
-    {
-      InternalProfileTimelineMarker(const char* aName,
-                                    ProfilerMarkerTracing* aPayload,
-                                    float aTime)
-        : mName(aName)
-        , mPayload(aPayload)
-        , mTime(aTime)
-      {}
-      const char* mName;
-      ProfilerMarkerTracing* mPayload;
-      float mTime;
-    };
-    nsTArray<nsAutoPtr<InternalProfileTimelineMarker>> mProfileTimelineMarkers;
+    // A depth count of how many times NotifyRunToCompletionStart
+    // has been called without a matching NotifyRunToCompletionStop.
+    uint32_t          mJSRunToCompletionDepth;
 
-    // Get the elapsed time (in millis) since the profile timeline recording
-    // started
-    float GetProfileTimelineDelta();
+    // True if recording profiles.
+    bool mProfileTimelineRecording;
+
+    nsTArray<TimelineMarker*> mProfileTimelineMarkers;
 
     // Get rid of all the timeline markers accumulated so far
     void ClearProfileTimelineMarkers();

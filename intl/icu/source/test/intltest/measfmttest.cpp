@@ -47,7 +47,6 @@ private:
     void TestGreek();
     void TestFormatSingleArg();
     void TestFormatMeasuresZeroArg();
-    void TestMultiplesWithPer();
     void TestSimplePer();
     void TestNumeratorPlurals();
     void TestMultiples();
@@ -55,11 +54,11 @@ private:
     void TestCurrencies();
     void TestFieldPosition();
     void TestFieldPositionMultiple();
-    void TestFieldPositionMultipleWithPer();
     void TestBadArg();
     void TestEquality();
     void TestGroupingSeparator();
     void TestDoubleZero();
+    void TestUnitPerUnitResolution();
     void verifyFormat(
         const char *description,
         const MeasureFormat &fmt,
@@ -85,11 +84,16 @@ private:
         const MeasureUnit &unit,
         const MeasureUnit &perUnit,
         const char *expected);
-    void helperTestMultiplesWithPer(
+    void helperTestSimplePer(
         const Locale &locale,
         UMeasureFormatWidth width,
+        double value,
         const MeasureUnit &unit,
-        const char *expected);
+        const MeasureUnit &perUnit,
+        const char *expected,
+        int32_t field,
+        int32_t expected_start,
+        int32_t expected_end);
     void helperTestMultiples(
         const Locale &locale,
         UMeasureFormatWidth width,
@@ -100,16 +104,6 @@ private:
         const UnicodeString &prefix,
         const Measure *measures,
         int32_t measureCount,
-        NumberFormat::EAlignmentFields field,
-        int32_t start,
-        int32_t end);
-    void verifyFieldPositionWithPer(
-        const char *description,
-        const MeasureFormat &fmt,
-        const UnicodeString &prefix,
-        const Measure *measures,
-        int32_t measureCount,
-        const MeasureUnit &perUnit,
         NumberFormat::EAlignmentFields field,
         int32_t start,
         int32_t end);
@@ -131,7 +125,6 @@ void MeasureFormatTest::runIndexedTest(
     TESTCASE_AUTO(TestGreek);
     TESTCASE_AUTO(TestFormatSingleArg);
     TESTCASE_AUTO(TestFormatMeasuresZeroArg);
-    TESTCASE_AUTO(TestMultiplesWithPer);
     TESTCASE_AUTO(TestSimplePer);
     TESTCASE_AUTO(TestNumeratorPlurals);
     TESTCASE_AUTO(TestMultiples);
@@ -139,11 +132,11 @@ void MeasureFormatTest::runIndexedTest(
     TESTCASE_AUTO(TestCurrencies);
     TESTCASE_AUTO(TestFieldPosition);
     TESTCASE_AUTO(TestFieldPositionMultiple);
-    TESTCASE_AUTO(TestFieldPositionMultipleWithPer);
     TESTCASE_AUTO(TestBadArg);
     TESTCASE_AUTO(TestEquality);
     TESTCASE_AUTO(TestGroupingSeparator);
     TESTCASE_AUTO(TestDoubleZero);
+    TESTCASE_AUTO(TestUnitPerUnitResolution);
     TESTCASE_AUTO_END;
 }
 
@@ -871,32 +864,6 @@ void MeasureFormatTest::TestFormatMeasuresZeroArg() {
     verifyFormat("TestFormatMeasuresZeroArg", fmt, NULL, 0, "");
 }
 
-void MeasureFormatTest::TestMultiplesWithPer() {
-    Locale en("en");
-    UErrorCode status = U_ZERO_ERROR;
-    LocalPointer<MeasureUnit> second(MeasureUnit::createSecond(status));
-    LocalPointer<MeasureUnit> minute(MeasureUnit::createMinute(status));
-    if (!assertSuccess("", status)) {
-        return;
-    }
-
-    // Per unit test.
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_WIDE, *second, "2 miles, 1 foot, 2.3 inches per second");
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_SHORT, *second, "2 mi, 1 ft, 2.3 inps");
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_NARROW, *second, "2mi 1\\u2032 2.3\\u2033/s");
-
-    // Fallback compound per test
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_WIDE, *minute, "2 miles, 1 foot, 2.3 inches per minute");
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_SHORT, *minute, "2 mi, 1 ft, 2.3 in/min");
-    helperTestMultiplesWithPer(
-            en, UMEASFMT_WIDTH_NARROW, *minute, "2mi 1\\u2032 2.3\\u2033/m");
-}
-
 void MeasureFormatTest::TestSimplePer() {
     Locale en("en");
     UErrorCode status = U_ZERO_ERROR;
@@ -908,6 +875,19 @@ void MeasureFormatTest::TestSimplePer() {
     }
 
     helperTestSimplePer(
+            en, UMEASFMT_WIDTH_WIDE,
+            1.0, *pound, *second, "1 pound per second");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_WIDE,
+            2.0, *pound, *second, "2 pounds per second");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_WIDE,
+            1.0, *pound, *minute, "1 pound per minute");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_WIDE,
+            2.0, *pound, *minute, "2 pounds per minute");
+
+    helperTestSimplePer(
             en, UMEASFMT_WIDTH_SHORT, 1.0, *pound, *second, "1 lbps");
     helperTestSimplePer(
             en, UMEASFMT_WIDTH_SHORT, 2.0, *pound, *second, "2 lbps");
@@ -915,6 +895,39 @@ void MeasureFormatTest::TestSimplePer() {
             en, UMEASFMT_WIDTH_SHORT, 1.0, *pound, *minute, "1 lb/min");
     helperTestSimplePer(
             en, UMEASFMT_WIDTH_SHORT, 2.0, *pound, *minute, "2 lb/min");
+
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_NARROW, 1.0, *pound, *second, "1#/s");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_NARROW, 2.0, *pound, *second, "2#/s");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_NARROW, 1.0, *pound, *minute, "1#/m");
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_NARROW, 2.0, *pound, *minute, "2#/m");
+
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_SHORT,
+            23.3, *pound, *second, "23.3 lbps",
+            NumberFormat::kDecimalSeparatorField,
+            2, 3);
+
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_SHORT,
+            23.3, *pound, *second, "23.3 lbps",
+            NumberFormat::kIntegerField,
+            0, 2);
+
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_SHORT,
+            23.3, *pound, *minute, "23.3 lb/min",
+            NumberFormat::kDecimalSeparatorField,
+            2, 3);
+
+    helperTestSimplePer(
+            en, UMEASFMT_WIDTH_SHORT,
+            23.3, *pound, *minute, "23.3 lb/min",
+            NumberFormat::kIntegerField,
+            0, 2);
 }
 
 void MeasureFormatTest::TestNumeratorPlurals() {
@@ -927,13 +940,20 @@ void MeasureFormatTest::TestNumeratorPlurals() {
     }
 
     helperTestSimplePer(
-            pl, UMEASFMT_WIDTH_WIDE, 1.0, *foot, *second, "1 stopa na sekund\\u0119");
+            pl,
+            UMEASFMT_WIDTH_WIDE,
+            1.0, *foot, *second, "1 stopa na sekund\\u0119");
     helperTestSimplePer(
-            pl, UMEASFMT_WIDTH_WIDE, 2.0, *foot, *second, "2 stopy na sekund\\u0119");
+            pl,
+            UMEASFMT_WIDTH_WIDE,
+            2.0, *foot, *second, "2 stopy na sekund\\u0119");
     helperTestSimplePer(
-            pl, UMEASFMT_WIDTH_WIDE, 5.0, *foot, *second, "5 st\\u00f3p na sekund\\u0119");
+            pl,
+            UMEASFMT_WIDTH_WIDE,
+            5.0, *foot, *second, "5 st\\u00f3p na sekund\\u0119");
     helperTestSimplePer(
-            pl, UMEASFMT_WIDTH_WIDE, 1.5, *foot, *second, "1,5 stopy na sekund\\u0119");
+            pl, UMEASFMT_WIDTH_WIDE,
+            1.5, *foot, *second, "1,5 stopy na sekund\\u0119");
 }
 
 void MeasureFormatTest::helperTestSimplePer(
@@ -943,8 +963,30 @@ void MeasureFormatTest::helperTestSimplePer(
         const MeasureUnit &unit,
         const MeasureUnit &perUnit,
         const char *expected) {
+    helperTestSimplePer(
+            locale,
+            width,
+            value,
+            unit,
+            perUnit,
+            expected,
+            FieldPosition::DONT_CARE,
+            0,
+            0);
+}
+
+void MeasureFormatTest::helperTestSimplePer(
+        const Locale &locale,
+        UMeasureFormatWidth width,
+        double value,
+        const MeasureUnit &unit,
+        const MeasureUnit &perUnit,
+        const char *expected,
+        int32_t field,
+        int32_t expected_start,
+        int32_t expected_end) {
     UErrorCode status = U_ZERO_ERROR;
-    FieldPosition pos(0);
+    FieldPosition pos(field);
     MeasureFormat fmt(locale, width, status);
     if (!assertSuccess("Error creating format object", status)) {
         return;
@@ -953,10 +995,10 @@ void MeasureFormatTest::helperTestSimplePer(
     if (!assertSuccess("Error creating measure object", status)) {
         return;
     }
-    UnicodeString buffer;
-    fmt.formatMeasuresPer(
-            &measure,
-            1,
+    UnicodeString prefix("prefix: ");
+    UnicodeString buffer(prefix);
+    fmt.formatMeasurePerUnit(
+            measure,
             perUnit,
             buffer,
             pos,
@@ -964,45 +1006,18 @@ void MeasureFormatTest::helperTestSimplePer(
     if (!assertSuccess("Error formatting measures with per", status)) {
         return;
     }
+    UnicodeString uexpected(expected);
+    uexpected = prefix + uexpected;
     assertEquals(
             "TestSimplePer",
-            UnicodeString(expected).unescape(),
+            uexpected.unescape(),
             buffer);
-}
-
-void MeasureFormatTest::helperTestMultiplesWithPer(
-        const Locale &locale,
-        UMeasureFormatWidth width,
-        const MeasureUnit &perUnit,
-        const char *expected) {
-    UErrorCode status = U_ZERO_ERROR;
-    FieldPosition pos(0);
-    MeasureFormat fmt(locale, width, status);
-    if (!assertSuccess("Error creating format object", status)) {
-        return;
+    if (field != FieldPosition::DONT_CARE) {
+        assertEquals(
+                "Start", expected_start, pos.getBeginIndex() - prefix.length());
+        assertEquals(
+                "End", expected_end, pos.getEndIndex() - prefix.length());
     }
-    Measure measures[] = {
-            Measure(2, MeasureUnit::createMile(status), status),
-            Measure(1, MeasureUnit::createFoot(status), status),
-            Measure(2.3, MeasureUnit::createInch(status), status)};
-    if (!assertSuccess("Error creating measures", status)) {
-        return;
-    }
-    UnicodeString buffer;
-    fmt.formatMeasuresPer(
-            measures,
-            UPRV_LENGTHOF(measures),
-            perUnit,
-            buffer,
-            pos,
-            status);
-    if (!assertSuccess("Error formatting measures with per", status)) {
-        return;
-    }
-    assertEquals(
-            "TestMultiplesWithPer",
-            UnicodeString(expected).unescape(),
-            buffer);
 }
 
 void MeasureFormatTest::TestMultiples() {
@@ -1181,99 +1196,6 @@ void MeasureFormatTest::TestFieldPositionMultiple() {
             0);
 }
 
-void MeasureFormatTest::TestFieldPositionMultipleWithPer() {
-    UErrorCode status = U_ZERO_ERROR;
-    MeasureFormat fmt("en", UMEASFMT_WIDTH_SHORT, status);
-    if (!assertSuccess("Error creating format object", status)) {
-        return;
-    }
-    Measure first[] = {
-            Measure(354, MeasureUnit::createMeter(status), status),
-            Measure(23, MeasureUnit::createCentimeter(status), status)};
-    Measure second[] = {
-            Measure(354, MeasureUnit::createMeter(status), status),
-            Measure(23, MeasureUnit::createCentimeter(status), status),
-            Measure(5.4, MeasureUnit::createMillimeter(status), status)};
-    Measure third[] = {
-            Measure(3, MeasureUnit::createMeter(status), status),
-            Measure(23, MeasureUnit::createCentimeter(status), status),
-            Measure(5, MeasureUnit::createMillimeter(status), status)};
-    if (!assertSuccess("Error creating measure objects", status)) {
-        return;
-    }
-    UnicodeString prefix("123456: ");
-
-    LocalPointer<MeasureUnit> secondUnit(MeasureUnit::createSecond(status));
-    LocalPointer<MeasureUnit> minuteUnit(MeasureUnit::createMinute(status));
-    if (!assertSuccess("Error creating format object", status)) {
-        return;
-    }
-
-    // per unit test
-    verifyFieldPositionWithPer(
-            "Integer",
-            fmt,
-            prefix,
-            first,
-            UPRV_LENGTHOF(first),
-            *secondUnit,
-            NumberFormat::kIntegerField,
-            8,
-            11);
-    verifyFieldPositionWithPer(
-            "Decimal separator",
-            fmt,
-            prefix,
-            second,
-            UPRV_LENGTHOF(second),
-            *secondUnit,
-            NumberFormat::kDecimalSeparatorField,
-            23,
-            24);
-    verifyFieldPositionWithPer(
-            "no decimal separator",
-            fmt,
-            prefix,
-            third,
-            UPRV_LENGTHOF(third),
-            *secondUnit,
-            NumberFormat::kDecimalSeparatorField,
-            0,
-            0);
-
-    // Fallback to compound per test
-    verifyFieldPositionWithPer(
-            "Integer",
-            fmt,
-            prefix,
-            first,
-            UPRV_LENGTHOF(first),
-            *minuteUnit,
-            NumberFormat::kIntegerField,
-            8,
-            11);
-    verifyFieldPositionWithPer(
-            "Decimal separator",
-            fmt,
-            prefix,
-            second,
-            UPRV_LENGTHOF(second),
-            *minuteUnit,
-            NumberFormat::kDecimalSeparatorField,
-            23,
-            24);
-    verifyFieldPositionWithPer(
-            "no decimal separator",
-            fmt,
-            prefix,
-            third,
-            UPRV_LENGTHOF(third),
-            *minuteUnit,
-            NumberFormat::kDecimalSeparatorField,
-            0,
-            0);
-}
-
 void MeasureFormatTest::TestBadArg() {
     UErrorCode status = U_ZERO_ERROR;
     MeasureFormat fmt("en", UMEASFMT_WIDTH_SHORT, status);
@@ -1323,8 +1245,8 @@ void MeasureFormatTest::TestGroupingSeparator() {
         return;
     }
     Measure ms[] = {
-            Measure(INT32_MAX, MeasureUnit::createYear(status), status),
-            Measure(INT32_MIN, MeasureUnit::createMonth(status), status),
+            Measure((int32_t)INT32_MAX, MeasureUnit::createYear(status), status),
+            Measure((int32_t)INT32_MIN, MeasureUnit::createMonth(status), status),
             Measure(-987, MeasureUnit::createDay(status), status),
             Measure(1362, MeasureUnit::createHour(status), status),
             Measure(987, MeasureUnit::createMinute(status), status)};
@@ -1379,6 +1301,26 @@ void MeasureFormatTest::TestDoubleZero() {
             appendTo);
 }
 
+void MeasureFormatTest::TestUnitPerUnitResolution() {
+    UErrorCode status = U_ZERO_ERROR;
+    Locale en("en");
+    MeasureFormat fmt("en", UMEASFMT_WIDTH_SHORT, status);
+    Measure measure(50, MeasureUnit::createPound(status), status);
+    LocalPointer<MeasureUnit> sqInch(MeasureUnit::createSquareInch(status));
+    if (!assertSuccess("Create of format unit and per unit", status)) {
+        return;
+    }
+    FieldPosition pos(0);
+    UnicodeString actual;
+    fmt.formatMeasurePerUnit(
+            measure,
+            *sqInch,
+            actual,
+            pos,
+            status);
+    assertEquals("", "50 psi", actual);
+}
+
 void MeasureFormatTest::verifyFieldPosition(
         const char *description,
         const MeasureFormat &fmt,
@@ -1400,40 +1342,6 @@ void MeasureFormatTest::verifyFieldPosition(
     CharString endIndex;
     endIndex.append(descPrefix, status).append("endIndex", status);
     fmt.formatMeasures(measures, measureCount, result, pos, status);
-    if (!assertSuccess("Error formatting", status)) {
-        return;
-    }
-    assertEquals(beginIndex.data(), start, pos.getBeginIndex());
-    assertEquals(endIndex.data(), end, pos.getEndIndex());
-}
-
-void MeasureFormatTest::verifyFieldPositionWithPer(
-        const char *description,
-        const MeasureFormat &fmt,
-        const UnicodeString &prefix,
-        const Measure *measures,
-        int32_t measureCount,
-        const MeasureUnit &perUnit,
-        NumberFormat::EAlignmentFields field,
-        int32_t start,
-        int32_t end) {
-    UnicodeString result(prefix);
-    FieldPosition pos(field);
-    UErrorCode status = U_ZERO_ERROR;
-    CharString ch;
-    const char *descPrefix = ch.append(description, status)
-            .append(": ", status).data();
-    CharString beginIndex;
-    beginIndex.append(descPrefix, status).append("beginIndex", status);
-    CharString endIndex;
-    endIndex.append(descPrefix, status).append("endIndex", status);
-    fmt.formatMeasuresPer(
-            measures,
-            measureCount,
-            perUnit,
-            result,
-            pos,
-            status);
     if (!assertSuccess("Error formatting", status)) {
         return;
     }

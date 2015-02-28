@@ -1884,6 +1884,9 @@ RegexMatcher &RegexMatcher::reset(const UnicodeString &input) {
     if (fPattern->fNeedsAltInput) {
         fAltInputText = utext_clone(fAltInputText, fInputText, FALSE, TRUE, &fDeferredStatus);
     }
+    if (U_FAILURE(fDeferredStatus)) {
+        return *this;
+    }
     fInputLength = utext_nativeLength(fInputText);
 
     reset();
@@ -1908,6 +1911,9 @@ RegexMatcher &RegexMatcher::reset(UText *input) {
     if (fInputText != input) {
         fInputText = utext_clone(fInputText, input, FALSE, TRUE, &fDeferredStatus);
         if (fPattern->fNeedsAltInput) fAltInputText = utext_clone(fAltInputText, fInputText, FALSE, TRUE, &fDeferredStatus);
+        if (U_FAILURE(fDeferredStatus)) {
+            return *this;
+        }
         fInputLength = utext_nativeLength(fInputText);
 
         delete fInput;

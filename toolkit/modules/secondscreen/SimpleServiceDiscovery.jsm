@@ -21,7 +21,7 @@ Cu.import("resource://gre/modules/Messaging.jsm");
 #ifdef ANDROID
 let log = Cu.import("resource://gre/modules/AndroidLog.jsm",{}).AndroidLog.d.bind(null, "SSDP");
 #else
-let log = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService).logStringMessage
+let log = Cu.reportError;
 #endif
 
 XPCOMUtils.defineLazyGetter(this, "converter", function () {
@@ -135,7 +135,9 @@ var SimpleServiceDiscovery = {
 
   _usingLAN: function() {
     let network = Cc["@mozilla.org/network/network-link-service;1"].getService(Ci.nsINetworkLinkService);
-    return (network.linkType == Ci.nsINetworkLinkService.LINK_TYPE_WIFI || network.linkType == Ci.nsINetworkLinkService.LINK_TYPE_ETHERNET);
+    return (network.linkType == Ci.nsINetworkLinkService.LINK_TYPE_WIFI ||
+            network.linkType == Ci.nsINetworkLinkService.LINK_TYPE_ETHERNET ||
+            network.linkType == Ci.nsINetworkLinkService.LINK_TYPE_UNKNOWN);
   },
 
   _search: function _search() {

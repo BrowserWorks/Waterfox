@@ -33,6 +33,7 @@ OptimizationInfo::initNormalOptimizationInfo()
     rangeAnalysis_ = true;
     loopUnrolling_ = true;
     autoTruncate_ = true;
+    sink_ = true;
     registerAllocator_ = RegisterAllocator_LSRA;
 
     inlineMaxTotalBytecodeLength_ = 1000;
@@ -42,6 +43,7 @@ OptimizationInfo::initNormalOptimizationInfo()
     smallFunctionMaxInlineDepth_ = 10;
     compilerWarmUpThreshold_ = 1000;
     inliningWarmUpThresholdFactor_ = 0.125;
+    inliningRecompileThresholdFactor_ = 4;
 }
 
 void
@@ -57,6 +59,7 @@ OptimizationInfo::initAsmjsOptimizationInfo()
     edgeCaseAnalysis_ = false;
     eliminateRedundantChecks_ = false;
     autoTruncate_ = false;
+    sink_ = false;
     registerAllocator_ = RegisterAllocator_Backtracking;
     scalarReplacement_ = false;        // AsmJS has no objects.
 }

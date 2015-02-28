@@ -8,12 +8,12 @@
 const TAB_URL = EXAMPLE_URL + "doc_binary_search.html";
 const JS_URL = EXAMPLE_URL + "code_binary_search.js";
 
-let gDebuggee, gPanel, gDebugger, gEditor;
+let gTab, gPanel, gDebugger, gEditor;
 let gSources, gFrames, gPrefs, gOptions;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
-    gDebuggee = aDebuggee;
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+    gTab = aTab;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -41,9 +41,9 @@ function testToggleGeneratedSource() {
     is(gOptions._showOriginalSourceItem.getAttribute("checked"), "false",
       "Source maps should now be disabled.")
 
-    is(gSources.selectedValue.indexOf(".coffee"), -1,
+    is(gSources.selectedItem.attachment.source.url.indexOf(".coffee"), -1,
       "The debugger should not show the source mapped coffee source file.");
-    isnot(gSources.selectedValue.indexOf(".js"), -1,
+    isnot(gSources.selectedItem.attachment.source.url.indexOf(".js"), -1,
       "The debugger should show the generated js source file.");
 
     is(gEditor.getText().indexOf("isnt"), -1,
@@ -61,8 +61,10 @@ function testToggleGeneratedSource() {
 
 function testSetBreakpoint() {
   let deferred = promise.defer();
+  let sourceForm = getSourceForm(gSources, JS_URL);
+  let source = gDebugger.gThreadClient.source(sourceForm);
 
-  gDebugger.gThreadClient.setBreakpoint({ url: JS_URL, line: 7 }, aResponse => {
+  source.setBreakpoint({ line: 7 }, aResponse => {
     ok(!aResponse.error,
       "Should be able to set a breakpoint in a js file.");
 
@@ -81,7 +83,7 @@ function testSetBreakpoint() {
 
       // This will cause the breakpoint to be hit, and put us back in the
       // paused state.
-      gDebuggee.binary_search([0, 2, 3, 5, 7, 10], 5);
+      callInTab(gTab, "binary_search", [0, 2, 3, 5, 7, 10], 5);
     });
   });
 
@@ -95,9 +97,9 @@ function testToggleOnPause() {
     is(gOptions._showOriginalSourceItem.getAttribute("checked"), "true",
       "Source maps should now be enabled.")
 
-    isnot(gSources.selectedValue.indexOf(".coffee"), -1,
+    isnot(gSources.selectedItem.attachment.source.url.indexOf(".coffee"), -1,
       "The debugger should show the source mapped coffee source file.");
-    is(gSources.selectedValue.indexOf(".js"), -1,
+    is(gSources.selectedItem.attachment.source.url.indexOf(".js"), -1,
       "The debugger should not show the generated js source file.");
 
     is(gEditor.getText().indexOf("isnt"), 218,
@@ -135,7 +137,7 @@ function testResume() {
 }
 
 registerCleanupFunction(function() {
-  gDebuggee = null;
+  gTab = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

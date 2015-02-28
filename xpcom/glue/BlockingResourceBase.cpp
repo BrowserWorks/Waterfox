@@ -187,9 +187,11 @@ BlockingResourceBase::Print(nsACString& aOut) const
   for (uint32_t i = 0; i < state.Length(); i++) {
     const size_t kMaxLength = 1024;
     char buffer[kMaxLength];
-    addressService.GetLocation(state[i], buffer, kMaxLength);
+    addressService.GetLocation(i + 1, state[i], buffer, kMaxLength);
     const char* fmt = "    %s\n";
-    aOut += nsPrintfCString(fmt, buffer);
+    aOut.AppendLiteral("    ");
+    aOut.Append(buffer);
+    aOut.AppendLiteral("\n");
     fprintf(stderr, fmt, buffer);
   }
 
@@ -229,7 +231,9 @@ BlockingResourceBase::~BlockingResourceBase()
   // base class, or its underlying primitive, will check for such
   // stupid mistakes.
   mChainPrev = 0;             // racy only for stupidly buggy client code
-  sDeadlockDetector->Remove(this);
+  if (sDeadlockDetector) {
+    sDeadlockDetector->Remove(this);
+  }
 }
 
 

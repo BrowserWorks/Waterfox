@@ -147,7 +147,7 @@ void UnifiedCache::dumpContents() const {
 // On entry, gCacheMutex must be held.
 // On exit, cache contents dumped to stderr.
 void UnifiedCache::_dumpContents() const {
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement *element = uhash_nextElement(fHashtable, &pos);
     char buffer[256];
     int32_t cnt = 0;
@@ -193,7 +193,7 @@ UnifiedCache::~UnifiedCache() {
 // Returns TRUE if any value in cache was flushed or FALSE otherwise.
 UBool UnifiedCache::_flush(UBool all) const {
     UBool result = FALSE;
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement *element = uhash_nextElement(fHashtable, &pos);
     for (; element != NULL; element = uhash_nextElement(fHashtable, &pos)) {
         const SharedObject *sharedObject =

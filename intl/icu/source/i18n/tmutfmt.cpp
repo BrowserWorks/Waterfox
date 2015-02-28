@@ -189,7 +189,7 @@ TimeUnitFormat::parseObject(const UnicodeString& source,
          i < TimeUnit::UTIMEUNIT_FIELD_COUNT;
          i = (TimeUnit::UTimeUnitFields)(i+1)) {
         Hashtable* countToPatterns = fTimeUnitToCountToPatterns[i];
-        int32_t elemPos = -1;
+        int32_t elemPos = UHASH_FIRST;
         const UHashElement* elem = NULL;
         while ((elem = countToPatterns->nextElement(elemPos)) != NULL){
             const UHashTok keyTok = elem->key;
@@ -686,7 +686,7 @@ TimeUnitFormat::setNumberFormat(const NumberFormat& format, UErrorCode& status){
 
 void
 TimeUnitFormat::deleteHash(Hashtable* htable) {
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     if ( htable ) {
         while ( (element = htable->nextElement(pos)) != NULL ) {
@@ -707,7 +707,7 @@ TimeUnitFormat::copyHash(const Hashtable* source, Hashtable* target, UErrorCode&
     if ( U_FAILURE(status) ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     if ( source ) {
         while ( (element = source->nextElement(pos)) != NULL ) {

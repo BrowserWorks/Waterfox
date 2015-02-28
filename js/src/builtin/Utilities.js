@@ -31,8 +31,8 @@
 //
 // The few items below here are either self-hosted or installing them under a
 // std_Foo name would require ugly contortions, so they just get aliased here.
-var std_iterator = '@@iterator'; // FIXME: Change to be a symbol.
 var std_Array_indexOf = ArrayIndexOf;
+var std_String_substring = String_substring;
 // WeakMap is a bare constructor without properties or methods.
 var std_WeakMap = WeakMap;
 // StopIteration is a bare constructor without properties or methods.
@@ -100,7 +100,12 @@ function ToLength(v) {
         return 0;
 
     // Math.pow(2, 53) - 1 = 0x1fffffffffffff
-    return v < 0x1fffffffffffff ? v : 0x1fffffffffffff;
+    return std_Math_min(v, 0x1fffffffffffff);
+}
+
+// Spec: ECMAScript Draft, 6th edition Oct 14, 2014, 7.2.4.
+function SameValueZero(x, y) {
+    return x === y || (x !== x && y !== y);
 }
 
 /********** Testing code **********/

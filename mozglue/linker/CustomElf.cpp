@@ -74,11 +74,6 @@ static int p_flags_to_mprot(Word flags)
          ((flags & PF_R) ? PROT_READ : 0);
 }
 
-void
-__void_stub(void)
-{
-}
-
 } /* anonymous namespace */
 
 /**
@@ -263,7 +258,9 @@ CustomElf::Load(Mappable *mappable, const char *path, int flags)
                             arm_exidx_phdr->p_memsz);
 #endif
 
-  elf->stats("oneLibLoaded");
+  if (MOZ_UNLIKELY(Logging::isVerbose())) {
+    elf->stats("oneLibLoaded");
+  }
   DEBUG_LOG("CustomElf::Load(\"%s\", 0x%x) = %p", path, flags,
             static_cast<void *>(elf));
   return elf;
@@ -279,12 +276,6 @@ CustomElf::~CustomElf()
    * calls destructors once, so call it in all cases. */
   ElfLoader::__wrap_cxa_finalize(this);
   ElfLoader::Singleton.Forget(this);
-}
-
-void *
-CustomElf::GetSymbolPtr(const char *symbol) const
-{
-  return BaseElf::GetSymbolPtr(symbol, Hash(symbol));
 }
 
 void *
@@ -330,16 +321,6 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
       return FunctionPtr(sigaction);
   }
 
-#define MISSING_FLASH_SYMNAME_START "_ZN7android10VectorImpl19reservedVectorImpl"
-
-  // Android changed some symbols that Flash depended on in 4.4,
-  // so stub those out here
-  if (strncmp(symbol,
-              MISSING_FLASH_SYMNAME_START,
-              sizeof(MISSING_FLASH_SYMNAME_START) - 1) == 0) {
-    return FunctionPtr(__void_stub);
-  }
-
   void *sym;
 
   unsigned long hash = Hash(symbol);
@@ -348,7 +329,8 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
   if (ElfLoader::Singleton.self_elf) {
     /* We consider the library containing this code a permanent LD_PRELOAD,
      * so, check if the symbol exists here first. */
-    sym = ElfLoader::Singleton.self_elf->GetSymbolPtr(symbol, hash);
+    sym = static_cast<BaseElf *>(
+      ElfLoader::Singleton.self_elf.get())->GetSymbolPtr(symbol, hash);
     if (sym)
       return sym;
   }
@@ -361,9 +343,12 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
    * happen. */
   for (std::vector<RefPtr<LibHandle> >::const_iterator it = dependencies.begin();
        it < dependencies.end(); ++it) {
-    if (!(*it)->IsSystemElf()) {
-      sym = static_cast<BaseElf *>(
-        static_cast<CustomElf *>((*it).get()))->GetSymbolPtr(symbol, hash);
+    /* Skip if it's the library containing this code, since we've already
+     * looked at it above. */
+    if (*it == ElfLoader::Singleton.self_elf)
+      continue;
+    if (BaseElf *be = (*it)->AsBaseElf()) {
+      sym = be->GetSymbolPtr(symbol, hash);
     } else {
       sym = (*it)->GetSymbolPtr(symbol);
     }
@@ -372,25 +357,6 @@ CustomElf::GetSymbolPtrInDeps(const char *symbol) const
   }
   return nullptr;
 }
-
-bool
-CustomElf::Contains(void *addr) const
-{
-  return base.Contains(addr);
-}
-
-#ifdef __ARM_EABI__
-const void *
-CustomElf::FindExidx(int *pcount) const
-{
-  if (arm_exidx) {
-    *pcount = arm_exidx.numElements();
-    return arm_exidx;
-  }
-  *pcount = 0;
-  return nullptr;
-}
-#endif
 
 void
 CustomElf::stats(const char *when) const

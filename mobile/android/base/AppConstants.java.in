@@ -6,9 +6,10 @@
 
 package org.mozilla.gecko;
 
-import org.mozilla.gecko.mozglue.RobocopTarget;
-
 import android.os.Build;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
  * A collection of constants that pertain to the build and runtime state of the
@@ -19,7 +20,9 @@ import android.os.Build;
  * See also SysInfo.java, which includes some of the values available from
  * nsSystemInfo inside Gecko.
  */
-@RobocopTarget
+// Normally, we'd annotate with @RobocopTarget.  Since AppConstants is compiled
+// before RobocopTarget, we instead add o.m.g.AppConstants directly to the
+// Proguard configuration.
 public class AppConstants {
     public static final String ANDROID_PACKAGE_NAME = "@ANDROID_PACKAGE_NAME@";
     public static final String MANGLED_ANDROID_PACKAGE_NAME = "@MANGLED_ANDROID_PACKAGE_NAME@";
@@ -94,13 +97,13 @@ public class AppConstants {
     // add additional quotes we end up with ""x.y"", which is a syntax error.
     public static final String MOZILLA_VERSION = @MOZILLA_VERSION@;
 
-    public static final String MOZ_STUMBLER_API_KEY =
+    public static final String MOZ_MOZILLA_API_KEY = "@MOZ_MOZILLA_API_KEY@";
+    public static final boolean MOZ_STUMBLER_BUILD_TIME_ENABLED =
 //#ifdef MOZ_ANDROID_MLS_STUMBLER
-    "@MOZ_STUMBLER_API_KEY@";
+    true;
 //#else
-    null;
+    false;
 //#endif
-    public static final boolean MOZ_STUMBLER_BUILD_TIME_ENABLED = (MOZ_STUMBLER_API_KEY != null);
 
     public static final String MOZ_CHILD_PROCESS_NAME = "@MOZ_CHILD_PROCESS_NAME@";
     public static final String MOZ_UPDATE_CHANNEL = "@MOZ_UPDATE_CHANNEL@";
@@ -232,6 +235,13 @@ public class AppConstants {
     false;
 //#endif
 
+    public static final boolean NIGHTLY_BUILD =
+//#ifdef NIGHTLY_BUILD
+    true;
+//#else
+    false;
+//#endif
+
     public static final boolean DEBUG_BUILD =
 //#ifdef MOZ_DEBUG
     true;
@@ -259,6 +269,13 @@ public class AppConstants {
     public static final boolean ANDROID_DOWNLOADS_INTEGRATION =
 //#ifdef MOZ_ANDROID_DOWNLOADS_INTEGRATION
     AppConstants.Versions.feature12Plus;
+//#else
+    false;
+//#endif
+
+    public static final boolean MOZ_LINKER_EXTRACT =
+//#ifdef MOZ_LINKER_EXTRACT
+    true;
 //#else
     false;
 //#endif

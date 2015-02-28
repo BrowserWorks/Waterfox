@@ -377,7 +377,14 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     Condition testUndefined(Condition cond, const Address &addr) {
         return testUndefined(cond, Operand(addr));
     }
-
+    Condition testNull(Condition cond, const Operand &operand) {
+        MOZ_ASSERT(cond == Equal || cond == NotEqual);
+        cmpl(ToType(operand), ImmTag(JSVAL_TAG_NULL));
+        return cond;
+    }
+    Condition testNull(Condition cond, const Address &addr) {
+        return testNull(cond, Operand(addr));
+    }
 
     Condition testUndefined(Condition cond, const ValueOperand &value) {
         return testUndefined(cond, value.typeReg());
@@ -558,8 +565,20 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     // Common interface.
     /////////////////////////////////////////////////////////////////
     void reserveStack(uint32_t amount) {
-        if (amount)
-            subl(Imm32(amount), StackPointer);
+        if (amount) {
+            // On windows, we cannot skip very far down the stack without touching the
+            // memory pages in-between.  This is a corner-case code for situations where the
+            // Ion frame data for a piece of code is very large.  To handle this special case,
+            // for frames over 1k in size we allocate memory on the stack incrementally, touching
+            // it as we go.
+            uint32_t amountLeft = amount;
+            while (amountLeft > 4096) {
+                subl(Imm32(4096), StackPointer);
+                store32(Imm32(0), Address(StackPointer, 0));
+                amountLeft -= 4096;
+            }
+            subl(Imm32(amountLeft), StackPointer);
+        }
         framePushed_ += amount;
     }
     void freeStack(uint32_t amount) {
@@ -725,13 +744,16 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
     void load32(AbsoluteAddress address, Register dest) {
         movl(Operand(address), dest);
     }
-    void storePtr(ImmWord imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmWord imm, T address) {
         movl(Imm32(imm.value), Operand(address));
     }
-    void storePtr(ImmPtr imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmPtr imm, T address) {
         storePtr(ImmWord(uintptr_t(imm.value)), address);
     }
-    void storePtr(ImmGCPtr imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmGCPtr imm, T address) {
         movl(imm, Operand(address));
     }
     void storePtr(Register src, const Address &address) {
@@ -825,9 +847,14 @@ class MacroAssemblerX86 : public MacroAssemblerX86Shared
 
     // Note: this function clobbers the source register.
     void boxDouble(FloatRegister src, const ValueOperand &dest) {
-        movd(src, dest.payloadReg());
-        psrldq(Imm32(4), src);
-        movd(src, dest.typeReg());
+        if (Assembler::HasSSE41()) {
+            movd(src, dest.payloadReg());
+            pextrd(1, src, dest.typeReg());
+        } else {
+            movd(src, dest.payloadReg());
+            psrldq(Imm32(4), src);
+            movd(src, dest.typeReg());
+        }
     }
     void boxNonDouble(JSValueType type, Register src, const ValueOperand &dest) {
         if (src != dest.payloadReg())

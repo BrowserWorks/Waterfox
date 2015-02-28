@@ -29,17 +29,19 @@ public:
     // Special sort key bytes for all levels.
     static const uint8_t TERMINATOR_BYTE = 0;
     static const uint8_t LEVEL_SEPARATOR_BYTE = 1;
+
+    /** The secondary/tertiary lower limit for tailoring before any root elements. */
+    static const uint32_t BEFORE_WEIGHT16 = 0x0100;
+
     /**
      * Merge-sort-key separator.
-     * Must not be used as the lead byte of any CE weight,
-     * nor as primary compression low terminator.
+     * Same as the unique primary and identical-level weights of U+FFFE.
+     * Must not be used as primary compression low terminator.
      * Otherwise usable.
      */
     static const uint8_t MERGE_SEPARATOR_BYTE = 2;
     static const uint32_t MERGE_SEPARATOR_PRIMARY = 0x02000000;  // U+FFFE
-    static const uint32_t MERGE_SEPARATOR_WEIGHT16 = 0x0200;  // U+FFFE
-    static const uint32_t MERGE_SEPARATOR_LOWER32 = 0x02000200;  // U+FFFE
-    static const uint32_t MERGE_SEPARATOR_CE32 = 0x02000202;  // U+FFFE
+    static const uint32_t MERGE_SEPARATOR_CE32 = 0x02000505;  // U+FFFE
 
     /**
      * Primary compression low terminator, must be greater than MERGE_SEPARATOR_BYTE.

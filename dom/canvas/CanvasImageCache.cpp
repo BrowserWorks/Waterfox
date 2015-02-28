@@ -13,6 +13,7 @@
 #include "nsContentUtils.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/gfx/2D.h"
+#include "gfx2DGlue.h"
 
 namespace mozilla {
 
@@ -282,7 +283,7 @@ CanvasImageCache::NotifyDrawImage(Element* aImage,
 SourceSurface*
 CanvasImageCache::Lookup(Element* aImage,
                          HTMLCanvasElement* aCanvas,
-                         gfxIntSize* aSize)
+                         gfx::IntSize* aSize)
 {
   if (!gImageCache)
     return nullptr;
@@ -298,7 +299,7 @@ CanvasImageCache::Lookup(Element* aImage,
 
   gImageCache->MarkUsed(entry->mData);
 
-  *aSize = entry->mData->mSize;
+  *aSize = gfx::ToIntSize(entry->mData->mSize);
   return entry->mData->mSourceSurface;
 }
 

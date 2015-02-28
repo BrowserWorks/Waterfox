@@ -26,9 +26,9 @@
       <preference id="privacy.donottrackheader.enabled"
                   name="privacy.donottrackheader.enabled"
                   type="bool"/>
-      <preference id="privacy.donottrackheader.value"
-                  name="privacy.donottrackheader.value"
-                  type="int"/>
+      <preference id="privacy.trackingprotection.enabled"
+                  name="privacy.trackingprotection.enabled"
+                  type="bool"/>
 
       <!-- XXX button prefs -->
       <preference id="pref.privacy.disable_button.cookie_exceptions"
@@ -42,10 +42,15 @@
       <preference id="browser.urlbar.autocomplete.enabled"
                   name="browser.urlbar.autocomplete.enabled"
                   type="bool"/>
-      <preference id="browser.urlbar.default.behavior"
-                  name="browser.urlbar.default.behavior"
-                  type="int"
-                  onchange="document.getElementById('browser.urlbar.autocomplete.enabled').updateElements();"/>
+      <preference id="browser.urlbar.suggest.bookmark"
+                  name="browser.urlbar.suggest.bookmark"
+                  type="bool"/>
+      <preference id="browser.urlbar.suggest.history"
+                  name="browser.urlbar.suggest.history"
+                  type="bool"/>
+      <preference id="browser.urlbar.suggest.openpage"
+                  name="browser.urlbar.suggest.openpage"
+                  type="bool"/>
 
       <!-- History -->
       <preference id="places.history.enabled"
@@ -84,20 +89,32 @@
     <!-- Tracking -->
     <groupbox id="trackingGroup" align="start">
       <caption label="&tracking.label;"/>
-      <radiogroup id="doNotTrackSelection" orient="vertical"
-                  preference="privacy.donottrackheader.value"
-                  onsynctopreference="return gPrivacyPane.setTrackingPrefs()"
-                  onsyncfrompreference="return gPrivacyPane.getTrackingPrefs()">
-        <radio id="dntnotrack" value="1" label="&dntTrackingNotOkay.label2;"
-                accesskey="&dntTrackingNotOkay.accesskey;" />
-        <radio id="dntdotrack" value="0" label="&dntTrackingOkay.label2;"
-                accesskey="&dntTrackingOkay.accesskey;" />
-        <radio id="dntnopref" value="-1" label="&dntTrackingNopref.label2;"
-                accesskey="&dntTrackingNopref.accesskey;" />
-      </radiogroup>
-      <label class="text-link" id="doNotTrackInfo"
-             href="https://www.mozilla.org/dnt"
-             value="&doNotTrackInfo.label;"/>
+      <vbox id="trackingprotectionbox" hidden="true">
+        <hbox align="center">
+          <checkbox id="trackingProtection"
+                    preference="privacy.trackingprotection.enabled"
+                    accesskey="&trackingProtection.accesskey;"
+                    label="&trackingProtection.label;" />
+          <image id="trackingProtectionImage" src="chrome://browser/skin/bad-content-blocked-16.png"/>
+        </hbox>
+        <label id="trackingProtectionLearnMore"
+               class="text-link"
+               value="&trackingProtectionLearnMore.label;"/>
+        <separator/>
+      </vbox>
+      <checkbox id="privacyDoNotTrackCheckbox"
+                label="&dntTrackingNotOkay.label2;"
+                accesskey="&dntTrackingNotOkay.accesskey;"
+                preference="privacy.donottrackheader.enabled"/>
+      <separator class="thin"/>
+      <vbox>
+        <hbox pack="end">
+          <spacer flex="1"/>
+          <label class="text-link" id="doNotTrackInfo"
+                href="https://www.mozilla.org/dnt"
+                value="&doNotTrackInfo.label;"/>
+        </hbox>
+      </vbox>
 
     </groupbox>
 
@@ -242,23 +259,22 @@
     <groupbox id="locationBarGroup">
       <caption label="&locationBar.label;"/>
 
-      <hbox align="center">
-        <label id="locationBarSuggestionLabel"
-               control="locationBarSuggestion"
-               accesskey="&locbar.pre.accessKey;">&locbar.pre.label;</label>
-        <menulist id="locationBarSuggestion"
-                  preference="browser.urlbar.autocomplete.enabled"
-                  onsyncfrompreference="return gPrivacyPane.readSuggestionPref();"
-                  onsynctopreference="return gPrivacyPane.writeSuggestionPref();">
-          <menupopup>
-            <menuitem label="&locbar.both.label;" value="0"/>
-            <menuitem label="&locbar.history.label;" value="1"/>
-            <menuitem label="&locbar.bookmarks.label;" value="2"/>
-            <menuitem label="&locbar.nothing.label;" value="-1"/>
-          </menupopup>
-        </menulist>
-        <label>&locbar.post.label;</label>
-      </hbox>
+      <label id="locationBarSuggestionLabel">&locbar.suggest.label;</label>
+
+      <vbox id="tabPrefsBox" align="start" flex="1">
+        <checkbox id="historySuggestion" label="&locbar.history.label;"
+                  onsyncfrompreference="return gPrivacyPane.writeSuggestionPref();"
+                  accesskey="&locbar.history.accesskey;"
+                  preference="browser.urlbar.suggest.history"/>
+        <checkbox id="bookmarkSuggestion" label="&locbar.bookmarks.label;"
+                  onsyncfrompreference="return gPrivacyPane.writeSuggestionPref();"
+                  accesskey="&locbar.bookmarks.accesskey;"
+                  preference="browser.urlbar.suggest.bookmark"/>
+        <checkbox id="openpageSuggestion" label="&locbar.openpage.label;"
+                  onsyncfrompreference="return gPrivacyPane.writeSuggestionPref();"
+                  accesskey="&locbar.openpage.accesskey;"
+                  preference="browser.urlbar.suggest.openpage"/>
+      </vbox>
     </groupbox>
 
   </prefpane>

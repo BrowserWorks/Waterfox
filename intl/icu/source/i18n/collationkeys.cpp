@@ -262,7 +262,7 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
     int32_t commonQuaternaries = 0;
 
     uint32_t prevSecondary = 0;
-    UBool anyMergeSeparators = FALSE;
+    int32_t secSegmentStart = 0;
 
     for(;;) {
         // No need to keep all CEs in the buffer when we write a sort key.
@@ -350,7 +350,11 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
             uint32_t s = lower32 >> 16;
             if(s == 0) {
                 // secondary ignorable
-            } else if(s == Collation::COMMON_WEIGHT16) {
+            } else if(s == Collation::COMMON_WEIGHT16 &&
+                    ((options & CollationSettings::BACKWARD_SECONDARY) == 0 ||
+                        p != Collation::MERGE_SEPARATOR_PRIMARY)) {
+                // s is a common secondary weight, and
+                // backwards-secondary is off or the ce is not the merge separator.
                 ++commonSecondaries;
             } else if((options & CollationSettings::BACKWARD_SECONDARY) == 0) {
                 if(commonSecondaries != 0) {
@@ -389,16 +393,28 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
                     }
                     // commonSecondaries == 0
                 }
-                // Reduce separators so that we can look for byte<=1 later.
-                if(s <= Collation::MERGE_SEPARATOR_WEIGHT16) {
-                    if(s == Collation::MERGE_SEPARATOR_WEIGHT16) {
-                        anyMergeSeparators = TRUE;
+                if(0 < p && p <= Collation::MERGE_SEPARATOR_PRIMARY) {
+                    // The backwards secondary level compares secondary weights backwards
+                    // within segments separated by the merge separator (U+FFFE).
+                    uint8_t *secs = secondaries.data();
+                    int32_t last = secondaries.length() - 1;
+                    if(secSegmentStart < last) {
+                        uint8_t *p = secs + secSegmentStart;
+                        uint8_t *q = secs + last;
+                        do {
+                            uint8_t b = *p;
+                            *p++ = *q;
+                            *q-- = b;
+                        } while(p < q);
                     }
-                    secondaries.appendByte((s >> 8) - 1);
+                    secondaries.appendByte(p == Collation::NO_CE_PRIMARY ?
+                        Collation::LEVEL_SEPARATOR_BYTE : Collation::MERGE_SEPARATOR_BYTE);
+                    prevSecondary = 0;
+                    secSegmentStart = secondaries.length();
                 } else {
                     secondaries.appendReverseWeight16(s);
+                    prevSecondary = s;
                 }
-                prevSecondary = s;
             }
         }
 
@@ -411,19 +427,23 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
             } else {
                 uint32_t c = (lower32 >> 8) & 0xff;  // case bits & tertiary lead byte
                 U_ASSERT((c & 0xc0) != 0xc0);
-                if((c & 0xc0) == 0 && c > Collation::MERGE_SEPARATOR_BYTE) {
+                if((c & 0xc0) == 0 && c > Collation::LEVEL_SEPARATOR_BYTE) {
                     ++commonCases;
                 } else {
                     if((options & CollationSettings::UPPER_FIRST) == 0) {
                         // lowerFirst: Compress common weights to nibbles 1..7..13, mixed=14, upper=15.
-                        if(commonCases != 0) {
+                        // If there are only common (=lowest) weights in the whole level,
+                        // then we need not write anything.
+                        // Level length differences are handled already on the next-higher level.
+                        if(commonCases != 0 &&
+                                (c > Collation::LEVEL_SEPARATOR_BYTE || !cases.isEmpty())) {
                             --commonCases;
                             while(commonCases >= CASE_LOWER_FIRST_COMMON_MAX_COUNT) {
                                 cases.appendByte(CASE_LOWER_FIRST_COMMON_MIDDLE << 4);
                                 commonCases -= CASE_LOWER_FIRST_COMMON_MAX_COUNT;
                             }
                             uint32_t b;
-                            if(c <= Collation::MERGE_SEPARATOR_BYTE) {
+                            if(c <= Collation::LEVEL_SEPARATOR_BYTE) {
                                 b = CASE_LOWER_FIRST_COMMON_LOW + commonCases;
                             } else {
                                 b = CASE_LOWER_FIRST_COMMON_HIGH - commonCases;
@@ -431,7 +451,7 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
                             cases.appendByte(b << 4);
                             commonCases = 0;
                         }
-                        if(c > Collation::MERGE_SEPARATOR_BYTE) {
+                        if(c > Collation::LEVEL_SEPARATOR_BYTE) {
                             c = (CASE_LOWER_FIRST_COMMON_HIGH + (c >> 6)) << 4;  // 14 or 15
                         }
                     } else {
@@ -447,11 +467,11 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
                             cases.appendByte((CASE_UPPER_FIRST_COMMON_LOW + commonCases) << 4);
                             commonCases = 0;
                         }
-                        if(c > Collation::MERGE_SEPARATOR_BYTE) {
+                        if(c > Collation::LEVEL_SEPARATOR_BYTE) {
                             c = (CASE_UPPER_FIRST_COMMON_LOW - (c >> 6)) << 4;  // 2 or 1
                         }
                     }
-                    // c is a separator byte 01 or 02,
+                    // c is a separator byte 01,
                     // or a left-shifted nibble 0x10, 0x20, ... 0xf0.
                     cases.appendByte(c);
                 }
@@ -510,14 +530,14 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
                 // Their case+tertiary weights must be greater than those of
                 // primary and secondary CEs.
                 //
-                // Separators    01..02 -> 01..02  (unchanged)
-                // Lowercase     03..04 -> 83..84  (includes uncased)
+                // Separator         01 -> 01      (unchanged)
+                // Lowercase     02..04 -> 82..84  (includes uncased)
                 // Common weight     05 -> 85..C5  (common-weight compression range)
                 // Lowercase     06..3F -> C6..FF
-                // Mixed case    43..7F -> 43..7F
-                // Uppercase     83..BF -> 03..3F
+                // Mixed case    42..7F -> 42..7F
+                // Uppercase     82..BF -> 02..3F
                 // Tertiary CE   86..BF -> C6..FF
-                if(t <= Collation::MERGE_SEPARATOR_WEIGHT16) {
+                if(t <= Collation::NO_CE_WEIGHT16) {
                     // Keep separators unchanged.
                 } else if(lower32 > 0xffff) {
                     // Invert case bits of primary & secondary CEs.
@@ -551,24 +571,22 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
 
         if((levels & Collation::QUATERNARY_LEVEL_FLAG) != 0) {
             uint32_t q = lower32 & 0xffff;
-            if((q & 0xc0) == 0 && q > Collation::MERGE_SEPARATOR_WEIGHT16) {
+            if((q & 0xc0) == 0 && q > Collation::NO_CE_WEIGHT16) {
                 ++commonQuaternaries;
-            } else if(q <= Collation::MERGE_SEPARATOR_WEIGHT16 &&
+            } else if(q == Collation::NO_CE_WEIGHT16 &&
                     (options & CollationSettings::ALTERNATE_MASK) == 0 &&
-                    (quaternaries.isEmpty() ||
-                        quaternaries[quaternaries.length() - 1] == Collation::MERGE_SEPARATOR_BYTE)) {
-                // If alternate=non-ignorable and there are only
-                // common quaternary weights between two separators,
-                // then we need not write anything between these separators.
+                    quaternaries.isEmpty()) {
+                // If alternate=non-ignorable and there are only common quaternary weights,
+                // then we need not write anything.
                 // The only weights greater than the merge separator and less than the common weight
                 // are shifted primary weights, which are not generated for alternate=non-ignorable.
                 // There are also exactly as many quaternary weights as tertiary weights,
                 // so level length differences are handled already on tertiary level.
                 // Any above-common quaternary weight will compare greater regardless.
-                quaternaries.appendByte(q >> 8);
+                quaternaries.appendByte(Collation::LEVEL_SEPARATOR_BYTE);
             } else {
-                if(q <= Collation::MERGE_SEPARATOR_WEIGHT16) {
-                    q >>= 8;
+                if(q == Collation::NO_CE_WEIGHT16) {
+                    q = Collation::LEVEL_SEPARATOR_BYTE;
                 } else {
                     q = 0xfc + ((q >> 6) & 3);
                 }
@@ -602,42 +620,7 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
         if(!callback.needToWrite(Collation::SECONDARY_LEVEL)) { return; }
         ok &= secondaries.isOk();
         sink.Append(Collation::LEVEL_SEPARATOR_BYTE);
-        uint8_t *secs = secondaries.data();
-        int32_t length = secondaries.length() - 1;  // Ignore the trailing NO_CE.
-        if((options & CollationSettings::BACKWARD_SECONDARY) != 0) {
-            // The backwards secondary level compares secondary weights backwards
-            // within segments separated by the merge separator (U+FFFE, weight 02).
-            // The separator weights 01 & 02 were reduced to 00 & 01 so that
-            // we do not accidentally separate at a _second_ weight byte of 02.
-            int32_t start = 0;
-            for(;;) {
-                // Find the merge separator or the NO_CE terminator.
-                int32_t limit;
-                if(anyMergeSeparators) {
-                    limit = start;
-                    while(secs[limit] > 1) { ++limit; }
-                } else {
-                    limit = length;
-                }
-                // Reverse this segment.
-                if(start < limit) {
-                    uint8_t *p = secs + start;
-                    uint8_t *q = secs + limit - 1;
-                    while(p < q) {
-                        uint8_t s = *p;
-                        *p++ = *q;
-                        *q-- = s;
-                    }
-                }
-                // Did we reach the end of the string?
-                if(secs[limit] == 0) { break; }
-                // Restore the merge separator.
-                secs[limit] = 2;
-                // Skip the merge separator and continue.
-                start = limit + 1;
-            }
-        }
-        sink.Append(reinterpret_cast<char *>(secs), length);
+        secondaries.appendTo(sink);
     }
 
     if((levels & Collation::CASE_LEVEL_FLAG) != 0) {
@@ -649,21 +632,12 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
         uint8_t b = 0;
         for(int32_t i = 0; i < length; ++i) {
             uint8_t c = (uint8_t)cases[i];
-            if(c <= Collation::MERGE_SEPARATOR_BYTE) {
-                U_ASSERT(c != 0);
-                if(b != 0) {
-                    sink.Append(b);
-                    b = 0;
-                }
-                sink.Append(c);
+            U_ASSERT((c & 0xf) == 0 && c != 0);
+            if(b == 0) {
+                b = c;
             } else {
-                U_ASSERT((c & 0xf) == 0);
-                if(b == 0) {
-                    b = c;
-                } else {
-                    sink.Append(b | (c >> 4));
-                    b = 0;
-                }
+                sink.Append(b | (c >> 4));
+                b = 0;
             }
         }
         if(b != 0) {

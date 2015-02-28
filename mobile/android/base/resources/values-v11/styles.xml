@@ -51,8 +51,8 @@
          <item name="android:displayOptions">showHome|homeAsUp|showTitle</item>
     </style>
  
-    <!-- TabsTray ActionBar -->
-    <style name="ActionBar.TabsTray">
+    <!-- TabsLayout ActionBar -->
+    <style name="ActionBar.TabsLayout">
          <item name="android:visibility">gone</item>
     </style>
 
@@ -77,7 +77,7 @@
     </style>
 
     <style name="GeckoActionBar" parent="@android:style/Widget.Holo.Light.ActionMode">
-        <item name="android:background">@drawable/ab_stacked_transparent_light_holo</item>
+        <item name="android:background">@drawable/ab_background</item>
     </style>
 
     <style name="TextAppearance.Widget.ActionBar.Title" parent="@android:style/TextAppearance.Medium"/>

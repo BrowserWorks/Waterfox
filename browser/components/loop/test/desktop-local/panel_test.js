@@ -64,7 +64,8 @@ describe("loop.panel", function() {
         },
         on: sandbox.stub()
       },
-      confirm: sandbox.stub()
+      confirm: sandbox.stub(),
+      notifyUITour: sandbox.stub()
     };
 
     document.mozL10n.initialize(navigator.mozLoop);
@@ -726,6 +727,42 @@ describe("loop.panel", function() {
       return TestUtils.renderIntoDocument(loop.panel.RoomEntry(props));
     }
 
+    describe("Edit room name", function() {
+      var roomEntry, domNode;
+
+      beforeEach(function() {
+        roomEntry = mountRoomEntry({
+          dispatcher: dispatcher,
+          deleteRoom: sandbox.stub(),
+          room: new loop.store.Room(roomData)
+        });
+        domNode = roomEntry.getDOMNode();
+
+        TestUtils.Simulate.click(domNode.querySelector(".edit-in-place"));
+      });
+
+      it("should render an edit form on room name click", function() {
+        expect(domNode.querySelector("form")).not.eql(null);
+        expect(domNode.querySelector("input").value).eql(roomData.roomName);
+      });
+
+      it("should dispatch a RenameRoom action when submitting the form",
+        function() {
+          var dispatch = sandbox.stub(dispatcher, "dispatch");
+
+          TestUtils.Simulate.change(domNode.querySelector("input"), {
+            target: {value: "New name"}
+          });
+          TestUtils.Simulate.submit(domNode.querySelector("form"));
+
+          sinon.assert.calledOnce(dispatch);
+          sinon.assert.calledWithExactly(dispatch, new sharedActions.RenameRoom({
+            roomToken: roomData.roomToken,
+            newRoomName: "New name"
+          }));
+        });
+    });
+
     describe("Copy button", function() {
       var roomEntry, copyButton;
 
@@ -815,6 +852,7 @@ describe("loop.panel", function() {
     });
 
     describe("Room URL click", function() {
+
       var roomEntry, urlLink;
 
       beforeEach(function() {
@@ -839,6 +877,25 @@ describe("loop.panel", function() {
         TestUtils.Simulate.click(urlLink);
 
         sinon.assert.calledOnce(fakeWindow.close);
+      });
+    });
+
+    describe("Room name updated", function() {
+      it("should update room name", function() {
+        var roomEntry = mountRoomEntry({
+          dispatcher: dispatcher,
+          room: new loop.store.Room(roomData)
+        });
+        var updatedRoom = new loop.store.Room(_.extend({}, roomData, {
+          roomName: "New room name",
+          ctime: new Date().getTime()
+        }));
+
+        roomEntry.setProps({room: updatedRoom});
+
+        expect(
+          roomEntry.getDOMNode().querySelector(".edit-in-place").textContent)
+        .eql("New room name");
       });
     });
   });

@@ -19,6 +19,7 @@
 #include "nsISupportsImpl.h"            // for MOZ_COUNT_CTOR, etc
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsString.h"                   // for nsAutoCString
+#include "gfxVR.h"
 
 namespace mozilla {
 namespace layers {
@@ -58,6 +59,16 @@ Layer*
 CanvasLayerComposite::GetLayer()
 {
   return this;
+}
+
+void
+CanvasLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+{
+  LayerComposite::SetLayerManager(aManager);
+  mManager = aManager;
+  if (mImageHost) {
+    mImageHost->SetCompositor(mCompositor);
+  }
 }
 
 LayerRenderState

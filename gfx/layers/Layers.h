@@ -45,6 +45,7 @@
 #include "nscore.h"                     // for nsACString, nsAString
 #include "prlog.h"                      // for PRLogModuleInfo
 #include "gfx2DGlue.h"
+#include "gfxVR.h"
 
 class gfxContext;
 
@@ -59,7 +60,7 @@ class WebGLContext;
 
 namespace gl {
 class GLContext;
-class SurfaceStream;
+class SharedSurface;
 }
 
 namespace gfx {
@@ -1889,6 +1890,16 @@ public:
    */
   static bool HasOpaqueAncestorLayer(Layer* aLayer);
 
+  void SetChildrenChanged(bool aVal) {
+    mChildrenChanged = aVal;
+  }
+
+  /**
+   * VR
+   */
+  void SetVRHMDInfo(gfx::VRHMDInfo* aHMD) { mHMDInfo = aHMD; }
+  gfx::VRHMDInfo* GetVRHMDInfo() { return mHMDInfo; }
+
 protected:
   friend class ReadbackProcessor;
 
@@ -1931,6 +1942,10 @@ protected:
   bool mUseIntermediateSurface;
   bool mSupportsComponentAlphaChildren;
   bool mMayHaveReadbackChild;
+  // This is updated by ComputeDifferences. This will be true if we need to invalidate
+  // the intermediate surface.
+  bool mChildrenChanged;
+  nsRefPtr<gfx::VRHMDInfo> mHMDInfo;
 };
 
 /**
@@ -2010,8 +2025,7 @@ public:
     Data()
       : mDrawTarget(nullptr)
       , mGLContext(nullptr)
-      , mStream(nullptr)
-      , mTexID(0)
+      , mFrontbufferGLTex(0)
       , mSize(0,0)
       , mHasAlpha(false)
       , mIsGLAlphaPremult(true)
@@ -2021,11 +2035,8 @@ public:
     mozilla::gfx::DrawTarget* mDrawTarget; // a DrawTarget for the canvas contents
     mozilla::gl::GLContext* mGLContext; // or this, for GL.
 
-    // Canvas/SkiaGL uses this
-    mozilla::gl::SurfaceStream* mStream;
-
-    // ID of the texture backing the canvas layer (defaults to 0)
-    uint32_t mTexID;
+    // Frontbuffer override
+    uint32_t mFrontbufferGLTex;
 
     // The size of the canvas content
     nsIntSize mSize;
@@ -2230,7 +2241,15 @@ public:
   {
     MOZ_ASSERT(!mFirstChild && !mLastChild);
     MOZ_ASSERT(!aLayer->GetParent());
-    MOZ_ASSERT(aLayer->Manager() == Manager());
+    if (aLayer->Manager() != Manager()) {
+      // This can happen when e.g. rendering while dragging tabs
+      // between windows - aLayer's manager may be the manager for the
+      // old window's tab.  In that case, it will be changed before the
+      // next render (see SetLayerManager).  It is simply easier to
+      // ignore the rendering here than it is to pause it.
+      NS_WARNING("ConnectReferentLayer failed - Incorrect LayerManager");
+      return;
+    }
 
     mFirstChild = mLastChild = aLayer;
     aLayer->SetParent(this);
@@ -2242,9 +2261,6 @@ public:
    */
   void DetachReferentLayer(Layer* aLayer)
   {
-    MOZ_ASSERT(aLayer == mFirstChild && mFirstChild == mLastChild);
-    MOZ_ASSERT(aLayer->GetParent() == this);
-
     mFirstChild = mLastChild = nullptr;
     aLayer->SetParent(nullptr);
   }

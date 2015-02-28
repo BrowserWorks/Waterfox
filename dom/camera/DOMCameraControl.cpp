@@ -37,6 +37,7 @@
 #include "mozilla/dom/CameraFacesDetectedEvent.h"
 #include "mozilla/dom/CameraFacesDetectedEventBinding.h"
 #include "mozilla/dom/CameraStateChangeEvent.h"
+#include "mozilla/dom/CameraClosedEvent.h"
 #include "mozilla/dom/BlobEvent.h"
 #include "DOMCameraDetectedFace.h"
 #include "mozilla/dom/BindingUtils.h"
@@ -45,6 +46,12 @@
 using namespace mozilla;
 using namespace mozilla::dom;
 using namespace mozilla::ipc;
+
+#ifdef MOZ_WIDGET_GONK
+StaticRefPtr<ICameraControl> nsDOMCameraControl::sCachedCameraControl;
+/* static */ nsresult nsDOMCameraControl::sCachedCameraControlStartResult = NS_OK;
+/* static */ nsCOMPtr<nsITimer> nsDOMCameraControl::sDiscardCachedCameraControlTimer;
+#endif
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(nsDOMCameraControl)
   NS_INTERFACE_MAP_ENTRY(nsISupports)
@@ -144,6 +151,60 @@ nsDOMCameraControl::DOMCameraConfiguration::~DOMCameraConfiguration()
   MOZ_COUNT_DTOR(nsDOMCameraControl::DOMCameraConfiguration);
 }
 
+#ifdef MOZ_WIDGET_GONK
+// This shoudl be long enough for even our slowest platforms.
+static const unsigned long kCachedCameraTimeoutMs = 3500;
+
+// Open the battery-door-facing camera by default.
+static const uint32_t kDefaultCameraId = 0;
+
+/* static */ void
+nsDOMCameraControl::PreinitCameraHardware()
+{
+  // Assume a default, minimal configuration. This should initialize the
+  // hardware, but won't (can't) start the preview.
+  nsRefPtr<ICameraControl> cameraControl = ICameraControl::Create(kDefaultCameraId);
+  if (NS_WARN_IF(!cameraControl)) {
+    return;
+  }
+
+  sCachedCameraControlStartResult = cameraControl->Start();
+  if (NS_WARN_IF(NS_FAILED(sCachedCameraControlStartResult))) {
+    return;
+  }
+
+  sCachedCameraControl = cameraControl;
+
+  nsCOMPtr<nsITimer> timer = do_CreateInstance(NS_TIMER_CONTRACTID);
+  if (NS_WARN_IF(!timer)) {
+    return;
+  }
+
+  nsresult rv = timer->InitWithFuncCallback(DiscardCachedCameraInstance,
+                                            nullptr,
+                                            kCachedCameraTimeoutMs,
+                                            nsITimer::TYPE_ONE_SHOT);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    // If we can't start the timer, it's possible for an app to never grab the
+    // camera, leaving the hardware tied up indefinitely. Better to take the
+    // performance hit.
+    sCachedCameraControl = nullptr;
+    return;
+  }
+
+  sDiscardCachedCameraControlTimer = timer;
+}
+
+/* static */ void
+nsDOMCameraControl::DiscardCachedCameraInstance(nsITimer* aTimer, void* aClosure)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  sDiscardCachedCameraControlTimer = nullptr;
+  sCachedCameraControl = nullptr;
+}
+#endif
+
 nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
                                        const CameraConfiguration& aInitialConfig,
                                        GetCameraCallback* aOnSuccess,
@@ -214,11 +275,24 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
     config.mRecorderProfile = aInitialConfig.mRecorderProfile;
   }
 
-  mCameraControl = ICameraControl::Create(aCameraId);
+#ifdef MOZ_WIDGET_GONK
+  bool gotCached = false;
+  if (sCachedCameraControl && aCameraId == kDefaultCameraId) {
+    mCameraControl = sCachedCameraControl;
+    sCachedCameraControl = nullptr;
+    gotCached = true;
+  } else {
+    sCachedCameraControl = nullptr;
+#endif
+    mCameraControl = ICameraControl::Create(aCameraId);
+#ifdef MOZ_WIDGET_GONK
+  }
+#endif
   mCurrentConfiguration = initialConfig.forget();
 
   // Attach our DOM-facing media stream to our viewfinder stream.
-  mStream = mInput;
+  SetHintContents(HINT_CONTENTS_VIDEO);
+  InitStreamCommon(mInput);
   MOZ_ASSERT(mWindow, "Shouldn't be created with a null window!");
   if (mWindow->GetExtantDoc()) {
     CombineWithPrincipal(mWindow->GetExtantDoc()->NodePrincipal());
@@ -228,12 +302,24 @@ nsDOMCameraControl::nsDOMCameraControl(uint32_t aCameraId,
   mListener = new DOMCameraControlListener(this, mInput);
   mCameraControl->AddListener(mListener);
 
-  // Start the camera...
-  if (haveInitialConfig) {
-    rv = mCameraControl->Start(&config);
+#ifdef MOZ_WIDGET_GONK
+  if (!gotCached || NS_FAILED(sCachedCameraControlStartResult)) {
+#endif
+    // Start the camera...
+    if (haveInitialConfig) {
+      rv = mCameraControl->Start(&config);
+    } else {
+      rv = mCameraControl->Start();
+    }
+#ifdef MOZ_WIDGET_GONK
   } else {
-    rv = mCameraControl->Start();
+    if (haveInitialConfig) {
+      rv = mCameraControl->SetConfiguration(config);
+    } else {
+      rv = NS_OK;
+    }
   }
+#endif
   if (NS_FAILED(rv)) {
     mListener->OnUserError(DOMCameraControlListener::kInStartCamera, rv);
   }
@@ -664,12 +750,7 @@ nsDOMCameraControl::Capabilities()
   nsRefPtr<CameraCapabilities> caps = mCapabilities;
 
   if (!caps) {
-    caps = new CameraCapabilities(mWindow);
-    nsresult rv = caps->Populate(mCameraControl);
-    if (NS_FAILED(rv)) {
-      DOM_CAMERA_LOGW("Failed to populate camera capabilities (%d)\n", rv);
-      return nullptr;
-    }
+    caps = new CameraCapabilities(mWindow, mCameraControl);
     mCapabilities = caps;
   }
 
@@ -1135,15 +1216,16 @@ nsDOMCameraControl::DispatchStateEvent(const nsString& aType, const nsString& aS
 
 // Camera Control event handlers--must only be called from the Main Thread!
 void
-nsDOMCameraControl::OnHardwareStateChange(CameraControlListener::HardwareState aState)
+nsDOMCameraControl::OnHardwareStateChange(CameraControlListener::HardwareState aState,
+                                          nsresult aReason)
 {
   MOZ_ASSERT(NS_IsMainThread());
   ErrorResult ignored;
 
-  DOM_CAMERA_LOGI("DOM OnHardwareStateChange(%d)\n", aState);
-
   switch (aState) {
     case CameraControlListener::kHardwareOpen:
+      DOM_CAMERA_LOGI("DOM OnHardwareStateChange: open\n");
+      MOZ_ASSERT(aReason == NS_OK);
       {
         // The hardware is open, so we can return a camera to JS, even if
         // the preview hasn't started yet.
@@ -1164,30 +1246,61 @@ nsDOMCameraControl::OnHardwareStateChange(CameraControlListener::HardwareState a
       break;
 
     case CameraControlListener::kHardwareClosed:
+      DOM_CAMERA_LOGI("DOM OnHardwareStateChange: closed\n");
       {
         nsRefPtr<Promise> promise = mReleasePromise.forget();
-        if (promise || mReleaseOnSuccessCb) {
-          // If we have this event handler, this was a solicited hardware close.
-          if (promise) {
-            promise->MaybeResolve(JS::UndefinedHandleValue);
-          }
-          nsRefPtr<CameraReleaseCallback> cb = mReleaseOnSuccessCb.forget();
-          mReleaseOnErrorCb = nullptr;
-          if (cb) {
-            cb->Call(ignored);
-          }
-        } else {
-          // If not, something else closed the hardware.
-          nsRefPtr<CameraClosedCallback> cb = mOnClosedCb;
-          if (cb) {
-            cb->Call(ignored);
-          }
+        if (promise) {
+          promise->MaybeResolve(JS::UndefinedHandleValue);
         }
-        DispatchTrustedEvent(NS_LITERAL_STRING("close"));
+
+        nsRefPtr<CameraReleaseCallback> rcb = mReleaseOnSuccessCb.forget();
+        mReleaseOnErrorCb = nullptr;
+        if (rcb) {
+          ErrorResult ignored;
+          rcb->Call(ignored);
+        }
+
+        CameraClosedEventInit eventInit;
+        switch (aReason) {
+          case NS_OK:
+            eventInit.mReason = NS_LITERAL_STRING("HardwareReleased");
+            break;
+
+          case NS_ERROR_FAILURE:
+            eventInit.mReason = NS_LITERAL_STRING("SystemFailure");
+            break;
+
+          case NS_ERROR_NOT_AVAILABLE:
+            eventInit.mReason = NS_LITERAL_STRING("NotAvailable");
+            break;
+
+          default:
+            DOM_CAMERA_LOGE("Unhandled hardware close reason, 0x%x\n", aReason);
+            MOZ_ASSERT_UNREACHABLE("Unanticipated reason for hardware close");
+            eventInit.mReason = NS_LITERAL_STRING("SystemFailure");
+            break;
+        }
+
+        nsRefPtr<CameraClosedCallback> cb = mOnClosedCb;
+        if (cb) {
+          cb->Call(eventInit.mReason, ignored);
+        }
+        nsRefPtr<CameraClosedEvent> event =
+          CameraClosedEvent::Constructor(this,
+                                         NS_LITERAL_STRING("close"),
+                                         eventInit);
+        DispatchTrustedEvent(event);
       }
       break;
 
+    case CameraControlListener::kHardwareOpenFailed:
+      DOM_CAMERA_LOGI("DOM OnHardwareStateChange: open failed\n");
+      MOZ_ASSERT(aReason == NS_ERROR_NOT_AVAILABLE);
+      OnUserError(DOMCameraControlListener::kInStartCamera, NS_ERROR_NOT_AVAILABLE);
+      break;
+
     default:
+      DOM_CAMERA_LOGE("DOM OnHardwareStateChange: UNKNOWN=%d\n", aState);
       MOZ_ASSERT_UNREACHABLE("Unanticipated camera hardware state");
   }
 }
@@ -1402,7 +1515,7 @@ nsDOMCameraControl::OnAutoFocusMoving(bool aIsMoving)
 void
 nsDOMCameraControl::OnFacesDetected(const nsTArray<ICameraControl::Face>& aFaces)
 {
-  DOM_CAMERA_LOGI("DOM OnFacesDetected %u face(s)\n", aFaces.Length());
+  DOM_CAMERA_LOGI("DOM OnFacesDetected %zu face(s)\n", aFaces.Length());
   MOZ_ASSERT(NS_IsMainThread());
 
   Sequence<OwningNonNull<DOMCameraDetectedFace> > faces;
@@ -1481,8 +1594,24 @@ nsDOMCameraControl::OnUserError(CameraControlListener::UserContext aContext, nsr
 
     case CameraControlListener::kInStopCamera:
       promise = mReleasePromise.forget();
-      mReleaseOnSuccessCb = nullptr;
       errorCb = mReleaseOnErrorCb.forget();
+      if (aError == NS_ERROR_NOT_INITIALIZED) {
+        // This value indicates that the hardware is already closed; which for
+        // kInStopCamera, is not actually an error.
+        if (promise) {
+          promise->MaybeResolve(JS::UndefinedHandleValue);
+        }
+
+        nsRefPtr<CameraReleaseCallback> cb = mReleaseOnSuccessCb.forget();
+        mReleaseOnErrorCb = nullptr;
+        if (cb) {
+          ErrorResult ignored;
+          cb->Call(ignored);
+        }
+
+        return;
+      }
+      mReleaseOnSuccessCb = nullptr;
       break;
 
     case CameraControlListener::kInSetConfiguration:

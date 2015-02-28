@@ -115,7 +115,6 @@
 #ifdef XP_UNIX
 #ifndef XP_MACOSX
 @BINPATH@/run-mozilla.sh
-@BINPATH@/mozilla-xremote-client
 #endif
 #endif
 
@@ -133,6 +132,7 @@
 @BINPATH@/components/autocomplete.xpt
 @BINPATH@/components/autoconfig.xpt
 @BINPATH@/components/browsercompsbase.xpt
+@BINPATH@/components/browser-element.xpt
 @BINPATH@/components/browser-feeds.xpt
 @BINPATH@/components/caps.xpt
 @BINPATH@/components/chardet.xpt
@@ -140,9 +140,7 @@
 @BINPATH@/components/commandhandler.xpt
 @BINPATH@/components/commandlines.xpt
 @BINPATH@/components/composer.xpt
-@BINPATH@/components/content_base.xpt
 @BINPATH@/components/content_events.xpt
-@BINPATH@/components/content_htmldoc.xpt
 @BINPATH@/components/content_html.xpt
 @BINPATH@/components/content_xslt.xpt
 @BINPATH@/components/cookie.xpt
@@ -190,6 +188,7 @@
 @BINPATH@/components/dom_power.xpt
 @BINPATH@/components/dom_quota.xpt
 @BINPATH@/components/dom_range.xpt
+@BINPATH@/components/dom_security.xpt
 @BINPATH@/components/dom_settings.xpt
 @BINPATH@/components/dom_permissionsettings.xpt
 @BINPATH@/components/dom_sidebar.xpt
@@ -200,6 +199,7 @@
 @BINPATH@/components/dom_telephony.xpt
 @BINPATH@/components/dom_threads.xpt
 @BINPATH@/components/dom_traversal.xpt
+@BINPATH@/components/dom_tv.xpt
 @BINPATH@/components/dom_views.xpt
 @BINPATH@/components/dom_voicemail.xpt
 #ifdef MOZ_WEBSPEECH
@@ -338,7 +338,6 @@
 @BINPATH@/components/xpconnect.xpt
 @BINPATH@/components/xulapp.xpt
 @BINPATH@/components/xul.xpt
-@BINPATH@/components/xuldoc.xpt
 @BINPATH@/components/xultmpl.xpt
 @BINPATH@/components/zipwriter.xpt
 
@@ -450,6 +449,10 @@
 @BINPATH@/components/RadioInterfaceLayer.js
 @BINPATH@/components/RadioInterfaceLayer.manifest
 @BINPATH@/components/RILContentHelper.js
+@BINPATH@/components/RILSystemMessengerHelper.js
+@BINPATH@/components/RILSystemMessengerHelper.manifest
+@BINPATH@/components/TelephonyAudioService.js
+@BINPATH@/components/TelephonyAudioService.manifest
 @BINPATH@/components/TelephonyService.js
 @BINPATH@/components/TelephonyService.manifest
 @BINPATH@/components/VoicemailService.js
@@ -844,7 +847,6 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/ProcessGlobal.js
 @BINPATH@/components/OMAContentHandler.js
 @BINPATH@/components/PaymentGlue.js
-@BINPATH@/components/YoutubeProtocolHandler.js
 @BINPATH@/components/RecoveryService.js
 @BINPATH@/components/MailtoProtocolHandler.js
 @BINPATH@/components/SmsProtocolHandler.js
@@ -886,4 +888,8 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 [gaia]
 @BINPATH@/gaia/*
 @BINPATH@/b2g-bin@BIN_SUFFIX@
+#endif
+
+#ifdef PACKAGE_MOZTT
+@BINPATH@/fonts/*
 #endif

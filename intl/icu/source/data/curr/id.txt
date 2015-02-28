@@ -389,7 +389,7 @@ id{
         }
         GBP{
             "£",
-            "Pound Sterling Inggris",
+            "Pound Inggris",
         }
         GEK{
             "GEK",
@@ -1436,7 +1436,7 @@ id{
             other{"Pound Kepulauan Falkland"}
         }
         GBP{
-            other{"Pound Sterling Inggris"}
+            other{"Pound Inggris"}
         }
         GEL{
             other{"Lari Georgia"}
@@ -1862,5 +1862,5 @@ id{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

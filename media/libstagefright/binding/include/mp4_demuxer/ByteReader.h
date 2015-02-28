@@ -16,23 +16,39 @@ class ByteReader
 public:
   ByteReader() : mPtr(nullptr), mRemaining(0) {}
   explicit ByteReader(const mozilla::Vector<uint8_t>& aData)
-    : mPtr(&aData[0]), mRemaining(aData.length())
+    : mPtr(&aData[0]), mRemaining(aData.length()), mLength(aData.length())
   {
   }
   ByteReader(const uint8_t* aData, size_t aSize)
-    : mPtr(aData), mRemaining(aSize)
+    : mPtr(aData), mRemaining(aSize), mLength(aSize)
   {
   }
+  template<size_t S>
+  ByteReader(const nsAutoTArray<uint8_t, S>& aData)
+    : mPtr(&aData[0]), mRemaining(aData.Length()), mLength(aData.Length())
+  {
+  }
+  explicit ByteReader(const nsTArray<uint8_t>& aData)
+    : mPtr(&aData[0]), mRemaining(aData.Length()), mLength(aData.Length())
+  {
+  }
+
   void SetData(const nsTArray<uint8_t>& aData)
   {
     MOZ_ASSERT(!mPtr && !mRemaining);
-    mPtr = &aData[0];
+    mPtr = aData.Elements();
     mRemaining = aData.Length();
+    mLength = mRemaining;
   }
 
   ~ByteReader()
   {
-    MOZ_ASSERT(!mRemaining);
+    NS_ASSERTION(!mRemaining, "Not all bytes have been processed");
+  }
+
+  size_t Offset()
+  {
+    return mLength - mRemaining;
   }
 
   // Make it explicit if we're not using the extra bytes.
@@ -66,6 +82,21 @@ public:
     return mozilla::BigEndian::readUint16(ptr);
   }
 
+  uint32_t ReadU24()
+  {
+    auto ptr = Read(3);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return ptr[0] << 16 | ptr[1] << 8 | ptr[2];
+  }
+
+  uint32_t Read24()
+  {
+    return (uint32_t)ReadU24();
+  }
+
   uint32_t ReadU32()
   {
     auto ptr = Read(4);
@@ -76,6 +107,16 @@ public:
     return mozilla::BigEndian::readUint32(ptr);
   }
 
+  int32_t Read32()
+  {
+    auto ptr = Read(4);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readInt32(ptr);
+  }
+
   uint64_t ReadU64()
   {
     auto ptr = Read(8);
@@ -84,6 +125,16 @@ public:
       return 0;
     }
     return mozilla::BigEndian::readUint64(ptr);
+  }
+
+  int64_t Read64()
+  {
+    auto ptr = Read(8);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readInt64(ptr);
   }
 
   const uint8_t* Read(size_t aCount)
@@ -98,6 +149,126 @@ public:
     mPtr += aCount;
 
     return result;
+  }
+
+  const uint8_t* Rewind(size_t aCount)
+  {
+    MOZ_ASSERT(aCount <= Offset());
+    size_t rewind = Offset();
+    if (aCount < rewind) {
+      rewind = aCount;
+    }
+    mRemaining += rewind;
+    mPtr -= rewind;
+    return mPtr;
+  }
+
+  uint8_t PeekU8()
+  {
+    auto ptr = Peek(1);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return *ptr;
+  }
+
+  uint16_t PeekU16()
+  {
+    auto ptr = Peek(2);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readUint16(ptr);
+  }
+
+  uint32_t PeekU24()
+  {
+    auto ptr = Peek(3);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return ptr[0] << 16 | ptr[1] << 8 | ptr[2];
+  }
+
+  uint32_t Peek24()
+  {
+    return (uint32_t)PeekU24();
+  }
+
+  uint32_t PeekU32()
+  {
+    auto ptr = Peek(4);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readUint32(ptr);
+  }
+
+  int32_t Peek32()
+  {
+    auto ptr = Peek(4);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readInt32(ptr);
+  }
+
+  uint64_t PeekU64()
+  {
+    auto ptr = Peek(8);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readUint64(ptr);
+  }
+
+  int64_t Peek64()
+  {
+    auto ptr = Peek(8);
+    if (!ptr) {
+      MOZ_ASSERT(false);
+      return 0;
+    }
+    return mozilla::BigEndian::readInt64(ptr);
+  }
+
+  const uint8_t* Peek(size_t aCount)
+  {
+    if (aCount > mRemaining) {
+      MOZ_ASSERT(false);
+      return nullptr;
+    }
+    return mPtr;
+  }
+
+  const uint8_t* Seek(size_t aOffset)
+  {
+    if (aOffset >= mLength) {
+      MOZ_ASSERT(false);
+      return nullptr;
+    }
+
+    mPtr = mPtr - Offset() + aOffset;
+    mRemaining = mLength - aOffset;
+    return mPtr;
+  }
+
+  const uint8_t* Reset()
+  {
+    mPtr -= Offset();
+    mRemaining = mLength;
+    return mPtr;
+  }
+
+  uint32_t Align()
+  {
+    return 4 - ((intptr_t)mPtr & 3);
   }
 
   template <typename T> bool CanReadType() { return mRemaining >= sizeof(T); }
@@ -128,6 +299,7 @@ public:
 private:
   const uint8_t* mPtr;
   size_t mRemaining;
+  size_t mLength;
 };
 }
 

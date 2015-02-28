@@ -69,6 +69,15 @@ struct CGBlockScopeList {
     void finish(BlockScopeArray *array);
 };
 
+struct CGYieldOffsetList {
+    Vector<uint32_t> list;
+    explicit CGYieldOffsetList(ExclusiveContext *cx) : list(cx) {}
+
+    bool append(uint32_t offset) { return list.append(offset); }
+    size_t length() const { return list.length(); }
+    void finish(YieldOffsetArray &array, uint32_t prologLength);
+};
+
 struct StmtInfoBCE;
 
 // Use zero inline elements because these go on the stack and affect how many
@@ -116,6 +125,13 @@ struct BytecodeEmitter
     OwnedAtomIndexMapPtr atomIndices; /* literals indexed for mapping */
     unsigned        firstLine;      /* first line, for JSScript::initFromEmitter */
 
+    /*
+     * Only unaliased locals have stack slots assigned to them. This vector is
+     * used to map a local index (which includes unaliased and aliased locals)
+     * to its stack slot index.
+     */
+    Vector<uint32_t, 16> localsToFrameSlots_;
+
     int32_t         stackDepth;     /* current stack depth in script frame */
     uint32_t        maxStackDepth;  /* maximum stack depth so far */
 
@@ -130,6 +146,12 @@ struct BytecodeEmitter
                                        cloned during execution */
     CGTryNoteList   tryNoteList;    /* list of emitted try notes */
     CGBlockScopeList blockScopeList;/* list of emitted block scope notes */
+
+    /*
+     * For each yield op, map the yield index (stored as bytecode operand) to
+     * the offset of the next op.
+     */
+    CGYieldOffsetList yieldOffsetList;
 
     uint16_t        typesetCount;   /* Number of JOF_TYPESET opcodes generated */
 
@@ -178,6 +200,7 @@ struct BytecodeEmitter
                     bool insideEval, HandleScript evalCaller, bool hasGlobalScope,
                     uint32_t lineNum, EmitterMode emitterMode = Normal);
     bool init();
+    bool updateLocalsToFrameSlots();
 
     bool isAliasedName(ParseNode *pn);
 

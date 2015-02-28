@@ -10,7 +10,6 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 let promise = require("devtools/toolkit/deprecated-sync-thenables");
 let EventEmitter = require("devtools/toolkit/event-emitter");
-let {CssLogic} = require("devtools/styleinspector/css-logic");
 let clipboard = require("sdk/clipboard");
 
 loader.lazyGetter(this, "MarkupView", () => require("devtools/markupview/markup-view").MarkupView);
@@ -58,7 +57,6 @@ function InspectorPanel(iframeWindow, toolbox) {
   this.panelDoc = iframeWindow.document;
   this.panelWin = iframeWindow;
   this.panelWin.inspector = this;
-  this._inspector = null;
 
   this._onBeforeNavigate = this._onBeforeNavigate.bind(this);
   this._target.on("will-navigate", this._onBeforeNavigate);
@@ -104,6 +102,18 @@ InspectorPanel.prototype = {
 
   get hasUrlToImageDataResolver() {
     return this._target.client.traits.urlToImageDataResolver;
+  },
+
+  get canGetUniqueSelector() {
+    return this._target.client.traits.getUniqueSelector;
+  },
+
+  get canGetUsedFontFaces() {
+    return this._target.client.traits.getUsedFontFaces;
+  },
+
+  get canPasteInnerOrAdjacentHTML() {
+    return this._target.client.traits.pasteHTML;
   },
 
   _deferredOpen: function(defaultSelection) {
@@ -315,7 +325,7 @@ InspectorPanel.prototype = {
                         "chrome://browser/content/devtools/computedview.xhtml",
                         "computedview" == defaultTab);
 
-    if (Services.prefs.getBoolPref("devtools.fontinspector.enabled") && !this.target.isRemote) {
+    if (Services.prefs.getBoolPref("devtools.fontinspector.enabled") && this.canGetUsedFontFaces) {
       this.sidebar.addTab("fontinspector",
                           "chrome://browser/content/devtools/fontinspector/font-inspector.xhtml",
                           "fontinspector" == defaultTab);
@@ -406,9 +416,20 @@ InspectorPanel.prototype = {
     // On any new selection made by the user, store the unique css selector
     // of the selected node so it can be restored after reload of the same page
     if (reason !== "navigateaway" &&
-        this.selection.node &&
+        this.canGetUniqueSelector &&
         this.selection.isElementNode()) {
-      this.selectionCssSelector = CssLogic.findCssSelector(this.selection.node);
+      selection.getUniqueSelector().then(selector => {
+        this.selectionCssSelector = selector;
+      }).then(null, e => {
+        // Only log this as an error if the panel hasn't been destroyed in the
+        // meantime.
+        if (!this._panelDestroyer) {
+          console.error(e);
+        } else {
+          console.warn("Could not set the unique selector for the newly "+
+            "selected node, the inspector was destroyed.");
+        }
+      });
     }
 
     let selfUpdate = this.updating("inspector-panel");
@@ -568,7 +589,7 @@ InspectorPanel.prototype = {
    * Returns the clipboard content if it is appropriate for pasting
    * into the current node's outer HTML, otherwise returns null.
    */
-  _getClipboardContentForOuterHTML: function Inspector_getClipboardContentForOuterHTML() {
+  _getClipboardContentForPaste: function Inspector_getClipboardContentForPaste() {
     let flavors = clipboard.currentFlavors;
     if (flavors.indexOf("text") != -1 ||
         (flavors.indexOf("html") != -1 && flavors.indexOf("image") == -1)) {
@@ -624,6 +645,9 @@ InspectorPanel.prototype = {
       copyInnerHTML.setAttribute("disabled", "true");
       copyOuterHTML.setAttribute("disabled", "true");
     }
+    if (!this.canGetUniqueSelector) {
+      unique.hidden = true;
+    }
 
     // Enable the "edit HTML" item if the selection is an element and the root
     // actor has the appropriate trait (isOuterHTMLEditable)
@@ -634,15 +658,34 @@ InspectorPanel.prototype = {
       editHTML.setAttribute("disabled", "true");
     }
 
-    // Enable the "paste outer HTML" item if the selection is an element and
-    // the root actor has the appropriate trait (isOuterHTMLEditable) and if
-    // the clipbard content is appropriate.
     let pasteOuterHTML = this.panelDoc.getElementById("node-menu-pasteouterhtml");
-    if (isEditableElement && this.isOuterHTMLEditable &&
-        this._getClipboardContentForOuterHTML()) {
-      pasteOuterHTML.removeAttribute("disabled");
+    let pasteInnerHTML = this.panelDoc.getElementById("node-menu-pasteinnerhtml");
+    let pasteBefore = this.panelDoc.getElementById("node-menu-pastebefore");
+    let pasteAfter = this.panelDoc.getElementById("node-menu-pasteafter");
+    let pasteFirstChild = this.panelDoc.getElementById("node-menu-pastefirstchild");
+    let pasteLastChild = this.panelDoc.getElementById("node-menu-pastelastchild");
+
+    // Is the clipboard content appropriate? Is the element editable?
+    if (isEditableElement && this._getClipboardContentForPaste()) {
+      pasteInnerHTML.disabled = !this.canPasteInnerOrAdjacentHTML;
+      // Enable the "paste outer HTML" item if the selection is an element and
+      // the root actor has the appropriate trait (isOuterHTMLEditable).
+      pasteOuterHTML.disabled = !this.isOuterHTMLEditable;
+      // Don't paste before / after a root or a BODY or a HEAD element.
+      pasteBefore.disabled = pasteAfter.disabled =
+        !this.canPasteInnerOrAdjacentHTML || this.selection.isRoot() ||
+        this.selection.isBodyNode() || this.selection.isHeadNode();
+      // Don't paste as a first / last child of a HTML document element.
+      pasteFirstChild.disabled = pasteLastChild.disabled =
+        !this.canPasteInnerOrAdjacentHTML || (this.selection.isHTMLNode() &&
+        this.selection.isRoot());
     } else {
-      pasteOuterHTML.setAttribute("disabled", "true");
+      pasteOuterHTML.disabled = true;
+      pasteInnerHTML.disabled = true;
+      pasteBefore.disabled = true;
+      pasteAfter.disabled = true;
+      pasteFirstChild.disabled = true;
+      pasteLastChild.disabled = true;
     }
 
     // Enable the "copy image data-uri" item if the selection is previewable
@@ -682,7 +725,7 @@ InspectorPanel.prototype = {
     this._markupBox.setAttribute("collapsed", true);
     this._markupBox.appendChild(this._markupFrame);
     this._markupFrame.setAttribute("src", "chrome://browser/content/devtools/markup-view.xhtml");
-    this._markupFrame.setAttribute("aria-label", this.strings.GetStringFromName("inspector.panelLabel.markupView"))
+    this._markupFrame.setAttribute("aria-label", this.strings.GetStringFromName("inspector.panelLabel.markupView"));
   },
 
   _onMarkupFrameLoad: function InspectorPanel__onMarkupFrameLoad() {
@@ -765,8 +808,7 @@ InspectorPanel.prototype = {
   /**
    * Edit the outerHTML of the selected Node.
    */
-  editHTML: function InspectorPanel_editHTML()
-  {
+  editHTML: function InspectorPanel_editHTML() {
     if (!this.selection.isNode()) {
       return;
     }
@@ -778,22 +820,49 @@ InspectorPanel.prototype = {
   /**
    * Paste the contents of the clipboard into the selected Node's outer HTML.
    */
-  pasteOuterHTML: function InspectorPanel_pasteOuterHTML()
-  {
-    let content = this._getClipboardContentForOuterHTML();
-    if (content) {
-      let node = this.selection.nodeFront;
-      this.markup.getNodeOuterHTML(node).then((oldContent) => {
-        this.markup.updateNodeOuterHTML(node, content, oldContent);
-      });
-    }
+  pasteOuterHTML: function InspectorPanel_pasteOuterHTML() {
+    let content = this._getClipboardContentForPaste();
+    if (!content)
+      return promise.reject("No clipboard content for paste");
+
+    let node = this.selection.nodeFront;
+    return this.markup.getNodeOuterHTML(node).then(oldContent => {
+      this.markup.updateNodeOuterHTML(node, content, oldContent);
+    });
+  },
+
+  /**
+   * Paste the contents of the clipboard into the selected Node's inner HTML.
+   */
+  pasteInnerHTML: function InspectorPanel_pasteInnerHTML() {
+    let content = this._getClipboardContentForPaste();
+    if (!content)
+      return promise.reject("No clipboard content for paste");
+
+    let node = this.selection.nodeFront;
+    return this.markup.getNodeInnerHTML(node).then(oldContent => {
+      this.markup.updateNodeInnerHTML(node, content, oldContent);
+    });
+  },
+
+  /**
+   * Paste the contents of the clipboard as adjacent HTML to the selected Node.
+   * @param position The position as specified for Element.insertAdjacentHTML
+   *        (i.e. "beforeBegin", "afterBegin", "beforeEnd", "afterEnd").
+   */
+  pasteAdjacentHTML: function InspectorPanel_pasteAdjacent(position) {
+    let content = this._getClipboardContentForPaste();
+    if (!content)
+      return promise.reject("No clipboard content for paste");
+
+    let node = this.selection.nodeFront;
+    return this.markup.insertAdjacentHTMLToNode(node, position, content);
   },
 
   /**
    * Copy the innerHTML of the selected Node to the clipboard.
    */
-  copyInnerHTML: function InspectorPanel_copyInnerHTML()
-  {
+  copyInnerHTML: function InspectorPanel_copyInnerHTML() {
     if (!this.selection.isNode()) {
       return;
     }
@@ -842,10 +911,9 @@ InspectorPanel.prototype = {
       return;
     }
 
-    let toCopy = CssLogic.findCssSelector(this.selection.node);
-    if (toCopy) {
-      clipboardHelper.copyString(toCopy);
-    }
+    this.selection.nodeFront.getUniqueSelector().then((selector) => {
+      clipboardHelper.copyString(selector);
+    }).then(null, console.error);
   },
 
   /**

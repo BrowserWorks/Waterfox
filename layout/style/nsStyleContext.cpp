@@ -22,6 +22,7 @@
 #include "mozilla/StyleAnimationValue.h"
 #include "GeckoProfiler.h"
 #include "nsIDocument.h"
+#include "nsPrintfCString.h"
 
 #ifdef DEBUG
 // #define NOISY_DEBUG
@@ -509,8 +510,21 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
   // Any direct children of elements with Ruby display values which are
   // block-level are converted to their inline-level equivalents.
   if (!aSkipParentDisplayBasedStyleFixup && mParent) {
-    const nsStyleDisplay* parentDisp = mParent->StyleDisplay();
-    if (parentDisp->IsFlexOrGridDisplayType() &&
+    // Skip display:contents ancestors to reach the potential container.
+    // (If there are only display:contents ancestors between this node and
+    // a flex/grid container ancestor, then this node is a flex/grid item, since
+    // its parent *in the frame tree* will be the flex/grid container. So we treat
+    // it like a flex/grid item here.)
+    nsStyleContext* containerContext = mParent;
+    const nsStyleDisplay* containerDisp = containerContext->StyleDisplay();
+    while (containerDisp->mDisplay == NS_STYLE_DISPLAY_CONTENTS) {
+      if (!containerContext->GetParent()) {
+        break;
+      }
+      containerContext = containerContext->GetParent();
+      containerDisp = containerContext->StyleDisplay();
+    }
+    if (containerDisp->IsFlexOrGridDisplayType() &&
         GetPseudo() != nsCSSAnonBoxes::mozNonElement) {
       uint8_t displayVal = disp->mDisplay;
       // Skip table parts.
@@ -543,8 +557,8 @@ nsStyleContext::ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup)
             static_cast<nsStyleDisplay*>(GetUniqueStyleData(eStyleStruct_Display));
           mutable_display->mDisplay = displayVal;
         }
-      } 
-    } else if (parentDisp->IsRubyDisplayType()) {
+      }
+    } else if (containerDisp->IsRubyDisplayType()) {
       uint8_t displayVal = disp->mDisplay;
       nsRuleNode::EnsureInlineDisplay(displayVal);
       // The display change should only occur for "in-flow" children
@@ -845,22 +859,26 @@ nsStyleContext::Mark()
 }
 
 #ifdef DEBUG
-void nsStyleContext::List(FILE* out, int32_t aIndent)
+void nsStyleContext::List(FILE* out, int32_t aIndent, bool aListDescendants)
 {
+  nsAutoCString str;
   // Indent
   int32_t ix;
-  for (ix = aIndent; --ix >= 0; ) fputs("  ", out);
-  fprintf(out, "%p(%d) parent=%p ",
-          (void*)this, mRefCnt, (void *)mParent);
+  for (ix = aIndent; --ix >= 0; ) {
+    str.AppendLiteral("  ");
+  }
+  str.Append(nsPrintfCString("%p(%d) parent=%p ",
+                             (void*)this, mRefCnt, (void *)mParent));
   if (mPseudoTag) {
     nsAutoString  buffer;
     mPseudoTag->ToString(buffer);
-    fputs(NS_LossyConvertUTF16toASCII(buffer).get(), out);
-    fputs(" ", out);
+    AppendUTF16toUTF8(buffer, str);
+    str.Append(' ');
   }
 
   if (mRuleNode) {
-    fputs("{\n", out);
+    fprintf_stderr(out, "%s{\n", str.get());
+    str.Truncate();
     nsRuleNode* ruleNode = mRuleNode;
     while (ruleNode) {
       nsIStyleRule *styleRule = ruleNode->GetRule();
@@ -869,26 +887,30 @@ void nsStyleContext::List(FILE* out, int32_t aIndent)
       }
       ruleNode = ruleNode->GetParent();
     }
-    for (ix = aIndent; --ix >= 0; ) fputs("  ", out);
-    fputs("}\n", out);
+    for (ix = aIndent; --ix >= 0; ) {
+      str.AppendLiteral("  ");
+    }
+    fprintf_stderr(out, "%s}\n", str.get());
   }
   else {
-    fputs("{}\n", out);
+    fprintf_stderr(out, "%s{}\n", str.get());
   }
 
-  if (nullptr != mChild) {
-    nsStyleContext* child = mChild;
-    do {
-      child->List(out, aIndent + 1);
-      child = child->mNextSibling;
-    } while (mChild != child);
-  }
-  if (nullptr != mEmptyChild) {
-    nsStyleContext* child = mEmptyChild;
-    do {
-      child->List(out, aIndent + 1);
-      child = child->mNextSibling;
-    } while (mEmptyChild != child);
+  if (aListDescendants) {
+    if (nullptr != mChild) {
+      nsStyleContext* child = mChild;
+      do {
+        child->List(out, aIndent + 1, aListDescendants);
+        child = child->mNextSibling;
+      } while (mChild != child);
+    }
+    if (nullptr != mEmptyChild) {
+      nsStyleContext* child = mEmptyChild;
+      do {
+        child->List(out, aIndent + 1, aListDescendants);
+        child = child->mNextSibling;
+      } while (mEmptyChild != child);
+    }
   }
 }
 #endif

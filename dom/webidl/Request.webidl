@@ -1,4 +1,4 @@
-/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* -*- Mode: IDL; tab-width: 1; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -7,14 +7,14 @@
  * https://fetch.spec.whatwg.org/#request-class
  */
 
-typedef (Request or ScalarValueString) RequestInfo;
+typedef (Request or USVString) RequestInfo;
 
 [Constructor(RequestInfo input, optional RequestInit init),
  Exposed=(Window,Worker),
  Func="mozilla::dom::Headers::PrefEnabled"]
 interface Request {
   readonly attribute ByteString method;
-  readonly attribute ScalarValueString url;
+  readonly attribute USVString url;
   readonly attribute Headers headers;
 
   readonly attribute DOMString referrer;
@@ -34,5 +34,5 @@ dictionary RequestInit {
   RequestCredentials credentials;
 };
 
-enum RequestMode { "same-origin", "no-cors", "cors" };
+enum RequestMode { "same-origin", "no-cors", "cors", "cors-with-forced-preflight" };
 enum RequestCredentials { "omit", "same-origin", "include" };

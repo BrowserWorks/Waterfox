@@ -197,7 +197,7 @@ ms{
         }
         GBP{
             "£",
-            "Paun Sterling British",
+            "Paun British",
         }
         GEL{
             "GEL",
@@ -841,7 +841,7 @@ ms{
             other{"Paun Kepulauan Falkland"}
         }
         GBP{
-            other{"Paun Sterling British"}
+            other{"Paun British"}
         }
         GEL{
             other{"Lari Georgia"}
@@ -1177,5 +1177,5 @@ ms{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

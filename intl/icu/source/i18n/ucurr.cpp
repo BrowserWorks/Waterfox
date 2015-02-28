@@ -1007,6 +1007,12 @@ collectCurrencyNames(const char* locale,
     *currencySymbols = (CurrencyNameStruct*)uprv_malloc
         (sizeof(CurrencyNameStruct) * (*total_currency_symbol_count));
 
+    if(currencyNames == NULL || currencySymbols == NULL) {
+      ec = U_MEMORY_ALLOCATION_ERROR;
+    }
+
+    if (U_FAILURE(ec)) return;
+
     const UChar* s = NULL;  // currency name
     char* iso = NULL;  // currency ISO code
 
@@ -1174,6 +1180,15 @@ collectCurrencyNames(const char* locale,
         printf("len: %d\n", (*currencySymbols)[index].currencyNameLen);
     }
 #endif
+    // fail on hashtable errors
+    if (U_FAILURE(ec3)) {
+      ec = ec3;
+      return;
+    }
+    if (U_FAILURE(ec4)) {
+      ec = ec4;
+      return;
+    }
 }
 
 // @param  currencyNames: currency names array

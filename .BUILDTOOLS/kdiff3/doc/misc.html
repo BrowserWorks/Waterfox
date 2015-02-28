@@ -1,0 +1,48 @@
+<html><head><title>Chapter 4. Miscellaneous Topics</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="index.html" title="The KDiff3 Handbook"><link rel="prev" href="other.html" title="Other Functions in Directory Merge Window"><link rel="next" href="kpart.html" title="Using KDiff3 as a KPart"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Miscellaneous Topics</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="other.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="kpart.html">Next</a></div><div class="navCenter"> </div></div><div class="chapter" lang="en"><div class="titlepage"><div><div><h2 class="title"><a name="misc"></a>Chapter 4. Miscellaneous Topics</h2></div></div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="networktransparency"></a>Networktransparency via KIO</h2></div></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2543093"></a>KIO-Slaves</h3></div></div></div><p>
+KDE supports networktransparency via KIO-slaves. <span class="application">KDiff3</span> uses this
+for reading input files and for scanning directories.
+This means that you can specify files and directories on local and
+remote resources via URLs.
+</p><p>
+Example:
+</p><p>
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">kdiff3</strong></span></span> test.cpp  ftp://ftp.faraway.org/test.cpp
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">kdiff3</strong></span></span> tar:/home/hacker/archive.tar.gz/dir ./dir
+</pre>
+</p><p>The first line compares a local file with a file on an FTP-server. The second line
+compares a directory within an compressed archive with a local directory.
+</p><p>
+Other KIO-slaves that are interesting are:
+</p><div class="itemizedlist"><ul type="disc"><li><p>Files from the WWW (http:),</p></li><li><p>Files from the FTP (ftp:),</p></li><li><p>Encrypted file transfer (fish:, sftp:),</p></li><li><p>Windows-ressources (smb:),</p></li><li><p>Local files (file:),</p></li></ul></div><p>
+Other things that are possible, but probably less useful are:
+</p><div class="itemizedlist"><ul type="disc"><li><p>Man-pages (man:),</p></li><li><p>Info-pages (info:),</p></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2543175"></a>How To Write URLs</h3></div></div></div><p>
+   An URL has a different syntax compared with paths for local files and directories.
+   Some things should be considered:
+</p><div class="itemizedlist"><ul type="disc"><li><p>
+   A path can be relative and can contain "." or "..". This is not possible for URLs
+   which are always absolute.
+</p></li><li><p>
+   Special characters must be written with "escaping". ("#"-&gt;"%23", space-&gt;"%20", etc.)
+   E.g. A file with the name "/#foo#" would have the URL "file:/%23foo%23".
+</p></li><li><p>
+   When URLs don't work as expected, try to open them in Konqueror first.
+</p></li></ul></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2543206"></a>Capabilities of KIO-Slaves</h3></div></div></div><p>
+   Networktransparency has one drawback: Not all ressources have the same cababilities.
+</p><p>
+   Sometimes this is due to the file system of the server, sometimes due to the protocol.
+   Here is a short list of restrictions:
+</p><div class="itemizedlist"><ul type="disc"><li><p>
+   Sometimes there is no support for links.
+</p></li><li><p>
+   Or there is no way to distinguish if a link points to a file or a directory; always
+   assuming a file. (ftp:, sftp:).
+</p></li><li><p>
+   Can't always determine the filesize.
+</p></li><li><p>
+   Limited support for permissions.
+</p></li><li><p>
+   No possibility to modify permissions or modification time, so permissions or time
+   of a copy will differ from the original. (See the option "Trust the size".)
+   (To modify permissions or modification time is only possible for local files.)
+</p></li></ul></div></div></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="other.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="kpart.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Other Functions in Directory Merge Window </div><div class="navRight"> Using <span class="application">KDiff3</span> as a KPart</div><div class="navCenter"><a accesskey="u" href="index.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

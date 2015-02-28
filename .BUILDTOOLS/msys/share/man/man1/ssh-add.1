@@ -1,0 +1,146 @@
+.TH SSH-ADD 1 "September 25, 1999" ""
+.SH NAME
+\fBssh-add\fP
+\- adds RSA or DSA identities to the authentication agent
+.SH SYNOPSIS
+.br
+\fBssh-add\fP
+[\fB\-cDdLlXx\fP]
+[\fB\-t\fP \fIlife\fP]
+[\fIfile ...\fP]
+.br
+\fBssh-add\fP
+\fB\-s\fP \fIreader\fP
+.br
+\fBssh-add\fP
+\fB\-e\fP \fIreader\fP
+.SH DESCRIPTION
+\fBssh-add\fP
+adds RSA or DSA identities to the authentication agent,
+\fBssh-agent\fP(1).
+When run without arguments, it adds the files
+\fI~/.ssh/id_rsa\fP,
+\fI~/.ssh/id_dsa\fP
+and
+\fI~/.ssh/identity\fP.
+Alternative file names can be given on the command line.
+If any file requires a passphrase,
+\fBssh-add\fP
+asks for the passphrase from the user.
+The passphrase is read from the user's tty.
+\fBssh-add\fP
+retries the last passphrase if multiple identity files are given.
+
+The authentication agent must be running and the
+.IR SSH_AUTH_SOCK
+environment variable must contain the name of its socket for
+\fBssh-add\fP
+to work.
+
+The options are as follows:
+.TP
+\fB\-c\fP
+Indicates that added identities should be subject to confirmation before
+being used for authentication.
+Confirmation is performed by the
+.IR SSH_ASKPASS
+program mentioned below.
+Successful confirmation is signaled by a zero exit status from the
+.IR SSH_ASKPASS
+program, rather than text entered into the requester.
+.TP
+\fB\-D\fP
+Deletes all identities from the agent.
+.TP
+\fB\-d\fP
+Instead of adding the identity, removes the identity from the agent.
+.TP
+\fB\-e\fP \fIreader\fP
+Remove key in smartcard
+\fIreader\fP.
+.TP
+\fB\-L\fP
+Lists public key parameters of all identities currently represented
+by the agent.
+.TP
+\fB\-l\fP
+Lists fingerprints of all identities currently represented by the agent.
+.TP
+\fB\-s\fP \fIreader\fP
+Add key in smartcard
+\fIreader\fP.
+.TP
+\fB\-t\fP \fIlife\fP
+Set a maximum lifetime when adding identities to an agent.
+The lifetime may be specified in seconds or in a time format
+specified in
+\fBsshd_config\fP(5).
+.TP
+\fB\-X\fP
+Unlock the agent.
+.TP
+\fB\-x\fP
+Lock the agent with a password.
+.SH ENVIRONMENT
+.TP
+.B "DISPLAY" and "SSH_ASKPASS"
+If
+\fBssh-add\fP
+needs a passphrase, it will read the passphrase from the current
+terminal if it was run from a terminal.
+If
+\fBssh-add\fP
+does not have a terminal associated with it but
+.IR DISPLAY
+and
+.IR SSH_ASKPASS
+are set, it will execute the program specified by
+.IR SSH_ASKPASS
+and open an X11 window to read the passphrase.
+This is particularly useful when calling
+\fBssh-add\fP
+from a
+\fI\&.xsession\fP
+or related script.
+(Note that on some machines it
+may be necessary to redirect the input from
+\fI/dev/null\fP
+to make this work.)
+.TP
+.B SSH_AUTH_SOCK
+Identifies the path of a unix-domain socket used to communicate with the
+agent.
+.SH FILES
+.TP
+.B ~/.ssh/identity
+Contains the protocol version 1 RSA authentication identity of the user.
+.TP
+.B ~/.ssh/id_dsa
+Contains the protocol version 2 DSA authentication identity of the user.
+.TP
+.B ~/.ssh/id_rsa
+Contains the protocol version 2 RSA authentication identity of the user.
+
+Identity files should not be readable by anyone but the user.
+Note that
+\fBssh-add\fP
+ignores identity files if they are accessible by others.
+.SH DIAGNOSTICS
+Exit status is 0 on success, 1 if the specified command fails,
+and 2 if
+\fBssh-add\fP
+is unable to contact the authentication agent.
+.SH SEE ALSO
+\fBssh\fP(1),
+\fBssh-agent\fP(1),
+\fBssh-keygen\fP(1),
+\fBsshd\fP(8)
+.SH AUTHORS
+OpenSSH is a derivative of the original and free
+ssh 1.2.12 release by Tatu Ylonen.
+Aaron Campbell, Bob Beck, Markus Friedl, Niels Provos,
+Theo de Raadt and Dug Song
+removed many bugs, re-added newer features and
+created OpenSSH.
+Markus Friedl contributed the support for SSH
+protocol versions 1.5 and 2.0.

@@ -21,6 +21,7 @@
 #include "mozilla/AppUnits.h"           // for AppUnits
 
 class gfxASurface;
+class gfxContext;
 class gfxTextPerfMetrics;
 class gfxUserFontSet;
 struct nsFont;
@@ -32,7 +33,6 @@ class nsIScreen;
 class nsIScreenManager;
 class nsIWidget;
 struct nsRect;
-class nsRenderingContext;
 
 class nsDeviceContext MOZ_FINAL
 {
@@ -61,7 +61,7 @@ public:
      *
      * @return the new rendering context (guaranteed to be non-null)
      */
-    already_AddRefed<nsRenderingContext> CreateRenderingContext();
+    already_AddRefed<gfxContext> CreateRenderingContext();
 
     /**
      * Gets the number of app units in one CSS pixel; this number is global,
@@ -103,11 +103,11 @@ public:
     static int32_t AppUnitsPerCSSInch() { return mozilla::AppUnitsPerCSSInch(); }
 
     /**
-     * Get the unscaled ratio of app units to dev pixels; useful if something
-     * needs to be converted from to unscaled pixels
+     * Get the ratio of app units to dev pixels that would be used at unit
+     * (100%) full zoom.
      */
-    int32_t UnscaledAppUnitsPerDevPixel() const
-    { return mAppUnitsPerDevNotScaledPixel; }
+    int32_t AppUnitsPerDevPixelAtUnitFullZoom() const
+    { return mAppUnitsPerDevPixelAtUnitFullZoom; }
 
     /**
      * Get the nsFontMetrics that describe the properties of
@@ -235,16 +235,16 @@ public:
     bool CheckDPIChange();
 
     /**
-     * Set the pixel scaling factor: all lengths are multiplied by this factor
+     * Set the full zoom factor: all lengths are multiplied by this factor
      * when we convert them to device pixels. Returns whether the ratio of
-     * app units to dev pixels changed because of the scale factor.
+     * app units to dev pixels changed because of the zoom factor.
      */
-    bool SetPixelScale(float aScale);
+    bool SetFullZoom(float aScale);
 
     /**
-     * Returns the pixel scaling factor (page zoom factor) applied.
+     * Returns the page full zoom factor applied.
      */
-    float GetPixelScale() const { return mPixelScale; }
+    float GetFullZoom() const { return mFullZoom; }
 
     /**
      * True if this device context was created for printing.
@@ -260,15 +260,15 @@ private:
     void ComputeFullAreaUsingScreen(nsRect *outRect);
     void FindScreen(nsIScreen **outScreen);
     void CalcPrintingSize();
-    void UpdateScaledAppUnits();
+    void UpdateAppUnitsForFullZoom();
 
     nscoord  mWidth;
     nscoord  mHeight;
     uint32_t mDepth;
     int32_t  mAppUnitsPerDevPixel;
-    int32_t  mAppUnitsPerDevNotScaledPixel;
+    int32_t  mAppUnitsPerDevPixelAtUnitFullZoom;
     int32_t  mAppUnitsPerPhysicalInch;
-    float    mPixelScale;
+    float    mFullZoom;
     float    mPrintingScale;
 
     nsFontCache*                   mFontCache;

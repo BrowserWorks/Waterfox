@@ -17,6 +17,7 @@ EXPORTS += [
     'client/ClientTiledPaintedLayer.h',
     'composite/CompositableHost.h',
     'composite/ImageHost.h',
+    'CompositorTypes.h',
     'CopyableCanvasLayer.h',
     'D3D9SurfaceImage.h',
     'FrameMetrics.h',
@@ -25,14 +26,12 @@ EXPORTS += [
     'ImageContainer.h',
     'ImageLayers.h',
     'ImageTypes.h',
-    'ipc/CompositorChild.h',
-    'ipc/CompositorParent.h',
-    'ipc/ShadowLayersManager.h',
     'ipc/ThreadSafeRefcountingWithMainThreadDestruction.h',
     'Layers.h',
     'LayerScope.h',
     'LayersLogging.h',
     'LayerSorter.h',
+    'LayersTypes.h',
     'LayerTreeInvalidation.h',
     'opengl/Composer2D.h',
     'opengl/OGLShaderProgram.h',
@@ -98,7 +97,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         SOURCES += [
             'd3d11/CompositorD3D11.cpp',
             'd3d11/ReadbackManagerD3D11.cpp',
-        ]         
+        ]
         if CONFIG['MOZ_ENABLE_DIRECT2D1_1']:
             DEFINES['USE_D2D1_1'] = True
 
@@ -111,10 +110,6 @@ EXPORTS.mozilla.layers += [
     # exporting things from apz/src is temporary until we extract a
     # proper interface for the code there
     'apz/src/APZCTreeManager.h',
-    'apz/src/AsyncPanZoomController.h',
-    'apz/src/Axis.h',
-    'apz/src/GestureEventListener.h',
-    'apz/src/TaskThrottler.h',
     'apz/testutil/APZTestData.h',
     'apz/util/ActiveElementManager.h',
     'apz/util/APZCCallbackHelper.h',
@@ -130,6 +125,7 @@ EXPORTS.mozilla.layers += [
     'client/ImageClient.h',
     'client/TextureClient.h',
     'client/TextureClientPool.h',
+    'client/TextureClientRecycleAllocator.h',
     'client/TiledContentClient.h',
     'composite/AsyncCompositionManager.h',
     'composite/CanvasLayerComposite.h',
@@ -242,6 +238,7 @@ UNIFIED_SOURCES += [
     'apz/src/Axis.cpp',
     'apz/src/GestureEventListener.cpp',
     'apz/src/InputBlockState.cpp',
+    'apz/src/InputQueue.cpp',
     'apz/src/OverscrollHandoffState.cpp',
     'apz/src/TaskThrottler.cpp',
     'apz/testutil/APZTestData.cpp',
@@ -272,6 +269,7 @@ UNIFIED_SOURCES += [
     'client/ImageClient.cpp',
     'client/TextureClient.cpp',
     'client/TextureClientPool.cpp',
+    'client/TextureClientRecycleAllocator.cpp',
     'client/TiledContentClient.cpp',
     'composite/AsyncCompositionManager.cpp',
     'composite/CanvasLayerComposite.cpp',
@@ -315,6 +313,7 @@ UNIFIED_SOURCES += [
     'LayerSorter.cpp',
     'opengl/CompositingRenderTargetOGL.cpp',
     'opengl/CompositorOGL.cpp',
+    'opengl/GLBlitTextureImageHelper.cpp',
     'opengl/OGLShaderProgram.cpp',
     'opengl/TextureClientOGL.cpp',
     'opengl/TextureHostOGL.cpp',

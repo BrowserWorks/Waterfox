@@ -1,6 +1,8 @@
-==================================
-Runtime locale switching in Fennec
-==================================
+.. -*- Mode: rst; fill-column: 80; -*-
+
+====================================
+ Runtime locale switching in Fennec
+====================================
 
 `Bug 917480 <https://bugzilla.mozilla.org/show_bug.cgi?id=917480>`_ built on `Bug 936756 <https://bugzilla.mozilla.org/show_bug.cgi?id=936756>`_ to allow users to switch between supported locales at runtime, within Fennec, without altering the system locale.
 
@@ -22,7 +24,7 @@ The question, then, is when to do so.
 Locale events
 =============
 
-One might imagine that we need only set the locale when our Application is instantiated, and when a new locale is set. Alas, that's not the case: whenever there's a configuration change (*e.g.*, screen rotation), when a new activity is started, and at other apparently random times, Android will supply our activities with a configuration that's been reset to the sytem locale.
+One might imagine that we need only set the locale when our Application is instantiated, and when a new locale is set. Alas, that's not the case: whenever there's a configuration change (*e.g.*, screen rotation), when a new activity is started, and at other apparently random times, Android will supply our activities with a configuration that's been reset to the system locale.
 
 For this reason, each starting activity must ask ``BrowserLocaleManager`` to fix its locale.
 

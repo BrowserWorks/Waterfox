@@ -536,7 +536,7 @@ protected:
 public:
   virtual TextureInfo GetTextureInfo() const MOZ_OVERRIDE
   {
-    return TextureInfo(CompositableType::BUFFER_TILED);
+    return TextureInfo(CompositableType::CONTENT_TILED);
   }
 
   virtual void ClearCachedResources() MOZ_OVERRIDE;

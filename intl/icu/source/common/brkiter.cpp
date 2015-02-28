@@ -69,13 +69,7 @@ BreakIterator::buildInstance(const Locale& loc, const char *type, int32_t kind, 
     ures_initStackObject(brkName);
 
     // Get the locale
-    UResourceBundle *b = ures_open(U_ICUDATA_BRKITR, loc.getName(), &status);
-    /* this is a hack for now. Should be fixed when the data is fetched from
-        brk_index.txt */
-    if(status==U_USING_DEFAULT_WARNING){
-        status=U_ZERO_ERROR;
-        ures_openFillIn(b, U_ICUDATA_BRKITR, "", &status);
-    }
+    UResourceBundle *b = ures_openNoDefault(U_ICUDATA_BRKITR, loc.getName(), &status);
 
     // Get the "boundaries" array.
     if (U_SUCCESS(status)) {

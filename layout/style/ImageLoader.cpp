@@ -285,6 +285,7 @@ ImageLoader::LoadImage(nsIURI* aURI, nsIPrincipal* aOriginPrincipal,
 
   nsRefPtr<imgRequestProxy> request;
   nsContentUtils::LoadImage(aURI, mDocument, aOriginPrincipal, aReferrer,
+                            mDocument->GetReferrerPolicy(),
                             nullptr, nsIRequest::LOAD_NORMAL,
                             NS_LITERAL_STRING("css"),
                             getter_AddRefs(request));
@@ -350,6 +351,7 @@ void InvalidateImagesCallback(nsIFrame* aFrame,
   }
 
   aItem->Invalidate();
+  aFrame->SchedulePaint();
 
   // Update ancestor rendering observers (-moz-element etc)
   nsIFrame *f = aFrame;
@@ -360,7 +362,7 @@ void InvalidateImagesCallback(nsIFrame* aFrame,
 }
 
 void
-ImageLoader::DoRedraw(FrameSet* aFrameSet)
+ImageLoader::DoRedraw(FrameSet* aFrameSet, bool aForcePaint)
 {
   NS_ASSERTION(aFrameSet, "Must have a frame set");
   NS_ASSERTION(mDocument, "Should have returned earlier!");
@@ -377,7 +379,9 @@ ImageLoader::DoRedraw(FrameSet* aFrameSet)
         frame->InvalidateFrame();
       } else {
         FrameLayerBuilder::IterateRetainedDataFor(frame, InvalidateImagesCallback);
-        frame->SchedulePaint();
+        if (aForcePaint) {
+          frame->SchedulePaint();
+        }
       }
     }
   }
@@ -392,31 +396,31 @@ NS_INTERFACE_MAP_BEGIN(ImageLoader)
 NS_INTERFACE_MAP_END
 
 NS_IMETHODIMP
-ImageLoader::Notify(imgIRequest *aRequest, int32_t aType, const nsIntRect* aData)
+ImageLoader::Notify(imgIRequest* aRequest, int32_t aType, const nsIntRect* aData)
 {
   if (aType == imgINotificationObserver::SIZE_AVAILABLE) {
     nsCOMPtr<imgIContainer> image;
     aRequest->GetImage(getter_AddRefs(image));
-    return OnStartContainer(aRequest, image);
+    return OnSizeAvailable(aRequest, image);
   }
 
   if (aType == imgINotificationObserver::IS_ANIMATED) {
     return OnImageIsAnimated(aRequest);
   }
 
-  if (aType == imgINotificationObserver::LOAD_COMPLETE) {
-    return OnStopFrame(aRequest);
+  if (aType == imgINotificationObserver::FRAME_COMPLETE) {
+    return OnFrameComplete(aRequest);
   }
 
   if (aType == imgINotificationObserver::FRAME_UPDATE) {
-    return FrameChanged(aRequest);
+    return OnFrameUpdate(aRequest);
   }
 
   return NS_OK;
 }
 
 nsresult
-ImageLoader::OnStartContainer(imgIRequest* aRequest, imgIContainer* aImage)
+ImageLoader::OnSizeAvailable(imgIRequest* aRequest, imgIContainer* aImage)
 { 
   nsPresContext* presContext = GetPresContext();
   if (!presContext) {
@@ -453,7 +457,7 @@ ImageLoader::OnImageIsAnimated(imgIRequest* aRequest)
 }
 
 nsresult
-ImageLoader::OnStopFrame(imgIRequest *aRequest)
+ImageLoader::OnFrameComplete(imgIRequest* aRequest)
 {
   if (!mDocument || mInClone) {
     return NS_OK;
@@ -466,13 +470,16 @@ ImageLoader::OnStopFrame(imgIRequest *aRequest)
 
   NS_ASSERTION(frameSet, "This should never be null!");
 
-  DoRedraw(frameSet);
+  // Since we just finished decoding a frame, we always want to paint, in case
+  // we're now able to paint an image that we couldn't paint before (and hence
+  // that we don't have retained data for).
+  DoRedraw(frameSet, /* aForcePaint = */ true);
 
   return NS_OK;
 }
 
 nsresult
-ImageLoader::FrameChanged(imgIRequest *aRequest)
+ImageLoader::OnFrameUpdate(imgIRequest* aRequest)
 {
   if (!mDocument || mInClone) {
     return NS_OK;
@@ -485,7 +492,7 @@ ImageLoader::FrameChanged(imgIRequest *aRequest)
 
   NS_ASSERTION(frameSet, "This should never be null!");
 
-  DoRedraw(frameSet);
+  DoRedraw(frameSet, /* aForcePaint = */ false);
 
   return NS_OK;
 }

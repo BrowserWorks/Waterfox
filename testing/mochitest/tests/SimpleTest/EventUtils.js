@@ -305,12 +305,13 @@ function synthesizePointerAtPoint(left, top, aEvent, aWindow)
     var pressure = ("pressure" in aEvent) ? aEvent.pressure : 0;
     var inputSource = ("inputSource" in aEvent) ? aEvent.inputSource : 0;
     var synthesized = ("isSynthesized" in aEvent) ? aEvent.isSynthesized : true;
+    var isPrimary = ("isPrimary" in aEvent) ? aEvent.isPrimary : false;
 
     if (("type" in aEvent) && aEvent.type) {
       defaultPrevented = utils.sendPointerEventToWindow(aEvent.type, left, top, button,
                                                         clickCount, modifiers, false,
                                                         pressure, inputSource,
-                                                        synthesized);
+                                                        synthesized, 0, 0, 0, 0, isPrimary);
     }
     else {
       utils.sendPointerEventToWindow("pointerdown", left, top, button, clickCount, modifiers, false, pressure, inputSource);
@@ -870,12 +871,13 @@ const COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT = 0x05;
  *
  * @param aEvent               The composition event information.  This must
  *                             have |type| member.  The value must be
- *                             "compositionstart" or "compositionend".
+ *                             "compositionstart", "compositionend",
+ *                             "compositioncommitasis" or "compositioncommit".
  *                             And also this may have |data| and |locale| which
  *                             would be used for the value of each property of
- *                             the composition event.  Note that the data would
- *                             be ignored if the event type were
- *                             "compositionstart".
+ *                             the composition event.  Note that the |data| is
+ *                             ignored if the event type is "compositionstart"
+ *                             or "compositioncommitasis".
  * @param aWindow              Optional (If null, current |window| will be used)
  */
 function synthesizeComposition(aEvent, aWindow)

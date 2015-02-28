@@ -18,7 +18,8 @@ class WrapperAnswer : public virtual JavaScriptShared
   public:
     explicit WrapperAnswer(JSRuntime *rt) : JavaScriptShared(rt) {}
 
-    bool RecvPreventExtensions(const ObjectId &objId, ReturnStatus *rs);
+    bool RecvPreventExtensions(const ObjectId &objId, ReturnStatus *rs,
+                               bool *succeeded);
     bool RecvGetPropertyDescriptor(const ObjectId &objId, const JSIDVariant &id,
                                    ReturnStatus *rs,
                                    PPropertyDescriptor *out);
@@ -55,14 +56,11 @@ class WrapperAnswer : public virtual JavaScriptShared
     bool RecvRegExpToShared(const ObjectId &objId, ReturnStatus *rs, nsString *source, uint32_t *flags);
 
     bool RecvGetPropertyKeys(const ObjectId &objId, const uint32_t &flags,
-                             ReturnStatus *rs, nsTArray<nsString> *names);
+                             ReturnStatus *rs, nsTArray<JSIDVariant> *ids);
     bool RecvInstanceOf(const ObjectId &objId, const JSIID &iid,
                         ReturnStatus *rs, bool *instanceof);
     bool RecvDOMInstanceOf(const ObjectId &objId, const int &prototypeID, const int &depth,
                            ReturnStatus *rs, bool *instanceof);
-
-    bool RecvIsCallable(const ObjectId &objId, bool *result);
-    bool RecvIsConstructor(const ObjectId &objId, bool *result);
 
     bool RecvDropObject(const ObjectId &objId);
 

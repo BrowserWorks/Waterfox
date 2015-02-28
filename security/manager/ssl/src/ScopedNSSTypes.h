@@ -11,7 +11,9 @@
 
 #include "NSSErrorsService.h"
 #include "mozilla/Likely.h"
+#ifndef MOZ_NO_MOZALLOC
 #include "mozilla/mozalloc_oom.h"
+#endif
 #include "mozilla/Scoped.h"
 #include "nsError.h"
 #include "nsDebug.h"
@@ -90,6 +92,9 @@ MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTCertList,
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTName,
                                           CERTName,
                                           CERT_DestroyName)
+MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTOidSequence,
+                                          CERTOidSequence,
+                                          CERT_DestroyOidSequence)
 MOZ_TYPE_SPECIFIC_SCOPED_POINTER_TEMPLATE(ScopedCERTCertNicknames,
                                           CERTCertNicknames,
                                           CERT_FreeNicknames)
@@ -257,8 +262,11 @@ inline void
 SECITEM_AllocItem(SECItem & item, uint32_t len)
 {
   if (MOZ_UNLIKELY(!SECITEM_AllocItem(nullptr, &item, len))) {
+#ifndef MOZ_NO_MOZALLOC
     mozalloc_handle_oom(len);
-    if (MOZ_UNLIKELY(!SECITEM_AllocItem(nullptr, &item, len))) {
+    if (MOZ_UNLIKELY(!SECITEM_AllocItem(nullptr, &item, len)))
+#endif
+    {
       MOZ_CRASH();
     }
   }

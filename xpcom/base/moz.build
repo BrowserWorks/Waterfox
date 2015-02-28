@@ -39,6 +39,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 XPIDL_MODULE = 'xpcom_base'
 
 EXPORTS += [
+    'AlreadyAddRefed.h',
     'CodeAddressService.h',
     'ErrorList.h',
     'nsAgg.h',
@@ -76,6 +77,7 @@ EXPORTS.mozilla += [
     'CountingAllocatorBase.h',
     'CycleCollectedJSRuntime.h',
     'Debug.h',
+    'ErrorNames.h',
     'LinuxUtils.h',
     'nsMemoryInfoDumper.h',
     'StackWalk.h',
@@ -97,6 +99,7 @@ UNIFIED_SOURCES += [
     'ClearOnShutdown.cpp',
     'CycleCollectedJSRuntime.cpp',
     'Debug.cpp',
+    'ErrorNames.cpp',
     'nsConsoleMessage.cpp',
     'nsConsoleService.cpp',
     'nsCycleCollector.cpp',

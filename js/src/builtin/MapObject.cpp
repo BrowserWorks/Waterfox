@@ -878,7 +878,7 @@ const Class MapIteratorObject::class_ = {
 };
 
 const JSFunctionSpec MapIteratorObject::methods[] = {
-    JS_SELF_HOSTED_FN("@@iterator", "IteratorIdentity", 0, 0),
+    JS_SELF_HOSTED_SYM_FN(iterator, "IteratorIdentity", 0, 0),
     JS_FN("next", next, 0, 0),
     JS_FS_END
 };
@@ -1076,8 +1076,14 @@ MapObject::initClass(JSContext *cx, JSObject *obj)
 
         // Define its alias.
         RootedValue funval(cx, ObjectValue(*fun));
+#if JS_HAS_SYMBOLS
+        RootedId iteratorId(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().iterator));
+        if (!JS_DefinePropertyById(cx, proto, iteratorId, funval, 0))
+            return nullptr;
+#else
         if (!JS_DefineProperty(cx, proto, js_std_iterator_str, funval, 0))
             return nullptr;
+#endif
     }
     return proto;
 }
@@ -1244,7 +1250,8 @@ MapObject::construct(JSContext *cx, unsigned argc, Value *vp)
             if (done)
                 break;
             if (!pairVal.isObject()) {
-                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INVALID_MAP_ITERABLE);
+                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+                                     JSMSG_INVALID_MAP_ITERABLE, "Map");
                 return false;
             }
 
@@ -1302,7 +1309,8 @@ MapObject::size_impl(JSContext *cx, CallArgs args)
     MOZ_ASSERT(MapObject::is(args.thisv()));
 
     ValueMap &map = extract(args);
-    JS_STATIC_ASSERT(sizeof map.count() <= sizeof(uint32_t));
+    static_assert(sizeof(map.count()) <= sizeof(uint32_t),
+                  "map count must be precisely representable as a JS number");
     args.rval().setNumber(map.count());
     return true;
 }
@@ -1527,7 +1535,7 @@ const Class SetIteratorObject::class_ = {
 };
 
 const JSFunctionSpec SetIteratorObject::methods[] = {
-    JS_SELF_HOSTED_FN("@@iterator", "IteratorIdentity", 0, 0),
+    JS_SELF_HOSTED_SYM_FN(iterator, "IteratorIdentity", 0, 0),
     JS_FN("next", next, 0, 0),
     JS_FS_END
 };
@@ -1701,8 +1709,15 @@ SetObject::initClass(JSContext *cx, JSObject *obj)
         RootedValue funval(cx, ObjectValue(*fun));
         if (!JS_DefineProperty(cx, proto, "keys", funval, 0))
             return nullptr;
+
+#if JS_HAS_SYMBOLS
+        RootedId iteratorId(cx, SYMBOL_TO_JSID(cx->wellKnownSymbols().iterator));
+        if (!JS_DefinePropertyById(cx, proto, iteratorId, funval, 0))
+            return nullptr;
+#else
         if (!JS_DefineProperty(cx, proto, js_std_iterator_str, funval, 0))
             return nullptr;
+#endif
     }
     return proto;
 }
@@ -1832,7 +1847,8 @@ SetObject::size_impl(JSContext *cx, CallArgs args)
     MOZ_ASSERT(is(args.thisv()));
 
     ValueSet &set = extract(args);
-    JS_STATIC_ASSERT(sizeof set.count() <= sizeof(uint32_t));
+    static_assert(sizeof(set.count()) <= sizeof(uint32_t),
+                  "set count must be precisely representable as a JS number");
     args.rval().setNumber(set.count());
     return true;
 }

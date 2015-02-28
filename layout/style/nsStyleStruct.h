@@ -138,6 +138,11 @@ public:
 struct nsStyleGradientStop {
   nsStyleCoord mLocation; // percent, coord, calc, none
   nscolor mColor;
+  bool mIsInterpolationHint;
+
+  // Use ==/!= on nsStyleGradient instead of on the gradient stop.
+  bool operator==(const nsStyleGradientStop&) const MOZ_DELETE;
+  bool operator!=(const nsStyleGradientStop&) const MOZ_DELETE;
 };
 
 class nsStyleGradient MOZ_FINAL {
@@ -2023,6 +2028,7 @@ struct nsStyleDisplay {
   uint8_t mClipFlags;           // [reset] see nsStyleConsts.h
   uint8_t mOrient;              // [reset] see nsStyleConsts.h
   uint8_t mMixBlendMode;        // [reset] see nsStyleConsts.h
+  uint8_t mIsolation;           // [reset] see nsStyleConsts.h
   uint8_t mWillChangeBitField;  // [reset] see nsStyleConsts.h. Stores a
                                 // bitfield representation of the properties
                                 // that are frequently queried. This should
@@ -2032,6 +2038,7 @@ struct nsStyleDisplay {
   nsAutoTArray<nsString, 1> mWillChange;
 
   uint8_t mTouchAction;         // [reset] see nsStyleConsts.h
+  uint8_t mScrollBehavior;      // [reset] see nsStyleConsts.h NS_STYLE_SCROLL_BEHAVIOR_*
 
   // mSpecifiedTransform is the list of transform functions as
   // specified, or null to indicate there is no transform.  (inherit or
@@ -2094,7 +2101,8 @@ struct nsStyleDisplay {
            NS_STYLE_DISPLAY_RUBY_BASE == aDisplay ||
            NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER == aDisplay ||
            NS_STYLE_DISPLAY_RUBY_TEXT == aDisplay ||
-           NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER == aDisplay;
+           NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER == aDisplay ||
+           NS_STYLE_DISPLAY_CONTENTS == aDisplay;
   }
 
   bool IsInlineOutsideStyle() const {
@@ -2130,12 +2138,16 @@ struct nsStyleDisplay {
            NS_STYLE_POSITION_STICKY == mPosition;
   }
 
+  static bool IsRubyDisplayType(uint8_t aDisplay) {
+    return NS_STYLE_DISPLAY_RUBY == aDisplay ||
+           NS_STYLE_DISPLAY_RUBY_BASE == aDisplay ||
+           NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER == aDisplay ||
+           NS_STYLE_DISPLAY_RUBY_TEXT == aDisplay ||
+           NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER == aDisplay;
+  }
+
   bool IsRubyDisplayType() const {
-    return NS_STYLE_DISPLAY_RUBY == mDisplay ||
-           NS_STYLE_DISPLAY_RUBY_BASE == mDisplay ||
-           NS_STYLE_DISPLAY_RUBY_BASE_CONTAINER == mDisplay ||
-           NS_STYLE_DISPLAY_RUBY_TEXT == mDisplay ||
-           NS_STYLE_DISPLAY_RUBY_TEXT_CONTAINER == mDisplay;
+    return IsRubyDisplayType(mDisplay);
   }
 
   bool IsFlexOrGridDisplayType() const {
@@ -2599,6 +2611,7 @@ struct nsStyleUserInterface {
   uint8_t   mUserInput;       // [inherited]
   uint8_t   mUserModify;      // [inherited] (modify-content)
   uint8_t   mUserFocus;       // [inherited] (auto-select)
+  uint8_t   mWindowDragging;  // [inherited]
 
   uint8_t   mCursor;          // [inherited] See nsStyleConsts.h
 
@@ -2829,15 +2842,17 @@ struct nsStyleSVG {
 class nsStyleBasicShape MOZ_FINAL {
 public:
   enum Type {
-    // eInset,
-    // eCircle,
-    // eEllipse,
+    eInset,
+    eCircle,
+    eEllipse,
     ePolygon
   };
 
   explicit nsStyleBasicShape(Type type)
-    : mType(type)
+    : mType(type),
+      mFillRule(NS_STYLE_FILL_RULE_NONZERO)
   {
+    mPosition.SetInitialPercentValues(0.5f);
   }
 
   Type GetShapeType() const { return mType; }
@@ -2849,15 +2864,47 @@ public:
     mFillRule = aFillRule;
   }
 
+  typedef nsStyleBackground::Position Position;
+  Position& GetPosition() {
+    NS_ASSERTION(mType == eCircle || mType == eEllipse,
+                 "expected circle or ellipse");
+    return mPosition;
+  }
+  const Position& GetPosition() const {
+    NS_ASSERTION(mType == eCircle || mType == eEllipse,
+                 "expected circle or ellipse");
+    return mPosition;
+  }
+
+  bool HasRadius() const {
+    NS_ASSERTION(mType == eInset, "expected inset");
+    nsStyleCoord zero;
+    zero.SetCoordValue(0);
+    NS_FOR_CSS_HALF_CORNERS(corner) {
+      if (mRadius.Get(corner) != zero) {
+        return true;
+      }
+    }
+    return false;
+  }
+  nsStyleCorners& GetRadius() {
+    NS_ASSERTION(mType == eInset, "expected circle or ellipse");
+    return mRadius;
+  }
+  const nsStyleCorners& GetRadius() const {
+    NS_ASSERTION(mType == eInset, "expected circle or ellipse");
+    return mRadius;
+  }
+
+  // mCoordinates has coordinates for polygon or radii for
+  // ellipse and circle.
   nsTArray<nsStyleCoord>& Coordinates()
   {
-    NS_ASSERTION(mType == ePolygon, "expected polygon");
     return mCoordinates;
   }
 
   const nsTArray<nsStyleCoord>& Coordinates() const
   {
-    NS_ASSERTION(mType == ePolygon, "expected polygon");
     return mCoordinates;
   }
 
@@ -2865,7 +2912,9 @@ public:
   {
     return mType == aOther.mType &&
            mFillRule == aOther.mFillRule &&
-           mCoordinates == aOther.mCoordinates;
+           mCoordinates == aOther.mCoordinates &&
+           mPosition == aOther.mPosition &&
+           mRadius == aOther.mRadius;
   }
   bool operator!=(const nsStyleBasicShape& aOther) const {
     return !(*this == aOther);
@@ -2878,7 +2927,12 @@ private:
 
   Type mType;
   int32_t mFillRule;
+
+  // mCoordinates has coordinates for polygon or radii for
+  // ellipse and circle.
   nsTArray<nsStyleCoord> mCoordinates;
+  Position mPosition;
+  nsStyleCorners mRadius;
 };
 
 struct nsStyleClipPath

@@ -15,15 +15,6 @@ using namespace js::frontend;
 
 using mozilla::IsFinite;
 
-/*
- * Asserts to verify assumptions behind pn_ macros.
- */
-#define pn_offsetof(m)  offsetof(ParseNode, m)
-
-JS_STATIC_ASSERT(pn_offsetof(pn_link) == pn_offsetof(dn_uses));
-
-#undef pn_offsetof
-
 #ifdef DEBUG
 void
 ParseNode::checkListConsistency()
@@ -317,7 +308,7 @@ const char *
 Definition::kindString(Kind kind)
 {
     static const char * const table[] = {
-        "", js_var_str, js_const_str, js_let_str, js_function_str, "argument", "unknown"
+        "", js_var_str, js_const_str, js_const_str, js_let_str, "argument", js_function_str, "unknown"
     };
 
     MOZ_ASSERT(unsigned(kind) <= unsigned(ARG));
@@ -514,7 +505,7 @@ Parser<FullParseHandler>::cloneLeftHandSide(ParseNode *opn)
         if (opn->isDefn()) {
             /* We copied some definition-specific state into pn. Clear it out. */
             pn->pn_cookie.makeFree();
-            pn->pn_dflags &= ~(PND_LET | PND_BOUND);
+            pn->pn_dflags &= ~(PND_LEXICAL | PND_BOUND);
             pn->setDefn(false);
 
             handler.linkUseToDef(pn, (Definition *) opn);

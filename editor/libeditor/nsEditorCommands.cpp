@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-
 #include "mozFlushType.h"
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "nsCOMPtr.h"
 #include "nsCRT.h"
@@ -27,27 +27,21 @@
 
 class nsISupports;
 
-
-#define STATE_ENABLED  "state_enabled"
+#define STATE_ENABLED "state_enabled"
 #define STATE_DATA "state_data"
 
-
-nsBaseEditorCommand::nsBaseEditorCommand()
-{
-}
+nsBaseEditorCommand::nsBaseEditorCommand() {}
 
 NS_IMPL_ISUPPORTS(nsBaseEditorCommand, nsIControllerCommand)
 
-
 NS_IMETHODIMP
-nsUndoCommand::IsCommandEnabled(const char * aCommandName, 
-                                nsISupports *aCommandRefCon, 
+nsUndoCommand::IsCommandEnabled(const char *aCommandName,
+                                nsISupports *aCommandRefCon,
                                 bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     bool isEnabled, isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -59,18 +53,17 @@ nsUndoCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsUndoCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   if (editor)
     return editor->Undo(1);
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsUndoCommand::DoCommandParams(const char *aCommandName,
                                nsICommandParams *aParams,
                                nsISupports *aCommandRefCon)
@@ -78,25 +71,24 @@ nsUndoCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsUndoCommand::GetCommandStateParams(const char *aCommandName,
                                      nsICommandParams *aParams,
                                      nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
-nsRedoCommand::IsCommandEnabled(const char * aCommandName,
+nsRedoCommand::IsCommandEnabled(const char *aCommandName,
                                 nsISupports *aCommandRefCon,
                                 bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     bool isEnabled, isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -108,18 +100,17 @@ nsRedoCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsRedoCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   if (editor)
     return editor->Redo(1);
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsRedoCommand::DoCommandParams(const char *aCommandName,
                                nsICommandParams *aParams,
                                nsISupports *aCommandRefCon)
@@ -127,20 +118,20 @@ nsRedoCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsRedoCommand::GetCommandStateParams(const char *aCommandName,
                                      nsICommandParams *aParams,
                                      nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
-nsClearUndoCommand::IsCommandEnabled(const char * aCommandName,
+nsClearUndoCommand::IsCommandEnabled(const char *aCommandName,
                                      nsISupports *refCon, bool *outCmdEnabled)
-{ 
+{
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
   if (editor)
@@ -149,51 +140,48 @@ nsClearUndoCommand::IsCommandEnabled(const char * aCommandName,
   *outCmdEnabled = false;
   return NS_OK;
 }
-  
 
 NS_IMETHODIMP
 nsClearUndoCommand::DoCommand(const char *aCommandName, nsISupports *refCon)
-{ 
+{
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
   NS_ENSURE_TRUE(editor, NS_ERROR_NOT_IMPLEMENTED);
-  
-  editor->EnableUndo(false);  // Turning off undo clears undo/redo stacks.
-  editor->EnableUndo(true);   // This re-enables undo/redo.
-  
+
+  editor->EnableUndo(false); // Turning off undo clears undo/redo stacks.
+  editor->EnableUndo(true);  // This re-enables undo/redo.
+
   return NS_OK;
 }
-                                  
-NS_IMETHODIMP                       
+
+NS_IMETHODIMP
 nsClearUndoCommand::DoCommandParams(const char *aCommandName,
                                     nsICommandParams *aParams,
                                     nsISupports *refCon)
 {
   return DoCommand(aCommandName, refCon);
 }
-                                                  
-NS_IMETHODIMP                                     
+
+NS_IMETHODIMP
 nsClearUndoCommand::GetCommandStateParams(const char *aCommandName,
                                           nsICommandParams *aParams,
                                           nsISupports *refCon)
-{ 
+{
   NS_ENSURE_ARG_POINTER(aParams);
-  
+
   bool enabled;
   nsresult rv = IsCommandEnabled(aCommandName, refCon, &enabled);
   NS_ENSURE_SUCCESS(rv, rv);
-   
+
   return aParams->SetBooleanValue(STATE_ENABLED, enabled);
 }
 
 NS_IMETHODIMP
-nsCutCommand::IsCommandEnabled(const char * aCommandName,
-                               nsISupports *aCommandRefCon,
-                               bool *outCmdEnabled)
+nsCutCommand::IsCommandEnabled(const char *aCommandName,
+                               nsISupports *aCommandRefCon, bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     bool isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -205,18 +193,17 @@ nsCutCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsCutCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   if (editor)
     return editor->Cut();
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCutCommand::DoCommandParams(const char *aCommandName,
                               nsICommandParams *aParams,
                               nsISupports *aCommandRefCon)
@@ -224,19 +211,18 @@ nsCutCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCutCommand::GetCommandStateParams(const char *aCommandName,
                                     nsICommandParams *aParams,
                                     nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
-
 NS_IMETHODIMP
-nsCutOrDeleteCommand::IsCommandEnabled(const char * aCommandName,
+nsCutOrDeleteCommand::IsCommandEnabled(const char *aCommandName,
                                        nsISupports *aCommandRefCon,
                                        bool *outCmdEnabled)
 {
@@ -249,14 +235,12 @@ nsCutOrDeleteCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsCutOrDeleteCommand::DoCommand(const char *aCommandName,
                                 nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     nsCOMPtr<nsISelection> selection;
     nsresult rv = editor->GetSelection(getter_AddRefs(selection));
     if (NS_SUCCEEDED(rv) && selection && selection->Collapsed()) {
@@ -264,11 +248,11 @@ nsCutOrDeleteCommand::DoCommand(const char *aCommandName,
     }
     return editor->Cut();
   }
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCutOrDeleteCommand::DoCommandParams(const char *aCommandName,
                                       nsICommandParams *aParams,
                                       nsISupports *aCommandRefCon)
@@ -276,18 +260,18 @@ nsCutOrDeleteCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCutOrDeleteCommand::GetCommandStateParams(const char *aCommandName,
                                             nsICommandParams *aParams,
                                             nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
-nsCopyCommand::IsCommandEnabled(const char * aCommandName,
+nsCopyCommand::IsCommandEnabled(const char *aCommandName,
                                 nsISupports *aCommandRefCon,
                                 bool *outCmdEnabled)
 {
@@ -300,18 +284,17 @@ nsCopyCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsCopyCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   if (editor)
     return editor->Copy();
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCopyCommand::DoCommandParams(const char *aCommandName,
                                nsICommandParams *aParams,
                                nsISupports *aCommandRefCon)
@@ -319,18 +302,18 @@ nsCopyCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCopyCommand::GetCommandStateParams(const char *aCommandName,
                                      nsICommandParams *aParams,
                                      nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
-nsCopyOrDeleteCommand::IsCommandEnabled(const char * aCommandName,
+nsCopyOrDeleteCommand::IsCommandEnabled(const char *aCommandName,
                                         nsISupports *aCommandRefCon,
                                         bool *outCmdEnabled)
 {
@@ -343,14 +326,12 @@ nsCopyOrDeleteCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsCopyOrDeleteCommand::DoCommand(const char *aCommandName,
                                  nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     nsCOMPtr<nsISelection> selection;
     nsresult rv = editor->GetSelection(getter_AddRefs(selection));
     if (NS_SUCCEEDED(rv) && selection && selection->Collapsed()) {
@@ -358,11 +339,11 @@ nsCopyOrDeleteCommand::DoCommand(const char *aCommandName,
     }
     return editor->Copy();
   }
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCopyOrDeleteCommand::DoCommandParams(const char *aCommandName,
                                        nsICommandParams *aParams,
                                        nsISupports *aCommandRefCon)
@@ -370,14 +351,68 @@ nsCopyOrDeleteCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsCopyOrDeleteCommand::GetCommandStateParams(const char *aCommandName,
                                              nsICommandParams *aParams,
                                              nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
+}
+
+NS_IMETHODIMP
+nsCopyAndCollapseToEndCommand::IsCommandEnabled(const char *aCommandName,
+                                                nsISupports *aCommandRefCon,
+                                                bool *outCmdEnabled)
+{
+  NS_ENSURE_ARG_POINTER(outCmdEnabled);
+  nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (editor)
+    return editor->CanCopy(outCmdEnabled);
+
+  *outCmdEnabled = false;
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+nsCopyAndCollapseToEndCommand::DoCommand(const char *aCommandName,
+                                         nsISupports *aCommandRefCon)
+{
+  nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
+  if (editor) {
+    nsresult rv = editor->Copy();
+    if (NS_FAILED(rv)) {
+      return rv;
+    }
+
+    nsCOMPtr<nsISelection> selection;
+    rv = editor->GetSelection(getter_AddRefs(selection));
+    if (NS_SUCCEEDED(rv) && selection) {
+      selection->CollapseToEnd();
+    }
+    return rv;
+  }
+
+  return NS_ERROR_FAILURE;
+}
+
+NS_IMETHODIMP
+nsCopyAndCollapseToEndCommand::DoCommandParams(const char *aCommandName,
+                                               nsICommandParams *aParams,
+                                               nsISupports *aCommandRefCon)
+{
+  return DoCommand(aCommandName, aCommandRefCon);
+}
+
+NS_IMETHODIMP
+nsCopyAndCollapseToEndCommand::GetCommandStateParams(
+  const char *aCommandName, nsICommandParams *aParams,
+  nsISupports *aCommandRefCon)
+{
+  bool canUndo;
+  IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
@@ -387,8 +422,7 @@ nsPasteCommand::IsCommandEnabled(const char *aCommandName,
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     bool isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -400,17 +434,16 @@ nsPasteCommand::IsCommandEnabled(const char *aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsPasteCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   NS_ENSURE_TRUE(editor, NS_ERROR_FAILURE);
-  
+
   return editor->Paste(nsIClipboard::kGlobalClipboard);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPasteCommand::DoCommandParams(const char *aCommandName,
                                 nsICommandParams *aParams,
                                 nsISupports *aCommandRefCon)
@@ -418,14 +451,14 @@ nsPasteCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPasteCommand::GetCommandStateParams(const char *aCommandName,
                                       nsICommandParams *aParams,
                                       nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
@@ -435,8 +468,7 @@ nsPasteTransferableCommand::IsCommandEnabled(const char *aCommandName,
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
-  if (editor)
-  {
+  if (editor) {
     bool isEditable = false;
     nsresult rv = editor->GetIsSelectionEditable(&isEditable);
     NS_ENSURE_SUCCESS(rv, rv);
@@ -449,19 +481,20 @@ nsPasteTransferableCommand::IsCommandEnabled(const char *aCommandName,
 }
 
 NS_IMETHODIMP
-nsPasteTransferableCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
+nsPasteTransferableCommand::DoCommand(const char *aCommandName,
+                                      nsISupports *aCommandRefCon)
 {
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPasteTransferableCommand::DoCommandParams(const char *aCommandName,
                                             nsICommandParams *aParams,
                                             nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   NS_ENSURE_TRUE(editor, NS_ERROR_FAILURE);
-  
+
   nsCOMPtr<nsISupports> supports;
   aParams->GetISupportsValue("transferable", getter_AddRefs(supports));
   NS_ENSURE_TRUE(supports, NS_ERROR_FAILURE);
@@ -472,7 +505,7 @@ nsPasteTransferableCommand::DoCommandParams(const char *aCommandName,
   return editor->PasteTransferable(trans);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsPasteTransferableCommand::GetCommandStateParams(const char *aCommandName,
                                                   nsICommandParams *aParams,
                                                   nsISupports *aCommandRefCon)
@@ -498,8 +531,8 @@ nsPasteTransferableCommand::GetCommandStateParams(const char *aCommandName,
 
 NS_IMETHODIMP
 nsSwitchTextDirectionCommand::IsCommandEnabled(const char *aCommandName,
-                                 nsISupports *aCommandRefCon,
-                                 bool *outCmdEnabled)
+                                               nsISupports *aCommandRefCon,
+                                               bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
@@ -511,7 +544,8 @@ nsSwitchTextDirectionCommand::IsCommandEnabled(const char *aCommandName,
 }
 
 NS_IMETHODIMP
-nsSwitchTextDirectionCommand::DoCommand(const char *aCommandName, nsISupports *aCommandRefCon)
+nsSwitchTextDirectionCommand::DoCommand(const char *aCommandName,
+                                        nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   NS_ENSURE_TRUE(editor, NS_ERROR_FAILURE);
@@ -519,18 +553,18 @@ nsSwitchTextDirectionCommand::DoCommand(const char *aCommandName, nsISupports *a
   return editor->SwitchTextDirection();
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSwitchTextDirectionCommand::DoCommandParams(const char *aCommandName,
-                                nsICommandParams *aParams,
-                                nsISupports *aCommandRefCon)
+                                              nsICommandParams *aParams,
+                                              nsISupports *aCommandRefCon)
 {
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSwitchTextDirectionCommand::GetCommandStateParams(const char *aCommandName,
-                                      nsICommandParams *aParams,
-                                      nsISupports *aCommandRefCon)
+                                                    nsICommandParams *aParams,
+                                                    nsISupports *aCommandRefCon)
 {
   bool canSwitchTextDirection = true;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canSwitchTextDirection);
@@ -538,9 +572,9 @@ nsSwitchTextDirectionCommand::GetCommandStateParams(const char *aCommandName,
 }
 
 NS_IMETHODIMP
-nsDeleteCommand::IsCommandEnabled(const char* aCommandName,
-                                  nsISupports* aCommandRefCon,
-                                  bool* outCmdEnabled)
+nsDeleteCommand::IsCommandEnabled(const char *aCommandName,
+                                  nsISupports *aCommandRefCon,
+                                  bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
@@ -555,17 +589,16 @@ nsDeleteCommand::IsCommandEnabled(const char* aCommandName,
   NS_ENSURE_SUCCESS(rv, rv);
 
   if (!nsCRT::strcmp("cmd_delete", aCommandName) && *outCmdEnabled) {
-    rv = editor->CanCut(outCmdEnabled);
+    rv = editor->CanDelete(outCmdEnabled);
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
-nsDeleteCommand::DoCommand(const char* aCommandName,
-                           nsISupports* aCommandRefCon)
+nsDeleteCommand::DoCommand(const char *aCommandName,
+                           nsISupports *aCommandRefCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   NS_ENSURE_TRUE(editor, NS_ERROR_FAILURE);
@@ -596,7 +629,7 @@ nsDeleteCommand::DoCommand(const char* aCommandName,
   return editor->DeleteSelection(deleteDir, nsIEditor::eStrip);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsDeleteCommand::DoCommandParams(const char *aCommandName,
                                  nsICommandParams *aParams,
                                  nsISupports *aCommandRefCon)
@@ -604,18 +637,18 @@ nsDeleteCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsDeleteCommand::GetCommandStateParams(const char *aCommandName,
                                        nsICommandParams *aParams,
                                        nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
 NS_IMETHODIMP
-nsSelectAllCommand::IsCommandEnabled(const char * aCommandName,
+nsSelectAllCommand::IsCommandEnabled(const char *aCommandName,
                                      nsISupports *aCommandRefCon,
                                      bool *outCmdEnabled)
 {
@@ -638,7 +671,6 @@ nsSelectAllCommand::IsCommandEnabled(const char * aCommandName,
   return rv;
 }
 
-
 NS_IMETHODIMP
 nsSelectAllCommand::DoCommand(const char *aCommandName,
                               nsISupports *aCommandRefCon)
@@ -646,11 +678,11 @@ nsSelectAllCommand::DoCommand(const char *aCommandName,
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(aCommandRefCon);
   if (editor)
     return editor->SelectAll();
-    
+
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSelectAllCommand::DoCommandParams(const char *aCommandName,
                                     nsICommandParams *aParams,
                                     nsISupports *aCommandRefCon)
@@ -658,19 +690,18 @@ nsSelectAllCommand::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSelectAllCommand::GetCommandStateParams(const char *aCommandName,
                                           nsICommandParams *aParams,
                                           nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
-
 NS_IMETHODIMP
-nsSelectionMoveCommands::IsCommandEnabled(const char * aCommandName,
+nsSelectionMoveCommands::IsCommandEnabled(const char *aCommandName,
                                           nsISupports *aCommandRefCon,
                                           bool *outCmdEnabled)
 {
@@ -682,6 +713,70 @@ nsSelectionMoveCommands::IsCommandEnabled(const char * aCommandName,
   *outCmdEnabled = false;
   return NS_OK;
 }
+
+static const struct ScrollCommand {
+  const char *reverseScroll;
+  const char *forwardScroll;
+  nsresult (NS_STDCALL nsISelectionController::*scroll)(bool);
+} scrollCommands[] = {
+  { "cmd_scrollTop", "cmd_scrollBottom",
+    &nsISelectionController::CompleteScroll },
+  { "cmd_scrollPageUp", "cmd_scrollPageDown",
+    &nsISelectionController::ScrollPage },
+  { "cmd_scrollLineUp", "cmd_scrollLineDown",
+    &nsISelectionController::ScrollLine }
+};
+
+static const struct MoveCommand {
+  const char *reverseMove;
+  const char *forwardMove;
+  const char *reverseSelect;
+  const char *forwardSelect;
+  nsresult (NS_STDCALL nsISelectionController::*move)(bool, bool);
+} moveCommands[] = {
+  { "cmd_charPrevious", "cmd_charNext",
+    "cmd_selectCharPrevious", "cmd_selectCharNext",
+    &nsISelectionController::CharacterMove },
+  { "cmd_linePrevious", "cmd_lineNext",
+    "cmd_selectLinePrevious", "cmd_selectLineNext",
+    &nsISelectionController::LineMove },
+  { "cmd_wordPrevious", "cmd_wordNext",
+    "cmd_selectWordPrevious", "cmd_selectWordNext",
+    &nsISelectionController::WordMove },
+  { "cmd_beginLine", "cmd_endLine",
+    "cmd_selectBeginLine", "cmd_selectEndLine",
+    &nsISelectionController::IntraLineMove },
+  { "cmd_movePageUp", "cmd_movePageDown",
+    "cmd_selectPageUp", "cmd_selectPageDown",
+    &nsISelectionController::PageMove },
+  { "cmd_moveTop", "cmd_moveBottom",
+    "cmd_selectTop", "cmd_selectBottom",
+    &nsISelectionController::CompleteMove }
+};
+
+static const struct PhysicalCommand {
+  const char *move;
+  const char *select;
+  int16_t direction;
+  int16_t amount;
+} physicalCommands[] = {
+  { "cmd_moveLeft", "cmd_selectLeft",
+    nsISelectionController::MOVE_LEFT, 0 },
+  { "cmd_moveRight", "cmd_selectRight",
+    nsISelectionController::MOVE_RIGHT, 0 },
+  { "cmd_moveUp", "cmd_selectUp",
+    nsISelectionController::MOVE_UP, 0 },
+  { "cmd_moveDown", "cmd_selectDown",
+    nsISelectionController::MOVE_DOWN, 0 },
+  { "cmd_moveLeft2", "cmd_selectLeft2",
+    nsISelectionController::MOVE_LEFT, 1 },
+  { "cmd_moveRight2", "cmd_selectRight2",
+    nsISelectionController::MOVE_RIGHT, 1 },
+  { "cmd_moveUp2", "cmd_selectUp2",
+    nsISelectionController::MOVE_UP, 1 },
+  { "cmd_moveDown2", "cmd_selectDown2",
+    nsISelectionController::MOVE_DOWN, 1 }
+};
 
 NS_IMETHODIMP
 nsSelectionMoveCommands::DoCommand(const char *aCommandName,
@@ -700,92 +795,48 @@ nsSelectionMoveCommands::DoCommand(const char *aCommandName,
   }
 
   nsCOMPtr<nsISelectionController> selCont;
-  nsresult rv = editor->GetSelectionController(getter_AddRefs(selCont)); 
+  nsresult rv = editor->GetSelectionController(getter_AddRefs(selCont));
   NS_ENSURE_SUCCESS(rv, rv);
   NS_ENSURE_TRUE(selCont, NS_ERROR_FAILURE);
 
-  // complete scroll commands
-  if (!nsCRT::strcmp(aCommandName,"cmd_scrollTop"))
-    return selCont->CompleteScroll(false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_scrollBottom"))
-    return selCont->CompleteScroll(true);
+  // scroll commands
+  for (size_t i = 0; i < mozilla::ArrayLength(scrollCommands); i++) {
+    const ScrollCommand &cmd = scrollCommands[i];
+    if (!nsCRT::strcmp(aCommandName, cmd.reverseScroll)) {
+      return (selCont->*(cmd.scroll))(false);
+    } else if (!nsCRT::strcmp(aCommandName, cmd.forwardScroll)) {
+      return (selCont->*(cmd.scroll))(true);
+    }
+  }
 
-  // complete move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_moveTop"))
-    return selCont->CompleteMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_moveBottom"))
-    return selCont->CompleteMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectTop"))
-    return selCont->CompleteMove(false, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectBottom"))
-    return selCont->CompleteMove(true, true);
+  // caret movement/selection commands
+  for (size_t i = 0; i < mozilla::ArrayLength(moveCommands); i++) {
+    const MoveCommand &cmd = moveCommands[i];
+    if (!nsCRT::strcmp(aCommandName, cmd.reverseMove)) {
+      return (selCont->*(cmd.move))(false, false);
+    } else if (!nsCRT::strcmp(aCommandName, cmd.forwardMove)) {
+      return (selCont->*(cmd.move))(true, false);
+    } else if (!nsCRT::strcmp(aCommandName, cmd.reverseSelect)) {
+      return (selCont->*(cmd.move))(false, true);
+    } else if (!nsCRT::strcmp(aCommandName, cmd.forwardSelect)) {
+      return (selCont->*(cmd.move))(true, true);
+    }
+  }
 
-  // line move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_lineNext"))
-    return selCont->LineMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_linePrevious"))
-    return selCont->LineMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectLineNext"))
-    return selCont->LineMove(true, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectLinePrevious"))
-    return selCont->LineMove(false, true);
+  // physical-direction movement/selection
+  for (size_t i = 0; i < mozilla::ArrayLength(physicalCommands); i++) {
+    const PhysicalCommand &cmd = physicalCommands[i];
+    if (!nsCRT::strcmp(aCommandName, cmd.move)) {
+      return selCont->PhysicalMove(cmd.direction, cmd.amount, false);
+    } else if (!nsCRT::strcmp(aCommandName, cmd.select)) {
+      return selCont->PhysicalMove(cmd.direction, cmd.amount, true);
+    }
+  }
 
-  // character move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_charPrevious"))
-    return selCont->CharacterMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_charNext"))
-    return selCont->CharacterMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectCharPrevious"))
-    return selCont->CharacterMove(false, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectCharNext"))
-    return selCont->CharacterMove(true, true);
-
-  // intra line move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_beginLine"))
-    return selCont->IntraLineMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_endLine"))
-    return selCont->IntraLineMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectBeginLine"))
-    return selCont->IntraLineMove(false, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectEndLine"))
-    return selCont->IntraLineMove(true, true);
-  
-  // word move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_wordPrevious"))
-    return selCont->WordMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_wordNext"))
-    return selCont->WordMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectWordPrevious"))
-    return selCont->WordMove(false, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectWordNext"))
-    return selCont->WordMove(true, true);
-  
-  // scroll page commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_scrollPageUp"))
-    return selCont->ScrollPage(false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_scrollPageDown"))
-    return selCont->ScrollPage(true);
-  
-  // scroll line commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_scrollLineUp"))
-    return selCont->ScrollLine(false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_scrollLineDown"))
-    return selCont->ScrollLine(true);
-  
-  // page move commands
-  else if (!nsCRT::strcmp(aCommandName,"cmd_movePageUp"))
-    return selCont->PageMove(false, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_movePageDown"))
-    return selCont->PageMove(true, false);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectPageUp"))
-    return selCont->PageMove(false, true);
-  else if (!nsCRT::strcmp(aCommandName,"cmd_selectPageDown"))
-    return selCont->PageMove(true, true);
-    
   return NS_ERROR_FAILURE;
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSelectionMoveCommands::DoCommandParams(const char *aCommandName,
                                          nsICommandParams *aParams,
                                          nsISupports *aCommandRefCon)
@@ -793,20 +844,19 @@ nsSelectionMoveCommands::DoCommandParams(const char *aCommandName,
   return DoCommand(aCommandName, aCommandRefCon);
 }
 
-NS_IMETHODIMP 
+NS_IMETHODIMP
 nsSelectionMoveCommands::GetCommandStateParams(const char *aCommandName,
                                                nsICommandParams *aParams,
                                                nsISupports *aCommandRefCon)
 {
   bool canUndo;
   IsCommandEnabled(aCommandName, aCommandRefCon, &canUndo);
-  return aParams->SetBooleanValue(STATE_ENABLED,canUndo);
+  return aParams->SetBooleanValue(STATE_ENABLED, canUndo);
 }
 
-
 NS_IMETHODIMP
-nsInsertPlaintextCommand::IsCommandEnabled(const char * aCommandName,
-                                           nsISupports *refCon, 
+nsInsertPlaintextCommand::IsCommandEnabled(const char *aCommandName,
+                                           nsISupports *refCon,
                                            bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
@@ -817,7 +867,6 @@ nsInsertPlaintextCommand::IsCommandEnabled(const char * aCommandName,
   *outCmdEnabled = false;
   return NS_ERROR_NOT_IMPLEMENTED;
 }
-
 
 NS_IMETHODIMP
 nsInsertPlaintextCommand::DoCommand(const char *aCommandName,
@@ -859,16 +908,15 @@ nsInsertPlaintextCommand::GetCommandStateParams(const char *aCommandName,
   return aParams->SetBooleanValue(STATE_ENABLED, outCmdEnabled);
 }
 
-
 NS_IMETHODIMP
-nsPasteQuotationCommand::IsCommandEnabled(const char * aCommandName,
+nsPasteQuotationCommand::IsCommandEnabled(const char *aCommandName,
                                           nsISupports *refCon,
                                           bool *outCmdEnabled)
 {
   NS_ENSURE_ARG_POINTER(outCmdEnabled);
 
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
-  nsCOMPtr<nsIEditorMailSupport>  mailEditor = do_QueryInterface(refCon);
+  nsCOMPtr<nsIEditorMailSupport> mailEditor = do_QueryInterface(refCon);
   if (editor && mailEditor) {
     uint32_t flags;
     editor->GetFlags(&flags);
@@ -880,12 +928,11 @@ nsPasteQuotationCommand::IsCommandEnabled(const char * aCommandName,
   return NS_OK;
 }
 
-
 NS_IMETHODIMP
 nsPasteQuotationCommand::DoCommand(const char *aCommandName,
                                    nsISupports *refCon)
 {
-  nsCOMPtr<nsIEditorMailSupport>  mailEditor = do_QueryInterface(refCon);
+  nsCOMPtr<nsIEditorMailSupport> mailEditor = do_QueryInterface(refCon);
   if (mailEditor)
     return mailEditor->PasteAsQuotation(nsIClipboard::kGlobalClipboard);
 
@@ -897,7 +944,7 @@ nsPasteQuotationCommand::DoCommandParams(const char *aCommandName,
                                          nsICommandParams *aParams,
                                          nsISupports *refCon)
 {
-  nsCOMPtr<nsIEditorMailSupport>  mailEditor = do_QueryInterface(refCon);
+  nsCOMPtr<nsIEditorMailSupport> mailEditor = do_QueryInterface(refCon);
   if (mailEditor)
     return mailEditor->PasteAsQuotation(nsIClipboard::kGlobalClipboard);
 
@@ -910,13 +957,11 @@ nsPasteQuotationCommand::GetCommandStateParams(const char *aCommandName,
                                                nsISupports *refCon)
 {
   nsCOMPtr<nsIEditor> editor = do_QueryInterface(refCon);
-  if (editor)
-  {
+  if (editor) {
     bool enabled = false;
     editor->CanPaste(nsIClipboard::kGlobalClipboard, &enabled);
     aParams->SetBooleanValue(STATE_ENABLED, enabled);
   }
- 
+
   return NS_OK;
 }
-

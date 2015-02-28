@@ -13,12 +13,11 @@ function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(2);
 
-  let gTab, gDebuggee, gPanel, gDebugger;
+  let gTab, gPanel, gDebugger;
   let gSources, gStep;
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = aPanel.panelWin;
     gSources = gDebugger.DebuggerView.Sources;
@@ -30,7 +29,7 @@ function test() {
   function performTest() {
     switch (gStep++) {
       case 0:
-        testCurrentSource(FIRST_URL, "");
+        testCurrentSource(FIRST_URL, null);
         reload().then(performTest);
         break;
       case 1:
@@ -62,7 +61,7 @@ function test() {
 
   function switchAndReload(aUrl) {
     let finished = waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN).then(reload);
-    gSources.selectedValue = aUrl;
+    gSources.selectedValue = getSourceActor(gSources, aUrl);
     return finished;
   }
 
@@ -70,9 +69,9 @@ function test() {
     info("Currently preferred source: '" + gSources.preferredValue + "'.");
     info("Currently selected source: '" + gSources.selectedValue + "'.");
 
-    is(gSources.preferredValue, aExpectedUrl,
+    is(getSourceURL(gSources, gSources.preferredValue), aExpectedUrl,
       "The preferred source url wasn't set correctly (" + gStep + ").");
-    is(gSources.selectedValue, aUrl,
+    is(getSourceURL(gSources, gSources.selectedValue), aUrl,
       "The selected source isn't the correct one (" + gStep + ").");
   }
 }

@@ -197,7 +197,7 @@ cy{
         }
         GBP{
             "£",
-            "Punt Sterling Prydain",
+            "Punt Prydain",
         }
         GEL{
             "GEL",
@@ -1018,12 +1018,12 @@ cy{
             zero{"Punt Ynysoedd Falkland/Malvinas"}
         }
         GBP{
-            few{"Punt Sterling Prydain"}
-            many{"Punt Sterling Prydain"}
-            one{"Punt Sterling Prydain"}
-            other{"Punt Sterling Prydain"}
-            two{"Punt Sterling Prydain"}
-            zero{"Punt Sterling Prydain"}
+            few{"Punt Prydain"}
+            many{"Punt Prydain"}
+            one{"Punt Prydain"}
+            other{"Punt Prydain"}
+            two{"Punt Prydain"}
+            zero{"Punt Prydain"}
         }
         GEL{
             few{"Lari Georgia"}
@@ -1930,5 +1930,5 @@ cy{
         two{"{0} {1}"}
         zero{"{0} {1}"}
     }
-    Version{"2.1.7.80"}
+    Version{"2.1.10.42"}
 }

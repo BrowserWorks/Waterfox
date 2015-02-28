@@ -87,6 +87,7 @@ CERT_FilterCertListByUsage
 CERT_FilterCertListForUserCerts
 CERT_FindCertByDERCert
 CERT_FindCertByIssuerAndSN
+CERT_FindCertByName
 CERT_FindCertByNickname
 CERT_FindCertByNicknameOrEmailAddr
 CERT_FindCertExtension
@@ -145,7 +146,6 @@ CERT_StartCertificateRequestAttributes
 CERT_SubjectPublicKeyInfoTemplate DATA
 CERT_TimeChoiceTemplate DATA
 CERT_VerifyCertificate
-CERT_VerifyCertName
 CERT_VerifySignedDataWithPublicKeyInfo
 DER_AsciiToTime_Util
 DER_DecodeTimeChoice_Util
@@ -636,6 +636,7 @@ SSL_CipherPrefSet
 SSL_CipherPrefSetDefault
 SSL_ClearSessionCache
 SSL_ConfigSecureServer
+SSL_ConfigSecureServerWithCertChain
 SSL_ConfigServerSessionIDCache
 SSL_ExportKeyingMaterial
 SSL_ForceHandshake

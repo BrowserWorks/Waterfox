@@ -304,13 +304,6 @@ class TestRecursiveMakeBackend(BackendTester):
             'VISIBILITY_FLAGS': [
                 'VISIBILITY_FLAGS :=',
             ],
-            'DELAYLOAD_LDFLAGS': [
-                'DELAYLOAD_LDFLAGS += -DELAYLOAD:foo.dll',
-                'DELAYLOAD_LDFLAGS += -DELAYLOAD:bar.dll',
-            ],
-            'USE_DELAYIMP': [
-                'USE_DELAYIMP := 1',
-            ],
             'RCFILE': [
                 'RCFILE := foo.rc',
             ],
@@ -337,6 +330,8 @@ class TestRecursiveMakeBackend(BackendTester):
             'MOZBUILD_LDFLAGS': [
                 'MOZBUILD_LDFLAGS += -framework Foo',
                 'MOZBUILD_LDFLAGS += -x',
+                'MOZBUILD_LDFLAGS += -DELAYLOAD:foo.dll',
+                'MOZBUILD_LDFLAGS += -DELAYLOAD:bar.dll',
             ],
             'WIN32_EXE_LDFLAGS': [
                 'WIN32_EXE_LDFLAGS += -subsystem:console',
@@ -628,15 +623,19 @@ class TestRecursiveMakeBackend(BackendTester):
         expected = [
             'extra_js__FILES := module1.js module2.js',
             'extra_js__DEST = $(FINAL_TARGET)/modules/',
+            'extra_js__TARGET := misc',
             'INSTALL_TARGETS += extra_js_',
             'extra_js_submodule_FILES := module3.js module4.js',
             'extra_js_submodule_DEST = $(FINAL_TARGET)/modules/submodule',
+            'extra_js_submodule_TARGET := misc',
             'INSTALL_TARGETS += extra_js_submodule',
             'extra_pp_js_ := pp-module1.js',
             'extra_pp_js__PATH = $(FINAL_TARGET)/modules/',
+            'extra_pp_js__TARGET := misc',
             'PP_TARGETS += extra_pp_js_',
             'extra_pp_js_ppsub := pp-module2.js',
             'extra_pp_js_ppsub_PATH = $(FINAL_TARGET)/modules/ppsub',
+            'extra_pp_js_ppsub_TARGET := misc',
             'PP_TARGETS += extra_pp_js_ppsub',
         ]
 

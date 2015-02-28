@@ -11,15 +11,10 @@
  */
 
 [Constructor(optional DOMString utfLabel = "utf-8"),
- Exposed=(Window,Worker)]
+ Exposed=(Window,Worker,System)]
 interface TextEncoder {
   [Constant]
   readonly attribute DOMString encoding;
-  [Throws]
-  Uint8Array encode(optional DOMString input = "", optional TextEncodeOptions options);
+  [Throws, NewObject]
+  Uint8Array encode(optional USVString input = "");
 };
-
-dictionary TextEncodeOptions {
-  boolean stream = false;
-};
-

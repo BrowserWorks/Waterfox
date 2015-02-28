@@ -6,7 +6,7 @@
 
 "use strict";
 
-const { Ci, Cu } = require("chrome");
+const { Cc, Ci, Cu } = require("chrome");
 const Services = require("Services");
 const { ActorPool, appendExtraActors, createExtraActors } = require("devtools/server/actors/common");
 const { DebuggerServer } = require("devtools/server/main");
@@ -16,6 +16,10 @@ const DevToolsUtils = require("devtools/toolkit/DevToolsUtils");
 
 DevToolsUtils.defineLazyGetter(this, "StyleSheetActor", () => {
   return require("devtools/server/actors/stylesheets").StyleSheetActor;
+});
+
+DevToolsUtils.defineLazyGetter(this, "ppmm", () => {
+  return Cc["@mozilla.org/parentprocessmessagemanager;1"].getService(Ci.nsIMessageBroadcaster);
 });
 
 /* Root actor for the remote debugging protocol. */
@@ -115,7 +119,11 @@ RootActor.prototype = {
 
   traits: {
     sources: true,
+    // Whether the inspector actor allows modifying outer HTML.
     editOuterHTML: true,
+    // Whether the inspector actor allows modifying innerHTML and inserting
+    // adjacent HTML.
+    pasteHTML: true,
     // Whether the server-side highlighter actor exists and can be used to
     // remotely highlight nodes (see server/actors/highlighter.js)
     highlightable: true,
@@ -124,7 +132,8 @@ RootActor.prototype = {
     customHighlighters: [
       "BoxModelHighlighter",
       "CssTransformHighlighter",
-      "SelectorHighlighter"
+      "SelectorHighlighter",
+      "RectHighlighter"
     ],
     // Whether the inspector actor implements the getImageDataFromURL
     // method that returns data-uris for image URLs. This is used for image
@@ -137,13 +146,25 @@ RootActor.prototype = {
     storageInspectorReadOnly: true,
     // Whether conditional breakpoints are supported
     conditionalBreakpoints: true,
+    // Whether the server supports full source actors (breakpoints on
+    // eval scripts, etc)
+    debuggerSourceActors: true,
     bulk: true,
     // Whether the style rule actor implements the modifySelector method
     // that modifies the rule's selector
     selectorEditable: true,
     // Whether the page style actor implements the addNewRule method that
     // adds new rules to the page
-    addNewRule: true
+    addNewRule: true,
+    // Whether the dom node actor implements the getUniqueSelector method
+    getUniqueSelector: true,
+    // Whether the debugger server supports
+    // blackboxing/pretty-printing (not supported in Fever Dream yet)
+    noBlackBoxing: false,
+    noPrettyPrinting: false,
+    // Whether the page style actor implements the getUsedFontFaces method
+    // that returns the font faces used on a node
+    getUsedFontFaces: true
   },
 
   /**
@@ -270,14 +291,12 @@ RootActor.prototype = {
         newActorPool.addActor(tabActor);
         tabActorList.push(tabActor);
       }
-
       /* DebuggerServer.addGlobalActor support: create actors. */
       if (!this._globalActorPool) {
         this._globalActorPool = new ActorPool(this.conn);
-        this._createExtraActors(this._parameters.globalActorFactories, this._globalActorPool);
         this.conn.addActorPool(this._globalActorPool);
       }
-
+      this._createExtraActors(this._parameters.globalActorFactories, this._globalActorPool);
       /*
        * Drop the old actorID -> actor map. Actors that still mattered were
        * added to the new map; others will go away.
@@ -352,6 +371,28 @@ RootActor.prototype = {
     this._parameters.addonList.onListChanged = null;
   },
 
+  onListProcesses: function () {
+    let processes = [];
+    for (let i = 0; i < ppmm.childCount; i++) {
+      processes.push({
+        id: i, // XXX: may not be a perfect id, but process message manager doesn't expose anything...
+        parent: i == 0, // XXX Weak, but appear to be stable
+        tabCount: undefined, // TODO: exposes process message manager on frameloaders in order to compute this
+      });
+    }
+    return { processes: processes };
+  },
+
+  onAttachProcess: function (aRequest) {
+    let mm = ppmm.getChildAt(aRequest.id);
+    if (!mm) {
+      return { error: "noProcess",
+               message: "There is no process with id '" + aRequest.id + "'." };
+    }
+    return DebuggerServer.connectToContent(this.conn, mm)
+                         .then(form => ({ form: form }));
+  },
+
   /* This is not in the spec, but it's used by tests. */
   onEcho: function (aRequest) {
     /*
@@ -404,7 +445,7 @@ RootActor.prototype = {
    * is here because the Style Editor and Inspector share style sheet actors.
    *
    * @param DOMStyleSheet styleSheet
-   *        The style sheet to creat an actor for.
+   *        The style sheet to create an actor for.
    * @return StyleSheetActor actor
    *         The actor for this style sheet.
    *
@@ -419,12 +460,35 @@ RootActor.prototype = {
     this._globalActorPool.addActor(actor);
 
     return actor;
-  }
+  },
+
+  /**
+   * Remove the extra actor (added by DebuggerServer.addGlobalActor or
+   * DebuggerServer.addTabActor) name |aName|.
+   */
+  removeActorByName: function(aName) {
+    if (aName in this._extraActors) {
+      const actor = this._extraActors[aName];
+      if (this._globalActorPool.has(actor)) {
+        this._globalActorPool.removeActor(actor);
+      }
+      if (this._tabActorPool) {
+        // Iterate over TabActor instances to also remove tab actors
+        // created during listTabs for each document.
+        this._tabActorPool.forEach(tab => {
+          tab.removeActorByName(aName);
+        });
+      }
+      delete this._extraActors[aName];
+    }
+   }
 };
 
 RootActor.prototype.requestTypes = {
   "listTabs": RootActor.prototype.onListTabs,
   "listAddons": RootActor.prototype.onListAddons,
+  "listProcesses": RootActor.prototype.onListProcesses,
+  "attachProcess": RootActor.prototype.onAttachProcess,
   "echo": RootActor.prototype.onEcho,
   "protocolDescription": RootActor.prototype.onProtocolDescription
 };

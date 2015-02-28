@@ -8,14 +8,14 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_inline-script.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
+    gSources = gDebugger.DebuggerView.Sources;
 
     addBreakpoint();
   });
@@ -28,12 +28,12 @@ function addBreakpoint() {
     ok(isCaretPos(gPanel, 16),
       "The source editor caret position is incorrect (1).");
 
-    gPanel.addBreakpoint({ url: TAB_URL, line: 20 }).then(() => {
+    gPanel.addBreakpoint({ actor: getSourceActor(gSources, TAB_URL), line: 20 }).then(() => {
       testResume();
     });
   });
 
-  gDebuggee.runDebuggerStatement();
+  callInTab(gTab, "runDebuggerStatement");
 }
 
 function testResume() {
@@ -54,9 +54,7 @@ function testResume() {
       });
     });
 
-    EventUtils.sendMouseEvent({ type: "click" },
-      gDebuggee.document.querySelector("button"),
-      gDebuggee);
+    sendMouseClickToTab(gTab, content.document.querySelector("button"));
   });
 }
 
@@ -84,7 +82,7 @@ function testBreakpointHit() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
+  gSources = null;
 });

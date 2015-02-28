@@ -8,10 +8,10 @@
 #include "mozilla/dom/MessagePort.h"
 #include "mozilla/dom/MessagePortBinding.h"
 #include "mozilla/dom/MessagePortList.h"
-#include "mozilla/dom/UnionTypes.h"
 
 #include "mozilla/HoldDropJSObjects.h"
 #include "jsapi.h"
+#include "nsGlobalWindow.h" // So we can assign an nsGlobalWindow* to mWindowSource
 
 namespace mozilla {
 namespace dom {
@@ -57,7 +57,7 @@ MessageEvent::~MessageEvent()
 }
 
 JSObject*
-MessageEvent::WrapObject(JSContext* aCx)
+MessageEvent::WrapObjectInternal(JSContext* aCx)
 {
   return mozilla::dom::MessageEventBinding::Wrap(aCx, this);
 }
@@ -142,8 +142,8 @@ MessageEvent::Constructor(const GlobalObject& aGlobal,
   }
 
   if (!aParam.mSource.IsNull()) {
-    if (aParam.mSource.Value().IsWindowProxy()) {
-      event->mWindowSource = aParam.mSource.Value().GetAsWindowProxy();
+    if (aParam.mSource.Value().IsWindow()) {
+      event->mWindowSource = aParam.mSource.Value().GetAsWindow();
     } else {
       event->mPortSource = aParam.mSource.Value().GetAsMessagePort();
     }

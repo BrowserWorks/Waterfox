@@ -7,7 +7,17 @@ const SETTINGS_KEY_DATA_ENABLED = "ril.data.enabled";
 const SETTINGS_KEY_DATA_ROAMING_ENABLED = "ril.data.roaming_enabled";
 const SETTINGS_KEY_DATA_APN_SETTINGS = "ril.data.apnSettings";
 
-let Promise = Cu.import("resource://gre/modules/Promise.jsm").Promise;
+const PREF_KEY_RIL_DEBUGGING_ENABLED = "ril.debugging.enabled";
+
+// Emulate Promise.jsm semantics.
+Promise.defer = function() { return new Deferred(); };
+function Deferred() {
+  this.promise = new Promise(function(resolve, reject) {
+    this.resolve = resolve;
+    this.reject = reject;
+  }.bind(this));
+  Object.freeze(this);
+}
 
 let _pendingEmulatorCmdCount = 0;
 let _pendingEmulatorShellCmdCount = 0;
@@ -77,33 +87,6 @@ function runEmulatorShellCmdSafe(aCommands) {
   return deferred.promise;
 }
 
-/**
- * Wrap DOMRequest onsuccess/onerror events to Promise resolve/reject.
- *
- * Fulfill params: A DOMEvent.
- * Reject params: A DOMEvent.
- *
- * @param aRequest
- *        A DOMRequest instance.
- *
- * @return A deferred promise.
- */
-function wrapDomRequestAsPromise(aRequest) {
-  let deferred = Promise.defer();
-
-  ok(aRequest instanceof DOMRequest,
-     "aRequest is instanceof " + aRequest.constructor);
-
-  aRequest.addEventListener("success", function(aEvent) {
-    deferred.resolve(aEvent);
-  });
-  aRequest.addEventListener("error", function(aEvent) {
-    deferred.reject(aEvent);
-  });
-
-  return deferred.promise;
-}
-
 let workingFrame;
 
 /**
@@ -127,11 +110,10 @@ let workingFrame;
 function getSettings(aKey, aAllowError) {
   let request =
     workingFrame.contentWindow.navigator.mozSettings.createLock().get(aKey);
-  return wrapDomRequestAsPromise(request)
-    .then(function resolve(aEvent) {
+  return request.then(function resolve(aValue) {
       ok(true, "getSettings(" + aKey + ") - success");
-      return aEvent.target.result[aKey];
-    }, function reject(aEvent) {
+      return aValue[aKey];
+    }, function reject(aError) {
       ok(aAllowError, "getSettings(" + aKey + ") - error");
     });
 }
@@ -360,8 +342,7 @@ function waitForManagerEvent(aEventName, aServiceId) {
  */
 function getNetworks() {
   let request = mobileConnection.getNetworks();
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result);
+  return request.then(() => request.result);
 }
 
 /**
@@ -378,8 +359,7 @@ function getNetworks() {
  */
 function selectNetwork(aNetwork) {
   let request = mobileConnection.selectNetwork(aNetwork);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -414,8 +394,7 @@ function selectNetworkAndWait(aNetwork) {
  */
 function selectNetworkAutomatically() {
   let request = mobileConnection.selectNetworkAutomatically();
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -449,8 +428,7 @@ function selectNetworkAutomaticallyAndWait() {
  */
 function sendMMI(aMmi) {
   let request = mobileConnection.sendMMI(aMmi);
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -467,8 +445,7 @@ function sendMMI(aMmi) {
  */
  function setRoamingPreference(aMode) {
   let request = mobileConnection.setRoamingPreference(aMode);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -488,8 +465,7 @@ function sendMMI(aMmi) {
  */
  function setPreferredNetworkType(aType) {
   let request = mobileConnection.setPreferredNetworkType(aType);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -506,8 +482,7 @@ function sendMMI(aMmi) {
  */
  function getPreferredNetworkType() {
   let request = mobileConnection.getPreferredNetworkType();
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -525,8 +500,7 @@ function sendMMI(aMmi) {
  */
  function setCallForwardingOption(aOptions) {
   let request = mobileConnection.setCallForwardingOption(aOptions);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -545,8 +519,7 @@ function sendMMI(aMmi) {
  */
  function getCallForwardingOption(aReason) {
   let request = mobileConnection.getCallForwardingOption(aReason);
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -563,8 +536,7 @@ function sendMMI(aMmi) {
  */
  function setVoicePrivacyMode(aEnabled) {
   let request = mobileConnection.setVoicePrivacyMode(aEnabled);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -579,8 +551,7 @@ function sendMMI(aMmi) {
  */
  function getVoicePrivacyMode() {
   let request = mobileConnection.getVoicePrivacyMode();
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -595,8 +566,7 @@ function sendMMI(aMmi) {
  */
  function setCallBarringOption(aOptions) {
   let request = mobileConnection.setCallBarringOption(aOptions);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -612,8 +582,7 @@ function sendMMI(aMmi) {
  */
  function getCallBarringOption(aOptions) {
   let request = mobileConnection.getCallBarringOption(aOptions);
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -627,8 +596,7 @@ function sendMMI(aMmi) {
  */
  function changeCallBarringPassword(aOptions) {
   let request = mobileConnection.changeCallBarringPassword(aOptions);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -686,8 +654,7 @@ function setDataEnabledAndWait(aEnabled, aServiceId) {
 function setRadioEnabled(aEnabled, aServiceId) {
   let mobileConn = getMozMobileConnectionByServiceId(aServiceId);
   let request = mobileConn.setRadioEnabled(aEnabled);
-  return wrapDomRequestAsPromise(request)
-    .then(function onsuccess() {
+  return request.then(function onsuccess() {
       ok(true, "setRadioEnabled " + aEnabled + " on " + aServiceId + " success.");
     }, function onerror() {
       ok(false, "setRadioEnabled " + aEnabled + " on " + aServiceId + " " +
@@ -752,8 +719,7 @@ function setClir(aMode, aServiceId) {
   ok(true, "setClir(" + aMode + ", " + aServiceId + ")");
   let mobileConn = getMozMobileConnectionByServiceId(aServiceId);
   let request = mobileConn.setCallingLineIdRestriction(aMode);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error });
+  return request.then(null, () => { throw request.error });
 }
 
 /**
@@ -774,8 +740,7 @@ function getClir(aServiceId) {
   ok(true, "getClir(" + aServiceId + ")");
   let mobileConn = getMozMobileConnectionByServiceId(aServiceId);
   let request = mobileConn.getCallingLineIdRestriction();
-  return wrapDomRequestAsPromise(request)
-    .then(() => request.result, () => { throw request.error });
+  return request.then(() => request.result, () => { throw request.error });
 }
 
 /**
@@ -1154,8 +1119,16 @@ function cleanUp() {
  *        A function that takes no parameter.
  */
 function startTestBase(aTestCaseMain) {
+  // Turn on debugging pref.
+  let debugPref = SpecialPowers.getBoolPref(PREF_KEY_RIL_DEBUGGING_ENABLED);
+  SpecialPowers.setBoolPref(PREF_KEY_RIL_DEBUGGING_ENABLED, true);
+
   Promise.resolve()
     .then(aTestCaseMain)
+    .then(() => {
+      // Restore debugging pref.
+      SpecialPowers.setBoolPref(PREF_KEY_RIL_DEBUGGING_ENABLED, debugPref);
+    })
     .then(cleanUp, function() {
       ok(false, 'promise rejects during test.');
       cleanUp();

@@ -22,7 +22,7 @@ public:
                nsPresContext* aPresContext,
                WidgetPointerEvent* aEvent);
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  virtual JSObject* WrapObjectInternal(JSContext* aCx) MOZ_OVERRIDE
   {
     return PointerEventBinding::Wrap(aCx, this);
   }
@@ -47,6 +47,8 @@ public:
   bool IsPrimary();
   void GetPointerType(nsAString& aPointerType);
 };
+
+void ConvertPointerTypeToString(uint16_t aPointerTypeSrc, nsAString& aPointerTypeDest);
 
 } // namespace dom
 } // namespace mozilla

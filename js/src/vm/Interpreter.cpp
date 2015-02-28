@@ -35,6 +35,7 @@
 #include "jit/Ion.h"
 #include "jit/IonAnalysis.h"
 #include "vm/Debugger.h"
+#include "vm/GeneratorObject.h"
 #include "vm/Opcodes.h"
 #include "vm/Shape.h"
 #include "vm/TraceLogging.h"
@@ -308,7 +309,9 @@ static inline bool
 SetPropertyOperation(JSContext *cx, HandleScript script, jsbytecode *pc, HandleValue lval,
                      HandleValue rval)
 {
-    MOZ_ASSERT(*pc == JSOP_SETPROP);
+    MOZ_ASSERT(*pc == JSOP_SETPROP || *pc == JSOP_STRICTSETPROP);
+
+    bool strict = *pc == JSOP_STRICTSETPROP;
 
     RootedObject obj(cx, ToObjectFromStack(cx, lval));
     if (!obj)
@@ -323,12 +326,12 @@ SetPropertyOperation(JSContext *cx, HandleScript script, jsbytecode *pc, HandleV
                                                              obj.as<NativeObject>(),
                                                              id,
                                                              baseops::Qualified,
-                                                             &rref, script->strict()))
+                                                             &rref, strict))
         {
             return false;
         }
     } else {
-        if (!JSObject::setGeneric(cx, obj, obj, id, &rref, script->strict()))
+        if (!JSObject::setGeneric(cx, obj, obj, id, &rref, strict))
             return false;
     }
 
@@ -448,7 +451,7 @@ bool
 js::Invoke(JSContext *cx, CallArgs args, MaybeConstruct construct)
 {
     MOZ_ASSERT(args.length() <= ARGS_LENGTH_MAX);
-    MOZ_ASSERT(!cx->compartment()->activeAnalysis);
+    MOZ_ASSERT(!cx->zone()->types.activeAnalysis);
 
     /* Perform GC if necessary on exit from the function. */
     AutoGCIfNeeded gcIfNeeded(cx);
@@ -615,7 +618,10 @@ js::ExecuteKernel(JSContext *cx, HandleScript script, JSObject &scopeChainArg, c
                   ExecuteType type, AbstractFramePtr evalInFrame, Value *result)
 {
     MOZ_ASSERT_IF(evalInFrame, type == EXECUTE_DEBUG);
-    MOZ_ASSERT_IF(type == EXECUTE_GLOBAL, !scopeChainArg.is<ScopeObject>());
+    MOZ_ASSERT_IF(type == EXECUTE_GLOBAL,
+                  !scopeChainArg.is<ScopeObject>() ||
+                  (scopeChainArg.is<DynamicWithObject>() &&
+                   !scopeChainArg.as<DynamicWithObject>().isSyntactic()));
 #ifdef DEBUG
     if (thisv.isObject()) {
         RootedObject thisObj(cx, &thisv.toObject());
@@ -863,7 +869,7 @@ PopScope(JSContext *cx, ScopeIter &si)
 {
     switch (si.type()) {
       case ScopeIter::Block:
-        if (cx->compartment()->debugMode())
+        if (cx->compartment()->isDebuggee())
             DebugScopes::onPopBlock(cx, si);
         if (si.staticBlock().needsClone())
             si.frame().popBlock(cx);
@@ -1024,24 +1030,29 @@ HandleError(JSContext *cx, InterpreterRegs &regs)
   again:
     if (cx->isExceptionPending()) {
         /* Call debugger throw hooks. */
-        JSTrapStatus status = Debugger::onExceptionUnwind(cx, regs.fp());
-        switch (status) {
-          case JSTRAP_ERROR:
+        RootedValue exception(cx);
+        if (!cx->getPendingException(&exception))
             goto again;
 
-          case JSTRAP_CONTINUE:
-          case JSTRAP_THROW:
-            break;
+        if (!exception.isMagic(JS_GENERATOR_CLOSING)) {
+            JSTrapStatus status = Debugger::onExceptionUnwind(cx, regs.fp());
+            switch (status) {
+              case JSTRAP_ERROR:
+                goto again;
 
-          case JSTRAP_RETURN:
-            ForcedReturn(cx, si, regs);
-            return SuccessfulReturnContinuation;
+              case JSTRAP_CONTINUE:
+              case JSTRAP_THROW:
+                break;
 
-          default:
-            MOZ_CRASH("Bad Debugger::onExceptionUnwind status");
+              case JSTRAP_RETURN:
+                ForcedReturn(cx, si, regs);
+                return SuccessfulReturnContinuation;
+
+              default:
+                MOZ_CRASH("Bad Debugger::onExceptionUnwind status");
+            }
         }
 
-        RootedValue exception(cx);
         for (TryNoteIter tni(cx, regs); !tni.done(); ++tni) {
             JSTryNote *tn = *tni;
 
@@ -1123,6 +1134,7 @@ HandleError(JSContext *cx, InterpreterRegs &regs)
 #define PUSH_BOOLEAN(b)          REGS.sp++->setBoolean(b)
 #define PUSH_DOUBLE(d)           REGS.sp++->setDouble(d)
 #define PUSH_INT32(i)            REGS.sp++->setInt32(i)
+#define PUSH_SYMBOL(s)           REGS.sp++->setSymbol(s)
 #define PUSH_STRING(s)           do { REGS.sp++->setString(s); assertSameCompartmentDebugOnly(cx, REGS.sp[-1]); } while (0)
 #define PUSH_OBJECT(obj)         do { REGS.sp++->setObject(obj); assertSameCompartmentDebugOnly(cx, REGS.sp[-1]); } while (0)
 #define PUSH_OBJECT_OR_NULL(obj) do { REGS.sp++->setObjectOrNull(obj); assertSameCompartmentDebugOnly(cx, REGS.sp[-1]); } while (0)
@@ -1440,7 +1452,7 @@ Interpret(JSContext *cx, RunState &state)
     JS_END_MACRO
 
     gc::MaybeVerifyBarriers(cx, true);
-    MOZ_ASSERT(!cx->compartment()->activeAnalysis);
+    MOZ_ASSERT(!cx->zone()->types.activeAnalysis);
 
     InterpreterFrame *entryFrame = state.pushInterpreterFrame(cx);
     if (!entryFrame)
@@ -1476,33 +1488,11 @@ Interpret(JSContext *cx, RunState &state)
     RootedScript rootScript0(cx);
     DebugOnly<uint32_t> blockDepth;
 
-    if (MOZ_UNLIKELY(REGS.fp()->isGeneratorFrame())) {
-        MOZ_ASSERT(script->containsPC(REGS.pc));
-        MOZ_ASSERT(REGS.stackDepth() <= script->nslots());
-
-        /*
-         * To support generator_throw and to catch ignored exceptions,
-         * fail if cx->isExceptionPending() is true.
-         */
-        if (cx->isExceptionPending()) {
-            probes::EnterScript(cx, script, script->functionNonDelazifying(), REGS.fp());
-            goto error;
-        }
-    }
-
     /* State communicated between non-local jumps: */
     bool interpReturnOK;
 
-    if (!activation.entryFrame()->isGeneratorFrame()) {
-        if (!activation.entryFrame()->prologue(cx))
-            goto error;
-    } else {
-        if (!probes::EnterScript(cx, script, script->functionNonDelazifying(),
-                                 activation.entryFrame()))
-        {
-            goto error;
-        }
-    }
+    if (!activation.entryFrame()->prologue(cx))
+        goto error;
 
     switch (Debugger::onEnterFrame(cx, activation.entryFrame())) {
       case JSTRAP_CONTINUE:
@@ -1542,7 +1532,7 @@ CASE(EnableInterruptsPseudoOpcode)
         moreInterrupts = true;
     }
 
-    if (cx->compartment()->debugMode()) {
+    if (script->isDebuggee()) {
         if (script->stepModeEnabled()) {
             RootedValue rval(cx);
             JSTrapStatus status = JSTRAP_CONTINUE;
@@ -1600,21 +1590,14 @@ CASE(EnableInterruptsPseudoOpcode)
 /* Various 1-byte no-ops. */
 CASE(JSOP_NOP)
 CASE(JSOP_UNUSED2)
-CASE(JSOP_UNUSED45)
-CASE(JSOP_UNUSED46)
-CASE(JSOP_UNUSED47)
-CASE(JSOP_UNUSED48)
-CASE(JSOP_UNUSED49)
-CASE(JSOP_UNUSED50)
 CASE(JSOP_UNUSED51)
 CASE(JSOP_UNUSED52)
-CASE(JSOP_UNUSED57)
 CASE(JSOP_UNUSED83)
+CASE(JSOP_UNUSED92)
 CASE(JSOP_UNUSED103)
 CASE(JSOP_UNUSED104)
 CASE(JSOP_UNUSED105)
 CASE(JSOP_UNUSED107)
-CASE(JSOP_UNUSED124)
 CASE(JSOP_UNUSED125)
 CASE(JSOP_UNUSED126)
 CASE(JSOP_UNUSED146)
@@ -1622,7 +1605,6 @@ CASE(JSOP_UNUSED147)
 CASE(JSOP_UNUSED148)
 CASE(JSOP_BACKPATCH)
 CASE(JSOP_UNUSED150)
-CASE(JSOP_UNUSED156)
 CASE(JSOP_UNUSED157)
 CASE(JSOP_UNUSED158)
 CASE(JSOP_UNUSED159)
@@ -1657,11 +1639,6 @@ CASE(JSOP_UNUSED190)
 CASE(JSOP_UNUSED191)
 CASE(JSOP_UNUSED192)
 CASE(JSOP_UNUSED196)
-CASE(JSOP_UNUSED201)
-CASE(JSOP_UNUSED205)
-CASE(JSOP_UNUSED206)
-CASE(JSOP_UNUSED207)
-CASE(JSOP_UNUSED208)
 CASE(JSOP_UNUSED209)
 CASE(JSOP_UNUSED210)
 CASE(JSOP_UNUSED211)
@@ -1715,6 +1692,9 @@ END_CASE(JSOP_LOOPENTRY)
 
 CASE(JSOP_LINENO)
 END_CASE(JSOP_LINENO)
+
+CASE(JSOP_FORCEINTERPRETER)
+END_CASE(JSOP_FORCEINTERPRETER)
 
 CASE(JSOP_UNDEFINED)
     PUSH_UNDEFINED();
@@ -1774,9 +1754,7 @@ CASE(JSOP_RETRVAL)
   successful_return_continuation:
     interpReturnOK = true;
   return_continuation:
-    if (activation.entryFrame() != REGS.fp())
-  inline_return:
-    {
+    if (activation.entryFrame() != REGS.fp()) {
         // Stop the engine. (No details about which engine exactly, could be
         // interpreter, Baseline or IonMonkey.)
         TraceLogStopEvent(logger);
@@ -1785,11 +1763,7 @@ CASE(JSOP_RETRVAL)
 
         interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), interpReturnOK);
 
-        if (!REGS.fp()->isYielding())
-            REGS.fp()->epilogue(cx);
-        else
-            probes::ExitScript(cx, script, script->functionNonDelazifying(),
-                               REGS.fp()->hasPushedSPSFrame());
+        REGS.fp()->epilogue(cx);
 
   jit_return_pop_frame:
 
@@ -2276,9 +2250,6 @@ END_CASE(JSOP_POS)
 
 CASE(JSOP_DELNAME)
 {
-    /* Strict mode code should never contain JSOP_DELNAME opcodes. */
-    MOZ_ASSERT(!script->strict());
-
     RootedPropertyName &name = rootName0;
     name = script->getName(REGS.pc);
 
@@ -2293,7 +2264,10 @@ CASE(JSOP_DELNAME)
 END_CASE(JSOP_DELNAME)
 
 CASE(JSOP_DELPROP)
+CASE(JSOP_STRICTDELPROP)
 {
+    static_assert(JSOP_DELPROP_LENGTH == JSOP_STRICTDELPROP_LENGTH,
+                  "delprop and strictdelprop must be the same size");
     RootedId &id = rootId0;
     id = NameToId(script->getName(REGS.pc));
 
@@ -2303,7 +2277,7 @@ CASE(JSOP_DELPROP)
     bool succeeded;
     if (!JSObject::deleteGeneric(cx, obj, id, &succeeded))
         goto error;
-    if (!succeeded && script->strict()) {
+    if (!succeeded && JSOp(*REGS.pc) == JSOP_STRICTDELPROP) {
         obj->reportNotConfigurable(cx, id);
         goto error;
     }
@@ -2313,7 +2287,10 @@ CASE(JSOP_DELPROP)
 END_CASE(JSOP_DELPROP)
 
 CASE(JSOP_DELELEM)
+CASE(JSOP_STRICTDELELEM)
 {
+    static_assert(JSOP_DELELEM_LENGTH == JSOP_STRICTDELELEM_LENGTH,
+                  "delelem and strictdelelem must be the same size");
     /* Fetch the left part and resolve it to a non-null object. */
     RootedObject &obj = rootObject0;
     FETCH_OBJECT(cx, -2, obj);
@@ -2327,7 +2304,7 @@ CASE(JSOP_DELELEM)
         goto error;
     if (!JSObject::deleteGeneric(cx, obj, id, &succeeded))
         goto error;
-    if (!succeeded && script->strict()) {
+    if (!succeeded && JSOp(*REGS.pc) == JSOP_STRICTDELELEM) {
         obj->reportNotConfigurable(cx, id);
         goto error;
     }
@@ -2400,8 +2377,14 @@ CASE(JSOP_SETINTRINSIC)
 END_CASE(JSOP_SETINTRINSIC)
 
 CASE(JSOP_SETGNAME)
+CASE(JSOP_STRICTSETGNAME)
 CASE(JSOP_SETNAME)
+CASE(JSOP_STRICTSETNAME)
 {
+    static_assert(JSOP_SETNAME_LENGTH == JSOP_STRICTSETNAME_LENGTH,
+                  "setname and strictsetname must be the same size");
+    static_assert(JSOP_SETGNAME_LENGTH == JSOP_STRICTSETGNAME_LENGTH,
+                  "setganem adn strictsetgname must be the same size");
     RootedObject &scope = rootObject0;
     scope = &REGS.sp[-2].toObject();
     HandleValue value = REGS.stackHandleAt(-1);
@@ -2415,7 +2398,10 @@ CASE(JSOP_SETNAME)
 END_CASE(JSOP_SETNAME)
 
 CASE(JSOP_SETPROP)
+CASE(JSOP_STRICTSETPROP)
 {
+    static_assert(JSOP_SETPROP_LENGTH == JSOP_STRICTSETPROP_LENGTH,
+                  "setprop and strictsetprop must be the same size");
     HandleValue lval = REGS.stackHandleAt(-2);
     HandleValue rval = REGS.stackHandleAt(-1);
 
@@ -2449,13 +2435,16 @@ CASE(JSOP_CALLELEM)
 END_CASE(JSOP_GETELEM)
 
 CASE(JSOP_SETELEM)
+CASE(JSOP_STRICTSETELEM)
 {
+    static_assert(JSOP_SETELEM_LENGTH == JSOP_STRICTSETELEM_LENGTH,
+                  "setelem and strictsetelem must be the same size");
     RootedObject &obj = rootObject0;
     FETCH_OBJECT(cx, -3, obj);
     RootedId &id = rootId0;
     FETCH_ELEMENT_ID(-2, id);
     Value &value = REGS.sp[-1];
-    if (!SetObjectElementOperation(cx, obj, id, value, script->strict()))
+    if (!SetObjectElementOperation(cx, obj, id, value, *REGS.pc == JSOP_STRICTSETELEM))
         goto error;
     REGS.sp[-3] = value;
     REGS.sp -= 2;
@@ -2463,7 +2452,10 @@ CASE(JSOP_SETELEM)
 END_CASE(JSOP_SETELEM)
 
 CASE(JSOP_EVAL)
+CASE(JSOP_STRICTEVAL)
 {
+    static_assert(JSOP_EVAL_LENGTH == JSOP_STRICTEVAL_LENGTH,
+                  "eval and stricteval must be the same size");
     CallArgs args = CallArgsFromSp(GET_ARGC(REGS.pc), REGS.sp);
     if (REGS.fp()->scopeChain()->global().valueIsEval(args.calleev())) {
         if (!DirectEval(cx, args))
@@ -2484,7 +2476,10 @@ CASE(JSOP_SPREADCALL)
     /* FALL THROUGH */
 
 CASE(JSOP_SPREADEVAL)
+CASE(JSOP_STRICTSPREADEVAL)
 {
+    static_assert(JSOP_SPREADEVAL_LENGTH == JSOP_STRICTSPREADEVAL_LENGTH,
+                  "spreadeval and strictspreadeval must be the same size");
     MOZ_ASSERT(REGS.stackDepth() >= 3);
 
     HandleValue callee = REGS.stackHandleAt(-3);
@@ -2713,6 +2708,10 @@ CASE(JSOP_TOSTRING)
     }
 }
 END_CASE(JSOP_TOSTRING)
+
+CASE(JSOP_SYMBOL)
+    PUSH_SYMBOL(cx->wellKnownSymbols().get(GET_UINT8(REGS.pc)));
+END_CASE(JSOP_SYMBOL)
 
 CASE(JSOP_OBJECT)
 {
@@ -3129,14 +3128,6 @@ CASE(JSOP_NEWOBJECT)
 }
 END_CASE(JSOP_NEWOBJECT)
 
-CASE(JSOP_ENDINIT)
-{
-    /* FIXME remove JSOP_ENDINIT bug 588522 */
-    MOZ_ASSERT(REGS.stackDepth() >= 1);
-    MOZ_ASSERT(REGS.sp[-1].isObject() || REGS.sp[-1].isUndefined());
-}
-END_CASE(JSOP_ENDINIT)
-
 CASE(JSOP_MUTATEPROTO)
 {
     MOZ_ASSERT(REGS.stackDepth() >= 2);
@@ -3319,17 +3310,15 @@ END_CASE(JSOP_INSTANCEOF)
 CASE(JSOP_DEBUGGER)
 {
     RootedValue rval(cx);
-    switch (Debugger::onDebuggerStatement(cx, &rval)) {
+    switch (Debugger::onDebuggerStatement(cx, REGS.fp())) {
       case JSTRAP_ERROR:
         goto error;
       case JSTRAP_CONTINUE:
         break;
       case JSTRAP_RETURN:
-        REGS.fp()->setReturnValue(rval);
         ForcedReturn(cx, REGS);
         goto successful_return_continuation;
       case JSTRAP_THROW:
-        cx->setPendingException(rval);
         goto error;
       default:;
     }
@@ -3371,7 +3360,7 @@ CASE(JSOP_DEBUGLEAVEBLOCK)
     // FIXME: This opcode should not be necessary.  The debugger shouldn't need
     // help from bytecode to do its job.  See bug 927782.
 
-    if (MOZ_UNLIKELY(cx->compartment()->debugMode()))
+    if (MOZ_UNLIKELY(cx->compartment()->isDebuggee()))
         DebugScopes::onPopBlock(cx, REGS.fp(), REGS.pc);
 }
 END_CASE(JSOP_DEBUGLEAVEBLOCK)
@@ -3379,33 +3368,84 @@ END_CASE(JSOP_DEBUGLEAVEBLOCK)
 CASE(JSOP_GENERATOR)
 {
     MOZ_ASSERT(!cx->isExceptionPending());
-    REGS.fp()->initGeneratorFrame();
-    REGS.pc += JSOP_GENERATOR_LENGTH;
-    JSObject *obj = js_NewGenerator(cx, REGS);
+    MOZ_ASSERT(REGS.stackDepth() == 0);
+    JSObject *obj = GeneratorObject::create(cx, REGS.fp());
     if (!obj)
         goto error;
-    REGS.fp()->setReturnValue(ObjectValue(*obj));
-    REGS.fp()->setYielding();
-    interpReturnOK = true;
-    if (activation.entryFrame() != REGS.fp())
-        goto inline_return;
-    goto exit;
+    PUSH_OBJECT(*obj);
+}
+END_CASE(JSOP_GENERATOR)
+
+CASE(JSOP_INITIALYIELD)
+{
+    MOZ_ASSERT(!cx->isExceptionPending());
+    MOZ_ASSERT(REGS.fp()->isNonEvalFunctionFrame());
+    RootedObject &obj = rootObject0;
+    obj = &REGS.sp[-1].toObject();
+    POP_RETURN_VALUE();
+    MOZ_ASSERT(REGS.stackDepth() == 0);
+    if (!GeneratorObject::initialSuspend(cx, obj, REGS.fp(), REGS.pc))
+        goto error;
+    goto successful_return_continuation;
 }
 
 CASE(JSOP_YIELD)
+{
     MOZ_ASSERT(!cx->isExceptionPending());
     MOZ_ASSERT(REGS.fp()->isNonEvalFunctionFrame());
-    if (cx->innermostGenerator()->state == JSGEN_CLOSING) {
-        RootedValue &val = rootValue0;
-        val.setObject(REGS.fp()->callee());
-        js_ReportValueError(cx, JSMSG_BAD_GENERATOR_YIELD, JSDVG_SEARCH_STACK, val, js::NullPtr());
+    RootedObject &obj = rootObject0;
+    obj = &REGS.sp[-1].toObject();
+    if (!GeneratorObject::normalSuspend(cx, obj, REGS.fp(), REGS.pc,
+                                        REGS.spForStackDepth(0), REGS.stackDepth() - 2))
+    {
         goto error;
     }
-    REGS.fp()->setReturnValue(REGS.sp[-1]);
-    REGS.fp()->setYielding();
-    REGS.pc += JSOP_YIELD_LENGTH;
-    interpReturnOK = true;
-    goto exit;
+
+    REGS.sp--;
+    POP_RETURN_VALUE();
+
+    goto successful_return_continuation;
+}
+
+CASE(JSOP_RESUME)
+{
+    RootedObject &gen = rootObject0;
+    RootedValue &val = rootValue0;
+    val = REGS.sp[-1];
+    gen = &REGS.sp[-2].toObject();
+    // popInlineFrame expects there to be an additional value on the stack to
+    // pop off, so leave "gen" on the stack.
+
+    GeneratorObject::ResumeKind resumeKind = GeneratorObject::getResumeKind(REGS.pc);
+    bool ok = GeneratorObject::resume(cx, activation, gen, val, resumeKind);
+    SET_SCRIPT(REGS.fp()->script());
+    if (!ok)
+        goto error;
+
+    ADVANCE_AND_DISPATCH(0);
+}
+
+CASE(JSOP_DEBUGAFTERYIELD)
+{
+    // No-op in the interpreter, as GeneratorObject::resume takes care of
+    // fixing up InterpreterFrames.
+    MOZ_ASSERT_IF(REGS.fp()->script()->isDebuggee(), REGS.fp()->isDebuggee());
+}
+END_CASE(JSOP_DEBUGAFTERYIELD)
+
+CASE(JSOP_FINALYIELDRVAL)
+{
+    RootedObject &gen = rootObject0;
+    gen = &REGS.sp[-1].toObject();
+    REGS.sp--;
+
+    if (!GeneratorObject::finalSuspend(cx, gen)) {
+        interpReturnOK = false;
+        goto return_continuation;
+    }
+
+    goto successful_return_continuation;
+}
 
 CASE(JSOP_ARRAYPUSH)
 {
@@ -3463,11 +3503,7 @@ DEFAULT()
   exit:
     interpReturnOK = Debugger::onLeaveFrame(cx, REGS.fp(), interpReturnOK);
 
-    if (!REGS.fp()->isYielding())
-        REGS.fp()->epilogue(cx);
-    else
-        probes::ExitScript(cx, script, script->functionNonDelazifying(),
-                           REGS.fp()->hasPushedSPSFrame());
+    REGS.fp()->epilogue(cx);
 
     gc::MaybeVerifyBarriers(cx, true);
 
@@ -3594,7 +3630,7 @@ js::Lambda(JSContext *cx, HandleFunction fun, HandleObject parent)
     if (!clone)
         return nullptr;
 
-    MOZ_ASSERT(clone->global() == clone->global());
+    MOZ_ASSERT(fun->global() == clone->global());
     return clone;
 }
 
@@ -3610,7 +3646,7 @@ js::LambdaArrow(JSContext *cx, HandleFunction fun, HandleObject parent, HandleVa
     MOZ_ASSERT(clone->as<JSFunction>().isArrow());
     clone->as<JSFunction>().setExtendedSlot(0, thisv);
 
-    MOZ_ASSERT(clone->global() == clone->global());
+    MOZ_ASSERT(fun->global() == clone->global());
     return clone;
 }
 
@@ -4002,6 +4038,7 @@ js::SpreadCallOperation(JSContext *cx, HandleScript script, jsbytecode *pc, Hand
             return false;
         break;
       case JSOP_SPREADEVAL:
+      case JSOP_STRICTSPREADEVAL:
         if (cx->global()->valueIsEval(args.calleev())) {
             if (!DirectEval(cx, args))
                 return false;
@@ -4039,7 +4076,7 @@ js::ReportUninitializedLexical(JSContext *cx, HandleScript script, jsbytecode *p
 
         // First search for a name among body-level lets.
         for (BindingIter bi(script); bi; bi++) {
-            if (bi->kind() != Binding::ARGUMENT && bi.frameIndex() == slot) {
+            if (bi->kind() != Binding::ARGUMENT && !bi->aliased() && bi.frameIndex() == slot) {
                 name = bi->name();
                 break;
             }

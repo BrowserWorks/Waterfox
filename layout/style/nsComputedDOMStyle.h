@@ -235,6 +235,7 @@ private:
   mozilla::dom::CSSValue* DoGetMinHeight();
   mozilla::dom::CSSValue* DoGetMinWidth();
   mozilla::dom::CSSValue* DoGetMixBlendMode();
+  mozilla::dom::CSSValue* DoGetIsolation();
   mozilla::dom::CSSValue* DoGetObjectFit();
   mozilla::dom::CSSValue* DoGetObjectPosition();
   mozilla::dom::CSSValue* DoGetLeft();
@@ -429,6 +430,7 @@ private:
   mozilla::dom::CSSValue* DoGetPerspectiveOrigin();
   mozilla::dom::CSSValue* DoGetTransformStyle();
   mozilla::dom::CSSValue* DoGetOrient();
+  mozilla::dom::CSSValue* DoGetScrollBehavior();
 
   /* User interface properties */
   mozilla::dom::CSSValue* DoGetCursor();
@@ -438,6 +440,7 @@ private:
   mozilla::dom::CSSValue* DoGetUserInput();
   mozilla::dom::CSSValue* DoGetUserModify();
   mozilla::dom::CSSValue* DoGetUserSelect();
+  mozilla::dom::CSSValue* DoGetWindowDragging();
 
   /* Column properties */
   mozilla::dom::CSSValue* DoGetColumnCount();
@@ -588,6 +591,11 @@ private:
   // Helper function for computing basic shape styles.
   mozilla::dom::CSSValue* CreatePrimitiveValueForClipPath(
     const nsStyleBasicShape* aStyleBasicShape, uint8_t aSizingBox);
+  void BoxValuesToString(nsAString& aString,
+                         const nsTArray<nsStyleCoord>& aBoxValues);
+  void BasicShapeRadiiToString(nsAString& aCssText,
+                               const nsStyleCorners& aCorners);
+
 
   static nsComputedStyleMap* GetComputedStyleMap();
 

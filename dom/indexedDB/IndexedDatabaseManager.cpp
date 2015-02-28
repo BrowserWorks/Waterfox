@@ -80,7 +80,8 @@ public:
     AssertIsOnIOThread();
 
     return !mPersistentStorageFileManagers.IsEmpty() ||
-           !mTemporaryStorageFileManagers.IsEmpty();
+           !mTemporaryStorageFileManagers.IsEmpty() ||
+           !mDefaultStorageFileManagers.IsEmpty();
   }
 
   void
@@ -105,6 +106,7 @@ private:
 
   nsTArray<nsRefPtr<FileManager> > mPersistentStorageFileManagers;
   nsTArray<nsRefPtr<FileManager> > mTemporaryStorageFileManagers;
+  nsTArray<nsRefPtr<FileManager> > mDefaultStorageFileManagers;
 };
 
 namespace {
@@ -178,16 +180,6 @@ private:
   bool mWaiting;
 };
 
-struct MOZ_STACK_CLASS InvalidateInfo
-{
-  InvalidateInfo(PersistenceType aPersistenceType, const nsACString& aPattern)
-  : persistenceType(aPersistenceType), pattern(aPattern)
-  { }
-
-  PersistenceType persistenceType;
-  const nsACString& pattern;
-};
-
 void
 TestingPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
@@ -212,6 +204,7 @@ IndexedDatabaseManager::~IndexedDatabaseManager()
 }
 
 bool IndexedDatabaseManager::sIsMainProcess = false;
+bool IndexedDatabaseManager::sFullSynchronousMode = false;
 mozilla::Atomic<bool> IndexedDatabaseManager::sLowDiskSpaceMode(false);
 
 // static
@@ -299,6 +292,14 @@ IndexedDatabaseManager::Init()
   Preferences::RegisterCallbackAndCall(TestingPrefChangedCallback,
                                        kTestingPref);
 
+  // By default IndexedDB uses SQLite with PRAGMA synchronous = NORMAL. This
+  // guarantees (unlike synchronous = OFF) atomicity and consistency, but not
+  // necessarily durability in situations such as power loss. This preference
+  // allows enabling PRAGMA synchronous = FULL on SQLite, which does guarantee
+  // durability, but with an extra fsync() and the corresponding performance
+  // hit.
+  sFullSynchronousMode = Preferences::GetBool("dom.indexedDB.fullSynchronous");
+
   return NS_OK;
 }
 
@@ -357,7 +358,7 @@ IndexedDatabaseManager::FireWindowOnError(nsPIDOMWindow* aOwner,
 
   ThreadsafeAutoJSContext cx;
   RootedDictionary<ErrorEventInit> init(cx);
-  request->FillScriptErrorEvent(init);
+  request->GetCallerLocation(init.mFilename, &init.mLineno);
 
   init.mMessage = errorName;
   init.mCancelable = true;
@@ -455,7 +456,7 @@ IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
 
   JS::Rooted<JS::Value> indexedDB(aCx);
   js::AssertSameCompartment(aCx, aGlobal);
-  if (!WrapNewBindingObject(aCx, factory, &indexedDB)) {
+  if (!GetOrCreateDOMReflector(aCx, factory, &indexedDB)) {
     return false;
   }
 
@@ -502,6 +503,16 @@ IndexedDatabaseManager::InTestingMode()
   return gTestingMode;
 }
 
+// static
+bool
+IndexedDatabaseManager::FullSynchronous()
+{
+  MOZ_ASSERT(gDBManager,
+             "FullSynchronous() called before indexedDB has been initialized!");
+
+  return sFullSynchronousMode;
+}
+
 already_AddRefed<FileManager>
 IndexedDatabaseManager::GetFileManager(PersistenceType aPersistenceType,
                                        const nsACString& aOrigin,
@@ -535,66 +546,49 @@ IndexedDatabaseManager::AddFileManager(FileManager* aFileManager)
   info->AddFileManager(aFileManager);
 }
 
-// static
-PLDHashOperator
-IndexedDatabaseManager::InvalidateAndRemoveFileManagers(
-                                             const nsACString& aKey,
-                                             nsAutoPtr<FileManagerInfo>& aValue,
-                                             void* aUserArg)
-{
-  AssertIsOnIOThread();
-  NS_ASSERTION(!aKey.IsEmpty(), "Empty key!");
-  NS_ASSERTION(aValue, "Null pointer!");
-
-  if (!aUserArg) {
-    aValue->InvalidateAllFileManagers();
-    return PL_DHASH_REMOVE;
-  }
-
-  InvalidateInfo* info = static_cast<InvalidateInfo*>(aUserArg);
-
-  if (PatternMatchesOrigin(info->pattern, aKey)) {
-    aValue->InvalidateAndRemoveFileManagers(info->persistenceType);
-
-    if (!aValue->HasFileManagers()) {
-      return PL_DHASH_REMOVE;
-    }
-  }
-
-  return PL_DHASH_NEXT;
-}
-
 void
 IndexedDatabaseManager::InvalidateAllFileManagers()
 {
   AssertIsOnIOThread();
 
-  mFileManagerInfos.Enumerate(InvalidateAndRemoveFileManagers, nullptr);
+  class MOZ_STACK_CLASS Helper MOZ_FINAL
+  {
+  public:
+    static PLDHashOperator
+    Enumerate(const nsACString& aKey,
+              FileManagerInfo* aValue,
+              void* aUserArg)
+    {
+      AssertIsOnIOThread();
+      MOZ_ASSERT(!aKey.IsEmpty());
+      MOZ_ASSERT(aValue);
+
+      aValue->InvalidateAllFileManagers();
+      return PL_DHASH_NEXT;
+    }
+  };
+
+  mFileManagerInfos.EnumerateRead(Helper::Enumerate, nullptr);
+  mFileManagerInfos.Clear();
 }
 
 void
 IndexedDatabaseManager::InvalidateFileManagers(
                                   PersistenceType aPersistenceType,
-                                  const OriginOrPatternString& aOriginOrPattern)
+                                  const nsACString& aOrigin)
 {
   AssertIsOnIOThread();
-  NS_ASSERTION(!aOriginOrPattern.IsEmpty(), "Empty pattern!");
+  MOZ_ASSERT(!aOrigin.IsEmpty());
 
-  if (aOriginOrPattern.IsOrigin()) {
-    FileManagerInfo* info;
-    if (!mFileManagerInfos.Get(aOriginOrPattern, &info)) {
-      return;
-    }
-
-    info->InvalidateAndRemoveFileManagers(aPersistenceType);
-
-    if (!info->HasFileManagers()) {
-      mFileManagerInfos.Remove(aOriginOrPattern);
-    }
+  FileManagerInfo* info;
+  if (!mFileManagerInfos.Get(aOrigin, &info)) {
+    return;
   }
-  else {
-    InvalidateInfo info(aPersistenceType, aOriginOrPattern);
-    mFileManagerInfos.Enumerate(InvalidateAndRemoveFileManagers, &info);
+
+  info->InvalidateAndRemoveFileManagers(aPersistenceType);
+
+  if (!info->HasFileManagers()) {
+    mFileManagerInfos.Remove(aOrigin);
   }
 }
 
@@ -773,6 +767,10 @@ FileManagerInfo::InvalidateAllFileManagers() const
   for (i = 0; i < mTemporaryStorageFileManagers.Length(); i++) {
     mTemporaryStorageFileManagers[i]->Invalidate();
   }
+
+  for (i = 0; i < mDefaultStorageFileManagers.Length(); i++) {
+    mDefaultStorageFileManagers[i]->Invalidate();
+  }
 }
 
 void
@@ -817,11 +815,12 @@ FileManagerInfo::GetArray(PersistenceType aPersistenceType)
       return mPersistentStorageFileManagers;
     case PERSISTENCE_TYPE_TEMPORARY:
       return mTemporaryStorageFileManagers;
+    case PERSISTENCE_TYPE_DEFAULT:
+      return mDefaultStorageFileManagers;
 
     case PERSISTENCE_TYPE_INVALID:
     default:
       MOZ_CRASH("Bad storage type value!");
-      return mPersistentStorageFileManagers;
   }
 }
 
@@ -848,7 +847,7 @@ AsyncDeleteFileRunnable::Run()
   nsresult rv;
   int64_t fileSize;
 
-  if (mFileManager->Privilege() != Chrome) {
+  if (mFileManager->EnforcingQuota()) {
     rv = file->GetFileSize(&fileSize);
     NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
   }
@@ -856,7 +855,7 @@ AsyncDeleteFileRunnable::Run()
   rv = file->Remove(false);
   NS_ENSURE_SUCCESS(rv, NS_ERROR_FAILURE);
 
-  if (mFileManager->Privilege() != Chrome) {
+  if (mFileManager->EnforcingQuota()) {
     QuotaManager* quotaManager = QuotaManager::Get();
     NS_ASSERTION(quotaManager, "Shouldn't be null!");
 

@@ -124,7 +124,7 @@ CollationRootElements::getSecondaryBefore(uint32_t p, uint32_t s) const {
         sec = elements[index] >> 16;
     } else {
         index = findPrimary(p) + 1;
-        previousSec = Collation::MERGE_SEPARATOR_WEIGHT16;
+        previousSec = Collation::BEFORE_WEIGHT16;
         sec = Collation::COMMON_WEIGHT16;
     }
     U_ASSERT(s >= sec);
@@ -149,12 +149,12 @@ CollationRootElements::getTertiaryBefore(uint32_t p, uint32_t s, uint32_t t) con
             previousTer = 0;
         } else {
             index = (int32_t)elements[IX_FIRST_SECONDARY_INDEX];
-            previousTer = Collation::MERGE_SEPARATOR_WEIGHT16;
+            previousTer = Collation::BEFORE_WEIGHT16;
         }
         secTer = elements[index] & ~SEC_TER_DELTA_FLAG;
     } else {
         index = findPrimary(p) + 1;
-        previousTer = Collation::MERGE_SEPARATOR_WEIGHT16;
+        previousTer = Collation::BEFORE_WEIGHT16;
         secTer = Collation::COMMON_SEC_AND_TER_CE;
     }
     uint32_t st = (s << 16) | t;

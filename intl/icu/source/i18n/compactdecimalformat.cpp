@@ -868,7 +868,7 @@ static void fillInMissing(CDFLocaleStyleData* result) {
     }
   }
   // Iterate over each variant.
-  int32_t pos = -1;
+  int32_t pos = UHASH_FIRST;
   const UHashElement* element = uhash_nextElement(result->unitsByVariant, &pos);
   for (;element != NULL; element = uhash_nextElement(result->unitsByVariant, &pos)) {
     CDFUnit* units = (CDFUnit*) element->value.pointer;

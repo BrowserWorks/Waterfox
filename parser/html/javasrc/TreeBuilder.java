@@ -611,32 +611,104 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             } else {
                 elt = createHtmlElementSetAsRoot(tokenizer.emptyAttributes());
             }
-            StackNode<T> node = new StackNode<T>(ElementName.HTML, elt
-            // [NOCPP[
-                    , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
-            // ]NOCPP]
-            );
-            currentPtr++;
-            stack[currentPtr] = node;
-            if ("template" == contextName) {
-                pushTemplateMode(IN_TEMPLATE);
-            }
-            resetTheInsertionMode();
-            formPointer = getFormPointerForContext(contextNode);
-            if ("title" == contextName || "textarea" == contextName) {
-                tokenizer.setStateAndEndTagExpectation(Tokenizer.RCDATA, contextName);
-            } else if ("style" == contextName || "xmp" == contextName
-                    || "iframe" == contextName || "noembed" == contextName
-                    || "noframes" == contextName
-                    || (scriptingEnabled && "noscript" == contextName)) {
-                tokenizer.setStateAndEndTagExpectation(Tokenizer.RAWTEXT, contextName);
-            } else if ("plaintext" == contextName) {
-                tokenizer.setStateAndEndTagExpectation(Tokenizer.PLAINTEXT, contextName);
-            } else if ("script" == contextName) {
-                tokenizer.setStateAndEndTagExpectation(Tokenizer.SCRIPT_DATA,
+            // When the context node is not in the HTML namespace, contrary
+            // to the spec, the first node on the stack is not set to "html"
+            // in the HTML namespace. Instead, it is set to a node that has
+            // the characteristics of the appropriate "adjusted current node".
+            // This way, there is no need to perform "adjusted current node"
+            // checks during tree construction. Instead, it's sufficient to
+            // just look at the current node. However, this also means that it
+            // is not safe to treat "html" in the HTML namespace as a sentinel
+            // that ends stack popping. Instead, stack popping loops that are
+            // meant not to pop the first element on the stack need to check
+            // for currentPos becoming zero.
+            if (contextNamespace == "http://www.w3.org/2000/svg") {
+                ElementName elementName = ElementName.SVG;
+                if ("title" == contextName || "desc" == contextName
+                        || "foreignObject" == contextName) {
+                    // These elements are all alike and we don't care about
+                    // the exact name.
+                    elementName = ElementName.FOREIGNOBJECT;
+                }
+                // This is the SVG variant of the StackNode constructor.
+                StackNode<T> node = new StackNode<T>(elementName,
+                        elementName.camelCaseName, elt
+                        // [NOCPP[
+                        , errorHandler == null ? null
+                                : new TaintableLocatorImpl(tokenizer)
+                // ]NOCPP]
+                );
+                currentPtr++;
+                stack[currentPtr] = node;
+                tokenizer.setStateAndEndTagExpectation(Tokenizer.DATA,
                         contextName);
-            } else {
-                tokenizer.setStateAndEndTagExpectation(Tokenizer.DATA, contextName);
+                // The frameset-ok flag is set even though <frameset> never
+                // ends up being allowed as HTML frameset in the fragment case.
+                mode = FRAMESET_OK;
+            } else if (contextNamespace == "http://www.w3.org/1998/Math/MathML") {
+                ElementName elementName = ElementName.MATH;
+                if ("mi" == contextName || "mo" == contextName
+                        || "mn" == contextName || "ms" == contextName
+                        || "mtext" == contextName) {
+                    // These elements are all alike and we don't care about
+                    // the exact name.
+                    elementName = ElementName.MTEXT;
+                } else if ("annotation-xml" == contextName) {
+                    elementName = ElementName.ANNOTATION_XML;
+                    // Blink does not check the encoding attribute of the
+                    // annotation-xml element innerHTML is being set on.
+                    // Let's do the same at least until
+                    // https://www.w3.org/Bugs/Public/show_bug.cgi?id=26783
+                    // is resolved.
+                }
+                // This is the MathML variant of the StackNode constructor.
+                StackNode<T> node = new StackNode<T>(elementName, elt,
+                        elementName.name, false
+                        // [NOCPP[
+                        , errorHandler == null ? null
+                                : new TaintableLocatorImpl(tokenizer)
+                // ]NOCPP]
+                );
+                currentPtr++;
+                stack[currentPtr] = node;
+                tokenizer.setStateAndEndTagExpectation(Tokenizer.DATA,
+                        contextName);
+                // The frameset-ok flag is set even though <frameset> never
+                // ends up being allowed as HTML frameset in the fragment case.
+                mode = FRAMESET_OK;
+            } else { // html
+                StackNode<T> node = new StackNode<T>(ElementName.HTML, elt
+                // [NOCPP[
+                        , errorHandler == null ? null
+                                : new TaintableLocatorImpl(tokenizer)
+                // ]NOCPP]
+                );
+                currentPtr++;
+                stack[currentPtr] = node;
+                if ("template" == contextName) {
+                    pushTemplateMode(IN_TEMPLATE);
+                }
+                resetTheInsertionMode();
+                formPointer = getFormPointerForContext(contextNode);
+                if ("title" == contextName || "textarea" == contextName) {
+                    tokenizer.setStateAndEndTagExpectation(Tokenizer.RCDATA,
+                            contextName);
+                } else if ("style" == contextName || "xmp" == contextName
+                        || "iframe" == contextName || "noembed" == contextName
+                        || "noframes" == contextName
+                        || (scriptingEnabled && "noscript" == contextName)) {
+                    tokenizer.setStateAndEndTagExpectation(Tokenizer.RAWTEXT,
+                            contextName);
+                } else if ("plaintext" == contextName) {
+                    tokenizer.setStateAndEndTagExpectation(Tokenizer.PLAINTEXT,
+                            contextName);
+                } else if ("script" == contextName) {
+                    tokenizer.setStateAndEndTagExpectation(
+                            Tokenizer.SCRIPT_DATA, contextName);
+                } else {
+                    tokenizer.setStateAndEndTagExpectation(Tokenizer.DATA,
+                            contextName);
+                }
             }
             contextName = null;
             contextNode = null;
@@ -647,7 +719,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             // CPPONLY: if (tokenizer.isViewingXmlSource()) {
             // CPPONLY: T elt = createElement("http://www.w3.org/2000/svg",
             // CPPONLY: "svg",
-            // CPPONLY: tokenizer.emptyAttributes());
+            // CPPONLY: tokenizer.emptyAttributes(), null);
             // CPPONLY: StackNode<T> node = new StackNode<T>(ElementName.SVG,
             // CPPONLY: "svg",
             // CPPONLY: elt);
@@ -1454,7 +1526,8 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 case IN_CELL:
                 case IN_BODY:
                     // [NOCPP[
-                    openelementloop: for (int i = currentPtr; i >= 0; i--) {
+                    // i > 0 to stop in time in the foreign fragment case.
+                    openelementloop: for (int i = currentPtr; i > 0; i--) {
                         int group = stack[i].getGroup();
                         switch (group) {
                             case DD_OR_DT:
@@ -1621,20 +1694,17 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case P:
                         case PRE_OR_LISTING:
                         case TABLE:
-                            errHtmlStartTagInForeignContext(name);
-                            while (!isSpecialParentInForeign(stack[currentPtr])) {
-                                pop();
-                            }
-                            continue starttagloop;
                         case FONT:
-                            if (attributes.contains(AttributeName.COLOR)
-                                    || attributes.contains(AttributeName.FACE)
-                                    || attributes.contains(AttributeName.SIZE)) {
+                            // re-check FONT to deal with the special case
+                            if (!(group == FONT && !(attributes.contains(AttributeName.COLOR)
+                                    || attributes.contains(AttributeName.FACE) || attributes.contains(AttributeName.SIZE)))) {
                                 errHtmlStartTagInForeignContext(name);
-                                while (!isSpecialParentInForeign(stack[currentPtr])) {
-                                    pop();
-                                }
-                                continue starttagloop;
+                                if (!fragment) {
+                                    while (!isSpecialParentInForeign(stack[currentPtr])) {
+                                        pop();
+                                    }
+                                    continue starttagloop;
+                                } // else fall thru
                             }
                             // else fall thru
                         default:
@@ -3308,10 +3378,18 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         endtagloop: for (;;) {
             if (isInForeign()) {
                 if (stack[currentPtr].name != name) {
-                    errEndTagDidNotMatchCurrentOpenElement(name, stack[currentPtr].popName);
+                    if (currentPtr == 0) {
+                        errStrayEndTag(name);
+                    } else {
+                        errEndTagDidNotMatchCurrentOpenElement(name, stack[currentPtr].popName);
+                    }
                 }
                 eltPos = currentPtr;
                 for (;;) {
+                    if (eltPos == 0) {
+                        assert fragment: "We can get this close to the root of the stack in foreign content only in the fragment case.";
+                        break endtagloop;
+                    }
                     if (stack[eltPos].name == name) {
                         while (currentPtr >= eltPos) {
                             pop();
@@ -3649,7 +3727,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                                 // XXX Can the 'in foreign' case happen anymore?
                                 if (isInForeign()) {
                                     errHtmlStartTagInForeignContext(name);
-                                    while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                    // Check for currentPtr for the fragment
+                                    // case.
+                                    while (currentPtr >= 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
                                         pop();
                                     }
                                 }
@@ -3730,8 +3810,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                         case BR:
                             errEndTagBr();
                             if (isInForeign()) {
+                                // XXX can this happen anymore?
                                 errHtmlStartTagInForeignContext(name);
-                                while (stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
+                                // Check for currentPtr for the fragment
+                                // case.
+                                while (currentPtr >= 0 && stack[currentPtr].ns != "http://www.w3.org/1999/xhtml") {
                                     pop();
                                 }
                             }
@@ -4723,7 +4806,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
                 assert node == listOfActiveFormattingElements[nodeListPos];
                 assert node == stack[nodePos];
                 T clone = createElement("http://www.w3.org/1999/xhtml",
-                        node.name, node.attributes.cloneAttributes(null));
+                        node.name, node.attributes.cloneAttributes(null), commonAncestor.node);
                 StackNode<T> newNode = new StackNode<T>(node.getFlags(), node.ns,
                         node.name, clone, node.popName, node.attributes
                         // [NOCPP[
@@ -4752,7 +4835,7 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             }
             T clone = createElement("http://www.w3.org/1999/xhtml",
                     formattingElt.name,
-                    formattingElt.attributes.cloneAttributes(null));
+                    formattingElt.attributes.cloneAttributes(null), furthestBlock.node);
             StackNode<T> formattingClone = new StackNode<T>(
                     formattingElt.getFlags(), formattingElt.ns,
                     formattingElt.name, clone, formattingElt.popName,
@@ -4931,22 +5014,28 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         while (entryPos < listPtr) {
             entryPos++;
             StackNode<T> entry = listOfActiveFormattingElements[entryPos];
-            T clone = createElement("http://www.w3.org/1999/xhtml", entry.name,
-                    entry.attributes.cloneAttributes(null));
+            StackNode<T> currentNode = stack[currentPtr];
+
+            T clone;
+            if (currentNode.isFosterParenting()) {
+                clone = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", entry.name,
+                        entry.attributes.cloneAttributes(null));
+            } else {
+                clone = createElement("http://www.w3.org/1999/xhtml", entry.name,
+                        entry.attributes.cloneAttributes(null), currentNode.node);
+                appendElement(clone, currentNode.node);
+            }
+
             StackNode<T> entryClone = new StackNode<T>(entry.getFlags(),
                     entry.ns, entry.name, clone, entry.popName,
                     entry.attributes
                     // [NOCPP[
                     , entry.getLocator()
-            // ]NOCPP]
+                    // ]NOCPP]
             );
+
             entry.dropAttributes(); // transfer ownership to entryClone
-            StackNode<T> currentNode = stack[currentPtr];
-            if (currentNode.isFosterParenting()) {
-                insertIntoFosterParent(clone);
-            } else {
-                appendElement(clone, currentNode.node);
-            }
+
             push(entryClone);
             // stack takes ownership of the local variable
             listOfActiveFormattingElements[entryPos] = entryClone;
@@ -4967,6 +5056,26 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
         StackNode<T> node = stack[tablePos];
         insertFosterParentedChild(child, node.node, stack[tablePos - 1].node);
+    }
+
+    private T createAndInsertFosterParentedElement(@NsUri String ns, @Local String name,
+            HtmlAttributes attributes) throws SAXException {
+        return createAndInsertFosterParentedElement(ns, name, attributes, null);
+    }
+
+    private T createAndInsertFosterParentedElement(@NsUri String ns, @Local String name,
+            HtmlAttributes attributes, T form) throws SAXException {
+        int tablePos = findLastOrRoot(TreeBuilder.TABLE);
+        int templatePos = findLastOrRoot(TreeBuilder.TEMPLATE);
+
+        if (templatePos >= tablePos) {
+            T child = createElement(ns, name, attributes, form, stack[templatePos].node);
+            appendElement(child, stack[templatePos].node);
+            return child;
+        }
+
+        StackNode<T> node = stack[tablePos];
+        return createAndInsertFosterParentedElement(ns, name, attributes, form, node.node, stack[tablePos - 1].node);
     }
 
     private boolean isInStack(StackNode<T> node) {
@@ -5123,9 +5232,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // [NOCPP[
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/1999/xhtml", "head",
-                attributes);
-        appendElement(elt, stack[currentPtr].node);
+        T currentNode = stack[currentPtr].node;
+        T elt = createElement("http://www.w3.org/1999/xhtml", "head", attributes, currentNode);
+        appendElement(elt, currentNode);
         headPointer = elt;
         StackNode<T> node = new StackNode<T>(ElementName.HEAD,
                 elt
@@ -5151,25 +5260,26 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // [NOCPP[
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/1999/xhtml", "form",
-                attributes);
+
+        T elt;
+        StackNode<T> current = stack[currentPtr];
+        if (current.isFosterParenting()) {
+            fatal();
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", "form", attributes);
+        } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", "form", attributes, current.node);
+            appendElement(elt, current.node);
+        }
 
         if (!isTemplateContents()) {
             formPointer = elt;
         }
 
-        StackNode<T> current = stack[currentPtr];
-        if (current.isFosterParenting()) {
-            fatal();
-            insertIntoFosterParent(elt);
-        } else {
-            appendElement(elt, current.node);
-        }
         StackNode<T> node = new StackNode<T>(ElementName.FORM,
                 elt
                 // [NOCPP[
                 , errorHandler == null ? null : new TaintableLocatorImpl(tokenizer)
-        // ]NOCPP]
+                // ]NOCPP]
         );
         push(node);
     }
@@ -5184,12 +5294,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         HtmlAttributes clone = attributes.cloneAttributes(null);
         // Attributes must not be read after calling createElement, because
         // createElement may delete attributes in C++.
-        T elt = createElement("http://www.w3.org/1999/xhtml", elementName.name, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", elementName.name, attributes);
         } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", elementName.name, attributes, current.node);
             appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(elementName, elt, clone
@@ -5209,8 +5320,9 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
         // This method can't be called for custom elements
-        T elt = createElement("http://www.w3.org/1999/xhtml", elementName.name, attributes);
-        appendElement(elt, stack[currentPtr].node);
+        T currentNode = stack[currentPtr].node;
+        T elt = createElement("http://www.w3.org/1999/xhtml", elementName.name, attributes, currentNode);
+        appendElement(elt, currentNode);
         if (ElementName.TEMPLATE == elementName) {
             elt = getDocumentFragmentForTemplate(elt);
         }
@@ -5232,12 +5344,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/1999/xhtml", popName, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", popName, attributes);
         } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(elementName, elt, popName
@@ -5265,13 +5378,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         }
         // Attributes must not be read after calling createElement(), since
         // createElement may delete the object in C++.
-        T elt = createElement("http://www.w3.org/1998/Math/MathML", popName,
-                attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1998/Math/MathML", popName, attributes);
         } else {
+            elt  = createElement("http://www.w3.org/1998/Math/MathML", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(elementName, elt, popName,
@@ -5314,12 +5427,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/2000/svg", popName, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/2000/svg", popName, attributes);
         } else {
+            elt = createElement("http://www.w3.org/2000/svg", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(elementName, popName, elt
@@ -5337,13 +5451,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
         // Can't be called for custom elements
-        T elt = createElement("http://www.w3.org/1999/xhtml", elementName.name, attributes,
-                form == null || fragment || isTemplateContents() ? null : form);
+        T elt;
+        T formOwner = form == null || fragment || isTemplateContents() ? null : form;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", elementName.name,
+                    attributes, formOwner);
         } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", elementName.name,
+                    attributes, formOwner, current.node);
             appendElement(elt, current.node);
         }
         StackNode<T> node = new StackNode<T>(elementName, elt
@@ -5360,13 +5477,16 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
         // Can't be called for custom elements
-        T elt = createElement("http://www.w3.org/1999/xhtml", name, attributes,
-                form == null || fragment || isTemplateContents() ? null : form);
+        T elt;
+        T formOwner = form == null || fragment || isTemplateContents() ? null : form;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", name,
+                    attributes, formOwner);
         } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", name,
+                    attributes, formOwner, current.node);
             appendElement(elt, current.node);
         }
         elementPushed("http://www.w3.org/1999/xhtml", name, elt);
@@ -5383,12 +5503,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/1999/xhtml", popName, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1999/xhtml", popName, attributes);
         } else {
+            elt = createElement("http://www.w3.org/1999/xhtml", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         elementPushed("http://www.w3.org/1999/xhtml", popName, elt);
@@ -5405,12 +5526,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/2000/svg", popName, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/2000/svg", popName, attributes);
         } else {
+            elt = createElement("http://www.w3.org/2000/svg", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         elementPushed("http://www.w3.org/2000/svg", popName, elt);
@@ -5427,12 +5549,13 @@ public abstract class TreeBuilder<T> implements TokenHandler,
             popName = checkPopName(popName);
         }
         // ]NOCPP]
-        T elt = createElement("http://www.w3.org/1998/Math/MathML", popName, attributes);
+        T elt;
         StackNode<T> current = stack[currentPtr];
         if (current.isFosterParenting()) {
             fatal();
-            insertIntoFosterParent(elt);
+            elt = createAndInsertFosterParentedElement("http://www.w3.org/1998/Math/MathML", popName, attributes);
         } else {
+            elt = createElement("http://www.w3.org/1998/Math/MathML", popName, attributes, current.node);
             appendElement(elt, current.node);
         }
         elementPushed("http://www.w3.org/1998/Math/MathML", popName, elt);
@@ -5445,10 +5568,10 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
         // Can't be called for custom elements
+        T currentNode = stack[currentPtr].node;
         T elt = createElement("http://www.w3.org/1999/xhtml", name, attributes,
-                form == null || fragment || isTemplateContents() ? null : form);
-        StackNode<T> current = stack[currentPtr];
-        appendElement(elt, current.node);
+                form == null || fragment || isTemplateContents() ? null : form, currentNode);
+        appendElement(elt, currentNode);
         elementPushed("http://www.w3.org/1999/xhtml", name, elt);
         elementPopped("http://www.w3.org/1999/xhtml", name, elt);
     }
@@ -5457,12 +5580,12 @@ public abstract class TreeBuilder<T> implements TokenHandler,
         // [NOCPP[
         checkAttributes(attributes, "http://www.w3.org/1999/xhtml");
         // ]NOCPP]
+        T currentNode = stack[currentPtr].node;
         T elt = createElement("http://www.w3.org/1999/xhtml", "form",
-                attributes);
+                attributes, currentNode);
         formPointer = elt;
         // ownership transferred to form pointer
-        StackNode<T> current = stack[currentPtr];
-        appendElement(elt, current.node);
+        appendElement(elt, currentNode);
         elementPushed("http://www.w3.org/1999/xhtml", "form", elt);
         elementPopped("http://www.w3.org/1999/xhtml", "form", elt);
     }
@@ -5495,11 +5618,11 @@ public abstract class TreeBuilder<T> implements TokenHandler,
     }
 
     protected abstract T createElement(@NsUri String ns, @Local String name,
-            HtmlAttributes attributes) throws SAXException;
+            HtmlAttributes attributes, T intendedParent) throws SAXException;
 
     protected T createElement(@NsUri String ns, @Local String name,
-            HtmlAttributes attributes, T form) throws SAXException {
-        return createElement("http://www.w3.org/1999/xhtml", name, attributes);
+            HtmlAttributes attributes, T form, T intendedParent) throws SAXException {
+        return createElement("http://www.w3.org/1999/xhtml", name, attributes, intendedParent);
     }
 
     protected abstract T createHtmlElementSetAsRoot(HtmlAttributes attributes)
@@ -5517,6 +5640,20 @@ public abstract class TreeBuilder<T> implements TokenHandler,
 
     protected abstract void insertFosterParentedChild(T child, T table,
             T stackParent) throws SAXException;
+
+    // We don't generate CPP code for this method because it is not used in generated CPP
+    // code. Instead, the form owner version of this method is called with a null form owner.
+    // [NOCPP[
+
+    protected abstract T createAndInsertFosterParentedElement(@NsUri String ns, @Local String name,
+            HtmlAttributes attributes, T table, T stackParent) throws SAXException;
+
+    // ]NOCPP]
+
+    protected T createAndInsertFosterParentedElement(@NsUri String ns, @Local String name,
+            HtmlAttributes attributes, T form, T table, T stackParent) throws SAXException {
+        return createAndInsertFosterParentedElement(ns, name, attributes, table, stackParent);
+    };
 
     protected abstract void insertFosterParentedCharacters(
             @NoLength char[] buf, int start, int length, T table, T stackParent)
@@ -5643,6 +5780,15 @@ public abstract class TreeBuilder<T> implements TokenHandler,
      */
     public final void setFragmentContext(@Local String context,
             @NsUri String ns, T node, boolean quirks) {
+        // [NOCPP[
+        if (!((context == null && ns == null)
+                || "http://www.w3.org/1999/xhtml" == ns
+                || "http://www.w3.org/2000/svg" == ns || "http://www.w3.org/1998/Math/MathML" == ns)) {
+            throw new IllegalArgumentException(
+                    "The namespace must be the HTML, SVG or MathML namespace (or null when the local name is null). Got: "
+                            + ns);
+        }
+        // ]NOCPP]
         this.contextName = context;
         this.contextNamespace = ns;
         this.contextNode = node;

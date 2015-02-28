@@ -8,7 +8,6 @@
 
 #include "gfxWindowsSurface.h"
 #include "gfxWindowsPlatform.h"
-#include "SurfaceStream.h"
 #include "SharedSurface.h"
 #include "SharedSurfaceGL.h"
 #include "GLContext.h"
@@ -77,19 +76,6 @@ CanvasLayerD3D9::UpdateSurface()
     }
   }
 
-  RefPtr<SourceSurface> surface;
-
-  if (mGLContext) {
-    SharedSurface* surf = mGLContext->RequestFrame();
-    if (!surf)
-        return;
-
-    SharedSurface_Basic* shareSurf = SharedSurface_Basic::Cast(surf);
-    surface = shareSurf->GetData();
-  } else {
-    surface = mDrawTarget->Snapshot();
-  }
-
   // WebGL reads entire surface.
   LockTextureRectD3D9 textureLock(mTexture);
   if (!textureLock.HasLock()) {
@@ -105,10 +91,27 @@ CanvasLayerD3D9::UpdateSurface()
                                                                rect.Pitch,
                                                                SurfaceFormat::B8G8R8A8);
 
-  Rect drawRect(0, 0, surface->GetSize().width, surface->GetSize().height);
-  rectDt->DrawSurface(surface, drawRect, drawRect,
-                      DrawSurfaceOptions(),  DrawOptions(1.0F, CompositionOp::OP_SOURCE));
-  rectDt->Flush();
+  if (mGLContext) {
+    auto screen = mGLContext->Screen();
+    MOZ_ASSERT(screen);
+
+    SharedSurface* surf = screen->Front()->Surf();
+    if (!surf)
+      return;
+    surf->WaitSync();
+
+    if (!ReadbackSharedSurface(surf, rectDt)) {
+      NS_WARNING("Failed to readback into texture.");
+    }
+  } else {
+    RefPtr<SourceSurface> surface = mDrawTarget->Snapshot();
+
+    Rect drawRect(0, 0, surface->GetSize().width, surface->GetSize().height);
+    rectDt->DrawSurface(surface, drawRect, drawRect,
+                        DrawSurfaceOptions(),  DrawOptions(1.0F, CompositionOp::OP_SOURCE));
+
+    rectDt->Flush();
+  }
 }
 
 Layer*

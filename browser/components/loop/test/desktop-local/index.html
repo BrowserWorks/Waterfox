@@ -6,7 +6,7 @@
 <head>
   <meta charset="utf-8">
   <title>Loop desktop-local mocha tests</title>
-  <link rel="stylesheet" media="all" href="../shared/vendor/mocha-1.17.1.css">
+  <link rel="stylesheet" media="all" href="../shared/vendor/mocha-2.0.1.css">
 </head>
 <body>
   <div id="mocha">
@@ -14,6 +14,13 @@
   </div>
   <div id="messages"></div>
   <div id="fixtures"></div>
+  <script>
+    var uncaughtError;
+    window.addEventListener("error", function(error) {
+      uncaughtError = error;
+    });
+  </script>
+
   <!-- libs -->
   <script src="../../content/libs/l10n.js"></script>
   <script src="../../content/shared/libs/react-0.11.2.js"></script>
@@ -22,7 +29,7 @@
   <script src="../../content/shared/libs/backbone-1.1.2.js"></script>
 
   <!-- test dependencies -->
-  <script src="../shared/vendor/mocha-1.17.1.js"></script>
+  <script src="../shared/vendor/mocha-2.0.1.js"></script>
   <script src="../shared/vendor/chai-1.9.0.js"></script>
   <script src="../shared/vendor/sinon-1.12.2.js"></script>
   <script>
@@ -64,10 +71,18 @@
   <script src="roomViews_test.js"></script>
   <script src="conversationViews_test.js"></script>
   <script src="contacts_test.js"></script>
+  <script src="l10n_test.js"></script>
   <script>
     // Stop the default init functions running to avoid conflicts in tests
     document.removeEventListener('DOMContentLoaded', loop.panel.init);
     document.removeEventListener('DOMContentLoaded', loop.conversation.init);
+
+    describe("Uncaught Error Check", function() {
+      it("should load the tests without errors", function() {
+        expect(uncaughtError && uncaughtError.message).to.be.undefined;
+      });
+    });
+
     mocha.run(function () {
       $("#mocha").append("<p id='complete'>Complete.</p>");
     });

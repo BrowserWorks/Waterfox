@@ -998,7 +998,6 @@ en{
         FONIPA{"IPA Phonetics"}
         FONUPA{"UPA Phonetics"}
         HEPBURN{"Hepburn romanization"}
-        HEPLOC{"Hepburn romanization, Library of Congress method"}
         IJEKAVSK{"Serbian with Ijekavian pronunciation"}
         KKCOR{"Common Orthography"}
         KSCOR{"Standard Orthography"}
@@ -1029,7 +1028,7 @@ en{
         VALENCIA{"Valencian"}
         WADEGILE{"Wade-Giles Romanization"}
     }
-    Version{"2.1.8.87"}
+    Version{"2.1.10.42"}
     codePatterns{
         language{"Language: {0}"}
         script{"Script: {0}"}

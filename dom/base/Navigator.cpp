@@ -39,6 +39,8 @@
 #include "mozilla/dom/ServiceWorkerContainer.h"
 #include "mozilla/dom/Telephony.h"
 #include "mozilla/dom/Voicemail.h"
+#include "mozilla/dom/TVManager.h"
+#include "mozilla/dom/VRDevice.h"
 #include "mozilla/Hal.h"
 #include "nsISiteSpecificUserAgent.h"
 #include "mozilla/ClearOnShutdown.h"
@@ -67,9 +69,9 @@
 #include "mozIApplication.h"
 #include "WidgetUtils.h"
 #include "mozIThirdPartyUtil.h"
-#include "nsChannelPolicy.h"
 
 #ifdef MOZ_MEDIA_NAVIGATOR
+#include "mozilla/dom/MediaDevices.h"
 #include "MediaManager.h"
 #endif
 #ifdef MOZ_B2G_BT
@@ -113,7 +115,6 @@ namespace mozilla {
 namespace dom {
 
 static bool sDoNotTrackEnabled = false;
-static uint32_t sDoNotTrackValue = 1;
 static bool sVibratorEnabled   = false;
 static uint32_t sMaxVibrateMS  = 0;
 static uint32_t sMaxVibrateListLen = 0;
@@ -125,9 +126,6 @@ Navigator::Init()
   Preferences::AddBoolVarCache(&sDoNotTrackEnabled,
                                "privacy.donottrackheader.enabled",
                                false);
-  Preferences::AddUintVarCache(&sDoNotTrackValue,
-                               "privacy.donottrackheader.value",
-                               1);
   Preferences::AddBoolVarCache(&sVibratorEnabled,
                                "dom.vibrator.enabled", true);
   Preferences::AddUintVarCache(&sMaxVibrateMS,
@@ -177,6 +175,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN(Navigator)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMobileMessageManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTelephony)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mVoicemail)
+  NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mTVManager)
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mConnection)
 #ifdef MOZ_B2G_RIL
   NS_IMPL_CYCLE_COLLECTION_TRAVERSE(mMobileConnections)
@@ -258,6 +257,10 @@ Navigator::Invalidate()
   if (mVoicemail) {
     mVoicemail->Shutdown();
     mVoicemail = nullptr;
+  }
+
+  if (mTVManager) {
+    mTVManager = nullptr;
   }
 
   if (mConnection) {
@@ -629,11 +632,7 @@ NS_IMETHODIMP
 Navigator::GetDoNotTrack(nsAString &aResult)
 {
   if (sDoNotTrackEnabled) {
-    if (sDoNotTrackValue == 0) {
-      aResult.AssignLiteral("0");
-    } else {
-      aResult.AssignLiteral("1");
-    }
+    aResult.AssignLiteral("1");
   } else {
     aResult.AssignLiteral("unspecified");
   }
@@ -1056,26 +1055,11 @@ Navigator::SendBeacon(const nsAString& aUrl,
   }
 
   nsCOMPtr<nsIChannel> channel;
-  nsCOMPtr<nsIChannelPolicy> channelPolicy;
-  nsCOMPtr<nsIContentSecurityPolicy> csp;
-  rv = principal->GetCsp(getter_AddRefs(csp));
-  if (NS_FAILED(rv)) {
-    aRv.Throw(NS_ERROR_FAILURE);
-    return false;
-  }
-
-  if (csp) {
-    channelPolicy = do_CreateInstance(NSCHANNELPOLICY_CONTRACTID);
-    channelPolicy->SetContentSecurityPolicy(csp);
-    channelPolicy->SetLoadType(nsIContentPolicy::TYPE_BEACON);
-  }
-
   rv = NS_NewChannel(getter_AddRefs(channel),
                      uri,
                      doc,
                      nsILoadInfo::SEC_NORMAL,
-                     nsIContentPolicy::TYPE_BEACON,
-                     channelPolicy);
+                     nsIContentPolicy::TYPE_BEACON);
 
   if (NS_FAILED(rv)) {
     aRv.Throw(rv);
@@ -1116,7 +1100,10 @@ Navigator::SendBeacon(const nsAString& aUrl,
   }
   bool isForeign = true;
   thirdPartyUtil->IsThirdPartyWindow(mWindow, uri, &isForeign);
-  httpChannelInternal->SetForceAllowThirdPartyCookie(!isForeign);
+  uint32_t thirdPartyFlags = isForeign ?
+    0 :
+    nsIHttpChannelInternal::THIRD_PARTY_FORCE_ALLOW;
+  httpChannelInternal->SetThirdPartyFlags(thirdPartyFlags);
 
   nsCString mimeType;
   if (!aData.IsNull()) {
@@ -1240,6 +1227,21 @@ Navigator::SendBeacon(const nsAString& aUrl,
 }
 
 #ifdef MOZ_MEDIA_NAVIGATOR
+MediaDevices*
+Navigator::GetMediaDevices(ErrorResult& aRv)
+{
+  if (!mMediaDevices) {
+    if (!mWindow ||
+        !mWindow->GetOuterWindow() ||
+        mWindow->GetOuterWindow()->GetCurrentInnerWindow() != mWindow) {
+      aRv.Throw(NS_ERROR_NOT_AVAILABLE);
+      return nullptr;
+    }
+    mMediaDevices = new MediaDevices(mWindow);
+  }
+  return mMediaDevices;
+}
+
 void
 Navigator::MozGetUserMedia(const MediaStreamConstraints& aConstraints,
                            NavigatorUserMediaSuccessCallback& aOnSuccess,
@@ -1590,6 +1592,19 @@ Navigator::GetMozTelephony(ErrorResult& aRv)
   return mTelephony;
 }
 
+TVManager*
+Navigator::GetTv()
+{
+  if (!mTVManager) {
+    if (!mWindow) {
+      return nullptr;
+    }
+    mTVManager = TVManager::Create(mWindow);
+  }
+
+  return mTVManager;
+}
+
 #ifdef MOZ_B2G
 already_AddRefed<Promise>
 Navigator::GetMobileIdAssertion(const MobileIdOptions& aOptions,
@@ -1710,6 +1725,32 @@ Navigator::GetGamepads(nsTArray<nsRefPtr<Gamepad> >& aGamepads,
   win->GetGamepads(aGamepads);
 }
 #endif
+
+already_AddRefed<Promise>
+Navigator::GetVRDevices(ErrorResult& aRv)
+{
+  if (!mWindow || !mWindow->GetDocShell()) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return nullptr;
+  }
+
+  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
+  nsRefPtr<Promise> p = Promise::Create(go, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  nsGlobalWindow* win = static_cast<nsGlobalWindow*>(mWindow.get());
+
+  nsTArray<nsRefPtr<VRDevice>> vrDevs;
+  if (!win->GetVRDevices(vrDevs)) {
+    p->MaybeReject(NS_ERROR_FAILURE);
+  } else {
+    p->MaybeResolve(vrDevs);
+  }
+
+  return p.forget();
+}
 
 //*****************************************************************************
 //    Navigator::nsIMozNavigatorNetwork
@@ -1950,9 +1991,9 @@ Navigator::GetMozAudioChannelManager(ErrorResult& aRv)
 #endif
 
 bool
-Navigator::DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
-                        JS::Handle<jsid> aId,
-                        JS::MutableHandle<JSPropertyDescriptor> aDesc)
+Navigator::DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
+                     JS::Handle<jsid> aId,
+                     JS::MutableHandle<JSPropertyDescriptor> aDesc)
 {
   if (!JSID_IS_STRING(aId)) {
     return true;
@@ -2018,7 +2059,7 @@ Navigator::DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
       nsISupports* existingObject = mCachedResolveResults.GetWeak(name);
       if (existingObject) {
         // We know all of our WebIDL objects here are wrappercached, so just go
-        // ahead and WrapObject() them.  We can't use WrapNewBindingObject,
+        // ahead and WrapObject() them.  We can't use GetOrCreateDOMReflector,
         // because we don't have the concrete type.
         JS::Rooted<JS::Value> wrapped(aCx);
         if (!dom::WrapObject(aCx, existingObject, &wrapped)) {
@@ -2335,6 +2376,37 @@ Navigator::HasMobileIdSupport(JSContext* aCx, JSObject* aGlobal)
 #endif
 
 /* static */
+bool
+Navigator::HasTVSupport(JSContext* aCx, JSObject* aGlobal)
+{
+  JS::Rooted<JSObject*> global(aCx, aGlobal);
+
+  nsCOMPtr<nsPIDOMWindow> win = GetWindowFromGlobal(global);
+  if (!win) {
+    return false;
+  }
+
+  // Just for testing, we can enable TV for any kind of app.
+  if (Preferences::GetBool("dom.testing.tv_enabled_for_hosted_apps", false)) {
+    return true;
+  }
+
+  nsIDocument* doc = win->GetExtantDoc();
+  if (!doc || !doc->NodePrincipal()) {
+    return false;
+  }
+
+  nsIPrincipal* principal = doc->NodePrincipal();
+  uint16_t status;
+  if (NS_FAILED(principal->GetAppStatus(&status))) {
+    return false;
+  }
+
+  // Only support TV Manager API for certified apps for now.
+  return status == nsIPrincipal::APP_STATUS_CERTIFIED;
+}
+
+/* static */
 already_AddRefed<nsPIDOMWindow>
 Navigator::GetWindowFromGlobal(JSObject* aGlobal)
 {
@@ -2490,6 +2562,44 @@ Navigator::GetUserAgent(nsPIDOMWindow* aWindow, nsIURI* aURI,
 
   return siteSpecificUA->GetUserAgentForURIAndWindow(aURI, aWindow, aUserAgent);
 }
+
+#ifdef MOZ_EME
+already_AddRefed<Promise>
+Navigator::RequestMediaKeySystemAccess(const nsAString& aKeySystem,
+                                       const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
+                                       ErrorResult& aRv)
+{
+  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
+  nsRefPtr<Promise> p = Promise::Create(go, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  if (aKeySystem.IsEmpty() ||
+      (aOptions.WasPassed() && aOptions.Value().IsEmpty())) {
+    p->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
+    return p.forget();
+  }
+
+  if (!MediaKeySystemAccess::IsKeySystemSupported(aKeySystem)) {
+    p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return p.forget();
+  }
+
+  // TODO: Wait (async) until the CDM is downloaded, if it's not already.
+
+  if (!aOptions.WasPassed() ||
+      MediaKeySystemAccess::IsSupported(aKeySystem, aOptions.Value())) {
+    nsRefPtr<MediaKeySystemAccess> access(new MediaKeySystemAccess(mWindow, aKeySystem));
+    p->MaybeResolve(access);
+    return p.forget();
+  }
+
+  p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+
+  return p.forget();
+}
+#endif
 
 } // namespace dom
 } // namespace mozilla

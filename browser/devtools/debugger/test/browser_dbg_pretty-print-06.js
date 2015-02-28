@@ -8,13 +8,12 @@
 const TAB_URL = EXAMPLE_URL + "doc_included-script.html";
 const JS_URL = EXAMPLE_URL + "code_location-changes.js";
 
-let gTab, gDebuggee, gPanel, gDebugger, gClient;
+let gTab, gPanel, gDebugger, gClient;
 let gEditor, gSources, gControllerSources, gPrettyPrinted;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gClient = gDebugger.gClient;
@@ -44,7 +43,7 @@ function test() {
         ok(false, "The source editor text shouldn't have changed.");
       });
 
-      is(gSources.selectedValue, JS_URL,
+      is(getSelectedSourceURL(gSources), JS_URL,
         "The correct source is currently selected.");
       ok(gEditor.getText().contains("myFunction"),
         "The source shouldn't be pretty printed yet.");
@@ -62,7 +61,7 @@ function test() {
 
       let text;
       [source, text] = yield gControllerSources.getText(source);
-      is(gSources.selectedValue, JS_URL,
+      is(getSelectedSourceURL(gSources), JS_URL,
         "The correct source is still selected.");
       ok(gEditor.getText().contains("myFunction"),
         "The displayed source hasn't changed.");
@@ -83,7 +82,6 @@ function clickPrettyPrintButton() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gClient = null;

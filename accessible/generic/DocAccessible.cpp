@@ -6,6 +6,7 @@
 #include "Accessible-inl.h"
 #include "AccIterator.h"
 #include "DocAccessible-inl.h"
+#include "DocAccessibleChild.h"
 #include "HTMLImageMapAccessible.h"
 #include "nsAccCache.h"
 #include "nsAccessiblePivot.h"
@@ -15,6 +16,7 @@
 #include "Role.h"
 #include "RootAccessible.h"
 #include "TreeWalker.h"
+#include "xpcAccessibleDocument.h"
 
 #include "nsIMutableArray.h"
 #include "nsICommandManager.h"
@@ -75,7 +77,7 @@ static const uint32_t kRelationAttrsLen = ArrayLength(kRelationAttrs);
 DocAccessible::
   DocAccessible(nsIDocument* aDocument, nsIContent* aRootContent,
                   nsIPresShell* aPresShell) :
-  HyperTextAccessibleWrap(aRootContent, this), xpcAccessibleDocument(),
+  HyperTextAccessibleWrap(aRootContent, this),
   // XXX aaronl should we use an algorithm for the initial cache size?
   mAccessibleCache(kDefaultCacheLength),
   mNodeToAccessibleMap(kDefaultCacheLength),
@@ -83,7 +85,7 @@ DocAccessible::
   mScrollPositionChangedTicks(0),
   mLoadState(eTreeConstructionPending), mDocFlags(0), mLoadEventType(0),
   mVirtualCursor(nullptr),
-  mPresShell(aPresShell)
+  mPresShell(aPresShell), mIPCDoc(nullptr)
 {
   mGenericTypes |= eDocument;
   mStateFlags |= eNotNodeMapEntry;
@@ -127,33 +129,12 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(DocAccessible, Accessible)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(DocAccessible)
-  NS_INTERFACE_MAP_ENTRY(nsIAccessibleDocument)
   NS_INTERFACE_MAP_ENTRY(nsIDocumentObserver)
   NS_INTERFACE_MAP_ENTRY(nsIMutationObserver)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY(nsIAccessiblePivotObserver)
-  NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsIAccessibleDocument)
-    foundInterface = 0;
-
-  nsresult status;
-  if (!foundInterface) {
-    // HTML document accessible must inherit from HyperTextAccessible to get
-    // support text interfaces. XUL document accessible doesn't need this.
-    // However at some point we may push <body> to implement the interfaces and
-    // return DocAccessible to inherit from AccessibleWrap.
-
-    status = IsHyperText() ? 
-      HyperTextAccessible::QueryInterface(aIID, (void**)&foundInterface) :
-      Accessible::QueryInterface(aIID, (void**)&foundInterface);
-  } else {
-    NS_ADDREF(foundInterface);
-    status = NS_OK;
-  }
-
-  *aInstancePtr = foundInterface;
-  return status;
-}
+NS_INTERFACE_MAP_END_INHERITING(HyperTextAccessible)
 
 NS_IMPL_ADDREF_INHERITED(DocAccessible, HyperTextAccessible)
 NS_IMPL_RELEASE_INHERITED(DocAccessible, HyperTextAccessible)
@@ -473,6 +454,12 @@ DocAccessible::Shutdown()
 
   mChildDocuments.Clear();
 
+  // XXX thinking about ordering?
+  if (IPCAccessibilityActive()) {
+    DocAccessibleChild::Send__delete__(mIPCDoc);
+    MOZ_ASSERT(!mIPCDoc);
+  }
+
   if (mVirtualCursor) {
     mVirtualCursor->RemoveObserver(this);
     mVirtualCursor = nullptr;
@@ -493,7 +480,7 @@ DocAccessible::Shutdown()
 
   HyperTextAccessibleWrap::Shutdown();
 
-  GetAccService()->NotifyOfDocumentShutdown(kungFuDeathGripDoc);
+  GetAccService()->NotifyOfDocumentShutdown(this, kungFuDeathGripDoc);
 }
 
 nsIFrame*
@@ -683,9 +670,11 @@ DocAccessible::OnPivotChanged(nsIAccessiblePivot* aPivot,
                               PivotMoveReason aReason,
                               bool aIsFromUserInput)
 {
-  nsRefPtr<AccEvent> event = new AccVCChangeEvent(
-    this, aOldAccessible, aOldStart, aOldEnd, aReason,
-    aIsFromUserInput ? eFromUserInput : eNoUserInput);
+  nsRefPtr<AccEvent> event =
+    new AccVCChangeEvent(
+      this, (aOldAccessible ? aOldAccessible->ToInternalAccessible() : nullptr),
+      aOldStart, aOldEnd, aReason,
+      aIsFromUserInput ? eFromUserInput : eNoUserInput);
   nsEventShell::FireEvent(event);
 
   return NS_OK;
@@ -1258,6 +1247,11 @@ DocAccessible::UnbindFromDocument(Accessible* aAccessible)
       mNodeToAccessibleMap.Get(aAccessible->GetNode()) == aAccessible)
     mNodeToAccessibleMap.Remove(aAccessible->GetNode());
 
+  // Update XPCOM part.
+  xpcAccessibleDocument* xpcDoc = GetAccService()->GetCachedXPCDocument(this);
+  if (xpcDoc)
+    xpcDoc->NotifyOfShutdown(aAccessible);
+
   void* uniqueID = aAccessible->UniqueID();
 
   NS_ASSERTION(!aAccessible->IsDefunct(), "Shutdown the shutdown accessible!");
@@ -1445,6 +1439,13 @@ DocAccessible::DoInitialUpdate()
   if (!IsRoot()) {
     nsRefPtr<AccReorderEvent> reorderEvent = new AccReorderEvent(Parent());
     ParentDocument()->FireDelayedEvent(reorderEvent);
+  }
+
+  uint32_t childCount = ChildCount();
+  for (uint32_t i = 0; i < childCount; i++) {
+    Accessible* child = GetChildAt(i);
+    nsRefPtr<AccShowEvent> event = new AccShowEvent(child, child->GetContent());
+  FireDelayedEvent(event);
   }
 }
 

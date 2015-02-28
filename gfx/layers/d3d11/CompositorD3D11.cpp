@@ -169,7 +169,7 @@ CompositorD3D11::Initialize()
       return false;
     }
 
-    Vertex vertices[] = { {0.0, 0.0}, {1.0, 0.0}, {0.0, 1.0}, {1.0, 1.0} };
+    Vertex vertices[] = { {{0.0, 0.0}}, {{1.0, 0.0}}, {{0.0, 1.0}}, {{1.0, 1.0}} };
     CD3D11_BUFFER_DESC bufferDesc(sizeof(vertices), D3D11_BIND_VERTEX_BUFFER);
     D3D11_SUBRESOURCE_DATA data;
     data.pSysMem = (void*)vertices;
@@ -210,7 +210,6 @@ CompositorD3D11::Initialize()
     }
 
     CD3D11_SAMPLER_DESC samplerDesc(D3D11_DEFAULT);
-    samplerDesc.AddressU = samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
     hr = mDevice->CreateSamplerState(&samplerDesc, byRef(mAttachments->mLinearSamplerState));
     if (FAILED(hr)) {
       return false;
@@ -414,9 +413,8 @@ CompositorD3D11::CreateRenderTarget(const gfx::IntRect& aRect,
                              D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET);
 
   RefPtr<ID3D11Texture2D> texture;
-  mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
-  NS_ASSERTION(texture, "Could not create texture");
-  if (!texture) {
+  HRESULT hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
+  if (Failed(hr) || !texture) {
     return nullptr;
   }
 
@@ -447,9 +445,9 @@ CompositorD3D11::CreateRenderTargetFromSource(const gfx::IntRect &aRect,
                              D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET);
 
   RefPtr<ID3D11Texture2D> texture;
-  mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
+  HRESULT hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
   NS_ASSERTION(texture, "Could not create texture");
-  if (!texture) {
+  if (Failed(hr) || !texture) {
     return nullptr;
   }
 
@@ -496,9 +494,8 @@ CompositorD3D11::SetRenderTarget(CompositingRenderTarget* aRenderTarget)
   MOZ_ASSERT(aRenderTarget);
   CompositingRenderTargetD3D11* newRT =
     static_cast<CompositingRenderTargetD3D11*>(aRenderTarget);
-  ID3D11RenderTargetView* view = newRT->mRTView;
   mCurrentRT = newRT;
-  mContext->OMSetRenderTargets(1, &view, nullptr);
+  mCurrentRT->BindRenderTarget(mContext);
   PrepareViewport(newRT->GetSize());
 }
 
@@ -579,7 +576,6 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
   IntPoint origin = mCurrentRT->GetOrigin();
   mVSConstants.renderTargetOffset[0] = origin.x;
   mVSConstants.renderTargetOffset[1] = origin.y;
-  mVSConstants.layerQuad = aRect;
 
   mPSConstants.layerOpacity[0] = aOpacity;
 
@@ -605,7 +601,12 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
     }
 
     RefPtr<ID3D11ShaderResourceView> view;
-    mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
+    HRESULT hr = mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
+    if (Failed(hr)) {
+      // XXX - There's a chance we won't be able to render anything, should we
+      // just crash release builds?
+      return;
+    }
 
     ID3D11ShaderResourceView* srView = view;
     mContext->PSSetShaderResources(3, 1, &srView);
@@ -627,6 +628,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
   mContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
   mContext->VSSetShader(mAttachments->mVSQuadShader[maskType], nullptr, 0);
 
+  const Rect* pTexCoordRect = nullptr;
 
   switch (aEffectChain.mPrimaryEffect->mType) {
   case EffectTypes::SOLID_COLOR: {
@@ -646,7 +648,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       TexturedEffect* texturedEffect =
         static_cast<TexturedEffect*>(aEffectChain.mPrimaryEffect.get());
 
-      mVSConstants.textureCoords = texturedEffect->mTextureCoords;
+      pTexCoordRect = &texturedEffect->mTextureCoords;
 
       TextureSourceD3D11* source = texturedEffect->mTexture->AsSourceD3D11();
 
@@ -658,7 +660,12 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       SetPSForEffect(aEffectChain.mPrimaryEffect, maskType, texturedEffect->mTexture->GetFormat());
 
       RefPtr<ID3D11ShaderResourceView> view;
-      mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
+      HRESULT hr = mDevice->CreateShaderResourceView(source->GetD3D11Texture(), nullptr, byRef(view));
+      if (Failed(hr)) {
+        // XXX - There's a chance we won't be able to render anything, should we
+        // just crash release builds?
+        return;
+      }
 
       ID3D11ShaderResourceView* srView = view;
       mContext->PSSetShaderResources(0, 1, &srView);
@@ -677,7 +684,7 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 
       SetSamplerForFilter(Filter::LINEAR);
 
-      mVSConstants.textureCoords = ycbcrEffect->mTextureCoords;
+      pTexCoordRect = &ycbcrEffect->mTextureCoords;
 
       const int Y = 0, Cb = 1, Cr = 2;
       TextureSource* source = ycbcrEffect->mTexture;
@@ -699,13 +706,27 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
       TextureSourceD3D11* sourceCb = source->GetSubSource(Cb)->AsSourceD3D11();
       TextureSourceD3D11* sourceCr = source->GetSubSource(Cr)->AsSourceD3D11();
 
+      HRESULT hr;
+
       RefPtr<ID3D11ShaderResourceView> views[3];
-      mDevice->CreateShaderResourceView(sourceY->GetD3D11Texture(),
-                                        nullptr, byRef(views[0]));
-      mDevice->CreateShaderResourceView(sourceCb->GetD3D11Texture(),
-                                        nullptr, byRef(views[1]));
-      mDevice->CreateShaderResourceView(sourceCr->GetD3D11Texture(),
-                                        nullptr, byRef(views[2]));
+
+      hr = mDevice->CreateShaderResourceView(sourceY->GetD3D11Texture(),
+                                             nullptr, byRef(views[0]));
+      if (Failed(hr)) {
+        return;
+      }
+
+      hr = mDevice->CreateShaderResourceView(sourceCb->GetD3D11Texture(),
+                                             nullptr, byRef(views[1]));
+      if (Failed(hr)) {
+        return;
+      }
+
+      hr = mDevice->CreateShaderResourceView(sourceCr->GetD3D11Texture(),
+                                             nullptr, byRef(views[2]));
+      if (Failed(hr)) {
+        return;
+      }
 
       ID3D11ShaderResourceView* srViews[3] = { views[0], views[1], views[2] };
       mContext->PSSetShaderResources(0, 3, srViews);
@@ -730,10 +751,20 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
 
       SetSamplerForFilter(effectComponentAlpha->mFilter);
 
-      mVSConstants.textureCoords = effectComponentAlpha->mTextureCoords;
+      pTexCoordRect = &effectComponentAlpha->mTextureCoords;
+
       RefPtr<ID3D11ShaderResourceView> views[2];
-      mDevice->CreateShaderResourceView(sourceOnBlack->GetD3D11Texture(), nullptr, byRef(views[0]));
-      mDevice->CreateShaderResourceView(sourceOnWhite->GetD3D11Texture(), nullptr, byRef(views[1]));
+
+      HRESULT hr;
+
+      hr = mDevice->CreateShaderResourceView(sourceOnBlack->GetD3D11Texture(), nullptr, byRef(views[0]));
+      if (Failed(hr)) {
+        return;
+      }
+      hr = mDevice->CreateShaderResourceView(sourceOnWhite->GetD3D11Texture(), nullptr, byRef(views[1]));
+      if (Failed(hr)) {
+        return;
+      }
 
       ID3D11ShaderResourceView* srViews[2] = { views[0], views[1] };
       mContext->PSSetShaderResources(0, 2, srViews);
@@ -746,12 +777,34 @@ CompositorD3D11::DrawQuad(const gfx::Rect& aRect,
     NS_WARNING("Unknown shader type");
     return;
   }
-  if (!UpdateConstantBuffers()) {
-    NS_WARNING("Failed to update shader constant buffers");
-    return;
+
+  if (pTexCoordRect) {
+    Rect layerRects[4];
+    Rect textureRects[4];
+    size_t rects = DecomposeIntoNoRepeatRects(aRect,
+                                              *pTexCoordRect,
+                                              &layerRects,
+                                              &textureRects);
+    for (size_t i = 0; i < rects; i++) {
+      mVSConstants.layerQuad = layerRects[i];
+      mVSConstants.textureCoords = textureRects[i];
+
+      if (!UpdateConstantBuffers()) {
+        NS_WARNING("Failed to update shader constant buffers");
+        break;
+      }
+      mContext->Draw(4, 0);
+    }
+  } else {
+    mVSConstants.layerQuad = aRect;
+
+    if (!UpdateConstantBuffers()) {
+      NS_WARNING("Failed to update shader constant buffers");
+    } else {
+      mContext->Draw(4, 0);
+    }
   }
 
-  mContext->Draw(4, 0);
   if (restoreBlendMode) {
     mContext->OMSetBlendState(mAttachments->mPremulBlendState, sBlendFactor, 0xFFFFFFFF);
   }
@@ -832,7 +885,7 @@ CompositorD3D11::EndFrame()
       PaintToTarget();
     }
   }
-  
+
   mCurrentRT = nullptr;
 }
 
@@ -872,7 +925,12 @@ void
 CompositorD3D11::VerifyBufferSize()
 {
   DXGI_SWAP_CHAIN_DESC swapDesc;
-  mSwapChain->GetDesc(&swapDesc);
+  HRESULT hr;
+
+  hr = mSwapChain->GetDesc(&swapDesc);
+  if (Failed(hr)) {
+    return;
+  }
 
   if ((swapDesc.BufferDesc.Width == mSize.width &&
        swapDesc.BufferDesc.Height == mSize.height) ||
@@ -880,17 +938,27 @@ CompositorD3D11::VerifyBufferSize()
     return;
   }
 
-  mDefaultRT = nullptr;
+  if (mDefaultRT) {
+    // Make sure the texture, which belongs to the swapchain, is destroyed
+    // before resizing the swapchain.
+    if (mCurrentRT == mDefaultRT) {
+      mCurrentRT = nullptr;
+    }
+    MOZ_ASSERT(mDefaultRT->hasOneRef());
+    mDefaultRT = nullptr;
+  }
 
   if (IsRunningInWindowsMetro()) {
-    mSwapChain->ResizeBuffers(2, mSize.width, mSize.height,
-                              DXGI_FORMAT_B8G8R8A8_UNORM,
-                              0);
+    hr = mSwapChain->ResizeBuffers(2, mSize.width, mSize.height,
+                                   DXGI_FORMAT_B8G8R8A8_UNORM,
+                                   0);
+    HandleError(hr);
     mDisableSequenceForNextFrame = true;
   } else {
-    mSwapChain->ResizeBuffers(1, mSize.width, mSize.height,
-                              DXGI_FORMAT_B8G8R8A8_UNORM,
-                              0);
+    hr = mSwapChain->ResizeBuffers(1, mSize.width, mSize.height,
+                                   DXGI_FORMAT_B8G8R8A8_UNORM,
+                                   0);
+    HandleError(hr);
   }
 }
 
@@ -909,7 +977,7 @@ CompositorD3D11::UpdateRenderTarget()
   nsRefPtr<ID3D11Texture2D> backBuf;
 
   hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
-  if (FAILED(hr)) {
+  if (Failed(hr)) {
     return;
   }
 
@@ -976,29 +1044,6 @@ CompositorD3D11::CreateShaders()
   return true;
 }
 
-static
-bool ShouldRecoverFromMapFailure(HRESULT hr, ID3D11Device* device)
-{
-  // XXX - it would be nice to use gfxCriticalError, but it needs to
-  // be made to work off the main thread first.
-  if (SUCCEEDED(hr)) {
-    return true;
-  }
-  if (hr == DXGI_ERROR_DEVICE_REMOVED) {
-    switch (device->GetDeviceRemovedReason()) {
-      case DXGI_ERROR_DEVICE_HUNG:
-      case DXGI_ERROR_DEVICE_REMOVED:
-      case DXGI_ERROR_DEVICE_RESET:
-      case DXGI_ERROR_DRIVER_INTERNAL_ERROR:
-        return true;
-      case DXGI_ERROR_INVALID_CALL:
-      default:
-        return false;
-    }
-  }
-  return false;
-}
-
 bool
 CompositorD3D11::UpdateConstantBuffers()
 {
@@ -1006,21 +1051,15 @@ CompositorD3D11::UpdateConstantBuffers()
   D3D11_MAPPED_SUBRESOURCE resource;
 
   hr = mContext->Map(mAttachments->mVSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (FAILED(hr)) {
-    if (ShouldRecoverFromMapFailure(hr, GetDevice())) {
-      return false;
-    }
-    MOZ_CRASH();
+  if (Failed(hr)) {
+    return false;
   }
   *(VertexShaderConstants*)resource.pData = mVSConstants;
   mContext->Unmap(mAttachments->mVSConstantBuffer, 0);
 
   hr = mContext->Map(mAttachments->mPSConstantBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-  if (FAILED(hr)) {
-    if (ShouldRecoverFromMapFailure(hr, GetDevice())) {
-      return false;
-    }
-    MOZ_CRASH();
+  if (Failed(hr)) {
+    return false;
   }
   *(PixelShaderConstants*)resource.pData = mPSConstants;
   mContext->Unmap(mAttachments->mPSConstantBuffer, 0);
@@ -1039,12 +1078,12 @@ CompositorD3D11::SetSamplerForFilter(Filter aFilter)
 {
   ID3D11SamplerState *sampler;
   switch (aFilter) {
-  default:
-  case Filter::LINEAR:
-    sampler = mAttachments->mLinearSamplerState;
-    break;
-  case Filter::POINT:
+    case Filter::POINT:
     sampler = mAttachments->mPointSamplerState;
+    break;
+  case Filter::LINEAR:
+  default:
+    sampler = mAttachments->mLinearSamplerState;
     break;
   }
 
@@ -1055,8 +1094,12 @@ void
 CompositorD3D11::PaintToTarget()
 {
   nsRefPtr<ID3D11Texture2D> backBuf;
+  HRESULT hr;
 
-  mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
+  hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
+  if (Failed(hr)) {
+    return;
+  }
 
   D3D11_TEXTURE2D_DESC bbDesc;
   backBuf->GetDesc(&bbDesc);
@@ -1069,11 +1112,17 @@ CompositorD3D11::PaintToTarget()
 
   nsRefPtr<ID3D11Texture2D> readTexture;
 
-  HRESULT hr = mDevice->CreateTexture2D(&softDesc, nullptr, getter_AddRefs(readTexture));
+  hr = mDevice->CreateTexture2D(&softDesc, nullptr, getter_AddRefs(readTexture));
+  if (Failed(hr)) {
+    return;
+  }
   mContext->CopyResource(readTexture, backBuf);
 
   D3D11_MAPPED_SUBRESOURCE map;
-  mContext->Map(readTexture, 0, D3D11_MAP_READ, 0, &map);
+  hr = mContext->Map(readTexture, 0, D3D11_MAP_READ, 0, &map);
+  if (Failed(hr)) {
+    return;
+  }
   RefPtr<DataSourceSurface> sourceSurface =
     Factory::CreateWrappingDataSourceSurface((uint8_t*)map.pData,
                                              map.RowPitch,
@@ -1082,8 +1131,51 @@ CompositorD3D11::PaintToTarget()
   mTarget->CopySurface(sourceSurface,
                        IntRect(0, 0, bbDesc.Width, bbDesc.Height),
                        IntPoint(-mTargetBounds.x, -mTargetBounds.y));
+
   mTarget->Flush();
   mContext->Unmap(readTexture, 0);
+}
+
+void
+CompositorD3D11::HandleError(HRESULT hr, Severity aSeverity)
+{
+  if (SUCCEEDED(hr)) {
+    return;
+  }
+  // XXX - It would be nice to use gfxCriticalError, but it needs to
+  // be made to work off the main thread first.
+  MOZ_ASSERT(aSeverity != DebugAssert);
+
+  if (aSeverity == Critical) {
+    MOZ_CRASH("Unrecoverable D3D11 error");
+  }
+
+  if (mDevice && hr == DXGI_ERROR_DEVICE_REMOVED) {
+    hr = mDevice->GetDeviceRemovedReason();
+  }
+
+  // Always crash if we are making invalid calls
+  if (hr == DXGI_ERROR_INVALID_CALL) {
+    MOZ_CRASH("Invalid D3D11 api call");
+  }
+
+  if (aSeverity == Recoverable) {
+    NS_WARNING("Encountered a recoverable D3D11 error");
+  }
+}
+
+bool
+CompositorD3D11::Failed(HRESULT hr, Severity aSeverity)
+{
+  HandleError(hr, aSeverity);
+  return FAILED(hr);
+}
+
+bool
+CompositorD3D11::Succeeded(HRESULT hr, Severity aSeverity)
+{
+  HandleError(hr, aSeverity);
+  return SUCCEEDED(hr);
 }
 
 }

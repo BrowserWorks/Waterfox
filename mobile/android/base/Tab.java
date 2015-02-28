@@ -9,15 +9,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mozilla.gecko.db.BrowserContract.Bookmarks;
 import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.URLMetadata;
+import org.mozilla.gecko.favicons.Favicons;
+import org.mozilla.gecko.favicons.LoadFaviconTask;
+import org.mozilla.gecko.favicons.OnFaviconLoadedListener;
+import org.mozilla.gecko.favicons.RemoteFavicon;
 import org.mozilla.gecko.gfx.Layer;
+import org.mozilla.gecko.toolbar.BrowserToolbar.TabEditingState;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.ContentResolver;
@@ -42,14 +47,14 @@ public class Tab {
     private String mTitle;
     private Bitmap mFavicon;
     private String mFaviconUrl;
-    private int mFaviconSize;
+
+    // The set of all available Favicons for this tab, sorted by attractiveness.
+    final TreeSet<RemoteFavicon> mAvailableFavicons = new TreeSet<>();
     private boolean mHasFeeds;
     private boolean mHasOpenSearch;
     private final SiteIdentity mSiteIdentity;
     private boolean mReaderEnabled;
     private BitmapDrawable mThumbnail;
-    private int mHistoryIndex;
-    private int mHistorySize;
     private final int mParentId;
     private final boolean mExternal;
     private boolean mBookmark;
@@ -67,10 +72,17 @@ public class Tab {
     private boolean mEnteringReaderMode;
     private final Context mAppContext;
     private ErrorType mErrorType = ErrorType.NONE;
-    private static final int MAX_HISTORY_LIST_SIZE = 50;
     private volatile int mLoadProgress;
     private volatile int mRecordingCount;
     private String mMostRecentHomePanel;
+
+    private int mHistoryIndex;
+    private int mHistorySize;
+    private boolean mCanDoBack;
+    private boolean mCanDoForward;
+
+    private boolean mIsEditing;
+    private final TabEditingState mEditingState = new TabEditingState();
 
     public static final int STATE_DELAYED = 0;
     public static final int STATE_LOADING = 1;
@@ -84,6 +96,7 @@ public class Tab {
     public static final int LOAD_PROGRESS_STOP = 100;
 
     private static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
+    public static final int MAX_HISTORY_LIST_SIZE = 50;
 
     public enum ErrorType {
         CERT_ERROR,  // Pages with certificate problems
@@ -314,6 +327,14 @@ public class Tab {
         return mContentType;
     }
 
+    public int getHistoryIndex() {
+        return mHistoryIndex;
+    }
+
+    public int getHistorySize() {
+        return mHistorySize;
+    }
+
     public synchronized void updateTitle(String title) {
         // Keep the title unchanged while entering reader mode.
         if (mEnteringReaderMode) {
@@ -365,46 +386,81 @@ public class Tab {
         return mHasTouchListeners;
     }
 
-    public void setFaviconLoadId(int faviconLoadId) {
-        mFaviconLoadId = faviconLoadId;
-    }
+    public synchronized void addFavicon(String faviconURL, int faviconSize, String mimeType) {
+        RemoteFavicon favicon = new RemoteFavicon(faviconURL, faviconSize, mimeType);
 
-    public int getFaviconLoadId() {
-        return mFaviconLoadId;
-    }
-
-    /**
-     * Returns true if the favicon changed.
-     */
-    public boolean updateFavicon(Bitmap favicon) {
-        if (mFavicon == favicon) {
-            return false;
+        // Add this Favicon to the set of available Favicons.
+        synchronized (mAvailableFavicons) {
+            mAvailableFavicons.add(favicon);
         }
-        mFavicon = favicon;
-        return true;
     }
 
-    public synchronized void updateFaviconURL(String faviconUrl, int size) {
-        // If we already have an "any" sized icon, don't update the icon.
-        if (mFaviconSize == -1)
-            return;
+    public void loadFavicon() {
+        // If we have a Favicon explicitly set, load it.
+        if (!mAvailableFavicons.isEmpty()) {
+            RemoteFavicon newFavicon = mAvailableFavicons.first();
 
-        // Only update the favicon if it's bigger than the current favicon.
-        // We use -1 to represent icons with sizes="any".
-        if (size == -1 || size >= mFaviconSize) {
-            mFaviconUrl = faviconUrl;
-            mFaviconSize = size;
+            // If the new Favicon is different, cancel the old load. Else, abort.
+            if (newFavicon.faviconUrl.equals(mFaviconUrl)) {
+                return;
+            }
+
+            Favicons.cancelFaviconLoad(mFaviconLoadId);
+            mFaviconUrl = newFavicon.faviconUrl;
+        } else {
+            // Otherwise, fallback to the default Favicon.
+            mFaviconUrl = null;
         }
+
+        int flags = (isPrivate() || mErrorType != ErrorType.NONE) ? 0 : LoadFaviconTask.FLAG_PERSIST;
+        mFaviconLoadId = Favicons.getSizedFavicon(mAppContext, mUrl, mFaviconUrl, Favicons.browserToolbarFaviconSize, flags,
+                new OnFaviconLoadedListener() {
+                    @Override
+                    public void onFaviconLoaded(String pageUrl, String faviconURL, Bitmap favicon) {
+                        // The tab might be pointing to another URL by the time the
+                        // favicon is finally loaded, in which case we simply ignore it.
+                        if (!pageUrl.equals(mUrl)) {
+                            return;
+                        }
+
+                        // That one failed. Try the next one.
+                        if (favicon == null) {
+                            // If what we just tried to load originated from the set of declared icons..
+                            if (!mAvailableFavicons.isEmpty()) {
+                                // Discard it.
+                                mAvailableFavicons.remove(mAvailableFavicons.first());
+
+                                // Load the next best, if we have one. If not, it'll fall back to the
+                                // default Favicon URL, before giving up.
+                                loadFavicon();
+
+                                return;
+                            }
+
+                            // Total failure: display the default favicon.
+                            favicon = Favicons.defaultFavicon;
+                        }
+
+                        mFavicon = favicon;
+                        mFaviconLoadId = Favicons.NOT_LOADING;
+                        Tabs.getInstance().notifyListeners(Tab.this, Tabs.TabEvents.FAVICON);
+                    }
+                }
+        );
     }
 
     public synchronized void clearFavicon() {
+        // Cancel any ongoing favicon load (if we never finished downloading the old favicon before
+        // we changed page).
+        Favicons.cancelFaviconLoad(mFaviconLoadId);
+
         // Keep the favicon unchanged while entering reader mode
         if (mEnteringReaderMode)
             return;
 
         mFavicon = null;
         mFaviconUrl = null;
-        mFaviconSize = 0;
+        mAvailableFavicons.clear();
     }
 
     public void setHasFeeds(boolean hasFeeds) {
@@ -471,22 +527,6 @@ public class Tab {
         });
     }
 
-    public void addToReadingList() {
-        if (!mReaderEnabled)
-            return;
-
-        JSONObject json = new JSONObject();
-        try {
-            json.put("tabID", String.valueOf(getId()));
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "JSON error - failing to add to reading list", e);
-            return;
-        }
-
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Reader:Add", json.toString());
-        GeckoAppShell.sendEventToGecko(e);
-    }
-
     public void toggleReaderMode() {
         if (AboutPages.isAboutReader(mUrl)) {
             Tabs.getInstance().loadUrl(ReaderModeUtils.getUrlFromAboutReader(mUrl));
@@ -507,7 +547,7 @@ public class Tab {
 
     // Our version of nsSHistory::GetCanGoBack
     public boolean canDoBack() {
-        return mHistoryIndex > 0;
+        return mCanDoBack;
     }
 
     public boolean doBack() {
@@ -519,53 +559,6 @@ public class Tab {
         return true;
     }
 
-    public boolean showBackHistory() {
-        if (!canDoBack())
-            return false;
-        return this.showHistory(Math.max(mHistoryIndex - MAX_HISTORY_LIST_SIZE, 0), mHistoryIndex, mHistoryIndex);
-    }
-
-    public boolean showForwardHistory() {
-        if (!canDoForward())
-            return false;
-        return this.showHistory(mHistoryIndex, Math.min(mHistorySize - 1, mHistoryIndex + MAX_HISTORY_LIST_SIZE), mHistoryIndex);
-    }
-
-    public boolean showAllHistory() {
-        if (!canDoForward() && !canDoBack())
-            return false;
-
-        int min = mHistoryIndex - MAX_HISTORY_LIST_SIZE / 2;
-        int max = mHistoryIndex + MAX_HISTORY_LIST_SIZE / 2;
-        if (min < 0) {
-            max -= min;
-        }
-        if (max > mHistorySize - 1) {
-            min -= max - (mHistorySize - 1);
-            max = mHistorySize - 1;
-        }
-        min = Math.max(min, 0);
-
-        return this.showHistory(min, max, mHistoryIndex);
-    }
-
-    /**
-     * This method will show the history starting on fromIndex until toIndex of the history.
-     */
-    public boolean showHistory(int fromIndex, int toIndex, int selIndex) {
-        JSONObject json = new JSONObject();
-        try {
-            json.put("fromIndex", fromIndex);
-            json.put("toIndex", toIndex);
-            json.put("selIndex", selIndex);
-        } catch (JSONException e) {
-            Log.e(LOGTAG, "JSON error", e);
-        }
-        GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:ShowHistory", json.toString());
-        GeckoAppShell.sendEventToGecko(e);
-        return true;
-    }
-
     public void doStop() {
         GeckoEvent e = GeckoEvent.createBroadcastEvent("Session:Stop", "");
         GeckoAppShell.sendEventToGecko(e);
@@ -573,7 +566,7 @@ public class Tab {
 
     // Our version of nsSHistory::GetCanGoForward
     public boolean canDoForward() {
-        return mHistoryIndex < mHistorySize - 1;
+        return mCanDoForward;
     }
 
     public boolean doForward() {
@@ -585,53 +578,15 @@ public class Tab {
         return true;
     }
 
-    void handleSessionHistoryMessage(String event, JSONObject message) throws JSONException {
-        if (event.equals("New")) {
-            final String url = message.getString("url");
-            mHistoryIndex++;
-            mHistorySize = mHistoryIndex + 1;
-        } else if (event.equals("Back")) {
-            if (!canDoBack()) {
-                Log.w(LOGTAG, "Received unexpected back notification");
-                return;
-            }
-            mHistoryIndex--;
-        } else if (event.equals("Forward")) {
-            if (!canDoForward()) {
-                Log.w(LOGTAG, "Received unexpected forward notification");
-                return;
-            }
-            mHistoryIndex++;
-        } else if (event.equals("Goto")) {
-            int index = message.getInt("index");
-            if (index < 0 || index >= mHistorySize) {
-                Log.w(LOGTAG, "Received unexpected history-goto notification");
-                return;
-            }
-            mHistoryIndex = index;
-        } else if (event.equals("Purge")) {
-            int numEntries = message.getInt("numEntries");
-            if (numEntries > mHistorySize) {
-                Log.w(LOGTAG, "Received unexpectedly large number of history entries to purge");
-                mHistoryIndex = -1;
-                mHistorySize = 0;
-                return;
-            }
-
-            mHistorySize -= numEntries;
-            mHistoryIndex -= numEntries;
-
-            // If we weren't at the last history entry, mHistoryIndex may have become too small
-            if (mHistoryIndex < -1)
-                mHistoryIndex = -1;
-        }
-    }
-
     void handleLocationChange(JSONObject message) throws JSONException {
         final String uri = message.getString("uri");
         final String oldUrl = getURL();
         final boolean sameDocument = message.getBoolean("sameDocument");
         mEnteringReaderMode = ReaderModeUtils.isEnteringReaderMode(oldUrl, uri);
+        mHistoryIndex = message.getInt("historyIndex");
+        mHistorySize = message.getInt("historySize");
+        mCanDoBack = message.getBoolean("canGoBack");
+        mCanDoForward = message.getBoolean("canGoForward");
 
         if (!TextUtils.equals(oldUrl, uri)) {
             updateURL(uri);
@@ -858,5 +813,17 @@ public class Tab {
 
     public boolean isRecording() {
         return mRecordingCount > 0;
+    }
+
+    public boolean isEditing() {
+        return mIsEditing;
+    }
+
+    public void setIsEditing(final boolean isEditing) {
+        this.mIsEditing = isEditing;
+    }
+
+    public TabEditingState getEditingState() {
+        return mEditingState;
     }
 }

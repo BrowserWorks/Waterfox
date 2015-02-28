@@ -34,7 +34,6 @@ class nsXULElement;
 namespace mozilla {
 namespace gl {
 class SourceSurface;
-class SurfaceStream;
 }
 
 namespace dom {
@@ -115,6 +114,7 @@ private:
 
 struct CanvasBidiProcessor;
 class CanvasRenderingContext2DUserData;
+class CanvasDrawObserver;
 
 /**
  ** CanvasRenderingContext2D
@@ -148,6 +148,7 @@ public:
                  double dy, mozilla::ErrorResult& error);
   void SetTransform(double m11, double m12, double m21, double m22, double dx,
                     double dy, mozilla::ErrorResult& error);
+  void ResetTransform(mozilla::ErrorResult& error);
 
   double GlobalAlpha()
   {
@@ -699,7 +700,9 @@ protected:
   /**
    * Check if the target is valid after calling EnsureTarget.
    */
-  bool IsTargetValid() { return mTarget != sErrorTarget && mTarget != nullptr; }
+  bool IsTargetValid() const {
+    return mTarget != sErrorTarget && mTarget != nullptr;
+  }
 
   /**
     * Returns the surface format this canvas should be allocated using. Takes
@@ -725,7 +728,7 @@ protected:
                             mozilla::gfx::Rect* bounds,
                             mozilla::gfx::Rect dest,
                             mozilla::gfx::Rect src,
-                            gfxIntSize imgSize);
+                            gfx::IntSize imgSize);
 
   nsString& GetFont()
   {
@@ -742,6 +745,10 @@ protected:
   static void RemoveDemotableContext(CanvasRenderingContext2D* context);
 
   RenderingMode mRenderingMode;
+
+  // Texture informations for fast video rendering
+  unsigned int mVideoTexture;
+  nsIntSize mCurrentVideoSize;
 
   // Member vars
   int32_t mWidth, mHeight;
@@ -768,7 +775,13 @@ protected:
   // sErrorTarget.
   mozilla::RefPtr<mozilla::gfx::DrawTarget> mTarget;
 
-  RefPtr<gl::SurfaceStream> mStream;
+  uint32_t SkiaGLTex() const;
+
+  // This observes our draw calls at the beginning of the canvas
+  // lifetime and switches to software or GPU mode depending on
+  // what it thinks is best
+  CanvasDrawObserver* mDrawObserver;
+  void RemoveDrawObserver();
 
   /**
     * Flag to avoid duplicate calls to InvalidateFrame. Set to true whenever
@@ -1087,6 +1100,7 @@ protected:
   }
 
   friend struct CanvasBidiProcessor;
+  friend class CanvasDrawObserver;
 };
 
 MOZ_FINISH_NESTED_ENUM_CLASS(CanvasRenderingContext2D::CanvasMultiGetterType)

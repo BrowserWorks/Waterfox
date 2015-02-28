@@ -7,6 +7,7 @@
 #ifndef gc_Heap_h
 #define gc_Heap_h
 
+#include "mozilla/ArrayUtils.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/PodOperations.h"
@@ -36,6 +37,7 @@ struct Runtime;
 
 namespace js {
 
+class AutoLockGC;
 class FreeOp;
 
 #ifdef DEBUG
@@ -129,7 +131,9 @@ MapAllocToTraceKind(AllocKind kind)
         JSTRACE_SYMBOL,     /* FINALIZE_SYMBOL */
         JSTRACE_JITCODE,    /* FINALIZE_JITCODE */
     };
-    JS_STATIC_ASSERT(JS_ARRAY_LENGTH(map) == FINALIZE_LIMIT);
+
+    static_assert(MOZ_ARRAY_LENGTH(map) == FINALIZE_LIMIT,
+                  "AllocKind-to-TraceKind mapping must be in sync");
     return map[kind];
 }
 
@@ -627,7 +631,15 @@ struct ArenaHeader : public JS::shadow::ArenaHeader
     inline void setNextAllocDuringSweep(ArenaHeader *aheader);
     inline void unsetAllocDuringSweep();
 
+    inline void setNextArenaToUpdate(ArenaHeader *aheader);
+    inline ArenaHeader *getNextArenaToUpdateAndUnlink();
+
     void unmarkAll();
+
+#ifdef JSGC_COMPACTING
+    size_t countUsedCells();
+    size_t countFreeCells();
+#endif
 };
 
 struct Arena
@@ -733,9 +745,17 @@ static_assert(sizeof(ChunkTrailer) == 2 * sizeof(uintptr_t) + sizeof(uint64_t),
 /* The chunk header (located at the end of the chunk to preserve arena alignment). */
 struct ChunkInfo
 {
-    Chunk           *next;
-    Chunk           **prevp;
+    void init() {
+        next = prev = nullptr;
+        age = 0;
+    }
 
+  private:
+    friend class ChunkPool;
+    Chunk           *next;
+    Chunk           *prev;
+
+  public:
     /* Free arenas are linked together with aheader.next. */
     ArenaHeader     *freeArenasHead;
 
@@ -933,35 +953,18 @@ struct Chunk
         return info.numArenasFree != 0;
     }
 
-    inline void addToAvailableList(JS::Zone *zone);
-    inline void insertToAvailableList(Chunk **insertPoint);
-    inline void removeFromAvailableList();
+    ArenaHeader *allocateArena(JSRuntime *rt, JS::Zone *zone, AllocKind kind,
+                               const AutoLockGC &lock);
 
-    ArenaHeader *allocateArena(JS::Zone *zone, AllocKind kind);
-
-    void releaseArena(ArenaHeader *aheader);
+    enum ArenaDecommitState { IsCommitted = false, IsDecommitted = true };
+    void releaseArena(JSRuntime *rt, ArenaHeader *aheader, const AutoLockGC &lock,
+                      ArenaDecommitState state = IsCommitted);
     void recycleArena(ArenaHeader *aheader, SortedArenaList &dest, AllocKind thingKind,
                       size_t thingsPerArena);
 
     static Chunk *allocate(JSRuntime *rt);
 
     void decommitAllArenas(JSRuntime *rt);
-
-    /*
-     * Assuming that the info.prevp points to the next field of the previous
-     * chunk in a doubly-linked list, get that chunk.
-     */
-    Chunk *getPrevious() {
-        MOZ_ASSERT(info.prevp);
-        return fromPointerToNext(info.prevp);
-    }
-
-    /* Get the chunk from a pointer to its info.next field. */
-    static Chunk *fromPointerToNext(Chunk **nextFieldPtr) {
-        uintptr_t addr = reinterpret_cast<uintptr_t>(nextFieldPtr);
-        MOZ_ASSERT((addr & ChunkMask) == offsetof(Chunk, info.next));
-        return reinterpret_cast<Chunk *>(addr - offsetof(Chunk, info.next));
-    }
 
   private:
     inline void init(JSRuntime *rt);
@@ -970,11 +973,12 @@ struct Chunk
     unsigned findDecommittedArenaOffset();
     ArenaHeader* fetchNextDecommittedArena();
 
+    void addArenaToFreeList(JSRuntime *rt, ArenaHeader *aheader);
+    void addArenaToDecommittedList(JSRuntime *rt, const ArenaHeader *aheader);
+
   public:
     /* Unlink and return the freeArenasHead. */
     inline ArenaHeader* fetchNextFreeArena(JSRuntime *rt);
-
-    inline void addArenaToFreeList(JSRuntime *rt, ArenaHeader *aheader);
 };
 
 static_assert(sizeof(Chunk) == ChunkSize,
@@ -1137,6 +1141,23 @@ ArenaHeader::unsetAllocDuringSweep()
     MOZ_ASSERT(allocatedDuringIncremental);
     allocatedDuringIncremental = 0;
     auxNextLink = 0;
+}
+
+inline ArenaHeader *
+ArenaHeader::getNextArenaToUpdateAndUnlink()
+{
+    MOZ_ASSERT(!hasDelayedMarking && !allocatedDuringIncremental && !markOverflow);
+    ArenaHeader *next = &reinterpret_cast<Arena *>(auxNextLink << ArenaShift)->aheader;
+    auxNextLink = 0;
+    return next;
+}
+
+inline void
+ArenaHeader::setNextArenaToUpdate(ArenaHeader *aheader)
+{
+    MOZ_ASSERT(!hasDelayedMarking && !allocatedDuringIncremental && !markOverflow);
+    MOZ_ASSERT(!auxNextLink);
+    auxNextLink = aheader->arenaAddress() >> ArenaShift;
 }
 
 static void

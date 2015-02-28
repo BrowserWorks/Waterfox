@@ -10,13 +10,14 @@
 interface nsIDOMDocument;
 interface nsINode;
 interface nsIPrincipal;
+interface nsIURI;
 
 typedef unsigned long nsSecurityFlags;
 
 /**
  * An nsILoadOwner represents per-load information about who started the load.
  */
-[scriptable, builtinclass, uuid(046db047-a1c1-4519-8ec7-99f3054bc9ac)]
+[scriptable, builtinclass, uuid(768a1f20-57d4-462a-812a-41c04e5d1e19)]
 interface nsILoadInfo : nsISupports
 {
   /**
@@ -71,6 +72,25 @@ interface nsILoadInfo : nsISupports
   [noscript, notxpcom, nostdcall, binaryname(LoadingPrincipal)]
   nsIPrincipal binaryLoadingPrincipal();
 
+  /**
+   * The triggeringPrincipal is the principal that triggerd the load.
+   * Most likely the triggeringPrincipal and the loadingPrincipal are the same,
+   * in which case triggeringPrincipal returns the loadingPrincipal.
+   * In some cases the loadingPrincipal and the triggeringPrincipal are different
+   * however, e.g. a stylesheet may import a subresource. In that case the
+   * stylesheet principal is the triggeringPrincipal and the document that loads
+   * the stylesheet provides a loadingContext and hence the loadingPrincipal.
+   *
+   * If triggeringPrincipal and loadingPrincipal are the same, then
+   * triggeringPrincipal returns loadingPrincipal.
+   */
+  readonly attribute nsIPrincipal triggeringPrincipal;
+
+  /**
+   * A C++-friendly version of triggeringPrincipal.
+   */
+  [noscript, notxpcom, nostdcall, binaryname(TriggeringPrincipal)]
+  nsIPrincipal binaryTriggeringPrincipal();
 
   /**
    * The loadingDocument of the channel.
@@ -136,7 +156,7 @@ interface nsILoadInfo : nsISupports
    * The contentPolicyType of the channel, used for security checks
    * like Mixed Content Blocking and Content Security Policy.
    */
-   readonly attribute nsContentPolicyType contentPolicyType;
+  readonly attribute nsContentPolicyType contentPolicyType;
 
 %{ C++
   inline nsContentPolicyType GetContentPolicyType()
@@ -148,4 +168,16 @@ interface nsILoadInfo : nsISupports
   }
 %}
 
+  /**
+   * A base URI for use in situations where it cannot otherwise be inferred.
+   * This attribute may be null.  The value of this attribute may be
+   * ignored if the base URI can be inferred by the channel's URI.
+   */
+  readonly attribute nsIURI baseURI;
+
+  /**
+   * A C++-friendly version of baseURI.
+   */
+  [noscript, notxpcom, nostdcall, binaryname(BaseURI)]
+  nsIURI binaryBaseURI();
 };

@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 if CONFIG['JS_SHELL_NAME']:
-    Program(CONFIG['JS_SHELL_NAME'])
+    GeckoProgram(CONFIG['JS_SHELL_NAME'], linkage=None)
     if CONFIG['JS_BUNDLED_EDITLINE']:
         USE_LIBS += ['editline']
     USE_LIBS += ['static:js']
@@ -33,3 +33,6 @@ GENERATED_INCLUDES += ['..']
 
 OS_LIBS += CONFIG['EDITLINE_LIBS']
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
+
+if CONFIG['GNU_CXX']:
+    FAIL_ON_WARNINGS = True

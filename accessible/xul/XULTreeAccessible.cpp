@@ -16,6 +16,7 @@
 #include "Relation.h"
 #include "Role.h"
 #include "States.h"
+#include "XULTreeGridAccessible.h"
 
 #include "nsComponentManagerUtils.h"
 #include "nsIAccessibleRelation.h"
@@ -199,7 +200,7 @@ XULTreeAccessible::ChildAtPoint(int32_t aX, int32_t aY,
 
   int32_t row = -1;
   nsCOMPtr<nsITreeColumn> column;
-  nsAutoCString childEltUnused;
+  nsAutoString childEltUnused;
   mTree->GetCellAt(clientX, clientY, &row, getter_AddRefs(column),
                    childEltUnused);
 
@@ -248,21 +249,16 @@ XULTreeAccessible::SetCurrentItem(Accessible* aItem)
   NS_ERROR("XULTreeAccessible::SetCurrentItem not implemented");
 }
 
-already_AddRefed<nsIArray>
-XULTreeAccessible::SelectedItems()
+void
+XULTreeAccessible::SelectedItems(nsTArray<Accessible*>* aItems)
 {
   if (!mTreeView)
-    return nullptr;
+    return;
 
   nsCOMPtr<nsITreeSelection> selection;
   mTreeView->GetSelection(getter_AddRefs(selection));
   if (!selection)
-    return nullptr;
-
-  nsCOMPtr<nsIMutableArray> selectedItems =
-    do_CreateInstance(NS_ARRAY_CONTRACTID);
-  if (!selectedItems)
-    return nullptr;
+    return;
 
   int32_t rangeCount = 0;
   selection->GetRangeCount(&rangeCount);
@@ -270,13 +266,11 @@ XULTreeAccessible::SelectedItems()
     int32_t firstIdx = 0, lastIdx = -1;
     selection->GetRangeAt(rangeIdx, &firstIdx, &lastIdx);
     for (int32_t rowIdx = firstIdx; rowIdx <= lastIdx; rowIdx++) {
-      nsIAccessible* item = GetTreeItemAccessible(rowIdx);
+      Accessible* item = GetTreeItemAccessible(rowIdx);
       if (item)
-        selectedItems->AppendElement(item, false);
+        aItems->AppendElement(item);
     }
   }
-
-  return selectedItems.forget();
 }
 
 uint32_t
@@ -725,7 +719,7 @@ NS_IMPL_ADDREF_INHERITED(XULTreeItemAccessibleBase, Accessible)
 NS_IMPL_RELEASE_INHERITED(XULTreeItemAccessibleBase, Accessible)
 
 ////////////////////////////////////////////////////////////////////////////////
-// XULTreeItemAccessibleBase: nsIAccessible implementation
+// XULTreeItemAccessibleBase: Accessible
 
 Accessible*
 XULTreeItemAccessibleBase::FocusedChild()
@@ -746,7 +740,7 @@ XULTreeItemAccessibleBase::Bounds() const
   nsCOMPtr<nsITreeColumn> column = nsCoreUtils::GetFirstSensibleColumn(mTree);
 
   int32_t x = 0, y = 0, width = 0, height = 0;
-  nsresult rv = mTree->GetCoordsForCellItem(mRow, column, EmptyCString(),
+  nsresult rv = mTree->GetCoordsForCellItem(mRow, column, EmptyString(),
                                             &x, &y, &width, &height);
   if (NS_FAILED(rv))
     return nsIntRect();
@@ -996,7 +990,7 @@ XULTreeItemAccessibleBase::DispatchClickEvent(nsIContent* aContent,
 
   // Get column and pseudo element.
   nsCOMPtr<nsITreeColumn> column;
-  nsAutoCString pseudoElm;
+  nsAutoString pseudoElm;
 
   if (aActionIndex == eAction_Click) {
     // Key column is visible and clickable.
@@ -1004,7 +998,7 @@ XULTreeItemAccessibleBase::DispatchClickEvent(nsIContent* aContent,
   } else {
     // Primary column contains a twisty we should click on.
     columns->GetPrimaryColumn(getter_AddRefs(column));
-    pseudoElm = NS_LITERAL_CSTRING("twisty");
+    pseudoElm = NS_LITERAL_STRING("twisty");
   }
 
   if (column)
@@ -1196,4 +1190,3 @@ XULTreeColumAccessible::GetSiblingAtOffset(int32_t aOffset,
 
   return nullptr;
 }
-

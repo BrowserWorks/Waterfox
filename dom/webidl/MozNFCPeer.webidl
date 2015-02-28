@@ -10,14 +10,26 @@
 
 [JSImplementation="@mozilla.org/nfc/NFCPeer;1", AvailableIn="CertifiedApps"]
 interface MozNFCPeer {
+  /**
+   * Send NDEF data to peer device.
+   */
   [Throws]
-  DOMRequest sendNDEF(sequence<MozNDEFRecord> records);
+  Promise<void> sendNDEF(sequence<MozNDEFRecord> records);
+
+  /**
+   * Send file to peer device.
+   */
   [Throws]
-  DOMRequest sendFile(Blob blob);
+  Promise<void> sendFile(Blob blob);
 };
 
 // Mozilla Only
 partial interface MozNFCPeer {
   [ChromeOnly]
   attribute DOMString session;
+
+  /**
+   * Indicate if this peer is already lost.
+   */
+  readonly attribute boolean isLost;
 };

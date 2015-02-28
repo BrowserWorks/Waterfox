@@ -53,7 +53,7 @@ struct SurfaceDescriptorD3D10 {
 struct SurfaceDescriptorMacIOSurface {
   uint32_t surface;
   double scaleFactor;
-  bool hasAlpha;
+  bool isOpaque;
 };
 
 struct SurfaceTextureDescriptor {
@@ -63,6 +63,7 @@ struct SurfaceTextureDescriptor {
 
 struct EGLImageDescriptor {
   uintptr_t image; // `EGLImage` is a `void*`.
+  uintptr_t fence;
   IntSize size;
 };
 
@@ -74,11 +75,11 @@ struct NewSurfaceDescriptorGralloc {
    * Extra size member is necessary. See Bug 850566.
    */
   IntSize size;
+  bool isOpaque;
 };
 
-struct SurfaceStreamDescriptor {
-  uintptr_t surfStream;
-  bool yflip;
+struct SharedSurfaceDescriptor {
+  uintptr_t surf;
 };
 
 /**
@@ -106,9 +107,9 @@ union SurfaceDescriptor {
   SurfaceDescriptorX11;
   SurfaceTextureDescriptor;
   EGLImageDescriptor;
-  SurfaceStreamDescriptor;
   SurfaceDescriptorMacIOSurface;
   NewSurfaceDescriptorGralloc;
+  SharedSurfaceDescriptor;
   null_t;
 };
 

@@ -41,9 +41,6 @@ namespace {
 // These bits are numbered so that the least subtle issues have higher values.
 // This should make it easier for us to interpret the results.
 const uint32_t NPN_NOT_NEGOTIATED = 64;
-const uint32_t KEA_NOT_FORWARD_SECRET = 32;
-const uint32_t KEA_NOT_SAME_AS_EXPECTED = 16;
-const uint32_t KEA_NOT_ALLOWED = 8;
 const uint32_t POSSIBLE_VERSION_DOWNGRADE = 4;
 const uint32_t POSSIBLE_CIPHER_SUITE_DOWNGRADE = 2;
 const uint32_t KEA_NOT_SUPPORTED = 1;
@@ -892,10 +889,9 @@ PreliminaryHandshakeDone(PRFileDesc* fd)
         infoObject->SetSSLStatus(status);
       }
 
-      status->mHaveKeyLengthAndCipher = true;
-      status->mKeyLength = cipherInfo.symKeyBits;
-      status->mSecretKeyLength = cipherInfo.effectiveKeyBits;
-      status->mCipherName.Assign(cipherInfo.cipherSuiteName);
+      status->mHaveCipherSuiteAndProtocol = true;
+      status->mCipherSuite = channelInfo.cipherSuite;
+      status->mProtocolVersion = channelInfo.protocolVersion & 0xFF;
       infoObject->SetKEAUsed(cipherInfo.keaType);
       infoObject->SetKEAKeyBits(channelInfo.keaKeyBits);
       infoObject->SetMACAlgorithmUsed(cipherInfo.macAlgorithm);
@@ -963,64 +959,27 @@ CanFalseStartCallback(PRFileDesc* fd, void* client_data, PRBool *canFalseStart)
 
   nsSSLIOLayerHelpers& helpers = infoObject->SharedState().IOLayerHelpers();
 
-  // Prevent version downgrade attacks from TLS 1.x to SSL 3.0.
-  // TODO(bug 861310): If we negotiate less than our highest-supported version,
-  // then check that a previously-completed handshake negotiated that version;
-  // eventually, require that the highest-supported version of TLS is used.
-  if (channelInfo.protocolVersion < SSL_LIBRARY_VERSION_TLS_1_0) {
+  // Prevent version downgrade attacks from TLS 1.2, and avoid False Start for
+  // TLS 1.3 and later. See Bug 861310 for all the details as to why.
+  if (channelInfo.protocolVersion != SSL_LIBRARY_VERSION_TLS_1_2) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG, ("CanFalseStartCallback [%p] failed - "
-                                      "SSL Version must be >= TLS1 %x\n", fd,
+                                      "SSL Version must be TLS 1.2, was %x\n", fd,
                                       static_cast<int32_t>(channelInfo.protocolVersion)));
     reasonsForNotFalseStarting |= POSSIBLE_VERSION_DOWNGRADE;
   }
 
-  // never do false start without one of these key exchange algorithms
-  if (cipherInfo.keaType != ssl_kea_rsa &&
-      cipherInfo.keaType != ssl_kea_dh &&
-      cipherInfo.keaType != ssl_kea_ecdh) {
+  // See bug 952863 for why ECDHE is allowed, but DHE (and RSA) are not.
+  if (cipherInfo.keaType != ssl_kea_ecdh) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG, ("CanFalseStartCallback [%p] failed - "
                                       "unsupported KEA %d\n", fd,
                                       static_cast<int32_t>(cipherInfo.keaType)));
     reasonsForNotFalseStarting |= KEA_NOT_SUPPORTED;
   }
 
-  // XXX: This assumes that all TLS_DH_* and TLS_ECDH_* cipher suites
-  // are disabled.
-  if (cipherInfo.keaType != ssl_kea_ecdh &&
-      cipherInfo.keaType != ssl_kea_dh) {
-    if (helpers.mFalseStartRequireForwardSecrecy) {
-      PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-             ("CanFalseStartCallback [%p] failed - KEA used is %d, but "
-              "require-forward-secrecy configured.\n", fd,
-              static_cast<int32_t>(cipherInfo.keaType)));
-      reasonsForNotFalseStarting |= KEA_NOT_FORWARD_SECRET;
-    } else if (cipherInfo.keaType == ssl_kea_rsa) {
-      // Make sure we've seen the same kea from this host in the past, to limit
-      // the potential for downgrade attacks.
-      int16_t expected = infoObject->GetKEAExpected();
-      if (cipherInfo.keaType != expected) {
-        PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-               ("CanFalseStartCallback [%p] failed - "
-                "KEA used is %d, expected %d\n", fd,
-                static_cast<int32_t>(cipherInfo.keaType),
-                static_cast<int32_t>(expected)));
-        reasonsForNotFalseStarting |= KEA_NOT_SAME_AS_EXPECTED;
-      }
-    } else {
-      reasonsForNotFalseStarting |= KEA_NOT_ALLOWED;
-    }
-  }
-
-  // Prevent downgrade attacks on the symmetric cipher. We accept downgrades
-  // from 256-bit keys to 128-bit keys and we treat AES and Camellia as being
-  // equally secure. We consider every message authentication mechanism that we
-  // support *for these ciphers* to be equally-secure. We assume that for CBC
-  // mode, that the server has implemented all the same mitigations for
-  // published attacks that we have, or that those attacks are not relevant in
-  // the decision to false start.
-  if (cipherInfo.symCipher != ssl_calg_aes_gcm && 
-      cipherInfo.symCipher != ssl_calg_aes &&
-      cipherInfo.symCipher != ssl_calg_camellia) {
+  // Prevent downgrade attacks on the symmetric cipher. We do not allow CBC
+  // mode due to BEAST, POODLE, and other attacks on the MAC-then-Encrypt
+  // design. See bug 1109766 for more details.
+  if (cipherInfo.symCipher != ssl_calg_aes_gcm) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
            ("CanFalseStartCallback [%p] failed - Symmetric cipher used, %d, "
             "is not supported with False Start.\n", fd,
@@ -1173,6 +1132,92 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                            infoObject->GetPort(),
                                            versions.max);
 
+  bool weakEncryption = false;
+  SSLChannelInfo channelInfo;
+  rv = SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo));
+  MOZ_ASSERT(rv == SECSuccess);
+  if (rv == SECSuccess) {
+    // Get the protocol version for telemetry
+    // 0=ssl3, 1=tls1, 2=tls1.1, 3=tls1.2
+    unsigned int versionEnum = channelInfo.protocolVersion & 0xFF;
+    Telemetry::Accumulate(Telemetry::SSL_HANDSHAKE_VERSION, versionEnum);
+    AccumulateCipherSuite(
+      infoObject->IsFullHandshake() ? Telemetry::SSL_CIPHER_SUITE_FULL
+                                    : Telemetry::SSL_CIPHER_SUITE_RESUMED,
+      channelInfo);
+
+    SSLCipherSuiteInfo cipherInfo;
+    rv = SSL_GetCipherSuiteInfo(channelInfo.cipherSuite, &cipherInfo,
+                                sizeof cipherInfo);
+    MOZ_ASSERT(rv == SECSuccess);
+    if (rv == SECSuccess) {
+      weakEncryption =
+        (channelInfo.protocolVersion <= SSL_LIBRARY_VERSION_3_0) ||
+        (cipherInfo.symCipher == ssl_calg_rc4);
+
+      // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
+      Telemetry::Accumulate(
+        infoObject->IsFullHandshake()
+          ? Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_FULL
+          : Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_RESUMED,
+        cipherInfo.keaType);
+
+      DebugOnly<int16_t> KEAUsed;
+      MOZ_ASSERT(NS_SUCCEEDED(infoObject->GetKEAUsed(&KEAUsed)) &&
+                 (KEAUsed == cipherInfo.keaType));
+
+      if (infoObject->IsFullHandshake()) {
+        switch (cipherInfo.keaType) {
+          case ssl_kea_rsa:
+            AccumulateNonECCKeySize(Telemetry::SSL_KEA_RSA_KEY_SIZE_FULL,
+                                    channelInfo.keaKeyBits);
+            break;
+          case ssl_kea_dh:
+            AccumulateNonECCKeySize(Telemetry::SSL_KEA_DHE_KEY_SIZE_FULL,
+                                    channelInfo.keaKeyBits);
+            break;
+          case ssl_kea_ecdh:
+            AccumulateECCCurve(Telemetry::SSL_KEA_ECDHE_CURVE_FULL,
+                               channelInfo.keaKeyBits);
+            break;
+          default:
+            MOZ_CRASH("impossible KEA");
+            break;
+        }
+
+        Telemetry::Accumulate(Telemetry::SSL_AUTH_ALGORITHM_FULL,
+                              cipherInfo.authAlgorithm);
+
+        // RSA key exchange doesn't use a signature for auth.
+        if (cipherInfo.keaType != ssl_kea_rsa) {
+          switch (cipherInfo.authAlgorithm) {
+            case ssl_auth_rsa:
+              AccumulateNonECCKeySize(Telemetry::SSL_AUTH_RSA_KEY_SIZE_FULL,
+                                      channelInfo.authKeyBits);
+              break;
+            case ssl_auth_dsa:
+              AccumulateNonECCKeySize(Telemetry::SSL_AUTH_DSA_KEY_SIZE_FULL,
+                                      channelInfo.authKeyBits);
+              break;
+            case ssl_auth_ecdsa:
+              AccumulateECCCurve(Telemetry::SSL_AUTH_ECDSA_CURVE_FULL,
+                                 channelInfo.authKeyBits);
+              break;
+            default:
+              MOZ_CRASH("impossible auth algorithm");
+              break;
+          }
+        }
+      }
+
+      Telemetry::Accumulate(
+          infoObject->IsFullHandshake()
+            ? Telemetry::SSL_SYMMETRIC_CIPHER_FULL
+            : Telemetry::SSL_SYMMETRIC_CIPHER_RESUMED,
+          cipherInfo.symCipher);
+    }
+  }
+
   PRBool siteSupportsSafeRenego;
   rv = SSL_HandshakeNegotiatedExtension(fd, ssl_renegotiation_info_xtn,
                                         &siteSupportsSafeRenego);
@@ -1181,8 +1226,9 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
     siteSupportsSafeRenego = false;
   }
 
-  if (siteSupportsSafeRenego ||
-      !ioLayerHelpers.treatUnsafeNegotiationAsBroken()) {
+  if (!weakEncryption &&
+      (siteSupportsSafeRenego ||
+       !ioLayerHelpers.treatUnsafeNegotiationAsBroken())) {
     infoObject->SetSecurityState(nsIWebProgressListener::STATE_IS_SECURE |
                                  nsIWebProgressListener::STATE_SECURE_HIGH);
   } else {
@@ -1244,87 +1290,6 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
       PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
               ("HandshakeCallback using NEW cert %p\n", nssc.get()));
       status->mServerCert = nssc;
-    }
-  }
-
-  SSLChannelInfo channelInfo;
-  rv = SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo));
-  MOZ_ASSERT(rv == SECSuccess);
-  if (rv == SECSuccess) {
-    // Get the protocol version for telemetry
-    // 0=ssl3, 1=tls1, 2=tls1.1, 3=tls1.2
-    unsigned int versionEnum = channelInfo.protocolVersion & 0xFF;
-    Telemetry::Accumulate(Telemetry::SSL_HANDSHAKE_VERSION, versionEnum);
-    AccumulateCipherSuite(
-      infoObject->IsFullHandshake() ? Telemetry::SSL_CIPHER_SUITE_FULL
-                                    : Telemetry::SSL_CIPHER_SUITE_RESUMED,
-      channelInfo);
-
-    SSLCipherSuiteInfo cipherInfo;
-    rv = SSL_GetCipherSuiteInfo(channelInfo.cipherSuite, &cipherInfo,
-                                sizeof cipherInfo);
-    MOZ_ASSERT(rv == SECSuccess);
-    if (rv == SECSuccess) {
-      // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
-      Telemetry::Accumulate(
-        infoObject->IsFullHandshake()
-          ? Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_FULL
-          : Telemetry::SSL_KEY_EXCHANGE_ALGORITHM_RESUMED,
-        cipherInfo.keaType);
-
-      DebugOnly<int16_t> KEAUsed;
-      MOZ_ASSERT(NS_SUCCEEDED(infoObject->GetKEAUsed(&KEAUsed)) &&
-                 (KEAUsed == cipherInfo.keaType));
-
-      if (infoObject->IsFullHandshake()) {
-        switch (cipherInfo.keaType) {
-          case ssl_kea_rsa:
-            AccumulateNonECCKeySize(Telemetry::SSL_KEA_RSA_KEY_SIZE_FULL,
-                                    channelInfo.keaKeyBits);
-            break;
-          case ssl_kea_dh:
-            AccumulateNonECCKeySize(Telemetry::SSL_KEA_DHE_KEY_SIZE_FULL,
-                                    channelInfo.keaKeyBits);
-            break;
-          case ssl_kea_ecdh:
-            AccumulateECCCurve(Telemetry::SSL_KEA_ECDHE_CURVE_FULL,
-                               channelInfo.keaKeyBits);
-            break;
-          default:
-            MOZ_CRASH("impossible KEA");
-            break;
-        }
-
-        Telemetry::Accumulate(Telemetry::SSL_AUTH_ALGORITHM_FULL,
-                              cipherInfo.authAlgorithm);
-
-        // RSA key exchange doesn't use a signature for auth.
-        if (cipherInfo.keaType != ssl_kea_rsa) {
-          switch (cipherInfo.authAlgorithm) {
-            case ssl_auth_rsa:
-              AccumulateNonECCKeySize(Telemetry::SSL_AUTH_RSA_KEY_SIZE_FULL,
-                                      channelInfo.authKeyBits);
-              break;
-            case ssl_auth_dsa:
-              AccumulateNonECCKeySize(Telemetry::SSL_AUTH_DSA_KEY_SIZE_FULL,
-                                      channelInfo.authKeyBits);
-              break;
-            case ssl_auth_ecdsa:
-              AccumulateECCCurve(Telemetry::SSL_AUTH_ECDSA_CURVE_FULL,
-                                 channelInfo.authKeyBits);
-              break;
-            default:
-              MOZ_CRASH("impossible auth algorithm");
-              break;
-          }
-        }
-      }
-
-      Telemetry::Accumulate(
-          infoObject->IsFullHandshake()
-            ? Telemetry::SSL_SYMMETRIC_CIPHER_FULL
-            : Telemetry::SSL_SYMMETRIC_CIPHER_RESUMED,
-          cipherInfo.symCipher);
     }
   }
 

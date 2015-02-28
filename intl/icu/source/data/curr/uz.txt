@@ -197,7 +197,7 @@ uz{
         }
         GBP{
             "£",
-            "Ingliz funt sterlingi",
+            "Ingliz funt",
         }
         GEL{
             "GEL",
@@ -855,8 +855,8 @@ uz{
             other{"Folklend oroli funti"}
         }
         GBP{
-            one{"Ingliz funt sterlingi"}
-            other{"Ingliz funt sterlingi"}
+            one{"Ingliz funt"}
+            other{"Ingliz funt"}
         }
         GEL{
             one{"Gujiston larisi"}
@@ -1303,5 +1303,5 @@ uz{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

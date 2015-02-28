@@ -1,0 +1,194 @@
+<html><head><title>Merging And The Merge Output Editor Window</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="documentation.html" title="Chapter 2. File Comparison And Merge"><link rel="prev" href="interpretinginformation.html" title="Comparing Files And Interpreting The Information In The Input Windows"><link rel="next" href="navigation.html" title="Navigation And Editing"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Merging And The Merge Output Editor Window</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="interpretinginformation.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="navigation.html">Next</a></div><div class="navCenter">File Comparison And Merge</div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="merging"></a>Merging And The Merge Output Editor Window</h2></div></div></div><div class="screenshot"><div xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="mediaobject"><hr><img src="screenshot_merge.png"><hr></div></div><p>
+   The merge output editor window (below the diff input windows) also has an info line at the top showing "Output:", the
+   filename   and "[Modified]" if you edited something. Usually it will contain
+   some text  through the automatic merge facilities, but often it will also
+   contain conflicts.
+</p><p>
+   !!! Saving is disabled until all conflicts are resolved !!! (Use the "Go
+   to prev/next unsolved conflicts"-buttons to find the remaining conflicts.)
+</p><p>
+   With only two input files every difference is also a conflict that must
+   be solved manually.
+</p><p>
+   With three input files the first file is treated as base, while the
+   second   and third input files contain modifications. When at any line only
+   either   input B or input C have changed but not both then the changed source
+   will   automatically be selected. Only when B and C have changed on the same
+   lines,   then the tool detects a conflict that must be solved manually.
+   When B and C are the same, but not the same as A, then C is selected.
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538855"></a>The Summary Column</h3></div></div></div><p>
+   The merge output editor window also has a summary column on the left. It shows the
+   letter of the input from which a line was selected or nothing if all three
+   sources where equal on a line. For conflicts it shows a questionmark "?"
+   and the line shows "&lt;Merge Conflict&gt;", all in red. Because solving
+   conflicts  line by line would take very long, the lines are grouped into
+   groups that  have the same difference and conflict characteristics.
+   But only-white-space-conflicts are separated from non-white-space-conflicts
+   in order to ease the merging of files were the indentation changed for many
+   lines.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="synchronise_views"></a>Setting The Current Group And Synchronising Merge And Diff View Position</h3></div></div></div><p>
+   When clicking into  the summary column with the left mouse button in either
+   window then the beginning of the group belonging to that line will shown in all windows.
+   This group then becomes the "current group". It is highlighted with the
+   "Current range (diff) background color" and
+   a black bar appears on the left side of the text.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538908"></a>Choosing Inputs A, B or C For Current Conflict And Editing</h3></div></div></div><p>
+   The button bar below the menubar contains three input selector buttons 
+   containing the letters "A", "B" and "C". Click the input selector 
+   button to insert (or remove if already inserted) the lines from the respective source.
+   To choose the lines from several inputs click the respective buttons in the
+   needed order. For example if you want that the lines from "B" appear before 
+   the lines from "A" in the output, first click "B", then "A".
+</p><p>
+   If you use the auto-advance option 
+   (<a href="navigation.html#autoadvance" title="Auto-Advance">"Automatically go to next unsolved conflict after source selection"</a>),
+   you should disable this before choosing lines from several inputs or if you want to
+   edit the lines after your choice. Otherwise <span class="application">KDiff3</span> will jump to the next
+   conflict after choosing the first input.
+</p><p>
+   It is often helpful directly edit the merge output. 
+   The summary column will show "m" for every line that was manually modified. 
+   When for instance the differences are aligned in a way that simply choosing 
+   the inputs won't be satisfactory, then you can mark the needed text and use 
+   normal <a href="selections.html" title="Select, Copy And Paste">copy and paste</a> to put it into the merge output.
+</p><p>
+   Sometimes, when a line is removed either by automatic merge or by editing
+   and no other lines remain in that group, then the text &lt;No src line&gt;
+   will appear in that line. This is just a placeholder for the group for
+   when  you might change your mind and select some source again. This text won't
+   appear in the saved file or in any selections you want to copy and paste.
+</p><p>
+   The text "&lt;Merge Conflict&gt;" will appear in the clipboard if you
+   copy and   paste some text containing such a line. But still be careful to
+   do so.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2538986"></a>Choosing Input A, B, or C for All Conflicts</h3></div></div></div><p>
+   The normal merge will start by solving simple conflicts automatically.
+   But the "Merge"-menu provides some actions for other common needs.
+   If you have to select the same source for most conflicts, then you can
+   choose "A", "B" or "C" everywhere, or only for the remaining unsolved
+   conflicts, or for unsolved white space conflicts. If you want to decide every
+   single delta yourself, you can "Set deltas to conflicts". Or if you want to
+   return to the automatic choices of <span class="application">KDiff3</span> then select
+   "Automatically solve simple conflicts". <span class="application">KDiff3</span> then restarts the merge.
+   For actions that change your previous modifications <span class="application">KDiff3</span> will ask for your
+   confirmation before proceeding.
+</p><p>
+   Note: When choosing either source for unsolved white space conflicts and
+   the options "Ignore Numbers" or "Ignore C/C++ Comments" are used then changes in
+   numbers or comments will be treated like white space too.
+
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="vcskeywordsmergesupport"></a>Automatic Merge of Version Control Keywords and History (Log)</h3></div></div></div><p>
+Many version control systems support special keywords in the file. (e.g. "$Date$", 
+"$Header$", "$Author$", "$Log$" etc.) During the 
+check-in the version control system (VCS) changes these lines. For instance 
+"$Date$" will turn into "$Date: 2005/03/22 18:45:01 $". Since this line will 
+be different in every version of the file, it would require manual interaction 
+during the merge.
+</p><p>
+<span class="application">KDiff3</span> offers automatic merge for these items. For simple lines that match the 
+"Auto merge regular expression"-option in all input-files <span class="application">KDiff3</span> will choose 
+the line from B or - if available - from C. (Additionally it is necessary that the lines 
+in question line up in the comparison and the previous line contains no conflict.)
+This auto merge can either be run immediately after a merge starts (activate the option 
+"Run regular expression auto merge on merge start") or later via the merge 
+menu "Run Regular Expression Auto Merge".
+</p><p>
+Automatic merge for version control history (also called "log") is also supported.
+The history automerge can either run immediately when the merge starts by activating the 
+option "Merge version control history on merge start" or later via the merge menu 
+"Automatically Solve History Conflicts".
+</p><p>
+Usually the version control history begins with a line containing the keyword "$Log$".
+This must be matched by the "History start regular expression"-option.
+<span class="application">KDiff3</span> detects which subsequent lines are in the history by analysing the leading characters 
+that came before the "$Log$"-keyword. If the same "leading comment"-characters also appears in the following
+lines, then they are also included in the history.
+</p><p>
+During each check-in the VCS writes a unique line specifying version-, date- and time-information 
+followed by lines with user comments.
+These lines form one history-entry. This history section grows with every check-in and the 
+most recent entries appear at the top (after the history start line). 
+</p><p>
+When for parallel development two or more developers check-in a branch of the file then 
+the merge history will contain several entries that appear as conflicts during the merge 
+of the branches. Since merging these can become very tedious, <span class="application">KDiff3</span> offers support with two 
+possible strategies: Just insert the history information from both contributors at the top
+or sort the history information by a user defined key.
+</p><p>
+The just-insert-all-entries-method is easier to configure. <span class="application">KDiff3</span> just needs a method to
+detect, which lines belong to one history entry. Most VCS insert an empty line after each
+history entry. If there are no other empty lines, this is a sufficient criterion for <span class="application">KDiff3</span>.
+Just set an empty "History entry start regular expression". If the empty line criterion 
+isn't sufficient, you can specify a regular expression to detect the history entry start.
+</p><p>
+Note that <span class="application">KDiff3</span> will remove duplicate history entrys. If a history entry appeared several times
+in the history of a input file, only one entry will remain in the output.
+</p><p>
+If you want to sort the history, then you have to specify how the sort key should be built.
+Use parentheses in the "History entry start regular expression" to group parts of the regular 
+expression that should later be used for the sort key.
+Then specify the "History entry start sort key order" specifying a comma "," separated list of 
+numbers referring to the position of the group in the regular expression.
+</p><p>
+Because this is not so easy to get right immediately, you are able to test and improve
+the regular expressions and key-generation in a dedicated dialog by pressing the 
+"Test your regular expressions"-button.
+</p><p>Example: Assume a history that looks like this:
+<pre class="screen">
+/**************************************************************************
+** HISTORY:    $Log: \toms_merge_main_view\MyApplication\src\complexalgorithm.cpp $
+**
+**     \main\integration_branch_12   2 Apr 2001 10:45:41   tom
+**  Merged branch simon_branch_15.
+**
+**     \main\henry_bugfix_branch_7\1   30 Mar 2001 19:22:05   henry
+**  Improved the speed for subroutine convertToMesh().
+**  Fixed crash.
+**************************************************************************/
+</pre>
+The history start line matches the regular expression ".*\$Log.*\$.*". Then follow 
+the history entries.
+</p><p>
+The line with the "$Log$"-keyword begins with two "*" after which follows a space. 
+<span class="application">KDiff3</span> uses the first non-white-space string as "leading comment" and assumes that
+the history ends in the first line without this leading comment. In this example the
+last line ends with a string that also starts with two "*", but instead of a space 
+character more "*" follow. Hence this line ends the history.
+</p><p>
+If history sorting isn't required then the history entry start line regular expression
+could look like this. (This line is split in two because it wouldn't fit otherwise.)
+<pre class="screen">
+\s*\\main\\\S+\s+[0-9]+ (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
+ [0-9][0-9][0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]\s+.*
+</pre>
+For details about regular expressions please see the
+<a href="http://doc.trolltech.com/3.3/qregexp.html#details" target="_top">regular expression documentation by Trolltech</a>.
+Note that "\s" (with lowercase "s") matches any white space and "\S" (with uppercase "S") matches any non-white-space.
+In our example the history entry start contains first the version info with reg. exp. "\\main\\\S+", the date consisting of day "[0-9]+", month "(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)" and year "[0-9][0-9][0-9][0-9]", the time "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]" and finally the developers login name ".*".
+</p><p>
+Note that the "leading comment"-characters (in the example "**") will already be removed by <span class="application">KDiff3</span> 
+before trying to match, hence the regular expression begins with a match for none or more white-space characters "\s*".
+Because comment characters can differ in each file (e.g. C/C++ uses other comment characters than a Perl script)
+<span class="application">KDiff3</span> takes care of the leading comment characters and you should not specify them in the regular expression.
+</p><p>
+If you require a sorted history. Then the sortkey must be calculated. For this the 
+relevant parts in the regular expression must be grouped by parentheses. 
+(The extra parentheses can also stay in if history sorting is disabled.)
+<pre class="screen">
+\s*\\main\\(\S+)\s+([0-9]+) (Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)
+ ([0-9][0-9][0-9][0-9]) ([0-9][0-9]:[0-9][0-9]:[0-9][0-9])\s+(.*)
+</pre>
+The parentheses now contain 1. version info, 2. day, 3. month, 4. year, 5. time, 6. name. 
+But if we want to sort by date and time, we need to construct a key with the elements in a different order of appearance:
+First the year, followed by month, day, time, version info and name. Hence the sortkey order to specify is "4,3,2,5,1,6".
+</p><p>
+Because  month names aren't good for sorting ("Apr" would be first) <span class="application">KDiff3</span> detects in which order 
+the month names were given and uses that number instead ("Apr"-&gt;"04"). 
+And if a pure number is found it will be transformed to a 4-digit value with leading zeros for sorting.
+Finally the resulting sort key for the first history entry start line will be:
+<pre class="screen">
+2001 04 0002 10:45:41 integration_branch_12   tom 
+</pre>
+</p><p>
+For more information also see <a href="options.html#mergeoptions" title="Merge Settings">Merge Settings</a>.
+</p></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="interpretinginformation.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="navigation.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Comparing Files And Interpreting The Information In The Input Windows </div><div class="navRight"> Navigation And Editing</div><div class="navCenter"><a accesskey="u" href="documentation.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

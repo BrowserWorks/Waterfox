@@ -20,8 +20,10 @@ from manifestparser import TestManifest
 from marionette import Marionette
 from mixins.b2g import B2GTestResultMixin, get_b2g_pid, get_dm
 from mozhttpd import MozHttpd
+from mozlog.structured.structuredlog import get_default_logger
 from moztest.adapters.unit import StructuredTestRunner, StructuredTestResult
 from moztest.results import TestResultCollection, TestResult, relevant_line
+import mozversion
 
 class MarionetteTest(TestResult):
 
@@ -45,12 +47,13 @@ class MarionetteTestResult(StructuredTestResult, TestResultCollection):
         self.testsRun = 0
         self.result_modifiers = [] # used by mixins to modify the result
         pid = kwargs.pop('b2g_pid')
+        logcat_stdout = kwargs.pop('logcat_stdout')
         if pid:
             if B2GTestResultMixin not in self.__class__.__bases__:
                 bases = [b for b in self.__class__.__bases__]
                 bases.append(B2GTestResultMixin)
                 self.__class__.__bases__ = tuple(bases)
-            B2GTestResultMixin.__init__(self, b2g_pid=pid)
+            B2GTestResultMixin.__init__(self, b2g_pid=pid, logcat_stdout=logcat_stdout)
         StructuredTestResult.__init__(self, *args, **kwargs)
 
     @property
@@ -202,6 +205,7 @@ class MarionetteTextTestRunner(StructuredTestRunner):
         self.capabilities = kwargs.pop('capabilities')
         self.pre_run_functions = []
         self.b2g_pid = None
+        self.logcat_stdout = kwargs.pop('logcat_stdout')
 
         if self.capabilities["device"] != "desktop" and self.capabilities["browserName"] == "B2G":
             def b2g_pre_run():
@@ -219,7 +223,9 @@ class MarionetteTextTestRunner(StructuredTestRunner):
                                 self.verbosity,
                                 marionette=self.marionette,
                                 b2g_pid=self.b2g_pid,
-                                logger=self.logger)
+                                logger=self.logger,
+                                logcat_stdout=self.logcat_stdout,
+                                result_callbacks=self.result_callbacks)
 
     def run(self, test):
         "Run the given test case or test suite."
@@ -271,6 +277,11 @@ class BaseMarionetteOptions(OptionParser):
                         dest='logdir',
                         action='store',
                         help='directory to store logcat dump files')
+        self.add_option('--logcat-stdout',
+                        action='store_true',
+                        dest='logcat_stdout',
+                        default=False,
+                        help='dump adb logcat to stdout')
         self.add_option('--address',
                         dest='address',
                         action='store',
@@ -321,7 +332,7 @@ class BaseMarionetteOptions(OptionParser):
                         help='xml output')
         self.add_option('--testvars',
                         dest='testvars',
-                        action='store',
+                        action='append',
                         help='path to a json file with any test data required')
         self.add_option('--tree',
                         dest='tree',
@@ -368,7 +379,8 @@ class BaseMarionetteOptions(OptionParser):
                         help="Define the path to store log file. If the path is"
                              " a directory, the real log file will be created"
                              " given the format gecko-(timestamp).log. If it is"
-                             " a file, if will be used directly. Default: 'gecko.log'")
+                             " a file, if will be used directly. '-' may be passed"
+                             " to write to stdout. Default: './gecko.log'")
         self.add_option('--logger-name',
                         dest='logger_name',
                         action='store',
@@ -437,12 +449,13 @@ class BaseMarionetteTestRunner(object):
     def __init__(self, address=None, emulator=None, emulator_binary=None,
                  emulator_img=None, emulator_res='480x800', homedir=None,
                  app=None, app_args=None, binary=None, profile=None,
-                 logger=None, no_window=False, logdir=None, xml_output=None,
-                 repeat=0, testvars=None, tree=None, type=None,
+                 logger=None, no_window=False, logdir=None, logcat_stdout=False,
+                 xml_output=None, repeat=0, testvars=None, tree=None, type=None,
                  device_serial=None, symbols_path=None, timeout=None,
                  shuffle=False, shuffle_seed=random.randint(0, sys.maxint),
                  sdcard=None, this_chunk=1, total_chunks=1, sources=None,
-                 server_root=None, gecko_log=None, **kwargs):
+                 server_root=None, gecko_log=None, result_callbacks=None,
+                 **kwargs):
         self.address = address
         self.emulator = emulator
         self.emulator_binary = emulator_binary
@@ -458,9 +471,9 @@ class BaseMarionetteTestRunner(object):
         self.httpd = None
         self.marionette = None
         self.logdir = logdir
+        self.logcat_stdout = logcat_stdout
         self.xml_output = xml_output
         self.repeat = repeat
-        self.testvars = {}
         self.test_kwargs = kwargs
         self.tree = tree
         self.type = type
@@ -481,18 +494,49 @@ class BaseMarionetteTestRunner(object):
         self.mixin_run_tests = []
         self.manifest_skipped_tests = []
         self.tests = []
+        self.result_callbacks = result_callbacks if result_callbacks is not None else []
 
-        if testvars:
-            if not os.path.exists(testvars):
-                raise IOError('--testvars file does not exist')
+        def gather_debug(test, status):
+            rv = {}
+            marionette = test._marionette_weakref()
 
-            try:
-                with open(testvars) as f:
-                    self.testvars = json.loads(f.read())
-            except ValueError as e:
-                json_path = os.path.abspath(testvars)
-                raise Exception("JSON file (%s) is not properly "
-                                "formatted: %s" % (json_path, e.message))
+            # In the event we're gathering debug without starting a session, skip marionette commands
+            if marionette.session is not None:
+                try:
+                    marionette.set_context(marionette.CONTEXT_CHROME)
+                    rv['screenshot'] = marionette.screenshot()
+                    marionette.set_context(marionette.CONTEXT_CONTENT)
+                    rv['source'] = marionette.page_source
+                except:
+                    logger = get_default_logger()
+                    logger.warning('Failed to gather test failure debug.', exc_info=True)
+            return rv
+
+        self.result_callbacks.append(gather_debug)
+
+        def update(d, u):
+            """ Update a dictionary that may contain nested dictionaries. """
+            for k, v in u.iteritems():
+                o = d.get(k, {})
+                if isinstance(v, dict) and isinstance(o, dict):
+                    d[k] = update(d.get(k, {}), v)
+                else:
+                    d[k] = u[k]
+            return d
+
+        self.testvars = {}
+        if testvars is not None:
+            for path in list(testvars):
+                if not os.path.exists(path):
+                    raise IOError('--testvars file %s does not exist' % path)
+                try:
+                    with open(path) as f:
+                        self.testvars = update(self.testvars,
+                                               json.loads(f.read()))
+                except ValueError as e:
+                    raise Exception("JSON file (%s) is not properly "
+                                    "formatted: %s" % (os.path.abspath(path),
+                                                       e.message))
 
         # set up test handlers
         self.test_handlers = []
@@ -610,6 +654,53 @@ class BaseMarionetteTestRunner(object):
     def start_marionette(self):
         self.marionette = Marionette(**self._build_kwargs())
 
+    def launch_test_container(self):
+        if self.marionette.session is None:
+            self.marionette.start_session()
+        self.marionette.set_context(self.marionette.CONTEXT_CONTENT)
+
+        result = self.marionette.execute_async_script("""
+if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) || (navigator.mozApps == undefined) || (navigator.mozApps == null)) {
+    marionetteScriptFinished(false);
+    return;
+}
+let setReq = navigator.mozSettings.createLock().set({'lockscreen.enabled': false});
+setReq.onsuccess = function() {
+    let appName = 'Test Container';
+    let activeApp = window.wrappedJSObject.System.currentApp;
+
+    // if the Test Container is already open then do nothing
+    if(activeApp.name === appName){
+        marionetteScriptFinished(true);
+    }
+
+    let appsReq = navigator.mozApps.mgmt.getAll();
+    appsReq.onsuccess = function() {
+        let apps = appsReq.result;
+        for (let i = 0; i < apps.length; i++) {
+            let app = apps[i];
+            if (app.manifest.name === appName) {
+                app.launch();
+                window.addEventListener('appopen', function apploadtime(){
+                    window.removeEventListener('appopen', apploadtime);
+                    marionetteScriptFinished(true);
+                });
+                return;
+            }
+        }
+        marionetteScriptFinished(false);
+    }
+    appsReq.onerror = function() {
+        marionetteScriptFinished(false);
+    }
+}
+setReq.onerror = function() {
+    marionetteScriptFinished(false);
+}""", script_timeout=60000)
+
+        if not result:
+            raise Exception("Could not launch test container app")
+
     def run_tests(self, tests):
         self.reset_test_stats()
         self.start_time = time.time()
@@ -634,7 +725,19 @@ class BaseMarionetteTestRunner(object):
         for test in tests:
             self.add_test(test)
 
-        self.logger.suite_start(self.tests)
+        version_info = mozversion.get_version(binary=self.bin,
+                                              sources=self.sources,
+                                              dm_type=os.environ.get('DM_TRANS', 'adb'),
+                                              device_serial=self.device_serial)
+
+        device_info = None
+        if self.capabilities['device'] != 'desktop' and self.capabilities['browserName'] == 'B2G':
+            dm = get_dm(self.marionette)
+            device_info = dm.getInfo()
+
+        self.logger.suite_start(self.tests,
+                                version_info=version_info,
+                                device_info=device_info)
 
         for test in self.manifest_skipped_tests:
             name = os.path.basename(test['path'])
@@ -696,7 +799,7 @@ class BaseMarionetteTestRunner(object):
 
         self.logger.suite_end()
 
-    def add_test(self, test, expected='pass', test_container=False):
+    def add_test(self, test, expected='pass', test_container=None):
         filepath = os.path.abspath(test)
 
         if os.path.isdir(filepath):
@@ -750,9 +853,13 @@ class BaseMarionetteTestRunner(object):
                     raise IOError("test file: %s does not exist" % i["path"])
 
                 file_ext = os.path.splitext(os.path.split(i['path'])[-1])[-1]
-                test_container = False
-                if i.get('test_container') and i.get('test_container') == 'true' and testarg_b2g:
-                    test_container = True
+                test_container = None
+                if i.get('test_container') and testarg_b2g:
+                    if i.get('test_container') == "true":
+                        test_container = True
+                    elif i.get('test_container') == "false":
+                        test_container = False
+
                 self.add_test(i["path"], i["expected"], test_container)
             return
 
@@ -779,7 +886,13 @@ class BaseMarionetteTestRunner(object):
         if suite.countTestCases():
             runner = self.textrunnerclass(logger=self.logger,
                                           marionette=self.marionette,
-                                          capabilities=self.capabilities)
+                                          capabilities=self.capabilities,
+                                          logcat_stdout=self.logcat_stdout,
+                                          result_callbacks=self.result_callbacks)
+
+            if test_container:
+                self.launch_test_container()
+
             results = runner.run(suite)
             self.results.append(results)
 

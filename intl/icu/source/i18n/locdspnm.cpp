@@ -764,6 +764,23 @@ UnicodeString&
 LocaleDisplayNamesImpl::keyValueDisplayName(const char* key,
                                             const char* value,
                                             UnicodeString& result) const {
+    if (uprv_strcmp(key, "currency") == 0) {
+        // ICU4C does not have ICU4J CurrencyDisplayInfo equivalent for now.
+        UErrorCode sts = U_ZERO_ERROR;
+        UnicodeString ustrValue(value, -1, US_INV);
+        int32_t len;
+        UBool isChoice = FALSE;
+        const UChar *currencyName = ucurr_getName(ustrValue.getTerminatedBuffer(),
+            locale.getBaseName(), UCURR_LONG_NAME, &isChoice, &len, &sts);
+        if (U_FAILURE(sts)) {
+            // Return the value as is on failure
+            result = ustrValue;
+            return result;
+        }
+        result.setTo(currencyName, len);
+        return adjustForUsageAndContext(kCapContextUsageKeyValue, result);
+    }
+
     if (nameLength == UDISPCTX_LENGTH_SHORT) {
         langData.get("Types%short", key, value, result);
         if (!result.isBogus()) {

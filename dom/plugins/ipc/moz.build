@@ -21,8 +21,7 @@ EXPORTS.mozilla.plugins += [
     'NPEventOSX.h',
     'NPEventUnix.h',
     'NPEventWindows.h',
-    'PluginIdentifierChild.h',
-    'PluginIdentifierParent.h',
+    'PluginBridge.h',
     'PluginInstanceChild.h',
     'PluginInstanceParent.h',
     'PluginMessageUtils.h',
@@ -37,6 +36,8 @@ EXPORTS.mozilla.plugins += [
     'PluginStreamChild.h',
     'PluginStreamParent.h',
     'PluginUtilsOSX.h',
+    'PluginWidgetChild.h',
+    'PluginWidgetParent.h',
     'ScopedMethodFactory.h',
     'StreamNotifyChild.h',
     'StreamNotifyParent.h',
@@ -56,7 +57,7 @@ if CONFIG['OS_ARCH'] == 'WINNT':
     ]
     DEFINES['MOZ_HANGUI_PROCESS_NAME'] = '"plugin-hang-ui%s"' % CONFIG['BIN_SUFFIX']
     LOCAL_INCLUDES += [
-        '/widget/shared',
+        '/widget',
         'hangui',
     ]
 
@@ -69,8 +70,9 @@ if CONFIG['MOZ_ENABLE_QT']:
     GENERATED_SOURCES += [
         'moc_NestedLoopTimer.cpp',
     ]
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'NestedLoopTimer.cpp',
+        'PluginHelperQt.cpp',
     ]
 
 UNIFIED_SOURCES += [
@@ -79,8 +81,6 @@ UNIFIED_SOURCES += [
     'ChildAsyncCall.cpp',
     'ChildTimer.cpp',
     'PluginBackgroundDestroyer.cpp',
-    'PluginIdentifierChild.cpp',
-    'PluginIdentifierParent.cpp',
     'PluginInstanceParent.cpp',
     'PluginMessageUtils.cpp',
     'PluginModuleParent.cpp',
@@ -95,6 +95,8 @@ UNIFIED_SOURCES += [
 SOURCES += [
     'PluginInstanceChild.cpp', # 'PluginThreadCallback' : ambiguous symbol
     'PluginModuleChild.cpp',   # Redefinition of mozilla::WindowsDllInterceptor sUser32Intercept
+    'PluginWidgetChild.cpp',
+    'PluginWidgetParent.cpp',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
@@ -105,8 +107,8 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 
 IPDL_SOURCES += [
     'PBrowserStream.ipdl',
+    'PluginTypes.ipdlh',
     'PPluginBackgroundDestroyer.ipdl',
-    'PPluginIdentifier.ipdl',
     'PPluginInstance.ipdl',
     'PPluginModule.ipdl',
     'PPluginScriptableObject.ipdl',

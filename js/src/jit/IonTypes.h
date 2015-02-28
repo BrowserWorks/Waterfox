@@ -110,6 +110,9 @@ enum BailoutKind
     // For the initial snapshot when entering a function.
     Bailout_InitialState,
 
+    // We hit a |debugger;| statement.
+    Bailout_Debugger,
+
     // END Normal bailouts
 
 
@@ -201,6 +204,8 @@ BailoutKindString(BailoutKind kind)
         return "Bailout_GuardThreadExclusive";
       case Bailout_InitialState:
         return "Bailout_InitialState";
+      case Bailout_Debugger:
+        return "Bailout_Debugger";
 
       // Bailouts caused by invalid assumptions.
       case Bailout_OverflowInvalidate:
@@ -369,6 +374,7 @@ enum MIRType
     MIRType_MagicIsConstructing,       // JS_IS_CONSTRUCTING magic value.
     MIRType_MagicUninitializedLexical, // JS_UNINITIALIZED_LEXICAL magic value.
     MIRType_Value,
+    MIRType_ObjectOrNull,
     MIRType_None,                      // Invalid, used as a placeholder.
     MIRType_Slots,                     // A slots vector
     MIRType_Elements,                  // An elements vector

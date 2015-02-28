@@ -828,6 +828,10 @@ static void TestDateFormatCalendar() {
     int32_t pos;
     UDate when;
     UErrorCode ec = U_ZERO_ERROR;
+    UChar buf1[256];
+    int32_t len1;
+    const char *expected;
+    UChar uExpected[32];
 
     ctest_setTimeZone(NULL, &ec);
 
@@ -874,6 +878,19 @@ static void TestDateFormatCalendar() {
         goto FAIL;
     }
 
+    /* Check if formatCalendar matches the original date */
+    len1 = udat_formatCalendar(date, cal, buf1, UPRV_LENGTHOF(buf1), NULL, &ec);
+    if (U_FAILURE(ec)) {
+        log_err("FAIL: udat_formatCalendar(4/5/2001) failed with %s\n",
+                u_errorName(ec));
+        goto FAIL;
+    }
+    expected = "4/5/01";
+    u_uastrcpy(uExpected, expected);
+    if (u_strlen(uExpected) != len1 || u_strncmp(uExpected, buf1, len1) != 0) {
+        log_err("FAIL: udat_formatCalendar(4/5/2001), expected: %s", expected);
+    }
+
     /* Parse the time */
     u_uastrcpy(buf, "5:45 PM");
     pos = 0;
@@ -883,7 +900,20 @@ static void TestDateFormatCalendar() {
                 pos, u_errorName(ec));
         goto FAIL;
     }
-    
+
+    /* Check if formatCalendar matches the original time */
+    len1 = udat_formatCalendar(time, cal, buf1, UPRV_LENGTHOF(buf1), NULL, &ec);
+    if (U_FAILURE(ec)) {
+        log_err("FAIL: udat_formatCalendar(17:45) failed with %s\n",
+                u_errorName(ec));
+        goto FAIL;
+    }
+    expected = "5:45 PM";
+    u_uastrcpy(uExpected, expected);
+    if (u_strlen(uExpected) != len1 || u_strncmp(uExpected, buf1, len1) != 0) {
+        log_err("FAIL: udat_formatCalendar(17:45), expected: %s", expected);
+    }
+
     /* Check result */
     when = ucal_getMillis(cal, &ec);
     if (U_FAILURE(ec)) {
@@ -1591,18 +1621,17 @@ static void TestOverrideNumberFormat(void) {
     u_uastrcpy(fields, "d");
     u_uastrcpy(pattern,"MM d");
 
+
     fmt=udat_open(UDAT_PATTERN, UDAT_PATTERN,"en_US",NULL,0,pattern, u_strlen(pattern), &status);
     if (!assertSuccess("udat_open()", &status)) {
         return;
     }
 
-
-    // loop 50 times to check getter/setter
+    // loop 5 times to check getter/setter
     for (i = 0; i < 5; i++){
         UNumberFormat* overrideFmt;
         overrideFmt = unum_open(UNUM_DEFAULT, NULL, 0, localeString, NULL, &status);
         assertSuccess("unum_open()", &status);
-
         udat_adoptNumberFormatForFields(fmt, fields, overrideFmt, &status);
         overrideFmt = NULL; // no longer valid
         assertSuccess("udat_setNumberFormatForField()", &status);
@@ -1612,7 +1641,6 @@ static void TestOverrideNumberFormat(void) {
             log_err("FAIL: udat_getNumberFormatForField did not return a valid pointer\n");
         }
     }
-
     {
       UNumberFormat* overrideFmt;
       overrideFmt = unum_open(UNUM_DEFAULT, NULL, 0, localeString, NULL, &status);

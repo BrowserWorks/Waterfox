@@ -119,7 +119,6 @@ UNIFIED_SOURCES += [
     'renderer/d3d/d3d9/VertexBuffer9.cpp',
     'renderer/d3d/d3d9/VertexDeclarationCache.cpp',
     'renderer/d3d/DynamicHLSL.cpp',
-    'renderer/d3d/HLSLCompiler.cpp',
     'renderer/d3d/ImageD3D.cpp',
     'renderer/d3d/IndexBuffer.cpp',
     'renderer/d3d/IndexDataManager.cpp',
@@ -151,6 +150,7 @@ UNIFIED_SOURCES += [
 SOURCES += [
     '../compiler/translator/glslang_lex.cpp',
     '../compiler/translator/glslang_tab.cpp',
+    'renderer/d3d/HLSLCompiler.cpp',
     'renderer/loadimageSSE2.cpp',
 ]
 SOURCES['renderer/loadimageSSE2.cpp'].flags += CONFIG['SSE2_FLAGS']
@@ -171,10 +171,11 @@ if CONFIG['MOZ_HAS_WINSDK_WITH_D3D']:
         'renderer/d3d/d3d11/RenderStateCache.cpp',
         'renderer/d3d/d3d11/RenderTarget11.cpp',
         'renderer/d3d/d3d11/ShaderExecutable11.cpp',
-        'renderer/d3d/d3d11/SwapChain11.cpp',
         'renderer/d3d/d3d11/TextureStorage11.cpp',
         'renderer/d3d/d3d11/VertexBuffer11.cpp',
     ]
+    SOURCES += ['renderer/d3d/d3d11/SwapChain11.cpp']
+    SOURCES['renderer/d3d/d3d11/SwapChain11.cpp'].flags += ['-DANGLE_RESOURCE_SHARE_TYPE=D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX']
 
 
 if CONFIG['GNU_CXX']:
@@ -216,17 +217,17 @@ LOCAL_INCLUDES += [ '../../include', '../../src' ]
 
 
 if CONFIG['MOZ_HAS_WINSDK_WITH_D3D']:
-  EXTRA_DSO_LDOPTS += [ 'd3d9.lib', 'dxguid.lib' ]
+  OS_LIBS += [ 'd3d9', 'dxguid' ]
 else:
   EXTRA_DSO_LDOPTS += [
     '\'%s/lib/%s/d3d9.lib\'' % (CONFIG['MOZ_DIRECTX_SDK_PATH'], CONFIG['MOZ_D3D_CPU_SUFFIX']),
     '\'%s/lib/%s/dxguid.lib\'' % (CONFIG['MOZ_DIRECTX_SDK_PATH'], CONFIG['MOZ_D3D_CPU_SUFFIX']),
   ]
 
-SharedLibrary('libGLESv2')
+GeckoSharedLibrary('libGLESv2', linkage=None)
 
 RCFILE = SRCDIR + '/libGLESv2.rc'
 DEFFILE = SRCDIR + '/libGLESv2.def'
 
-DEFINES['ANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES'] = '{ TEXT("d3dcompiler_47.dll"), TEXT("d3dcompiler_46.dll"), TEXT("d3dcompiler_43.dll") }'
+SOURCES['renderer/d3d/HLSLCompiler.cpp'].flags += ['-DANGLE_PRELOADED_D3DCOMPILER_MODULE_NAMES=\'{ TEXT("d3dcompiler_47.dll"), TEXT("d3dcompiler_46.dll"), TEXT("d3dcompiler_43.dll") }\'']
 

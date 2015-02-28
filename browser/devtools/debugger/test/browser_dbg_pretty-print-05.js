@@ -7,13 +7,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_included-script.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources, gControllerSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -28,7 +27,7 @@ function test() {
         ok(false, "The source editor text shouldn't have changed.");
       });
 
-      is(gSources.selectedValue, TAB_URL,
+      is(getSelectedSourceURL(gSources), TAB_URL,
         "The correct source is currently selected.");
       ok(gEditor.getText().contains("myFunction"),
         "The source shouldn't be pretty printed yet.");
@@ -46,7 +45,7 @@ function test() {
 
       let text;
       [source, text] = yield gControllerSources.getText(source);
-      is(gSources.selectedValue, TAB_URL,
+      is(getSelectedSourceURL(gSources), TAB_URL,
         "The correct source is still selected.");
       ok(gEditor.getText().contains("myFunction"),
         "The displayed source hasn't changed.");
@@ -63,12 +62,14 @@ function clickPrettyPrintButton() {
 }
 
 function prepareDebugger(aPanel) {
-  aPanel._view.Sources.preferredSource = TAB_URL;
+  aPanel._view.Sources.preferredSource = getSourceActor(
+    aPanel.panelWin.DebuggerView.Sources,
+    TAB_URL
+  );
 }
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

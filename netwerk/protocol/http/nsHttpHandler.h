@@ -96,7 +96,6 @@ public:
     bool           AllowExperiments() { return mTelemetryEnabled && mAllowExperiments; }
 
     bool           IsSpdyEnabled() { return mEnableSpdy; }
-    bool           IsSpdyV3Enabled() { return mSpdyV3; }
     bool           IsSpdyV31Enabled() { return mSpdyV31; }
     bool           IsHttp2DraftEnabled() { return mHttp2DraftEnabled; }
     bool           IsHttp2Enabled() { return mHttp2DraftEnabled && mHttp2Enabled; }
@@ -318,6 +317,7 @@ public:
     PRIntervalTime GetPipelineTimeout()   { return mPipelineReadTimeout; }
 
     SpdyInformation *SpdyInfo() { return &mSpdyInfo; }
+    bool IsH2MandatorySuiteEnabled() { return mH2MandatorySuiteEnabled; }
 
     // returns true in between Init and Shutdown states
     bool Active() { return mHandlerActive; }
@@ -386,6 +386,7 @@ private:
     uint16_t mMaxRequestDelay;
     uint16_t mIdleSynTimeout;
 
+    bool     mH2MandatorySuiteEnabled;
     bool     mPipeliningEnabled;
     uint16_t mMaxConnections;
     uint8_t  mMaxPersistentConnectionsPerServer;
@@ -435,6 +436,7 @@ private:
     nsCString      mCompatFirefox;
     bool           mCompatFirefoxEnabled;
     nsXPIDLCString mCompatDevice;
+    nsCString      mDeviceModelId;
 
     nsCString      mUserAgent;
     nsXPIDLCString mUserAgentOverride;
@@ -452,7 +454,6 @@ private:
 
     // For broadcasting tracking preference
     bool           mDoNotTrackEnabled;
-    uint8_t        mDoNotTrackValue;
 
     // for broadcasting safe hint;
     bool           mSafeHintEnabled;
@@ -468,7 +469,6 @@ private:
     uint32_t           mHandlerActive : 1;
 
     uint32_t           mEnableSpdy : 1;
-    uint32_t           mSpdyV3 : 1;
     uint32_t           mSpdyV31 : 1;
     uint32_t           mHttp2DraftEnabled : 1;
     uint32_t           mHttp2Enabled : 1;

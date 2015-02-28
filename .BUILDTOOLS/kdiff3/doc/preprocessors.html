@@ -1,0 +1,201 @@
+<html><head><title>Preprocessor Commands</title><link rel="stylesheet" href="common/kde-default.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.67.2"><meta name="keywords" content="KDE, kdeextragear, kdiff3, diff, merge, CVS, triplediff, compare, files, directories, version control, three-way-merge, in-line-differences, synchronise, kpart, kio, networktransparent, editor, white space, comments"><link rel="start" href="index.html" title="The KDiff3 Handbook"><link rel="up" href="documentation.html" title="Chapter 2. File Comparison And Merge"><link rel="prev" href="options.html" title="Options"><link rel="next" href="dirmerge.html" title="Chapter 3. Directory Comparison and Merge with KDiff3"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta name="GENERATOR" content="KDE XSL Stylesheet V1.13 using libxslt"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div style="position: absolute; left 0px;"><img src="common/top-left.png" style="margin: 0px" alt=""></div><div style="background-image: url(common/top-middle.png); width: 100%; height: 131px;"><div style="position: absolute;                      right: 0px;"><img src="common/top-right.png" style="margin: 0px" alt=""></div><div style="position: absolute;                         top: 63px;                         right: 0px;                         margin-top: -1em;                         margin-right: 5%;                         text-align: right;                          font-size: xx-large;                          font-weight: bold;                          text-shadow: #CDE1FF 0px 0px 5px;                          color: #444">Preprocessor Commands</div></div><div style="margin-top: 20px; background-color: #white;                        color: black;                       margin-left: 20px;                        margin-right: 20px;"><div style="position: absolute;                          left: 20px;"><a accesskey="p" href="options.html">Prev</a></div><div style="position: absolute;                          right: 20px;"><a accesskey="n" href="dirmerge.html">Next</a></div><div class="navCenter">File Comparison And Merge</div></div><div class="sect1" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="preprocessors"></a>Preprocessor Commands</h2></div></div></div><p>
+<span class="application">KDiff3</span> supports two preprocessor options.
+</p><p>
+<div class="variablelist"><dl><dt><span class="term"><span class="emphasis"><em>Preprocessor-Command:</em></span></span></dt><dd><p>
+      When any file is read, it will be piped through this external command.
+      The output of this command will be visible instead of the original file.
+      You can write your own preprocessor that fulfills your specific needs.
+      Use this to cut away disturbing parts of the file, or to automatically
+      correct the indentation etc.
+   </p></dd><dt><span class="term"><span class="emphasis"><em>Line-Matching Preprocessor-Command:</em></span></span></dt><dd><p>
+      When any file is read, it will be piped through this external command. If
+      a preprocessor-command (see above) is also specified, then the output of the
+      preprocessor is the input of the line-matching preprocessor.
+      The output will only be used during the line matching phase of the analysis.
+      You can write your own preprocessor that fulfills your specific needs.
+      Each input line must have a corresponding output line.
+   </p></dd></dl></div>
+</p><p>
+The idea is to allow the user greater flexibility while configuring the diff-result.
+But this requires an external program, and many users don't want to write one themselves.
+The good news is that very often <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> or <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span> 
+will do the job. 
+</p><p>Example: Simple testcase: Consider file a.txt (6 lines):
+<pre class="screen">
+      aa
+      ba
+      ca
+      da
+      ea
+      fa
+</pre>
+And file b.txt (3 lines):
+<pre class="screen">
+      cg
+      dg
+      eg
+</pre>
+Without a preprocessor the following lines would be placed next to each other:
+<pre class="screen">
+      aa - cg
+      ba - dg
+      ca - eg
+      da
+      ea
+      fa
+</pre>
+This is probably not wanted since the first letter contains the actually interesting information.
+To help the matching algorithm to ignore the second letter we can use a line matching preprocessor 
+command, that replaces 'g' with 'a':
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/g/a/'
+</pre>
+With this command the result of the comparison would be:
+<pre class="screen">
+      aa
+      ba
+      ca - cg
+      da - dg
+      ea - eg
+      fa
+</pre>
+Internally the matching algorithm sees the files after running the line matching preprocessor,
+but on the screen the file is unchanged. (The normal preprocessor would change the data also on 
+the screen.)
+</p><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sedbasics"></a><span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> Basics</h3></div></div></div><p>
+This section only introduces some very basic features of <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span>. For more
+information see <a href="info:/sed" target="_top">info:/sed</a> or 
+<a href="http://www.gnu.org/software/sed/manual/html_mono/sed.html" target="_top">
+http://www.gnu.org/software/sed/manual/html_mono/sed.html</a>.
+A precompiled version for Windows can be found at <a href="http://unxutils.sourceforge.net" target="_top">
+http://unxutils.sourceforge.net</a>.
+Note that the following examples assume that the <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span>-command is in some 
+directory in the PATH-environment variable. If this is not the case, you have to specify the full absolute
+path for the command. 
+</p><div class="note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>Also note that the following examples use the single quotation mark (') which won't work for Windows. 
+On Windows you should use the double quotation marks (") instead.</p></div><p>
+In this context only the <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span>-substitute-command is used:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>REGEXP</code></em></span>/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>REPLACEMENT</code></em></span>/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>FLAGS</code></em></span>'
+</pre>
+Before you use a new command within <span class="application">KDiff3</span>, you should first test it in a console.
+Here the <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">echo</strong></span></span>-command is useful. Example:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">echo</strong></span></span> abrakadabra | <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/a/o/'
+   -&gt; obrakadabra
+</pre>
+This example shows a very simple sed-command that replaces the first occurance 
+of "a" with "o". If you want to replace all occurances then you need the "g"-flag:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">echo</strong></span></span> abrakadabra | <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/a/o/g'
+   -&gt; obrokodobro
+</pre>
+The "|"-symbol is the pipe-command that transfers the output of the previous 
+command to the input of the following command. If you want to test with a longer file
+then you can use <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">cat</strong></span></span> on Unix-like systems or <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">type</strong></span></span> 
+on Windows-like systems. <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> will do the substitution for each line.
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">cat</strong></span></span> <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>filename</code></em></span> | <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>options</code></em></span>
+</pre>
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="sedforkdiff3"></a>Examples For <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span>-Use In <span class="application">KDiff3</span></h3></div></div></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541569"></a>Ignoring Other Types Of Comments</h4></div></div></div><p>
+Currently <span class="application">KDiff3</span> understands only C/C++ comments. Using the
+Line-Matching-Preprocessor-Command you can also ignore
+other types of comments, by converting them into C/C++-comments.
+
+Example: To ignore comments starting with "#", you would like to convert them
+to "//". Note that you also must enable the "Ignore C/C++-Comments" option to get 
+an effect. An appropriate Line-Matching-Preprocessor-Command would be:
+
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/#/\/\//'
+</pre>
+Since for <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> the "/"-character has a special meaning, it is necessary to place the 
+"\"-character before each "/" in the replacement-string. Sometimes the "\" is required
+to add or remove a special meaning of certain characters. The single quotation marks (') before 
+and after the substitution-command are important now, because otherwise the shell will
+try to interpret some special characters like '#', '$' or '\' before passing them to 
+<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span>. <span class="emphasis"><em>Note that on Windows you will need the double quotation marks (") here. Windows
+substitutes other characters like '%', so you might have to experiment a little bit.</em></span>
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541614"></a>Caseinsensitive Diff</h4></div></div></div><p>
+Use the following Line-Matching-Preprocessor-Command to convert all input to uppercase:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/\(.*\)/\U\1/'
+</pre>
+Here the ".*" is a regular expression that matches any string and in this context matches 
+all characters in the line. 
+The "\1" in the replacement string refers to the matched text within the first pair of "\(" and "\)".
+The "\U" converts the inserted text to uppercase.
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541636"></a>Ignoring Version Control Keywords</h4></div></div></div><p>
+CVS and other version control systems use several keywords to insert automatically
+generated strings (<a href="info:/cvs/Keyword%20substitution" target="_top">info:/cvs/Keyword substitution</a>).
+All of them follow the pattern "$KEYWORD generated text$". We now need a
+Line-Matching-Preprocessor-Command that removes only the generated text:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/\$\(Revision\|Author\|Log\|Header\|Date\).*\$/\$\1\$/'
+</pre>
+The "\|" separates the possible keywords. You might want to modify this list 
+according to your needs.
+The "\" before the "$" is necessary because otherwise the "$" matches the end of the line.
+</p><p>
+While experimenting with <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> you might come to understand and even like
+these regular expressions. They are useful because there are many other programs that also 
+support similar things.
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541676"></a>Ignoring Numbers</h4></div></div></div><p>
+Ignoring numbers actually is a built-in option. But as another example, this is how
+it would look as a Line-Matching-Preprocessor-command.
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/[0123456789.-]//g'
+</pre>
+Any character within '[' and ']' is a match and will be replaced with nothing.
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541695"></a>Ignoring Certain Columns</h4></div></div></div><p>
+Sometimes a text is very strictly formatted, and contains columns that you always want to ignore, while there are
+other columns you want to preserve for analysis. In the following example the first five columns (characters) are 
+ignored, the next ten columns are preserved, then again five columns are ignored and the rest of the line is preserved.
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/.....\(..........\).....\(.*\)/\1\2/'
+</pre>
+Each dot '.' matches any single character. The "\1" and "\2" in the replacement string refer to the matched text within the first 
+and second pair of "\(" and "\)" denoting the text to be preserved.
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541720"></a>Combining Several Substitutions</h4></div></div></div><p>
+Sometimes you want to apply several substitutions at once. You can then use the 
+semicolon ';' to separate these from each other. Example:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">echo</strong></span></span> abrakadabra | <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/a/o/g;s/\(.*\)/\U\1/'
+   -&gt; OBROKODOBRO
+</pre>
+</p></div><div class="sect3" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="id2541742"></a>Using <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span> instead of <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span></h4></div></div></div><p>
+Instead of <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> you might want to use something else like 
+<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span>.
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span> -p -e 's/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>REGEXP</code></em></span>/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>REPLACEMENT</code></em></span>/<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="replaceable"><em class="replaceable"><code>FLAGS</code></em></span>'
+</pre>
+But some details are different in <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span>. Note that where 
+<span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> needed "\(" and "\)" <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span>
+requires the simpler "(" and ")" without preceding '\'. Example:
+<pre class="screen">
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">sed</strong></span></span> 's/\(.*\)/\U\1/'
+   <span xmlns:doc="http://nwalsh.com/xsl/documentation/1.0" class="command"><span><strong class="command">perl</strong></span></span> -p -e 's/(.*)/\U\1/'
+</pre>
+</p></div></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2541802"></a>Order Of Preprocessor Execution</h3></div></div></div><p>
+The data is piped through all internal and external preprocessors in the 
+following order:
+</p><div class="itemizedlist"><ul type="disc"><li><p>Normal preprocessor,</p></li><li><p>Line-Matching-Preprocessor,</p></li><li><p>Ignore case (conversion to uppercase),</p></li><li><p>Detection of C/C++ comments,</p></li><li><p>Ignore numbers,</p></li><li><p>Ignore white space</p></li></ul></div><p>
+The data after the normal preprocessor will be preserved for display and merging. The
+other operations only modify the data that the line-matching-diff-algorithm sees.
+</p><p>
+In the rare cases where you use a normal preprocessor note that 
+the line-matching-preprocessor sees the output of the normal preprocessor as input.
+</p></div><div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="id2541854"></a>Warning</h3></div></div></div><p>
+The preprocessor-commands are often very useful, but as with any option that modifies
+your texts or hides away certain differences automatically, you might accidentally overlook 
+certain differences and in the worst case destroy important data.
+</p><p>
+For this reason during a merge if a normal preprocessor-command is being used <span class="application">KDiff3</span> 
+will tell you so and ask you if it should be disabled or not. 
+But it won't warn you if a Line-Matching-Preprocessor-command is active. The merge will not complete until
+all conflicts are solved. If you disabled "Show White Space" then the differences that
+were removed with the Line-Matching-Preprocessor-command will also be invisible. If the 
+Save-button remains disabled during a merge (because of remaining conflicts), make sure to enable 
+"Show White Space". If you don't wan't to merge these less important differences manually
+you can select "Choose [A|B|C] For All Unsolved White space Conflicts" in the Merge-menu.
+</p></div></div><div style="background-color: #white; color: black;                  margin-top: 20px; margin-left: 20px;                  margin-right: 20px;"><div style="position: absolute; left: 20px;"><a accesskey="p" href="options.html">Prev</a></div><div style="position: absolute; right: 20px;"><a accesskey="n" href="dirmerge.html">Next</a></div><div align="center"><a accesskey="h" href="index.html">Contents</a></div></div><div style="background-color: #white;   color: black;         margin-left: 20px;   margin-right: 20px;"><div class="navLeft">Options </div><div class="navRight"> Directory Comparison and Merge with <span class="application">KDiff3</span></div><div class="navCenter"><a accesskey="u" href="documentation.html">Up</a></div></div><br><br><div class="bannerBottom" style="background-image: url(common/bottom-middle.png);                                        background-repeat: x-repeat;                                         width: 100%;                                         height: 70px;                                         bottom:0px;"><div class="BannerBottomRight"><img src="common/bottom-right.png" style="height: 70px; margin: 0px" alt=""></div><div class="bannerBottomLeft"><img src="common/bottom-left.png" style="height: 70px; margin: 0px;" alt=""></div><div id="comments" style="position:relative; top: 15px; left: 1em; width: 100%; color: #282828;"><p>Would you like to make a comment or contribute an update to this page?<br>Send feedback to the <a href="mailto:kde-doc-english@kde.org" style="background:transparent; color: #282828; text-decoration: underline;">KDE Docs Team</a></p></div></div></body></html>

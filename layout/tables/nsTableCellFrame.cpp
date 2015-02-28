@@ -2,9 +2,14 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "nsTableCellFrame.h"
+
+#include "gfxUtils.h"
+#include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/Helpers.h"
 #include "nsTableFrame.h"
 #include "nsTableColFrame.h"
-#include "nsTableCellFrame.h"
 #include "nsTableRowFrame.h"
 #include "nsTableRowGroupFrame.h"
 #include "nsTablePainter.h"
@@ -34,7 +39,7 @@
 #include "mozilla/LookAndFeel.h"
 
 using namespace mozilla;
-
+using namespace mozilla::gfx;
 
 nsTableCellFrame::nsTableCellFrame(nsStyleContext* aContext) :
   nsContainerFrame(aContext)
@@ -318,30 +323,41 @@ nsTableCellFrame::DecorateForSelection(nsRenderingContext& aRenderingContext,
         bordercolor = EnsureDifferentColors(bordercolor,
                                             StyleBackground()->mBackgroundColor);
 
-        gfxContext* ctx = aRenderingContext.ThebesContext();
+        int32_t appUnitsPerDevPixel = PresContext()->AppUnitsPerDevPixel();
+        Point devPixelOffset = NSPointToPoint(aPt, appUnitsPerDevPixel);
 
-        gfxPoint devPixelOffset =
-          nsLayoutUtils::PointToGfxPoint(aPt,
-                                         PresContext()->AppUnitsPerDevPixel());
+        DrawTarget* drawTarget = aRenderingContext.GetDrawTarget();
+        AutoRestoreTransform autoRestoreTransform(drawTarget);
+        drawTarget->SetTransform(
+          drawTarget->GetTransform().PreTranslate(devPixelOffset));
 
-        gfxContextMatrixAutoSaveRestore autoSR(ctx);
-        ctx->SetMatrix(ctx->CurrentMatrix().Translate(devPixelOffset));
+        ColorPattern color(ToDeviceColor(bordercolor));
 
         nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
 
-        aRenderingContext.SetColor(bordercolor);
-        aRenderingContext.DrawLine(onePixel, 0, mRect.width, 0);
-        aRenderingContext.DrawLine(0, onePixel, 0, mRect.height);
-        aRenderingContext.DrawLine(onePixel, mRect.height, mRect.width, mRect.height);
-        aRenderingContext.DrawLine(mRect.width, onePixel, mRect.width, mRect.height);
+        StrokeLineWithSnapping(nsPoint(onePixel, 0), nsPoint(mRect.width, 0),
+                               appUnitsPerDevPixel, *drawTarget, color);
+        StrokeLineWithSnapping(nsPoint(0, onePixel), nsPoint(0, mRect.height),
+                               appUnitsPerDevPixel, *drawTarget, color);
+        StrokeLineWithSnapping(nsPoint(onePixel, mRect.height),
+                               nsPoint(mRect.width, mRect.height),
+                               appUnitsPerDevPixel, *drawTarget, color);
+        StrokeLineWithSnapping(nsPoint(mRect.width, onePixel),
+                               nsPoint(mRect.width, mRect.height),
+                               appUnitsPerDevPixel, *drawTarget, color);
         //middle
-        aRenderingContext.DrawRect(onePixel, onePixel, mRect.width-onePixel,
-                                   mRect.height-onePixel);
+        nsRect r(onePixel, onePixel,
+                 mRect.width - onePixel, mRect.height - onePixel);
+        Rect devPixelRect =
+          NSRectToSnappedRect(r, appUnitsPerDevPixel, *drawTarget);
+        drawTarget->StrokeRect(devPixelRect, color);
         //shading
-        aRenderingContext.DrawLine(2*onePixel, mRect.height-2*onePixel,
-                                   mRect.width-onePixel, mRect.height- (2*onePixel));
-        aRenderingContext.DrawLine(mRect.width - (2*onePixel), 2*onePixel,
-                                   mRect.width - (2*onePixel), mRect.height-onePixel);
+        StrokeLineWithSnapping(nsPoint(2*onePixel, mRect.height-2*onePixel),
+                               nsPoint(mRect.width-onePixel, mRect.height- (2*onePixel)),
+                               appUnitsPerDevPixel, *drawTarget, color);
+        StrokeLineWithSnapping(nsPoint(mRect.width - (2*onePixel), 2*onePixel),
+                               nsPoint(mRect.width - (2*onePixel), mRect.height-onePixel),
+                               appUnitsPerDevPixel, *drawTarget, color);
       }
     }
   }

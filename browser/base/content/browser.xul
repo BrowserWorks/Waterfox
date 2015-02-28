@@ -249,13 +249,13 @@
            noautohide="true"
            orient="vertical"
            align="stretch">
-      <label class="SearchHighlightTitle">One-Click Searches</label>
-      <description class="SearchHighlightText" flex="1">Search any of these sites instantly, without changing your default.</description>
+      <label class="SearchHighlightTitle">&SearchHighlight1.title;</label>
+      <description class="SearchHighlightText" flex="1">&SearchHighlight1.text;</description>
       <hbox class="SearchHighlightFooter" align="center">
         <spacer class="dot filled"/>
         <spacer class="dot"/>
         <spacer flex="1"/>
-        <button label="Next"/>
+        <button label="&SearchHighlightNext;"/>
       </hbox>
     </panel>
     <panel id="SearchHighlight2"
@@ -266,20 +266,21 @@
            noautohide="true"
            orient="vertical"
            align="stretch">
-      <label class="SearchHighlightTitle">Smart Suggestions</label>
-      <description class="SearchHighlightText" flex="1">Suggestions from your default search engine appear as you type.</description>
+      <label class="SearchHighlightTitle">&SearchHighlight2.title;</label>
+      <description class="SearchHighlightText" flex="1">&SearchHighlight2.text;</description>
       <hbox class="SearchHighlightFooter" align="center">
         <spacer class="dot"/>
         <spacer class="dot filled"/>
         <spacer flex="1"/>
-        <button label="Thanks!"/>
+        <button label="&SearchHighlightClose;"/>
       </hbox>
     </panel>
 
-    <panel id="abouthome-search-panel" orient="vertical" type="arrow" hidden="true">
+    <panel id="abouthome-search-panel" orient="vertical" type="arrow" hidden="true"
+           onclick="this.hidePopup()">
       <hbox id="abouthome-search-panel-manage"
             onclick="openPreferences('paneSearch')">
-        <label>&cmd_engineManager.label;</label>
+        <label>&changeSearchSettings.button;</label>
       </hbox>
     </panel>
 
@@ -724,9 +725,9 @@
              fullscreentoolbar="true" mode="icons" customizable="true"
              iconsize="small"
 #ifdef MOZ_DEV_EDITION
-             defaultset="urlbar-container,search-container,developer-button,bookmarks-menu-button,downloads-button,home-button"
+             defaultset="urlbar-container,search-container,developer-button,bookmarks-menu-button,downloads-button,home-button,loop-button"
 #else
-             defaultset="urlbar-container,search-container,bookmarks-menu-button,downloads-button,home-button"
+             defaultset="urlbar-container,search-container,bookmarks-menu-button,downloads-button,home-button,loop-button"
 #endif
              customizationtarget="nav-bar-customization-target"
              overflowable="true"
@@ -765,7 +766,6 @@
                      enablehistory="true"
                      maxrows="6"
                      newlines="stripsurroundingwhitespace"
-                     oninput="gBrowser.userTypedValue = this.value;"
                      ontextentered="this.handleCommand(param);"
                      ontextreverted="return this.handleRevert();"
                      pageproxystate="invalid"

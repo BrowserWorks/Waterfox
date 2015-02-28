@@ -60,13 +60,13 @@ NS_IMETHODIMP imgTools::DecodeImage(nsIInputStream* aInStr,
                                     imgIContainer **aContainer)
 {
   nsresult rv;
-  nsRefPtr<image::Image> image;
 
   NS_ENSURE_ARG_POINTER(aInStr);
 
   // Create a new image container to hold the decoded data.
   nsAutoCString mimeType(aMimeType);
-  image = ImageFactory::CreateAnonymousImage(mimeType);
+  nsRefPtr<image::Image> image = ImageFactory::CreateAnonymousImage(mimeType);
+  nsRefPtr<ProgressTracker> tracker = image->GetProgressTracker();
 
   if (image->HasError())
     return NS_ERROR_FAILURE;
@@ -89,8 +89,10 @@ NS_IMETHODIMP imgTools::DecodeImage(nsIInputStream* aInStr,
   // Send the source data to the Image.
   rv = image->OnImageDataAvailable(nullptr, nullptr, inStream, 0, uint32_t(length));
   NS_ENSURE_SUCCESS(rv, rv);
+
   // Let the Image know we've sent all the data.
   rv = image->OnImageDataComplete(nullptr, nullptr, NS_OK, true);
+  tracker->SyncNotifyProgress(FLAG_LOAD_COMPLETE);
   NS_ENSURE_SUCCESS(rv, rv);
 
   // All done.

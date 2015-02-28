@@ -79,6 +79,8 @@ void DateFormatTest::runIndexedTest( int32_t index, UBool exec, const char* &nam
     TESTCASE_AUTO(TestRelative);
     TESTCASE_AUTO(TestRelativeClone);
     TESTCASE_AUTO(TestHostClone);
+    TESTCASE_AUTO(TestHebrewClone);
+    TESTCASE_AUTO(TestDateFormatSymbolsClone);
     TESTCASE_AUTO(TestTimeZoneDisplayName);
     TESTCASE_AUTO(TestRoundtripWithCalendar);
     TESTCASE_AUTO(Test6338);
@@ -103,6 +105,12 @@ void DateFormatTest::runIndexedTest( int32_t index, UBool exec, const char* &nam
 
     TESTCASE_AUTO(TestParseLeniencyAPIs);
     TESTCASE_AUTO(TestNumberFormatOverride);
+    TESTCASE_AUTO(TestCreateInstanceForSkeleton);
+    TESTCASE_AUTO(TestCreateInstanceForSkeletonDefault);
+    TESTCASE_AUTO(TestCreateInstanceForSkeletonWithCalendar);
+    TESTCASE_AUTO(TestDFSCreateForLocaleNonGregorianLocale);
+    TESTCASE_AUTO(TestDFSCreateForLocaleWithCalendarInLocale);
+    TESTCASE_AUTO(TestChangeCalendar);
 
     TESTCASE_AUTO_END;
 }
@@ -2422,7 +2430,7 @@ void DateFormatTest::TestHostClone(void)
     UDate now = Calendar::getNow();
     DateFormat *full = DateFormat::createDateInstance(DateFormat::kFull, loc);
     if (full == NULL) {
-        dataerrln("FAIL: Can't create Relative date instance");
+        dataerrln("FAIL: Can't create host date instance");
         return;
     }
     UnicodeString result1;
@@ -2438,6 +2446,82 @@ void DateFormatTest::TestHostClone(void)
         errln("FAIL: Clone returned different result from non-clone.");
     }
     delete fullClone;
+}
+
+void DateFormatTest::TestHebrewClone(void)
+{
+    /*
+    Verify that a cloned formatter gives the same results
+    and is useable after the original has been deleted.
+    */
+    UErrorCode status = U_ZERO_ERROR;
+    Locale loc("he@calendar=hebrew");
+    UDate now = Calendar::getNow();
+    LocalPointer<DateFormat> fmt(
+            DateFormat::createDateInstance(DateFormat::kLong, loc));
+    if (fmt.isNull()) {
+        dataerrln("FAIL: Can't create Hebrew date instance");
+        return;
+    }
+    UnicodeString result1;
+    fmt->format(now, result1, status);
+    LocalPointer<Format> fmtClone(fmt->clone());
+
+    // free fmt to be sure that fmtClone is independent of fmt.
+    fmt.adoptInstead(NULL);
+
+    UnicodeString result2;
+    fmtClone->format(now, result2, status);
+    ASSERT_OK(status);
+    if (result1 != result2) {
+        errln("FAIL: Clone returned different result from non-clone.");
+    }
+}
+
+static UBool getActualAndValidLocales(
+        const Format &fmt, Locale &valid, Locale &actual) {
+    const SimpleDateFormat* dat = dynamic_cast<const SimpleDateFormat*>(&fmt);
+    if (dat == NULL) {
+        return FALSE;
+    }
+    const DateFormatSymbols *sym = dat->getDateFormatSymbols();
+    if (sym == NULL) {
+        return FALSE;
+    }
+    UErrorCode status = U_ZERO_ERROR;
+    valid = sym->getLocale(ULOC_VALID_LOCALE, status);
+    actual = sym->getLocale(ULOC_ACTUAL_LOCALE, status);
+    return U_SUCCESS(status);
+}
+
+void DateFormatTest::TestDateFormatSymbolsClone(void)
+{
+    /*
+    Verify that a cloned formatter gives the same results
+    and is useable after the original has been deleted.
+    */
+    Locale loc("de_CH_LUCERNE");
+    LocalPointer<DateFormat> fmt(
+            DateFormat::createDateInstance(DateFormat::kDefault, loc));
+    Locale valid1;
+    Locale actual1;
+    if (!getActualAndValidLocales(*fmt, valid1, actual1)) {
+        dataerrln("FAIL: Could not fetch valid + actual locales");
+        return;
+    }
+    LocalPointer<Format> fmtClone(fmt->clone());
+
+    // Free fmt to be sure that fmtClone is really independent of fmt.
+    fmt.adoptInstead(NULL);
+    Locale valid2;
+    Locale actual2;
+    if (!getActualAndValidLocales(*fmtClone, valid2, actual2)) {
+        errln("FAIL: Could not fetch valid + actual locales");
+        return;
+    }
+    if (valid1 != valid2 || actual1 != actual2) {
+        errln("Date format symbol locales of clone don't match original");
+    }
 }
 
 void DateFormatTest::TestTimeZoneDisplayName()
@@ -3751,7 +3835,9 @@ void DateFormatTest::TestFormalChineseDate() {
     
     // create formatter 
     SimpleDateFormat *sdf = new SimpleDateFormat(pattern,override,Locale::getChina(),status);
-    failure(status, "new SimpleDateFormat with override", TRUE); 
+    if (failure(status, "new SimpleDateFormat with override", TRUE)) {
+        return;
+    }
 
     UDate thedate = date(2009-1900, UCAL_JULY, 28);
     FieldPosition pos(0);
@@ -4276,7 +4362,7 @@ void DateFormatTest::TestDateFormatLeniency() {
        Locale locale = Locale::createFromName(itemPtr->locale);
        status = U_ZERO_ERROR;
        ParsePosition pos(0);
-       sdmft.adoptInstead(new SimpleDateFormat(itemPtr->pattern, locale, status));
+       sdmft.adoptInsteadAndCheckErrorCode(new SimpleDateFormat(itemPtr->pattern, locale, status), status);
        if (U_FAILURE(status)) {
            dataerrln("Unable to create SimpleDateFormat - %s", u_errorName(status));
            continue;
@@ -4467,22 +4553,23 @@ void DateFormatTest::TestNumberFormatOverride() {
     UnicodeString fields = (UnicodeString) "M";
 
     LocalPointer<SimpleDateFormat> fmt;
-    fmt.adoptInstead(new SimpleDateFormat((UnicodeString)"MM d", status));
+    fmt.adoptInsteadAndCheckErrorCode(new SimpleDateFormat((UnicodeString)"MM d", status), status);
     if (!assertSuccess("SimpleDateFormat with pattern MM d", status)) {
         return;
     }
 
-    NumberFormat* check_nf = NumberFormat::createInstance(Locale("en_US"), status);
-    assertSuccess("NumberFormat en_US", status);
 
-    // loop 100 times to test setter/getter
-    for(int i=0; i<100; i++){
+    for(int i=0; i<3; i++){
+        NumberFormat* check_nf = NumberFormat::createInstance(Locale("en_US"), status);
+        assertSuccess("NumberFormat en_US", status);
         fmt->adoptNumberFormat(fields, check_nf, status);
         assertSuccess("adoptNumberFormat check_nf", status);
 
         const NumberFormat* get_nf = fmt->getNumberFormatForField('M');
         if (get_nf != check_nf) errln("FAIL: getter and setter do not work");
     }
+    NumberFormat* check_nf = NumberFormat::createInstance(Locale("en_US"), status);
+    assertSuccess("NumberFormat en_US", status);
     fmt->adoptNumberFormat(check_nf); // make sure using the same NF will not crash
 
     const char * DATA [][2] = {
@@ -4500,7 +4587,7 @@ void DateFormatTest::TestNumberFormatOverride() {
         fields = DATA[i][0];
         
         LocalPointer<SimpleDateFormat> fmt;
-        fmt.adoptInstead(new SimpleDateFormat((UnicodeString)"MM d", status));
+        fmt.adoptInsteadAndCheckErrorCode(new SimpleDateFormat((UnicodeString)"MM d", status), status);
         assertSuccess("SimpleDateFormat with pattern MM d", status);
         NumberFormat* overrideNF = NumberFormat::createInstance(Locale::createFromName("zh@numbers=hanidays"),status);
         assertSuccess("NumberFormat zh@numbers=hanidays", status);
@@ -4537,6 +4624,130 @@ void DateFormatTest::TestNumberFormatOverride() {
             errln("FAIL: Expected " + expected + " get: " + result);
     }
 }
+
+void DateFormatTest::TestCreateInstanceForSkeleton() {
+    UErrorCode status = U_ZERO_ERROR;
+    LocalPointer<DateFormat> fmt(DateFormat::createInstanceForSkeleton(
+            "yMMMMd", "en", status));
+    if (!assertSuccess("Create with pattern yMMMMd", status)) {
+        return;
+    }
+    UnicodeString result;
+    FieldPosition pos(0);
+    fmt->format(date(98, 5-1, 25), result, pos);
+    assertEquals("format yMMMMd", "May 25, 1998", result);
+    fmt.adoptInstead(DateFormat::createInstanceForSkeleton(
+            "yMd", "en", status));
+    if (!assertSuccess("Create with pattern yMd", status)) {
+        return;
+    }
+    result.remove();
+    fmt->format(date(98, 5-1, 25), result, pos);
+    assertEquals("format yMd", "5/25/1998", result);
+}
+
+void DateFormatTest::TestCreateInstanceForSkeletonDefault() {
+    UErrorCode status = U_ZERO_ERROR;
+    Locale savedLocale;
+    Locale::setDefault(Locale::getUS(), status);
+    LocalPointer<DateFormat> fmt(DateFormat::createInstanceForSkeleton(
+            "yMMMd", status));
+    Locale::setDefault(savedLocale, status);
+    if (!assertSuccess("Create with pattern yMMMd", status)) {
+        return;
+    }
+    UnicodeString result;
+    FieldPosition pos(0);
+    fmt->format(date(98, 5-1, 25), result, pos);
+    assertEquals("format yMMMd", "May 25, 1998", result);
+}
+
+void DateFormatTest::TestCreateInstanceForSkeletonWithCalendar() {
+    UErrorCode status = U_ZERO_ERROR;
+    LocalPointer<DateFormat> fmt(
+            DateFormat::createInstanceForSkeleton(
+                    Calendar::createInstance(
+                            TimeZone::createTimeZone("GMT-3:00"),
+                            status),
+                    "yMdHm", "en", status));
+    if (!assertSuccess("Create with pattern yMMMMd", status)) {
+        return;
+    }
+    UnicodeString result;
+    FieldPosition pos(0);
+
+    LocalPointer<Calendar> cal(Calendar::createInstance(
+        TimeZone::createTimeZone("GMT-7:00"),
+        status));
+    if (!assertSuccess("Creating GMT-7 time zone failed", status)) {
+        return;
+    }
+    cal->clear();
+    cal->set(1998, 5-1, 25, 0, 0, 0);
+
+    // date format time zone should be 4 hours ahead.
+    fmt->format(cal->getTime(status), result, pos);
+    assertEquals("format yMdHm", "5/25/1998, 04:00", result);
+    assertSuccess("", status);
+}
+
+void DateFormatTest::TestDFSCreateForLocaleNonGregorianLocale() {
+    UErrorCode status = U_ZERO_ERROR;
+    Locale fa("fa");
+    LocalPointer<DateFormatSymbols> sym(
+            DateFormatSymbols::createForLocale(fa, status));
+    if (!assertSuccess("", status)) {
+        return;
+    }
+
+    // Farsi should default to the persian calendar, not gregorian
+    int32_t count;
+    const UnicodeString *months = sym->getShortMonths(count);
+
+    // First persian month.
+    UnicodeString expected("\\u0641\\u0631\\u0648\\u0631\\u062f\\u06cc\\u0646");
+    assertEquals("", expected.unescape(), months[0]);
+}
+
+void DateFormatTest::TestDFSCreateForLocaleWithCalendarInLocale() {
+    UErrorCode status = U_ZERO_ERROR;
+    Locale en_heb("en@calendar=hebrew");
+    LocalPointer<DateFormatSymbols> sym(
+            DateFormatSymbols::createForLocale(en_heb, status));
+    if (!assertSuccess("", status)) {
+        return;
+    }
+
+    // We should get the months of the hebrew calendar, not the gregorian
+    // calendar.
+    int32_t count;
+    const UnicodeString *months = sym->getShortMonths(count);
+
+    // First hebrew month.
+    UnicodeString expected("Tishri");
+    assertEquals("", expected, months[0]);
+}
+
+void DateFormatTest::TestChangeCalendar() {
+    UErrorCode status = U_ZERO_ERROR;
+    Locale en("en");
+    Locale en_heb("en@calendar=hebrew");
+    LocalPointer<DateFormat> fmt(
+            DateFormat::createInstanceForSkeleton("yMMMd", en, status));
+    if (!assertSuccess("", status)) {
+        return;
+    }
+    fmt->adoptCalendar(Calendar::createInstance(en_heb, status));
+    if (!assertSuccess("", status)) {
+        return;
+    }
+    UnicodeString result;
+    FieldPosition pos(0);
+    fmt->format(date(98, 5-1, 25), result, pos);
+    assertEquals("format yMMMd", "Iyar 29, 5758", result);
+}
+
+
 #endif /* #if !UCONFIG_NO_FORMATTING */
 
 //eof

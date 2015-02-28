@@ -215,6 +215,15 @@ public:
     return mLowPrecisionTiledBuffer.GetValidRegion();
   }
 
+  virtual void SetCompositor(Compositor* aCompositor)
+  {
+    CompositableHost::SetCompositor(aCompositor);
+    mTiledBuffer.SetCompositor(aCompositor);
+    mLowPrecisionTiledBuffer.SetCompositor(aCompositor);
+    mOldTiledBuffer.SetCompositor(aCompositor);
+    mOldLowPrecisionTiledBuffer.SetCompositor(aCompositor);
+  }
+
   virtual bool UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
                                    const SurfaceDescriptorTiles& aTiledDescriptor) MOZ_OVERRIDE;
 
@@ -225,7 +234,7 @@ public:
                  const gfx::Rect& aClipRect,
                  const nsIntRegion* aVisibleRegion = nullptr);
 
-  virtual CompositableType GetType() { return CompositableType::BUFFER_TILED; }
+  virtual CompositableType GetType() { return CompositableType::CONTENT_TILED; }
 
   virtual TiledLayerComposer* AsTiledLayerComposer() MOZ_OVERRIDE { return this; }
 

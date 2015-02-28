@@ -11,6 +11,11 @@
  */
 fr{
     Version{"2.1.8.9"}
+    durationUnits{
+        hm{"hh:mm"}
+        hms{"hh:mm:ss"}
+        ms{"mm:ss"}
+    }
     units{
         acceleration{
             g-force{

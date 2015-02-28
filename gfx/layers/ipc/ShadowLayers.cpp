@@ -410,6 +410,13 @@ ShadowLayerForwarder::UseTexture(CompositableClient* aCompositable,
   MOZ_ASSERT(aTexture);
   MOZ_ASSERT(aCompositable->GetIPDLActor());
   MOZ_ASSERT(aTexture->GetIPDLActor());
+#if defined(MOZ_WIDGET_GONK) && ANDROID_VERSION >= 17
+  FenceHandle handle = aTexture->GetAcquireFenceHandle();
+  if (handle.IsValid()) {
+    RefPtr<FenceDeliveryTracker> tracker = new FenceDeliveryTracker(handle);
+    SendFenceHandle(tracker, aTexture->GetIPDLActor(), handle);
+  }
+#endif
   mTxn->AddEdit(OpUseTexture(nullptr, aCompositable->GetIPDLActor(),
                              nullptr, aTexture->GetIPDLActor()));
 }
@@ -494,7 +501,7 @@ ShadowLayerForwarder::RemoveTextureFromCompositableAsync(AsyncTransactionTracker
 bool
 ShadowLayerForwarder::InWorkerThread()
 {
-  return GetMessageLoop()->id() == MessageLoop::current()->id();
+  return MessageLoop::current() && (GetMessageLoop()->id() == MessageLoop::current()->id());
 }
 
 static void RemoveTextureWorker(TextureClient* aTexture, ReentrantMonitor* aBarrier, bool* aDone)
@@ -603,6 +610,14 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
       common.stickyScrollContainerId() = mutant->GetStickyScrollContainerId();
       common.stickyScrollRangeOuter() = mutant->GetStickyScrollRangeOuter();
       common.stickyScrollRangeInner() = mutant->GetStickyScrollRangeInner();
+    } else {
+#ifdef MOZ_VALGRIND
+      // Initialize these so that Valgrind doesn't complain when we send them
+      // to another process.
+      common.stickyScrollContainerId() = 0;
+      common.stickyScrollRangeOuter() = LayerRect();
+      common.stickyScrollRangeInner() = LayerRect();
+#endif
     }
     common.scrollbarTargetContainerId() = mutant->GetScrollbarTargetContainerId();
     common.scrollbarDirection() = mutant->GetScrollbarDirection();
@@ -627,7 +642,7 @@ ShadowLayerForwarder::EndTransaction(InfallibleTArray<EditReply>* aReplies,
 
   AutoInfallibleTArray<Edit, 10> cset;
   size_t nCsets = mTxn->mCset.size() + mTxn->mPaints.size();
-  NS_ABORT_IF_FALSE(nCsets > 0 || mWindowOverlayChanged, "should have bailed by now");
+  NS_ABORT_IF_FALSE(nCsets > 0 || mWindowOverlayChanged || mTxn->RotationChanged(), "should have bailed by now");
 
   cset.SetCapacity(nCsets);
   if (!mTxn->mCset.empty()) {
@@ -723,13 +738,13 @@ ShadowLayerForwarder::DeallocShmem(ipc::Shmem& aShmem)
 bool
 ShadowLayerForwarder::IPCOpen() const
 {
-  return mShadowManager->IPCOpen();
+  return HasShadowManager() && mShadowManager->IPCOpen();
 }
 
 bool
 ShadowLayerForwarder::IsSameProcess() const
 {
-  if (!mShadowManager->IPCOpen()) {
+  if (!HasShadowManager() || !mShadowManager->IPCOpen()) {
     return false;
   }
   return mShadowManager->OtherProcess() == kInvalidProcessHandle;

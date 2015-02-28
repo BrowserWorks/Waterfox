@@ -15,16 +15,6 @@ Cu.import("resource://gre/modules/BrowserElementPromptService.jsm");
 
 let kLongestReturnedString = 128;
 
-// Event whitelisted for bubbling.
-let whitelistedEvents = [
-  Ci.nsIDOMKeyEvent.DOM_VK_ESCAPE,   // Back button.
-  Ci.nsIDOMKeyEvent.DOM_VK_SLEEP,    // Power button.
-  Ci.nsIDOMKeyEvent.DOM_VK_CONTEXT_MENU,
-  Ci.nsIDOMKeyEvent.DOM_VK_F5,       // Search button.
-  Ci.nsIDOMKeyEvent.DOM_VK_PAGE_UP,  // Volume up.
-  Ci.nsIDOMKeyEvent.DOM_VK_PAGE_DOWN // Volume down.
-];
-
 function debug(msg) {
   //dump("BrowserElementChildPreload - " + msg + "\n");
 }
@@ -59,54 +49,6 @@ function sendSyncMsg(msg, data) {
 
 let CERTIFICATE_ERROR_PAGE_PREF = 'security.alternate_certificate_error_page';
 
-let NS_ERROR_MODULE_BASE_OFFSET = 0x45;
-let NS_ERROR_MODULE_SECURITY= 21;
-function NS_ERROR_GET_MODULE(err) {
-  return ((((err) >> 16) - NS_ERROR_MODULE_BASE_OFFSET) & 0x1fff);
-}
-
-function NS_ERROR_GET_CODE(err) {
-  return ((err) & 0xffff);
-}
-
-let SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
-let SEC_ERROR_UNKNOWN_ISSUER = (SEC_ERROR_BASE + 13);
-let SEC_ERROR_CA_CERT_INVALID =   (SEC_ERROR_BASE + 36);
-let SEC_ERROR_UNTRUSTED_ISSUER = (SEC_ERROR_BASE + 20);
-let SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE = (SEC_ERROR_BASE + 30);
-let SEC_ERROR_UNTRUSTED_CERT = (SEC_ERROR_BASE + 21);
-let SEC_ERROR_EXPIRED_CERTIFICATE = (SEC_ERROR_BASE + 11);
-let SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED = (SEC_ERROR_BASE + 176);
-
-let SSL_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SSL_ERROR_BASE;
-let SSL_ERROR_BAD_CERT_DOMAIN = (SSL_ERROR_BASE + 12);
-
-let MOZILLA_PKIX_ERROR_BASE = Ci.nsINSSErrorsService.MOZILLA_PKIX_ERROR_BASE;
-let MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY = (MOZILLA_PKIX_ERROR_BASE + 1);
-let MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE = (MOZILLA_PKIX_ERROR_BASE + 2);
-
-function getErrorClass(errorCode) {
-  let NSPRCode = -1 * NS_ERROR_GET_CODE(errorCode);
-
-  switch (NSPRCode) {
-    case SEC_ERROR_UNKNOWN_ISSUER:
-    case SEC_ERROR_UNTRUSTED_ISSUER:
-    case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
-    case SEC_ERROR_UNTRUSTED_CERT:
-    case SSL_ERROR_BAD_CERT_DOMAIN:
-    case SEC_ERROR_EXPIRED_CERTIFICATE:
-    case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
-    case SEC_ERROR_CA_CERT_INVALID:
-    case MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
-    case MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
-      return Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT;
-    default:
-      return Ci.nsINSSErrorsService.ERROR_CLASS_SSL_PROTOCOL;
-  }
-
-  return null;
-}
-
 const OBSERVED_EVENTS = [
   'fullscreen-origin-change',
   'ask-parent-to-exit-fullscreen',
@@ -117,7 +59,7 @@ const OBSERVED_EVENTS = [
 
 const COMMAND_MAP = {
   'cut': 'cmd_cut',
-  'copy': 'cmd_copy',
+  'copy': 'cmd_copyAndCollapseToEnd',
   'paste': 'cmd_paste',
   'selectall': 'cmd_selectAll'
 };
@@ -229,6 +171,12 @@ BrowserElementChild.prototype = {
                      /* useCapture = */ false,
                      /* wantsUntrusted = */ false);
 
+    addEventListener('touchcarettap',
+                     this._touchCaretTapHandler.bind(this),
+                     /* useCapture = */ false,
+                     /* wantsUntrusted = */ false);
+
+
     // This listens to unload events from our message manager, but /not/ from
     // the |content| window.  That's because the window's unload event doesn't
     // bubble, and we're not using a capturing listener.  If we'd used
@@ -282,15 +230,6 @@ BrowserElementChild.prototype = {
 
     // We are using the system group for those events so if something in the
     // content called .stopPropagation() this will still be called.
-    els.addSystemEventListener(global, 'keydown',
-                               this._keyEventHandler.bind(this),
-                               /* useCapture = */ true);
-    els.addSystemEventListener(global, 'keypress',
-                               this._keyEventHandler.bind(this),
-                               /* useCapture = */ true);
-    els.addSystemEventListener(global, 'keyup',
-                               this._keyEventHandler.bind(this),
-                               /* useCapture = */ true);
     els.addSystemEventListener(global, 'DOMWindowClose',
                                this._windowCloseHandler.bind(this),
                                /* useCapture = */ false);
@@ -440,6 +379,10 @@ BrowserElementChild.prototype = {
     }
     debug("Nested event loop - finish");
 
+    if (win.modalDepth == 0) {
+      delete this._windowIDDict[outerWindowID];
+    }
+
     // If we exited the loop because the inner window changed, then bail on the
     // modal prompt.
     if (innerWindowID !== this._tryGetInnerWindowID(win)) {
@@ -472,7 +415,6 @@ BrowserElementChild.prototype = {
     }
 
     let win = this._windowIDDict[outerID].get();
-    delete this._windowIDDict[outerID];
 
     if (!win) {
       debug("recvStopWaiting, but window is gone\n");
@@ -632,6 +574,11 @@ BrowserElementChild.prototype = {
     }
 
     sendAsyncMsg('metachange', meta);
+  },
+
+  _touchCaretTapHandler: function(e) {
+    e.stopPropagation();
+    sendAsyncMsg('touchcarettap');
   },
 
   _ScrollViewChangeHandler: function(e) {
@@ -1181,16 +1128,6 @@ BrowserElementChild.prototype = {
     sendAsyncMsg('got-set-input-method-active', msgData);
   },
 
-  _keyEventHandler: function(e) {
-    if (whitelistedEvents.indexOf(e.keyCode) != -1 && !e.defaultPrevented) {
-      sendAsyncMsg('keyevent', {
-        type: e.type,
-        keyCode: e.keyCode,
-        charCode: e.charCode,
-      });
-    }
-  },
-
   // The docShell keeps a weak reference to the progress listener, so we need
   // to keep a strong ref to it ourselves.
   _progressListener: {
@@ -1242,23 +1179,28 @@ BrowserElementChild.prototype = {
           return;
         }
 
-        if (NS_ERROR_GET_MODULE(status) == NS_ERROR_MODULE_SECURITY &&
-            getErrorClass(status) == Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT) {
+        // getErrorClass() will throw if the error code passed in is not a NSS
+        // error code.
+        try {
+          let nssErrorsService = Cc['@mozilla.org/nss_errors_service;1']
+                                   .getService(Ci.nsINSSErrorsService);
+          if (nssErrorsService.getErrorClass(status)
+                == Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT) {
+            // XXX Is there a point firing the event if the error page is not
+            // certerror? If yes, maybe we should add a property to the
+            // event to to indicate whether there is a custom page. That would
+            // let the embedder have more control over the desired behavior.
+            let errorPage = null;
+            try {
+              errorPage = Services.prefs.getCharPref(CERTIFICATE_ERROR_PAGE_PREF);
+            } catch (e) {}
 
-          // XXX Is there a point firing the event if the error page is not
-          // certerror? If yes, maybe we should add a property to the
-          // event to to indicate whether there is a custom page. That would
-          // let the embedder have more control over the desired behavior.
-          var errorPage = null;
-          try {
-            errorPage = Services.prefs.getCharPref(CERTIFICATE_ERROR_PAGE_PREF);
-          } catch(e) {}
-
-          if (errorPage == 'certerror') {
-            sendAsyncMsg('error', { type: 'certerror' });
-            return;
+            if (errorPage == 'certerror') {
+              sendAsyncMsg('error', { type: 'certerror' });
+              return;
+            }
           }
-        }
+        } catch (e) {}
 
         // TODO See nsDocShell::DisplayLoadError for a list of all the error
         // codes (the status param) we should eventually handle here.

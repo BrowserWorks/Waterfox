@@ -22,6 +22,7 @@
 #include "plarena.h"
 #include "gfxTypes.h"
 #include "WritingModes.h"
+#include "JustificationUtils.h"
 
 class nsFloatManager;
 struct nsStyleText;
@@ -62,7 +63,8 @@ public:
    * space rectangle, relative to the containing block.
    * @param aFloatFrame the float frame that was placed.
    */
-  void UpdateBand(const nsRect& aNewAvailableSpace,
+  void UpdateBand(mozilla::WritingMode aWM,
+                  const mozilla::LogicalRect& aNewAvailableSpace,
                   nsIFrame* aFloatFrame);
 
   void BeginSpan(nsIFrame* aFrame, const nsHTMLReflowState* aSpanReflowState,
@@ -111,9 +113,9 @@ public:
 
   // Support methods for word-wrapping during line reflow
 
-  void SetTextJustificationWeights(int32_t aNumSpaces, int32_t aNumLetters) {
-    mTextJustificationNumSpaces = aNumSpaces;
-    mTextJustificationNumLetters = aNumLetters;
+  void SetJustificationInfo(const mozilla::JustificationInfo& aInfo)
+  {
+    mJustificationInfo = aInfo;
   }
 
   /**
@@ -150,13 +152,19 @@ public:
   //----------------------------------------
   // Inform the line-layout about the presence of a floating frame
   // XXX get rid of this: use get-frame-type?
-  bool AddFloat(nsIFrame* aFloat, nscoord aAvailableWidth)
+  bool AddFloat(nsIFrame* aFloat, nscoord aAvailableISize)
   {
-    return mBlockRS->AddFloat(this, aFloat, aAvailableWidth);
+    // When reflowing ruby text frames, no block reflow state is
+    // provided to the line layout. However, floats should never be
+    // associated with ruby text containers, hence this method should
+    // not be called in that case.
+    NS_ABORT_IF_FALSE(mBlockRS, "Should not call this method "
+                      "if there is no block reflow state available");
+    return mBlockRS->AddFloat(this, aFloat, aAvailableISize);
   }
 
-  void SetTrimmableWidth(nscoord aTrimmableWidth) {
-    mTrimmableWidth = aTrimmableWidth;
+  void SetTrimmableISize(nscoord aTrimmableISize) {
+    mTrimmableISize = aTrimmableISize;
   }
 
   //----------------------------------------
@@ -203,8 +211,8 @@ public:
    * frames containing optional break points (e.g., whitespace in text frames)
    * can call SetLastOptionalBreakPosition to record where a break could
    * have been made, but wasn't because we decided to place more content on
-   * the line. For non-text frames, offset 0 means
-   * before the content, offset INT32_MAX means after the content.
+   * the line. For non-text frames, offset 0 means before the frame, offset
+   * INT32_MAX means after the frame.
    * 
    * Currently this is used to handle cases where a single word comprises
    * multiple frames, and the first frame fits on the line but the whole word
@@ -212,6 +220,8 @@ public:
    * reflow the whole line again, forcing a break at that position. The last
    * optional break position could be in a text frame or else after a frame
    * that cannot be part of a text run, so those are the positions we record.
+   *
+   * @param aFrame the frame which contains the optional break position.
    * 
    * @param aFits set to true if the break position is within the available width.
    * 
@@ -222,30 +232,30 @@ public:
    * @return true if we are actually reflowing with forced break position and we
    * should break here
    */
-  bool NotifyOptionalBreakPosition(nsIContent* aContent, int32_t aOffset,
-                                     bool aFits, gfxBreakPriority aPriority) {
+  bool NotifyOptionalBreakPosition(nsIFrame* aFrame, int32_t aOffset,
+                                   bool aFits, gfxBreakPriority aPriority) {
     NS_ASSERTION(!aFits || !mNeedBackup,
                   "Shouldn't be updating the break position with a break that fits after we've already flagged an overrun");
     // Remember the last break position that fits; if there was no break that fit,
     // just remember the first break
     if ((aFits && aPriority >= mLastOptionalBreakPriority) ||
-        !mLastOptionalBreakContent) {
-      mLastOptionalBreakContent = aContent;
-      mLastOptionalBreakContentOffset = aOffset;
+        !mLastOptionalBreakFrame) {
+      mLastOptionalBreakFrame = aFrame;
+      mLastOptionalBreakFrameOffset = aOffset;
       mLastOptionalBreakPriority = aPriority;
     }
-    return aContent && mForceBreakContent == aContent &&
-      mForceBreakContentOffset == aOffset;
+    return aFrame && mForceBreakFrame == aFrame &&
+      mForceBreakFrameOffset == aOffset;
   }
   /**
    * Like NotifyOptionalBreakPosition, but here it's OK for mNeedBackup
    * to be set, because the caller is merely pruning some saved break position(s)
    * that are actually not feasible.
    */
-  void RestoreSavedBreakPosition(nsIContent* aContent, int32_t aOffset,
+  void RestoreSavedBreakPosition(nsIFrame* aFrame, int32_t aOffset,
                                  gfxBreakPriority aPriority) {
-    mLastOptionalBreakContent = aContent;
-    mLastOptionalBreakContentOffset = aOffset;
+    mLastOptionalBreakFrame = aFrame;
+    mLastOptionalBreakFrameOffset = aOffset;
     mLastOptionalBreakPriority = aPriority;
   }
   /**
@@ -253,17 +263,17 @@ public:
    */
   void ClearOptionalBreakPosition() {
     mNeedBackup = false;
-    mLastOptionalBreakContent = nullptr;
-    mLastOptionalBreakContentOffset = -1;
+    mLastOptionalBreakFrame = nullptr;
+    mLastOptionalBreakFrameOffset = -1;
     mLastOptionalBreakPriority = gfxBreakPriority::eNoBreak;
   }
   // Retrieve last set optional break position. When this returns null, no
   // optional break has been recorded (which means that the line can't break yet).
-  nsIContent* GetLastOptionalBreakPosition(int32_t* aOffset,
-                                           gfxBreakPriority* aPriority) {
-    *aOffset = mLastOptionalBreakContentOffset;
+  nsIFrame* GetLastOptionalBreakPosition(int32_t* aOffset,
+                                         gfxBreakPriority* aPriority) {
+    *aOffset = mLastOptionalBreakFrameOffset;
     *aPriority = mLastOptionalBreakPriority;
-    return mLastOptionalBreakContent;
+    return mLastOptionalBreakFrame;
   }
   
   /**
@@ -281,13 +291,13 @@ public:
   // Record that we want to break at the given content+offset (which
   // should have been previously returned by GetLastOptionalBreakPosition
   // from another nsLineLayout).
-  void ForceBreakAtPosition(nsIContent* aContent, int32_t aOffset) {
-    mForceBreakContent = aContent;
-    mForceBreakContentOffset = aOffset;
+  void ForceBreakAtPosition(nsIFrame* aFrame, int32_t aOffset) {
+    mForceBreakFrame = aFrame;
+    mForceBreakFrameOffset = aOffset;
   }
-  bool HaveForcedBreakPosition() { return mForceBreakContent != nullptr; }
-  int32_t GetForcedBreakPosition(nsIContent* aContent) {
-    return mForceBreakContent == aContent ? mForceBreakContentOffset : -1;
+  bool HaveForcedBreakPosition() { return mForceBreakFrame != nullptr; }
+  int32_t GetForcedBreakPosition(nsIFrame* aFrame) {
+    return mForceBreakFrame == aFrame ? mForceBreakFrameOffset : -1;
   }
 
   /**
@@ -336,14 +346,18 @@ protected:
   const nsStyleText* mStyleText; // for the block
   const nsHTMLReflowState* mBlockReflowState;
 
-  nsIContent* mLastOptionalBreakContent;
-  nsIContent* mForceBreakContent;
+  nsIFrame* mLastOptionalBreakFrame;
+  nsIFrame* mForceBreakFrame;
   
   // XXX remove this when landing bug 154892 (splitting absolute positioned frames)
   friend class nsInlineFrame;
 
   nsBlockReflowState* mBlockRS;/* XXX hack! */
 
+  // XXX Take care that nsRubyBaseContainer would give nullptr to this
+  //     member. It should not be a problem currently, since the only
+  //     code use it is handling float, which does not affect ruby.
+  //     See comment in nsLineLayout::AddFloat
   nsLineList::iterator mLineBox;
 
   // Per-frame data recorded by the line-layout reflow logic. This
@@ -383,17 +397,14 @@ protected:
     nsOverflowAreas mOverflowAreas;
 
     // From reflow-state
-    mozilla::LogicalMargin mMargin;
-    mozilla::LogicalMargin mBorderPadding;
-    mozilla::LogicalMargin mOffsets;
+    mozilla::LogicalMargin mMargin;        // in *line* writing mode
+    mozilla::LogicalMargin mBorderPadding; // in *line* writing mode
+    mozilla::LogicalMargin mOffsets;       // in *frame* writing mode
 
     // state for text justification
-    int32_t mJustificationNumSpaces;
-    int32_t mJustificationNumLetters;
+    mozilla::JustificationInfo mJustificationInfo;
+    mozilla::JustificationAssignment mJustificationAssignment;
     
-    // Other state we use
-    uint8_t mBlockDirAlign;
-
 // PerFrameData flags
 #define PFD_RELATIVEPOS                 0x00000001
 #define PFD_ISTEXTFRAME                 0x00000002
@@ -403,14 +414,19 @@ protected:
 #define PFD_RECOMPUTEOVERFLOW           0x00000020
 #define PFD_ISBULLET                    0x00000040
 #define PFD_SKIPWHENTRIMMINGWHITESPACE  0x00000080
-#define PFD_LASTFLAG                    PFD_SKIPWHENTRIMMINGWHITESPACE
+#define PFD_ISEMPTY                     0x00000100
+#define PFD_LASTFLAG                    PFD_ISEMPTY
 
-    uint8_t mFlags;
+    // Other state we use
+    uint16_t mFlags;
+    uint8_t mBlockDirAlign;
+
+    static_assert(PFD_LASTFLAG <= UINT16_MAX,
+                  "Flag value exceeds the length of flags variable.");
 
     void SetFlag(uint32_t aFlag, bool aValue)
     {
       NS_ASSERTION(aFlag<=PFD_LASTFLAG, "bad flag");
-      NS_ASSERTION(aFlag<=UINT8_MAX, "bad flag");
       if (aValue) { // set flag
         mFlags |= aFlag;
       }
@@ -433,6 +449,18 @@ protected:
       }
       return pfd;
     }
+
+    bool IsStartJustifiable() const
+    {
+      return mJustificationInfo.mIsStartJustifiable;
+    }
+
+    bool IsEndJustifiable() const
+    {
+      return mJustificationInfo.mIsEndJustifiable;
+    }
+
+    bool ParticipatesInJustification() const;
   };
   PerFrameData* mFrameFreeList;
 
@@ -476,9 +504,19 @@ protected:
   PerSpanData* mRootSpan;
   PerSpanData* mCurrentSpan;
 
+  // The container width to use when converting between logical and
+  // physical coordinates for frames in this span. For the root span
+  // this is the width of the block cached in mContainerWidth; for
+  // child spans it's the width of the root span
+  nscoord ContainerWidthForSpan(PerSpanData* aPSD) {
+    return (aPSD == mRootSpan)
+      ? mContainerWidth
+      : aPSD->mFrame->mBounds.Width(mRootSpan->mWritingMode);
+  }
+
   gfxBreakPriority mLastOptionalBreakPriority;
-  int32_t     mLastOptionalBreakContentOffset;
-  int32_t     mForceBreakContentOffset;
+  int32_t     mLastOptionalBreakFrameOffset;
+  int32_t     mForceBreakFrameOffset;
 
   nscoord mMinLineBSize;
   
@@ -489,8 +527,7 @@ protected:
   // This state varies during the reflow of a line but is line
   // "global" state not span "local" state.
   int32_t mLineNumber;
-  int32_t mTextJustificationNumSpaces;
-  int32_t mTextJustificationNumLetters;
+  mozilla::JustificationInfo mJustificationInfo;
 
   int32_t mTotalPlacedFrames;
 
@@ -504,9 +541,11 @@ protected:
   // the block has been called.
   nscoord mFinalLineBSize;
   
-  // Amount of trimmable whitespace width for the trailing text frame, if any
-  nscoord mTrimmableWidth;
+  // Amount of trimmable whitespace inline size for the trailing text
+  // frame, if any
+  nscoord mTrimmableISize;
 
+  // Physical width. Use only for physical <-> logical coordinate conversion.
   nscoord mContainerWidth;
 
   bool mFirstLetterStyleOK      : 1;
@@ -572,23 +611,14 @@ protected:
 
   bool TrimTrailingWhiteSpaceIn(PerSpanData* psd, nscoord* aDeltaISize);
 
-  void ComputeJustificationWeights(PerSpanData* psd, int32_t* numSpaces, int32_t* numLetters);
-
-  struct FrameJustificationState {
-    int32_t mTotalNumSpaces;
-    int32_t mTotalNumLetters;
-    nscoord mTotalWidthForSpaces;
-    nscoord mTotalWidthForLetters;
-    int32_t mNumSpacesProcessed;
-    int32_t mNumLettersProcessed;
-    nscoord mWidthForSpacesProcessed;
-    nscoord mWidthForLettersProcessed;
-  };
+  struct JustificationComputationState;
+  int32_t ComputeFrameJustification(PerSpanData* psd,
+                                    JustificationComputationState& aState);
 
   // Apply justification.  The return value is the amount by which the width of
   // the span corresponding to aPSD got increased due to justification.
-  nscoord ApplyFrameJustification(PerSpanData* aPSD,
-                                  FrameJustificationState* aState);
+  nscoord ApplyFrameJustification(
+      PerSpanData* aPSD, mozilla::JustificationApplicationState& aState);
 
 
 #ifdef DEBUG

@@ -4,6 +4,7 @@
 
 package org.mozilla.search;
 
+import org.mozilla.gecko.GeckoAppShell;
 import org.mozilla.gecko.LocaleAware;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
@@ -93,6 +94,8 @@ public class SearchActivity extends LocaleAware.LocaleAwareFragmentActivity
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        GeckoAppShell.ensureCrashHandling();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.search_activity_main);
 
@@ -337,6 +340,11 @@ public class SearchActivity extends LocaleAware.LocaleAwareFragmentActivity
 
             @Override
             public void onAnimationEnd(Animator animation) {
+                // Don't do anything if the activity is destroyed before the animation ends.
+                if (searchEngineManager == null) {
+                    return;
+                }
+
                 setEditState(EditState.WAITING);
                 setSearchState(SearchState.POSTSEARCH);
 

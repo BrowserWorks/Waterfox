@@ -13,6 +13,8 @@ var gRGB_TO_HSL = {
  "rgb(96, 201, 58)": "hsl(104,57%,51%)",
  "rgb(240, 195, 111)": "hsl(39,82%,69%)",
  "rgb(227, 155, 22)": "hsl(39,82%,49%)",
+ "rgb(204, 204, 204)": "hsl(0,0%,80%)",
+ "rgb(153, 153, 153)": "hsl(0,0%,60%)",
 };
 
 let test = Task.async(function*() {
@@ -27,7 +29,7 @@ let test = Task.async(function*() {
   panel.panelWin.on(EVENTS.OVERVIEW_UPDATED, () => updated++);
 
   ok((yield waitUntil(() => updated > 0)),
-    "The overview graph was updated a bunch of times.");
+    "The overview graphs were updated a bunch of times.");
   ok((yield waitUntil(() => TimelineController.getMarkers().length > 0)),
     "There are some markers available.");
 

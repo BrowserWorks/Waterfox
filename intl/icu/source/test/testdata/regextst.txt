@@ -1201,6 +1201,39 @@
 "A|B|\U00012345"                "hello <0>\U00012345</0>"
 "A|B|\U00010000"                "hello \ud800"
 
+# Bug 11369
+#   Incorrect optimization of patterns with a zero length quantifier {0}
+
+"(.|b)(|b){0}\$(?#xxx){3}(?>\D*)"   "AAAAABBBBBCCCCCDDDDEEEEE"
+"(|b)ab(c)"                     "<0><1></1>ab<2>c</2></0>"
+"(|b){0}a{3}(D*)"               "<0>aaa<2></2></0>"
+"(|b){0,1}a{3}(D*)"             "<0><1></1>aaa<2></2></0>"
+"((|b){0})a{3}(D*)"             "<0><1></1>aaa<3></3></0>"
+
+# Bug 11370
+#   Max match length computation of look-behind expression gives result that is too big to fit in the
+#   in the 24 bit operand portion of the compiled code. Expressions should fail to compile
+#   (Look-behind match length must be bounded. This case is treated as unbounded, an error.)
+
+"(?<!(0123456789a){10000000})x"         E  "no match"
+"(?<!\\ubeaf(\\ubeaf{11000}){11000})"   E  "no match"
+
+# Bug 11374 Bad integer overflow check in number conversion.
+#           4294967300 converts to 4 with 32 bit overflow.
+
+"x{4294967300}"                         E  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+"x{0,4294967300}"                       E  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Bug 11373
+#
+#    Overflow checking in max match length computation for loops.
+#    Value here is 10 * 100000 * 3000 = 3E9, overflowing a 32 bit signed value.
+#    Before fixing, this case gave an assertion failure.
+
+"(?<=((0123456789){100000}){3000})abc"  E  "abc"
+
+
+
 #  Random debugging, Temporary
 #
 

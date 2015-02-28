@@ -377,6 +377,8 @@ def ContextDerivedTypedList(type, base_class=List):
 # - 'export'
 # - 'libs': everything that is not built from C/C++/ObjC source and that has
 #      traditionally been in the libs tier.
+# - 'misc': like libs, but with parallel build. Eventually, everything that
+#      currently is in libs should move here.
 # A value of None means the variable has no direct effect on any tier.
 
 VARIABLES = {
@@ -499,6 +501,37 @@ VARIABLES = {
         delimiters.
         """, None),
 
+    'HAS_MISC_RULE': (bool, bool,
+        """Whether this directory should be traversed in the ``misc`` tier.
+
+        Many ``libs`` rules still exist in Makefile.in files. We highly prefer
+        that these rules exist in the ``misc`` tier/target so that they can be
+        executed concurrently during tier traversal (the ``misc`` tier is
+        fully concurrent).
+
+        Presence of this variable indicates that this directory should be
+        traversed by the ``misc`` tier.
+
+        Please note that converting ``libs`` rules to the ``misc`` tier must
+        be done with care, as there are many implicit dependencies that can
+        break the build in subtle ways.
+        """, 'misc'),
+
+    'FINAL_TARGET_FILES': (HierarchicalStringList, list,
+        """List of files to be installed into the application directory.
+
+        ``FINAL_TARGET_FILES`` will copy (or symlink, if the platform supports it)
+        the contents of its files to the directory specified by
+        ``FINAL_TARGET`` (typically ``dist/bin``). Files that are destined for a
+        subdirectory can be specified by accessing a field, or as a dict access.
+        For example, to export ``foo.png`` to the top-level directory and
+        ``bar.svg`` to the directory ``images/do-not-use``, append to
+        ``FINAL_TARGET_FILES`` like so::
+
+           FINAL_TARGET_FILES += ['foo.png']
+           FINAL_TARGET_FILES.images['do-not-use'] += ['bar.svg']
+        """, None),
+
     'DISABLE_STL_WRAPPING': (bool, bool,
         """Disable the wrappers for STL which allow it to work with C++ exceptions
         disabled.
@@ -509,21 +542,21 @@ VARIABLES = {
 
        This variable contains a list of files to copy into
        ``$(FINAL_TARGET)/components/``.
-        """, 'libs'),
+        """, 'misc'),
 
     'EXTRA_JS_MODULES': (HierarchicalStringList, list,
         """Additional JavaScript files to distribute.
 
         This variable contains a list of files to copy into
         ``$(FINAL_TARGET)/modules.
-        """, 'libs'),
+        """, 'misc'),
 
     'EXTRA_PP_JS_MODULES': (HierarchicalStringList, list,
         """Additional JavaScript files to distribute.
 
         This variable contains a list of files to copy into
         ``$(FINAL_TARGET)/modules``, after preprocessing.
-        """, 'libs'),
+        """, 'misc'),
 
     'TESTING_JS_MODULES': (HierarchicalStringList, list,
         """JavaScript modules to install in the test-only destination.
@@ -535,14 +568,14 @@ VARIABLES = {
         variable to control the final destination. e.g.
 
         ``TESTING_JS_MODULES.foo += ['module.jsm']``.
-        """, 'libs'),
+        """, None),
 
     'EXTRA_PP_COMPONENTS': (StrictOrderingOnAppendList, list,
         """Javascript XPCOM files.
 
        This variable contains a list of files to preprocess.  Generated
        files will be installed in the ``/components`` directory of the distribution.
-        """, 'libs'),
+        """, 'misc'),
 
     'FINAL_LIBRARY': (unicode, unicode,
         """Library in which the objects of the current directory will be linked.
@@ -856,7 +889,7 @@ VARIABLES = {
         This is a list of files that define XPCOM interface definitions.
         Entries must be files that exist. Entries are almost certainly ``.idl``
         files.
-        """, 'libs'),
+        """, 'misc'),
 
     'XPIDL_MODULE': (unicode, unicode,
         """XPCOM Interface Definition Module Name.
@@ -956,6 +989,10 @@ VARIABLES = {
 
     'MOCHITEST_MANIFESTS': (StrictOrderingOnAppendList, list,
         """List of manifest files defining mochitest tests.
+        """, None),
+
+    'MOCHITEST_WEBAPPRT_CONTENT_MANIFESTS': (StrictOrderingOnAppendList, list,
+        """List of manifest files defining webapprt mochitest content tests.
         """, None),
 
     'MOCHITEST_WEBAPPRT_CHROME_MANIFESTS': (StrictOrderingOnAppendList, list,

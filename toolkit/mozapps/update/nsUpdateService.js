@@ -2989,7 +2989,7 @@ UpdateService.prototype = {
         if (status == STATE_NONE)
           cleanupActiveUpdate();
         self._update = null;
-        this._backgroundUpdateCheckCodePing(PING_BGUC_CHECK_NO_INCOMPAT);
+        self._backgroundUpdateCheckCodePing(PING_BGUC_CHECK_NO_INCOMPAT);
       }
     });
   },
@@ -3017,8 +3017,8 @@ UpdateService.prototype = {
     let bs = Cc["@mozilla.org/extensions/blocklist;1"].
              getService(Ci.nsIBlocklistService);
     if (bs.isAddonBlocklisted(addon,
-                              gUpdates.update.appVersion,
-                              gUpdates.update.platformVersion))
+                              this._update.appVersion,
+                              this._update.platformVersion))
       return;
 
     // Compatibility or new version updates mean the same thing here.

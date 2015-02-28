@@ -319,8 +319,6 @@ typedef NSInteger NSEventGestureAxis;
 
 - (void)handleMouseMoved:(NSEvent*)aEvent;
 
-- (void)updateWindowDraggableStateOnMouseMove:(NSEvent*)theEvent;
-
 - (void)sendMouseEnterOrExitEvent:(NSEvent*)aEvent
                             enter:(BOOL)aEnter
                              type:(mozilla::WidgetMouseEvent::exitType)aType;
@@ -341,6 +339,7 @@ typedef NSInteger NSEventGestureAxis;
 - (BOOL)isCoveringTitlebar;
 
 - (NSColor*)vibrancyFillColorForWidgetType:(uint8_t)aWidgetType;
+- (NSColor*)vibrancyFontSmoothingBackgroundColorForWidgetType:(uint8_t)aWidgetType;
 
 // Simple gestures support
 //
@@ -505,6 +504,13 @@ public:
                       const mozilla::WidgetKeyboardEvent& aEvent,
                       DoCommandCallback aCallback,
                       void* aCallbackData) MOZ_OVERRIDE;
+  bool ExecuteNativeKeyBindingRemapped(
+                      NativeKeyBindingsType aType,
+                      const mozilla::WidgetKeyboardEvent& aEvent,
+                      DoCommandCallback aCallback,
+                      void* aCallbackData,
+                      uint32_t aGeckoKeyCode,
+                      uint32_t aCocoaKeyCode);
   virtual nsIMEUpdatePreference GetIMEUpdatePreference() MOZ_OVERRIDE;
   NS_IMETHOD        GetToggledKeyState(uint32_t aKeyCode,
                                        bool* aLEDState);
@@ -559,6 +565,9 @@ public:
 
   virtual void UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries);
 
+  virtual void UpdateWindowDraggingRegion(const nsIntRegion& aRegion) MOZ_OVERRIDE;
+  const nsIntRegion& GetDraggableRegion() { return mDraggableRegion; }
+
   void              HidePlugin();
   void              UpdatePluginPort();
 
@@ -583,6 +592,7 @@ public:
 
   void              ClearVibrantAreas();
   NSColor*          VibrancyFillColorForWidgetType(uint8_t aWidgetType);
+  NSColor*          VibrancyFontSmoothingBackgroundColorForWidgetType(uint8_t aWidgetType);
 
   // unit conversion convenience functions
   int32_t           CocoaPointsToDevPixels(CGFloat aPts) const {
@@ -689,6 +699,8 @@ protected:
   // The area of mTitlebarCGContext that has changed and needs to be
   // uploaded to to mTitlebarImage. Main thread only.
   nsIntRegion           mDirtyTitlebarRegion;
+
+  nsIntRegion           mDraggableRegion;
 
   // Cached value of [mView backingScaleFactor], to avoid sending two obj-c
   // messages (respondsToSelector, backingScaleFactor) every time we need to

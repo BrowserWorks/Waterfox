@@ -129,22 +129,13 @@ public class TopSitesPanel extends HomeFragment {
         }
     }
 
-    public interface BrowserTilesRecorderProvider {
-        public TilesRecorder getTilesRecorder();
-    }
-
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
 
         mMaxGridEntries = activity.getResources().getInteger(R.integer.number_of_top_sites);
 
-        try {
-            mTilesRecorder = ((BrowserTilesRecorderProvider) activity).getTilesRecorder();
-        } catch (ClassCastException e) {
-            throw new ClassCastException(activity.toString()
-                    + " must implement TopSitesPanel.BrowserTilesRecorderProvider");
-        }
+        mTilesRecorder = new TilesRecorder();
     }
 
     @Override
@@ -313,11 +304,12 @@ public class TopSitesPanel extends HomeFragment {
     public void onDestroyView() {
         super.onDestroyView();
 
-        // Discard any additional item clicks on the list
-        // as the panel is getting destroyed (see bug 930160).
+        // Discard any additional item clicks on the list as the
+        // panel is getting destroyed (see bugs 930160 & 1096958).
         mList.setOnItemClickListener(null);
-        mList = null;
+        mGrid.setOnItemClickListener(null);
 
+        mList = null;
         mGrid = null;
         mListAdapter = null;
         mGridAdapter = null;
@@ -528,7 +520,7 @@ public class TopSitesPanel extends HomeFragment {
             final Cursor cursor = BrowserDB.getTopSites(getContext().getContentResolver(), mMaxGridEntries, SEARCH_LIMIT);
             final long end = SystemClock.uptimeMillis();
             final long took = end - start;
-            Telemetry.HistogramAdd(TELEMETRY_HISTOGRAM_LOAD_CURSOR, (int) Math.min(took, Integer.MAX_VALUE));
+            Telemetry.addToHistogram(TELEMETRY_HISTOGRAM_LOAD_CURSOR, (int) Math.min(took, Integer.MAX_VALUE));
             return cursor;
         }
     }
@@ -693,7 +685,7 @@ public class TopSitesPanel extends HomeFragment {
         }
     }
 
-    private class CursorLoaderCallbacks implements LoaderCallbacks<Cursor> {
+    private class CursorLoaderCallbacks extends TransitionAwareCursorLoaderCallbacks {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             trace("Creating TopSitesLoader: " + id);
@@ -711,7 +703,7 @@ public class TopSitesPanel extends HomeFragment {
          * Why that is... dunno.
          */
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
+        protected void onLoadFinishedAfterTransitions(Loader<Cursor> loader, Cursor c) {
             debug("onLoadFinished: " + c.getCount() + " rows.");
 
             mListAdapter.swapCursor(c);
@@ -756,6 +748,8 @@ public class TopSitesPanel extends HomeFragment {
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+            super.onLoaderReset(loader);
+
             if (mListAdapter != null) {
                 mListAdapter.swapCursor(null);
             }

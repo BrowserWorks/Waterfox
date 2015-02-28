@@ -30,6 +30,7 @@ class LIRGeneratorMIPS : public LIRGeneratorShared
     // stores and loads; on MIPS all registers are okay.
     LAllocation useByteOpRegister(MDefinition *mir);
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition *mir);
+    LDefinition tempByteOpRegister();
 
     inline LDefinition tempToUnbox() {
         return LDefinition::BogusTemp();
@@ -56,7 +57,8 @@ class LIRGeneratorMIPS : public LIRGeneratorShared
 
     bool lowerForFPU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir,
                      MDefinition *src);
-    bool lowerForFPU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir,
+    template<size_t Temps>
+    bool lowerForFPU(LInstructionHelper<1, 2, Temps> *ins, MDefinition *mir,
                      MDefinition *lhs, MDefinition *rhs);
 
     bool lowerForCompIx4(LSimdBinaryCompIx4 *ins, MSimdBinaryComp *mir,
@@ -100,12 +102,17 @@ class LIRGeneratorMIPS : public LIRGeneratorShared
     bool visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32 *ins);
     bool visitAsmJSLoadHeap(MAsmJSLoadHeap *ins);
     bool visitAsmJSStoreHeap(MAsmJSStoreHeap *ins);
+    bool visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap *ins);
+    bool visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap *ins);
     bool visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins);
     bool visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins);
     bool visitForkJoinGetSlice(MForkJoinGetSlice *ins);
     bool visitSimdTernaryBitwise(MSimdTernaryBitwise *ins);
     bool visitSimdSplatX4(MSimdSplatX4 *ins);
     bool visitSimdValueX4(MSimdValueX4 *ins);
+    bool visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement *ins);
+    bool visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop *ins);
+    bool visitSubstr(MSubstr *ins);
 };
 
 typedef LIRGeneratorMIPS LIRGeneratorSpecific;

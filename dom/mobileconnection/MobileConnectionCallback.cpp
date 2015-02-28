@@ -15,6 +15,13 @@ namespace mozilla {
 namespace dom {
 namespace mobileconnection {
 
+#define CONVERT_ENUM_TO_STRING(_enumType, _enum, _string)               \
+{                                                                       \
+  uint32_t index = uint32_t(_enum);                                     \
+  _string.AssignASCII(_enumType##Values::strings[index].value,          \
+                      _enumType##Values::strings[index].length);        \
+}
+
 NS_IMPL_ISUPPORTS(MobileConnectionCallback, nsIMobileConnectionCallback)
 
 MobileConnectionCallback::MobileConnectionCallback(nsPIDOMWindow* aWindow,
@@ -31,7 +38,7 @@ nsresult
 MobileConnectionCallback::NotifySendCancelMmiSuccess(const MozMMIResult& aResult)
 {
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -58,19 +65,14 @@ MobileConnectionCallback::NotifySuccess(JS::Handle<JS::Value> aResult)
   return rs->FireSuccessAsync(mRequest, aResult);
 }
 
-// nsIMobileConnectionCallback
-
-NS_IMETHODIMP
-MobileConnectionCallback::NotifySuccess()
-{
-  return NotifySuccess(JS::UndefinedHandleValue);
-}
-
-NS_IMETHODIMP
+/**
+ * Notify Success with string.
+ */
+nsresult
 MobileConnectionCallback::NotifySuccessWithString(const nsAString& aResult)
 {
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -83,6 +85,14 @@ MobileConnectionCallback::NotifySuccessWithString(const nsAString& aResult)
   }
 
   return NotifySuccess(jsResult);
+}
+
+// nsIMobileConnectionCallback
+
+NS_IMETHODIMP
+MobileConnectionCallback::NotifySuccess()
+{
+  return NotifySuccess(JS::UndefinedHandleValue);
 }
 
 NS_IMETHODIMP
@@ -105,7 +115,7 @@ MobileConnectionCallback::NotifyGetNetworksSuccess(uint32_t aCount,
   }
 
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -151,7 +161,7 @@ MobileConnectionCallback::NotifySendCancelMmiSuccessWithStrings(const nsAString&
                                                                 const char16_t** aAdditionalInformation)
 {
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -186,7 +196,7 @@ MobileConnectionCallback::NotifySendCancelMmiSuccessWithCallForwardingOptions(
                                                                 nsIMobileCallForwardingOptions** aResults)
 {
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -287,7 +297,7 @@ MobileConnectionCallback::NotifyGetCallForwardingSuccess(uint32_t aCount,
   }
 
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -313,7 +323,7 @@ MobileConnectionCallback::NotifyGetCallBarringSuccess(uint16_t aProgram,
   result.mServiceClass.Construct().SetValue(aServiceClass);
 
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -335,7 +345,7 @@ MobileConnectionCallback::NotifyGetClirStatusSuccess(uint16_t aN, uint16_t aM)
   result.mM.Construct(aM);
 
   AutoJSAPI jsapi;
-  if (!NS_WARN_IF(jsapi.Init(mWindow))) {
+  if (NS_WARN_IF(!jsapi.Init(mWindow))) {
     return NS_ERROR_FAILURE;
   }
 
@@ -347,6 +357,30 @@ MobileConnectionCallback::NotifyGetClirStatusSuccess(uint16_t aN, uint16_t aM)
   }
 
   return NotifySuccess(jsResult);
+};
+
+NS_IMETHODIMP
+MobileConnectionCallback::NotifyGetPreferredNetworkTypeSuccess(int32_t aType)
+{
+  MOZ_ASSERT(aType < static_cast<int32_t>(MobilePreferredNetworkType::EndGuard_));
+  MobilePreferredNetworkType type = static_cast<MobilePreferredNetworkType>(aType);
+
+  nsAutoString typeString;
+  CONVERT_ENUM_TO_STRING(MobilePreferredNetworkType, type, typeString);
+
+  return NotifySuccessWithString(typeString);
+};
+
+NS_IMETHODIMP
+MobileConnectionCallback::NotifyGetRoamingPreferenceSuccess(int32_t aMode)
+{
+  MOZ_ASSERT(aMode < static_cast<int32_t>(MobileRoamingMode::EndGuard_));
+  MobileRoamingMode mode = static_cast<MobileRoamingMode>(aMode);
+
+  nsAutoString modeString;
+  CONVERT_ENUM_TO_STRING(MobileRoamingMode, mode, modeString);
+
+  return NotifySuccessWithString(modeString);
 };
 
 NS_IMETHODIMP

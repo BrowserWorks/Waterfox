@@ -8,16 +8,19 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
+    let gTab = aTab;
     let gDebugger = aPanel.panelWin;
     let gEvents = gDebugger.EVENTS;
     let gEditor = gDebugger.DebuggerView.editor;
     let gSources = gDebugger.DebuggerView.Sources;
     let gBreakpoints = gDebugger.DebuggerController.Breakpoints;
-    let gBreakpointLocation = { url: EXAMPLE_URL + "code_script-switching-01.js", line: 5 };
-
+    let gBreakpointLocation;
     Task.spawn(function() {
       yield waitForSourceShown(aPanel, "-01.js");
+      gBreakpointLocation = { actor: getSourceActor(gSources, EXAMPLE_URL + "code_script-switching-01.js"),
+                              line: 5 };
+
       yield aPanel.addBreakpoint(gBreakpointLocation);
 
       yield ensureThreadClientState(aPanel, "resumed");
@@ -66,7 +69,7 @@ function test() {
         yield ensureSourceIs(aPanel, "-01.js");
         yield verifyView({ disabled: false, visible: true });
 
-        executeSoon(() => aDebuggee.firstCall());
+        callInTab(gTab, "firstCall");
         yield waitForDebuggerEvents(aPanel, gEvents.FETCHED_SCOPES);
         yield ensureSourceIs(aPanel, "-01.js");
         yield ensureCaretAt(aPanel, 5);
@@ -83,7 +86,7 @@ function test() {
         yield ensureSourceIs(aPanel, "-02.js", true);
         yield verifyView({ disabled: false, visible: false });
 
-        executeSoon(() => aDebuggee.firstCall());
+        callInTab(gTab, "firstCall");
         yield waitForSourceAndCaretAndScopes(aPanel, "-01.js", 1);
         yield verifyView({ disabled: false, visible: true });
 
@@ -98,16 +101,16 @@ function test() {
         yield ensureSourceIs(aPanel, "-02.js", true);
         yield verifyView({ disabled: true, visible: false });
 
-        executeSoon(() => aDebuggee.firstCall());
+        callInTab(gTab, "firstCall");
         yield waitForDebuggerEvents(aPanel, gEvents.FETCHED_SCOPES);
         yield ensureSourceIs(aPanel, "-02.js");
-        yield ensureCaretAt(aPanel, 1);
+        yield ensureCaretAt(aPanel, 6);
         yield verifyView({ disabled: true, visible: false });
 
         executeSoon(() => gDebugger.gThreadClient.resume());
         yield waitForDebuggerEvents(aPanel, gEvents.AFTER_FRAMES_CLEARED);
         yield ensureSourceIs(aPanel, "-02.js");
-        yield ensureCaretAt(aPanel, 1);
+        yield ensureCaretAt(aPanel, 6);
         yield verifyView({ disabled: true, visible: false });
       });
     }

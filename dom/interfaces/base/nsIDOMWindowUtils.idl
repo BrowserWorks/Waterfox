@@ -51,7 +51,7 @@ interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 
-[scriptable, uuid(ed12c067-506b-4b10-9853-d4bba5c1bb6c)]
+[scriptable, uuid(9621eb05-b498-4e87-a012-95d817987624)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -102,6 +102,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * or is 0, it is taken to be 1.
    */
   unsigned long redraw([optional] in unsigned long aCount);
+
+  /**
+   * Force a synchronous layer transaction for this window if necessary.
+   */
+  void updateLayerTree();
 
   /**
    * Set the CSS viewport to be |widthPx| x |heightPx| in units of CSS
@@ -176,15 +181,13 @@ interface nsIDOMWindowUtils : nsISupports {
    * that each edge is located at a multiple of the "alignment" value.
    *
    * Note that both the margin values and alignment are treated as values in
-   * LayerPixels. Refer to layout/base/Units.h for a description of this unit.
+   * ScreenPixels. Refer to layout/base/Units.h for a description of this unit.
    * The base rect values are in app units.
    */
   void setDisplayPortMarginsForElement(in float aLeftMargin,
                                        in float aTopMargin,
                                        in float aRightMargin,
                                        in float aBottomMargin,
-                                       in uint32_t aAlignmentX,
-                                       in uint32_t aAlignmentY,
                                        in nsIDOMElement aElement,
                                        in uint32_t aPriority);
 
@@ -1033,11 +1036,13 @@ interface nsIDOMWindowUtils : nsISupports {
    * Cannot be accessed from unprivileged context (not content-accessible)
    * Will throw a DOM security error if called without chrome privileges.
    *
-   * @param aType     The event type: "compositionstart", "compositionend" or
-   *                  "compositionupdate".
+   * @param aType     The event type: "compositionstart",
+   *                  "compositioncommitasis", or "compositioncommit".
    * @param aData     The data property value.  Note that this isn't applied
    *                  for compositionstart event because its value is the
-   *                  selected text which is automatically computed.
+   *                  selected text which is automatically computed. And also
+   *                  this isn't applied for compositioncommitasis because
+   *                  the last data will be set automatically.
    * @param aLocale   The locale property value.
    */
   void sendCompositionEvent(in AString aType,
@@ -1599,6 +1604,11 @@ interface nsIDOMWindowUtils : nsISupports {
   void loadSheet(in nsIURI sheetURI, in unsigned long type);
 
   /**
+   * Same as the above method but allows passing the URI as a string.
+   */
+  void loadSheetUsingURIString(in ACString sheetURI, in unsigned long type);
+
+  /**
    * Adds a style sheet to the list of additional style sheets of the document.
    *
    * Style sheets can be preloaded with nsIStyleSheetService.preloadSheet.
@@ -1612,6 +1622,11 @@ interface nsIDOMWindowUtils : nsISupports {
    * style sheets of the document.  The removal takes effect immediately.
    */
   void removeSheet(in nsIURI sheetURI, in unsigned long type);
+
+  /**
+   * Same as the above method but allows passing the URI as a string.
+   */
+  void removeSheetUsingURIString(in ACString sheetURI, in unsigned long type);
 
   /**
    * Returns true if a user input is being handled.

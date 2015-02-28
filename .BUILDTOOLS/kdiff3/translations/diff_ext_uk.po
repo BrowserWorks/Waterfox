@@ -1,0 +1,94 @@
+# translation of kdiff3plugin.po to Ukrainian
+# Copyright (C) YEAR This_file_is_part_of_KDE
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Yuri Chornoivan <yurchor@ukr.net>, 2008.
+msgid ""
+msgstr ""
+"Project-Id-Version: kdiff3plugin\n"
+"Report-Msgid-Bugs-To: http://bugs.kde.org\n"
+"POT-Creation-Date: 2008-08-05 08:32+0200\n"
+"PO-Revision-Date: 2008-08-05 14:20+0300\n"
+"Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
+"Language-Team: Ukrainian <translation@linux.org.ua>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: KBabel 1.11.4\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%"
+"10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: kdiff3plugin.cpp:107
+msgid "KDiff3"
+msgstr "KDiff3"
+
+#: kdiff3plugin.cpp:114
+#, kde-format
+msgid "Compare with %1"
+msgstr "Порівняти з %1"
+
+#: kdiff3plugin.cpp:120
+#, kde-format
+msgid "Merge with %1"
+msgstr "Об’єднати з %1"
+
+#: kdiff3plugin.cpp:126
+#, kde-format
+msgid "Save '%1' for later"
+msgstr "Зберегти «%1» на потім"
+
+#: kdiff3plugin.cpp:132
+msgid "3-way merge with base"
+msgstr "3-рівневе об’єднання за основою"
+
+#: kdiff3plugin.cpp:139
+msgid "Compare with ..."
+msgstr "Порівняти з..."
+
+#: kdiff3plugin.cpp:149
+msgid "Clear list"
+msgstr "Очистити список"
+
+#: kdiff3plugin.cpp:157
+msgid "Compare"
+msgstr "Порівняти"
+
+#: kdiff3plugin.cpp:163
+msgid "3 way comparison"
+msgstr "3-рівневе порівняння"
+
+#: kdiff3plugin.cpp:167
+msgid "About KDiff3 menu plugin ..."
+msgstr "Про додаток меню KDiff3..."
+
+#: kdiff3plugin.cpp:269
+msgid ""
+"KDiff3 Menu Plugin: Copyright (C) 2008 Joachim Eibl\n"
+"KDiff3 homepage: http://kdiff3.sourceforge.net\n"
+"\n"
+msgstr ""
+"Додаток меню KDiff3: Copyright © 2008 Joachim Eibl\n"
+"Домашня сторінка KDiff3: http://kdiff3.sourceforge.net\n"
+"\n"
+
+#: kdiff3plugin.cpp:271
+msgid ""
+"Using the contextmenu extension:\n"
+"For simple comparison of two selected files choose \"Compare\".\n"
+"If the other file is somewhere else \"Save\" the first file for later. It "
+"will appear in the \"Compare With ...\" submenu. Then use \"Compare With\" "
+"on second file.\n"
+"For a 3-way merge first \"Save\" the base file, then the branch to merge and "
+"choose \"3-way merge with base\" on the other branch which will be used as "
+"destination.\n"
+"Same also applies to directory comparison and merge."
+msgstr ""
+"За допомогою додатка контекстного меню:\n"
+"Для простого порівняння двох вибраних файлів виберіть пункт «Порівняти».\n"
+"Якщо інший файл у якомусь іншому місці, «Збережіть» перший файл. У цьому разі "
+"він з’явиться у підменю «Порівняти з...». Потім скористайтеся пунктом "
+"«Порівняти з» для другого файла.\n"
+"Для 3-рівневого об’єднання спочатку «Збережіть» основний файл, потім варіант "
+"для об’єднання і оберіть \"3-рівневе об’єднання за основою\" на іншому "
+"варіанті файла, який буде використано як файл призначення об’єднання.\n"
+"Те саме стосується і порівняння з об’єднанням каталогів."

@@ -26,6 +26,7 @@ MIRGenerator::MIRGenerator(CompileCompartment *compartment, const JitCompileOpti
     alloc_(alloc),
     graph_(graph),
     abortReason_(AbortReason_NoAbort),
+    shouldForceAbort_(false),
     abortedNewScriptPropertiesTypes_(*alloc_),
     error_(false),
     pauseBuild_(nullptr),
@@ -234,9 +235,9 @@ MIRGraph::forkJoinContext()
 
 MBasicBlock *
 MBasicBlock::New(MIRGraph &graph, BytecodeAnalysis *analysis, CompileInfo &info,
-                 MBasicBlock *pred, const BytecodeSite &site, Kind kind)
+                 MBasicBlock *pred, const BytecodeSite *site, Kind kind)
 {
-    MOZ_ASSERT(site.pc() != nullptr);
+    MOZ_ASSERT(site->pc() != nullptr);
 
     MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, site, kind);
     if (!block->init())
@@ -250,7 +251,7 @@ MBasicBlock::New(MIRGraph &graph, BytecodeAnalysis *analysis, CompileInfo &info,
 
 MBasicBlock *
 MBasicBlock::NewPopN(MIRGraph &graph, CompileInfo &info,
-                     MBasicBlock *pred, const BytecodeSite &site, Kind kind, uint32_t popped)
+                     MBasicBlock *pred, const BytecodeSite *site, Kind kind, uint32_t popped)
 {
     MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, site, kind);
     if (!block->init())
@@ -264,7 +265,7 @@ MBasicBlock::NewPopN(MIRGraph &graph, CompileInfo &info,
 
 MBasicBlock *
 MBasicBlock::NewWithResumePoint(MIRGraph &graph, CompileInfo &info,
-                                MBasicBlock *pred, const BytecodeSite &site,
+                                MBasicBlock *pred, const BytecodeSite *site,
                                 MResumePoint *resumePoint)
 {
     MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, site, NORMAL);
@@ -286,10 +287,10 @@ MBasicBlock::NewWithResumePoint(MIRGraph &graph, CompileInfo &info,
 
 MBasicBlock *
 MBasicBlock::NewPendingLoopHeader(MIRGraph &graph, CompileInfo &info,
-                                  MBasicBlock *pred, const BytecodeSite &site,
+                                  MBasicBlock *pred, const BytecodeSite *site,
                                   unsigned stackPhiCount)
 {
-    MOZ_ASSERT(site.pc() != nullptr);
+    MOZ_ASSERT(site->pc() != nullptr);
 
     MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, site, PENDING_LOOP_HEADER);
     if (!block->init())
@@ -306,14 +307,16 @@ MBasicBlock::NewSplitEdge(MIRGraph &graph, CompileInfo &info, MBasicBlock *pred)
 {
     return pred->pc()
            ? MBasicBlock::New(graph, nullptr, info, pred,
-                              BytecodeSite(pred->trackedTree(), pred->pc()), SPLIT_EDGE)
+                              new(graph.alloc()) BytecodeSite(pred->trackedTree(), pred->pc()),
+                              SPLIT_EDGE)
            : MBasicBlock::NewAsmJS(graph, info, pred, SPLIT_EDGE);
 }
 
 MBasicBlock *
 MBasicBlock::NewAsmJS(MIRGraph &graph, CompileInfo &info, MBasicBlock *pred, Kind kind)
 {
-    MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, BytecodeSite(), kind);
+    BytecodeSite *site = new(graph.alloc()) BytecodeSite();
+    MBasicBlock *block = new(graph.alloc()) MBasicBlock(graph, info, site, kind);
     if (!block->init())
         return nullptr;
 
@@ -352,14 +355,14 @@ MBasicBlock::NewAsmJS(MIRGraph &graph, CompileInfo &info, MBasicBlock *pred, Kin
     return block;
 }
 
-MBasicBlock::MBasicBlock(MIRGraph &graph, CompileInfo &info, const BytecodeSite &site, Kind kind)
+MBasicBlock::MBasicBlock(MIRGraph &graph, CompileInfo &info, const BytecodeSite *site, Kind kind)
   : unreachable_(false),
     graph_(graph),
     info_(info),
     predecessors_(graph.alloc()),
     stackPosition_(info_.firstStackSlot()),
     numDominated_(0),
-    pc_(site.pc()),
+    pc_(site->pc()),
     lir_(nullptr),
     entryResumePoint_(nullptr),
     outerResumePoint_(nullptr),
@@ -752,6 +755,20 @@ MBasicBlock::discardLastIns()
     discard(lastIns());
 }
 
+MConstant *
+MBasicBlock::optimizedOutConstant(TempAllocator &alloc)
+{
+    // If the first instruction is a MConstant(MagicValue(JS_OPTIMIZED_OUT))
+    // then reuse it.
+    MInstruction *ins = *begin();
+    if (ins->type() == MIRType_MagicOptimizedOut)
+        return ins->toConstant();
+
+    MConstant *constant = MConstant::New(alloc, MagicValue(JS_OPTIMIZED_OUT));
+    insertBefore(ins, constant);
+    return constant;
+}
+
 void
 MBasicBlock::addFromElsewhere(MInstruction *ins)
 {
@@ -776,6 +793,27 @@ MBasicBlock::moveBefore(MInstruction *at, MInstruction *ins)
     ins->setBlock(at->block());
     at->block()->instructions_.insertBefore(at, ins);
     ins->setTrackedSite(at->trackedSite());
+}
+
+MInstruction *
+MBasicBlock::safeInsertTop(MDefinition *ins, IgnoreTop ignore)
+{
+    // Beta nodes and interrupt checks are required to be located at the
+    // beginnings of basic blocks, so we must insert new instructions after any
+    // such instructions.
+    MInstructionIterator insertIter = !ins || ins->isPhi()
+                                    ? begin()
+                                    : begin(ins->toInstruction());
+    while (insertIter->isBeta() ||
+           insertIter->isInterruptCheck() ||
+           insertIter->isInterruptCheckPar() ||
+           insertIter->isConstant() ||
+           (!(ignore & IgnoreRecover) && insertIter->isRecoveredOnBailout()))
+    {
+        insertIter++;
+    }
+
+    return *insertIter;
 }
 
 void
@@ -887,10 +925,8 @@ MBasicBlock::discardAllPhis()
 void
 MBasicBlock::discardAllResumePoints(bool discardEntry)
 {
-    if (outerResumePoint_) {
-        discardResumePoint(outerResumePoint_);
-        outerResumePoint_ = nullptr;
-    }
+    if (outerResumePoint_)
+        clearOuterResumePoint();
 
     if (discardEntry && entryResumePoint_)
         clearEntryResumePoint();

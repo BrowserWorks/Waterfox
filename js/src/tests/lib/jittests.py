@@ -177,10 +177,10 @@ class Test:
                         test.tz_pacific = True
                     elif name == 'ion-eager':
                         test.jitflags.append('--ion-eager')
-                    elif name == 'no-ion':
-                        test.jitflags.append('--no-ion')
                     elif name == 'dump-bytecode':
                         test.jitflags.append('--dump-bytecode')
+                    elif name.startswith('--'): # // |jit-test| --ion-gvn=off; --no-sse4
+                        test.jitflags.append(name)
                     else:
                         print('%s: warning: unrecognized |jit-test| attribute %s' % (path, part))
 
@@ -373,8 +373,11 @@ def run_test_remote(test, device, prefix, options):
     # the same buffer to both.
     return TestOutput(test, cmd, out, out, returncode, None, False)
 
-def check_output(out, err, rc, timed_out, test):
+def check_output(out, err, rc, timed_out, test, options):
     if timed_out:
+        if test.relpath_tests in options.ignore_timeouts:
+            return True
+
         # The shell sometimes hangs on shutdown on Windows 7 and Windows
         # Server 2008. See bug 970063 comment 7 for a description of the
         # problem. Until bug 956899 is fixed, ignore timeouts on these
@@ -645,14 +648,23 @@ def process_test_results(results, num_tests, options):
 
     try:
         for i, res in enumerate(results):
-            if options.show_output:
+            ok = check_output(res.out, res.err, res.rc, res.timed_out, res.test, options)
+
+            if ok:
+                show_output = options.show_output and not options.failed_only
+            else:
+                show_output = options.show_output or not options.no_show_failed
+
+            if show_output:
+                pb.beginline()
                 sys.stdout.write(res.out)
                 sys.stdout.write(res.err)
                 sys.stdout.write('Exit code: %s\n' % res.rc)
-            if res.test.valgrind:
+
+            if res.test.valgrind and not show_output:
+                pb.beginline()
                 sys.stdout.write(res.err)
 
-            ok = check_output(res.out, res.err, res.rc, res.timed_out, res.test)
             doing = 'after %s' % res.test.relpath_tests
             if not ok:
                 failures.append(res)

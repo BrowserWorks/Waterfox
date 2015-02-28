@@ -137,10 +137,6 @@ es_MX{
             "FKP",
             "libra malvinense",
         }
-        GBP{
-            "GBP",
-            "libra esterlina británica",
-        }
         GEL{
             "GEL",
             "lari georgiano",
@@ -433,10 +429,6 @@ es_MX{
             one{"libra malvinense"}
             other{"libras malvinenses"}
         }
-        GBP{
-            one{"libra esterlina británica"}
-            other{"libras esterlinas británicas"}
-        }
         GEL{
             one{"lari georgiano"}
             other{"laris georgianos"}
@@ -626,5 +618,5 @@ es_MX{
             other{"kwachas zambianos"}
         }
     }
-    Version{"2.1.8.19"}
+    Version{"2.1.10.42"}
 }

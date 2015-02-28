@@ -117,6 +117,8 @@ GonkCameraParameters::Parameters::GetTextKey(uint32_t aKey)
       return KEY_RECORDING_HINT;
     case CAMERA_PARAM_PICTURE_QUALITY:
       return KEY_JPEG_QUALITY;
+    case CAMERA_PARAM_PREFERRED_PREVIEWSIZE_FOR_VIDEO:
+      return KEY_PREFERRED_PREVIEW_SIZE_FOR_VIDEO;
 
     case CAMERA_PARAM_SUPPORTED_PREVIEWSIZES:
       return KEY_SUPPORTED_PREVIEW_SIZES;
@@ -352,7 +354,7 @@ GonkCameraParameters::SetTranslated(uint32_t aKey, const ICameraControl::Size& a
   if (aSize.width > INT_MAX || aSize.height > INT_MAX) {
     // AOSP can only handle signed ints.
     DOM_CAMERA_LOGE("Camera parameter aKey=%d out of bounds (width=%u, height=%u)\n",
-      aSize.width, aSize.height);
+      aKey, aSize.width, aSize.height);
     return NS_ERROR_INVALID_ARG;
   }
 

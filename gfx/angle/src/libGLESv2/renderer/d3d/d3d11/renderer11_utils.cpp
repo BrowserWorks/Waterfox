@@ -16,6 +16,8 @@
 
 #include "common/debug.h"
 
+
+
 #include <algorithm>
 
 namespace rx
@@ -23,6 +25,22 @@ namespace rx
 
 namespace gl_d3d11
 {
+	
+#define D3D_FL9_1_REQ_TEXTURE1D_U_DIMENSION          2048
+#define D3D_FL9_3_REQ_TEXTURE1D_U_DIMENSION          4096
+#define D3D_FL9_1_REQ_TEXTURE2D_U_OR_V_DIMENSION     2048
+#define D3D_FL9_3_REQ_TEXTURE2D_U_OR_V_DIMENSION     4096
+#define D3D_FL9_1_REQ_TEXTURECUBE_DIMENSION          512
+#define D3D_FL9_3_REQ_TEXTURECUBE_DIMENSION          4096
+#define D3D_FL9_1_REQ_TEXTURE3D_U_V_OR_W_DIMENSION   256
+#define D3D_FL9_1_DEFAULT_MAX_ANISOTROPY             2
+#define D3D_FL9_1_IA_PRIMITIVE_MAX_COUNT             65535
+#define D3D_FL9_2_IA_PRIMITIVE_MAX_COUNT             1048575
+#define D3D_FL9_1_SIMULTANEOUS_RENDER_TARGET_COUNT   1
+#define D3D_FL9_3_SIMULTANEOUS_RENDER_TARGET_COUNT   4
+#define D3D_FL9_1_MAX_TEXTURE_REPEAT                 128
+#define D3D_FL9_2_MAX_TEXTURE_REPEAT                 2048
+#define D3D_FL9_3_MAX_TEXTURE_REPEAT                 8192
 
 D3D11_BLEND ConvertBlendFunc(GLenum glBlend, bool isAlpha)
 {
@@ -276,7 +294,9 @@ static bool GetNPOTTextureSupport(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0: return true;
@@ -294,7 +314,9 @@ static float GetMaximumAnisotropy(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_MAX_MAXANISOTROPY;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -314,7 +336,9 @@ static bool GetOcclusionQuerySupport(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0: return true;
@@ -334,7 +358,9 @@ static bool GetEventQuerySupport(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0:
@@ -352,7 +378,9 @@ static bool GetInstancingSupport(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0:
@@ -375,7 +403,9 @@ static bool GetDerivativeInstructionSupport(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0:
@@ -393,7 +423,9 @@ static size_t GetMaximumSimultaneousRenderTargets(D3D_FEATURE_LEVEL featureLevel
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -411,7 +443,9 @@ static size_t GetMaximum2DTextureSize(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_REQ_TEXTURE2D_U_OR_V_DIMENSION;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -429,7 +463,9 @@ static size_t GetMaximumCubeMapTextureSize(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_REQ_TEXTURECUBE_DIMENSION;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -447,7 +483,9 @@ static size_t GetMaximum2DTextureArraySize(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_REQ_TEXTURE2D_ARRAY_AXIS_DIMENSION;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -465,7 +503,9 @@ static size_t GetMaximum3DTextureSize(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_REQ_TEXTURE3D_U_V_OR_W_DIMENSION;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -483,7 +523,9 @@ static size_t GetMaximumViewportSize(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_VIEWPORT_BOUNDS_MAX;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -507,7 +549,9 @@ static size_t GetMaximumDrawIndexedIndexCount(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0: return std::numeric_limits<GLint>::max();
@@ -529,7 +573,9 @@ static size_t GetMaximumDrawVertexCount(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0: return std::numeric_limits<GLint>::max();
@@ -546,7 +592,9 @@ static size_t GetMaximumVertexInputSlots(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_STANDARD_VERTEX_ELEMENT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1: return D3D10_1_STANDARD_VERTEX_ELEMENT_COUNT;
@@ -566,7 +614,9 @@ static size_t GetMaximumVertexUniformVectors(D3D_FEATURE_LEVEL featureLevel)
     // TODO(geofflang): Remove hard-coded limit once the gl-uniform-arrays test can pass
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return 1024; // D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -591,7 +641,9 @@ static size_t GetMaximumVertexUniformBlocks(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - GetReservedVertexUniformBuffers();
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -618,7 +670,9 @@ static size_t GetMaximumVertexOutputVectors(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_VS_OUTPUT_REGISTER_COUNT - GetReservedVertexOutputVectors();
 
       case D3D_FEATURE_LEVEL_10_1: return D3D10_1_VS_OUTPUT_REGISTER_COUNT - GetReservedVertexOutputVectors();
@@ -637,7 +691,9 @@ static size_t GetMaximumVertexTextureUnits(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -659,7 +715,9 @@ static size_t GetMaximumPixelUniformVectors(D3D_FEATURE_LEVEL featureLevel)
     // TODO(geofflang): Remove hard-coded limit once the gl-uniform-arrays test can pass
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return 1024; // D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -684,7 +742,9 @@ static size_t GetMaximumPixelUniformBlocks(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT - GetReservedPixelUniformBuffers();
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -703,7 +763,9 @@ static size_t GetMaximumPixelInputVectors(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_PS_INPUT_REGISTER_COUNT - GetReservedVertexOutputVectors();
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -722,7 +784,9 @@ static size_t GetMaximumPixelTextureUnits(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -741,7 +805,9 @@ static int GetMinimumTexelOffset(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_TEXEL_OFFSET_MAX_NEGATIVE;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -760,7 +826,9 @@ static int GetMaximumTexelOffset(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_COMMONSHADER_TEXEL_OFFSET_MAX_POSITIVE;
       case D3D_FEATURE_LEVEL_10_1:
       case D3D_FEATURE_LEVEL_10_0: return D3D11_COMMONSHADER_TEXEL_OFFSET_MAX_POSITIVE;
@@ -783,7 +851,9 @@ static size_t GetMaximumConstantBufferSize(D3D_FEATURE_LEVEL featureLevel)
 
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_REQ_CONSTANT_BUFFER_ELEMENT_COUNT * bytesPerComponent;
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -802,7 +872,9 @@ static size_t GetMaximumStreamOutputBuffers(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0: return D3D11_SO_BUFFER_SLOT_COUNT;
 
       case D3D_FEATURE_LEVEL_10_1: return D3D10_1_SO_BUFFER_SLOT_COUNT;
@@ -816,11 +888,13 @@ static size_t GetMaximumStreamOutputBuffers(D3D_FEATURE_LEVEL featureLevel)
     }
 }
 
-static size_t GetMaximumStreamOutputInterleavedComponenets(D3D_FEATURE_LEVEL featureLevel)
+static size_t GetMaximumStreamOutputInterleavedComponents(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
+#endif
       case D3D_FEATURE_LEVEL_11_0:
 
       case D3D_FEATURE_LEVEL_10_1:
@@ -834,12 +908,14 @@ static size_t GetMaximumStreamOutputInterleavedComponenets(D3D_FEATURE_LEVEL fea
     }
 }
 
-static size_t GetMaximumStreamOutputSeparateCompeonents(D3D_FEATURE_LEVEL featureLevel)
+static size_t GetMaximumStreamOutputSeparateComponents(D3D_FEATURE_LEVEL featureLevel)
 {
     switch (featureLevel)
     {
+#if _MSC_VER >= 1700
       case D3D_FEATURE_LEVEL_11_1:
-      case D3D_FEATURE_LEVEL_11_0: return GetMaximumStreamOutputInterleavedComponenets(featureLevel) /
+#endif
+      case D3D_FEATURE_LEVEL_11_0: return GetMaximumStreamOutputInterleavedComponents(featureLevel) /
                                           GetMaximumStreamOutputBuffers(featureLevel);
 
 
@@ -948,9 +1024,9 @@ void GenerateCaps(ID3D11Device *device, gl::Caps *caps, gl::TextureCapsMap *text
     caps->maxCombinedTextureImageUnits = caps->maxVertexTextureImageUnits + caps->maxTextureImageUnits;
 
     // Transform feedback limits
-    caps->maxTransformFeedbackInterleavedComponents = GetMaximumStreamOutputInterleavedComponenets(featureLevel);
+    caps->maxTransformFeedbackInterleavedComponents = GetMaximumStreamOutputInterleavedComponents(featureLevel);
     caps->maxTransformFeedbackSeparateAttributes = GetMaximumStreamOutputBuffers(featureLevel);
-    caps->maxTransformFeedbackSeparateComponents = GetMaximumStreamOutputSeparateCompeonents(featureLevel);
+    caps->maxTransformFeedbackSeparateComponents = GetMaximumStreamOutputSeparateComponents(featureLevel);
 
     // GL extension support
     extensions->setTextureExtensionSupport(*textureCapsMap);
@@ -1076,6 +1152,7 @@ Workarounds GenerateWorkarounds()
 {
     Workarounds workarounds;
     workarounds.mrtPerfWorkaround = true;
+    workarounds.setDataFasterThanImageUpload = true;
     return workarounds;
 }
 

@@ -29,6 +29,7 @@ class LIRGeneratorNone : public LIRGeneratorShared
 
     LAllocation useByteOpRegister(MDefinition *) { MOZ_CRASH(); }
     LAllocation useByteOpRegisterOrNonDoubleConstant(MDefinition *) { MOZ_CRASH(); }
+    LDefinition tempByteOpRegister() { MOZ_CRASH(); }
     LDefinition tempToUnbox() { MOZ_CRASH(); }
     bool needTempForPostBarrier() { MOZ_CRASH(); }
     LDefinition tempForDispatchCache(MIRType v = MIRType_None) { MOZ_CRASH(); }
@@ -78,6 +79,10 @@ class LIRGeneratorNone : public LIRGeneratorShared
     bool visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins) { MOZ_CRASH(); }
     bool visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins) { MOZ_CRASH(); }
     bool visitForkJoinGetSlice(MForkJoinGetSlice *ins) { MOZ_CRASH(); }
+    bool visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop *ins) { MOZ_CRASH(); }
+    bool visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement *ins) { MOZ_CRASH(); }
+    bool visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap *ins) { MOZ_CRASH(); }
+    bool visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap *ins) { MOZ_CRASH(); }
 
     LTableSwitch *newLTableSwitch(LAllocation, LDefinition, MTableSwitch *) { MOZ_CRASH(); }
     LTableSwitchV *newLTableSwitchV(MTableSwitch *) { MOZ_CRASH(); }

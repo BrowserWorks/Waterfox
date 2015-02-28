@@ -729,7 +729,7 @@ class EmptyBlobImpl MOZ_FINAL
   : public FileImplBase
 {
 public:
-  EmptyBlobImpl(const nsAString& aContentType)
+  explicit EmptyBlobImpl(const nsAString& aContentType)
     : FileImplBase(aContentType, 0)
   {
     mImmutable = true;
@@ -840,7 +840,7 @@ struct MOZ_STACK_CLASS CreateBlobImplMetadata MOZ_FINAL
   bool mHasRecursed;
   const bool mIsSameProcessActor;
 
-  CreateBlobImplMetadata(bool aIsSameProcessActor)
+  explicit CreateBlobImplMetadata(bool aIsSameProcessActor)
     : mLength(0)
     , mLastModifiedDate(0)
     , mHasRecursed(false)
@@ -1678,7 +1678,7 @@ class BlobChild::RemoteBlobImpl::CreateStreamHelper MOZ_FINAL
   bool mDone;
 
 public:
-  CreateStreamHelper(RemoteBlobImpl* aRemoteBlobImpl);
+  explicit CreateStreamHelper(RemoteBlobImpl* aRemoteBlobImpl);
 
   nsresult
   GetStream(nsIInputStream** aInputStream);
@@ -1826,11 +1826,8 @@ public:
   virtual bool
   IsFile() const MOZ_OVERRIDE;
 
-  virtual void
-  Unlink() MOZ_OVERRIDE;
-
-  virtual void
-  Traverse(nsCycleCollectionTraversalCallback& aCallback) MOZ_OVERRIDE;
+  virtual bool
+  MayBeClonedToOtherThreads() const MOZ_OVERRIDE;
 
   virtual BlobChild*
   GetBlobChild() MOZ_OVERRIDE;
@@ -2532,18 +2529,11 @@ RemoteBlobImpl::IsFile() const
   return mBlobImpl->IsFile();
 }
 
-void
+bool
 BlobParent::
-RemoteBlobImpl::Unlink()
+RemoteBlobImpl::MayBeClonedToOtherThreads() const
 {
-  return mBlobImpl->Unlink();
-}
-
-void
-BlobParent::
-RemoteBlobImpl::Traverse(nsCycleCollectionTraversalCallback& aCallback)
-{
-  return mBlobImpl->Traverse(aCallback);
+  return mBlobImpl->MayBeClonedToOtherThreads();
 }
 
 BlobChild*
@@ -2990,7 +2980,6 @@ BlobChild::GetOrCreateFromImpl(ChildManagerType* aManager,
   ParentBlobConstructorParams params(blobParams);
 
   if (NS_WARN_IF(!aManager->SendPBlobConstructor(actor, params))) {
-    BlobChild::Destroy(actor);
     return nullptr;
   }
 
@@ -3055,7 +3044,6 @@ BlobChild::SendSliceConstructor(ChildManagerType* aManager,
     return newActor;
   }
 
-  BlobChild::Destroy(newActor);
   return nullptr;
 }
 
@@ -3538,7 +3526,6 @@ BlobParent::GetOrCreateFromImpl(ParentManagerType* aManager,
 
   ChildBlobConstructorParams params(id, blobParams);
   if (NS_WARN_IF(!aManager->SendPBlobConstructor(actor, params))) {
-    BlobParent::Destroy(actor);
     return nullptr;
   }
 
@@ -3704,7 +3691,6 @@ BlobParent::SendSliceConstructor(
     return newActor;
   }
 
-  BlobParent::Destroy(newActor);
   return nullptr;
 }
 
@@ -3874,7 +3860,7 @@ BlobParent::RecvPBlobStreamConstructor(PBlobStreamParent* aActor,
   // Make sure we can't overflow.
   if (NS_WARN_IF(UINT64_MAX - aLength < aStart)) {
     ASSERT_UNLESS_FUZZING();
-    return nullptr;
+    return false;
   }
 
   ErrorResult errorResult;
@@ -3883,7 +3869,7 @@ BlobParent::RecvPBlobStreamConstructor(PBlobStreamParent* aActor,
 
   if (NS_WARN_IF(aStart + aLength > blobLength)) {
     ASSERT_UNLESS_FUZZING();
-    return nullptr;
+    return false;
   }
 
   nsRefPtr<FileImpl> blobImpl;

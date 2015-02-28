@@ -58,7 +58,6 @@ function getDialogDoc() {
     while (containedDocShells.hasMoreElements()) {
         // Get the corresponding document for this docshell
         var childDocShell = containedDocShells.getNext();
-        childDocShell.QueryInterface(Ci.nsIDocShell);
         // We don't want it if it's not done loading.
         if (childDocShell.busyFlags != Ci.nsIDocShell.BUSY_FLAGS_NONE)
           continue;
@@ -99,14 +98,9 @@ let tests = [
     };
     startCallbackTimer();
     executeSoon(() => alert("test"));
-    let panelShownPromiseExists = Promise.defer();
-    waitForCondition(() => panelShown, panelShownPromiseExists.resolve, "Timed out waiting for panel promise to be assigned", 100);
-    yield panelShownPromiseExists.promise;
+    yield waitForConditionPromise(() => panelShown, "Timed out waiting for panel promise to be assigned", 100);
     yield panelShown;
 
-    popup = document.getElementById("UITourTooltip");
-    let hiddenPromise = promisePanelElementHidden(window, popup);
-    gContentAPI.hideInfo();
-    yield hiddenPromise;
+    yield hideInfoPromise();
   })
 ];

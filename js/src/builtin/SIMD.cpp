@@ -87,7 +87,7 @@ template<typename Elem>
 static Elem
 TypedObjectMemory(HandleValue v)
 {
-    OutlineTypedObject &obj = v.toObject().as<OutlineTypedObject>();
+    TypedObject &obj = v.toObject().as<TypedObject>();
     return reinterpret_cast<Elem>(obj.typedMem());
 }
 
@@ -138,7 +138,7 @@ static bool SignMask(JSContext *cx, unsigned argc, Value *vp)
         return false;
     }
 
-    OutlineTypedObject &typedObj = args.thisv().toObject().as<OutlineTypedObject>();
+    TypedObject &typedObj = args.thisv().toObject().as<TypedObject>();
     TypeDescr &descr = typedObj.typeDescr();
     if (descr.kind() != type::Simd || descr.as<SimdTypeDescr>().type() != SimdType::type) {
         JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_INCOMPATIBLE_PROTO,
@@ -159,7 +159,7 @@ static bool SignMask(JSContext *cx, unsigned argc, Value *vp)
 
 #define SIGN_MASK(type) \
 static bool type##SignMask(JSContext *cx, unsigned argc, Value *vp) { \
-    return SignMask<Int32x4>(cx, argc, vp); \
+    return SignMask<type>(cx, argc, vp); \
 }
     SIGN_MASK(Float32x4);
     SIGN_MASK(Int32x4);
@@ -167,7 +167,7 @@ static bool type##SignMask(JSContext *cx, unsigned argc, Value *vp) { \
 
 const Class SimdTypeDescr::class_ = {
     "SIMD",
-    JSCLASS_HAS_RESERVED_SLOTS(JS_DESCR_SLOTS),
+    JSCLASS_HAS_RESERVED_SLOTS(JS_DESCR_SLOTS) | JSCLASS_BACKGROUND_FINALIZE,
     JS_PropertyStub,         /* addProperty */
     JS_DeletePropertyStub,   /* delProperty */
     JS_PropertyStub,         /* getProperty */
@@ -175,7 +175,7 @@ const Class SimdTypeDescr::class_ = {
     JS_EnumerateStub,
     JS_ResolveStub,
     JS_ConvertStub,
-    nullptr,             /* finalize    */
+    TypeDescr::finalize,
     call,                /* call        */
     nullptr,             /* hasInstance */
     nullptr,             /* construct   */
@@ -267,6 +267,7 @@ CreateSimdClass(JSContext *cx,
     typeDescr->initReservedSlot(JS_DESCR_SLOT_SIZE, Int32Value(SimdTypeDescr::size(type)));
     typeDescr->initReservedSlot(JS_DESCR_SLOT_OPAQUE, BooleanValue(false));
     typeDescr->initReservedSlot(JS_DESCR_SLOT_TYPE, Int32Value(T::type));
+    typeDescr->initReservedSlot(JS_DESCR_SLOT_TRACE_LIST, PrivateValue(nullptr));
 
     if (!CreateUserSizeAndAlignmentProperties(cx, typeDescr))
         return nullptr;
@@ -322,7 +323,7 @@ SimdTypeDescr::call(JSContext *cx, unsigned argc, Value *vp)
         return false;
     }
 
-    Rooted<TypedObject*> result(cx, OutlineTypedObject::createZeroed(cx, descr, 0));
+    Rooted<TypedObject*> result(cx, TypedObject::createZeroed(cx, descr, 0));
     if (!result)
         return false;
 
@@ -368,270 +369,6 @@ const Class SIMDObject::class_ = {
         nullptr
 };
 
-static JSConstIntegerSpec SHUFFLE_MASKS[] = {
-    {"XXXX", 0x0},
-    {"XXXY", 0x40},
-    {"XXXZ", 0x80},
-    {"XXXW", 0xC0},
-    {"XXYX", 0x10},
-    {"XXYY", 0x50},
-    {"XXYZ", 0x90},
-    {"XXYW", 0xD0},
-    {"XXZX", 0x20},
-    {"XXZY", 0x60},
-    {"XXZZ", 0xA0},
-    {"XXZW", 0xE0},
-    {"XXWX", 0x30},
-    {"XXWY", 0x70},
-    {"XXWZ", 0xB0},
-    {"XXWW", 0xF0},
-    {"XYXX", 0x4},
-    {"XYXY", 0x44},
-    {"XYXZ", 0x84},
-    {"XYXW", 0xC4},
-    {"XYYX", 0x14},
-    {"XYYY", 0x54},
-    {"XYYZ", 0x94},
-    {"XYYW", 0xD4},
-    {"XYZX", 0x24},
-    {"XYZY", 0x64},
-    {"XYZZ", 0xA4},
-    {"XYZW", 0xE4},
-    {"XYWX", 0x34},
-    {"XYWY", 0x74},
-    {"XYWZ", 0xB4},
-    {"XYWW", 0xF4},
-    {"XZXX", 0x8},
-    {"XZXY", 0x48},
-    {"XZXZ", 0x88},
-    {"XZXW", 0xC8},
-    {"XZYX", 0x18},
-    {"XZYY", 0x58},
-    {"XZYZ", 0x98},
-    {"XZYW", 0xD8},
-    {"XZZX", 0x28},
-    {"XZZY", 0x68},
-    {"XZZZ", 0xA8},
-    {"XZZW", 0xE8},
-    {"XZWX", 0x38},
-    {"XZWY", 0x78},
-    {"XZWZ", 0xB8},
-    {"XZWW", 0xF8},
-    {"XWXX", 0xC},
-    {"XWXY", 0x4C},
-    {"XWXZ", 0x8C},
-    {"XWXW", 0xCC},
-    {"XWYX", 0x1C},
-    {"XWYY", 0x5C},
-    {"XWYZ", 0x9C},
-    {"XWYW", 0xDC},
-    {"XWZX", 0x2C},
-    {"XWZY", 0x6C},
-    {"XWZZ", 0xAC},
-    {"XWZW", 0xEC},
-    {"XWWX", 0x3C},
-    {"XWWY", 0x7C},
-    {"XWWZ", 0xBC},
-    {"XWWW", 0xFC},
-    {"YXXX", 0x1},
-    {"YXXY", 0x41},
-    {"YXXZ", 0x81},
-    {"YXXW", 0xC1},
-    {"YXYX", 0x11},
-    {"YXYY", 0x51},
-    {"YXYZ", 0x91},
-    {"YXYW", 0xD1},
-    {"YXZX", 0x21},
-    {"YXZY", 0x61},
-    {"YXZZ", 0xA1},
-    {"YXZW", 0xE1},
-    {"YXWX", 0x31},
-    {"YXWY", 0x71},
-    {"YXWZ", 0xB1},
-    {"YXWW", 0xF1},
-    {"YYXX", 0x5},
-    {"YYXY", 0x45},
-    {"YYXZ", 0x85},
-    {"YYXW", 0xC5},
-    {"YYYX", 0x15},
-    {"YYYY", 0x55},
-    {"YYYZ", 0x95},
-    {"YYYW", 0xD5},
-    {"YYZX", 0x25},
-    {"YYZY", 0x65},
-    {"YYZZ", 0xA5},
-    {"YYZW", 0xE5},
-    {"YYWX", 0x35},
-    {"YYWY", 0x75},
-    {"YYWZ", 0xB5},
-    {"YYWW", 0xF5},
-    {"YZXX", 0x9},
-    {"YZXY", 0x49},
-    {"YZXZ", 0x89},
-    {"YZXW", 0xC9},
-    {"YZYX", 0x19},
-    {"YZYY", 0x59},
-    {"YZYZ", 0x99},
-    {"YZYW", 0xD9},
-    {"YZZX", 0x29},
-    {"YZZY", 0x69},
-    {"YZZZ", 0xA9},
-    {"YZZW", 0xE9},
-    {"YZWX", 0x39},
-    {"YZWY", 0x79},
-    {"YZWZ", 0xB9},
-    {"YZWW", 0xF9},
-    {"YWXX", 0xD},
-    {"YWXY", 0x4D},
-    {"YWXZ", 0x8D},
-    {"YWXW", 0xCD},
-    {"YWYX", 0x1D},
-    {"YWYY", 0x5D},
-    {"YWYZ", 0x9D},
-    {"YWYW", 0xDD},
-    {"YWZX", 0x2D},
-    {"YWZY", 0x6D},
-    {"YWZZ", 0xAD},
-    {"YWZW", 0xED},
-    {"YWWX", 0x3D},
-    {"YWWY", 0x7D},
-    {"YWWZ", 0xBD},
-    {"YWWW", 0xFD},
-    {"ZXXX", 0x2},
-    {"ZXXY", 0x42},
-    {"ZXXZ", 0x82},
-    {"ZXXW", 0xC2},
-    {"ZXYX", 0x12},
-    {"ZXYY", 0x52},
-    {"ZXYZ", 0x92},
-    {"ZXYW", 0xD2},
-    {"ZXZX", 0x22},
-    {"ZXZY", 0x62},
-    {"ZXZZ", 0xA2},
-    {"ZXZW", 0xE2},
-    {"ZXWX", 0x32},
-    {"ZXWY", 0x72},
-    {"ZXWZ", 0xB2},
-    {"ZXWW", 0xF2},
-    {"ZYXX", 0x6},
-    {"ZYXY", 0x46},
-    {"ZYXZ", 0x86},
-    {"ZYXW", 0xC6},
-    {"ZYYX", 0x16},
-    {"ZYYY", 0x56},
-    {"ZYYZ", 0x96},
-    {"ZYYW", 0xD6},
-    {"ZYZX", 0x26},
-    {"ZYZY", 0x66},
-    {"ZYZZ", 0xA6},
-    {"ZYZW", 0xE6},
-    {"ZYWX", 0x36},
-    {"ZYWY", 0x76},
-    {"ZYWZ", 0xB6},
-    {"ZYWW", 0xF6},
-    {"ZZXX", 0xA},
-    {"ZZXY", 0x4A},
-    {"ZZXZ", 0x8A},
-    {"ZZXW", 0xCA},
-    {"ZZYX", 0x1A},
-    {"ZZYY", 0x5A},
-    {"ZZYZ", 0x9A},
-    {"ZZYW", 0xDA},
-    {"ZZZX", 0x2A},
-    {"ZZZY", 0x6A},
-    {"ZZZZ", 0xAA},
-    {"ZZZW", 0xEA},
-    {"ZZWX", 0x3A},
-    {"ZZWY", 0x7A},
-    {"ZZWZ", 0xBA},
-    {"ZZWW", 0xFA},
-    {"ZWXX", 0xE},
-    {"ZWXY", 0x4E},
-    {"ZWXZ", 0x8E},
-    {"ZWXW", 0xCE},
-    {"ZWYX", 0x1E},
-    {"ZWYY", 0x5E},
-    {"ZWYZ", 0x9E},
-    {"ZWYW", 0xDE},
-    {"ZWZX", 0x2E},
-    {"ZWZY", 0x6E},
-    {"ZWZZ", 0xAE},
-    {"ZWZW", 0xEE},
-    {"ZWWX", 0x3E},
-    {"ZWWY", 0x7E},
-    {"ZWWZ", 0xBE},
-    {"ZWWW", 0xFE},
-    {"WXXX", 0x3},
-    {"WXXY", 0x43},
-    {"WXXZ", 0x83},
-    {"WXXW", 0xC3},
-    {"WXYX", 0x13},
-    {"WXYY", 0x53},
-    {"WXYZ", 0x93},
-    {"WXYW", 0xD3},
-    {"WXZX", 0x23},
-    {"WXZY", 0x63},
-    {"WXZZ", 0xA3},
-    {"WXZW", 0xE3},
-    {"WXWX", 0x33},
-    {"WXWY", 0x73},
-    {"WXWZ", 0xB3},
-    {"WXWW", 0xF3},
-    {"WYXX", 0x7},
-    {"WYXY", 0x47},
-    {"WYXZ", 0x87},
-    {"WYXW", 0xC7},
-    {"WYYX", 0x17},
-    {"WYYY", 0x57},
-    {"WYYZ", 0x97},
-    {"WYYW", 0xD7},
-    {"WYZX", 0x27},
-    {"WYZY", 0x67},
-    {"WYZZ", 0xA7},
-    {"WYZW", 0xE7},
-    {"WYWX", 0x37},
-    {"WYWY", 0x77},
-    {"WYWZ", 0xB7},
-    {"WYWW", 0xF7},
-    {"WZXX", 0xB},
-    {"WZXY", 0x4B},
-    {"WZXZ", 0x8B},
-    {"WZXW", 0xCB},
-    {"WZYX", 0x1B},
-    {"WZYY", 0x5B},
-    {"WZYZ", 0x9B},
-    {"WZYW", 0xDB},
-    {"WZZX", 0x2B},
-    {"WZZY", 0x6B},
-    {"WZZZ", 0xAB},
-    {"WZZW", 0xEB},
-    {"WZWX", 0x3B},
-    {"WZWY", 0x7B},
-    {"WZWZ", 0xBB},
-    {"WZWW", 0xFB},
-    {"WWXX", 0xF},
-    {"WWXY", 0x4F},
-    {"WWXZ", 0x8F},
-    {"WWXW", 0xCF},
-    {"WWYX", 0x1F},
-    {"WWYY", 0x5F},
-    {"WWYZ", 0x9F},
-    {"WWYW", 0xDF},
-    {"WWZX", 0x2F},
-    {"WWZY", 0x6F},
-    {"WWZZ", 0xAF},
-    {"WWZW", 0xEF},
-    {"WWWX", 0x3F},
-    {"WWWY", 0x7F},
-    {"WWWZ", 0xBF},
-    {"WWWW", 0xFF},
-    {"XX", 0x0},
-    {"XY", 0x2},
-    {"YX", 0x1},
-    {"YY", 0x3},
-    {0,0}
-};
-
 JSObject *
 SIMDObject::initClass(JSContext *cx, Handle<GlobalObject *> global)
 {
@@ -650,9 +387,6 @@ SIMDObject::initClass(JSContext *cx, Handle<GlobalObject *> global)
     RootedObject SIMD(cx, NewObjectWithGivenProto(cx, &SIMDObject::class_, objProto,
                                                   global, SingletonObject));
     if (!SIMD)
-        return nullptr;
-
-    if (!JS_DefineConstIntegers(cx, SIMD, SHUFFLE_MASKS))
         return nullptr;
 
     // float32x4
@@ -717,7 +451,7 @@ js::CreateSimd(JSContext *cx, typename V::Elem *data)
     Rooted<TypeDescr*> typeDescr(cx, &V::GetTypeDescr(*cx->global()));
     MOZ_ASSERT(typeDescr);
 
-    Rooted<TypedObject *> result(cx, OutlineTypedObject::createZeroed(cx, typeDescr, 0));
+    Rooted<TypedObject *> result(cx, TypedObject::createZeroed(cx, typeDescr, 0));
     if (!result)
         return nullptr;
 
@@ -733,7 +467,7 @@ namespace js {
 // Unary SIMD operators
 template<typename T>
 struct Abs {
-    static inline T apply(T x) { return x < 0 ? -1 * x : x; }
+    static inline T apply(T x) { return mozilla::Abs(x); }
 };
 template<typename T>
 struct Neg {
@@ -775,11 +509,19 @@ struct Mul {
 };
 template<typename T>
 struct Minimum {
-    static inline T apply(T l, T r) { return l < r ? l : r; }
+    static inline T apply(T l, T r) { return math_min_impl(l, r); }
+};
+template<typename T>
+struct MinNum {
+    static inline T apply(T l, T r) { return IsNaN(l) ? r : (IsNaN(r) ? l : math_min_impl(l, r)); }
 };
 template<typename T>
 struct Maximum {
-    static inline T apply(T l, T r) { return l > r ? l : r; }
+    static inline T apply(T l, T r) { return math_max_impl(l, r); }
+};
+template<typename T>
+struct MaxNum {
+    static inline T apply(T l, T r) { return IsNaN(l) ? r : (IsNaN(r) ? l : math_max_impl(l, r)); }
 };
 template<typename T>
 struct LessThan {
@@ -818,10 +560,6 @@ struct Or {
     static inline T apply(T l, T r) { return l | r; }
 };
 template<typename T>
-struct Scale {
-    static inline T apply(int32_t lane, T scalar, T x) { return scalar * x; }
-};
-template<typename T>
 struct WithX {
     static inline T apply(int32_t lane, T scalar, T x) { return lane == 0 ? scalar : x; }
 };
@@ -836,22 +574,6 @@ struct WithZ {
 template<typename T>
 struct WithW {
     static inline T apply(int32_t lane, T scalar, T x) { return lane == 3 ? scalar : x; }
-};
-template<typename T>
-struct WithFlagX {
-    static inline T apply(T l, T f, T x) { return l == 0 ? (f ? 0xFFFFFFFF : 0x0) : x; }
-};
-template<typename T>
-struct WithFlagY {
-    static inline T apply(T l, T f, T x) { return l == 1 ? (f ? 0xFFFFFFFF : 0x0) : x; }
-};
-template<typename T>
-struct WithFlagZ {
-    static inline T apply(T l, T f, T x) { return l == 2 ? (f ? 0xFFFFFFFF : 0x0) : x; }
-};
-template<typename T>
-struct WithFlagW {
-    static inline T apply(T l, T f, T x) { return l == 3 ? (f ? 0xFFFFFFFF : 0x0) : x; }
 };
 struct ShiftLeft {
     static inline int32_t apply(int32_t v, int32_t bits) { return v << bits; }
@@ -971,53 +693,60 @@ FuncWith(JSContext *cx, unsigned argc, Value *vp)
 
 template<typename V>
 static bool
-FuncShuffle(JSContext *cx, unsigned argc, Value *vp)
+Swizzle(JSContext *cx, unsigned argc, Value *vp)
 {
     typedef typename V::Elem Elem;
 
     CallArgs args = CallArgsFromVp(argc, vp);
-    if (args.length() != 2 && args.length() != 3)
+    if (args.length() != (V::lanes + 1) || !IsVectorObject<V>(args[0]))
         return ErrorBadArgs(cx);
 
-    // Let L be V::Lanes. Each lane can contain L lanes, so the log2(L) first
-    // bits select the first lane, the next log2(L) the second, and so on.
-    const uint32_t SELECT_SHIFT = FloorLog2(V::lanes);
-    const uint32_t SELECT_MASK  = V::lanes - 1;
-    const int32_t MAX_MASK_VALUE = int32_t(pow(double(V::lanes), double(V::lanes))) - 1;
-    MOZ_ASSERT(MAX_MASK_VALUE > 0);
+    uint32_t lanes[V::lanes];
+    for (unsigned i = 0; i < V::lanes; i++) {
+        int32_t lane = -1;
+        if (!ToInt32(cx, args[i + 1], &lane))
+            return false;
+        if (lane < 0 || uint32_t(lane) >= V::lanes)
+            return ErrorBadArgs(cx);
+        lanes[i] = uint32_t(lane);
+    }
+
+    Elem *val = TypedObjectMemory<Elem *>(args[0]);
 
     Elem result[V::lanes];
-    if (args.length() == 2) {
-        if (!IsVectorObject<V>(args[0]) || !args[1].isInt32())
-            return ErrorBadArgs(cx);
+    for (unsigned i = 0; i < V::lanes; i++)
+        result[i] = val[lanes[i]];
 
-        Elem *val = TypedObjectMemory<Elem *>(args[0]);
-        int32_t maskArg;
-        if (!ToInt32(cx, args[1], &maskArg))
+    return StoreResult<V>(cx, args, result);
+}
+
+template<typename V>
+static bool
+Shuffle(JSContext *cx, unsigned argc, Value *vp)
+{
+    typedef typename V::Elem Elem;
+
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (args.length() != (V::lanes + 2) || !IsVectorObject<V>(args[0]) || !IsVectorObject<V>(args[1]))
+        return ErrorBadArgs(cx);
+
+    uint32_t lanes[V::lanes];
+    for (unsigned i = 0; i < V::lanes; i++) {
+        int32_t lane = -1;
+        if (!ToInt32(cx, args[i + 2], &lane))
             return false;
-        if (maskArg < 0 || maskArg > MAX_MASK_VALUE)
+        if (lane < 0 || uint32_t(lane) >= (2 * V::lanes))
             return ErrorBadArgs(cx);
+        lanes[i] = uint32_t(lane);
+    }
 
-        for (unsigned i = 0; i < V::lanes; i++)
-            result[i] = val[(maskArg >> (i * SELECT_SHIFT)) & SELECT_MASK];
-    } else {
-        MOZ_ASSERT(args.length() == 3);
-        if (!IsVectorObject<V>(args[0]) || !IsVectorObject<V>(args[1]) || !args[2].isInt32())
-            return ErrorBadArgs(cx);
+    Elem *lhs = TypedObjectMemory<Elem *>(args[0]);
+    Elem *rhs = TypedObjectMemory<Elem *>(args[1]);
 
-        Elem *val1 = TypedObjectMemory<Elem *>(args[0]);
-        Elem *val2 = TypedObjectMemory<Elem *>(args[1]);
-        int32_t maskArg;
-        if (!ToInt32(cx, args[2], &maskArg))
-            return false;
-        if (maskArg < 0 || maskArg > MAX_MASK_VALUE)
-            return ErrorBadArgs(cx);
-
-        unsigned i = 0;
-        for (; i < V::lanes / 2; i++)
-            result[i] = val1[(maskArg >> (i * SELECT_SHIFT)) & SELECT_MASK];
-        for (; i < V::lanes; i++)
-            result[i] = val2[(maskArg >> (i * SELECT_SHIFT)) & SELECT_MASK];
+    Elem result[V::lanes];
+    for (unsigned i = 0; i < V::lanes; i++) {
+        Elem *selectedInput = lanes[i] < V::lanes ? lhs : rhs;
+        result[i] = selectedInput[lanes[i] % V::lanes];
     }
 
     return StoreResult<V>(cx, args, result);
@@ -1042,6 +771,25 @@ Int32x4BinaryScalar(JSContext *cx, unsigned argc, Value *vp)
 
     for (unsigned i = 0; i < 4; i++)
         result[i] = Op::apply(val[i], bits);
+    return StoreResult<Int32x4>(cx, args, result);
+}
+
+template<typename In, template<typename C> class Op>
+static bool
+CompareFunc(JSContext *cx, unsigned argc, Value *vp)
+{
+    typedef typename In::Elem InElem;
+
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (args.length() != 2 || !IsVectorObject<In>(args[0]) || !IsVectorObject<In>(args[1]))
+        return ErrorBadArgs(cx);
+
+    int32_t result[Int32x4::lanes];
+    InElem *left = TypedObjectMemory<InElem *>(args[0]);
+    InElem *right = TypedObjectMemory<InElem *>(args[1]);
+    for (unsigned i = 0; i < Int32x4::lanes; i++)
+        result[i] = Op<InElem>::apply(left[i], right[i]);
+
     return StoreResult<Int32x4>(cx, args, result);
 }
 
@@ -1210,6 +958,87 @@ Float32x4Select(JSContext *cx, unsigned argc, Value *vp)
 
     float *result = reinterpret_cast<float *>(orInt);
     return StoreResult<Float32x4>(cx, args, result);
+}
+
+template<class VElem, unsigned NumElem>
+static bool
+TypedArrayDataPtrFromArgs(JSContext *cx, const CallArgs &args, VElem **data)
+{
+    if (!args[0].isObject())
+        return ErrorBadArgs(cx);
+
+    JSObject &argobj = args[0].toObject();
+    if (!argobj.is<TypedArrayObject>())
+        return ErrorBadArgs(cx);
+
+    Rooted<TypedArrayObject*> typedArray(cx, &argobj.as<TypedArrayObject>());
+
+    int32_t index;
+    if (!ToInt32(cx, args[1], &index))
+        return false;
+
+    int32_t byteStart = index * typedArray->bytesPerElement();
+    if (byteStart < 0 || (uint32_t(byteStart) + NumElem * sizeof(VElem)) > typedArray->byteLength())
+    {
+        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_BAD_INDEX);
+        return false;
+    }
+
+    *data = reinterpret_cast<VElem*>(static_cast<char*>(typedArray->viewData()) + byteStart);
+    return true;
+}
+
+template<class V, unsigned NumElem>
+static bool
+Load(JSContext *cx, unsigned argc, Value *vp)
+{
+    typedef typename V::Elem Elem;
+
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (args.length() != 2)
+        return ErrorBadArgs(cx);
+
+    Elem *typedArrayData = nullptr;
+    if (!TypedArrayDataPtrFromArgs<Elem, NumElem>(cx, args, &typedArrayData))
+        return false;
+
+    Rooted<TypeDescr*> typeDescr(cx, &V::GetTypeDescr(*cx->global()));
+    MOZ_ASSERT(typeDescr);
+    Rooted<TypedObject *> result(cx, OutlineTypedObject::createZeroed(cx, typeDescr, 0));
+    if (!result)
+        return false;
+
+    Elem *dest = reinterpret_cast<Elem*>(result->typedMem());
+    for (unsigned i = 0; i < NumElem; i++)
+        dest[i] = typedArrayData[i];
+
+    args.rval().setObject(*result);
+    return true;
+}
+
+template<class V, unsigned NumElem>
+static bool
+Store(JSContext *cx, unsigned argc, Value *vp)
+{
+    typedef typename V::Elem Elem;
+
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (args.length() != 3)
+        return ErrorBadArgs(cx);
+
+    Elem *typedArrayData = nullptr;
+    if (!TypedArrayDataPtrFromArgs<Elem, NumElem>(cx, args, &typedArrayData))
+        return false;
+
+    if (!IsVectorObject<V>(args[2]))
+        return ErrorBadArgs(cx);
+
+    Elem *src = TypedObjectMemory<Elem*>(args[2]);
+    for (unsigned i = 0; i < NumElem; i++)
+        typedArrayData[i] = src[i];
+
+    args.rval().setObject(args[2].toObject());
+    return true;
 }
 
 #define DEFINE_SIMD_FLOAT32X4_FUNCTION(Name, Func, Operands, Flags) \

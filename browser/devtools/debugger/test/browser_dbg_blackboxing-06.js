@@ -8,13 +8,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_blackboxing.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gSources = gDebugger.DebuggerView.Sources;
@@ -26,20 +25,20 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.runTest();
+    callInTab(gTab, "runTest");
   });
 }
 
 function testBlackBox() {
-  const selectedUrl = gSources.selectedValue;
+  const selectedActor = gSources.selectedValue;
 
   let finished = waitForSourceShown(gPanel, "blackboxme.js").then(() => {
-    const newSelectedUrl = gSources.selectedValue;
-    isnot(selectedUrl, newSelectedUrl,
+    const newSelectedActor = gSources.selectedValue;
+    isnot(selectedActor, newSelectedActor,
       "Should not have the same url selected.");
 
     return toggleBlackBoxing(gPanel).then(() => {
-      is(gSources.selectedValue, newSelectedUrl,
+      is(gSources.selectedValue, newSelectedActor,
         "The selected source did not change.");
     });
   });
@@ -50,7 +49,6 @@ function testBlackBox() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gSources = null;

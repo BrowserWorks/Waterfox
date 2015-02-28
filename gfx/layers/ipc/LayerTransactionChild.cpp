@@ -22,7 +22,7 @@ namespace layers {
 void
 LayerTransactionChild::Destroy()
 {
-  if (!IPCOpen() || mDestroyed) {
+  if (!IPCOpen()) {
     return;
   }
   // mDestroyed is used to prevent calling Send__delete__() twice.
@@ -34,7 +34,15 @@ LayerTransactionChild::Destroy()
   mDestroyed = true;
   NS_ABORT_IF_FALSE(0 == ManagedPLayerChild().Length(),
                     "layers should have been cleaned up by now");
-  PLayerTransactionChild::Send__delete__(this);
+
+  for (size_t i = 0; i < ManagedPTextureChild().Length(); ++i) {
+    TextureClient* texture = TextureClient::AsTextureClient(ManagedPTextureChild()[i]);
+    if (texture) {
+      texture->ForceRemove();
+    }
+  }
+
+  SendShutdown();
 }
 
 
@@ -56,6 +64,7 @@ LayerTransactionChild::DeallocPLayerChild(PLayerChild* actor)
 PCompositableChild*
 LayerTransactionChild::AllocPCompositableChild(const TextureInfo& aInfo)
 {
+  MOZ_ASSERT(!mDestroyed);
   return CompositableClient::CreateIPDLActor();
 }
 
@@ -120,6 +129,7 @@ LayerTransactionChild::SendFenceHandle(AsyncTransactionTracker* aTracker,
 void
 LayerTransactionChild::ActorDestroy(ActorDestroyReason why)
 {
+  mDestroyed = true;
   DestroyAsyncTransactionTrackersHolder();
 #ifdef MOZ_B2G
   // Due to poor lifetime management of gralloc (and possibly shmems) we will
@@ -136,6 +146,7 @@ PTextureChild*
 LayerTransactionChild::AllocPTextureChild(const SurfaceDescriptor&,
                                           const TextureFlags&)
 {
+  MOZ_ASSERT(!mDestroyed);
   return TextureClient::CreateIPDLActor();
 }
 

@@ -105,10 +105,10 @@ private:
 #define NS_NAVHISTORYRESULT_IID \
   { 0x455d1d40, 0x1b9b, 0x40e6, { 0xa6, 0x41, 0x8b, 0xb7, 0xe8, 0x82, 0x23, 0x87 } }
 
-class nsNavHistoryResult : public nsSupportsWeakReference,
-                           public nsINavHistoryResult,
-                           public nsINavBookmarkObserver,
-                           public nsINavHistoryObserver
+class nsNavHistoryResult MOZ_FINAL : public nsSupportsWeakReference,
+                                     public nsINavHistoryResult,
+                                     public nsINavBookmarkObserver,
+                                     public nsINavHistoryObserver
 {
 public:
   static nsresult NewHistoryResult(nsINavHistoryQuery** aQueries,
@@ -401,7 +401,7 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsNavHistoryResultNode, NS_NAVHISTORYRESULTNODE_II
 
 // derived classes each provide their own implementation of has children and
 // forward the rest to us using this macro
-#define NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN_AND_READONLY \
+#define NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN \
   NS_IMETHOD GetState(uint16_t* _state) \
     { return nsNavHistoryContainerResultNode::GetState(_state); } \
   NS_IMETHOD GetContainerOpen(bool *aContainerOpen) \
@@ -430,12 +430,12 @@ public:
   nsNavHistoryContainerResultNode(
     const nsACString& aURI, const nsACString& aTitle,
     const nsACString& aIconURI, uint32_t aContainerType,
-    bool aReadOnly, nsNavHistoryQueryOptions* aOptions);
+    nsNavHistoryQueryOptions* aOptions);
   nsNavHistoryContainerResultNode(
     const nsACString& aURI, const nsACString& aTitle,
     PRTime aTime,
     const nsACString& aIconURI, uint32_t aContainerType,
-    bool aReadOnly, nsNavHistoryQueryOptions* aOptions);
+    nsNavHistoryQueryOptions* aOptions);
 
   virtual nsresult Refresh();
 
@@ -478,8 +478,6 @@ public:
 
   // Filled in by the result type generator in nsNavHistory.
   nsCOMArray<nsNavHistoryResultNode> mChildren;
-
-  bool mChildrenReadOnly;
 
   nsCOMPtr<nsNavHistoryQueryOptions> mOptions;
 
@@ -621,9 +619,9 @@ NS_DEFINE_STATIC_IID_ACCESSOR(nsNavHistoryContainerResultNode,
 //    bookmarks. This keeps itself in sync by listening to history and
 //    bookmark notifications.
 
-class nsNavHistoryQueryResultNode : public nsNavHistoryContainerResultNode,
-                                    public nsINavHistoryQueryResultNode,
-                                    public nsINavBookmarkObserver
+class nsNavHistoryQueryResultNode MOZ_FINAL : public nsNavHistoryContainerResultNode,
+                                              public nsINavHistoryQueryResultNode,
+                                              public nsINavBookmarkObserver
 {
 public:
   nsNavHistoryQueryResultNode(const nsACString& aTitle,
@@ -644,10 +642,8 @@ public:
   NS_IMETHOD GetType(uint32_t* type)
     { *type = nsNavHistoryResultNode::RESULT_TYPE_QUERY; return NS_OK; }
   NS_IMETHOD GetUri(nsACString& aURI); // does special lazy creation
-  NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN_AND_READONLY
+  NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN
   NS_IMETHOD GetHasChildren(bool* aHasChildren);
-  NS_IMETHOD GetChildrenReadOnly(bool *aChildrenReadOnly)
-    { return nsNavHistoryContainerResultNode::GetChildrenReadOnly(aChildrenReadOnly); }
   NS_DECL_NSINAVHISTORYQUERYRESULTNODE
 
   bool CanExpand();
@@ -704,10 +700,10 @@ protected:
 //    Overridden container type for bookmark folders. It will keep the contents
 //    of the folder in sync with the bookmark service.
 
-class nsNavHistoryFolderResultNode : public nsNavHistoryContainerResultNode,
-                                     public nsINavHistoryQueryResultNode,
-                                     public nsINavBookmarkObserver,
-                                     public mozilla::places::AsyncStatementCallback
+class nsNavHistoryFolderResultNode MOZ_FINAL : public nsNavHistoryContainerResultNode,
+                                               public nsINavHistoryQueryResultNode,
+                                               public nsINavBookmarkObserver,
+                                               public mozilla::places::AsyncStatementCallback
 {
 public:
   nsNavHistoryFolderResultNode(const nsACString& aTitle,
@@ -725,9 +721,8 @@ public:
     return NS_OK;
   }
   NS_IMETHOD GetUri(nsACString& aURI);
-  NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN_AND_READONLY
+  NS_FORWARD_CONTAINERNODE_EXCEPT_HASCHILDREN
   NS_IMETHOD GetHasChildren(bool* aHasChildren);
-  NS_IMETHOD GetChildrenReadOnly(bool *aChildrenReadOnly);
   NS_IMETHOD GetItemId(int64_t *aItemId);
   NS_DECL_NSINAVHISTORYQUERYRESULTNODE
 

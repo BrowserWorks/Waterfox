@@ -346,16 +346,11 @@ template<> U_I18N_API
 const MeasureFormatCacheData *LocaleCacheKey<MeasureFormatCacheData>::createObject(
         const void * /*unused*/, UErrorCode &status) const {
     const char *localeId = fLoc.getName();
-    LocalUResourceBundlePointer topLevel(ures_open(NULL, localeId, &status));
     LocalUResourceBundlePointer unitsBundle(ures_open(U_ICUDATA_UNIT, localeId, &status));
     static UNumberFormatStyle currencyStyles[] = {
             UNUM_CURRENCY_PLURAL, UNUM_CURRENCY_ISO, UNUM_CURRENCY};
+    LocalPointer<MeasureFormatCacheData> result(new MeasureFormatCacheData(), status);
     if (U_FAILURE(status)) {
-        return NULL;
-    }
-    LocalPointer<MeasureFormatCacheData> result(new MeasureFormatCacheData());
-    if (result.isNull()) {
-        status = U_MEMORY_ALLOCATION_ERROR;
         return NULL;
     }
     if (!loadMeasureUnitData(
@@ -365,7 +360,7 @@ const MeasureFormatCacheData *LocaleCacheKey<MeasureFormatCacheData>::createObje
         return NULL;
     }
     result->adoptNumericDateFormatters(loadNumericDateFormatters(
-            topLevel.getAlias(), status));
+            unitsBundle.getAlias(), status));
     if (U_FAILURE(status)) {
         return NULL;
     }
@@ -594,18 +589,27 @@ void MeasureFormat::parseObject(
     return;
 }
 
-UnicodeString &MeasureFormat::formatMeasuresPer(
-        const Measure *measures,
-        int32_t measureCount,
+UnicodeString &MeasureFormat::formatMeasurePerUnit(
+        const Measure &measure,
         const MeasureUnit &perUnit,
         UnicodeString &appendTo,
         FieldPosition &pos,
         UErrorCode &status) const {
+    if (U_FAILURE(status)) {
+        return appendTo;
+    }
+    MeasureUnit *resolvedUnit =
+            MeasureUnit::resolveUnitPerUnit(measure.getUnit(), perUnit);
+    if (resolvedUnit != NULL) {
+        Measure newMeasure(measure.getNumber(), resolvedUnit, status);
+        return formatMeasure(
+                newMeasure, **numberFormat, appendTo, pos, status);
+    }
     FieldPosition fpos(pos.getField());
-    UnicodeString measuresString;
-    int32_t offset = withPerUnit(
-            formatMeasures(
-                    measures, measureCount, measuresString, fpos, status),
+    UnicodeString result;
+    int32_t offset = withPerUnitAndAppend(
+            formatMeasure(
+                    measure, **numberFormat, result, fpos, status),
             perUnit,
             appendTo,
             status);
@@ -983,7 +987,7 @@ static void getPerUnitString(
     result.trim();
 }
 
-int32_t MeasureFormat::withPerUnit(
+int32_t MeasureFormat::withPerUnitAndAppend(
         const UnicodeString &formatted,
         const MeasureUnit &perUnit,
         UnicodeString &appendTo,
@@ -996,7 +1000,7 @@ int32_t MeasureFormat::withPerUnit(
             perUnit.getIndex(), widthToIndex(width));
     if (perUnitFormatter != NULL) {
         const UnicodeString *params[] = {&formatted};
-        perUnitFormatter->format(
+        perUnitFormatter->formatAndAppend(
                 params,
                 UPRV_LENGTHOF(params),
                 appendTo,
@@ -1015,7 +1019,7 @@ int32_t MeasureFormat::withPerUnit(
     UnicodeString perUnitString;
     getPerUnitString(*qf, perUnitString);
     const UnicodeString *params[] = {&formatted, &perUnitString};
-    perFormatter->format(
+    perFormatter->formatAndAppend(
             params,
             UPRV_LENGTHOF(params),
             appendTo,

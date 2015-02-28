@@ -14,6 +14,7 @@
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
 #include "nsAboutProtocolUtils.h"
+#include "nsContentUtils.h"
 #include "nsInputStreamPump.h"
 #include "CacheFileUtils.h"
 #include <algorithm>
@@ -88,7 +89,9 @@ NS_IMPL_ISUPPORTS(nsAboutCacheEntry,
 // nsAboutCacheEntry::nsIAboutModule
 
 NS_IMETHODIMP
-nsAboutCacheEntry::NewChannel(nsIURI *uri, nsIChannel **result)
+nsAboutCacheEntry::NewChannel(nsIURI* uri,
+                              nsILoadInfo* aLoadInfo,
+                              nsIChannel** result)
 {
     NS_ENSURE_ARG_POINTER(uri);
     nsresult rv;
@@ -97,7 +100,12 @@ nsAboutCacheEntry::NewChannel(nsIURI *uri, nsIChannel **result)
     rv = GetContentStream(uri, getter_AddRefs(stream));
     if (NS_FAILED(rv)) return rv;
 
-    return NS_NewInputStreamChannel(result, uri, stream,
+    return NS_NewInputStreamChannel(result,
+                                    uri,
+                                    stream,
+                                    nsContentUtils::GetSystemPrincipal(),
+                                    nsILoadInfo::SEC_NORMAL,
+                                    nsIContentPolicy::TYPE_OTHER,
                                     NS_LITERAL_CSTRING("text/html"),
                                     NS_LITERAL_CSTRING("utf-8"));
 }

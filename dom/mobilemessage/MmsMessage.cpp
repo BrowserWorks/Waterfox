@@ -21,8 +21,6 @@
 
 using namespace mozilla::dom::mobilemessage;
 
-DOMCI_DATA(MozMmsMessage, mozilla::dom::MmsMessage)
-
 namespace mozilla {
 namespace dom {
 
@@ -582,7 +580,7 @@ MmsMessage::GetAttachments(JSContext* aCx, JS::MutableHandle<JS::Value> aAttachm
     nsRefPtr<File> newBlob = new File(global, attachment.content->Impl());
 
     JS::Rooted<JS::Value> val(aCx);
-    if (!WrapNewBindingObject(aCx, newBlob, &val)) {
+    if (!GetOrCreateDOMReflector(aCx, newBlob, &val)) {
       return NS_ERROR_FAILURE;
     }
 

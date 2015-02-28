@@ -6,9 +6,9 @@
 #ifndef mozilla_dom_InternalRequest_h
 #define mozilla_dom_InternalRequest_h
 
-#include "mozilla/dom/Headers.h"
+#include "mozilla/dom/HeadersBinding.h"
+#include "mozilla/dom/InternalHeaders.h"
 #include "mozilla/dom/RequestBinding.h"
-#include "mozilla/dom/UnionTypes.h"
 
 #include "nsIContentPolicy.h"
 #include "nsIInputStream.h"
@@ -55,7 +55,7 @@ public:
 
   explicit InternalRequest()
     : mMethod("GET")
-    , mHeaders(new Headers(nullptr, HeadersGuardEnum::None))
+    , mHeaders(new InternalHeaders(HeadersGuardEnum::None))
     , mContextFrameType(FRAMETYPE_NONE)
     , mReferrerType(REFERRER_CLIENT)
     , mMode(RequestMode::No_cors)
@@ -66,7 +66,11 @@ public:
     , mForceOriginHeader(false)
     , mManualRedirect(false)
     , mPreserveContentCodings(false)
-    , mSameOriginDataURL(false)
+      // FIXME(nsm): This should be false by default, but will lead to the
+      // algorithm never loading data: URLs right now. See Bug 1018872 about
+      // how certain contexts will override it to set it to true. Fetch
+      // specification does not handle this yet.
+    , mSameOriginDataURL(true)
     , mSkipServiceWorker(false)
     , mSynchronous(false)
     , mUnsafeRequest(false)
@@ -111,6 +115,14 @@ public:
   SetMethod(const nsACString& aMethod)
   {
     mMethod.Assign(aMethod);
+  }
+
+  bool
+  HasSimpleMethod() const
+  {
+    return mMethod.LowerCaseEqualsASCII("get") ||
+           mMethod.LowerCaseEqualsASCII("post") ||
+           mMethod.LowerCaseEqualsASCII("head");
   }
 
   void
@@ -159,6 +171,12 @@ public:
     return mSynchronous;
   }
 
+  RequestMode
+  Mode() const
+  {
+    return mMode;
+  }
+
   void
   SetMode(RequestMode aMode)
   {
@@ -171,14 +189,32 @@ public:
     mCredentialsMode = aCredentialsMode;
   }
 
+  ResponseTainting
+  GetResponseTainting() const
+  {
+    return mResponseTainting;
+  }
+
+  void
+  SetResponseTainting(ResponseTainting aTainting)
+  {
+    mResponseTainting = aTainting;
+  }
+
   nsContentPolicyType
   GetContext() const
   {
     return mContext;
   }
 
-  Headers*
-  Headers_()
+  bool
+  UnsafeRequest() const
+  {
+    return mUnsafeRequest;
+  }
+
+  InternalHeaders*
+  Headers()
   {
     return mHeaders;
   }
@@ -193,6 +229,12 @@ public:
   GetOrigin(nsCString& aOrigin) const
   {
     aOrigin.Assign(mOrigin);
+  }
+
+  bool
+  SameOriginDataURL() const
+  {
+    return mSameOriginDataURL;
   }
 
   void
@@ -225,7 +267,7 @@ private:
 
   nsCString mMethod;
   nsCString mURL;
-  nsRefPtr<Headers> mHeaders;
+  nsRefPtr<InternalHeaders> mHeaders;
   nsCOMPtr<nsIInputStream> mBodyStream;
 
   // nsContentPolicyType does not cover the complete set defined in the spec,

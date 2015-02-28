@@ -3,15 +3,6 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Don't link the updater against libmozglue. See bug 687139
-MOZ_GLUE_LDFLAGS =
-MOZ_GLUE_PROGRAM_LDFLAGS =
-
-ifeq (gonk,$(MOZ_WIDGET_TOOLKIT)) #{
-# clear out all the --wrap flags and remove dependency on mozglue for Gonk
-WRAP_LDFLAGS :=
-endif #}
-
 ifndef MOZ_WINCONSOLE
 ifdef MOZ_DEBUG
 MOZ_WINCONSOLE = 1
@@ -21,6 +12,28 @@ endif
 endif
 
 include $(topsrcdir)/config/rules.mk
+
+ifneq (,$(filter beta release esr,$(MOZ_UPDATE_CHANNEL)))
+	PRIMARY_CERT = release_primary.der
+	SECONDARY_CERT = release_secondary.der
+else ifneq (,$(filter nightly aurora nightly-elm nightly-profiling nightly-oak nightly-ux,$(MOZ_UPDATE_CHANNEL)))
+	PRIMARY_CERT = nightly_aurora_level3_primary.der
+	SECONDARY_CERT = nightly_aurora_level3_secondary.der
+else
+	PRIMARY_CERT = dep1.der
+	SECONDARY_CERT = dep2.der
+endif
+
+CERT_HEADERS := primaryCert.h secondaryCert.h xpcshellCert.h
+
+export:: $(CERT_HEADERS)
+
+primaryCert.h: $(PRIMARY_CERT)
+secondaryCert.h: $(SECONDARY_CERT)
+xpcshellCert.h: xpcshellCertificate.der
+
+$(CERT_HEADERS): gen_cert_header.py
+	$(PYTHON) $< $(@:.h=Data) $(filter-out $<,$^) > $@
 
 ifdef MOZ_WIDGET_GTK
 libs:: updater.png

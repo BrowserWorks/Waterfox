@@ -76,6 +76,12 @@ LIRGeneratorX86::useByteOpRegisterOrNonDoubleConstant(MDefinition *mir)
     return useFixed(mir, eax);
 }
 
+LDefinition
+LIRGeneratorX86::tempByteOpRegister()
+{
+    return tempFixed(eax);
+}
+
 bool
 LIRGeneratorX86::visitBox(MBox *box)
 {
@@ -219,7 +225,7 @@ LIRGeneratorX86::visitAsmJSLoadHeap(MAsmJSLoadHeap *ins)
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
     // For the x86 it is best to keep the 'ptr' in a register if a bounds check is needed.
-    if (ptr->isConstant() && ins->skipBoundsCheck()) {
+    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
         int32_t ptrValue = ptr->toConstant()->value().toInt32();
         // A bounds check is only skipped for a positive index.
         MOZ_ASSERT(ptrValue >= 0);
@@ -238,39 +244,43 @@ LIRGeneratorX86::visitAsmJSStoreHeap(MAsmJSStoreHeap *ins)
     LAsmJSStoreHeap *lir;
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
 
-    if (ptr->isConstant() && ins->skipBoundsCheck()) {
+    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
         int32_t ptrValue = ptr->toConstant()->value().toInt32();
         MOZ_ASSERT(ptrValue >= 0);
         LAllocation ptrAlloc = LAllocation(ptr->toConstant()->vp());
         switch (ins->viewType()) {
-          case Scalar::Int8: case Scalar::Uint8:
+          case AsmJSHeapAccess::Int8: case AsmJSHeapAccess::Uint8:
             // See comment below.
             lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useFixed(ins->value(), eax));
             break;
-          case Scalar::Int16: case Scalar::Uint16:
-          case Scalar::Int32: case Scalar::Uint32:
-          case Scalar::Float32: case Scalar::Float64:
+          case AsmJSHeapAccess::Int16: case AsmJSHeapAccess::Uint16:
+          case AsmJSHeapAccess::Int32: case AsmJSHeapAccess::Uint32:
+          case AsmJSHeapAccess::Float32: case AsmJSHeapAccess::Float64:
+          case AsmJSHeapAccess::Float32x4: case AsmJSHeapAccess::Int32x4:
             // See comment below.
             lir = new(alloc()) LAsmJSStoreHeap(ptrAlloc, useRegisterAtStart(ins->value()));
             break;
-          default: MOZ_CRASH("unexpected array type");
+          case AsmJSHeapAccess::Uint8Clamped:
+            MOZ_CRASH("unexpected array type");
         }
         return add(lir, ins);
     }
 
     switch (ins->viewType()) {
-      case Scalar::Int8: case Scalar::Uint8:
+      case AsmJSHeapAccess::Int8: case AsmJSHeapAccess::Uint8:
         // See comment for LIRGeneratorX86::useByteOpRegister.
         lir = new(alloc()) LAsmJSStoreHeap(useRegister(ins->ptr()), useFixed(ins->value(), eax));
         break;
-      case Scalar::Int16: case Scalar::Uint16:
-      case Scalar::Int32: case Scalar::Uint32:
-      case Scalar::Float32: case Scalar::Float64:
+      case AsmJSHeapAccess::Int16: case AsmJSHeapAccess::Uint16:
+      case AsmJSHeapAccess::Int32: case AsmJSHeapAccess::Uint32:
+      case AsmJSHeapAccess::Float32: case AsmJSHeapAccess::Float64:
+      case AsmJSHeapAccess::Float32x4: case AsmJSHeapAccess::Int32x4:
         // For now, don't allow constant values. The immediate operand
         // affects instruction layout which affects patching.
         lir = new(alloc()) LAsmJSStoreHeap(useRegisterAtStart(ptr), useRegisterAtStart(ins->value()));
         break;
-      default: MOZ_CRASH("unexpected array type");
+      case AsmJSHeapAccess::Uint8Clamped:
+        MOZ_CRASH("unexpected array type");
     }
 
     return add(lir, ins);
@@ -304,4 +314,19 @@ bool
 LIRGeneratorX86::visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins)
 {
     return define(new(alloc()) LAsmJSLoadFuncPtr(useRegisterAtStart(ins->index())), ins);
+}
+
+bool
+LIRGeneratorX86::visitSubstr(MSubstr *ins)
+{
+    // Due to lack of registers on x86, we reuse the string register as
+    // temporary. As a result we only need two temporary registers and take a
+    // bugos temporary as fifth argument.
+    LSubstr *lir = new (alloc()) LSubstr(useRegister(ins->string()),
+                                         useRegister(ins->begin()),
+                                         useRegister(ins->length()),
+                                         temp(),
+                                         LDefinition::BogusTemp(),
+                                         tempByteOpRegister());
+    return define(lir, ins) && assignSafepoint(lir, ins);
 }

@@ -18,6 +18,8 @@ Cu.import("resource://services-sync/util.js");
 const PREF_LAST_FXA_USER = "identity.fxaccounts.lastSignedInUserHash";
 const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync.ui.showCustomizationDialog";
 
+const ACTION_URL_PARAM = "action";
+
 const OBSERVER_TOPICS = [
   fxAccountsCommon.ONVERIFIED_NOTIFICATION,
   fxAccountsCommon.ONLOGOUT_NOTIFICATION,
@@ -96,17 +98,7 @@ function shouldAllowRelink(acctName) {
 let wrapper = {
   iframe: null,
 
-  init: function (url, entryPoint) {
-    let weave = Cc["@mozilla.org/weave/service;1"]
-                  .getService(Ci.nsISupports)
-                  .wrappedJSObject;
-
-    // Don't show about:accounts with FxA disabled.
-    if (!weave.fxAccountsEnabled) {
-      document.body.remove();
-      return;
-    }
-
+  init: function (url, urlParams) {
     // If a master-password is enabled, we want to encourage the user to
     // unlock it.  Things still work if not, but the user will probably need
     // to re-auth next startup (in which case we will get here again and
@@ -116,14 +108,14 @@ let wrapper = {
     let iframe = document.getElementById("remote");
     this.iframe = iframe;
     iframe.addEventListener("load", this);
-    try {
-      if (entryPoint) {
-        url += (url.indexOf("?") >= 0 ? "&" : "?") + entryPoint;
-      }
-      iframe.src = url;
-    } catch (e) {
-      error("Couldn't init Firefox Account wrapper: " + e.message);
+
+    // Ideally we'd just merge urlParams with new URL(url).searchParams, but our
+    // URLSearchParams implementation doesn't support iteration (bug 1085284).
+    let urlParamStr = urlParams.toString();
+    if (urlParamStr) {
+      url += (url.contains("?") ? "&" : "?") + urlParamStr;
     }
+    iframe.src = url;
   },
 
   handleEvent: function (evt) {
@@ -296,43 +288,42 @@ function init() {
       return;
     }
 
-    // If the url contains an entrypoint query parameter, extract it into a variable
-    // to append it to the accounts URI resource.
-    // Works for the following cases:
-    // - about:accounts?entrypoint="abouthome"
-    // - about:accounts?entrypoint=abouthome&action=signup
-    let entryPointQParam = "entrypoint=";
-    let entryPointPos = window.location.href.indexOf(entryPointQParam);
-    let entryPoint = "";
-    if (entryPointPos >= 0) {
-      entryPoint = window.location.href.substring(entryPointPos).split("&")[0];
-    }
-    if (window.location.href.contains("action=signin")) {
+    // Ideally we'd use new URL(document.URL).searchParams, but for about: URIs,
+    // searchParams is empty.
+    let urlParams = new URLSearchParams(document.URL.split("?")[1] || "");
+    let action = urlParams.get(ACTION_URL_PARAM);
+    urlParams.delete(ACTION_URL_PARAM);
+
+    switch (action) {
+    case "signin":
       if (user) {
         // asking to sign-in when already signed in just shows manage.
         show("stage", "manage");
       } else {
         show("remote");
-        wrapper.init(fxAccounts.getAccountsSignInURI(), entryPoint);
+        wrapper.init(fxAccounts.getAccountsSignInURI(), urlParams);
       }
-    } else if (window.location.href.contains("action=signup")) {
+      break;
+    case "signup":
       if (user) {
         // asking to sign-up when already signed in just shows manage.
         show("stage", "manage");
       } else {
         show("remote");
-        wrapper.init(fxAccounts.getAccountsSignUpURI(), entryPoint);
+        wrapper.init(fxAccounts.getAccountsSignUpURI(), urlParams);
       }
-    } else if (window.location.href.contains("action=reauth")) {
+      break;
+    case "reauth":
       // ideally we would only show this when we know the user is in a
       // "must reauthenticate" state - but we don't.
       // As the email address will be included in the URL returned from
       // promiseAccountsForceSigninURI, just always show it.
       fxAccounts.promiseAccountsForceSigninURI().then(url => {
         show("remote");
-        wrapper.init(url, entryPoint);
+        wrapper.init(url, urlParams);
       });
-    } else {
+      break;
+    default:
       // No action specified.
       if (user) {
         show("stage", "manage");
@@ -341,14 +332,15 @@ function init() {
       } else {
         // Attempt a migration if enabled or show the introductory page
         // otherwise.
-        migrateToDevEdition(entryPoint).then(migrated => {
+        migrateToDevEdition(urlParams).then(migrated => {
           if (!migrated) {
             show("stage", "intro");
             // load the remote frame in the background
-            wrapper.init(fxAccounts.getAccountsSignUpURI(), entryPoint);
+            wrapper.init(fxAccounts.getAccountsSignUpURI(), urlParams);
           }
         });
       }
+      break;
     }
   });
 }
@@ -382,7 +374,7 @@ function show(id, childId) {
 // Migrate sync data from the default profile to the dev-edition profile.
 // Returns a promise of a true value if migration succeeded, or false if it
 // failed.
-function migrateToDevEdition(entryPoint) {
+function migrateToDevEdition(urlParams) {
   let defaultProfilePath;
   try {
     defaultProfilePath = window.getDefaultProfilePath();
@@ -406,13 +398,13 @@ function migrateToDevEdition(entryPoint) {
   }).then(() => {
     return fxAccounts.promiseAccountsForceSigninURI().then(url => {
       show("remote");
-      wrapper.init(url, entryPoint);
+      wrapper.init(url, urlParams);
     });
   }).then(null, error => {
     log("Failed to migrate FX Account: " + error);
     show("stage", "intro");
     // load the remote frame in the background
-    wrapper.init(fxAccounts.getAccountsSignUpURI(), entryPoint);
+    wrapper.init(fxAccounts.getAccountsSignUpURI(), urlParams);
   }).then(() => {
     // Reset the pref after migration.
     Services.prefs.setBoolPref("identity.fxaccounts.migrateToDevEdition", false);

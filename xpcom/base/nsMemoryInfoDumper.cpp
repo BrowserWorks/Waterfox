@@ -760,6 +760,8 @@ nsMemoryInfoDumper::DumpMemoryInfoToTempDir(const nsAString& aIdentifier,
 }
 
 #ifdef MOZ_DMD
+dmd::DMDFuncs::Singleton dmd::DMDFuncs::sSingleton;
+
 nsresult
 nsMemoryInfoDumper::OpenDMDFile(const nsAString& aIdentifier, int aPid,
                                 FILE** aOutFile)
@@ -811,8 +813,7 @@ nsMemoryInfoDumper::DumpDMDToFile(FILE* aFile)
   }
 
   // Dump DMD's memory reports analysis to the file.
-  JSONWriter jsonWriter(MakeUnique<GZWriterWrapper>(gzWriter));
-  dmd::AnalyzeReports(jsonWriter);
+  dmd::AnalyzeReports(MakeUnique<GZWriterWrapper>(gzWriter));
 
   rv = gzWriter->Finish();
   NS_WARN_IF(NS_FAILED(rv));

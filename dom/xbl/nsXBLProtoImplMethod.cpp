@@ -18,6 +18,7 @@
 #include "nsIXPConnect.h"
 #include "xpcpublic.h"
 #include "nsXBLPrototypeBinding.h"
+#include "mozilla/dom/Element.h"
 #include "mozilla/dom/ScriptSettings.h"
 
 using namespace mozilla;
@@ -103,16 +104,21 @@ nsXBLProtoImplMethod::InstallMember(JSContext* aCx,
                   "Should not be installing an uncompiled method");
   MOZ_ASSERT(js::IsObjectInContextCompartment(aTargetClassObject, aCx));
 
-  JS::Rooted<JSObject*> globalObject(aCx, JS_GetGlobalForObject(aCx, aTargetClassObject));
-  MOZ_ASSERT(xpc::IsInContentXBLScope(globalObject) ||
-             xpc::IsInAddonScope(globalObject) ||
-             globalObject == xpc::GetXBLScope(aCx, globalObject));
+#ifdef DEBUG
+  {
+    JS::Rooted<JSObject*> globalObject(aCx, JS_GetGlobalForObject(aCx, aTargetClassObject));
+    MOZ_ASSERT(xpc::IsInContentXBLScope(globalObject) ||
+               xpc::IsInAddonScope(globalObject) ||
+               globalObject == xpc::GetXBLScope(aCx, globalObject));
+    MOZ_ASSERT(JS::CurrentGlobalOrNull(aCx) == globalObject);
+  }
+#endif
 
   JS::Rooted<JSObject*> jsMethodObject(aCx, GetCompiledMethod());
   if (jsMethodObject) {
     nsDependentString name(mName);
 
-    JS::Rooted<JSObject*> method(aCx, JS_CloneFunctionObject(aCx, jsMethodObject, globalObject));
+    JS::Rooted<JSObject*> method(aCx, JS::CloneFunctionObject(aCx, jsMethodObject));
     NS_ENSURE_TRUE(method, NS_ERROR_OUT_OF_MEMORY);
 
     if (!::JS_DefineUCProperty(aCx, aTargetClassObject,
@@ -194,8 +200,7 @@ nsXBLProtoImplMethod::CompileMember(AutoJSAPI& jsapi, const nsCString& aClassStr
   JS::CompileOptions options(cx);
   options.setFileAndLine(functionUri.get(),
                          uncompiledMethod->mBodyText.GetLineNumber())
-         .setVersion(JSVERSION_LATEST)
-         .setDefineOnScope(false);
+         .setVersion(JSVERSION_LATEST);
   JS::Rooted<JSObject*> methodObject(cx);
   JS::AutoObjectVector emptyVector(cx);
   nsresult rv = nsJSUtils::CompileFunction(jsapi, emptyVector, options, cname,
@@ -269,6 +274,7 @@ nsXBLProtoImplMethod::Write(nsIObjectOutputStream* aStream)
 nsresult
 nsXBLProtoImplAnonymousMethod::Execute(nsIContent* aBoundElement, JSAddonId* aAddonId)
 {
+  MOZ_ASSERT(aBoundElement->IsElement());
   NS_PRECONDITION(IsCompiled(), "Can't execute uncompiled method");
 
   if (!GetCompiledMethod()) {
@@ -286,32 +292,30 @@ nsXBLProtoImplAnonymousMethod::Execute(nsIContent* aBoundElement, JSAddonId* aAd
     return NS_OK;
   }
 
-  nsAutoMicroTask mt;
-
   // We are going to run script via JS::Call, so we need a script entry point,
   // but as this is XBL related it does not appear in the HTML spec.
   dom::AutoEntryScript aes(global);
+  aes.TakeOwnershipOfErrorReporting();
   JSContext* cx = aes.cx();
 
   JS::Rooted<JSObject*> globalObject(cx, global->GetGlobalJSObject());
 
-  JS::Rooted<JS::Value> v(cx);
-  nsresult rv = nsContentUtils::WrapNative(cx, aBoundElement, &v);
-  NS_ENSURE_SUCCESS(rv, rv);
-
-  JS::Rooted<JSObject*> thisObject(cx, &v.toObject());
   JS::Rooted<JSObject*> scopeObject(cx, xpc::GetScopeForXBLExecution(cx, globalObject, aAddonId));
   NS_ENSURE_TRUE(scopeObject, NS_ERROR_OUT_OF_MEMORY);
 
   JSAutoCompartment ac(cx, scopeObject);
-  if (!JS_WrapObject(cx, &thisObject))
-      return NS_ERROR_OUT_OF_MEMORY;
+  JS::AutoObjectVector scopeChain(cx);
+  if (!nsJSUtils::GetScopeChainForElement(cx, aBoundElement->AsElement(),
+                                          scopeChain)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
+  MOZ_ASSERT(scopeChain.length() != 0);
 
-  // Clone the function object, using thisObject as the parent so "this" is in
-  // the scope chain of the resulting function (for backwards compat to the
-  // days when this was an event handler).
+  // Clone the function object, using our scope chain (for backwards
+  // compat to the days when this was an event handler).
   JS::Rooted<JSObject*> jsMethodObject(cx, GetCompiledMethod());
-  JS::Rooted<JSObject*> method(cx, ::JS_CloneFunctionObject(cx, jsMethodObject, thisObject));
+  JS::Rooted<JSObject*> method(cx, JS::CloneFunctionObject(cx, jsMethodObject,
+                                                           scopeChain));
   if (!method)
     return NS_ERROR_OUT_OF_MEMORY;
 
@@ -321,20 +325,12 @@ nsXBLProtoImplAnonymousMethod::Execute(nsIContent* aBoundElement, JSAddonId* aAd
   bool scriptAllowed = nsContentUtils::GetSecurityManager()->
                          ScriptAllowed(js::GetGlobalForObjectCrossCompartment(method));
 
-  bool ok = true;
   if (scriptAllowed) {
     JS::Rooted<JS::Value> retval(cx);
     JS::Rooted<JS::Value> methodVal(cx, JS::ObjectValue(*method));
-    ok = ::JS::Call(cx, thisObject, methodVal, JS::HandleValueArray::empty(), &retval);
-  }
-
-  if (!ok) {
-    // If a constructor or destructor threw an exception, it doesn't stop
-    // anything else.  We just report it.  Note that we need to set aside the
-    // frame chain here, since the constructor invocation is not related to
-    // whatever is on the stack right now, really.
-    nsJSUtils::ReportPendingException(cx);
-    return NS_ERROR_FAILURE;
+    // No need to check the return here as AutoEntryScript has taken ownership
+    // of error reporting.
+    ::JS::Call(cx, scopeChain[0], methodVal, JS::HandleValueArray::empty(), &retval);
   }
 
   return NS_OK;

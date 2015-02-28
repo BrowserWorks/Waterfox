@@ -35,11 +35,11 @@ jit::Bailout(BailoutStack *sp, BaselineBailoutInfo **bailoutInfo)
                IsInRange(FAKE_JIT_TOP_FOR_BAILOUT + sizeof(CommonFrameLayout), 0, 0x1000),
                "Fake jitTop pointer should be within the first page.");
     cx->mainThread().jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
-    gc::AutoSuppressGC suppress(cx);
 
     JitActivationIterator jitActivations(cx->runtime());
     BailoutFrameInfo bailoutData(jitActivations, sp);
     JitFrameIterator iter(jitActivations);
+    MOZ_ASSERT(!iter.ionScript()->invalidated());
 
     TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
     TraceLogTimestamp(logger, TraceLogger::Bailout);
@@ -78,6 +78,17 @@ jit::Bailout(BailoutStack *sp, BaselineBailoutInfo **bailoutInfo)
         EnsureExitFrame(iter.jsFrame());
     }
 
+    // This condition was wrong when we entered this bailout function, but it
+    // might be true now. A GC might have reclaimed all the Jit code and
+    // invalidated all frames which are currently on the stack. As we are
+    // already in a bailout, we could not switch to an invalidation
+    // bailout. When the code of an IonScript which is on the stack is
+    // invalidated (see InvalidateActivation), we remove references to it and
+    // increment the reference counter for each activation that appear on the
+    // stack. As the bailed frame is one of them, we have to decrement it now.
+    if (iter.ionScript()->invalidated())
+        iter.ionScript()->decrementInvalidationCount(cx->runtime()->defaultFreeOp());
+
     return retval;
 }
 
@@ -91,7 +102,6 @@ jit::InvalidationBailout(InvalidationBailoutStack *sp, size_t *frameSizeOut,
 
     // We don't have an exit frame.
     cx->mainThread().jitTop = FAKE_JIT_TOP_FOR_BAILOUT;
-    gc::AutoSuppressGC suppress(cx);
 
     JitActivationIterator jitActivations(cx->runtime());
     BailoutFrameInfo bailoutData(jitActivations, sp);
@@ -149,7 +159,7 @@ jit::InvalidationBailout(InvalidationBailoutStack *sp, size_t *frameSizeOut,
         JitSpew(JitSpew_IonInvalidate, "   new  ra %p", (void *) frame->returnAddress());
     }
 
-    iter.ionScript()->decref(cx->runtime()->defaultFreeOp());
+    iter.ionScript()->decrementInvalidationCount(cx->runtime()->defaultFreeOp());
 
     return retval;
 }
@@ -171,7 +181,7 @@ uint32_t
 jit::ExceptionHandlerBailout(JSContext *cx, const InlineFrameIterator &frame,
                              ResumeFromException *rfe,
                              const ExceptionBailoutInfo &excInfo,
-                             bool *overrecursed)
+                             bool *overrecursed, bool *poppedLastSPSFrameOut)
 {
     // We can be propagating debug mode exceptions without there being an
     // actual exception pending. For instance, when we return false from an
@@ -186,9 +196,8 @@ jit::ExceptionHandlerBailout(JSContext *cx, const InlineFrameIterator &frame,
     JitFrameIterator iter(jitActivations);
 
     BaselineBailoutInfo *bailoutInfo = nullptr;
-    bool poppedLastSPSFrame = false;
     uint32_t retval = BailoutIonToBaseline(cx, bailoutData.activation(), iter, true,
-                                           &bailoutInfo, &excInfo, &poppedLastSPSFrame);
+                                           &bailoutInfo, &excInfo, poppedLastSPSFrameOut);
 
     if (retval == BAILOUT_RETURN_OK) {
         MOZ_ASSERT(bailoutInfo);

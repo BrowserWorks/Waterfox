@@ -6,6 +6,10 @@ const TEST_MSG = "ContentSearchTest";
 const CONTENT_SEARCH_MSG = "ContentSearch";
 const TEST_CONTENT_SCRIPT_BASENAME = "contentSearch.js";
 
+// This timeout is absurdly high to avoid random failures like bug 1087120.
+// That bug was reported when the timeout was 5 seconds, so let's try 10.
+const SUGGESTIONS_TIMEOUT = 10000;
+
 var gMsgMan;
 
 add_task(function* GetState() {
@@ -183,7 +187,7 @@ add_task(function* GetSuggestions_AddFormHistoryEntry_RemoveFormHistoryEntry() {
     data: {
       engineName: engine.name,
       searchString: searchStr,
-      remoteTimeout: 5000,
+      remoteTimeout: SUGGESTIONS_TIMEOUT,
     },
   });
 
@@ -219,7 +223,7 @@ add_task(function* GetSuggestions_AddFormHistoryEntry_RemoveFormHistoryEntry() {
     data: {
       engineName: engine.name,
       searchString: searchStr,
-      remoteTimeout: 5000,
+      remoteTimeout: SUGGESTIONS_TIMEOUT,
     },
   });
 
@@ -393,8 +397,10 @@ let currentEngineObj = Task.async(function* () {
   let uri1x = engine.getIconURLBySize(65, 26);
   let uri2x = engine.getIconURLBySize(130, 52);
   let uriFavicon = engine.getIconURLBySize(16, 16);
+  let bundle = Services.strings.createBundle("chrome://global/locale/autocomplete.properties");
   return {
     name: engine.name,
+    placeholder: bundle.formatStringFromName("searchWithEngine", [engine.name], 1),
     logoBuffer: yield arrayBufferFromDataURI(uri1x),
     logo2xBuffer: yield arrayBufferFromDataURI(uri2x),
     iconBuffer: yield arrayBufferFromDataURI(uriFavicon),

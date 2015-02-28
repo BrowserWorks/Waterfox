@@ -24,7 +24,7 @@ both:
     async DropObject(uint64_t objId);
 
     // These roughly map to the ProxyHandler hooks that CPOWs need.
-    prio(high) sync PreventExtensions(uint64_t objId) returns (ReturnStatus rs);
+    prio(high) sync PreventExtensions(uint64_t objId) returns (ReturnStatus rs, bool result);
     prio(high) sync GetPropertyDescriptor(uint64_t objId, JSIDVariant id) returns (ReturnStatus rs, PPropertyDescriptor result);
     prio(high) sync GetOwnPropertyDescriptor(uint64_t objId, JSIDVariant id) returns (ReturnStatus rs, PPropertyDescriptor result);
     prio(high) sync DefineProperty(uint64_t objId, JSIDVariant id, PPropertyDescriptor descriptor) returns (ReturnStatus rs);
@@ -42,12 +42,9 @@ both:
     prio(high) sync ClassName(uint64_t objId) returns (nsString name);
     prio(high) sync RegExpToShared(uint64_t objId) returns (ReturnStatus rs, nsString source, uint32_t flags);
 
-    prio(high) sync GetPropertyKeys(uint64_t objId, uint32_t flags) returns (ReturnStatus rs, nsString[] names);
+    prio(high) sync GetPropertyKeys(uint64_t objId, uint32_t flags) returns (ReturnStatus rs, JSIDVariant[] ids);
     prio(high) sync InstanceOf(uint64_t objId, JSIID iid) returns (ReturnStatus rs, bool instanceof);
     prio(high) sync DOMInstanceOf(uint64_t objId, int prototypeID, int depth) returns (ReturnStatus rs, bool instanceof);
-
-    prio(high) sync IsCallable(uint64_t objId) returns (bool result);
-    prio(high) sync IsConstructor(uint64_t objId) returns (bool result);
 
 parent:
     async __delete__();

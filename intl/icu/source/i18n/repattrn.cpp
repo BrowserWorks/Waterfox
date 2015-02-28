@@ -3,7 +3,7 @@
 //
 /*
 ***************************************************************************
-*   Copyright (C) 2002-2013 International Business Machines Corporation   *
+*   Copyright (C) 2002-2014 International Business Machines Corporation   *
 *   and others. All rights reserved.                                      *
 ***************************************************************************
 */
@@ -66,21 +66,29 @@ RegexPattern &RegexPattern::operator = (const RegexPattern &other) {
     init();
 
     // Copy simple fields
-    if ( other.fPatternString == NULL ) {
+    fDeferredStatus   = other.fDeferredStatus;
+
+    if (U_FAILURE(fDeferredStatus)) {
+        return *this;
+    }
+
+    if (other.fPatternString == NULL) {
         fPatternString = NULL;
-        fPattern      = utext_clone(fPattern, other.fPattern, FALSE, TRUE, &fDeferredStatus);
+        fPattern = utext_clone(fPattern, other.fPattern, FALSE, TRUE, &fDeferredStatus);
     } else {
         fPatternString = new UnicodeString(*(other.fPatternString));
-        UErrorCode status = U_ZERO_ERROR;
-        fPattern      = utext_openConstUnicodeString(NULL, fPatternString, &status);
-        if (U_FAILURE(status)) {
+        if (fPatternString == NULL) {
             fDeferredStatus = U_MEMORY_ALLOCATION_ERROR;
-            return *this;
+        } else {
+            fPattern = utext_openConstUnicodeString(NULL, fPatternString, &fDeferredStatus);
         }
     }
+    if (U_FAILURE(fDeferredStatus)) {
+        return *this;
+    }
+
     fFlags            = other.fFlags;
     fLiteralText      = other.fLiteralText;
-    fDeferredStatus   = other.fDeferredStatus;
     fMinMatchLen      = other.fMinMatchLen;
     fFrameSize        = other.fFrameSize;
     fDataSize         = other.fDataSize;

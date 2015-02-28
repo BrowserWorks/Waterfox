@@ -3,7 +3,7 @@
 <head>
 <title>The id attribute</title>
 <meta charset=utf8>
-<link rel="help" href="http://www.w3.org/TR/html5/global-attributes.html#the-id-attribute">
+<link rel="help" href="https://html.spec.whatwg.org/multipage/#the-id-attribute">
 <style>
 
 #abcd {
@@ -75,7 +75,7 @@
         assert_equals(document.defaultView.getComputedStyle(document.getElementById("ABCD"), false).zIndex, "2");
     }, "Association for CSS is exact and therefore case-sensitive.");
 
-    test(function() {  
+    test(function() {
         assert_equals(document.defaultView.getComputedStyle(document.getElementById("a b"), false).zIndex, "3");
     }, "Spaces are allowed in an id and still make an association.");
 

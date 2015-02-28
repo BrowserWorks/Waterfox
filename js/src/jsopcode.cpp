@@ -122,7 +122,7 @@ js::StackUses(JSScript *script, jsbytecode *pc)
       default:
         /* stack: fun, this, [argc arguments] */
         MOZ_ASSERT(op == JSOP_NEW || op == JSOP_CALL || op == JSOP_EVAL ||
-                   op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
+                   op == JSOP_STRICTEVAL || op == JSOP_FUNCALL || op == JSOP_FUNAPPLY);
         return 2 + GET_ARGC(pc);
     }
 }
@@ -804,6 +804,10 @@ js_DumpPC(JSContext *cx)
     if (!sprinter.init())
         return false;
     ScriptFrameIter iter(cx);
+    if (iter.done()) {
+        fprintf(stdout, "Empty stack.\n");
+        return true;
+    }
     RootedScript script(cx, iter.script());
     bool ok = js_DisassembleAtPC(cx, script, true, iter.pc(), false, &sprinter);
     fprintf(stdout, "%s", sprinter.string());
@@ -1001,7 +1005,7 @@ js_Disassemble1(JSContext *cx, HandleScript script, jsbytecode *pc,
 
       case JOF_OBJECT: {
         /* Don't call obj.toSource if analysis/inference is active. */
-        if (script->compartment()->activeAnalysis) {
+        if (script->zone()->types.activeAnalysis) {
             Sprint(sp, " object");
             break;
         }
@@ -1063,8 +1067,7 @@ js_Disassemble1(JSContext *cx, HandleScript script, jsbytecode *pc,
         goto print_int;
 
       case JOF_UINT24:
-        MOZ_ASSERT(op == JSOP_UINT24 || op == JSOP_NEWARRAY || op == JSOP_INITELEM_ARRAY ||
-                   op == JSOP_DUPAT);
+        MOZ_ASSERT(len == 4);
         i = (int)GET_UINT24(pc);
         goto print_int;
 
@@ -1463,10 +1466,8 @@ namespace {
 struct ExpressionDecompiler
 {
     JSContext *cx;
-    InterpreterFrame *fp;
     RootedScript script;
     RootedFunction fun;
-    BindingVector *localNames;
     BytecodeParser parser;
     Sprinter sprinter;
 
@@ -1474,11 +1475,9 @@ struct ExpressionDecompiler
         : cx(cx),
           script(cx, script),
           fun(cx, fun),
-          localNames(nullptr),
           parser(cx, script),
           sprinter(cx)
     {}
-    ~ExpressionDecompiler();
     bool init();
     bool decompilePCForStackOperand(jsbytecode *pc, int i);
     bool decompilePC(jsbytecode *pc);
@@ -1588,6 +1587,13 @@ ExpressionDecompiler::decompilePC(jsbytecode *pc)
         return sprinter.printf("%d", GetBytecodeInteger(pc)) >= 0;
       case JSOP_STRING:
         return quote(loadAtom(pc), '"');
+      case JSOP_SYMBOL: {
+        unsigned i = uint8_t(pc[1]);
+        MOZ_ASSERT(i < JS::WellKnownSymbolLimit);
+        if (i < JS::WellKnownSymbolLimit)
+            return write(cx->names().wellKnownSymbolDescriptions()[i]);
+        break;
+      }
       case JSOP_UNDEFINED:
         return write(js_undefined_str);
       case JSOP_THIS:
@@ -1621,24 +1627,12 @@ ExpressionDecompiler::decompilePC(jsbytecode *pc)
     return write("(intermediate value)");
 }
 
-ExpressionDecompiler::~ExpressionDecompiler()
-{
-    js_delete<BindingVector>(localNames);
-}
-
 bool
 ExpressionDecompiler::init()
 {
     assertSameCompartment(cx, script);
 
     if (!sprinter.init())
-        return false;
-
-    localNames = cx->new_<BindingVector>(cx);
-    if (!localNames)
-        return false;
-    RootedScript script_(cx, script);
-    if (!FillBindingVector(script_, localNames))
         return false;
 
     if (!parser.parse())
@@ -1675,8 +1669,15 @@ JSAtom *
 ExpressionDecompiler::getArg(unsigned slot)
 {
     MOZ_ASSERT(fun);
-    MOZ_ASSERT(slot < script->bindings.count());
-    return (*localNames)[slot].name();
+    MOZ_ASSERT(slot < script->bindings.numArgs());
+
+    for (BindingIter bi(script); bi; bi++) {
+        MOZ_ASSERT(bi->kind() == Binding::ARGUMENT);
+        if (bi.argIndex() == slot)
+            return bi->name();
+    }
+
+    MOZ_CRASH("No binding");
 }
 
 JSAtom *
@@ -1684,14 +1685,17 @@ ExpressionDecompiler::getLocal(uint32_t local, jsbytecode *pc)
 {
     MOZ_ASSERT(local < script->nfixed());
     if (local < script->nbodyfixed()) {
-        MOZ_ASSERT(fun);
-        uint32_t slot = local + fun->nargs();
-        MOZ_ASSERT(slot < script->bindings.count());
-        return (*localNames)[slot].name();
+        for (BindingIter bi(script); bi; bi++) {
+            if (bi->kind() != Binding::ARGUMENT && !bi->aliased() && bi.frameIndex() == local)
+                return bi->name();
+        }
+
+        MOZ_CRASH("No binding");
     }
     for (NestedScopeObject *chain = script->getStaticScope(pc);
          chain;
-         chain = chain->enclosingNestedScope()) {
+         chain = chain->enclosingNestedScope())
+    {
         if (!chain->is<StaticBlockObject>())
             continue;
         StaticBlockObject &block = chain->as<StaticBlockObject>();
@@ -2051,7 +2055,7 @@ js::StopPCCountProfiling(JSContext *cx)
     for (ZonesIter zone(rt, SkipAtoms); !zone.done(); zone.next()) {
         for (ZoneCellIter i(zone, FINALIZE_SCRIPT); !i.done(); i.next()) {
             JSScript *script = i.get<JSScript>();
-            if (script->hasScriptCounts() && script->types) {
+            if (script->hasScriptCounts() && script->types()) {
                 ScriptAndCounts sac;
                 sac.script = script;
                 sac.scriptCounts.set(script->releaseScriptCounts());
@@ -2382,9 +2386,6 @@ js::GetPCCountScriptContents(JSContext *cx, size_t index)
     JSScript *script = sac.script;
 
     StringBuffer buf(cx);
-
-    if (!script->functionNonDelazifying() && !script->compileAndGo())
-        return buf.finishString();
 
     {
         AutoCompartment ac(cx, &script->global());

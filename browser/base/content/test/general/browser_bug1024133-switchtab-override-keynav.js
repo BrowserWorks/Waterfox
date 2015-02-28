@@ -3,10 +3,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 add_task(function* test_switchtab_override_keynav() {
-  // This test is only relevant if UnifiedComplete is enabled.
-  if (!Services.prefs.getBoolPref("browser.urlbar.unifiedcomplete"))
-    return;
-
   let testURL = "http://example.org/browser/browser/base/content/test/general/dummy_page.html";
 
   info("Opening first tab");
@@ -25,25 +21,12 @@ add_task(function* test_switchtab_override_keynav() {
     return promiseClearHistory();
   });
 
-  info("Wait for autocomplete")
-  let searchDeferred = Promise.defer();
-  let onSearchComplete = gURLBar.onSearchComplete;
-  registerCleanupFunction(() => {
-    gURLBar.onSearchComplete = onSearchComplete;
-  });
-  gURLBar.onSearchComplete = function () {
-    ok(gURLBar.popupOpen, "The autocomplete popup is correctly open");
-    onSearchComplete.apply(gURLBar);
-    searchDeferred.resolve();
-  }
-
   gURLBar.focus();
   gURLBar.value = "dummy_pag";
   EventUtils.synthesizeKey("e" , {});
-  yield searchDeferred.promise;
+  yield promiseSearchComplete();
 
   info("Select second autocomplete popup entry");
-  EventUtils.synthesizeKey("VK_DOWN" , {});
   EventUtils.synthesizeKey("VK_DOWN" , {});
   ok(/moz-action:switchtab/.test(gURLBar.value), "switch to tab entry found");
 

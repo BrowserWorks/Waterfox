@@ -1,0 +1,257 @@
+.TH SCP 1 "September 25, 1999" ""
+.SH NAME
+\fBscp\fP
+\- secure copy (remote file copy program)
+.SH SYNOPSIS
+.br
+\fBscp\fP
+[\fB\-1246BCpqrv\fP]
+[\fB\-c\fP \fIcipher\fP]
+[\fB\-F\fP \fIssh_config\fP]
+[\fB\-i\fP \fIidentity_file\fP]
+[\fB\-l\fP \fIlimit\fP]
+[\fB\-o\fP \fIssh_option\fP]
+[\fB\-P\fP \fIport\fP]
+[\fB\-S\fP \fIprogram\fP]
+[[\fIuser\fP@]\fIhost1\fP:]\fIfile1\fP
+[\fI...\fP]
+[[\fIuser\fP@]\fIhost2\fP:]\fIfile2\fP
+.SH DESCRIPTION
+\fBscp\fP
+copies files between hosts on a network.
+It uses
+\fBssh\fP(1)
+for data transfer, and uses the same authentication and provides the
+same security as
+\fBssh\fP(1).
+Unlike
+\fBrcp\fP(1),
+\fBscp\fP
+will ask for passwords or passphrases if they are needed for
+authentication.
+
+Any file name may contain a host and user specification to indicate
+that the file is to be copied to/from that host.
+Copies between two remote hosts are permitted.
+
+The options are as follows:
+.TP
+\fB\-1\fP
+Forces
+\fBscp\fP
+to use protocol 1.
+.TP
+\fB\-2\fP
+Forces
+\fBscp\fP
+to use protocol 2.
+.TP
+\fB\-4\fP
+Forces
+\fBscp\fP
+to use IPv4 addresses only.
+.TP
+\fB\-6\fP
+Forces
+\fBscp\fP
+to use IPv6 addresses only.
+.TP
+\fB\-B\fP
+Selects batch mode (prevents asking for passwords or passphrases).
+.TP
+\fB\-C\fP
+Compression enable.
+Passes the
+\fB\-C\fP
+flag to
+\fBssh\fP(1)
+to enable compression.
+.TP
+\fB\-c\fP \fIcipher\fP
+Selects the cipher to use for encrypting the data transfer.
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-F\fP \fIssh_config\fP
+Specifies an alternative
+per-user configuration file for
+\fBssh\fP.
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-i\fP \fIidentity_file\fP
+Selects the file from which the identity (private key) for RSA
+authentication is read.
+This option is directly passed to
+\fBssh\fP(1).
+.TP
+\fB\-l\fP \fIlimit\fP
+Limits the used bandwidth, specified in Kbit/s.
+.TP
+\fB\-o\fP \fIssh_option\fP
+Can be used to pass options to
+\fBssh\fP
+in the format used in
+\fBssh_config\fP(5).
+This is useful for specifying options
+for which there is no separate
+\fBscp\fP
+command-line flag.
+For full details of the options listed below, and their possible values, see
+\fBssh_config\fP(5).
+
+.TP
+AddressFamily
+.TP
+BatchMode
+.TP
+BindAddress
+.TP
+ChallengeResponseAuthentication
+.TP
+CheckHostIP
+.TP
+Cipher
+.TP
+Ciphers
+.TP
+Compression
+.TP
+CompressionLevel
+.TP
+ConnectionAttempts
+.TP
+ConnectTimeout
+.TP
+ControlMaster
+.TP
+ControlPath
+.TP
+GlobalKnownHostsFile
+.TP
+GSSAPIAuthentication
+.TP
+GSSAPIDelegateCredentials
+.TP
+HashKnownHosts
+.TP
+Host
+.TP
+HostbasedAuthentication
+.TP
+HostKeyAlgorithms
+.TP
+HostKeyAlias
+.TP
+HostName
+.TP
+IdentityFile
+.TP
+IdentitiesOnly
+.TP
+KbdInteractiveDevices
+.TP
+LogLevel
+.TP
+MACs
+.TP
+NoHostAuthenticationForLocalhost
+.TP
+NumberOfPasswordPrompts
+.TP
+PasswordAuthentication
+.TP
+Port
+.TP
+PreferredAuthentications
+.TP
+Protocol
+.TP
+ProxyCommand
+.TP
+PubkeyAuthentication
+.TP
+RekeyLimit
+.TP
+RhostsRSAAuthentication
+.TP
+RSAAuthentication
+.TP
+SendEnv
+.TP
+ServerAliveInterval
+.TP
+ServerAliveCountMax
+.TP
+SmartcardDevice
+.TP
+StrictHostKeyChecking
+.TP
+TCPKeepAlive
+.TP
+UsePrivilegedPort
+.TP
+User
+.TP
+UserKnownHostsFile
+.TP
+VerifyHostKeyDNS
+.TP
+\fB\-P\fP \fIport\fP
+Specifies the port to connect to on the remote host.
+Note that this option is written with a capital
+`P',
+because
+\fB\-p\fP
+is already reserved for preserving the times and modes of the file in
+\fBrcp\fP(1).
+.TP
+\fB\-p\fP
+Preserves modification times, access times, and modes from the
+original file.
+.TP
+\fB\-q\fP
+Disables the progress meter.
+.TP
+\fB\-r\fP
+Recursively copy entire directories.
+.TP
+\fB\-S\fP \fIprogram\fP
+Name of
+\fIprogram\fP
+to use for the encrypted connection.
+The program must understand
+\fBssh\fP(1)
+options.
+.TP
+\fB\-v\fP
+Verbose mode.
+Causes
+\fBscp\fP
+and
+\fBssh\fP(1)
+to print debugging messages about their progress.
+This is helpful in
+debugging connection, authentication, and configuration problems.
+
+Ex -std scp
+.SH SEE ALSO
+\fBrcp\fP(1),
+\fBsftp\fP(1),
+\fBssh\fP(1),
+\fBssh-add\fP(1),
+\fBssh-agent\fP(1),
+\fBssh-keygen\fP(1),
+\fBssh_config\fP(5),
+\fBsshd\fP(8)
+.SH HISTORY
+\fBscp\fP
+is based on the
+\fBrcp\fP(1)
+program in BSD source code from the Regents of the University of
+California.
+.SH AUTHORS
+
+Timo Rinne <tri@iki.fi>
+
+Tatu Ylonen <ylo@cs.hut.fi>

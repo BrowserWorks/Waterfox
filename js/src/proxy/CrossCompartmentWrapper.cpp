@@ -28,24 +28,6 @@ using namespace js;
 #define NOTHING (true)
 
 bool
-CrossCompartmentWrapper::isExtensible(JSContext *cx, HandleObject wrapper, bool *extensible) const
-{
-    PIERCE(cx, wrapper,
-           NOTHING,
-           Wrapper::isExtensible(cx, wrapper, extensible),
-           NOTHING);
-}
-
-bool
-CrossCompartmentWrapper::preventExtensions(JSContext *cx, HandleObject wrapper) const
-{
-    PIERCE(cx, wrapper,
-           NOTHING,
-           Wrapper::preventExtensions(cx, wrapper),
-           NOTHING);
-}
-
-bool
 CrossCompartmentWrapper::getPropertyDescriptor(JSContext *cx, HandleObject wrapper, HandleId id,
                                                MutableHandle<PropertyDescriptor> desc) const
 {
@@ -96,11 +78,57 @@ CrossCompartmentWrapper::delete_(JSContext *cx, HandleObject wrapper, HandleId i
 }
 
 bool
-CrossCompartmentWrapper::enumerate(JSContext *cx, HandleObject wrapper, AutoIdVector &props) const
+CrossCompartmentWrapper::getPrototypeOf(JSContext *cx, HandleObject wrapper,
+                                        MutableHandleObject protop) const
+{
+    {
+        RootedObject wrapped(cx, wrappedObject(wrapper));
+        AutoCompartment call(cx, wrapped);
+        if (!JSObject::getProto(cx, wrapped, protop))
+            return false;
+        if (protop)
+            protop->setDelegate(cx);
+    }
+
+    return cx->compartment()->wrap(cx, protop);
+}
+
+bool
+CrossCompartmentWrapper::setPrototypeOf(JSContext *cx, HandleObject wrapper,
+                                        HandleObject proto, bool *bp) const
+{
+    RootedObject protoCopy(cx, proto);
+    PIERCE(cx, wrapper,
+           cx->compartment()->wrap(cx, &protoCopy),
+           Wrapper::setPrototypeOf(cx, wrapper, protoCopy, bp),
+           NOTHING);
+}
+
+bool
+CrossCompartmentWrapper::setImmutablePrototype(JSContext *cx, HandleObject wrapper, bool *succeeded) const
 {
     PIERCE(cx, wrapper,
            NOTHING,
-           Wrapper::enumerate(cx, wrapper, props),
+           Wrapper::setImmutablePrototype(cx, wrapper, succeeded),
+           NOTHING);
+}
+
+bool
+CrossCompartmentWrapper::preventExtensions(JSContext *cx, HandleObject wrapper,
+                                           bool *succeeded) const
+{
+    PIERCE(cx, wrapper,
+           NOTHING,
+           Wrapper::preventExtensions(cx, wrapper, succeeded),
+           NOTHING);
+}
+
+bool
+CrossCompartmentWrapper::isExtensible(JSContext *cx, HandleObject wrapper, bool *extensible) const
+{
+    PIERCE(cx, wrapper,
+           NOTHING,
+           Wrapper::isExtensible(cx, wrapper, extensible),
            NOTHING);
 }
 
@@ -151,11 +179,22 @@ CrossCompartmentWrapper::set(JSContext *cx, HandleObject wrapper, HandleObject r
 }
 
 bool
-CrossCompartmentWrapper::keys(JSContext *cx, HandleObject wrapper, AutoIdVector &props) const
+CrossCompartmentWrapper::getOwnEnumerablePropertyKeys(JSContext *cx, HandleObject wrapper,
+                                                      AutoIdVector &props) const
 {
     PIERCE(cx, wrapper,
            NOTHING,
-           Wrapper::keys(cx, wrapper, props),
+           Wrapper::getOwnEnumerablePropertyKeys(cx, wrapper, props),
+           NOTHING);
+}
+
+bool
+CrossCompartmentWrapper::getEnumerablePropertyKeys(JSContext *cx, HandleObject wrapper,
+                                                   AutoIdVector &props) const
+{
+    PIERCE(cx, wrapper,
+           NOTHING,
+           Wrapper::getEnumerablePropertyKeys(cx, wrapper, props),
            NOTHING);
 }
 
@@ -164,11 +203,9 @@ CrossCompartmentWrapper::keys(JSContext *cx, HandleObject wrapper, AutoIdVector 
  * allows fast iteration over objects across a compartment boundary.
  */
 static bool
-CanReify(HandleValue vp)
+CanReify(HandleObject obj)
 {
-    JSObject *obj;
-    return vp.isObject() &&
-           (obj = &vp.toObject())->is<PropertyIteratorObject>() &&
+    return obj->is<PropertyIteratorObject>() &&
            (obj->as<PropertyIteratorObject>().getNativeIterator()->flags & JSITER_ENUMERATE);
 }
 
@@ -186,9 +223,9 @@ struct AutoCloseIterator
 };
 
 static bool
-Reify(JSContext *cx, JSCompartment *origin, MutableHandleValue vp)
+Reify(JSContext *cx, JSCompartment *origin, MutableHandleObject objp)
 {
-    Rooted<PropertyIteratorObject*> iterObj(cx, &vp.toObject().as<PropertyIteratorObject>());
+    Rooted<PropertyIteratorObject*> iterObj(cx, &objp->as<PropertyIteratorObject>());
     NativeIterator *ni = iterObj->getNativeIterator();
 
     AutoCloseIterator close(cx, iterObj);
@@ -204,7 +241,6 @@ Reify(JSContext *cx, JSCompartment *origin, MutableHandleValue vp)
      * implicit cx->enumerators state.
      */
     size_t length = ni->numKeys();
-    bool isKeyIter = ni->isKeyIter();
     AutoIdVector keys(cx);
     if (length > 0) {
         if (!keys.reserve(length))
@@ -222,29 +258,22 @@ Reify(JSContext *cx, JSCompartment *origin, MutableHandleValue vp)
     if (!CloseIterator(cx, iterObj))
         return false;
 
-    if (isKeyIter) {
-        if (!VectorToKeyIterator(cx, obj, ni->flags, keys, vp))
-            return false;
-    } else {
-        if (!VectorToValueIterator(cx, obj, ni->flags, keys, vp))
-            return false;
-    }
-    return true;
+    return EnumeratedIdVectorToIterator(cx, obj, ni->flags, keys, objp);
 }
 
 bool
 CrossCompartmentWrapper::iterate(JSContext *cx, HandleObject wrapper, unsigned flags,
-                                 MutableHandleValue vp) const
+                                 MutableHandleObject objp) const
 {
     {
         AutoCompartment call(cx, wrappedObject(wrapper));
-        if (!Wrapper::iterate(cx, wrapper, flags, vp))
+        if (!Wrapper::iterate(cx, wrapper, flags, objp))
             return false;
     }
 
-    if (CanReify(vp))
-        return Reify(cx, cx->compartment(), vp);
-    return cx->compartment()->wrap(cx, vp);
+    if (CanReify(objp))
+        return Reify(cx, cx->compartment(), objp);
+    return cx->compartment()->wrap(cx, objp);
 }
 
 bool
@@ -401,33 +430,6 @@ CrossCompartmentWrapper::defaultValue(JSContext *cx, HandleObject wrapper, JSTyp
            NOTHING,
            Wrapper::defaultValue(cx, wrapper, hint, vp),
            cx->compartment()->wrap(cx, vp));
-}
-
-bool
-CrossCompartmentWrapper::getPrototypeOf(JSContext *cx, HandleObject wrapper,
-                                        MutableHandleObject protop) const
-{
-    {
-        RootedObject wrapped(cx, wrappedObject(wrapper));
-        AutoCompartment call(cx, wrapped);
-        if (!JSObject::getProto(cx, wrapped, protop))
-            return false;
-        if (protop)
-            protop->setDelegate(cx);
-    }
-
-    return cx->compartment()->wrap(cx, protop);
-}
-
-bool
-CrossCompartmentWrapper::setPrototypeOf(JSContext *cx, HandleObject wrapper,
-                                        HandleObject proto, bool *bp) const
-{
-    RootedObject protoCopy(cx, proto);
-    PIERCE(cx, wrapper,
-           cx->compartment()->wrap(cx, &protoCopy),
-           Wrapper::setPrototypeOf(cx, wrapper, protoCopy, bp),
-           NOTHING);
 }
 
 const CrossCompartmentWrapper CrossCompartmentWrapper::singleton(0u);

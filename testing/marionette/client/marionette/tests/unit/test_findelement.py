@@ -5,7 +5,7 @@
 from marionette_test import MarionetteTestCase
 from marionette import HTMLElement
 from by import By
-from errors import NoSuchElementException
+from errors import NoSuchElementException, InvalidSelectorException
 
 
 class TestElements(MarionetteTestCase):
@@ -122,7 +122,7 @@ class TestElements(MarionetteTestCase):
         self.marionette.set_search_timeout(0)
         self.assertRaises(NoSuchElementException, self.marionette.find_element, By.ID, "I'm not on the page")
 
-    def test_timeout(self):
+    def test_timeout_element(self):
         test_html = self.marionette.absolute_url("test.html")
         self.marionette.navigate(test_html)
         button = self.marionette.find_element("id", "createDivButton")
@@ -130,6 +130,15 @@ class TestElements(MarionetteTestCase):
         self.assertRaises(NoSuchElementException, self.marionette.find_element, By.ID, "newDiv")
         self.assertTrue(True, self.marionette.set_search_timeout(8000))
         self.assertEqual(HTMLElement, type(self.marionette.find_element(By.ID, "newDiv")))
+
+    def test_timeout_elements(self):
+        test_html = self.marionette.absolute_url("test.html")
+        self.marionette.navigate(test_html)
+        button = self.marionette.find_element("id", "createDivButton")
+        button.click()
+        self.assertEqual(len(self.marionette.find_elements(By.ID, "newDiv")), 0)
+        self.assertTrue(True, self.marionette.set_search_timeout(8000))
+        self.assertEqual(len(self.marionette.find_elements(By.ID, "newDiv")), 1)
 
     def test_css_selector_scope_doesnt_start_at_rootnode(self):
         test_html = self.marionette.absolute_url("test.html")
@@ -145,3 +154,8 @@ class TestElements(MarionetteTestCase):
         fbody = self.marionette.find_element(By.TAG_NAME, 'body')
         abody = self.marionette.get_active_element()
         self.assertEqual(fbody, abody)
+
+    def test_throws_error_when_trying_to_use_invalid_selector_type(self):
+        test_html = self.marionette.absolute_url("test.html")
+        self.marionette.navigate(test_html)
+        self.assertRaises(InvalidSelectorException, self.marionette.find_element, "Brie Search Type", "doesn't matter")

@@ -73,16 +73,6 @@
         return decodeURIComponent(url.slice(desc + 2));
       }
 
-      function getLocale()
-      {
-        var url = document.documentURI;
-        var matches = url.match(/l\=([^&]+)\&/);
-        if (!matches) {
-          return "";
-        }
-        return matches[1];
-      }
-
       function retryThis(buttonEl)
       {
         // Note: The application may wish to handle switching off "offline mode"
@@ -99,6 +89,37 @@
         }
 
         buttonEl.disabled = true;
+      }
+
+      function toggleDisplay(node) {
+        toggle = {
+          '': 'block',
+          'none': 'block',
+          'block': 'none'
+        };
+        node.style.display = toggle[node.style.display];
+      }
+
+      function showCertificateErrorReporting() {
+        // Display error reporting UI
+        document.getElementById('certificateErrorReporting').style.display = 'block';
+
+        // Get the hostname and add it to the panel
+        document.getElementById('hostname').textContent = document.location.hostname;
+
+        // Register click handler for the certificateErrorReportingPanel
+        document.getElementById('showCertificateErrorReportingPanel')
+                .addEventListener('click', function togglePanelVisibility() {
+          var panel = document.getElementById('certificateErrorReportingPanel');
+          toggleDisplay(panel);
+        });
+      }
+
+
+      function sendErrorReport() {
+        var event = new CustomEvent("AboutNetErrorSendReport", {bubbles:true});
+
+        document.dispatchEvent(event);
       }
 
       function initPage()
@@ -135,25 +156,28 @@
           errDesc.id = "errorLongDesc";
         }
 
-        if (err == "nssFailure2" && getLocale() == "en-US" &&
-            sd.textContent.contains("ssl_error_no_cypher_overlap")) {
-          errTitle.textContent = "Unable to Connect Securely";
-          errTitle.setAttribute("sslv3", "true");
-          sd.textContent = "Firefox cannot guarantee the safety of your data on " +
-            location.hostname + " because it uses SSLv3, a broken security protocol.";
-          errDesc.textContent = "Advanced info: ssl_error_no_cypher_overlap";
-          var learnMoreBtn = document.createElement("button");
-          learnMoreBtn.id = "errorTryAgain";
-          learnMoreBtn.textContent = "Learn More\u2026";
-          learnMoreBtn.setAttribute("autocomplete", "off");
-          learnMoreBtn.addEventListener("click", function(e) {
-            try {
-            location.href = "https://support.mozilla.org/kb/how-resolve-sslv3-error-messages-firefox";
-            } catch (ex) {/* Avoid breaking in case this throws weird errors */}
-            e.target.disabled = true;
-          });
+        if (err == "nssFailure2" &&
+            sd.textContent.contains("ssl_error_unsupported_version")) {
+          var ssl3ErrorTitle = document.getElementById("et_ssl3");
+          var ssl3ErrorDesc = document.getElementById("ed_ssl3");
+          var ssl3ShortDesc = document.getElementById("esd_ssl3");
+          var learnMoreText = document.getElementById("learn_more_ssl3");
+
+          errTitle.parentNode.replaceChild(ssl3ErrorTitle, errTitle);
+          ssl3ErrorTitle.id = "errorTitleText";
+          ssl3ErrorTitle.setAttribute("sslv3", "true");
+          errTitle = ssl3ErrorTitle;
+
+          sd.innerHTML = ssl3ShortDesc.innerHTML;
+          sd.querySelector('span').textContent = location.hostname;
+
+          errDesc.parentNode.replaceChild(ssl3ErrorDesc, errDesc);
+          ssl3ErrorDesc.id = "errorLongDesc";
+          ssl3ErrorDesc.querySelector('span').textContent = "ssl_error_unsupported_version";
+
           var retryBtn = document.getElementById("errorTryAgain");
-          retryBtn.parentNode.replaceChild(learnMoreBtn, retryBtn);
+          retryBtn.textContent = learnMoreText.textContent;
+          retryBtn.setAttribute("onclick", "learnMoreSSLV3()");
         }
 
         // remove undisplayed errors to avoid bug 39098
@@ -186,11 +210,42 @@
           document.getElementById("errorTryAgain").style.display = "none";
         }
 
-        if (err == "cspFrameAncestorBlocked") {
-          // Remove the "Try again" button for CSP frame ancestors violation, since it's
+        if (err == "cspBlocked") {
+          // Remove the "Try again" button for CSP violations, since it's
           // almost certainly useless. (Bug 553180)
           document.getElementById("errorTryAgain").style.display = "none";
         }
+
+        window.addEventListener("AboutNetErrorOptions", function(evt) {
+        // Pinning errors are of type nssFailure2 (don't ask me why)
+          if (getErrorCode() == "nssFailure2" && !errTitle.hasAttribute("sslv3")) {
+          // TODO: and the pref is set...
+            var options = JSON.parse(evt.detail);
+            if (options && options.enabled) {
+              var checkbox = document.getElementById('automaticallyReportInFuture');
+              showCertificateErrorReporting();
+              if (options.automatic) {
+                // set the checkbox
+                checkbox.checked = true;
+              }
+
+              checkbox.addEventListener('change', function(evt) {
+                  var event = new CustomEvent("AboutNetErrorSetAutomatic",
+                    {bubbles:true, detail:evt.target.checked});
+                  document.dispatchEvent(event);
+                }, false);
+
+              var reportBtn = document.getElementById('reportCertificateError');
+              var retryBtn = document.getElementById('reportCertificateErrorRetry');
+
+              reportBtn.addEventListener('click', sendErrorReport, false);
+              retryBtn.addEventListener('click', sendErrorReport, false);
+            }
+          }
+        }.bind(this), true, true);
+
+        var event = new CustomEvent("AboutNetErrorLoad", {bubbles:true});
+        document.dispatchEvent(event);
 
         if (err == "nssBadCert") {
           // Remove the "Try again" button for security exceptions, since it's
@@ -293,6 +348,11 @@
         return haystack.slice(-needle.length) == needle;
       }
 
+      function learnMoreSSLV3() {
+        location.href = "https://support.mozilla.org/kb/how-resolve-sslv3-error-messages-firefox";
+        // Ensure users don't re-click the button:
+        e.target.disabled = true;
+      }
     ]]></script>
   </head>
 
@@ -322,9 +382,10 @@
         <h1 id="et_nssFailure2">&nssFailure2.title;</h1>
         <h1 id="et_nssBadCert">&nssBadCert.title;</h1>
         <h1 id="et_malwareBlocked">&malwareBlocked.title;</h1>
-        <h1 id="et_cspFrameAncestorBlocked">&cspFrameAncestorBlocked.title;</h1>
+        <h1 id="et_cspBlocked">&cspBlocked.title;</h1>
         <h1 id="et_remoteXUL">&remoteXUL.title;</h1>
         <h1 id="et_corruptedContentError">&corruptedContentError.title;</h1>
+        <h1 id="et_ssl3">&oldSecurityProtocol.title;</h1>
       </div>
       <div id="errorDescriptionsContainer">
         <div id="ed_generic">&generic.longDesc;</div>
@@ -348,9 +409,12 @@
         <div id="ed_nssFailure2">&nssFailure2.longDesc2;</div>
         <div id="ed_nssBadCert">&nssBadCert.longDesc2;</div>
         <div id="ed_malwareBlocked">&malwareBlocked.longDesc;</div>
-        <div id="ed_cspFrameAncestorBlocked">&cspFrameAncestorBlocked.longDesc;</div>
+        <div id="ed_cspBlocked">&cspBlocked.longDesc;</div>
         <div id="ed_remoteXUL">&remoteXUL.longDesc;</div>
         <div id="ed_corruptedContentError">&corruptedContentError.longDesc;</div>
+        <div id="esd_ssl3">&oldSecurityProtocol.longDesc2;</div>
+        <div id="ed_ssl3">&oldSecurityProtocol.advancedInfo;</div>
+        <div id="learn_more_ssl3">&oldSecurityProtocol.learnMore;</div>
       </div>
     </div>
 
@@ -379,6 +443,7 @@
           <a id="securityOverrideLink" href="javascript:showSecuritySection();" >&securityOverride.linkText;</a>
           <div id="securityOverrideContent" style="display: none;">&securityOverride.warningContent;</div>
         </div>
+
       </div>
 
       <!-- Retry Button -->
@@ -398,6 +463,28 @@
             parent.insertBefore(button, nextSibling);
         }
       </script>
+
+      <!-- UI for option to report certificate errors to Mozilla. Removed on
+           init for other error types .-->
+      <div id="certificateErrorReporting">
+        <a id="showCertificateErrorReportingPanel" href="#">&errorReporting.title;<span class="downArrow"> ▼</span></a>
+      </div>
+
+      <div id="certificateErrorReportingPanel">
+        <p>&errorReporting.longDesc;</p>
+        <p>
+          <input type="checkbox" id="automaticallyReportInFuture" />
+          <label for="automaticallyReportInFuture" id="automaticallyReportInFuture">&errorReporting.automatic;</label>
+        </p>
+        <!-- TODO add link to relevant page on sumo -->
+        <a href="https://support.mozilla.org/kb/certificate-pinning-reports" target="new">&errorReporting.learnMore;</a>
+        <span id="reportingState">
+          <button id="reportCertificateError">&errorReporting.report;</button>
+          <button id="reportCertificateErrorRetry">&errorReporting.tryAgain;</button>
+          <span id="reportSendingMessage">&errorReporting.sending;</span>
+          <span id="reportSentMessage">&errorReporting.sent;</span>
+        </span>
+      </div>
 
     </div>
 

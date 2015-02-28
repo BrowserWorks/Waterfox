@@ -1446,7 +1446,7 @@ void TestGetLocale() {
     ucol_close(coll);
   }
 
-  /* completely non-existant locale for collator should get a default collator */
+  /* completely non-existent locale for collator should get a root collator */
   {
     UCollator *defaultColl = ucol_open(NULL, &status);
     coll = ucol_open("blahaha", &status);
@@ -1455,15 +1455,13 @@ void TestGetLocale() {
       if(strcmp(ucol_getLocaleByType(coll, ULOC_REQUESTED_LOCALE, &status), "blahaha")) {
         log_err("Nonexisting locale didn't preserve the requested locale\n");
       } */
-      if(strcmp(ucol_getLocaleByType(coll, ULOC_VALID_LOCALE, &status),
-        ucol_getLocaleByType(defaultColl, ULOC_VALID_LOCALE, &status))) {
-        log_err("Valid locale for nonexisting locale locale collator differs "
-          "from valid locale for default collator\n");
+      const char *name = ucol_getLocaleByType(coll, ULOC_VALID_LOCALE, &status);
+      if(*name != 0 && strcmp(name, "root") != 0) {
+        log_err("Valid locale for nonexisting-locale collator is \"%s\" not root\n", name);
       }
-      if(strcmp(ucol_getLocaleByType(coll, ULOC_ACTUAL_LOCALE, &status),
-        ucol_getLocaleByType(defaultColl, ULOC_ACTUAL_LOCALE, &status))) {
-        log_err("Actual locale for nonexisting locale locale collator differs "
-          "from actual locale for default collator\n");
+      name = ucol_getLocaleByType(coll, ULOC_ACTUAL_LOCALE, &status);
+      if(*name != 0 && strcmp(name, "root") != 0) {
+        log_err("Actual locale for nonexisting-locale collator is \"%s\" not root\n", name);
       }
       ucol_close(coll);
       ucol_close(defaultColl);

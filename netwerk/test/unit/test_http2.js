@@ -25,7 +25,7 @@ var bigListenerMD5 = '8f607cfdd2c87d6a7eedb657dafbd836';
 
 function checkIsHttp2(request) {
   try {
-    if (request.getResponseHeader("X-Firefox-Spdy") == "h2-14") {
+    if (request.getResponseHeader("X-Firefox-Spdy") == "h2-15") {
       if (request.getResponseHeader("X-Connection-Http2") == "yes") {
         return true;
       }
@@ -43,6 +43,7 @@ Http2CheckListener.prototype = {
   onStartRequestFired: false,
   onDataAvailableFired: false,
   isHttp2Connection: false,
+  shouldBeHttp2 : true,
 
   onStartRequest: function testOnStartRequest(request, ctx) {
     this.onStartRequestFired = true;
@@ -66,7 +67,7 @@ Http2CheckListener.prototype = {
   onStopRequest: function testOnStopRequest(request, ctx, status) {
     do_check_true(this.onStartRequestFired);
     do_check_true(this.onDataAvailableFired);
-    do_check_true(this.isHttp2Connection);
+    do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
 
     run_next_test();
     do_test_finished();
@@ -202,6 +203,16 @@ function test_http2_basic() {
   chan.asyncOpen(listener, null);
 }
 
+// make sure we don't use h2 when disallowed
+function test_http2_nospdy() {
+  var chan = makeChan("https://localhost:6944/");
+  var listener = new Http2CheckListener();
+  var internalChannel = chan.QueryInterface(Ci.nsIHttpChannelInternal);
+  internalChannel.allowSpdy = false;
+  listener.shouldBeHttp2 = false;
+  chan.asyncOpen(listener, null);
+}
+
 // Support for making sure XHR works over SPDY
 function checkXhr(xhr) {
   if (xhr.readyState != 4) {
@@ -248,7 +259,7 @@ function test_http2_header() {
 // Test to make sure cookies are split into separate fields before compression
 function test_http2_cookie_crumbling() {
   var chan = makeChan("https://localhost:6944/cookie_crumbling");
-  var cookiesSent = ['a=b', 'c=d', 'e=f'].sort();
+  var cookiesSent = ['a=b', 'c=d01234567890123456789', 'e=f'].sort();
   chan.setRequestHeader("Cookie", cookiesSent.join('; '), false);
   var listener = new Http2HeaderListener("X-Received-Header-Pairs", function(pairsReceived) {
     var cookiesReceived = JSON.parse(pairsReceived).filter(function(pair) {
@@ -308,7 +319,7 @@ function test_http2_big() {
 }
 
 // Support for doing a POST
-function do_post(content, chan, listener) {
+function do_post(content, chan, listener, method) {
   var stream = Cc["@mozilla.org/io/string-input-stream;1"]
                .createInstance(Ci.nsIStringInputStream);
   stream.data = content;
@@ -316,7 +327,7 @@ function do_post(content, chan, listener) {
   var uchan = chan.QueryInterface(Ci.nsIUploadChannel);
   uchan.setUploadStream(stream, "text/plain", stream.available());
 
-  chan.requestMethod = "POST";
+  chan.requestMethod = method;
 
   chan.asyncOpen(listener, null);
 }
@@ -325,14 +336,21 @@ function do_post(content, chan, listener) {
 function test_http2_post() {
   var chan = makeChan("https://localhost:6944/post");
   var listener = new Http2PostListener(md5s[0]);
-  do_post(posts[0], chan, listener);
+  do_post(posts[0], chan, listener, "POST");
+}
+
+// Make sure we can do a simple PATCH
+function test_http2_patch() {
+  var chan = makeChan("https://localhost:6944/patch");
+  var listener = new Http2PostListener(md5s[0]);
+  do_post(posts[0], chan, listener, "PATCH");
 }
 
 // Make sure we can do a POST that covers more than 2 frames
 function test_http2_post_big() {
   var chan = makeChan("https://localhost:6944/post");
   var listener = new Http2PostListener(md5s[1]);
-  do_post(posts[1], chan, listener);
+  do_post(posts[1], chan, listener, "POST");
 }
 
 Cu.import("resource://testing-common/httpd.js");
@@ -367,7 +385,7 @@ var altsvcClientListener = {
 function altsvcHttp1Server(metadata, response) {
   response.setStatusLine(metadata.httpVersion, 200, "OK");
   response.setHeader("Content-Type", "text/plain", false);
-  response.setHeader("Alt-Svc", 'h2=":6944"; ma=3200, h2-14=":6944"', false);
+  response.setHeader("Alt-Svc", 'h2-15=":6944"', false);
   var body = "this is where a cool kid would write something neat.\n";
   response.bodyOutputStream.write(body, body.length);
 }
@@ -382,6 +400,144 @@ function test_http2_altsvc() {
   chan.asyncOpen(altsvcClientListener, null);
 }
 
+var Http2PushApiListener = function() {};
+
+Http2PushApiListener.prototype = {
+  checksPending: 9, // 4 onDataAvailable and 5 onStop
+
+  getInterface: function(aIID) {
+    return this.QueryInterface(aIID);
+  },
+
+  QueryInterface: function(aIID) {
+    if (aIID.equals(Ci.nsIHttpPushListener) ||
+        aIID.equals(Ci.nsIStreamListener))
+      return this;
+    throw Components.results.NS_ERROR_NO_INTERFACE;
+  },
+
+  // nsIHttpPushListener
+  onPush: function onPush(associatedChannel, pushChannel) {
+    do_check_eq(associatedChannel.originalURI.spec, "https://localhost:6944/pushapi1");
+    do_check_eq (pushChannel.getRequestHeader("x-pushed-request"), "true");
+
+    pushChannel.asyncOpen(this, pushChannel);
+    if (pushChannel.originalURI.spec == "https://localhost:6944/pushapi1/2") {
+	pushChannel.cancel(Components.results.NS_ERROR_ABORT);
+    }
+  },
+
+ // normal Channel listeners
+  onStartRequest: function pushAPIOnStart(request, ctx) {
+  },
+
+  onDataAvailable: function pushAPIOnDataAvailable(request, ctx, stream, offset, cnt) {
+    do_check_neq(ctx.originalURI.spec, "https://localhost:6944/pushapi1/2");
+
+    var data = read_stream(stream, cnt);
+
+    if (ctx.originalURI.spec == "https://localhost:6944/pushapi1") {
+	do_check_eq(data[0], '0');
+	--this.checksPending;
+    } else if (ctx.originalURI.spec == "https://localhost:6944/pushapi1/1") {
+	do_check_eq(data[0], '1');
+	--this.checksPending; // twice
+    } else if (ctx.originalURI.spec == "https://localhost:6944/pushapi1/3") {
+	do_check_eq(data[0], '3');
+	--this.checksPending;
+    } else {
+	do_check_eq(true, false);
+    }
+  },
+
+  onStopRequest: function test_onStopR(request, ctx, status) {
+    if (ctx.originalURI.spec == "https://localhost:6944/pushapi1/2") {
+	do_check_eq(request.status, Components.results.NS_ERROR_ABORT);
+    } else {
+	do_check_eq(request.status, Components.results.NS_OK);
+    }
+
+    --this.checksPending; // 5 times - one for each push plus the pull
+    if (!this.checksPending) {
+	run_next_test();
+        do_test_finished();
+    }
+  }
+};
+
+// pushAPI testcase 1 expects
+// 1 to pull /pushapi1 with 0
+// 2 to see /pushapi1/1 with 1
+// 3 to see /pushapi1/1 with 1 (again)
+// 4 to see /pushapi1/2 that it will cancel
+// 5 to see /pushapi1/3 with 3
+
+function test_http2_pushapi_1() {
+  var chan = makeChan("https://localhost:6944/pushapi1");
+  chan.loadGroup = loadGroup;
+  var listener = new Http2PushApiListener();
+  chan.notificationCallbacks = listener;
+  chan.asyncOpen(listener, chan);
+}
+
+var WrongSuiteListener = function() {};
+WrongSuiteListener.prototype = new Http2CheckListener();
+WrongSuiteListener.prototype.shouldBeHttp2 = false;
+WrongSuiteListener.prototype.onStopRequest = function(request, ctx, status) {
+  prefs.setBoolPref("security.ssl3.ecdhe_rsa_aes_128_gcm_sha256", true);
+  Http2CheckListener.prototype.onStopRequest.call(this);
+};
+
+// test that we use h1 without the mandatory cipher suite available
+function test_http2_wrongsuite() {
+  prefs.setBoolPref("security.ssl3.ecdhe_rsa_aes_128_gcm_sha256", false);
+  var chan = makeChan("https://localhost:6944/wrongsuite");
+  chan.loadFlags = Ci.nsIRequest.LOAD_FRESH_CONNECTION | Ci.nsIChannel.LOAD_INITIAL_DOCUMENT_URI;
+  var listener = new WrongSuiteListener();
+  chan.asyncOpen(listener, null);
+}
+
+function test_http2_h11required_stream() {
+  var chan = makeChan("https://localhost:6944/h11required_stream");
+  var listener = new Http2CheckListener();
+  listener.shouldBeHttp2 = false;
+  chan.asyncOpen(listener, null);
+}
+
+function H11RequiredSessionListener () { }
+H11RequiredSessionListener.prototype = new Http2CheckListener();
+
+H11RequiredSessionListener.prototype.onStopRequest = function (request, ctx, status) {
+  var streamReused = request.getResponseHeader("X-H11Required-Stream-Ok");
+  do_check_eq(streamReused, "yes");
+
+  do_check_true(this.onStartRequestFired);
+  do_check_true(this.onDataAvailableFired);
+  do_check_true(this.isHttp2Connection == this.shouldBeHttp2);
+
+  run_next_test();
+  do_test_finished();
+};
+
+function test_http2_h11required_session() {
+  var chan = makeChan("https://localhost:6944/h11required_session");
+  var listener = new H11RequiredSessionListener();
+  listener.shouldBeHttp2 = false;
+  chan.asyncOpen(listener, null);
+}
+
+function test_http2_retry_rst() {
+  var chan = makeChan("https://localhost:6944/rstonce");
+  var listener = new Http2CheckListener();
+  chan.asyncOpen(listener, null);
+}
+
+function test_complete() {
+  resetPrefs();
+  do_test_finished();
+  do_timeout(0,run_next_test);
+}
+
 // hack - the header test resets the multiplex object on the server,
 // so make sure header is always run before the multiplex test.
 //
@@ -389,6 +545,7 @@ function test_http2_altsvc() {
 // a stalled stream when a SETTINGS frame arrives
 var tests = [ test_http2_post_big
             , test_http2_basic
+            , test_http2_nospdy
             , test_http2_push1
             , test_http2_push2
             , test_http2_push3
@@ -401,6 +558,16 @@ var tests = [ test_http2_post_big
             , test_http2_multiplex
             , test_http2_big
             , test_http2_post
+            , test_http2_patch
+            , test_http2_pushapi_1
+            // These next two must always come in this order
+            , test_http2_h11required_stream
+            , test_http2_h11required_session
+            , test_http2_retry_rst
+            , test_http2_wrongsuite
+
+            // cleanup
+            , test_complete
             ];
 var current_test = 0;
 
@@ -471,12 +638,14 @@ var spdy3pref;
 var spdypush;
 var http2pref;
 var tlspref;
+var altsvcpref1;
+var altsvcpref2;
 
 var loadGroup;
 
 function resetPrefs() {
   prefs.setBoolPref("network.http.spdy.enabled", spdypref);
-  prefs.setBoolPref("network.http.spdy.enabled.v3", spdy3pref);
+  prefs.setBoolPref("network.http.spdy.enabled.v3-1", spdy3pref);
   prefs.setBoolPref("network.http.spdy.allow-push", spdypush);
   prefs.setBoolPref("network.http.spdy.enabled.http2draft", http2pref);
   prefs.setBoolPref("network.http.spdy.enforce-tls-profile", tlspref);
@@ -487,7 +656,7 @@ function resetPrefs() {
 function run_test() {
   // Set to allow the cert presented by our SPDY server
   do_get_profile();
-  var prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
+  prefs = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch);
   var oldPref = prefs.getIntPref("network.http.speculative-parallel-limit");
   prefs.setIntPref("network.http.speculative-parallel-limit", 0);
 
@@ -500,7 +669,7 @@ function run_test() {
 
   // Enable all versions of spdy to see that we auto negotiate http/2
   spdypref = prefs.getBoolPref("network.http.spdy.enabled");
-  spdy3pref = prefs.getBoolPref("network.http.spdy.enabled.v3");
+  spdy3pref = prefs.getBoolPref("network.http.spdy.enabled.v3-1");
   spdypush = prefs.getBoolPref("network.http.spdy.allow-push");
   http2pref = prefs.getBoolPref("network.http.spdy.enabled.http2draft");
   tlspref = prefs.getBoolPref("network.http.spdy.enforce-tls-profile");
@@ -508,7 +677,7 @@ function run_test() {
   altsvcpref2 = prefs.getBoolPref("network.http.altsvc.oe", true);
 
   prefs.setBoolPref("network.http.spdy.enabled", true);
-  prefs.setBoolPref("network.http.spdy.enabled.v3", true);
+  prefs.setBoolPref("network.http.spdy.enabled.v3-1", true);
   prefs.setBoolPref("network.http.spdy.allow-push", true);
   prefs.setBoolPref("network.http.spdy.enabled.http2draft", true);
   prefs.setBoolPref("network.http.spdy.enforce-tls-profile", false);

@@ -90,7 +90,6 @@ XBLEnumerate(JSContext *cx, JS::Handle<JSObject*> obj)
 static const JSClass gPrototypeJSClass = {
     "XBL prototype JSClass",
     JSCLASS_HAS_PRIVATE | JSCLASS_PRIVATE_IS_NSISUPPORTS |
-    JSCLASS_NEW_RESOLVE |
     // Our one reserved slot holds the relevant nsXBLPrototypeBinding
     JSCLASS_HAS_RESERVED_SLOTS(1),
     JS_PropertyStub,  JS_DeletePropertyStub,
@@ -888,7 +887,7 @@ GetOrCreateClassObjectMap(JSContext *cx, JS::Handle<JSObject*> scope, const char
   JS::Rooted<JSObject*> map(cx, JS::NewWeakMapObject(cx));
   if (!map || !JS_DefineProperty(cx, scope, mapName, map,
                                  JSPROP_PERMANENT | JSPROP_READONLY,
-                                 JS_PropertyStub, JS_StrictPropertyStub))
+                                 JS_STUBGETTER, JS_STUBSETTER))
   {
     return nullptr;
   }
@@ -1037,7 +1036,7 @@ nsXBLBinding::DoInitJSClass(JSContext *cx,
     if (!JS_WrapObject(cx, &proto) ||
         !JS_DefineProperty(cx, holder, aClassName.get(), proto,
                            JSPROP_READONLY | JSPROP_PERMANENT,
-                           JS_PropertyStub, JS_StrictPropertyStub))
+                           JS_STUBGETTER, JS_STUBSETTER))
     {
       return NS_ERROR_OUT_OF_MEMORY;
     }

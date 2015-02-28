@@ -58,11 +58,8 @@ class JSFunction : public js::NativeObject
         INTERPRETED_LAMBDA_ARROW = INTERPRETED | LAMBDA | ARROW
     };
 
-    static void staticAsserts() {
-        JS_STATIC_ASSERT(INTERPRETED == JS_FUNCTION_INTERPRETED_BIT);
-        static_assert(sizeof(JSFunction) == sizeof(js::shadow::Function),
-                      "shadow interface must match actual interface");
-    }
+    static_assert(INTERPRETED == JS_FUNCTION_INTERPRETED_BIT,
+                  "jsfriendapi.h's JSFunction::INTERPRETED-alike is wrong");
 
   private:
     uint16_t        nargs_;       /* number of formal arguments
@@ -423,8 +420,13 @@ class JSFunction : public js::NativeObject
     }
 
     static unsigned offsetOfNativeOrScript() {
-        JS_STATIC_ASSERT(offsetof(U, n.native) == offsetof(U, i.s.script_));
-        JS_STATIC_ASSERT(offsetof(U, n.native) == offsetof(U, nativeOrScript));
+        static_assert(offsetof(U, n.native) == offsetof(U, i.s.script_),
+                      "native and script pointers must be in the same spot "
+                      "for offsetOfNativeOrScript() have any sense");
+        static_assert(offsetof(U, n.native) == offsetof(U, nativeOrScript),
+                      "U::nativeOrScript must be at the same offset as "
+                      "native");
+
         return offsetof(JSFunction, u.nativeOrScript);
     }
 
@@ -460,7 +462,6 @@ class JSFunction : public js::NativeObject
 
   public:
     inline bool isExtended() const {
-        JS_STATIC_ASSERT(FinalizeKind != ExtendedFinalizeKind);
         MOZ_ASSERT_IF(isTenured(), !!(flags() & EXTENDED) == (asTenured().getAllocKind() == ExtendedFinalizeKind));
         return !!(flags() & EXTENDED);
     }
@@ -481,6 +482,10 @@ class JSFunction : public js::NativeObject
 
     /* GC support. */
     js::gc::AllocKind getAllocKind() const {
+        static_assert(FinalizeKind != ExtendedFinalizeKind,
+                      "extended/non-extended AllocKinds have to be different "
+                      "for getAllocKind() to have a reason to exist");
+
         js::gc::AllocKind kind = FinalizeKind;
         if (isExtended())
             kind = ExtendedFinalizeKind;
@@ -488,6 +493,9 @@ class JSFunction : public js::NativeObject
         return kind;
     }
 };
+
+static_assert(sizeof(JSFunction) == sizeof(js::shadow::Function),
+              "shadow interface must match actual interface");
 
 extern JSString *
 fun_toStringHelper(JSContext *cx, js::HandleObject obj, unsigned indent);
@@ -521,6 +529,9 @@ NewFunctionWithProto(ExclusiveContext *cx, HandleObject funobj, JSNative native,
                      JSObject *proto, gc::AllocKind allocKind = JSFunction::FinalizeKind,
                      NewObjectKind newKind = GenericObject);
 
+extern JSAtom *
+IdToFunctionName(JSContext *cx, HandleId id);
+
 extern JSFunction *
 DefineFunction(JSContext *cx, HandleObject obj, HandleId id, JSNative native,
                unsigned nargs, unsigned flags,
@@ -528,10 +539,10 @@ DefineFunction(JSContext *cx, HandleObject obj, HandleId id, JSNative native,
                NewObjectKind newKind = GenericObject);
 
 bool
-FunctionHasResolveHook(const JSAtomState &atomState, PropertyName *name);
+FunctionHasResolveHook(const JSAtomState &atomState, jsid id);
 
 extern bool
-fun_resolve(JSContext *cx, HandleObject obj, HandleId id, MutableHandleObject objp);
+fun_resolve(JSContext *cx, HandleObject obj, HandleId id, bool *resolvedp);
 
 extern bool
 fun_toString(JSContext *cx, unsigned argc, Value *vp);
@@ -571,7 +582,6 @@ extern JSFunction *
 CloneFunctionObject(JSContext *cx, HandleFunction fun, HandleObject parent,
                     gc::AllocKind kind = JSFunction::FinalizeKind,
                     NewObjectKind newKindArg = GenericObject);
-
 
 extern bool
 FindBody(JSContext *cx, HandleFunction fun, HandleLinearString src, size_t *bodyStart,
@@ -664,7 +674,7 @@ js_fun_apply(JSContext *cx, unsigned argc, js::Value *vp);
 extern bool
 js_fun_call(JSContext *cx, unsigned argc, js::Value *vp);
 
-extern JSObject*
+extern JSObject *
 js_fun_bind(JSContext *cx, js::HandleObject target, js::HandleValue thisArg,
             js::Value *boundArgs, unsigned argslen);
 

@@ -14,10 +14,9 @@ GlobalEnumerate(JSContext *cx, JS::Handle<JSObject*> obj)
 }
 
 static bool
-GlobalResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id)
+GlobalResolve(JSContext *cx, JS::HandleObject obj, JS::HandleId id, bool *resolvedp)
 {
-    bool resolved = false;
-    return JS_ResolveStandardClass(cx, obj, id, &resolved);
+    return JS_ResolveStandardClass(cx, obj, id, resolvedp);
 }
 
 BEGIN_TEST(testRedefineGlobalEval)
@@ -42,7 +41,9 @@ BEGIN_TEST(testRedefineGlobalEval)
     CHECK(JS_GetProperty(cx, g, "Object", &v));
 
     static const char data[] = "Object.defineProperty(this, 'eval', { configurable: false });";
-    CHECK(JS_EvaluateScript(cx, g, data, mozilla::ArrayLength(data) - 1, __FILE__, __LINE__, &v));
+    JS::CompileOptions opts(cx);
+    CHECK(JS::Evaluate(cx, g, opts.setFileAndLine(__FILE__, __LINE__),
+                       data, mozilla::ArrayLength(data) - 1, &v));
 
     return true;
 }

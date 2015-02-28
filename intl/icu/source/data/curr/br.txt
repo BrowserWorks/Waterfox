@@ -325,7 +325,7 @@ br{
         }
         GBP{
             "£ RU",
-            "lur sterling Breizh-Veur",
+            "lur Breizh-Veur",
         }
         GEL{
             "GEL",
@@ -1644,11 +1644,11 @@ br{
             two{"lur gall"}
         }
         GBP{
-            few{"lur sterling Breizh-Veur"}
-            many{"a lurioù sterling Breizh-Veur"}
-            one{"lur sterling Breizh-Veur"}
-            other{"lur sterling Breizh-Veur"}
-            two{"lur sterling Breizh-Veur"}
+            few{"lur Breizh-Veur"}
+            many{"a lurioù Breizh-Veur"}
+            one{"lur Breizh-Veur"}
+            other{"lur Breizh-Veur"}
+            two{"lur Breizh-Veur"}
         }
         GEL{
             few{"lari Jorjia"}
@@ -2897,5 +2897,5 @@ br{
         other{"{0} {1}"}
         two{"{0} {1}"}
     }
-    Version{"2.1.7.39"}
+    Version{"2.1.10.42"}
 }

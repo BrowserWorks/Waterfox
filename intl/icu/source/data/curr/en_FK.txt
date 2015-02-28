@@ -15,7 +15,7 @@ en_FK{
         }
         GBP{
             "GB£",
-            "British Pound Sterling",
+            "British Pound",
         }
     }
     Version{"2.1.6.69"}

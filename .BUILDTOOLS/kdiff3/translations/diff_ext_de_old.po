@@ -1,0 +1,102 @@
+﻿# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-09-04 15:35+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: diff_ext.cpp:363
+msgid "Compare with %1"
+msgstr "Vergleichen mit %1"
+
+#: diff_ext.cpp:364
+msgid "Merge with %1"
+msgstr "Zusammenführen mit %1"
+
+#: diff_ext.cpp:379
+msgid "3-way merge with base"
+msgstr "3-Wege Zusammenführung mit Basis"
+
+#: diff_ext.cpp:382
+msgid "Save '%1' for later"
+msgstr "Speichere '%1' für später"
+
+#: diff_ext.cpp:404
+msgid "Compare with ..."
+msgstr "Vergleichen mit ..."
+
+#: diff_ext.cpp:403
+msgid "Compare"
+msgstr "Vergleichen"
+
+#: diff_ext.cpp:403
+msgid "Clear list"
+msgstr "Liste löschen"
+
+
+#: diff_ext.cpp:407
+msgid "3 way comparison"
+msgstr "Vergleiche 3 Dateien"
+
+#: diff_ext.cpp:413
+msgid "About Diff-Ext ..."
+msgstr "Über Diff-Ext ..."
+
+#: diff_ext.cpp:474
+msgid "Diff-Ext Copyright (c) 2003-2006, Sergey Zorin. All rights reserved.\n"
+msgstr "Diff-Ext Copyright (c) 2003-2006, Sergey Zorin. Alle Rechte vorbehalten.\n"
+
+#: diff_ext.cpp:475
+msgid "This software is distributable under the BSD license.\n"
+msgstr "Weitergabe dieses Programms unter den Bedingungen der BSD Lizenz.\n"
+
+#: diff_ext.cpp:476
+msgid "Some extensions for KDiff3 by Joachim Eibl.\n"
+msgstr "Einige Erweiterungen für KDiff3 von Joachim Eibl.\n"
+
+#: diff_ext.cpp:477
+msgid "See the homepage http://diff-ext.sourceforge.net"
+msgstr "Siehe die Homepage http://diff-ext.sourceforge.net"
+
+#: diff_ext.cpp:478
+msgid "About Diff-Ext for KDiff3"
+msgstr "Über Diff-Ext für KDiff3"
+
+#: diff_ext.cpp:503
+msgid "Compare selected files"
+msgstr "Vergleiche markierte Dateien"
+
+#: diff_ext.cpp:509 diff_ext.cpp:529
+msgid "Compare '%1' with '%2'"
+msgstr "Vergleiche '%1' mit '%2'"
+
+#: diff_ext.cpp:515
+msgid "Merke '%1' für spätere Aktion"
+msgstr ""
+
+#: diff_ext.cpp:567
+msgid "Could not start KDiff3. Please rerun KDiff3 installation."
+msgstr "Konnte KDiff3 nicht starten. Bitte wiederholen Sie die KDiff3 Installation."
+
+#: diff_ext.cpp:568
+msgid "Command"
+msgstr "Kommando"
+
+#: diff_ext.cpp:569
+msgid "CommandLine"
+msgstr "Kommandozeile"
+
+#: diff_ext.cpp:570
+msgid "Diff-Ext For KDiff3"
+msgstr "Diff-Ext für KDiff3"

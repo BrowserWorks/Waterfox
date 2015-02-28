@@ -97,6 +97,7 @@ void Mark##base##Range(JSTracer *trc, size_t len, HeapPtr<type*> *thing, const c
 void Mark##base##RootRange(JSTracer *trc, size_t len, type **thing, const char *name);            \
 bool Is##base##Marked(type **thingp);                                                             \
 bool Is##base##Marked(BarrieredBase<type*> *thingp);                                              \
+bool Is##base##MarkedFromAnyThread(BarrieredBase<type*> *thingp);                                 \
 bool Is##base##AboutToBeFinalized(type **thingp);                                                 \
 bool Is##base##AboutToBeFinalizedFromAnyThread(type **thingp);                                    \
 bool Is##base##AboutToBeFinalized(BarrieredBase<type*> *thingp);                                  \
@@ -235,7 +236,7 @@ void
 MarkArraySlots(JSTracer *trc, size_t len, HeapSlot *vec, const char *name);
 
 void
-MarkObjectSlots(JSTracer *trc, JSObject *obj, uint32_t start, uint32_t nslots);
+MarkObjectSlots(JSTracer *trc, NativeObject *obj, uint32_t start, uint32_t nslots);
 
 void
 MarkCrossCompartmentObjectUnbarriered(JSTracer *trc, JSObject *src, JSObject **dst_obj,
@@ -250,14 +251,14 @@ MarkCrossCompartmentScriptUnbarriered(JSTracer *trc, JSObject *src, JSScript **d
  * being GC'd. (Although it won't be marked if it's in the wrong compartment.)
  */
 void
-MarkCrossCompartmentSlot(JSTracer *trc, JSObject *src, HeapSlot *dst_slot, const char *name);
+MarkCrossCompartmentSlot(JSTracer *trc, JSObject *src, HeapValue *dst_slot, const char *name);
 
 
 /*** Special Cases ***/
 
 /*
  * MarkChildren<JSObject> is exposed solely for preWriteBarrier on
- * JSObject::TradeGuts. It should not be considered external interface.
+ * JSObject::swap. It should not be considered external interface.
  */
 void
 MarkChildren(JSTracer *trc, JSObject *obj);

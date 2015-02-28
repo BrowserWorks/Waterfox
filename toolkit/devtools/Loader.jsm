@@ -42,21 +42,6 @@ this.EXPORTED_SYMBOLS = ["DevToolsLoader", "devtools", "BuiltinProvider",
 
 let Timer = Cu.import("resource://gre/modules/Timer.jsm", {});
 
-let loaderGlobals = {
-  isWorker: false,
-  reportError: Cu.reportError,
-
-  btoa: btoa,
-  console: console,
-  _Iterator: Iterator,
-  loader: {
-    lazyGetter: (...args) => devtools.lazyGetter.apply(devtools, args),
-    lazyImporter: (...args) => devtools.lazyImporter.apply(devtools, args),
-    lazyServiceGetter: (...args) => devtools.lazyServiceGetter.apply(devtools, args),
-    lazyRequireGetter: (...args) => devtools.lazyRequireGetter.apply(devtools, args)
-  },
-};
-
 let loaderModules = {
   "Debugger": Debugger,
   "Services": Object.create(Services),
@@ -64,6 +49,7 @@ let loaderModules = {
   "toolkit/loader": loader,
   "xpcInspector": xpcInspector,
   "promise": promise,
+  "PromiseDebugging": PromiseDebugging
 };
 try {
   let { indexedDB } = Cu.Sandbox(this, {wantGlobalProperties:["indexedDB"]});
@@ -110,7 +96,7 @@ BuiltinProvider.prototype = {
         // Allow access to xpcshell test items from the loader.
         "xpcshell-test": "resource://test"
       },
-      globals: loaderGlobals,
+      globals: this.globals,
       invisibleToDebugger: this.invisibleToDebugger,
       sharedGlobal: true,
       sharedGlobalBlacklist: sharedGlobalBlacklist
@@ -189,7 +175,7 @@ SrcdirProvider.prototype = {
         "tern": ternURI,
         "source-map": sourceMapURI,
       },
-      globals: loaderGlobals,
+      globals: this.globals,
       invisibleToDebugger: this.invisibleToDebugger,
       sharedGlobal: true,
       sharedGlobalBlacklist: sharedGlobalBlacklist
@@ -218,24 +204,8 @@ SrcdirProvider.prototype = {
   },
 
   _writeFile: function(filename, data) {
-    let deferred = promise.defer();
-    let file = new FileUtils.File(filename);
-
-    var ostream = FileUtils.openSafeFileOutputStream(file)
-
-    var converter = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
-                    createInstance(Ci.nsIScriptableUnicodeConverter);
-    converter.charset = "UTF-8";
-    var istream = converter.convertToInputStream(data);
-    NetUtil.asyncCopy(istream, ostream, (status) => {
-      if (!Components.isSuccessCode(status)) {
-        deferred.reject(new Error("Couldn't write manifest: " + filename + "\n"));
-        return;
-      }
-
-      deferred.resolve(null);
-    });
-    return deferred.promise;
+    let promise = OS.File.writeAtomic(filename, data, {encoding: "utf-8"});
+    return promise.then(null, (ex) => new Error("Couldn't write manifest: " + ex + "\n"));
   },
 
   _writeManifest: function(dir) {
@@ -379,7 +349,23 @@ DevToolsLoader.prototype = {
       this._provider.unload("newprovider");
     }
     this._provider = provider;
+
+    // Pass through internal loader settings specific to this loader instance
     this._provider.invisibleToDebugger = this.invisibleToDebugger;
+    this._provider.globals = {
+      isWorker: false,
+      reportError: Cu.reportError,
+      btoa: btoa,
+      console: console,
+      _Iterator: Iterator,
+      loader: {
+        lazyGetter: this.lazyGetter,
+        lazyImporter: this.lazyImporter,
+        lazyServiceGetter: this.lazyServiceGetter,
+        lazyRequireGetter: this.lazyRequireGetter
+      },
+    };
+
     this._provider.load();
     this.require = loader.Require(this._provider.loader, { id: "devtools" });
 

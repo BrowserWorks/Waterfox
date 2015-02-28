@@ -30,6 +30,7 @@
 #include "jswrapper.h"
 
 #include "asmjs/AsmJSModule.h"
+#include "builtin/AtomicsObject.h"
 #include "builtin/SIMD.h"
 #include "frontend/BytecodeCompiler.h"
 #include "jit/Ion.h"
@@ -219,7 +220,7 @@ ValidateFFI(JSContext *cx, AsmJSModule::Global &global, HandleValue importVal,
 }
 
 static bool
-ValidateArrayView(JSContext *cx, AsmJSModule::Global &global, HandleValue globalVal)
+ValidateArrayView(JSContext *cx, AsmJSModule::Global &global, HandleValue globalVal, bool isShared)
 {
     RootedPropertyName field(cx, global.maybeViewName());
     if (!field)
@@ -229,11 +230,10 @@ ValidateArrayView(JSContext *cx, AsmJSModule::Global &global, HandleValue global
     if (!GetDataProperty(cx, globalVal, field, &v))
         return false;
 
-    if (!IsTypedArrayConstructor(v, global.viewType()) &&
-        !IsSharedTypedArrayConstructor(v, global.viewType()))
-    {
+    bool tac = IsTypedArrayConstructor(v, global.viewType());
+    bool stac = IsSharedTypedArrayConstructor(v, global.viewType());
+    if (!((tac || stac) && stac == isShared))
         return LinkFail(cx, "bad typed array constructor");
-    }
 
     return true;
 }
@@ -407,6 +407,35 @@ ValidateSimdOperation(JSContext *cx, AsmJSModule::Global &global, HandleValue gl
 }
 
 static bool
+ValidateAtomicsBuiltinFunction(JSContext *cx, AsmJSModule::Global &global, HandleValue globalVal)
+{
+    RootedValue v(cx);
+    if (!GetDataProperty(cx, globalVal, cx->names().Atomics, &v))
+        return false;
+    RootedPropertyName field(cx, global.atomicsName());
+    if (!GetDataProperty(cx, v, field, &v))
+        return false;
+
+    Native native = nullptr;
+    switch (global.atomicsBuiltinFunction()) {
+      case AsmJSAtomicsBuiltin_compareExchange: native = atomics_compareExchange; break;
+      case AsmJSAtomicsBuiltin_load: native = atomics_load; break;
+      case AsmJSAtomicsBuiltin_store: native = atomics_store; break;
+      case AsmJSAtomicsBuiltin_fence: native = atomics_fence; break;
+      case AsmJSAtomicsBuiltin_add: native = atomics_add; break;
+      case AsmJSAtomicsBuiltin_sub: native = atomics_sub; break;
+      case AsmJSAtomicsBuiltin_and: native = atomics_and; break;
+      case AsmJSAtomicsBuiltin_or: native = atomics_or; break;
+      case AsmJSAtomicsBuiltin_xor: native = atomics_xor; break;
+    }
+
+    if (!IsNativeFunction(v, native))
+        return LinkFail(cx, "bad Atomics.* builtin function");
+
+    return true;
+}
+
+static bool
 ValidateConstant(JSContext *cx, AsmJSModule::Global &global, HandleValue globalVal)
 {
     RootedPropertyName field(cx, global.constantName());
@@ -501,7 +530,7 @@ LinkModuleToHeap(JSContext *cx, AsmJSModule &module, Handle<ArrayBufferObjectMay
 static bool
 DynamicallyLinkModule(JSContext *cx, CallArgs args, AsmJSModule &module)
 {
-    module.setIsDynamicallyLinked();
+    module.setIsDynamicallyLinked(cx->runtime());
 
     HandleValue globalVal = args.get(0);
     HandleValue importVal = args.get(1);
@@ -533,8 +562,9 @@ DynamicallyLinkModule(JSContext *cx, CallArgs args, AsmJSModule &module)
                 return false;
             break;
           case AsmJSModule::Global::ArrayView:
+          case AsmJSModule::Global::SharedArrayView:
           case AsmJSModule::Global::ArrayViewCtor:
-            if (!ValidateArrayView(cx, global, globalVal))
+            if (!ValidateArrayView(cx, global, globalVal, module.hasArrayView() && module.isSharedView()))
                 return false;
             break;
           case AsmJSModule::Global::ByteLength:
@@ -543,6 +573,10 @@ DynamicallyLinkModule(JSContext *cx, CallArgs args, AsmJSModule &module)
             break;
           case AsmJSModule::Global::MathBuiltinFunction:
             if (!ValidateMathBuiltinFunction(cx, global, globalVal))
+                return false;
+            break;
+          case AsmJSModule::Global::AtomicsBuiltinFunction:
+            if (!ValidateAtomicsBuiltinFunction(cx, global, globalVal))
                 return false;
             break;
           case AsmJSModule::Global::Constant:
@@ -584,6 +618,11 @@ ChangeHeap(JSContext *cx, AsmJSModule &module, CallArgs args)
         heapLength > module.maxHeapLength())
     {
         args.rval().set(BooleanValue(false));
+        return true;
+    }
+
+    if (!module.hasArrayView()) {
+        args.rval().set(BooleanValue(true));
         return true;
     }
 
@@ -689,15 +728,14 @@ CallAsmJS(JSContext *cx, unsigned argc, Value *vp)
         }
     }
 
-    // An asm.js module is specialized to its heap's base address and length
-    // which is normally immutable except for the neuter operation that occurs
-    // when an ArrayBuffer is transfered. Throw an internal error if we're
-    // about to run with a neutered heap.
-    if (module.maybeHeapBufferObject() &&
-        module.maybeHeapBufferObject()->is<ArrayBufferObject>() &&
-        module.maybeHeapBufferObject()->as<ArrayBufferObject>().isNeutered())
-    {
-        js_ReportOverRecursed(cx);
+    // The correct way to handle this situation would be to allocate a new range
+    // of PROT_NONE memory and module.changeHeap to this memory. That would
+    // cause every access to take the out-of-bounds signal-handler path which
+    // does the right thing. For now, just throw an out-of-memory exception
+    // since these can technically pop out anywhere and the full fix may
+    // actually OOM when trying to allocate the PROT_NONE memory.
+    if (module.hasDetachedHeap()) {
+        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_OUT_OF_MEMORY);
         return false;
     }
 

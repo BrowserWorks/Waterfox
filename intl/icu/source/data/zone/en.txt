@@ -10,7 +10,7 @@
  * ICU <specials> source: <path>/common/main/en.xml
  */
 en{
-    Version{"2.1.8.87"}
+    Version{"2.1.10.42"}
     zoneStrings{
         "Africa:Sao_Tome"{
             ec{"São Tomé"}

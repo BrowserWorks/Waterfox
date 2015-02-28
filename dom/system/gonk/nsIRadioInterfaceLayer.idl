@@ -5,11 +5,9 @@
 #include "nsISupports.idl"
 #include "nsINetworkManager.idl"
 
-interface nsICellInfoListCallback;
 interface nsIIccInfo;
 interface nsIMobileConnectionInfo;
 interface nsIMobileMessageCallback;
-interface nsINeighboringCellIdsCallback;
 
 [scriptable, uuid(6e0f45b8-410e-11e3-8c8e-b715b2cd0128)]
 interface nsIRilNetworkInterface : nsINetworkInterface
@@ -42,17 +40,21 @@ interface nsIRilSendWorkerMessageCallback : nsISupports
   boolean handleResponse(in jsval response);
 };
 
-[scriptable, uuid(c13a8890-797b-4557-b92f-6b959f56c1d8)]
+[scriptable, uuid(dc874da3-5f74-49d4-8e1c-a58ed9a1c0ef)]
 interface nsIRadioInterface : nsISupports
 {
   readonly attribute nsIRilContext rilContext;
 
   /**
    * PDP APIs
+   *
+   * @param networkType
+   *        Mobile network type, that is, nsINetworkInterface.NETWORK_TYPE_MOBILE
+   *        or one of the nsINetworkInterface.NETWORK_TYPE_MOBILE_* values.
    */
-  void setupDataCallByType(in DOMString apntype);
-  void deactivateDataCallByType(in DOMString apntype);
-  long getDataCallStateByType(in DOMString apntype);
+  void setupDataCallByType(in long networkType);
+  void deactivateDataCallByType(in long networkType);
+  long getDataCallStateByType(in long networkType);
 
   void updateRILNetworkInterface();
 
@@ -72,17 +74,6 @@ interface nsIRadioInterface : nsISupports
               [optional] in nsIRilSendWorkerMessageCallback callback);
 
   void getSmscAddress(in nsIMobileMessageCallback request);
-
-  /**
-   * Request neighboring cell ids in GSM/UMTS network.
-   */
-  void getNeighboringCellIds(in nsINeighboringCellIdsCallback callback);
-
-  /**
-   * Request all of the current cell information known to the radio, including
-   * neighboring cells.
-   */
-  void getCellInfoList(in nsICellInfoListCallback callback);
 };
 
 [scriptable, uuid(78b65e8c-68e7-4510-9a05-65bba12b283e)]

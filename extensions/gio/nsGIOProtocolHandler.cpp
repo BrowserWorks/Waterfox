@@ -17,6 +17,7 @@
 #include "nsIStandardURL.h"
 #include "nsMimeTypes.h"
 #include "nsNetUtil.h"
+#include "nsNullPrincipal.h"
 #include "mozilla/Monitor.h"
 #include <gio/gio.h>
 #include <algorithm>
@@ -1045,7 +1046,9 @@ nsGIOProtocolHandler::NewURI(const nsACString &aSpec,
 }
 
 NS_IMETHODIMP
-nsGIOProtocolHandler::NewChannel(nsIURI *aURI, nsIChannel **aResult)
+nsGIOProtocolHandler::NewChannel2(nsIURI* aURI,
+                                  nsILoadInfo* aLoadInfo,
+                                  nsIChannel** aResult)
 {
   NS_ENSURE_ARG_POINTER(aURI);
   nsresult rv;
@@ -1062,16 +1065,29 @@ nsGIOProtocolHandler::NewChannel(nsIURI *aURI, nsIChannel **aResult)
   }
   else
   {
+    nsCOMPtr<nsIPrincipal> nullPrincipal =
+      do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+
     // start out assuming an unknown content-type.  we'll set the content-type
     // to something better once we open the URI.
     rv = NS_NewInputStreamChannel(aResult,
                                   aURI,
                                   stream,
+                                  nullPrincipal,
+                                  nsILoadInfo::SEC_NORMAL,
+                                  nsIContentPolicy::TYPE_OTHER,
                                   NS_LITERAL_CSTRING(UNKNOWN_CONTENT_TYPE));
     if (NS_SUCCEEDED(rv))
       stream->SetChannel(*aResult);
   }
   return rv;
+}
+
+NS_IMETHODIMP
+nsGIOProtocolHandler::NewChannel(nsIURI *aURI, nsIChannel **aResult)
+{
+    return NewChannel2(aURI, nullptr, aResult);
 }
 
 NS_IMETHODIMP

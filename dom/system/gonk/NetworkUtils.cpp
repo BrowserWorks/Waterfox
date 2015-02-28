@@ -109,6 +109,11 @@ typedef Tuple3<NetdCommand*, CommandChain*, CommandCallback> QueueData;
   } \
 } while (0);
 
+#define WARN_IF_FAILED(rv) do { \
+  if (SUCCESS != rv) { \
+    WARN("Error (%d) occurred in %s (%s:%d)", rv, __PRETTY_FUNCTION__, __FILE__, __LINE__); \
+  } \
+} while (0);
 
 static NetworkUtils* gNetworkUtils;
 static nsTArray<QueueData> gCommandQueue;
@@ -740,8 +745,8 @@ void NetworkUtils::postTetherInterfaceList(CommandChain* aChain,
   snprintf(command, MAX_COMMAND_SIZE - 1, "%s", DUMMY_COMMAND);
 
   char buf[BUF_SIZE];
-  const char* reason = NS_ConvertUTF16toUTF8(aResult.mResultReason).get();
-  memcpy(buf, reason, strlen(reason));
+  NS_ConvertUTF16toUTF8 reason(aResult.mResultReason);
+  memcpy(buf, reason.get(), reason.Length() + 1);
   split(buf, INTERFACE_DELIMIT, GET_FIELD(mInterfaceList));
 
   doCommand(command, aChain, aCallback);
@@ -1388,7 +1393,7 @@ CommandResult NetworkUtils::setDefaultRoute(NetworkParams& aOptions)
     // Remove IPv4's default route.
     RETURN_IF_FAILED(mNetUtils->do_ifc_remove_default_route(GET_CHAR(mOldIfname)));
     // Remove IPv6's default route.
-    RETURN_IF_FAILED(mNetUtils->do_ifc_remove_route(GET_CHAR(mOldIfname), "::", 0, NULL));
+    WARN_IF_FAILED(mNetUtils->do_ifc_remove_route(GET_CHAR(mOldIfname), "::", 0, NULL));
   }
 
   uint32_t length = aOptions.mGateways.Length();
@@ -1444,9 +1449,9 @@ CommandResult NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
       return EAFNOSUPPORT;
     }
 
-    RETURN_IF_FAILED(mNetUtils->do_ifc_remove_route(GET_CHAR(mIfname),
-                                                    type == AF_INET ? "0.0.0.0" : "::",
-                                                    0, autoGateway.get()));
+    WARN_IF_FAILED(mNetUtils->do_ifc_remove_route(GET_CHAR(mIfname),
+                                                  type == AF_INET ? "0.0.0.0" : "::",
+                                                  0, autoGateway.get()));
   }
 
   return SUCCESS;
@@ -1543,7 +1548,7 @@ CommandResult NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
     }
 
     // Remove default route.
-    RETURN_IF_FAILED(mNetUtils->do_ifc_remove_route(autoIfname.get(), "::", 0, NULL));
+    WARN_IF_FAILED(mNetUtils->do_ifc_remove_route(autoIfname.get(), "::", 0, NULL));
 
     // Remove subnet route.
     RETURN_IF_FAILED(mNetUtils->do_ifc_remove_route(autoIfname.get(), subnetStr, prefixLength, NULL));

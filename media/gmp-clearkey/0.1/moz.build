@@ -6,6 +6,8 @@
 
 SharedLibrary('clearkey')
 
+FINAL_TARGET = 'dist/bin/gmp-clearkey/0.1'
+
 UNIFIED_SOURCES += [
     'ClearKeyDecryptionManager.cpp',
     'ClearKeySession.cpp',
@@ -15,8 +17,27 @@ UNIFIED_SOURCES += [
 ]
 
 LOCAL_INCLUDES += [
-    '/content/media/gmp',
+    '/dom/media/gmp',
 ]
 
 USE_STATIC_LIBS = True
-USE_LIBS += [ 'mozalloc' ]
+
+DISABLE_STL_WRAPPING = True
+DEFINES['MOZ_NO_MOZALLOC'] = True
+
+# Suppress warnings in third-party code.
+if CONFIG['GNU_CXX']:
+    CFLAGS += [
+        '-Wno-missing-braces',
+        '-Wno-pointer-to-int-cast',
+        '-Wno-sign-compare',
+        '-include stdio.h',         # for sprintf() prototype
+        '-include unistd.h',        # for getpid() prototype
+    ]
+elif CONFIG['_MSC_VER']:
+    CFLAGS += [
+        '-FI stdio.h',              # for sprintf() prototype
+        '-wd4090',                  # '=' : different 'const' qualifiers
+    ]
+
+FAIL_ON_WARNINGS = True

@@ -8,14 +8,13 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_pretty-print-on-paused.html";
 
-let gTab, gDebuggee, gPanel, gDebugger, gThreadClient, gSources;
+let gTab, gPanel, gDebugger, gThreadClient, gSources;
 
 const SECOND_SOURCE_VALUE = EXAMPLE_URL + "code_ugly-2.js";
 
 function test(){
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gThreadClient = gDebugger.gThreadClient;
@@ -26,21 +25,20 @@ function test(){
         yield ensureSourceIs(gPanel, "code_script-switching-02.js", true);
 
         yield doInterrupt(gPanel);
-        yield rdpInvoke(gThreadClient, gThreadClient.setBreakpoint, {
-          url: gSources.selectedValue,
+
+        let source = gThreadClient.source(getSourceForm(gSources, SECOND_SOURCE_VALUE));
+        yield rdpInvoke(source, source.setBreakpoint, {
           line: 6
         });
         yield doResume(gPanel);
 
         const bpHit = waitForCaretAndScopes(gPanel, 6);
-        // Get the debuggee call off this tick so that we aren't accidentally
-        // blocking the yielding of bpHit which causes a deadlock.
-        executeSoon(() => gDebuggee.secondCall());
+        callInTab(gTab, "secondCall");
         yield bpHit;
 
         info("Switch to the second source.");
         const sourceShown = waitForSourceShown(gPanel, SECOND_SOURCE_VALUE);
-        gSources.selectedValue = SECOND_SOURCE_VALUE;
+        gSources.selectedValue = getSourceActor(gSources, SECOND_SOURCE_VALUE);
         yield sourceShown;
 
         info("Pretty print the source.");
@@ -59,7 +57,6 @@ function test(){
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gThreadClient = null;

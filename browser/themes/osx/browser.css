@@ -25,7 +25,7 @@
   --toolbarbutton-hover-boxshadow: 0 1px 0 hsla(0,0%,100%,.5),
                                    0 1px 0 hsla(0,0%,100%,.5) inset;
 
-  --toolbarbutton-active-background: hsla(0,0%,0%,.02) linear-gradient(hsla(0,0%,0%,.12), hsla(0,0%,0%,0)) border-box;
+  --toolbarbutton-active-background: hsla(0,0%,0%,.02) linear-gradient(hsla(0,0%,0%,.12), transparent) border-box;
   --toolbarbutton-active-bordercolor: hsla(0,0%,0%,.3);
   --toolbarbutton-active-boxshadow: 0 1px 0 hsla(0,0%,100%,.5),
                                     0 1px 0 hsla(0,0%,0%,.05) inset,
@@ -96,6 +96,12 @@
 
 #main-window:not(:-moz-lwtheme) > #titlebar {
   -moz-appearance: -moz-window-titlebar;
+}
+
+@media (-moz-mac-yosemite-theme) {
+  #main-window:not(:-moz-lwtheme) > #titlebar {
+    -moz-appearance: -moz-mac-vibrancy-light;
+  }
 }
 
 #main-window:not([tabsintitlebar]) > #titlebar {
@@ -1422,73 +1428,73 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-ic
     -moz-image-region: rect(0px, 192px, 32px, 160px);
   }
 
-  #loop-button-throttled > .toolbarbutton-badge-container {
+  #loop-button > .toolbarbutton-badge-container {
     list-style-image: url("chrome://browser/skin/loop/toolbar@2x.png");
     -moz-image-region: rect(0, 36px, 36px, 0);
   }
 
-  toolbar[brighttext] #loop-button-throttled > .toolbarbutton-badge-container {
+  toolbar[brighttext] #loop-button > .toolbarbutton-badge-container {
     list-style-image: url("chrome://browser/skin/loop/toolbar-inverted@2x.png");
   }
 
-  #loop-button-throttled[state="disabled"] > .toolbarbutton-badge-container,
-  #loop-button-throttled[disabled="true"] > .toolbarbutton-badge-container {
+  #loop-button[state="disabled"] > .toolbarbutton-badge-container,
+  #loop-button[disabled="true"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 72px, 36px, 36px);
   }
 
-  #loop-button-throttled:not([disabled="true"])[state="error"] > .toolbarbutton-badge-container {
+  #loop-button:not([disabled="true"])[state="error"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 108px, 36px, 72px);
   }
 
-  #loop-button-throttled:not([disabled="true"])[state="action"] > .toolbarbutton-badge-container {
+  #loop-button:not([disabled="true"])[state="action"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 144px, 36px, 108px);
   }
 
-  #loop-button-throttled:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
+  #loop-button:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 180px, 36px, 144px);
   }
 
-  #loop-button-throttled:not([disabled="true"])[state="active"] > .toolbarbutton-badge-container {
+  #loop-button:not([disabled="true"])[state="active"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 216px, 36px, 180px);
   }
 
-  #loop-button-throttled:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
+  #loop-button:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 252px, 36px, 216px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"] > .toolbarbutton-badge-container,
-  toolbarpaletteitem[place="palette"] > #loop-button-throttled > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"] > .toolbarbutton-badge-container,
+  toolbarpaletteitem[place="palette"] > #loop-button > .toolbarbutton-badge-container {
     list-style-image: url(chrome://browser/skin/loop/menuPanel@2x.png);
     -moz-image-region: rect(0, 64px, 64px, 0);
   }
 
   /* Make sure that the state icons are not shown in the customization palette. */
-  toolbarpaletteitem[place="palette"] > #loop-button-throttled > .toolbarbutton-badge-container {
+  toolbarpaletteitem[place="palette"] > #loop-button > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 64px, 64px, 0) !important;
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"][state="disabled"] > .toolbarbutton-badge-container,
-  #loop-button-throttled[cui-areatype="menu-panel"][disabled="true"] > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"][state="disabled"] > .toolbarbutton-badge-container,
+  #loop-button[cui-areatype="menu-panel"][disabled="true"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 128px, 64px, 64px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"]:not([disabled="true"])[state="error"] > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="error"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 192px, 64px, 128px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"] > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 256px, 64px, 192px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="action"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 320px, 64px, 256px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"] > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"] > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 384px, 64px, 320px);
   }
 
-  #loop-button-throttled[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
+  #loop-button[cui-areatype="menu-panel"]:not([disabled="true"])[state="active"]:-moz-any(:hover,:hover:active,[open]) > .toolbarbutton-badge-container {
     -moz-image-region: rect(0, 448px, 64px, 384px);
   }
 }
@@ -2143,7 +2149,7 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
 .urlbar-history-dropmarker[open="true"],
 .urlbar-history-dropmarker:hover:active {
   -moz-image-region: var(--urlbar-dropmarker-active-region);
-  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), hsla(205,100%,70%,0));
+  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), transparent);
 }
 
 @media (min-resolution: 2dppx) {
@@ -2172,7 +2178,7 @@ toolbarbutton[sdk-button="true"][cui-areatype="toolbar"] > .toolbarbutton-icon {
 
 .urlbar-icon[open="true"],
 .urlbar-icon:hover:active {
-  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), hsla(205,100%,70%,0));
+  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), transparent);
 }
 
 #urlbar-search-splitter {
@@ -2388,7 +2394,7 @@ richlistitem[type~="action"][actiontype="switchtab"][selected="true"] > .ac-url-
 }
 
 #urlbar > toolbarbutton:not([disabled]):hover:active {
-  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), hsla(205,100%,70%,0));
+  background-image: radial-gradient(circle closest-side, hsla(205,100%,70%,.3), transparent);
 }
 
 #urlbar-go-button {
@@ -4381,7 +4387,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 }
 
 %include ../shared/devtools/responsivedesign.inc.css
-%include ../shared/devtools/highlighter.inc.css
 %include ../shared/devtools/commandline.inc.css
 %include ../shared/plugin-doorhanger.inc.css
 %include ../shared/badcontent-doorhanger.inc.css
@@ -4417,64 +4422,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   text-shadow: none;
   background-image: linear-gradient(#B4211B, #8A1915);
   border-radius: 1px;
-}
-
-/* === social toolbar button === */
-
-#social-toolbar-item > .toolbarbutton-1 {
-  margin-left: 0;
-  margin-right: 0;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(ltr) {
-  -moz-border-end-width: 0;
-}
-#social-toolbar-item > .toolbarbutton-1:last-child:-moz-locale-dir(ltr) {
-  -moz-border-end-width: 1px;
-}
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(rtl) {
-  -moz-border-start-width: 0;
-}
-#social-toolbar-item > .toolbarbutton-1:first-child:-moz-locale-dir(rtl) {
-  -moz-border-start-width: 1px;
-}
-
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(ltr):first-child,
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(rtl):last-child {
-  margin-left: 4px;
-  border-top-left-radius: 3px;
-  border-bottom-left-radius: 3px;
-}
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(rtl):first-child,
-#social-toolbar-item > .toolbarbutton-1:-moz-locale-dir(ltr):last-child {
-  margin-right: 4px;
-  border-top-right-radius: 3px;
-  border-bottom-right-radius: 3px;
-}
-
-#social-toolbar-item > toolbaritem {
-  margin: 0;
-}
-
-#social-provider-button {
-  list-style-image: url(chrome://browser/skin/social/services-16.png);
-}
-
-@media (min-resolution: 2dppx) {
-  #social-provider-button {
-    list-style-image: url(chrome://browser/skin/social/services-16@2x.png);
-  }
-  #social-provider-button > .toolbarbutton-icon {
-    width: 16px;
-  }
-}
-
-#social-provider-button > .toolbarbutton-menu-dropmarker {
-  display: none;
 }
 
 .popup-notification-icon[popupid="servicesInstall"] {
@@ -4596,7 +4543,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 
 .chat-titlebar {
   background-color: #d9d9d9;
-  background-image: linear-gradient(rgba(255,255,255,.43), rgba(255,255,255,0));
+  background-image: linear-gradient(rgba(255,255,255,.43), transparent);
 }
 
 .chat-titlebar[selected] {
@@ -4605,7 +4552,7 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 
 .chatbar-button {
   background-color: #d9d9d9;
-  background-image: linear-gradient(rgba(255,255,255,.43), rgba(255,255,255,0));
+  background-image: linear-gradient(rgba(255,255,255,.43), transparent);
   border-top-left-radius: @toolbarbuttonCornerRadius@;
   border-top-right-radius: @toolbarbuttonCornerRadius@;
 }

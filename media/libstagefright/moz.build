@@ -5,7 +5,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 DEFINES['ANDROID_SMP'] = 0
-DEFINES['LOG_NDEBUG'] = 0
+DEFINES['LOG_NDEBUG'] = 1
 
 if CONFIG['OS_TARGET'] != 'WINNT':
    DEFINES['_GLIBCXX_OS_DEFINES'] = True
@@ -50,9 +50,12 @@ if CONFIG['OS_TARGET'] != 'Android':
 EXPORTS.mp4_demuxer += [
     'binding/include/mp4_demuxer/Adts.h',
     'binding/include/mp4_demuxer/AnnexB.h',
+    'binding/include/mp4_demuxer/AtomType.h',
     'binding/include/mp4_demuxer/BufferStream.h',
     'binding/include/mp4_demuxer/ByteReader.h',
+    'binding/include/mp4_demuxer/ByteWriter.h',
     'binding/include/mp4_demuxer/DecoderData.h',
+    'binding/include/mp4_demuxer/H264.h',
     'binding/include/mp4_demuxer/Interval.h',
     'binding/include/mp4_demuxer/MoofParser.h',
     'binding/include/mp4_demuxer/mp4_demuxer.h',
@@ -73,6 +76,7 @@ UNIFIED_SOURCES += [
     'binding/Box.cpp',
     'binding/BufferStream.cpp',
     'binding/DecoderData.cpp',
+    'binding/H264.cpp',
     'binding/Index.cpp',
     'binding/MoofParser.cpp',
     'binding/mp4_demuxer.cpp',
@@ -104,6 +108,10 @@ LOCAL_INCLUDES += [
     'stubs/include',
     'stubs/include/media/stagefright/foundation',
     'system/core/include',
+]
+
+TEST_DIRS += [
+    'gtest',
 ]
 
 FINAL_LIBRARY = 'xul'

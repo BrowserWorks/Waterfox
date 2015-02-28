@@ -9,8 +9,6 @@
 #include "nsCoord.h"
 #include "nsColor.h"
 
-class nsRenderingContext;
-
 #define BOUND_INNER 0
 #define BOUND_OUTER 1
 
@@ -27,13 +25,6 @@ public:
 
 protected:
   virtual ~inFlasher();
-
-  void DrawOutline(nscoord aX, nscoord aY, nscoord aWidth, nscoord aHeight,
-                   nsRenderingContext* aRenderContext,
-                   bool aDrawBegin, bool aDrawEnd);
-  void DrawLine(nscoord aX, nscoord aY, nscoord aLength,
-                bool aDir, bool aBounds,
-                nsRenderingContext* aRenderContext);
 
   nscolor mColor;
 

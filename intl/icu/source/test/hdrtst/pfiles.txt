@@ -1,3 +1,5 @@
-# Copyright (c) 2001-2011 International Business Machines 
+# Copyright (c) 2001-2014 International Business Machines 
 # Corporation and others. All Rights Reserved.
 # ICU 49 and later: no more platform-specific headers
+bytestriebuilder.h
+ucharstriebuilder.h

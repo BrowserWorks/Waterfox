@@ -10,7 +10,7 @@ import unittest
 import zipfile
 
 import mozfile
-from mozversion import get_version
+from mozversion import get_version, errors
 
 
 class SourcesTest(unittest.TestCase):
@@ -25,6 +25,9 @@ class SourcesTest(unittest.TestCase):
 
         with open(os.path.join(self.tempdir, 'application.ini'), 'w') as f:
             f.writelines("""[App]\nName = B2G\n""")
+
+        with open(os.path.join(self.tempdir, 'platform.ini'), 'w') as f:
+            f.write('[Build]\nBuildID = PlatformBuildID\n')
 
     def tearDown(self):
         mozfile.remove(self.tempdir)
@@ -65,6 +68,8 @@ class SourcesTest(unittest.TestCase):
         self.assertIsNone(v.get('gaia_changeset'))
         self.assertIsNone(v.get('gaia_date'))
 
+    def test_b2g_fallback_when_no_binary(self):
+        self.assertRaises(errors.RemoteAppNotFoundError, get_version)
 
 if __name__ == '__main__':
     unittest.main()

@@ -35,13 +35,6 @@ public:
    * Inherited from LibHandle/BaseElf
    */
   virtual ~CustomElf();
-  virtual void *GetSymbolPtr(const char *symbol) const;
-  virtual bool Contains(void *addr) const;
-  virtual void *GetBase() const { return GetPtr(0); }
-
-#ifdef __ARM_EABI__
-  virtual const void *FindExidx(int *pcount) const;
-#endif
 
 protected:
   virtual Mappable *GetMappable() const;
@@ -52,7 +45,13 @@ public:
    * used by the caller to give an identifier of the when the stats call is
    * made.
    */
-  void stats(const char *when) const;
+  virtual void stats(const char *when) const;
+
+  /**
+   * Returns the instance, casted as BaseElf. (short of a better way to do
+   * this without RTTI)
+   */
+  virtual BaseElf *AsBaseElf() { return this; }
 
 private:
   /**
@@ -66,8 +65,8 @@ private:
    * Private constructor
    */
   CustomElf(Mappable *mappable, const char *path)
-  : BaseElf(path)
-  , mappable(mappable)
+  : BaseElf(path, mappable)
+  , link_map()
   , init(0)
   , fini(0)
   , initialized(false)
@@ -135,9 +134,6 @@ private:
     return CallFunction(GetPtr(addr));
   }
 
-  /* Appropriated Mappable */
-  mozilla::RefPtr<Mappable> mappable;
-
   /* List of dependent libraries */
   std::vector<mozilla::RefPtr<LibHandle> > dependencies;
 
@@ -158,11 +154,6 @@ private:
   bool initialized;
 
   bool has_text_relocs;
-
-#ifdef __ARM_EABI__
-  /* ARM.exidx information used by FindExidx */
-  Array<uint32_t[2]> arm_exidx;
-#endif
 };
 
 #endif /* CustomElf_h */

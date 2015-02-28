@@ -42,12 +42,9 @@ public:
                 uint32_t aFlags);
   virtual nsIntRect FrameRect(uint32_t aWhichFrame) MOZ_OVERRIDE;
 
-  virtual size_t HeapSizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const;
-  virtual size_t HeapSizeOfDecodedWithComputedFallback(MallocSizeOf aMallocSizeOf) const;
-  virtual size_t NonHeapSizeOfDecoded() const;
-  virtual size_t OutOfProcessSizeOfDecoded() const;
-
-  virtual size_t HeapSizeOfVectorImageDocument(nsACString* aDocURL = nullptr) const MOZ_OVERRIDE;
+  virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+  virtual size_t SizeOfDecoded(gfxMemoryLocation aLocation,
+                               MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
 
   virtual nsresult OnImageDataAvailable(nsIRequest* aRequest,
                                         nsISupports* aContext,
@@ -58,7 +55,6 @@ public:
                                        nsISupports* aContext,
                                        nsresult aResult,
                                        bool aLastPart) MOZ_OVERRIDE;
-  virtual nsresult OnNewSourceData() MOZ_OVERRIDE;
 
   /**
    * Callback for SVGRootRenderingObserver.
@@ -78,7 +74,7 @@ public:
   void OnSVGDocumentError();
 
 protected:
-  explicit VectorImage(imgStatusTracker* aStatusTracker = nullptr,
+  explicit VectorImage(ProgressTracker* aProgressTracker = nullptr,
                        ImageURL* aURI = nullptr);
   virtual ~VectorImage();
 
@@ -90,6 +86,13 @@ protected:
   void Show(gfxDrawable* aDrawable, const SVGDrawingParameters& aParams);
 
 private:
+  /**
+   * In catastrophic circumstances like a GPU driver crash, we may lose our
+   * surfaces even if they're locked. RecoverFromLossOfSurfaces discards all
+   * existing surfaces, allowing us to recover.
+   */
+  void RecoverFromLossOfSurfaces();
+
   void CancelAllListeners();
   void SendInvalidationNotifications();
 
@@ -106,8 +109,8 @@ private:
   bool           mHasPendingInvalidation; // Invalidate observers next refresh
                                           // driver tick.
 
-  // Initializes imgStatusTracker and resets it on RasterImage destruction.
-  nsAutoPtr<imgStatusTrackerInit> mStatusTrackerInit;
+  // Initializes ProgressTracker and resets it on RasterImage destruction.
+  nsAutoPtr<ProgressTrackerInit> mProgressTrackerInit;
 
   friend class ImageFactory;
 };

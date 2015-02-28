@@ -407,8 +407,7 @@ EliminateTriviallyDeadResumePointOperands(MIRGraph &graph, MResumePoint *rp)
     if (def->isConstant())
         return;
 
-    MConstant *constant = MConstant::New(graph.alloc(), MagicValue(JS_OPTIMIZED_OUT));
-    rp->block()->insertBefore(*(rp->block()->begin()), constant);
+    MConstant *constant = rp->block()->optimizedOutConstant(graph.alloc());
     rp->replaceOperand(top, constant);
 }
 
@@ -536,6 +535,22 @@ jit::EliminateDeadResumePointOperands(MIRGenerator *mir, MIRGraph &graph)
     return true;
 }
 
+// Test whether |def| would be needed if it had no uses.
+bool
+js::jit::DeadIfUnused(const MDefinition *def)
+{
+    return !def->isEffectful() && !def->isGuard() && !def->isControlInstruction() &&
+           (!def->isInstruction() || !def->toInstruction()->resumePoint());
+}
+
+// Test whether |def| may be safely discarded, due to being dead or due to being
+// located in a basic block which has itself been marked for discarding.
+bool
+js::jit::IsDiscardable(const MDefinition *def)
+{
+    return !def->hasUses() && (DeadIfUnused(def) || def->block()->isMarked());
+}
+
 // Instructions are useless if they are unused and have no side effects.
 // This pass eliminates useless instructions.
 // The graph itself is unchanged.
@@ -551,15 +566,9 @@ jit::EliminateDeadCode(MIRGenerator *mir, MIRGraph &graph)
         // Remove unused instructions.
         for (MInstructionReverseIterator iter = block->rbegin(); iter != block->rend(); ) {
             MInstruction *inst = *iter++;
-            if (!inst->isEffectful() && !inst->resumePoint() &&
-                !inst->hasUses() && !inst->isGuard() &&
-                !inst->isControlInstruction())
+            if (js::jit::IsDiscardable(inst))
             {
                 block->discard(inst);
-            } else if (!inst->isRecoveredOnBailout() && !inst->isGuard() &&
-                       !inst->hasLiveDefUses() && inst->canRecoverOnBailout())
-            {
-                inst->setRecoveredOnBailout();
             }
         }
     }
@@ -722,8 +731,10 @@ jit::EliminatePhis(MIRGenerator *mir, MIRGraph &graph,
         MPhiIterator iter = block->phisBegin();
         while (iter != block->phisEnd()) {
             MPhi *phi = *iter++;
-            if (phi->isUnused())
+            if (phi->isUnused()) {
+                phi->optimizeOutAllUses(graph.alloc());
                 block->discardPhi(phi);
+            }
         }
     }
 
@@ -1761,30 +1772,73 @@ CheckPredecessorImpliesSuccessor(MBasicBlock *A, MBasicBlock *B)
     return false;
 }
 
-static bool
-CheckOperandImpliesUse(MNode *n, MDefinition *operand)
-{
-    // TODO: Fix code that leaves discarded things in resume point operands
-    // (bug 1055690).
-    MOZ_ASSERT_IF(!n->isResumePoint(), !operand->isDiscarded());
-    MOZ_ASSERT(operand->block() != nullptr);
+// If you have issues with the usesBalance assertions, then define the macro
+// _DEBUG_CHECK_OPERANDS_USES_BALANCE to spew information on the error output.
+// This output can then be processed with the following awk script to filter and
+// highlight which checks are missing or if there is an unexpected operand /
+// use.
+//
+// define _DEBUG_CHECK_OPERANDS_USES_BALANCE 1
+/*
 
-    for (MUseIterator i = operand->usesBegin(); i != operand->usesEnd(); i++) {
-        if (i->consumer() == n)
-            return true;
+$ ./js 2>stderr.log
+$ gawk '
+    /^==Check/ { context = ""; state = $2; }
+    /^[a-z]/ { context = context "\n\t" $0; }
+    /^==End/ {
+      if (state == "Operand") {
+        list[context] = list[context] - 1;
+      } else if (state == "Use") {
+        list[context] = list[context] + 1;
+      }
     }
-    return false;
+    END {
+      for (ctx in list) {
+        if (list[ctx] > 0) {
+          print "Missing operand check", ctx, "\n"
+        }
+        if (list[ctx] < 0) {
+          print "Missing use check", ctx, "\n"
+        }
+      };
+    }'  < stderr.log
+
+*/
+
+static void
+CheckOperand(const MNode *consumer, const MUse *use, int32_t *usesBalance)
+{
+    MOZ_ASSERT(use->hasProducer());
+    MDefinition *producer = use->producer();
+    MOZ_ASSERT(!producer->isDiscarded());
+    MOZ_ASSERT(producer->block() != nullptr);
+    MOZ_ASSERT(use->consumer() == consumer);
+#ifdef _DEBUG_CHECK_OPERANDS_USES_BALANCE
+    fprintf(stderr, "==Check Operand\n");
+    use->producer()->dump(stderr);
+    fprintf(stderr, "  index: %zu\n", use->consumer()->indexOf(use));
+    use->consumer()->dump(stderr);
+    fprintf(stderr, "==End\n");
+#endif
+    --*usesBalance;
 }
 
-static bool
-CheckUseImpliesOperand(MDefinition *def, MUse *use)
+static void
+CheckUse(const MDefinition *producer, const MUse *use, int32_t *usesBalance)
 {
     MOZ_ASSERT(!use->consumer()->block()->isDead());
     MOZ_ASSERT_IF(use->consumer()->isDefinition(),
                   !use->consumer()->toDefinition()->isDiscarded());
     MOZ_ASSERT(use->consumer()->block() != nullptr);
-
-    return use->consumer()->getOperand(use->index()) == def;
+    MOZ_ASSERT(use->consumer()->getOperand(use->index()) == producer);
+#ifdef _DEBUG_CHECK_OPERANDS_USES_BALANCE
+    fprintf(stderr, "==Check Use\n");
+    use->producer()->dump(stderr);
+    fprintf(stderr, "  index: %zu\n", use->consumer()->indexOf(use));
+    use->consumer()->dump(stderr);
+    fprintf(stderr, "==End\n");
+#endif
+    ++*usesBalance;
 }
 #endif // DEBUG
 
@@ -1808,6 +1862,7 @@ jit::AssertBasicGraphCoherency(MIRGraph &graph)
 
     // Assert successor and predecessor list coherency.
     uint32_t count = 0;
+    int32_t usesBalance = 0;
     for (MBasicBlockIterator block(graph.begin()); block != graph.end(); block++) {
         count++;
 
@@ -1835,10 +1890,8 @@ jit::AssertBasicGraphCoherency(MIRGraph &graph)
             // the entry resume point because we are still storing resume points
             // in the InlinePropertyTable.
             MOZ_ASSERT_IF(iter->instruction(), iter->instruction()->block() == *block);
-            for (uint32_t i = 0, e = iter->numOperands(); i < e; i++) {
-                MOZ_ASSERT(iter->getUseFor(i)->hasProducer());
-                MOZ_ASSERT(CheckOperandImpliesUse(*iter, iter->getOperand(i)));
-            }
+            for (uint32_t i = 0, e = iter->numOperands(); i < e; i++)
+                CheckOperand(*iter, iter->getUseFor(i), &usesBalance);
         }
         for (MPhiIterator phi(block->phisBegin()); phi != block->phisEnd(); phi++) {
             MOZ_ASSERT(phi->numOperands() == block->numPredecessors());
@@ -1859,9 +1912,9 @@ jit::AssertBasicGraphCoherency(MIRGraph &graph)
 
             // Assert that use chains are valid for this instruction.
             for (uint32_t i = 0, end = iter->numOperands(); i < end; i++)
-                MOZ_ASSERT(CheckOperandImpliesUse(*iter, iter->getOperand(i)));
+                CheckOperand(*iter, iter->getUseFor(i), &usesBalance);
             for (MUseIterator use(iter->usesBegin()); use != iter->usesEnd(); use++)
-                MOZ_ASSERT(CheckUseImpliesOperand(*iter, *use));
+                CheckUse(*iter, *use, &usesBalance);
 
             if (iter->isInstruction()) {
                 if (MResumePoint *resume = iter->toInstruction()->resumePoint()) {
@@ -1875,6 +1928,7 @@ jit::AssertBasicGraphCoherency(MIRGraph &graph)
                 MOZ_ASSERT(!iter->hasLiveDefUses());
         }
 
+        // The control instruction is not visited by the MDefinitionIterator.
         MControlInstruction *control = block->lastIns();
         MOZ_ASSERT(control->block() == *block);
         MOZ_ASSERT(!control->hasUses());
@@ -1882,10 +1936,13 @@ jit::AssertBasicGraphCoherency(MIRGraph &graph)
         MOZ_ASSERT(!control->isDiscarded());
         MOZ_ASSERT(!control->isRecoveredOnBailout());
         MOZ_ASSERT(control->resumePoint() == nullptr);
-        for (uint32_t i = 0, end = control->numOperands(); i < end; ++i)
-            MOZ_ASSERT(CheckOperandImpliesUse(control, control->getOperand(i)));
+        for (uint32_t i = 0, end = control->numOperands(); i < end; i++)
+            CheckOperand(control, control->getUseFor(i), &usesBalance);
     }
 
+    // In case issues, see the _DEBUG_CHECK_OPERANDS_USES_BALANCE macro above.
+    MOZ_ASSERT(usesBalance <= 0, "More use checks than operand checks");
+    MOZ_ASSERT(usesBalance >= 0, "More operand checks than use checks");
     MOZ_ASSERT(graph.numBlocks() == count);
 #endif
 }
@@ -1978,10 +2035,10 @@ jit::AssertGraphCoherency(MIRGraph &graph)
 #endif
 }
 
+#ifdef DEBUG
 static void
 AssertResumePointDominatedByOperands(MResumePoint *resume)
 {
-#ifdef DEBUG
     for (size_t i = 0, e = resume->numOperands(); i < e; ++i) {
         MDefinition *op = resume->getOperand(i);
         if (op->type() == MIRType_MagicOptimizedArguments)
@@ -1989,8 +2046,8 @@ AssertResumePointDominatedByOperands(MResumePoint *resume)
         MOZ_ASSERT(op->block()->dominates(resume->block()),
                    "Resume point is not dominated by its operands");
     }
-#endif
 }
+#endif // DEBUG
 
 void
 jit::AssertExtendedGraphCoherency(MIRGraph &graph)
@@ -2495,6 +2552,25 @@ LinearSum::multiply(int32_t scale)
 }
 
 bool
+LinearSum::divide(int32_t scale)
+{
+    MOZ_ASSERT(scale > 0);
+
+    for (size_t i = 0; i < terms_.length(); i++) {
+        if (terms_[i].scale % scale != 0)
+            return false;
+    }
+    if (constant_ % scale != 0)
+        return false;
+
+    for (size_t i = 0; i < terms_.length(); i++)
+        terms_[i].scale /= scale;
+    constant_ /= scale;
+
+    return true;
+}
+
+bool
 LinearSum::add(const LinearSum &other, int32_t scale /* = 1 */)
 {
     for (size_t i = 0; i < other.terms_.length(); i++) {
@@ -2508,6 +2584,19 @@ LinearSum::add(const LinearSum &other, int32_t scale /* = 1 */)
     if (!SafeMul(scale, other.constant_, &newConstant))
         return false;
     return add(newConstant);
+}
+
+bool
+LinearSum::add(SimpleLinearSum other, int32_t scale)
+{
+    if (other.term && !add(other.term, scale))
+        return false;
+
+    int32_t constant;
+    if (!SafeMul(other.constant, scale, &constant))
+        return false;
+
+    return add(constant);
 }
 
 bool
@@ -2537,7 +2626,9 @@ LinearSum::add(MDefinition *term, int32_t scale)
         }
     }
 
-    terms_.append(LinearTerm(term, scale));
+    if (!terms_.append(LinearTerm(term, scale)))
+        CrashAtUnhandlableOOM("LinearSum::add");
+
     return true;
 }
 
@@ -2589,7 +2680,7 @@ LinearSum::dump() const
 }
 
 MDefinition *
-jit::ConvertLinearSum(TempAllocator &alloc, MBasicBlock *block, const LinearSum &sum)
+jit::ConvertLinearSum(TempAllocator &alloc, MBasicBlock *block, const LinearSum &sum, bool convertConstant)
 {
     MDefinition *def = nullptr;
 
@@ -2634,7 +2725,20 @@ jit::ConvertLinearSum(TempAllocator &alloc, MBasicBlock *block, const LinearSum 
         }
     }
 
-    // Note: The constant component of the term is not converted.
+    if (convertConstant && sum.constant()) {
+        MConstant *constant = MConstant::New(alloc, Int32Value(sum.constant()));
+        block->insertAtEnd(constant);
+        constant->computeRange(alloc);
+        if (def) {
+            def = MAdd::New(alloc, def, constant);
+            def->toAdd()->setInt32();
+            block->insertAtEnd(def->toInstruction());
+            def->computeRange(alloc);
+        } else {
+            def = constant;
+        }
+    }
+
     if (!def) {
         def = MConstant::New(alloc, Int32Value(0));
         block->insertAtEnd(def->toInstruction());
@@ -2851,7 +2955,7 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext *cx, JSFunction *fun,
                                         types::TypeObject *type, HandleNativeObject baseobj,
                                         Vector<types::TypeNewScript::Initializer> *initializerList)
 {
-    MOZ_ASSERT(cx->compartment()->activeAnalysis);
+    MOZ_ASSERT(cx->zone()->types.activeAnalysis);
 
     // When invoking 'new' on the specified script, try to find some properties
     // which will definitely be added to the created object before it has a
@@ -2870,8 +2974,7 @@ jit::AnalyzeNewScriptDefiniteProperties(JSContext *cx, JSFunction *fun,
 
     Vector<PropertyName *> accessedProperties(cx);
 
-    LifoAlloc alloc(types::TypeZone::TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
-
+    LifoAlloc alloc(TempAllocator::PreferredLifoChunkSize);
     TempAllocator temp(&alloc);
     JitContext jctx(cx, &temp);
 
@@ -3084,7 +3187,7 @@ jit::AnalyzeArgumentsUsage(JSContext *cx, JSScript *scriptArg)
     // scripts (generators can be suspended when speculation fails).
     //
     // FIXME: Don't build arguments for ES6 generator expressions.
-    if (cx->compartment()->debugMode() || script->isGenerator())
+    if (scriptArg->isDebuggee() || script->isGenerator())
         return true;
 
     // If the script has dynamic name accesses which could reach 'arguments',
@@ -3110,8 +3213,7 @@ jit::AnalyzeArgumentsUsage(JSContext *cx, JSScript *scriptArg)
     if (!script->ensureHasTypes(cx))
         return false;
 
-    LifoAlloc alloc(types::TypeZone::TYPE_LIFO_ALLOC_PRIMARY_CHUNK_SIZE);
-
+    LifoAlloc alloc(TempAllocator::PreferredLifoChunkSize);
     TempAllocator temp(&alloc);
     JitContext jctx(cx, &temp);
 
@@ -3358,6 +3460,13 @@ jit::MakeLoopsContiguous(MIRGraph &graph)
         // If the loop isn't a loop, don't try to optimize it.
         if (numMarked == 0)
             continue;
+
+        // If there's an OSR block entering the loop in the middle, it's tricky,
+        // so don't try to handle it, for now.
+        if (canOsr) {
+            UnmarkLoopBlocks(graph, header);
+            continue;
+        }
 
         // Move all blocks between header and backedge that aren't marked to
         // the end of the loop, making the loop itself contiguous.

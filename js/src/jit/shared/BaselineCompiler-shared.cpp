@@ -9,6 +9,8 @@
 #include "jit/BaselineIC.h"
 #include "jit/VMFunctions.h"
 
+#include "jsscriptinlines.h"
+
 using namespace js;
 using namespace js::jit;
 
@@ -18,7 +20,7 @@ BaselineCompilerShared::BaselineCompilerShared(JSContext *cx, TempAllocator &all
     pc(script->code()),
     ionCompileable_(jit::IsIonEnabled(cx) && CanIonCompileScript(cx, script, false)),
     ionOSRCompileable_(jit::IsIonEnabled(cx) && CanIonCompileScript(cx, script, true)),
-    debugMode_(cx->compartment()->debugMode()),
+    compileDebugInstrumentation_(script->isDebuggee()),
     alloc_(alloc),
     analysis_(alloc, script),
     frame(script, masm),
@@ -88,7 +90,7 @@ BaselineCompilerShared::callVM(const VMFunction &fun, CallVMPhase phase)
         masm.makeFrameDescriptor(BaselineTailCallReg, JitFrame_BaselineJS);
         masm.push(BaselineTailCallReg);
     }
-
+    MOZ_ASSERT(fun.expectTailCall == NonTailCall);
     // Perform the call.
     masm.call(code);
     uint32_t callOffset = masm.currentOffset();

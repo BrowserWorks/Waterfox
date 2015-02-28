@@ -48,6 +48,7 @@ namespace JS {
     D(OUT_OF_NURSERY)                           \
     D(EVICT_NURSERY)                            \
     D(FULL_STORE_BUFFER)                        \
+    D(SHARED_MEMORY_LIMIT)                      \
                                                 \
     /* These are reserved for future use. */    \
     D(RESERVED0)                                \
@@ -69,7 +70,6 @@ namespace JS {
     D(RESERVED16)                               \
     D(RESERVED17)                               \
     D(RESERVED18)                               \
-    D(RESERVED19)                               \
                                                 \
     /* Reasons from Firefox */                  \
     D(DOM_WINDOW_UTILS)                         \
@@ -105,7 +105,7 @@ enum Reason {
     /*
      * For telemetry, we want to keep a fixed max bucket size over time so we
      * don't have to switch histograms. 100 is conservative; as of this writing
-     * there are 26. But the cost of extra buckets seems to be low while the
+     * there are 52. But the cost of extra buckets seems to be low while the
      * cost of switching histograms is high.
      */
     NUM_TELEMETRY_REASONS = 100
@@ -420,7 +420,7 @@ class JS_PUBLIC_API(AutoAssertNoAlloc)
  * object is live. This is most useful to help the exact rooting hazard analysis
  * in complex regions, since it cannot understand dataflow.
  *
- * Note: GC behavior is unpredictable even when deterministice and is generally
+ * Note: GC behavior is unpredictable even when deterministic and is generally
  *       non-deterministic in practice. The fact that this guard has not
  *       asserted is not a guarantee that a GC cannot happen in the guarded
  *       region. As a rule, anyone performing a GC unsafe action should

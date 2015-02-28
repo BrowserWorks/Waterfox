@@ -35,7 +35,7 @@ class Wait(object):
         implementation than the one provided by the standard library
         (time) can also be provided.
 
-        Sample usage:
+        Sample usage::
 
             # Wait 30 seconds for window to open, checking for its presence once
             # every 5 seconds.
@@ -125,7 +125,7 @@ class Wait(object):
             except self.exceptions as e:
                 last_exc = sys.exc_info()
 
-            if isinstance(rv, bool) and not rv:
+            if not rv:
                 self.clock.sleep(self.interval)
                 continue
 

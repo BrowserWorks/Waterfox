@@ -11,6 +11,11 @@
  */
 gsw{
     Version{"2.1.7.41"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         duration{
             day{

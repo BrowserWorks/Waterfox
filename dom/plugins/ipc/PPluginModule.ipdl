@@ -3,11 +3,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-include protocol PPluginIdentifier;
 include protocol PPluginInstance;
 include protocol PPluginScriptableObject;
 include protocol PCrashReporter;
-
+include protocol PContent;
 
 using NPError from "npapi.h";
 using NPNVariable from "npapi.h";
@@ -18,28 +17,29 @@ using struct nsID from "nsID.h";
 namespace mozilla {
 namespace plugins {
 
+struct PluginSettings
+{
+  // These settings correspond to NPNVariable. They are fetched from
+  // mozilla::plugins::parent::_getvalue.
+  bool javascriptEnabled;
+  bool asdEnabled;
+  bool isOffline;
+  bool supportsXembed;
+  bool supportsWindowless;
+
+  // These settings come from elsewhere.
+  nsCString userAgent;
+  bool nativeCursorsSupported;
+};
+
 intr protocol PPluginModule
 {
+  bridges PContent, PPluginModule;
+
   manages PPluginInstance;
-  manages PPluginIdentifier;
   manages PCrashReporter;
 
 both:
-  /**
-   * Sending a void string to this constructor creates an int identifier whereas
-   * sending a non-void string will create a string identifier. This constructor
-   * may be called by either child or parent. If a race occurs by calling the
-   * constructor with the same string or int argument then we create two actors
-   * and detect the second instance in the child. We prevent the parent's actor
-   * from leaking out to plugin code and only allow the child's to be used.
-   *
-   * When calling into the plugin, the parent may create a "temporary"
-   * identifier which is only valid for the lifetime of the current inerrupt frame.
-   */
-  async PPluginIdentifier(nsCString aString,
-                          int32_t aInt,
-                          bool temporary);
-
   // Window-specific message which instructs the interrupt mechanism to enter
   // a nested event loop for the current interrupt call.
   async ProcessNativeEventsInInterruptCall();
@@ -51,7 +51,7 @@ child:
   intr NP_GetEntryPoints()
     returns (NPError rv);
 
-  intr NP_Initialize(uint32_t aFlags)
+  intr NP_Initialize(PluginSettings settings)
     returns (NPError rv);
 
   intr PPluginInstance(nsCString aMimeType,
@@ -83,8 +83,16 @@ child:
   intr PCrashReporter()
     returns (NativeThreadId tid, uint32_t processType);
 
-  intr GeckoGetProfile()
+  /**
+   * Control the Gecko Profiler in the plugin process.
+   */
+  async StartProfiler(uint32_t aEntries, double aInterval, nsCString[] aFeatures,
+                      nsCString[] aThreadNameFilters);
+  async StopProfiler();
+  intr GetProfile()
     returns (nsCString aProfile);
+
+  async SettingChanged(PluginSettings settings);
 
 parent:
   /**
@@ -99,13 +107,6 @@ parent:
    * use the newly-invalid surface.
    */
   async BackUpXResources(FileDescriptor aXSocketFd);
-
-  intr NPN_UserAgent()
-    returns (nsCString userAgent);
-
-  intr NPN_GetValue_WithBoolReturn(NPNVariable aVariable)
-    returns (NPError aError,
-             bool aBoolVal);
 
   // Wake up and process a few native events.  Periodically called by
   // Gtk-specific code upon detecting that the plugin process has
@@ -125,12 +126,15 @@ parent:
   async ShowCursor(bool show);
   async PushCursor(NSCursorInfo cursorInfo);
   async PopCursor();
-  sync GetNativeCursorsSupported() returns (bool supported);
 
-  sync NPN_SetException(nullable PPluginScriptableObject actor,
-                        nsCString message);
+  sync NPN_SetException(nsCString message);
 
   async NPN_ReloadPlugins(bool aReloadPages);
+
+  // Notifies the chrome process that a PluginModuleChild linked to a content
+  // process was destroyed. The chrome process may choose to asynchronously shut
+  // down the plugin process in response.
+  async NotifyContentModuleDestroyed();
 };
 
 } // namespace plugins

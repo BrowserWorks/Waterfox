@@ -15,7 +15,17 @@ function chunkifyTests(tests, totalChunks, thisChunk, chunkByDir, logger) {
     var tests_by_dir = {};
     var test_dirs = []
     for (var i = 0; i < tests.length; ++i) {
-      var test_path = tests[i];
+      if ((tests[i] instanceof Object) && ('test' in tests[i])) {
+        var test_path = tests[i]['test']['url'];
+      }
+      else if ((tests[i] instanceof Object) && ('url' in tests[i])) {
+        // This condition is needed to run --chunk-by-dir on mochitest bc and dt.
+        var test_path = tests[i]['url'];
+      }
+      else {
+        // This condition is needed to run --chunk-by-dir on android chunks.
+        var test_path = tests[i];
+      }
       if (test_path[0] == '/') {
         test_path = test_path.substr(1);
       }
@@ -67,7 +77,14 @@ function chunkifyTests(tests, totalChunks, thisChunk, chunkByDir, logger) {
 function skipTests(tests, startTestPattern, endTestPattern) {
   var startIndex = 0, endIndex = tests.length - 1;
   for (var i = 0; i < tests.length; ++i) {
-    var test_path = tests[i];
+    var test_path;
+    if ((tests[i] instanceof Object) && ('test' in tests[i])) {
+      test_path = tests[i]['test']['url'];
+    } else if ((tests[i] instanceof Object) && ('url' in tests[i])) {
+      test_path = tests[i]['url'];
+    } else {
+      test_path = tests[i];
+    }
     if (startTestPattern && test_path.endsWith(startTestPattern)) {
       startIndex = i;
     }

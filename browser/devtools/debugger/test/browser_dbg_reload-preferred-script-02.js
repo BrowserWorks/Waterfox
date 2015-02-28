@@ -9,19 +9,18 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 const PREFERRED_URL = EXAMPLE_URL + "code_script-switching-02.js";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gSources = gDebugger.DebuggerView.Sources;
 
     waitForSourceShown(gPanel, PREFERRED_URL).then(finishTest);
-    gSources.preferredSource = PREFERRED_URL;
+    gSources.preferredSource = getSourceActor(gSources, PREFERRED_URL);
   });
 }
 
@@ -29,9 +28,9 @@ function finishTest() {
   info("Currently preferred source: " + gSources.preferredValue);
   info("Currently selected source: " + gSources.selectedValue);
 
-  is(gSources.preferredValue, PREFERRED_URL,
+  is(getSourceURL(gSources, gSources.preferredValue), PREFERRED_URL,
     "The preferred source url wasn't set correctly.");
-  is(gSources.selectedValue, PREFERRED_URL,
+  is(getSourceURL(gSources, gSources.selectedValue), PREFERRED_URL,
     "The selected source isn't the correct one.");
 
   closeDebuggerAndFinish(gPanel);
@@ -39,7 +38,6 @@ function finishTest() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gSources = null;

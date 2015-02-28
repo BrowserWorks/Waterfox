@@ -4,7 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "CompositorChild.h"
+#include "mozilla/layers/CompositorChild.h"
 #include <stddef.h>                     // for size_t
 #include "ClientLayerManager.h"         // for ClientLayerManager
 #include "base/message_loop.h"          // for MessageLoop
@@ -50,9 +50,11 @@ CompositorChild::Destroy()
 {
   mLayerManager->Destroy();
   mLayerManager = nullptr;
-  while (size_t len = ManagedPLayerTransactionChild().Length()) {
+  // start from the end of the array because Destroy() can cause the
+  // LayerTransactionChild to be removed from the array.
+  for (int i = ManagedPLayerTransactionChild().Length() - 1; i >= 0; --i) {
     RefPtr<LayerTransactionChild> layers =
-      static_cast<LayerTransactionChild*>(ManagedPLayerTransactionChild()[len - 1]);
+      static_cast<LayerTransactionChild*>(ManagedPLayerTransactionChild()[i]);
     layers->Destroy();
   }
   SendStop();
@@ -87,8 +89,17 @@ CompositorChild::Create(Transport* aTransport, ProcessId aOtherProcess)
     NS_RUNTIMEABORT("Couldn't Open() Compositor channel.");
     return nullptr;
   }
+
   // We release this ref in ActorDestroy().
-  return sCompositor = child.forget().take();
+  sCompositor = child.forget().take();
+
+  int32_t width;
+  int32_t height;
+  sCompositor->SendGetTileSize(&width, &height);
+  gfxPlatform::GetPlatform()->SetTileSize(width, height);
+
+  // We release this ref in ActorDestroy().
+  return sCompositor;
 }
 
 /*static*/ CompositorChild*

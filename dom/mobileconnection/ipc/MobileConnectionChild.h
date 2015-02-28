@@ -77,9 +77,9 @@ protected:
   RecvNotifyDataError(const nsString& aMessage) MOZ_OVERRIDE;
 
   virtual bool
-  RecvNotifyCFStateChanged(const bool& aSuccess, const uint16_t& aAction,
-                           const uint16_t& aReason, const nsString& aNumber,
-                           const uint16_t& aTimeSeconds, const uint16_t& aServiceClass) MOZ_OVERRIDE;
+  RecvNotifyCFStateChanged(const uint16_t& aAction, const uint16_t& aReason,
+                           const nsString& aNumber, const uint16_t& aTimeSeconds,
+                           const uint16_t& aServiceClass) MOZ_OVERRIDE;
 
   virtual bool
   RecvNotifyEmergencyCbModeChanged(const bool& aActive,
@@ -92,7 +92,7 @@ protected:
   RecvNotifyIccChanged(const nsString& aIccId) MOZ_OVERRIDE;
 
   virtual bool
-  RecvNotifyRadioStateChanged(const nsString& aRadioState) MOZ_OVERRIDE;
+  RecvNotifyRadioStateChanged(const int32_t& aRadioState) MOZ_OVERRIDE;
 
   virtual bool
   RecvNotifyClirModeChanged(const uint32_t& aMode) MOZ_OVERRIDE;
@@ -104,7 +104,7 @@ protected:
   RecvNotifyLastHomeNetworkChanged(const nsString& aNetwork) MOZ_OVERRIDE;
 
   virtual bool
-  RecvNotifyNetworkSelectionModeChanged(const nsString& aMode) MOZ_OVERRIDE;
+  RecvNotifyNetworkSelectionModeChanged(const int32_t& aMode) MOZ_OVERRIDE;
 
 private:
   uint32_t mServiceId;
@@ -113,11 +113,11 @@ private:
   nsRefPtr<MobileConnectionInfo> mVoice;
   nsRefPtr<MobileConnectionInfo> mData;
   nsString mIccId;
-  nsString mRadioState;
+  int32_t mRadioState;
   nsString mLastNetwork;
   nsString mLastHomeNetwork;
-  nsString mNetworkSelectionMode;
-  nsTArray<nsString> mSupportedNetworkTypes;
+  int32_t mNetworkSelectionMode;
+  nsTArray<int32_t> mSupportedNetworkTypes;
 };
 
 /******************************************************************************
@@ -143,9 +143,6 @@ public:
   DoReply(const MobileConnectionReplySuccess& aReply);
 
   bool
-  DoReply(const MobileConnectionReplySuccessString& aReply);
-
-  bool
   DoReply(const MobileConnectionReplySuccessBoolean& aReply);
 
   bool
@@ -162,6 +159,12 @@ public:
 
   bool
   DoReply(const MobileConnectionReplySuccessClirStatus& aReply);
+
+  bool
+  DoReply(const MobileConnectionReplySuccessPreferredNetworkType& aReply);
+
+  bool
+  DoReply(const MobileConnectionReplySuccessRoamingPreference& aMode);
 
   bool
   DoReply(const MobileConnectionReplyError& aReply);

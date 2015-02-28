@@ -254,10 +254,13 @@ class HashMap
             rekeyAs(old_key, new_key, new_key);
     }
 
-    // Infallibly rekey one entry, if present.
-    void rekeyAs(const Lookup &old_lookup, const Lookup &new_lookup, const Key &new_key) {
-        if (Ptr p = lookup(old_lookup))
+    // Infallibly rekey one entry if present, and return whether that happened.
+    bool rekeyAs(const Lookup &old_lookup, const Lookup &new_lookup, const Key &new_key) {
+        if (Ptr p = lookup(old_lookup)) {
             impl.rekeyAndMaybeRehash(p, new_lookup, new_key);
+            return true;
+        }
+        return false;
     }
 
     // HashMap is movable
@@ -472,10 +475,13 @@ class HashSet
             rekeyAs(old_value, new_value, new_value);
     }
 
-    // Infallibly rekey one entry, if present.
-    void rekeyAs(const Lookup &old_lookup, const Lookup &new_lookup, const T &new_value) {
-        if (Ptr p = lookup(old_lookup))
+    // Infallibly rekey one entry if present, and return whether that happened.
+    bool rekeyAs(const Lookup &old_lookup, const Lookup &new_lookup, const T &new_value) {
+        if (Ptr p = lookup(old_lookup)) {
             impl.rekeyAndMaybeRehash(p, new_lookup, new_value);
+            return true;
+        }
+        return false;
     }
 
     // Infallibly rekey one entry with a new key that is equivalent.
@@ -536,11 +542,14 @@ struct PointerHasher
     static HashNumber hash(const Lookup &l) {
         MOZ_ASSERT(!JS::IsPoisonedPtr(l));
         size_t word = reinterpret_cast<size_t>(l) >> zeroBits;
-        JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
+        static_assert(sizeof(HashNumber) == 4,
+                      "subsequent code assumes a four-byte hash");
 #if JS_BITS_PER_WORD == 32
         return HashNumber(word);
 #else
-        JS_STATIC_ASSERT(sizeof word == 8);
+        static_assert(sizeof(word) == 8,
+                      "unexpected word size, new hashing strategy required to "
+                      "properly incorporate all bits");
         return HashNumber((word >> 32) ^ word);
 #endif
     }
@@ -587,7 +596,8 @@ struct DefaultHasher<double>
 {
     typedef double Lookup;
     static HashNumber hash(double d) {
-        JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
+        static_assert(sizeof(HashNumber) == 4,
+                      "subsequent code assumes a four-byte hash");
         uint64_t u = mozilla::BitwiseCast<uint64_t>(d);
         return HashNumber(u ^ (u >> 32));
     }
@@ -601,7 +611,8 @@ struct DefaultHasher<float>
 {
     typedef float Lookup;
     static HashNumber hash(float f) {
-        JS_STATIC_ASSERT(sizeof(HashNumber) == 4);
+        static_assert(sizeof(HashNumber) == 4,
+                      "subsequent code assumes a four-byte hash");
         return HashNumber(mozilla::BitwiseCast<uint32_t>(f));
     }
     static bool match(float lhs, float rhs) {

@@ -8,7 +8,7 @@
 # verify the tests work
 include reftest-sanity/reftest.list
 
-# images (if libpr0n is busted, could result in weird failures in other tests)
+# images (if ImageLib is busted, could result in weird failures in other tests)
 include ../../image/test/reftest/reftest.list
 
 # CSSWG tests
@@ -68,6 +68,9 @@ include css-charset/reftest.list
 
 # css default pseudo class tests
 include css-default/reftest.list
+
+# css-display spec tests
+include css-display/reftest.list
 
 # css :disable tests
 include css-disabled/reftest.list
@@ -248,10 +251,10 @@ include outline/reftest.list
 include object/reftest.list
 
 # ogg-video/
-include ogg-video/reftest.list
+skip-if(!B2G&&browserIsRemote) include ogg-video/reftest.list
 
 # webm-video/
-include webm-video/reftest.list
+skip-if(!B2G&&browserIsRemote) include webm-video/reftest.list
 
 # parser/
 include ../../parser/htmlparser/tests/reftest/reftest.list
@@ -368,8 +371,7 @@ include ../xul/grid/reftests/reftest.list
 include z-index/reftest.list
 
 # reftest(s) to verify content bugfixes
-include ../../content/html/document/reftests/reftests.list
-include ../../content/html/content/reftests/reftest.list
+include ../../dom/html/reftests/reftest.list
 include ../../dom/imptests/reftest.list
 
 # editor/

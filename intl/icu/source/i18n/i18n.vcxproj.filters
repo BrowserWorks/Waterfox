@@ -228,7 +228,7 @@
     <ClCompile Include="reldtfmt.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="scientificformathelper.cpp">
+    <ClCompile Include="scientificnumberformatter.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
     <ClCompile Include="selfmt.cpp">
@@ -695,6 +695,15 @@
     <ClInclude Include="sharedbreakiterator.h">
       <Filter>formatting</Filter>
     </ClInclude>
+    <ClInclude Include="sharedcalendar.h">
+      <Filter>formatting</Filter>
+    </ClInclude>
+    <ClInclude Include="shareddateformatsymbols.h">
+      <Filter>formatting</Filter>
+    </ClInclude>
+    <ClInclude Include="shareddatetimepatterngenerator.h">
+      <Filter>formatting</Filter>
+    </ClInclude>
     <ClInclude Include="sharednumberformat.h">
       <Filter>formatting</Filter>
     </ClInclude>
@@ -1080,7 +1089,7 @@
     <CustomBuild Include="unicode\rbtz.h">
       <Filter>formatting</Filter>
     </CustomBuild>
-    <CustomBuild Include="unicode\scientificformathelper.h">
+    <CustomBuild Include="unicode\scientificnumberformatter.h">
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\selfmt.h">

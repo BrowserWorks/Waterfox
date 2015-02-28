@@ -78,23 +78,6 @@ class NormalArgumentsObject;
 class SetObject;
 class StrictArgumentsObject;
 
-/*
- * NOTE: This is a placeholder for bug 619558.
- *
- * Run a post write barrier that encompasses multiple contiguous slots in a
- * single step.
- */
-inline void
-DenseRangeWriteBarrierPost(JSRuntime *rt, JSObject *obj, uint32_t start, uint32_t count)
-{
-#ifdef JSGC_GENERATIONAL
-    if (count > 0) {
-        JS::shadow::Runtime *shadowRuntime = JS::shadow::Runtime::asShadowRuntime(rt);
-        shadowRuntime->gcStoreBufferPtr()->putSlotFromAnyThread(obj, HeapSlot::Element, start, count);
-    }
-#endif
-}
-
 namespace gc {
 class ForkJoinNursery;
 }
@@ -128,49 +111,6 @@ class JSObject : public js::gc::Cell
      * to get that prototype.
      */
     js::HeapPtrTypeObject type_;
-
-    // FIXME bug 1073842: this is temporary until these members are no longer
-    // accessed by non-native objects.
-    js::HeapSlot *slots;     /* Slots for object properties. */
-    js::HeapSlot *elements;  /* Slots for object elements. */
-
-  public:
-    // Methods for accessing slots/elements storage in objects that might be
-    // non-native. These will be removed soon as part of bug 1073842.
-    inline void *fakeNativeGetPrivate() const;
-    inline void *fakeNativeGetPrivate(uint32_t nfixed) const;
-    inline void fakeNativeSetPrivate(void *data);
-    inline bool fakeNativeHasPrivate() const;
-    inline void fakeNativeInitPrivate(void *data);
-    inline void *&fakeNativePrivateRef(uint32_t nfixed) const;
-    inline uint32_t fakeNativeSlotSpan();
-    inline const js::Value &fakeNativeGetSlot(uint32_t slot);
-    inline void fakeNativeSetSlot(uint32_t slot, const js::Value &value);
-    inline js::HeapSlot &fakeNativeGetSlotRef(uint32_t slot);
-    inline const js::Value &fakeNativeGetReservedSlot(uint32_t slot) const;
-    inline js::HeapSlot &fakeNativeGetReservedSlotRef(uint32_t slot);
-    inline void fakeNativeSetReservedSlot(uint32_t slot, const js::Value &value);
-    inline void fakeNativeInitReservedSlot(uint32_t slot, const js::Value &value);
-    inline void fakeNativeSetCrossCompartmentSlot(uint32_t slot, const js::Value &value);
-    inline void fakeNativeInitCrossCompartmentSlot(uint32_t slot, const js::Value &value);
-    inline void fakeNativeSetInitialSlots(js::HeapSlot *newSlots);
-    inline bool fakeNativeHasDynamicSlots() const;
-    inline uint32_t fakeNativeNumFixedSlots() const;
-    inline uint32_t fakeNativeNumDynamicSlots() const;
-    inline js::HeapSlot *&fakeNativeSlots();
-    inline void fakeNativeInitSlot(uint32_t slot, const js::Value &value);
-    inline void fakeNativeInitSlotRange(uint32_t start, const js::Value *vector, uint32_t length);
-    inline void fakeNativeInitializeSlotRange(uint32_t start, uint32_t count);
-    inline bool fakeNativeHasDynamicElements() const;
-    inline bool fakeNativeHasEmptyElements() const;
-    inline js::HeapSlotArray fakeNativeGetDenseElements();
-    inline bool fakeNativeDenseElementsAreCopyOnWrite();
-    inline js::ObjectElements *fakeNativeGetElementsHeader() const;
-    inline js::HeapSlot *&fakeNativeElements();
-    inline uint8_t *fakeNativeFixedData(size_t nslots) const;
-    inline const js::Value &fakeNativeGetDenseElement(uint32_t idx);
-    inline uint32_t fakeNativeGetDenseInitializedLength();
-    inline const js::HeapSlot *fakeNativeGetSlotAddressUnchecked(uint32_t slot) const;
 
   private:
     friend class js::Shape;
@@ -245,6 +185,13 @@ class JSObject : public js::gc::Cell
                                    js::gc::InitialHeap heap,
                                    js::HandleShape shape,
                                    js::HandleTypeObject type);
+
+    // Set the initial slots and elements of an object. These pointers are only
+    // valid for native objects, but during initialization are set for all
+    // objects. For non-native objects, these must not be dynamically allocated
+    // pointers which leak when the non-native object finishes initialization.
+    inline void setInitialSlotsMaybeNonNative(js::HeapSlot *slots);
+    inline void setInitialElementsMaybeNonNative(js::HeapSlot *elements);
 
   protected:
     enum GenerateShape {
@@ -405,13 +352,53 @@ class JSObject : public js::gc::Cell
     js::TaggedProto getTaggedProto() const {
         return type_->proto();
     }
+
     bool hasTenuredProto() const;
 
     bool uninlinedIsProxy() const;
+
     JSObject *getProto() const {
         MOZ_ASSERT(!uninlinedIsProxy());
         return getTaggedProto().toObjectOrNull();
     }
+
+    // Normal objects and a subset of proxies have uninteresting [[Prototype]].
+    // For such objects the [[Prototype]] is just a value returned when needed
+    // for accesses, or modified in response to requests.  These objects store
+    // the [[Prototype]] directly within |obj->type_|.
+    //
+    // Proxies that don't have such a simple [[Prototype]] instead have a
+    // "lazy" [[Prototype]].  Accessing the [[Prototype]] of such an object
+    // requires going through the proxy handler {get,set}PrototypeOf and
+    // setImmutablePrototype methods.  This is most commonly useful for proxies
+    // that are wrappers around other objects.  If the [[Prototype]] of the
+    // underlying object changes, the [[Prototype]] of the wrapper must also
+    // simultaneously change.  We implement this by having the handler methods
+    // simply delegate to the wrapped object, forwarding its response to the
+    // caller.
+    //
+    // This method returns true if this object has a non-simple [[Prototype]]
+    // as described above, or false otherwise.
+    bool hasLazyPrototype() const {
+        bool lazy = getTaggedProto().isLazy();
+        MOZ_ASSERT_IF(lazy, uninlinedIsProxy());
+        return lazy;
+    }
+
+    // True iff this object's [[Prototype]] is immutable.  Must not be called
+    // on proxies with lazy [[Prototype]]!
+    bool nonLazyPrototypeIsImmutable() const {
+        MOZ_ASSERT(!hasLazyPrototype());
+        return lastProperty()->hasObjectFlag(js::BaseShape::IMMUTABLE_PROTOTYPE);
+    }
+
+    // Attempt to make |obj|'s [[Prototype]] immutable, such that subsequently
+    // trying to change it will not work.  If an internal error occurred,
+    // returns false.  Otherwise, |*succeeded| is set to true iff |obj|'s
+    // [[Prototype]] is now immutable.
+    static bool
+    setImmutablePrototype(js::ExclusiveContext *cx, JS::HandleObject obj, bool *succeeded);
+
     static inline bool getProto(JSContext *cx, js::HandleObject obj,
                                 js::MutableHandleObject protop);
     // Returns false on error, success of operation in outparam.
@@ -527,10 +514,11 @@ class JSObject : public js::gc::Cell
         return !lastProperty()->hasObjectFlag(js::BaseShape::NOT_EXTENSIBLE);
     }
 
-    // Attempt to change the [[Extensible]] bit on |obj| to false.  Callers
-    // must ensure that |obj| is currently extensible before calling this!
+    // Attempt to change the [[Extensible]] bit on |obj| to false.  Indicate
+    // success or failure through the |*succeeded| outparam, or actual error
+    // through the return value.
     static bool
-    preventExtensions(JSContext *cx, js::HandleObject obj);
+    preventExtensions(JSContext *cx, js::HandleObject obj, bool *succeeded);
 
   private:
     enum ImmutabilityType { SEAL, FREEZE };
@@ -578,7 +566,6 @@ class JSObject : public js::gc::Cell
     JSNative callHook() const;
     JSNative constructHook() const;
 
-    inline void finish(js::FreeOp *fop);
     MOZ_ALWAYS_INLINE void finalize(js::FreeOp *fop);
 
     static inline bool hasProperty(JSContext *cx, js::HandleObject obj,
@@ -598,15 +585,6 @@ class JSObject : public js::gc::Cell
     bool callMethod(JSContext *cx, js::HandleId id, unsigned argc, js::Value *argv,
                     js::MutableHandleValue vp);
 
-  private:
-    struct TradeGutsReserved;
-    static bool ReserveForTradeGuts(JSContext *cx, JSObject *a, JSObject *b,
-                                    TradeGutsReserved &reserved);
-
-    static void TradeGuts(JSContext *cx, JSObject *a, JSObject *b,
-                          TradeGutsReserved &reserved);
-
-  public:
     static bool lookupGeneric(JSContext *cx, js::HandleObject obj, js::HandleId id,
                               js::MutableHandleObject objp, js::MutableHandleShape propp);
 
@@ -677,9 +655,11 @@ class JSObject : public js::gc::Cell
                                   uint32_t index, js::MutableHandleValue vp, bool strict);
 
     static bool nonNativeSetProperty(JSContext *cx, js::HandleObject obj,
-                                     js::HandleId id, js::MutableHandleValue vp, bool strict);
+                                     js::HandleObject receiver, js::HandleId id,
+                                     js::MutableHandleValue vp, bool strict);
     static bool nonNativeSetElement(JSContext *cx, js::HandleObject obj,
-                                    uint32_t index, js::MutableHandleValue vp, bool strict);
+                                    js::HandleObject receiver, uint32_t index,
+                                    js::MutableHandleValue vp, bool strict);
 
     static inline bool getGenericAttributes(JSContext *cx, js::HandleObject obj,
                                             js::HandleId id, unsigned *attrsp);
@@ -727,6 +707,10 @@ class JSObject : public js::gc::Cell
 
     static bool swap(JSContext *cx, JS::HandleObject a, JS::HandleObject b);
 
+  private:
+    void fixDictionaryShapeAfterSwap();
+
+  public:
     inline void initArrayClass();
 
     /*
@@ -820,11 +804,13 @@ operator!=(const JSObject &lhs, const JSObject &rhs)
     return &lhs != &rhs;
 }
 
-struct JSObject_Slots2 : JSObject { js::Value fslots[2]; };
-struct JSObject_Slots4 : JSObject { js::Value fslots[4]; };
-struct JSObject_Slots8 : JSObject { js::Value fslots[8]; };
-struct JSObject_Slots12 : JSObject { js::Value fslots[12]; };
-struct JSObject_Slots16 : JSObject { js::Value fslots[16]; };
+// Size of the various GC thing allocation sizes used for objects.
+struct JSObject_Slots0 : JSObject { void *data[2]; };
+struct JSObject_Slots2 : JSObject { void *data[2]; js::Value fslots[2]; };
+struct JSObject_Slots4 : JSObject { void *data[2]; js::Value fslots[4]; };
+struct JSObject_Slots8 : JSObject { void *data[2]; js::Value fslots[8]; };
+struct JSObject_Slots12 : JSObject { void *data[2]; js::Value fslots[12]; };
+struct JSObject_Slots16 : JSObject { void *data[2]; js::Value fslots[16]; };
 
 /* static */ MOZ_ALWAYS_INLINE void
 JSObject::readBarrier(JSObject *obj)
@@ -958,7 +944,7 @@ GetBuiltinPrototypePure(GlobalObject *global, JSProtoKey protoKey);
 
 extern bool
 SetClassAndProto(JSContext *cx, HandleObject obj,
-                 const Class *clasp, Handle<TaggedProto> proto, bool crashOnFailure);
+                 const Class *clasp, Handle<TaggedProto> proto);
 
 /*
  * Property-lookup-based access to interface and prototype objects for classes.
@@ -1127,7 +1113,8 @@ js_FindVariableScope(JSContext *cx, JSFunction **funp);
 namespace js {
 
 bool
-LookupPropertyPure(JSObject *obj, jsid id, NativeObject **objp, Shape **propp);
+LookupPropertyPure(ThreadSafeContext *cx, JSObject *obj, jsid id, NativeObject **objp,
+                   Shape **propp);
 
 bool
 GetPropertyPure(ThreadSafeContext *cx, JSObject *obj, jsid id, Value *vp);

@@ -57,6 +57,12 @@ LIRGeneratorMIPS::useByteOpRegisterOrNonDoubleConstant(MDefinition *mir)
     return useRegisterOrNonDoubleConstant(mir);
 }
 
+LDefinition
+LIRGeneratorMIPS::tempByteOpRegister()
+{
+    return temp();
+}
+
 bool
 LIRGeneratorMIPS::lowerConstantDouble(double d, MInstruction *mir)
 {
@@ -201,8 +207,9 @@ LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 1, 0> *ins, MDefinition *mir
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 }
 
+template<size_t Temps>
 bool
-LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir,
+LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 2, Temps> *ins, MDefinition *mir,
                               MDefinition *lhs, MDefinition *rhs)
 {
     ins->setOperand(0, useRegister(lhs));
@@ -210,6 +217,11 @@ LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir
     return define(ins, mir,
                   LDefinition(LDefinition::TypeFrom(mir->type()), LDefinition::REGISTER));
 }
+
+template bool LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 2, 0> *ins, MDefinition *mir,
+                                            MDefinition *lhs, MDefinition *rhs);
+template bool LIRGeneratorMIPS::lowerForFPU(LInstructionHelper<1, 2, 1> *ins, MDefinition *mir,
+                                            MDefinition *lhs, MDefinition *rhs);
 
 bool
 LIRGeneratorMIPS::lowerForBitAndAndBranch(LBitAndAndBranch *baab, MInstruction *mir,
@@ -468,7 +480,7 @@ LIRGeneratorMIPS::visitAsmJSLoadHeap(MAsmJSLoadHeap *ins)
 
     // For MIPS it is best to keep the 'ptr' in a register if a bounds check
     // is needed.
-    if (ptr->isConstant() && ins->skipBoundsCheck()) {
+    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
         int32_t ptrValue = ptr->toConstant()->value().toInt32();
         // A bounds check is only skipped for a positive index.
         MOZ_ASSERT(ptrValue >= 0);
@@ -486,7 +498,7 @@ LIRGeneratorMIPS::visitAsmJSStoreHeap(MAsmJSStoreHeap *ins)
     MOZ_ASSERT(ptr->type() == MIRType_Int32);
     LAllocation ptrAlloc;
 
-    if (ptr->isConstant() && ins->skipBoundsCheck()) {
+    if (ptr->isConstant() && !ins->needsBoundsCheck()) {
         MOZ_ASSERT(ptr->toConstant()->value().toInt32() >= 0);
         ptrAlloc = LAllocation(ptr->toConstant()->vp());
     } else
@@ -520,6 +532,18 @@ LIRGeneratorMIPS::lowerTruncateFToInt32(MTruncateToInt32 *ins)
 }
 
 bool
+LIRGeneratorMIPS::visitSubstr(MSubstr *ins)
+{
+    LSubstr *lir = new (alloc()) LSubstr(useRegister(ins->string()),
+                                         useRegister(ins->begin()),
+                                         useRegister(ins->length()),
+                                         temp(),
+                                         temp(),
+                                         tempByteOpRegister());
+    return define(lir, ins) && assignSafepoint(lir, ins);
+}
+
+bool
 LIRGeneratorMIPS::visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins)
 {
     MOZ_CRASH("NYI");
@@ -545,6 +569,30 @@ LIRGeneratorMIPS::visitSimdSplatX4(MSimdSplatX4 *ins)
 
 bool
 LIRGeneratorMIPS::visitSimdValueX4(MSimdValueX4 *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitCompareExchangeTypedArrayElement(MCompareExchangeTypedArrayElement *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitAsmJSCompareExchangeHeap(MAsmJSCompareExchangeHeap *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitAsmJSAtomicBinopHeap(MAsmJSAtomicBinopHeap *ins)
+{
+    MOZ_CRASH("NYI");
+}
+
+bool
+LIRGeneratorMIPS::visitAtomicTypedArrayElementBinop(MAtomicTypedArrayElementBinop *ins)
 {
     MOZ_CRASH("NYI");
 }

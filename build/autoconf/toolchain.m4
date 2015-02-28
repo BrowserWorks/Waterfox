@@ -73,6 +73,14 @@ if test "$compiler" = "clang"; then
 fi
 if test "$compiler" = "clang-cl"; then
     CLANG_CL=1
+    # We force clang-cl to emulate Visual C++ 2013 in configure.in, but that
+    # is based on the CLANG_CL variable defined here, so make sure that we're
+    # getting the right version here manually.
+    CC_VERSION=1800
+    CXX_VERSION=1800
+    # Build on clang-cl with MSVC 2013 with fallback emulation.
+    CFLAGS="$CFLAGS -fmsc-version=1800 -fallback"
+    CXXFLAGS="$CXXFLAGS -fmsc-version=1800 -fallback"
 fi
 
 if test "$GNU_CC"; then
@@ -153,6 +161,7 @@ MOZ_PATH_PROGS(AS, "${target_alias}-as" "${target}-as", :)
 AC_CHECK_PROGS(LD, "${target_alias}-ld" "${target}-ld", :)
 AC_CHECK_PROGS(STRIP, "${target_alias}-strip" "${target}-strip", :)
 AC_CHECK_PROGS(WINDRES, "${target_alias}-windres" "${target}-windres", :)
+AC_CHECK_PROGS(OTOOL, "${target_alias}-otool" "${target}-otool", :)
 AC_DEFINE(CROSS_COMPILE)
 CROSS_COMPILE=1
 

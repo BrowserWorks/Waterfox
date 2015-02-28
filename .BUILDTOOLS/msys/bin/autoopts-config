@@ -1,0 +1,104 @@
+#!/bin/sh
+## ---------------------------------------------------------------------
+## autoopts-config.in -- Tell a client where to find installed autoopts
+## 
+##  Autoopts copyright 1992-2002 Bruce Korb
+## 
+## Time-stamp:      "2002-09-14 11:28:43 bkorb"
+## Author:          Bruce Korb <bkorb@gnu.org>
+## Maintainer:      Bruce Korb <bkorb@gnu.org>
+## Created:         Mon Jun 30 15:35:12 1997
+##            by: bkorb
+## ---------------------------------------------------------------------
+## $Id: autoopts-config.in,v 2.14 2002/09/14 18:36:27 bkorb Exp $
+## ---------------------------------------------------------------------
+## Code:
+
+# Configured values:
+#
+     prefix=/usr
+    datadir=${prefix}/share
+ includedir=${prefix}/include
+exec_prefix=${prefix}
+     bindir=${exec_prefix}/bin
+     libdir=${exec_prefix}/lib
+     exeext=.exe
+    package=autogen
+    version=18:4:9
+
+# Derived values:
+#
+        tag=libopts-`echo ${version} | sed 's,:,.,g'`
+    autogen="${bindir}/autogen${exeext}"
+    ldflags="-L${libdir} -lopts"
+       libs="${ldflags}"
+ pkgdatadir="${datadir}/${package}"
+     libsrc="${pkgdatadir}/${tag}.tar.gz"
+static_libs="${libdir}/libopts.a"
+ everything="NOT FOR DISPLAY"
+
+[ "${includedir}" = "/usr/include" ] && cflags="" || cflags="-I${includedir}"
+
+# Displayable values:
+#
+optlist="autogen bindir cflags exec_prefix ldflags libs libsrc package
+         pkgdatadir prefix static_libs version everything"
+
+for o in $optlist
+do eval echo_${o}=false ; done
+
+usage()
+{
+  cat <<EOF
+Usage: autoopts-config <<OPTION>> [ ... ]
+Options may be one or more of:
+EOF
+  for o in $optlist
+  do
+    echo "       ${o}"
+  done | sed 's,_,-,g'
+  echo '"everything" will print out the list of names and values.'
+  exit $1
+}
+
+if test $# -eq 0; then
+  usage 1 1>&2
+fi
+
+# Figure out what's wanted
+#
+while test $# -gt 0; do
+  o=`echo $1 | sed 's,^-*,,;s/-/_/g'`
+
+  case $o in
+  everything | \
+  \*)  for o in $optlist
+       do eval echo_${o}=true
+       done                  ;;
+
+  help | h | \? )  usage 0   ;;
+
+  *)   eval "f=\$echo_${o}" || usage 1 2>&1
+       [ -n "$f" ]          || usage 1 2>&1
+       eval echo_${o}=true  || usage 1 2>&1
+       ;;
+  esac
+  shift
+done
+
+if ${echo_everything}
+then
+  echo_everything=false
+  for o in $optlist
+  do if eval \${echo_${o}}
+     then eval printf \""%-12s --> %s\\n"\" ${o} \"\${${o}}\" ; fi
+  done
+else
+  for o in $optlist
+  do if eval \${echo_${o}}
+     then eval echo \${${o}} ; fi
+  done
+fi
+
+exit 0
+## end autoopts-config.in

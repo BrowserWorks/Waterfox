@@ -1368,13 +1368,17 @@ static void TestCyrillicTailoring(void) {
     /* Russian overrides contractions, so this test is not valid anymore */
     /*genericLocaleStarter("ru", test, 3);*/
 
-    genericLocaleStarter("root", test, 3);
-    genericRulesStarter("&\\u0410 = \\u0410", test, 3);
-    genericRulesStarter("&Z < \\u0410", test, 3);
+    // Most of the following are commented out because UCA 8.0
+    // drops most of the Cyrillic contractions from the default order.
+    // See CLDR ticket #7246 "root collation: remove Cyrillic contractions".
+
+    // genericLocaleStarter("root", test, 3);
+    // genericRulesStarter("&\\u0410 = \\u0410", test, 3);
+    // genericRulesStarter("&Z < \\u0410", test, 3);
     genericRulesStarter("&\\u0410 = \\u0410 < \\u04d0", test, 3);
     genericRulesStarter("&Z < \\u0410 < \\u04d0", test, 3);
-    genericRulesStarter("&\\u0410 = \\u0410 < \\u0410\\u0301", test, 3);
-    genericRulesStarter("&Z < \\u0410 < \\u0410\\u0301", test, 3);
+    // genericRulesStarter("&\\u0410 = \\u0410 < \\u0410\\u0301", test, 3);
+    // genericRulesStarter("&Z < \\u0410 < \\u0410\\u0301", test, 3);
 }
 
 static void TestSuppressContractions(void) {

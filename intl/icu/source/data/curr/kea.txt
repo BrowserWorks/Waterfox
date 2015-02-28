@@ -142,7 +142,7 @@ kea{
         }
         GBP{
             "£",
-            "Libra sterlina britaniku",
+            "Libra britaniku",
         }
         GEL{
             "GEL",
@@ -617,7 +617,7 @@ kea{
             other{"Euro"}
         }
         GBP{
-            other{"Libra sterlina britaniku"}
+            other{"Libra britaniku"}
         }
         GMD{
             other{"Dalasi"}
@@ -752,5 +752,5 @@ kea{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.7.39"}
+    Version{"2.1.10.42"}
 }

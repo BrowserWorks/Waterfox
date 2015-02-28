@@ -1,0 +1,110 @@
+<?xml version="1.0" ?>
+<XML_DIZ_INFO>
+	<MASTER_PAD_VERSION_INFO>
+		<MASTER_PAD_VERSION>2.01</MASTER_PAD_VERSION>
+		<MASTER_PAD_EDITOR>PADGen 2.0.1.22 http://www.padgen.org</MASTER_PAD_EDITOR>
+		<MASTER_PAD_INFO>Portable Application Description, or PAD for short, is a data set that is used by shareware authors to disseminate information to anyone interested in their software products. To find out more go to http://www.asp-shareware.org/pad</MASTER_PAD_INFO>
+	</MASTER_PAD_VERSION_INFO>
+	<Company_Info>
+		<Company_Name>Igor Pavlov</Company_Name>
+		<Address_1 />
+		<Address_2 />
+		<City_Town />
+		<State_Province />
+		<Zip_Postal_Code />
+		<Country />
+		<Company_WebSite_URL>http://www.7-zip.org</Company_WebSite_URL>
+		<Contact_Info>
+			<Author_First_Name>Igor</Author_First_Name>
+			<Author_Last_Name>Pavlov</Author_Last_Name>
+			<Author_Email />
+			<Contact_First_Name>Igor</Contact_First_Name>
+			<Contact_Last_Name>Pavlov</Contact_Last_Name>
+			<Contact_Email />
+		</Contact_Info>
+		<Support_Info>
+			<Sales_Email />
+			<Support_Email />
+			<General_Email />
+			<Sales_Phone />
+			<Support_Phone />
+			<General_Phone />
+			<Fax_Phone />
+		</Support_Info>
+	</Company_Info>
+	<Program_Info>
+		<Program_Name>7-Zip</Program_Name>
+		<Program_Version>4.42</Program_Version>
+		<Program_Release_Month>05</Program_Release_Month>
+		<Program_Release_Day>14</Program_Release_Day>
+		<Program_Release_Year>2006</Program_Release_Year>
+		<Program_Cost_Dollars />
+		<Program_Cost_Other_Code />
+		<Program_Cost_Other />
+		<Program_Type>Freeware</Program_Type>
+		<Program_Release_Status>Minor Update</Program_Release_Status>
+		<Program_Install_Support>Install and Uninstall</Program_Install_Support>
+		<Program_OS_Support>Win98,WinME,WinNT 4.x,Windows2000,WinXP,Windows2003</Program_OS_Support>
+		<Program_Language>English,Arabic,ChineseSimplified,ChineseTraditional,Czech,Danish,Finnish,French,German,Greek,Hungarian,Italian,Japanese,Korean,Polish,Portuguese,Romanian,Russian,Spanish,Swedish,Turkish,Vietnamese</Program_Language>
+		<Program_Change_Info />
+		<Program_Specific_Category>Utilities</Program_Specific_Category>
+		<Program_Category_Class>System Utilities::File Compression</Program_Category_Class>
+		<Program_Categories>Compression,Zip,File Utilities</Program_Categories>
+		<Program_System_Requirements />
+		<Includes_JAVA_VM>N</Includes_JAVA_VM>
+		<Includes_VB_Runtime>N</Includes_VB_Runtime>
+		<Includes_DirectX>N</Includes_DirectX>
+		<File_Info>
+			<Filename_Versioned>7z442.exe</Filename_Versioned>
+			<Filename_Previous>7z441.exe</Filename_Previous>
+			<Filename_Generic>7z442.exe</Filename_Generic>
+			<Filename_Long>7z442.exe</Filename_Long>
+			<File_Size_Bytes>823913</File_Size_Bytes>
+			<File_Size_K>804</File_Size_K>
+			<File_Size_MB>0.79</File_Size_MB>
+		</File_Info>
+		<Expire_Info>
+			<Has_Expire_Info>N</Has_Expire_Info>
+			<Expire_Count />
+			<Expire_Based_On>Days</Expire_Based_On>
+			<Expire_Other_Info />
+			<Expire_Month />
+			<Expire_Day />
+			<Expire_Year />
+		</Expire_Info>
+	</Program_Info>
+	<Program_Descriptions>
+		<English>
+			<Keywords>7-zip,free,zip,7z,archiver,compression,unzip,compress,compressor,high,ratio,fast,command,line,gnu</Keywords>
+			<Char_Desc_45>7-Zip is a powerful file archiver</Char_Desc_45>
+			<Char_Desc_80>7-Zip is a file archiver with the highest compression ratio.</Char_Desc_80>
+			<Char_Desc_250>7-Zip is a file archiver with the highest compression ratio. The program supports 7z, ZIP, RAR, CAB, ARJ, LZH, CHM, CPIO, RPM, DEB, GZIP, BZIP2, Z and TAR formats. Compression ratio in the new 7z format is 30-50% better than ratio in ZIP format.</Char_Desc_250>
+			<Char_Desc_450>7-Zip is a file archiver with the highest compression ratio. The program supports 7z, ZIP, RAR, CAB, ARJ, LZH, CHM, CPIO, RPM, DEB, GZIP, BZIP2, Z and TAR formats. Compression ratio in the new 7z format is 30-50% better than ratio in ZIP format. Also 7-Zip compresses to ZIP 2-10% better than PKZip and WinZip. 7-Zip has additional powerful command line version and FAR Manager support.</Char_Desc_450>
+			<Char_Desc_2000>7-Zip is a file archiver with the highest compression ratio. The program supports 7z, ZIP, RAR, CAB, ARJ, LZH, CHM, CPIO, RPM, DEB, GZIP, BZIP2, Z and TAR formats. Compression ratio in the new 7z format is 30-50% better than ratio in ZIP format. Also 7-Zip compresses to ZIP 2-10% better than PKZip and WinZip. 7-Zip has additional powerful command line version and FAR Manager support.</Char_Desc_2000>
+		</English>
+	</Program_Descriptions>
+	<Web_Info>
+		<Application_URLs>
+			<Application_Info_URL>http://www.7-zip.org</Application_Info_URL>
+			<Application_Order_URL />
+			<Application_Screenshot_URL>http://www.7-zip.org/7zfm.png</Application_Screenshot_URL>
+			<Application_Icon_URL>http://www.7-zip.org/7-zip.gif</Application_Icon_URL>
+			<Application_XML_File_URL>http://www.7-zip.org/7zip_pad.xml</Application_XML_File_URL>
+		</Application_URLs>
+		<Download_URLs>
+			<Primary_Download_URL>http://prdownloads.sourceforge.net/sevenzip/7z442.exe</Primary_Download_URL>
+			<Secondary_Download_URL />
+			<Additional_Download_URL_1 />
+			<Additional_Download_URL_2 />
+		</Download_URLs>
+	</Web_Info>
+	<Permissions>
+		<Distribution_Permissions>7-Zip is distributed under the GNU Lesser General Public License, version 2.1.</Distribution_Permissions>
+		<EULA />
+	</Permissions>
+	<ASP>
+		<ASP_FORM>Y</ASP_FORM>
+		<ASP_Member>N</ASP_Member>
+		<ASP_Member_Number />
+	</ASP>
+</XML_DIZ_INFO>

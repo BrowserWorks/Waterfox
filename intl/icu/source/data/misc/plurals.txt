@@ -27,6 +27,7 @@ plurals:table(nofallback){
         brx{"set8"}
         bs{"set20"}
         ca{"set3"}
+        ce{"set8"}
         cgg{"set8"}
         chr{"set8"}
         ckb{"set8"}
@@ -215,6 +216,7 @@ plurals:table(nofallback){
         bn{"set52"}
         bs{"set36"}
         ca{"set48"}
+        ce{"set36"}
         cs{"set36"}
         cy{"set53"}
         da{"set36"}

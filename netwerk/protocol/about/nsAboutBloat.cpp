@@ -9,6 +9,7 @@
 #ifdef NS_BUILD_REFCNT_LOGGING
 
 #include "nsAboutBloat.h"
+#include "nsContentUtils.h"
 #include "nsStringStream.h"
 #include "nsDOMString.h"
 #include "nsIURI.h"
@@ -22,7 +23,9 @@ static void GC_gcollect() {}
 NS_IMPL_ISUPPORTS(nsAboutBloat, nsIAboutModule)
 
 NS_IMETHODIMP
-nsAboutBloat::NewChannel(nsIURI *aURI, nsIChannel **result)
+nsAboutBloat::NewChannel(nsIURI* aURI,
+                         nsILoadInfo* aLoadInfo,
+                         nsIChannel** result)
 {
     NS_ENSURE_ARG_POINTER(aURI);
     nsresult rv;
@@ -57,15 +60,15 @@ nsAboutBloat::NewChannel(nsIURI *aURI, nsIChannel **result)
     else if (leaks) {
         // dump the current set of leaks.
         GC_gcollect();
-    	
+
         rv = NS_NewCStringInputStream(getter_AddRefs(inStr),
             NS_LITERAL_CSTRING("Memory leaks dumped."));
         if (NS_FAILED(rv)) return rv;
     }
     else {
         nsCOMPtr<nsIFile> file;
-        rv = NS_GetSpecialDirectory(NS_OS_CURRENT_PROCESS_DIR, 
-                                    getter_AddRefs(file));       
+        rv = NS_GetSpecialDirectory(NS_OS_CURRENT_PROCESS_DIR,
+                                    getter_AddRefs(file));
         if (NS_FAILED(rv)) return rv;
 
         rv = file->AppendNative(NS_LITERAL_CSTRING("bloatlogs"));
@@ -109,7 +112,12 @@ nsAboutBloat::NewChannel(nsIURI *aURI, nsIChannel **result)
     }
 
     nsIChannel* channel = nullptr;
-    rv = NS_NewInputStreamChannel(&channel, aURI, inStr,
+    rv = NS_NewInputStreamChannel(&channel,
+                                  aURI,
+                                  inStr,
+                                  nsContentUtils::GetSystemPrincipal(),
+                                  nsILoadInfo::SEC_NORMAL,
+                                  nsIContentPolicy::TYPE_OTHER,
                                   NS_LITERAL_CSTRING("text/plain"),
                                   NS_LITERAL_CSTRING("utf-8"));
     if (NS_FAILED(rv)) return rv;

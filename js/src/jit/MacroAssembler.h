@@ -22,6 +22,7 @@
 #else
 # error "Unknown architecture!"
 #endif
+#include "jit/AtomicOp.h"
 #include "jit/IonInstrumentation.h"
 #include "jit/JitCompartment.h"
 #include "jit/VMFunctions.h"
@@ -319,7 +320,7 @@ class MacroAssembler : public MacroAssemblerSpecific
     void branchTestProxyHandlerFamily(Condition cond, Register proxy, Register scratch,
                                       const void *handlerp, Label *label) {
         Address handlerAddr(proxy, ProxyObject::offsetOfHandler());
-        loadPrivate(handlerAddr, scratch);
+        loadPtr(handlerAddr, scratch);
         Address familyAddr(scratch, BaseProxyHandler::offsetOfFamily());
         branchPtr(cond, familyAddr, ImmPtr(handlerp), label);
     }
@@ -738,6 +739,14 @@ class MacroAssembler : public MacroAssemblerSpecific
         }
     }
 
+    template<typename T>
+    void compareExchangeToTypedIntArray(Scalar::Type arrayType, const T &mem, Register oldval, Register newval,
+                                        Register temp, AnyRegister output);
+
+    template<typename S, typename T>
+    void atomicBinopToTypedIntArray(AtomicOp op, Scalar::Type arrayType, const S &value,
+                                    const T &mem, Register temp1, Register temp2, AnyRegister output);
+
     void storeToTypedFloatArray(Scalar::Type arrayType, FloatRegister value, const BaseIndex &dest);
     void storeToTypedFloatArray(Scalar::Type arrayType, FloatRegister value, const Address &dest);
 
@@ -810,12 +819,12 @@ class MacroAssembler : public MacroAssemblerSpecific
   public:
     void callMallocStub(size_t nbytes, Register result, Label *fail);
     void callFreeStub(Register slots);
-    void createGCObject(Register result, Register temp, NativeObject *templateObj,
+    void createGCObject(Register result, Register temp, JSObject *templateObj,
                         gc::InitialHeap initialHeap, Label *fail, bool initFixedSlots = true);
 
     void newGCThing(Register result, Register temp, NativeObject *templateObj,
                      gc::InitialHeap initialHeap, Label *fail);
-    void initGCThing(Register obj, Register temp, NativeObject *templateObj,
+    void initGCThing(Register obj, Register temp, JSObject *templateObj,
                      bool initFixedSlots = true);
 
     void newGCString(Register result, Register temp, Label *fail);
@@ -941,6 +950,15 @@ class MacroAssembler : public MacroAssemblerSpecific
     uint32_t callJit(Register callee) {
         leaveSPSFrame();
         MacroAssemblerSpecific::callJit(callee);
+        uint32_t ret = currentOffset();
+        reenterSPSFrame();
+        return ret;
+    }
+
+    // see above comment for what is returned
+    uint32_t callWithExitFrame(Label *target) {
+        leaveSPSFrame();
+        MacroAssemblerSpecific::callWithExitFrame(target);
         uint32_t ret = currentOffset();
         reenterSPSFrame();
         return ret;

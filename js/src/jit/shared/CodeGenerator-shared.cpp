@@ -145,7 +145,7 @@ CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const MInstruction *m
 }
 
 bool
-CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const BytecodeSite &site)
+CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const BytecodeSite *site)
 {
     code->setFramePushed(masm.framePushed());
     code->setBytecodeSite(site);
@@ -154,17 +154,18 @@ CodeGeneratorShared::addOutOfLineCode(OutOfLineCode *code, const BytecodeSite &s
 }
 
 bool
-CodeGeneratorShared::addNativeToBytecodeEntry(const BytecodeSite &site)
+CodeGeneratorShared::addNativeToBytecodeEntry(const BytecodeSite *site)
 {
     // Skip the table entirely if profiling is not enabled.
     if (!isNativeToBytecodeMapEnabled())
         return true;
 
-    MOZ_ASSERT(site.tree());
-    MOZ_ASSERT(site.pc());
+    MOZ_ASSERT(site);
+    MOZ_ASSERT(site->tree());
+    MOZ_ASSERT(site->pc());
 
-    InlineScriptTree *tree = site.tree();
-    jsbytecode *pc = site.pc();
+    InlineScriptTree *tree = site->tree();
+    jsbytecode *pc = site->pc();
     uint32_t nativeOffset = masm.currentOffset();
 
     MOZ_ASSERT_IF(nativeToBytecodeList_.empty(), nativeOffset == 0);
@@ -613,6 +614,7 @@ CodeGeneratorShared::generateCompactNativeToBytecodeMap(JSContext *cx, JitCode *
             &nativeToBytecodeList_[0] + nativeToBytecodeList_.length(),
             &tableOffset, &numRegions))
     {
+        js_free(nativeToBytecodeScriptList_);
         return false;
     }
 
@@ -621,8 +623,10 @@ CodeGeneratorShared::generateCompactNativeToBytecodeMap(JSContext *cx, JitCode *
 
     // Writer is done, copy it to sized buffer.
     uint8_t *data = cx->runtime()->pod_malloc<uint8_t>(writer.length());
-    if (!data)
+    if (!data) {
+        js_free(nativeToBytecodeScriptList_);
         return false;
+    }
 
     memcpy(data, writer.buffer(), writer.length());
     nativeToBytecodeMap_ = data;

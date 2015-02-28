@@ -1,0 +1,96 @@
+#content td.memItemLeft {
+text-align: right;
+}
+
+.groupHeader {
+font-size: medium;
+color: #418ADE;
+}
+
+hr { display: none; }
+#content h2 { margin-left: 0px; }
+
+table.memname {
+empty-cells: show;
+background-color: #f8f8f8;
+outline: .2em solid #d7d7d7;
+margin-top: 3em;
+margin-bottom: 1em;
+}
+
+td.memname {
+white-space: nowrap;
+font-weight: bold;
+}
+
+.paramtype {
+white-space: nowrap;
+font-weight: bold;
+}
+
+.paramname {
+white-space: nowrap;
+font-weight: bold;
+}
+
+.paramkey {
+text-align: right;
+}
+
+
+table.mdTable {
+background-color: #f8f8f8;
+outline: .2em solid #d7d7d7;
+width: 80%;
+}
+
+td.mdRow { padding: 8px 20px; }
+td.md { font-weight: bold; }
+td.mdname1 { font-weight: bold; color: #602020; }
+td.mdname { font-weight: bold; color: #602020;  }
+
+div.bic {
+border: 2px solid #E72300;
+background: #F6CFDD;
+padding: 0.5ex 1em;
+}
+
+div.memitem {
+}
+
+div.memproto {
+/*background: #F9F9F9;
+border: 1px solid #AAAAAA;*/
+font-weight: bold;
+}
+
+div.memproto td {
+white-space: nowrap;
+padding:0;
+margin:0;
+}
+
+table.memname {
+border-spacing: 0;
+border-collapse:collapse;
+}
+
+td.paramtype {
+font-family:monospace;
+}
+
+div.memproto a.el {
+font-family:monospace;
+}
+
+div.memproto a.elRef {
+font-family:monospace;
+}
+
+SPAN.keyword       { color: #008000 }
+SPAN.keywordtype   { color: #604020 }
+SPAN.keywordflow   { color: #e08000 }
+SPAN.comment       { color: #800000 }
+SPAN.preprocessor  { color: #806020 }
+SPAN.stringliteral { color: #002080 }
+SPAN.charliteral   { color: #008080 }

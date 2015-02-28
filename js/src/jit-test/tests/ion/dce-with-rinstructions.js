@@ -927,6 +927,48 @@ function rregexp_m_literal_replace(i) {
     return i;
 }
 
+var uceFault_string_replace = eval(uneval(uceFault).replace('uceFault', 'uceFault_string_replace'))
+function rstring_replace(i) {
+    var re = /str\d+9/;
+
+    assertEq(re.lastIndex == 0, true);
+    var res = "str00123456789".replace(re, "abc");
+    if (uceFault_string_replace(i) || uceFault_string_replace(i)) {
+        assertEq(res, "abc");
+    }
+    assertEq(re.lastIndex == 0, true);
+
+    return i;
+}
+
+var uceFault_string_replace_y = eval(uneval(uceFault).replace('uceFault', 'uceFault_string_replace_y'))
+function rstring_replace_y(i) {
+    var re = /str\d+9/y;
+
+    assertEq(re.lastIndex == 0, true);
+    var res = "str00123456789".replace(re, "abc");
+    if (uceFault_string_replace_y(i) || uceFault_string_replace_y(i)) {
+        assertEq(res, "abc");
+    }
+    assertEq(re.lastIndex == 0, true);
+
+    return i;
+}
+
+var uceFault_string_replace_g = eval(uneval(uceFault).replace('uceFault', 'uceFault_string_replace_g'))
+function rstring_replace_g(i) {
+    var re = /str\d+9/g;
+
+    assertEq(re.lastIndex == 0, true);
+    var res = "str00123456789str00123456789".replace(re, "abc");
+    if (uceFault_string_replace_g(i) || uceFault_string_replace_g(i)) {
+        assertEq(res, "abcabc");
+    }
+    assertEq(re.lastIndex == 0, true);
+
+    return i;
+}
+
 var uceFault_typeof = eval(uneval(uceFault).replace('uceFault', 'uceFault_typeof'))
 function rtypeof(i) {
     var inputs = [ {}, [], 1, true, undefined, function(){}, null ];
@@ -942,6 +984,69 @@ function rtypeof(i) {
         assertEq(x, y);
     }
 
+    return i;
+}
+
+var uceFault_todouble_value = eval(uneval(uceFault).replace('uceFault', 'uceFault_todouble_value'))
+function rtodouble_value(i) {
+    var a = 1;
+    if (i == 1000) a = "1";
+
+    var x = a < 8.1;
+
+    if (uceFault_todouble_value(i) || uceFault_todouble_value(i)) {
+        assertEq(x, true);
+    }
+
+    return i;
+}
+
+var uceFault_todouble_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_todouble_number'));
+function rtodouble_number(i) {
+    var x = Math.fround(Math.fround(i) + Math.fround(i)) + 1;
+    if (uceFault_todouble_number(i) || uceFault_todouble_number(i))
+        assertEq(2 * i + 1, x);
+    return i;
+}
+
+var uceFault_tofloat32_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_tofloat32_number'));
+function rtofloat32_number(i) {
+    var x = Math.fround(i + 0.1111111111);
+    if (uceFault_tofloat32_number(i) || uceFault_tofloat32_number(i))
+        assertEq(x, Math.fround(99.1111111111));
+    return i;
+}
+
+var uceFault_tofloat32_object = eval(uneval(uceFault).replace('uceFault', 'uceFault_tofloat32_object'));
+function rtofloat32_object(i) {
+    var t = i + 0.1111111111;
+    var o = { valueOf: function () { return t; } };
+    var x = Math.fround(o);
+    t = 1000.1111111111;
+    if (uceFault_tofloat32_object(i) || uceFault_tofloat32_object(i))
+        assertEq(x, Math.fround(99.1111111111));
+    return i;
+}
+
+var uceFault_hypot_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_number'));
+function rhypot_number(i) {
+    var x = Math.hypot(i, i + 1);
+    if (uceFault_hypot_number(i) || uceFault_hypot_number(i))
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1)));
+    return i;
+}
+
+var uceFault_hypot_object = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_object'));
+function rhypot_object(i) {
+    var t0 = i;
+    var t1 = i + 1;
+    var o0 = { valueOf: function () { return t0; } };
+    var o1 = { valueOf: function () { return t1; } };
+    var x = Math.hypot(o0, o1);
+    t0 = 1000;
+    t1 = 2000;
+    if (uceFault_hypot_object(i) || uceFault_hypot_object(i) )
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1)));
     return i;
 }
 
@@ -1035,7 +1140,16 @@ for (i = 0; i < 100; i++) {
     rregexp_i_literal_replace(i);
     rregexp_m_replace(i);
     rregexp_m_literal_replace(i);
+    rstring_replace(i);
+    rstring_replace_y(i);
+    rstring_replace_g(i);
     rtypeof(i);
+    rtodouble_value(i);
+    rtodouble_number(i);
+    rtofloat32_number(i);
+    rtofloat32_object(i);
+    rhypot_number(i);
+    rhypot_object(i);
 }
 
 // Test that we can refer multiple time to the same recover instruction, as well

@@ -1,0 +1,297 @@
+If you read this file _as_is_, just ignore the funny characters you
+see. It is written in the POD format (see perlpod manpage) which is
+specially designed to be readable as is.
+
+=head1 NAME
+
+perlamiga - Perl under Amiga OS
+
+=head1 SYNOPSIS
+
+One can read this document in the following formats:
+
+	man perlamiga
+	multiview perlamiga.guide
+
+to list some (not all may be available simultaneously), or it may
+be read I<as is>: either as F<README.amiga>, or F<pod/perlamiga.pod>.
+
+A recent version of perl for the Amiga can be found at the Geek Gadgets
+section of the Aminet:
+  
+      http://www.aminet.net/~aminet/dirs/dev_gg.html
+
+=cut
+
+Contents
+ 
+ perlamiga - Perl under Amiga OS
+
+       NAME 
+       SYNOPSIS 
+       DESCRIPTION 
+         -  Prerequisites 
+         -  Starting Perl programs under AmigaOS
+         -  Shortcomings of Perl under AmigaOS
+       INSTALLATION 
+       Accessing documentation 
+         -  Manpages 
+         -  HTML 
+         -  GNU info files 
+         -  LaTeX docs 
+       BUILD 
+         -  Prerequisites 
+         -  Getting the perl source 
+         -  Application of the patches 
+         -  Making 
+         -  Testing 
+         -  Installing the built perl 
+       AUTHOR 
+       SEE ALSO 
+
+=head1 DESCRIPTION
+
+=head2 Prerequisites
+
+=over 6
+
+=item B<Unix emulation for AmigaOS: ixemul.library>
+
+You need the Unix emulation for AmigaOS, whose most important part is
+B<ixemul.library>. For a minimum setup, get the latest versions
+of the following packages from the Aminet archives (http://www.aminet.net/~aminet/):
+
+	ixemul-bin
+	ixemul-env-bin
+	pdksh-bin
+
+Note also that this is a minimum setup; you might want to add other
+packages of B<ADE> (the I<Amiga Developers Environment>).
+
+=item B<Version of Amiga OS>
+
+You need at the very least AmigaOS version 2.0. Recommended is version 3.1.
+
+=back
+
+=head2 Starting Perl programs under AmigaOS
+
+Start your Perl program F<foo> with arguments C<arg1 arg2 arg3> the
+same way as on any other platform, by
+
+	perl foo arg1 arg2 arg3
+
+If you want to specify perl options C<-my_opts> to the perl itself (as
+opposed to to your program), use
+
+	perl -my_opts foo arg1 arg2 arg3
+
+Alternately, you can try to get a replacement for the system's B<Execute>
+command that honors the #!/usr/bin/perl syntax in scripts and set the s-Bit
+of your scripts. Then you can invoke your scripts like under UNIX with
+
+	foo arg1 arg2 arg3
+
+(Note that having *nixish full path to perl F</usr/bin/perl> is not
+necessary, F<perl> would be enough, but having full path would make it
+easier to use your script under *nix.)
+
+=head2 Shortcomings of Perl under AmigaOS
+
+Perl under AmigaOS lacks some features of perl under UNIX because of
+deficiencies in the UNIX-emulation, most notably:
+
+=over 4
+
+=item * 
+
+fork()
+
+=item *
+
+some features of the UNIX filesystem regarding link count and file dates
+
+=item *
+
+inplace operation (the B<-i> switch) without backup file
+
+=item *
+
+umask() works, but the correct permissions are only set when the file is
+finally close()d
+
+=back
+
+=head1 INSTALLATION
+
+Change to the installation directory (most probably ADE:), and
+extract the binary distribution:
+
+lha -mraxe x perl-$VERSION-bin.lha
+
+or
+
+tar xvzpf perl-$VERSION-bin.tgz
+
+(Of course you need lha or tar and gunzip for this.)
+
+For installation of the Unix emulation, read the appropriate docs.
+
+=head1 Accessing documentation
+
+=head2 Manpages
+
+If you have C<man> installed on your system, and you installed perl
+manpages, use something like this:
+
+	man perlfunc
+	man less
+	man ExtUtils.MakeMaker
+
+to access documentation for different components of Perl. Start with
+
+	man perl
+
+Note: You have to modify your man.conf file to search for manpages
+in the /ade/lib/perl5/man/man3 directory, or the man pages for the
+perl library will not be found. 
+
+Note that dot (F<.>) is used as a package separator for documentation
+for packages, and as usual, sometimes you need to give the section - C<3>
+above - to avoid shadowing by the I<less(1) manpage>.
+
+
+=head2 B<HTML>
+
+If you have some WWW browser available, you can build B<HTML> docs.
+Cd to directory with F<.pod> files, and do like this
+
+	cd /ade/lib/perl5/pod
+	pod2html
+
+After this you can direct your browser the file F<perl.html> in this
+directory, and go ahead with reading docs.
+
+Alternatively you may be able to get these docs prebuilt from C<CPAN>.
+
+=head2 B<GNU> C<info> files
+
+Users of C<Emacs> would appreciate it very much, especially with
+C<CPerl> mode loaded. You need to get latest C<pod2info> from C<CPAN>,
+or, alternately, prebuilt info pages.
+
+=head2 C<LaTeX> docs
+
+can be constructed using C<pod2latex>.
+
+=head1 BUILD
+
+Here we discuss how to build Perl under AmigaOS.
+
+=head2 Prerequisites
+
+You need to have the latest B<ixemul> (Unix emulation for Amiga)
+from Aminet.
+
+=head2 Getting the perl source
+
+You can either get the latest perl-for-amiga source from Ninemoons
+and extract it with:
+
+  tar xvzpf perl-$VERSION-src.tgz
+
+or get the official source from CPAN:
+
+  http://www.perl.com/CPAN/src/5.0
+
+Extract it like this
+
+  tar xvzpf perl-$VERSION.tar.gz
+
+You will see a message about errors while extracting F<Configure>. This
+is normal and expected. (There is a conflict with a similarly-named file
+F<configure>, but it causes no harm.)
+
+=head2 Making
+
+=over 4
+
+=item *
+
+remember to use a healthy sized stack (I used 2000000)
+
+=item *
+
+your PATH environment variable must include /bin (e.g. ".:/bin" is good)
+(or, more precisely, it must include the directory where you have your
+basic UNIX utilities like test, cat, sed, and so on)
+
+=item *
+	
+  sh Configure -Dprefix=/ade -Dloclibpth=/ade/lib
+
+=item *
+
+fix makedepend
+
+	In the file 'makedepend' there are three spots like this `$cat ...`:
+	a for loop near line 75, an egrep near line 161, and a for loop near
+	line 175.  In all those spots using an editor change the $cat to
+	/bin/cat.
+
+=item *
+
+now type make depend
+
+	When the make depend has ended load the gnumakefile into
+	an editor and go to the end of the file.
+
+	Move upwards in the file until you reach av.o: EXTERN.h
+	and delete all lines down to # WARNING: Put....
+
+=item *
+
+now go to the x2p directory
+
+	Load the gnumakefile into an editor.
+
+	Go to the end moveup until you reach hash.o: EXTERN.h
+	and delete all lines dowonwards until you reach a line saying
+
+	# WARNING: Put nothing....
+
+=item *
+
+Now!
+
+  make
+
+=back
+
+=head2 Testing
+
+Now run
+
+  make test
+
+Some tests will be skipped because they need the fork() function:
+
+F<io/pipe.t>, F<op/fork.t>, F<lib/filehand.t>, F<lib/open2.t>, F<lib/open3.t>, 
+F<lib/io_pipe.t>, F<lib/io_sock.t>
+
+=head2 Installing the built perl
+
+Run
+
+  make install
+
+=head1 AUTHORS
+
+Norbert Pueschel, pueschel@imsdd.meb.uni-bonn.de
+Jan-Erik Karlsson, trg@privat.utfors.se
+
+=head1 SEE ALSO
+
+perl(1).
+
+=cut

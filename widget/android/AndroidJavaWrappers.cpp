@@ -689,6 +689,13 @@ AndroidGeckoEvent::ApzGuid()
     return mApzGuid;
 }
 
+uint64_t
+AndroidGeckoEvent::ApzInputBlockId()
+{
+    MOZ_ASSERT(Type() == APZ_INPUT_EVENT);
+    return mApzInputBlockId;
+}
+
 WidgetTouchEvent
 AndroidGeckoEvent::MakeTouchEvent(nsIWidget* widget)
 {

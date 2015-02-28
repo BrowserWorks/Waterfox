@@ -14,6 +14,7 @@
 #include "nsString.h"
 #include "nsCOMPtr.h"
 #include "nsIObserver.h"
+#include "nsIContentPolicy.h"
 #include "imgRequestProxy.h"
 
 using namespace mozilla;
@@ -242,9 +243,11 @@ OSXNotificationCenter::ShowAlertNotification(const nsAString & aImageUrl, const 
       nsCOMPtr<nsIURI> imageUri;
       NS_NewURI(getter_AddRefs(imageUri), aImageUrl);
       if (imageUri) {
-        nsresult rv = il->LoadImage(imageUri, nullptr, nullptr, aPrincipal, nullptr,
+        nsresult rv = il->LoadImage(imageUri, nullptr, nullptr,
+                                    mozilla::net::RP_Default,
+                                    aPrincipal, nullptr,
                                     this, nullptr, nsIRequest::LOAD_NORMAL, nullptr,
-                                    nullptr, EmptyString(),
+                                    nsIContentPolicy::TYPE_IMAGE, EmptyString(),
                                     getter_AddRefs(osxni->mIconRequest));
         if (NS_SUCCEEDED(rv)) {
           // Set a timer for six seconds. If we don't have an icon by the time this
@@ -388,7 +391,7 @@ OSXNotificationCenter::Notify(imgIRequest *aRequest, int32_t aType, const nsIntR
     NSImage *cocoaImage = nil;
     uint32_t imgStatus = imgIRequest::STATUS_ERROR;
     nsresult rv = aRequest->GetImageStatus(&imgStatus);
-    if (NS_SUCCEEDED(rv) && imgStatus != imgIRequest::STATUS_ERROR) {
+    if (NS_SUCCEEDED(rv) && !(imgStatus & imgIRequest::STATUS_ERROR)) {
       nsCOMPtr<imgIContainer> image;
       rv = aRequest->GetImage(getter_AddRefs(image));
       if (NS_SUCCEEDED(rv)) {

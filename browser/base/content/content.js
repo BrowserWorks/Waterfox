@@ -25,8 +25,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PluginContent",
   "resource:///modules/PluginContent.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PrivateBrowsingUtils",
   "resource://gre/modules/PrivateBrowsingUtils.jsm");
-XPCOMUtils.defineLazyModuleGetter(this, "UITour",
-  "resource:///modules/UITour.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "FormSubmitObserver",
   "resource:///modules/FormSubmitObserver.jsm");
 
@@ -74,6 +72,10 @@ addMessageListener("Browser:Reload", function(message) {
   }
 });
 
+addMessageListener("MixedContent:ReenableProtection", function() {
+  docShell.mixedContentChannel = null;
+});
+
 addEventListener("DOMFormHasPassword", function(event) {
   InsecurePasswordUtils.checkForInsecurePasswords(event.target);
   LoginManagerContent.onFormPassword(event);
@@ -85,44 +87,167 @@ addEventListener("blur", function(event) {
   LoginManagerContent.onUsernameInput(event);
 });
 
-if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
-  addEventListener("contextmenu", function (event) {
-    let defaultPrevented = event.defaultPrevented;
-    if (!Services.prefs.getBoolPref("dom.event.contextmenu.enabled")) {
-      let plugin = null;
-      try {
-        plugin = event.target.QueryInterface(Ci.nsIObjectLoadingContent);
-      } catch (e) {}
-      if (plugin && plugin.displayedType == Ci.nsIObjectLoadingContent.TYPE_PLUGIN) {
-        // Don't open a context menu for plugins.
-        return;
-      }
-
-      defaultPrevented = false;
-    }
-
-    if (!defaultPrevented) {
-      let editFlags = SpellCheckHelper.isEditable(event.target, content);
-      let spellInfo;
-      if (editFlags &
-          (SpellCheckHelper.EDITABLE | SpellCheckHelper.CONTENTEDITABLE)) {
-        spellInfo =
-          InlineSpellCheckerContent.initContextMenu(event, editFlags, this);
-      }
-
-      sendSyncMessage("contextmenu", { editFlags, spellInfo }, { event });
-    }
-  }, false);
-} else {
-  addEventListener("mozUITour", function(event) {
-    if (!Services.prefs.getBoolPref("browser.uitour.enabled"))
+let handleContentContextMenu = function (event) {
+  let defaultPrevented = event.defaultPrevented;
+  if (!Services.prefs.getBoolPref("dom.event.contextmenu.enabled")) {
+    let plugin = null;
+    try {
+      plugin = event.target.QueryInterface(Ci.nsIObjectLoadingContent);
+    } catch (e) {}
+    if (plugin && plugin.displayedType == Ci.nsIObjectLoadingContent.TYPE_PLUGIN) {
+      // Don't open a context menu for plugins.
       return;
+    }
 
-    let handled = UITour.onPageEvent(event);
-    if (handled)
-      addEventListener("pagehide", UITour);
-  }, false, true);
+    defaultPrevented = false;
+  }
+
+  if (defaultPrevented)
+    return;
+
+  let addonInfo = {};
+  let subject = {
+    event: event,
+    addonInfo: addonInfo,
+  };
+  subject.wrappedJSObject = subject;
+  Services.obs.notifyObservers(subject, "content-contextmenu", null);
+
+  if (Services.appinfo.processType == Services.appinfo.PROCESS_TYPE_CONTENT) {
+    let editFlags = SpellCheckHelper.isEditable(event.target, content);
+    let spellInfo;
+    if (editFlags &
+        (SpellCheckHelper.EDITABLE | SpellCheckHelper.CONTENTEDITABLE)) {
+      spellInfo =
+        InlineSpellCheckerContent.initContextMenu(event, editFlags, this);
+    }
+
+    sendSyncMessage("contextmenu", { editFlags, spellInfo, addonInfo }, { event, popupNode: event.target });
+  }
+  else {
+    // Break out to the parent window and pass the add-on info along
+    let browser = docShell.chromeEventHandler;
+    let mainWin = browser.ownerDocument.defaultView;
+    mainWin.gContextMenuContentData = {
+      isRemote: false,
+      event: event,
+      popupNode: event.target,
+      browser: browser,
+      addonInfo: addonInfo,
+    };
+  }
 }
+
+Cc["@mozilla.org/eventlistenerservice;1"]
+  .getService(Ci.nsIEventListenerService)
+  .addSystemEventListener(global, "contextmenu", handleContentContextMenu, false);
+
+let AboutNetErrorListener = {
+  init: function(chromeGlobal) {
+    chromeGlobal.addEventListener('AboutNetErrorLoad', this, false, true);
+    chromeGlobal.addEventListener('AboutNetErrorSetAutomatic', this, false, true);
+    chromeGlobal.addEventListener('AboutNetErrorSendReport', this, false, true);
+  },
+
+  get isAboutNetError() {
+    return content.document.documentURI.startsWith("about:neterror");
+  },
+
+  handleEvent: function(aEvent) {
+    if (!this.isAboutNetError) {
+      return;
+    }
+
+    switch (aEvent.type) {
+    case "AboutNetErrorLoad":
+      this.onPageLoad(aEvent);
+      break;
+    case "AboutNetErrorSetAutomatic":
+      this.onSetAutomatic(aEvent);
+      break;
+    case "AboutNetErrorSendReport":
+      this.onSendReport(aEvent);
+      break;
+    }
+  },
+
+  onPageLoad: function(evt) {
+    let automatic = Services.prefs.getBoolPref("security.ssl.errorReporting.automatic");
+    content.dispatchEvent(new content.CustomEvent("AboutNetErrorOptions", {
+            detail: JSON.stringify({
+              enabled: Services.prefs.getBoolPref("security.ssl.errorReporting.enabled"),
+            automatic: automatic
+            })
+          }
+    ));
+    if (automatic) {
+      this.onSendReport(evt);
+    }
+  },
+
+  onSetAutomatic: function(evt) {
+    sendAsyncMessage("Browser:SetSSLErrorReportAuto", {
+        automatic: evt.detail
+      });
+  },
+
+  onSendReport: function(evt) {
+    let contentDoc = content.document;
+
+    let reportSendingMsg = contentDoc.getElementById("reportSendingMessage");
+    let reportSentMsg = contentDoc.getElementById("reportSentMessage");
+    let reportBtn = contentDoc.getElementById("reportCertificateError");
+    let retryBtn = contentDoc.getElementById("reportCertificateErrorRetry");
+
+    addMessageListener("Browser:SSLErrorReportStatus", function(message) {
+      // show and hide bits - but only if this is a message for the right
+      // document - we'll compare on document URI
+      if (contentDoc.documentURI === message.data.documentURI) {
+        switch(message.data.reportStatus) {
+        case "activity":
+          // Hide the button that was just clicked
+          reportBtn.style.display = "none";
+          retryBtn.style.display = "none";
+          reportSentMsg.style.display = "none";
+          reportSendingMsg.style.display = "inline";
+          break;
+        case "error":
+          // show the retry button
+          retryBtn.style.display = "inline";
+          reportSendingMsg.style.display = "none";
+          break;
+        case "complete":
+          // Show a success indicator
+          reportSentMsg.style.display = "inline";
+          reportSendingMsg.style.display = "none";
+          break;
+        }
+      }
+    });
+
+
+    let failedChannel = docShell.failedChannel;
+    let location = contentDoc.location.href;
+
+    let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
+                     .getService(Ci.nsISerializationHelper);
+
+    let serializable =  docShell.failedChannel.securityInfo
+                                .QueryInterface(Ci.nsITransportSecurityInfo)
+                                .QueryInterface(Ci.nsISerializable);
+
+    let serializedSecurityInfo = serhelper.serializeToString(serializable);
+
+    sendAsyncMessage("Browser:SendSSLErrorReport", {
+        elementId: evt.target.id,
+        documentURI: contentDoc.documentURI,
+        location: contentDoc.location,
+        securityInfo: serializedSecurityInfo
+      });
+  }
+}
+
+AboutNetErrorListener.init(this);
 
 let AboutHomeListener = {
   init: function(chromeGlobal) {
@@ -414,35 +539,6 @@ let ClickEventHandler = {
       return;
     } else if (ownerDoc.documentURI.startsWith("about:neterror")) {
       this.onAboutNetError(originalTarget, ownerDoc);
-    }
-
-    let [href, node] = this._hrefAndLinkNodeForClickEvent(event);
-
-    let json = { button: event.button, shiftKey: event.shiftKey,
-                 ctrlKey: event.ctrlKey, metaKey: event.metaKey,
-                 altKey: event.altKey, href: null, title: null,
-                 bookmark: false };
-
-    if (href) {
-      json.href = href;
-      if (node) {
-        json.title = node.getAttribute("title");
-        if (event.button == 0 && !event.ctrlKey && !event.shiftKey &&
-            !event.altKey && !event.metaKey) {
-          json.bookmark = node.getAttribute("rel") == "sidebar";
-          if (json.bookmark) {
-            event.preventDefault(); // Need to prevent the pageload.
-          }
-        }
-      }
-
-      sendAsyncMessage("Content:Click", json);
-      return;
-    }
-
-    // This might be middle mouse navigation.
-    if (event.button == 1) {
-      sendAsyncMessage("Content:Click", json);
     }
   },
 
@@ -746,4 +842,102 @@ addEventListener("pageshow", function(event) {
       persisted: event.persisted,
     });
   }
+});
+
+let SocialMessenger = {
+  init: function() {
+    addMessageListener("Social:GetPageData", this);
+    addMessageListener("Social:GetMicrodata", this);
+
+    XPCOMUtils.defineLazyGetter(this, "og", function() {
+      let tmp = {};
+      Cu.import("resource:///modules/Social.jsm", tmp);
+      return tmp.OpenGraphBuilder;
+    });
+  },
+  receiveMessage: function(aMessage) {
+    switch(aMessage.name) {
+      case "Social:GetPageData":
+        sendAsyncMessage("Social:PageDataResult", this.og.getData(content.document));
+        break;
+      case "Social:GetMicrodata":
+        let target = aMessage.objects;
+        sendAsyncMessage("Social:PageDataResult", this.og.getMicrodata(content.document, target));
+        break;
+    }
+  }
+}
+SocialMessenger.init();
+
+addEventListener("ActivateSocialFeature", function (aEvent) {
+  let document = content.document;
+  if (PrivateBrowsingUtils.isContentWindowPrivate(content)) {
+    Cu.reportError("cannot use social providers in private windows");
+    return;
+  }
+  let dwu = content.QueryInterface(Ci.nsIInterfaceRequestor)
+                   .getInterface(Ci.nsIDOMWindowUtils);
+  if (!dwu.isHandlingUserInput) {
+    Cu.reportError("attempt to activate provider without user input from " + document.nodePrincipal.origin);
+    return;
+  }
+
+  let node = aEvent.target;
+  let ownerDocument = node.ownerDocument;
+  let data = node.getAttribute("data-service");
+  if (data) {
+    try {
+      data = JSON.parse(data);
+    } catch(e) {
+      Cu.reportError("Social Service manifest parse error: " + e);
+      return;
+    }
+  } else {
+    Cu.reportError("Social Service manifest not available");
+    return;
+  }
+
+  sendAsyncMessage("Social:Activation", {
+    url: ownerDocument.location.href,
+    origin: ownerDocument.nodePrincipal.origin,
+    manifest: data
+  });
+}, true, true);
+
+addMessageListener("ContextMenu:SaveVideoFrameAsImage", (message) => {
+  let video = message.objects.target;
+  let canvas = content.document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  let ctxDraw = canvas.getContext("2d");
+  ctxDraw.drawImage(video, 0, 0);
+  sendAsyncMessage("ContextMenu:SaveVideoFrameAsImage:Result", {
+    dataURL: canvas.toDataURL("image/jpeg", ""),
+  });
+});
+
+addMessageListener("AboutMedia:CollectData", (mesage) => {
+  let text = "";
+  let media = content.document.getElementsByTagName('video');
+  if (media.length > 0) {
+    text += content.document.documentURI + "\n";
+  }
+  for (let mediaEl of media) {
+    text += "\t" + mediaEl.currentSrc + "\n";
+    text += "\t" + "currentTime: " + mediaEl.currentTime + "\n";
+    let ms = mediaEl.mozMediaSourceObject;
+    if (ms) {
+      for (let k = 0; k < ms.sourceBuffers.length; ++k) {
+        let sb = ms.sourceBuffers[k];
+        text += "\t\tSourceBuffer " + k + "\n";
+        for (let l = 0; l < sb.buffered.length; ++l) {
+          text += "\t\t\tstart=" + sb.buffered.start(l) + " end=" + sb.buffered.end(l) + "\n";
+        }
+      }
+      text += "\tInternal Data:\n";
+      text += ms.mozDebugReaderData.split("\n").map(line => { return "\t" + line + "\n"; }).join("");
+     }
+  }
+  sendAsyncMessage("AboutMedia:DataCollected", { text: text });
 });

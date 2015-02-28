@@ -91,7 +91,7 @@ es_419{
             tibt{"Dígitos tibetanos"}
         }
     }
-    Version{"2.1.8.19"}
+    Version{"2.1.10.16"}
     codePatterns{
         script{"Alfabeto: {0}"}
     }

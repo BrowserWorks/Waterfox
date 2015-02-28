@@ -10,14 +10,14 @@ import android.util.DisplayMetrics;
  * This class covers interactions with the context menu opened from web content
  */
 abstract class ContentContextMenuTest extends PixelTest {
-    private static final int MAX_TEST_TIMEOUT = 10000;
+    private static final int MAX_TEST_TIMEOUT = 30000; // 30 seconds (worst case)
 
     // This method opens the context menu of any web content. It assumes that the page is already loaded
     protected void openWebContentContextMenu(String waitText) {
         DisplayMetrics dm = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getMetrics(dm);
 
-        // The web content we are trying to open the context menu for should be positioned at the top of the page, at least 60px heigh and aligned to the middle
+        // The web content we are trying to open the context menu for should be positioned at the top of the page, at least 60px high and aligned to the middle
         float top = mDriver.getGeckoTop() + 30 * dm.density;
         float left = mDriver.getGeckoLeft() + mDriver.getGeckoWidth() / 2;
 

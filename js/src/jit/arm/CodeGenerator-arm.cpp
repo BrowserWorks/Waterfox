@@ -40,8 +40,11 @@ CodeGeneratorARM::CodeGeneratorARM(MIRGenerator *gen, LIRGraph *graph, MacroAsse
 bool
 CodeGeneratorARM::generatePrologue()
 {
+    MOZ_ASSERT(masm.framePushed() == 0);
     MOZ_ASSERT(!gen->compilingAsmJS());
-
+#ifdef JS_USE_LINK_REGISTER
+    masm.pushReturnAddress();
+#endif
     // Note that this automatically sets MacroAssembler::framePushed().
     masm.reserveStack(frameSize());
     masm.checkStackAlignment();
@@ -185,7 +188,7 @@ CodeGeneratorARM::bailoutIf(Assembler::Condition condition, LSnapshot *snapshot)
 
     // All bailout code is associated with the bytecodeSite of the block we are
     // bailing out from.
-    if (!addOutOfLineCode(ool, BytecodeSite(tree, tree->script()->code())))
+    if (!addOutOfLineCode(ool, new(alloc()) BytecodeSite(tree, tree->script()->code())))
         return false;
 
     masm.ma_b(ool->entry(), condition);
@@ -215,7 +218,7 @@ CodeGeneratorARM::bailoutFrom(Label *label, LSnapshot *snapshot)
 
     // All bailout code is associated with the bytecodeSite of the block we are
     // bailing out from.
-    if (!addOutOfLineCode(ool, BytecodeSite(tree, tree->script()->code())))
+    if (!addOutOfLineCode(ool, new(alloc()) BytecodeSite(tree, tree->script()->code())))
         return false;
 
     masm.retarget(label, ool->entry());
@@ -1889,10 +1892,12 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap *ins)
       default: MOZ_CRASH("unexpected array type");
     }
 
+    memoryBarrier(mir->barrierBefore());
+
     const LAllocation *ptr = ins->ptr();
 
     if (ptr->isConstant()) {
-        MOZ_ASSERT(mir->skipBoundsCheck());
+        MOZ_ASSERT(!mir->needsBoundsCheck());
         int32_t ptrImm = ptr->toConstant()->toInt32();
         MOZ_ASSERT(ptrImm >= 0);
         if (isFloat) {
@@ -1905,12 +1910,13 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap *ins)
             masm.ma_dataTransferN(IsLoad, size, isSigned, HeapReg, Imm32(ptrImm),
                                   ToRegister(ins->output()), Offset, Assembler::Always);
         }
+        memoryBarrier(mir->barrierAfter());
         return true;
     }
 
     Register ptrReg = ToRegister(ptr);
 
-    if (mir->skipBoundsCheck()) {
+    if (!mir->needsBoundsCheck()) {
         if (isFloat) {
             VFPRegister vd(ToFloatRegister(ins->output()));
             if (size == 32)
@@ -1921,6 +1927,7 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap *ins)
             masm.ma_dataTransferN(IsLoad, size, isSigned, HeapReg, ptrReg,
                                   ToRegister(ins->output()), Offset, Assembler::Always);
         }
+        memoryBarrier(mir->barrierAfter());
         return true;
     }
 
@@ -1942,6 +1949,7 @@ CodeGeneratorARM::visitAsmJSLoadHeap(LAsmJSLoadHeap *ins)
         masm.ma_mov(Imm32(0), d, NoSetCond, Assembler::AboveOrEqual);
         masm.ma_dataTransferN(IsLoad, size, isSigned, HeapReg, ptrReg, d, Offset, Assembler::Below);
     }
+    memoryBarrier(mir->barrierAfter());
     masm.append(AsmJSHeapAccess(bo.getOffset()));
     return true;
 }
@@ -1965,8 +1973,9 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap *ins)
       default: MOZ_CRASH("unexpected array type");
     }
     const LAllocation *ptr = ins->ptr();
+    memoryBarrier(mir->barrierBefore());
     if (ptr->isConstant()) {
-        MOZ_ASSERT(mir->skipBoundsCheck());
+        MOZ_ASSERT(!mir->needsBoundsCheck());
         int32_t ptrImm = ptr->toConstant()->toInt32();
         MOZ_ASSERT(ptrImm >= 0);
         if (isFloat) {
@@ -1979,12 +1988,13 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap *ins)
             masm.ma_dataTransferN(IsStore, size, isSigned, HeapReg, Imm32(ptrImm),
                                   ToRegister(ins->value()), Offset, Assembler::Always);
         }
+        memoryBarrier(mir->barrierAfter());
         return true;
     }
 
     Register ptrReg = ToRegister(ptr);
 
-    if (mir->skipBoundsCheck()) {
+    if (!mir->needsBoundsCheck()) {
         Register ptrReg = ToRegister(ptr);
         if (isFloat) {
             VFPRegister vd(ToFloatRegister(ins->value()));
@@ -1996,6 +2006,7 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap *ins)
             masm.ma_dataTransferN(IsStore, size, isSigned, HeapReg, ptrReg,
                                   ToRegister(ins->value()), Offset, Assembler::Always);
         }
+        memoryBarrier(mir->barrierAfter());
         return true;
     }
 
@@ -2010,7 +2021,90 @@ CodeGeneratorARM::visitAsmJSStoreHeap(LAsmJSStoreHeap *ins)
         masm.ma_dataTransferN(IsStore, size, isSigned, HeapReg, ptrReg,
                               ToRegister(ins->value()), Offset, Assembler::Below);
     }
+    memoryBarrier(mir->barrierAfter());
     masm.append(AsmJSHeapAccess(bo.getOffset()));
+    return true;
+}
+
+bool
+CodeGeneratorARM::visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap *ins)
+{
+    MAsmJSCompareExchangeHeap *mir = ins->mir();
+
+    MOZ_ASSERT(mir->viewType() <= AsmJSHeapAccess::Uint32);
+    Scalar::Type vt = Scalar::Type(mir->viewType());
+
+    const LAllocation *ptr = ins->ptr();
+    Register ptrReg = ToRegister(ptr);
+    BaseIndex srcAddr(HeapReg, ptrReg, TimesOne);
+
+    Register oldval = ToRegister(ins->oldValue());
+    Register newval = ToRegister(ins->newValue());
+
+    Label rejoin;
+    uint32_t maybeCmpOffset = 0;
+    if (mir->needsBoundsCheck()) {
+        Label goahead;
+        BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
+        Register out = ToRegister(ins->output());
+        maybeCmpOffset = bo.getOffset();
+        masm.ma_b(&goahead, Assembler::LessThan);
+        memoryBarrier(MembarFull);
+        masm.as_eor(out, out, O2Reg(out));
+        masm.ma_b(&rejoin, Assembler::Always);
+        masm.bind(&goahead);
+    }
+    masm.compareExchangeToTypedIntArray(vt == Scalar::Uint32 ? Scalar::Int32 : vt,
+                                        srcAddr, oldval, newval, InvalidReg,
+                                        ToAnyRegister(ins->output()));
+    if (rejoin.used()) {
+        masm.bind(&rejoin);
+        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+    }
+    return true;
+}
+
+bool
+CodeGeneratorARM::visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap *ins)
+{
+    MAsmJSAtomicBinopHeap *mir = ins->mir();
+
+    MOZ_ASSERT(mir->viewType() <= AsmJSHeapAccess::Uint32);
+    Scalar::Type vt = Scalar::Type(mir->viewType());
+
+    const LAllocation *ptr = ins->ptr();
+    Register ptrReg = ToRegister(ptr);
+    Register temp = ins->temp()->isBogusTemp() ? InvalidReg : ToRegister(ins->temp());
+    const LAllocation* value = ins->value();
+    AtomicOp op = mir->operation();
+
+    BaseIndex srcAddr(HeapReg, ptrReg, TimesOne);
+
+    Label rejoin;
+    uint32_t maybeCmpOffset = 0;
+    if (mir->needsBoundsCheck()) {
+        Label goahead;
+        BufferOffset bo = masm.ma_BoundsCheck(ptrReg);
+        Register out = ToRegister(ins->output());
+        maybeCmpOffset = bo.getOffset();
+        masm.ma_b(&goahead, Assembler::LessThan);
+        memoryBarrier(MembarFull);
+        masm.as_eor(out, out, O2Reg(out));
+        masm.ma_b(&rejoin, Assembler::Always);
+        masm.bind(&goahead);
+    }
+    if (value->isConstant())
+        masm.atomicBinopToTypedIntArray(op, vt == Scalar::Uint32 ? Scalar::Int32 : vt,
+                                        Imm32(ToInt32(value)), srcAddr, temp, InvalidReg,
+                                        ToAnyRegister(ins->output()));
+    else
+        masm.atomicBinopToTypedIntArray(op, vt == Scalar::Uint32 ? Scalar::Int32 : vt,
+                                        ToRegister(value), srcAddr, temp, InvalidReg,
+                                        ToAnyRegister(ins->output()));
+    if (rejoin.used()) {
+        masm.bind(&rejoin);
+        masm.append(AsmJSHeapAccess(maybeCmpOffset));
+    }
     return true;
 }
 
@@ -2246,4 +2340,25 @@ JitCode *
 JitRuntime::generateForkJoinGetSliceStub(JSContext *cx)
 {
     MOZ_CRASH("NYI");
+}
+
+void
+CodeGeneratorARM::memoryBarrier(MemoryBarrierBits barrier)
+{
+    // On ARMv6 the optional argument (BarrierST, etc) is ignored.
+    if (barrier == (MembarStoreStore|MembarSynchronizing))
+        masm.ma_dsb(masm.BarrierST);
+    else if (barrier & MembarSynchronizing)
+        masm.ma_dsb();
+    else if (barrier == MembarStoreStore)
+        masm.ma_dmb(masm.BarrierST);
+    else if (barrier)
+        masm.ma_dmb();
+}
+
+bool
+CodeGeneratorARM::visitMemoryBarrier(LMemoryBarrier *ins)
+{
+    memoryBarrier(ins->type());
+    return true;
 }

@@ -162,7 +162,7 @@ assertSameCompartment(ThreadSafeContext *cx, const T1 &t1)
 template <class T1> inline void
 assertSameCompartmentDebugOnly(ThreadSafeContext *cx, const T1 &t1)
 {
-#ifdef DEBUG
+#if defined(DEBUG) && defined(JS_CRASH_DIAGNOSTICS)
     START_ASSERT_SAME_COMPARTMENT();
     c.check(t1);
 #endif
@@ -367,6 +367,8 @@ inline void
 JSContext::setPendingException(js::Value v)
 {
     MOZ_ASSERT(!IsPoisonedValue(v));
+    // overRecursed_ is set after the fact by js_ReportOverRecursed.
+    this->overRecursed_ = false;
     this->throwing = true;
     this->unwrappedException_ = v;
     // We don't use assertSameCompartment here to allow

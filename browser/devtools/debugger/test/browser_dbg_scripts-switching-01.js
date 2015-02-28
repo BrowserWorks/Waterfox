@@ -7,13 +7,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -32,7 +31,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 }
 
@@ -52,9 +51,9 @@ function testSourcesDisplay() {
     EXAMPLE_URL + "code_script-switching-02.js",
     "The correct tooltip text is displayed for the second source.");
 
-  ok(gSources.containsValue(EXAMPLE_URL + gLabel1),
+  ok(getSourceActor(gSources, EXAMPLE_URL + gLabel1),
     "First source url is incorrect.");
-  ok(gSources.containsValue(EXAMPLE_URL + gLabel2),
+  ok(getSourceActor(gSources, EXAMPLE_URL + gLabel2),
     "Second source url is incorrect.");
 
   ok(gSources.getItemForAttachment(e => e.label == gLabel1),
@@ -64,12 +63,12 @@ function testSourcesDisplay() {
 
   ok(gSources.selectedItem,
     "There should be a selected item in the sources pane.");
-  is(gSources.selectedValue, EXAMPLE_URL + gLabel2,
+  is(getSelectedSourceURL(gSources), EXAMPLE_URL + gLabel2,
     "The selected value is the sources pane is incorrect.");
 
   is(gEditor.getText().search(/firstCall/), -1,
     "The first source is not displayed.");
-  is(gEditor.getText().search(/debugger/), 172,
+  is(gEditor.getText().search(/debugger/), 166,
     "The second source is displayed.");
 
   ok(gDebugger.document.title.endsWith(EXAMPLE_URL + gLabel2),
@@ -80,9 +79,9 @@ function testSourcesDisplay() {
 
   // The editor's debug location takes a tick to update.
   executeSoon(() => {
-    is(gEditor.getDebugLocation(), 0,
+    is(gEditor.getDebugLocation(), 5,
       "Editor debugger location is correct.");
-    ok(gEditor.hasLineClass(0, "debug-line"),
+    ok(gEditor.hasLineClass(5, "debug-line"),
       "The debugged line is highlighted appropriately (1).");
 
     waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN).then(deferred.resolve);
@@ -97,7 +96,7 @@ function testSwitchPaused1() {
 
   ok(gSources.selectedItem,
     "There should be a selected item in the sources pane.");
-  is(gSources.selectedValue, EXAMPLE_URL + gLabel1,
+  is(getSelectedSourceURL(gSources), EXAMPLE_URL + gLabel1,
     "The selected value is the sources pane is incorrect.");
 
   is(gEditor.getText().search(/firstCall/), 118,
@@ -126,31 +125,28 @@ function testSwitchPaused2() {
 
   ok(gSources.selectedItem,
     "There should be a selected item in the sources pane.");
-  is(gSources.selectedValue, EXAMPLE_URL + gLabel2,
+  is(getSelectedSourceURL(gSources), EXAMPLE_URL + gLabel2,
     "The selected value is the sources pane is incorrect.");
 
   is(gEditor.getText().search(/firstCall/), -1,
     "The first source is not displayed.");
-  is(gEditor.getText().search(/debugger/), 172,
+  is(gEditor.getText().search(/debugger/), 166,
     "The second source is displayed.");
 
   // The editor's debug location takes a tick to update.
   executeSoon(() => {
-    ok(isCaretPos(gPanel, 1),
+    ok(isCaretPos(gPanel, 6),
       "Editor caret location is correct.");
-    is(gEditor.getDebugLocation(), 0,
+    is(gEditor.getDebugLocation(), 5,
       "Editor debugger location is correct.");
-    ok(gEditor.hasLineClass(0, "debug-line"),
+    ok(gEditor.hasLineClass(5, "debug-line"),
       "The debugged line is highlighted appropriately (2).");
 
-    // Step out three times.
+    // Step out twice.
     waitForThreadEvents(gPanel, "paused").then(() => {
-      waitForThreadEvents(gPanel, "paused").then(() => {
-        waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN).then(deferred.resolve);
-        gDebugger.gThreadClient.stepOut();
-      });
+      waitForDebuggerEvents(gPanel, gDebugger.EVENTS.SOURCE_SHOWN).then(deferred.resolve);
       gDebugger.gThreadClient.stepOut();
-    });
+    })
     gDebugger.gThreadClient.stepOut();
   });
 
@@ -162,7 +158,7 @@ function testSwitchRunning() {
 
   ok(gSources.selectedItem,
     "There should be a selected item in the sources pane.");
-  is(gSources.selectedValue, EXAMPLE_URL + gLabel1,
+  is(getSelectedSourceURL(gSources), EXAMPLE_URL + gLabel1,
     "The selected value is the sources pane is incorrect.");
 
   is(gEditor.getText().search(/firstCall/), 118,
@@ -172,11 +168,11 @@ function testSwitchRunning() {
 
   // The editor's debug location takes a tick to update.
   executeSoon(() => {
-    ok(isCaretPos(gPanel, 1),
+    ok(isCaretPos(gPanel, 5),
       "Editor caret location is correct.");
-    is(gEditor.getDebugLocation(), 0,
+    is(gEditor.getDebugLocation(), 4,
       "Editor debugger location is correct.");
-    ok(gEditor.hasLineClass(0, "debug-line"),
+    ok(gEditor.hasLineClass(4, "debug-line"),
       "The debugged line is highlighted appropriately (3).");
 
     deferred.resolve();
@@ -187,7 +183,6 @@ function testSwitchRunning() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

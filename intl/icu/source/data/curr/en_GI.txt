@@ -11,7 +11,7 @@ en_GI{
     Currencies{
         GBP{
             "GB£",
-            "British Pound Sterling",
+            "British Pound",
         }
         GIP{
             "£",

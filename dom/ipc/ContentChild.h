@@ -10,6 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/ContentBridgeParent.h"
 #include "mozilla/dom/nsIContentChild.h"
+#include "mozilla/dom/PBrowserOrId.h"
 #include "mozilla/dom/PContentChild.h"
 #include "nsHashKeys.h"
 #include "nsIObserver.h"
@@ -48,6 +49,7 @@ class PrefObserver;
 class ConsoleListener;
 class PStorageChild;
 class ClonedMessageData;
+class TabChild;
 
 class ContentChild : public PContentChild
                    , public nsIContentChild
@@ -87,10 +89,10 @@ public:
     const AppInfo& GetAppInfo() {
         return mAppInfo;
     }
-
     void SetProcessName(const nsAString& aName, bool aDontOverride = false);
     void GetProcessName(nsAString& aName);
     void GetProcessName(nsACString& aName);
+    bool IsAlive();
     static void AppendProcessId(nsACString& aName);
 
     ContentBridgeParent* GetLastBridge() {
@@ -100,6 +102,10 @@ public:
         return parent;
     }
     nsRefPtr<ContentBridgeParent> mLastBridge;
+
+    PPluginModuleParent *
+    AllocPPluginModuleParent(mozilla::ipc::Transport* transport,
+                             base::ProcessId otherProcess) MOZ_OVERRIDE;
 
     PContentBridgeParent*
     AllocPContentBridgeParent(mozilla::ipc::Transport* transport,
@@ -131,9 +137,10 @@ public:
     AllocPBackgroundChild(Transport* aTransport, ProcessId aOtherProcess)
                           MOZ_OVERRIDE;
 
-    virtual PBrowserChild* AllocPBrowserChild(const IPCTabContext& aContext,
+    virtual PBrowserChild* AllocPBrowserChild(const TabId& aTabId,
+                                              const IPCTabContext& aContext,
                                               const uint32_t& aChromeFlags,
-                                              const uint64_t& aID,
+                                              const ContentParentId& aCpID,
                                               const bool& aIsForApp,
                                               const bool& aIsForBrowser);
     virtual bool DeallocPBrowserChild(PBrowserChild*);
@@ -206,6 +213,9 @@ public:
 
     virtual PNeckoChild* AllocPNeckoChild() MOZ_OVERRIDE;
     virtual bool DeallocPNeckoChild(PNeckoChild*) MOZ_OVERRIDE;
+
+    virtual PPrintingChild* AllocPPrintingChild() MOZ_OVERRIDE;
+    virtual bool DeallocPPrintingChild(PPrintingChild*) MOZ_OVERRIDE;
 
     virtual PScreenManagerChild*
     AllocPScreenManagerChild(uint32_t* aNumberOfScreens,
@@ -293,6 +303,8 @@ public:
 
     virtual bool RecvGeolocationUpdate(const GeoPosition& somewhere) MOZ_OVERRIDE;
 
+    virtual bool RecvGeolocationError(const uint16_t& errorCode) MOZ_OVERRIDE;
+
     virtual bool RecvUpdateDictionaryList(const InfallibleTArray<nsString>& aDictionaries) MOZ_OVERRIDE;
 
     virtual bool RecvAddPermission(const IPC::Permission& permission) MOZ_OVERRIDE;
@@ -346,6 +358,13 @@ public:
 
     virtual bool RecvOnAppThemeChanged() MOZ_OVERRIDE;
 
+    virtual bool RecvStartProfiler(const uint32_t& aEntries,
+                                   const double& aInterval,
+                                   const nsTArray<nsCString>& aFeatures,
+                                   const nsTArray<nsCString>& aThreadNameFilters) MOZ_OVERRIDE;
+    virtual bool RecvStopProfiler() MOZ_OVERRIDE;
+    virtual bool AnswerGetProfile(nsCString* aProfile) MOZ_OVERRIDE;
+
 #ifdef ANDROID
     gfxIntSize GetScreenSize() { return mScreenSize; }
 #endif
@@ -354,7 +373,7 @@ public:
     // cache the value
     nsString &GetIndexedDBPath();
 
-    uint64_t GetID() { return mID; }
+    ContentParentId GetID() { return mID; }
 
     bool IsForApp() { return mIsForApp; }
     bool IsForBrowser() { return mIsForBrowser; }
@@ -370,20 +389,35 @@ public:
     DeallocPFileDescriptorSetChild(PFileDescriptorSetChild*) MOZ_OVERRIDE;
 
     virtual bool SendPBrowserConstructor(PBrowserChild* actor,
+                                         const TabId& aTabId,
                                          const IPCTabContext& context,
                                          const uint32_t& chromeFlags,
-                                         const uint64_t& aID,
+                                         const ContentParentId& aCpID,
                                          const bool& aIsForApp,
                                          const bool& aIsForBrowser) MOZ_OVERRIDE;
 
     virtual bool RecvPBrowserConstructor(PBrowserChild* aCctor,
+                                         const TabId& aTabId,
                                          const IPCTabContext& aContext,
                                          const uint32_t& aChromeFlags,
-                                         const uint64_t& aID,
+                                         const ContentParentId& aCpID,
                                          const bool& aIsForApp,
                                          const bool& aIsForBrowser) MOZ_OVERRIDE;
+    virtual PDocAccessibleChild* AllocPDocAccessibleChild(PDocAccessibleChild*, const uint64_t&) MOZ_OVERRIDE;
+    virtual bool DeallocPDocAccessibleChild(PDocAccessibleChild*) MOZ_OVERRIDE;
 
     void GetAvailableDictionaries(InfallibleTArray<nsString>& aDictionaries);
+
+    PBrowserOrId
+    GetBrowserOrId(TabChild* aTabChild);
+
+    virtual POfflineCacheUpdateChild* AllocPOfflineCacheUpdateChild(
+            const URIParams& manifestURI,
+            const URIParams& documentURI,
+            const bool& stickDocument,
+            const TabId& aTabId) MOZ_OVERRIDE;
+    virtual bool
+    DeallocPOfflineCacheUpdateChild(POfflineCacheUpdateChild* offlineCacheUpdate) MOZ_OVERRIDE;
 
 private:
     virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
@@ -410,7 +444,7 @@ private:
      * We expect our content parent to set this ID immediately after opening a
      * channel to us.
      */
-    uint64_t mID;
+    ContentParentId mID;
 
     AppInfo mAppInfo;
 
@@ -421,6 +455,7 @@ private:
     bool mIsForApp;
     bool mIsForBrowser;
     bool mCanOverrideProcessName;
+    bool mIsAlive;
     nsString mProcessName;
 
     static ContentChild* sSingleton;

@@ -1,0 +1,1308 @@
+This is
+/misc/emacs/bzr/emacs24-merge/doc/misc/../../info/nxml-mode.info,
+produced by makeinfo version 4.13 from
+/misc/emacs/bzr/emacs24-merge/doc/misc/nxml-mode.texi.
+
+This manual documents nXML mode, an Emacs major mode for editing XML
+with RELAX NG support.
+
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover texts
+     being "A GNU Manual," and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     "GNU Free Documentation License".
+
+     (a) The FSF's Back-Cover Text is: "You have the freedom to copy and
+     modify this GNU manual."
+
+INFO-DIR-SECTION Emacs editing modes
+START-INFO-DIR-ENTRY
+* nXML Mode: (nxml-mode).       XML editing mode with RELAX NG support.
+END-INFO-DIR-ENTRY
+
+
+File: nxml-mode.info,  Node: Top,  Next: Introduction,  Up: (dir)
+
+nXML Mode
+*********
+
+This manual documents nXML mode, an Emacs major mode for editing XML
+with RELAX NG support.
+
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover texts
+     being "A GNU Manual," and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     "GNU Free Documentation License".
+
+     (a) The FSF's Back-Cover Text is: "You have the freedom to copy and
+     modify this GNU manual."
+
+   This manual is not yet complete.
+
+* Menu:
+
+* Introduction::
+* Completion::
+* Inserting end-tags::
+* Paragraphs::
+* Outlining::
+* Locating a schema::
+* DTDs::
+* Limitations::
+* GNU Free Documentation License::  The license for this documentation.
+
+
+File: nxml-mode.info,  Node: Introduction,  Next: Completion,  Prev: Top,  Up: Top
+
+1 Introduction
+**************
+
+nXML mode is an Emacs major-mode for editing XML documents.  It supports
+editing well-formed XML documents, and provides schema-sensitive editing
+using RELAX NG Compact Syntax.  To get started, visit a file containing
+an XML document, and, if necessary, use `M-x nxml-mode' to switch to
+nXML mode.  By default, `auto-mode-alist' and `magic-fallback-alist'
+put buffers in nXML mode if they have recognizable XML content or file
+extensions.  You may wish to customize the settings, for example to
+recognize different file extensions.
+
+   Once in nXML mode, you can type `C-h m' for basic information on the
+mode.
+
+   The `etc/nxml' directory in the Emacs distribution contains some data
+files used by nXML mode, and includes two files (`test-valid.xml' and
+`test-invalid.xml') that provide examples of valid and invalid XML
+documents.
+
+   To get validation and schema-sensitive editing, you need a RELAX NG
+Compact Syntax (RNC) schema for your document (*note Locating a
+schema::).  The `etc/schema' directory includes some schemas for
+popular document types.  See `http://relaxng.org/' for more information
+on RELAX NG.  You can use the `Trang' program from
+`http://www.thaiopensource.com/relaxng/trang.html' to automatically
+create RNC schemas.  This program can:
+
+   * infer an RNC schema from an instance document;
+
+   * convert a DTD to an RNC schema;
+
+   * convert a RELAX NG XML syntax schema to an RNC schema.
+
+To convert a RELAX NG XML syntax (`.rng') schema to a RNC one, you can
+also use the XSLT stylesheet from `http://www.pantor.com/download.html'.
+
+   To convert a W3C XML Schema to an RNC schema, you need first to
+convert it to RELAX NG XML syntax using the RELAX NG converter tool
+`rngconv' (built on top of MSV).  See `https://github.com/kohsuke/msv'
+and `https://msv.dev.java.net/'.
+
+   For historical discussions only, see the mailing list archives at
+`http://groups.yahoo.com/group/emacs-nxml-mode/'.  Please make all new
+discussions on the `help-gnu-emacs' and `emacs-devel' mailing lists.
+Report any bugs with `M-x report-emacs-bug'.
+
+
+File: nxml-mode.info,  Node: Completion,  Next: Inserting end-tags,  Prev: Introduction,  Up: Top
+
+2 Completion
+************
+
+Apart from real-time validation, the most important feature that nXML
+mode provides for assisting in document creation is "completion".
+Completion assists the user in inserting characters at point, based on
+knowledge of the schema and on the contents of the buffer before point.
+
+   nXML mode adapts the standard GNU Emacs command for completion in a
+buffer: `completion-at-point', which is bound to `C-M-i' and `M-<TAB>'.
+Note that many window systems and window managers use `M-<TAB>'
+themselves (typically for switching between windows) and do not pass it
+to applications.  In that case, you should type `C-M-i' or `<ESC>
+<TAB>' for completion, or bind `completion-at-point' to a key that is
+convenient for you.  In the following, I will assume that you type
+`C-M-i'.
+
+   nXML mode completion works by examining the symbol preceding point.
+This is the symbol to be completed. The symbol to be completed may be
+the empty. Completion considers what symbols starting with the symbol
+to be completed would be valid replacements for the symbol to be
+completed, given the schema and the contents of the buffer before
+point.  These symbols are the possible completions.  An example may
+make this clearer.  Suppose the buffer looks like this (where -!-
+indicates point):
+
+     <html xmlns="http://www.w3.org/1999/xhtml">
+     <h-!-
+
+and the schema is XHTML.  In this context, the symbol to be completed
+is `h'.  The possible completions consist of just `head'.  Another
+example, is
+
+     <html xmlns="http://www.w3.org/1999/xhtml">
+     <head>
+     <-!-
+
+In this case, the symbol to be completed is empty, and the possible
+completions are `base', `isindex', `link', `meta', `script', `style',
+`title'.  Another example is:
+
+     <html xmlns="-!-
+
+In this case, the symbol to be completed is empty, and the possible
+completions are just `http://www.w3.org/1999/xhtml'.
+
+   When you type `C-M-i', what happens depends on what the set of
+possible completions are.
+
+   * If the set of completions is empty, nothing happens.
+
+   * If there is one possible completion, then that completion is
+     inserted, together with any following characters that are
+     required. For example, in this case:
+
+          <html xmlns="http://www.w3.org/1999/xhtml">
+          <-!-
+
+     `C-M-i' will yield
+
+          <html xmlns="http://www.w3.org/1999/xhtml">
+          <head-!-
+
+   * If there is more than one possible completion, but all possible
+     completions share a common non-empty prefix, then that prefix is
+     inserted. For example, suppose the buffer is:
+
+          <html x-!-
+
+     The symbol to be completed is `x'. The possible completions are
+     `xmlns' and `xml:lang'.  These share a common prefix of `xml'.
+     Thus, `C-M-i' will yield:
+
+          <html xml-!-
+
+     Typically, you would do `C-M-i' again, which would have the result
+     described in the next item.
+
+   * If there is more than one possible completion, but the possible
+     completions do not share a non-empty prefix, then Emacs will
+     prompt you to input the symbol in the minibuffer, initializing the
+     minibuffer with the symbol to be completed, and popping up a buffer
+     showing the possible completions.  You can now input the symbol to
+     be inserted.  The symbol you input will be inserted in the buffer
+     instead of the symbol to be completed.  Emacs will then insert any
+     required characters after the symbol.  For example, if it contains:
+
+          <html xml-!-
+
+     Emacs will prompt you in the minibuffer with
+
+          Attribute: xml-!-
+
+     and the buffer showing possible completions will contain
+
+          Possible completions are:
+          xml:lang                           xmlns
+
+     If you input `xmlns', the result will be:
+
+          <html xmlns="-!-
+
+     (If you do `C-M-i' again, the namespace URI will be inserted.
+     Should that happen automatically?)
+
+
+File: nxml-mode.info,  Node: Inserting end-tags,  Next: Paragraphs,  Prev: Completion,  Up: Top
+
+3 Inserting end-tags
+********************
+
+The main redundancy in XML syntax is end-tags.  nXML mode provides
+several ways to make it easier to enter end-tags.  You can use all of
+these without a schema.
+
+   You can use `C-M-i' after `</' to complete the rest of the end-tag.
+
+   `C-c C-f' inserts an end-tag for the element containing point. This
+command is useful when you want to input the start-tag, then input the
+content and finally input the end-tag. The `f' is mnemonic for finish.
+
+   If you want to keep tags balanced and input the end-tag at the same
+time as the start-tag, before inputting the content, then you can use
+`C-c C-i'. This inserts a `>', then inserts the end-tag and leaves
+point before the end-tag.  `C-c C-b' is similar but more convenient for
+block-level elements: it puts the start-tag, point and the end-tag on
+successive lines, appropriately indented. The `i' is mnemonic for
+inline and the `b' is mnemonic for block.
+
+   Finally, you can customize nXML mode so that `/' automatically
+inserts the rest of the end-tag when it occurs after `<', by doing
+
+     `M-x customize-variable <RET> nxml-slash-auto-complete-flag <RET>'
+
+and then following the instructions in the displayed buffer.
+
+
+File: nxml-mode.info,  Node: Paragraphs,  Next: Outlining,  Prev: Inserting end-tags,  Up: Top
+
+4 Paragraphs
+************
+
+Emacs has several commands that operate on paragraphs, most notably
+`M-q'. nXML mode redefines these to work in a way that is useful for
+XML.  The exact rules that are used to find the beginning and end of a
+paragraph are complicated; they are designed mainly to ensure that
+`M-q' does the right thing.
+
+   A paragraph consists of one or more complete, consecutive lines.  A
+group of lines is not considered a paragraph unless it contains some
+non-whitespace characters between tags or inside comments.  A blank
+line separates paragraphs.  A single tag on a line by itself also
+separates paragraphs.  More precisely, if one tag together with any
+leading and trailing whitespace completely occupy one or more lines,
+then those lines will not be included in any paragraph.
+
+   A start-tag at the beginning of the line (possibly indented) may be
+treated as starting a paragraph.  Similarly, an end-tag at the end of
+the line may be treated as ending a paragraph. The following rules are
+used to determine whether such a tag is in fact treated as a paragraph
+boundary:
+
+   * If the schema does not allow text at that point, then it is a
+     paragraph boundary.
+
+   * If the end-tag corresponding to the start-tag is not at the end of
+     its line, or the start-tag corresponding to the end-tag is not at
+     the beginning of its line, then it is not a paragraph boundary.
+     For example, in
+
+          <p>This is a paragraph with an
+          <emph>emphasized</emph> phrase.
+
+     the `<emph>' start-tag would not be considered as starting a
+     paragraph, because its corresponding end-tag is not at the end of
+     the line.
+
+   * If there is text that is a sibling in element tree, then it is not
+     a paragraph boundary.  For example, in
+
+          <p>This is a paragraph with an
+          <emph>emphasized phrase that takes one source line</emph>
+
+     the `<emph>' start-tag would not be considered as starting a
+     paragraph, even though its end-tag is at the end of its line,
+     because there the text `This is a paragraph with an' is a sibling
+     of the `emph' element.
+
+   * Otherwise, it is a paragraph boundary.
+
+
+File: nxml-mode.info,  Node: Outlining,  Next: Locating a schema,  Prev: Paragraphs,  Up: Top
+
+5 Outlining
+***********
+
+nXML mode allows you to display all or part of a buffer as an outline,
+in a similar way to Emacs's outline mode.  An outline in nXML mode is
+based on recognizing two kinds of element: sections and headings.
+There is one heading for every section and one section for every
+heading.  A section contains its heading as or within its first child
+element.  A section also contains its subordinate sections (its
+subsections).  The text content of a section consists of anything in a
+section that is neither a subsection nor a heading.
+
+   Note that this is a different model from that used by XHTML.  nXML
+mode's outline support will not be useful for XHTML unless you adopt a
+convention of adding a `div' to enclose each section, rather than
+having sections implicitly delimited by different `hN' elements.  This
+limitation may be removed in a future version.
+
+   The variable `nxml-section-element-name-regexp' gives a regexp for
+the local names (i.e., the part of the name following any prefix) of
+section elements. The variable `nxml-heading-element-name-regexp' gives
+a regexp for the local names of heading elements. For an element to be
+recognized as a section
+
+   * its start-tag must occur at the beginning of a line (possibly
+     indented);
+
+   * its local name must match `nxml-section-element-name-regexp';
+
+   * either its first child element or a descendant of that first child
+     element must have a local name that matches
+     `nxml-heading-element-name-regexp'; the first such element is
+     treated as the section's heading.
+
+You can customize these variables using `M-x customize-variable'.
+
+   There are three possible outline states for a section:
+
+   * normal, showing everything, including its heading, text content
+     and subsections; each subsection is displayed according to the
+     state of that subsection;
+
+   * showing just its heading, with both its text content and its
+     subsections hidden; all subsections are hidden regardless of their
+     state;
+
+   * showing its heading and its subsections, with its text content
+     hidden; each subsection is displayed according to the state of
+     that subsection.
+
+   In the last two states, where the text content is hidden, the
+heading is displayed specially, in an abbreviated form. An element like
+this:
+
+     <section>
+     <title>Food</title>
+     <para>There are many kinds of food.</para>
+     </section>
+
+would be displayed on a single line like this:
+
+     <-section>Food...</>
+
+If there are hidden subsections, then a `+' will be used instead of a
+`-' like this:
+
+     <+section>Food...</>
+
+If there are non-hidden subsections, then the section will instead be
+displayed like this:
+
+     <-section>Food...
+       <-section>Delicious Food...</>
+       <-section>Distasteful Food...</>
+     </-section>
+
+The heading is always displayed with an indent that corresponds to its
+depth in the outline, even it is not actually indented in the buffer.
+The variable `nxml-outline-child-indent' controls how much a subheading
+is indented with respect to its parent heading when the heading is
+being displayed specially.
+
+   Commands to change the outline state of sections are bound to key
+sequences that start with `C-c C-o' (`o' is mnemonic for outline).  The
+third and final key has been chosen to be consistent with outline mode.
+In the following descriptions current section means the section
+containing point, or, more precisely, the innermost section containing
+the character immediately following point.
+
+   * `C-c C-o C-a' shows all sections in the buffer normally.
+
+   * `C-c C-o C-t' hides the text content of all sections in the buffer.
+
+   * `C-c C-o C-c' hides the text content of the current section.
+
+   * `C-c C-o C-e' shows the text content of the current section.
+
+   * `C-c C-o C-d' hides the text content and subsections of the
+     current section.
+
+   * `C-c C-o C-s' shows the current section and all its direct and
+     indirect subsections normally.
+
+   * `C-c C-o C-k' shows the headings of the direct and indirect
+     subsections of the current section.
+
+   * `C-c C-o C-l' hides the text content of the current section and of
+     its direct and indirect subsections.
+
+   * `C-c C-o C-i' shows the headings of the direct subsections of the
+     current section.
+
+   * `C-c C-o C-o' hides as much as possible without hiding the current
+     section's text content; the headings of ancestor sections of the
+     current section and their child section sections will not be
+     hidden.
+
+   When a heading is displayed specially, you can use <RET> in that
+heading to show the text content of the section in the same way as `C-c
+C-o C-e'.
+
+   You can also use the mouse to change the outline state: `S-mouse-2'
+hides the text content of a section in the same way as`C-c C-o C-c';
+`mouse-2' on a specially displayed heading shows the text content of
+the section in the same way as `C-c C-o C-e'; `mouse-1' on a specially
+displayed start-tag toggles the display of subheadings on and off.
+
+   The outline state for each section is stored with the first
+character of the section (as a text property). Every command that
+changes the outline state of any section updates the display of the
+buffer so that each section is displayed correctly according to its
+outline state.  If the section structure is subsequently changed, then
+it is possible for the display to no longer correctly reflect the
+stored outline state. `C-c C-o C-r' can be used to refresh the display
+so it is correct again.
+
+
+File: nxml-mode.info,  Node: Locating a schema,  Next: DTDs,  Prev: Outlining,  Up: Top
+
+6 Locating a schema
+*******************
+
+nXML mode has a configurable set of rules to locate a schema for the
+file being edited.  The rules are contained in one or more schema
+locating files, which are XML documents.
+
+   The variable `rng-schema-locating-files' specifies the list of the
+file-names of schema locating files that nXML mode should use.  The
+order of the list is significant: when file X occurs in the list before
+file Y then rules from file X have precedence over rules from file Y.
+A filename specified in `rng-schema-locating-files' may be relative. If
+so, it will be resolved relative to the document for which a schema is
+being located. It is not an error if relative file-names in
+`rng-schema-locating-files' do not exist. You can use `M-x
+customize-variable <RET> rng-schema-locating-files <RET>' to customize
+the list of schema locating files.
+
+   By default, `rng-schema-locating-files' list has two members:
+`schemas.xml', and `DIST-DIR/schema/schemas.xml' where `DIST-DIR' is
+the directory containing the nXML distribution. The first member will
+cause nXML mode to use a file `schemas.xml' in the same directory as
+the document being edited if such a file exist.  The second member
+contains rules for the schemas that are included with the nXML
+distribution.
+
+* Menu:
+
+* Commands for locating a schema::
+* Schema locating files::
+
+
+File: nxml-mode.info,  Node: Commands for locating a schema,  Next: Schema locating files,  Up: Locating a schema
+
+6.1 Commands for locating a schema
+==================================
+
+The command `C-c C-s C-w' will tell you what schema is currently being
+used.
+
+   The rules for locating a schema are applied automatically when you
+visit a file in nXML mode. However, if you have just created a new file
+and the schema cannot be inferred from the file-name, then this will
+not locate the right schema.  In this case, you should insert the
+start-tag of the root element and then use the command `C-c C-s C-a',
+which reapplies the rules based on the current content of the document.
+It is usually not necessary to insert the complete start-tag; often
+just `<NAME' is enough.
+
+   If you want to use a schema that has not yet been added to the
+schema locating files, you can use the command `C-c C-s C-f' to
+manually select the file containing the schema for the document in
+current buffer.  Emacs will read the file-name of the schema from the
+minibuffer. After reading the file-name, Emacs will ask whether you
+wish to add a rule to a schema locating file that persistently
+associates the document with the selected schema.  The rule will be
+added to the first file in the list specified
+`rng-schema-locating-files'; it will create the file if necessary, but
+will not create a directory. If the variable
+`rng-schema-locating-files' has not been customized, this means that
+the rule will be added to the file `schemas.xml' in the same directory
+as the document being edited.
+
+   The command `C-c C-s C-t' allows you to select a schema by
+specifying an identifier for the type of the document.  The schema
+locating files determine the available type identifiers and what schema
+is used for each type identifier. This is useful when it is impossible
+to infer the right schema from either the file-name or the content of
+the document, even though the schema is already in the schema locating
+file.  A situation in which this can occur is when there are multiple
+variants of a schema where all valid documents have the same document
+element.  For example, XHTML has Strict and Transitional variants.  In
+a situation like this, a schema locating file can define a type
+identifier for each variant. As with `C-c C-s C-f', Emacs will ask
+whether you wish to add a rule to a schema locating file that
+persistently associates the document with the specified type identifier.
+
+   The command `C-c C-s C-l' adds a rule to a schema locating file that
+persistently associates the document with the schema that is currently
+being used.
+
+
+File: nxml-mode.info,  Node: Schema locating files,  Prev: Commands for locating a schema,  Up: Locating a schema
+
+6.2 Schema locating files
+=========================
+
+Each schema locating file specifies a list of rules.  The rules from
+each file are appended in order. To locate a schema each rule is
+applied in turn until a rule matches.  The first matching rule is then
+used to determine the schema.
+
+   Schema locating files are designed to be useful for other
+applications that need to locate a schema for a document. In fact,
+there is nothing specific to locating schemas in the design; it could
+equally well be used for locating a stylesheet.
+
+* Menu:
+
+* Schema locating file syntax basics::
+* Using the document's URI to locate a schema::
+* Using the document element to locate a schema::
+* Using type identifiers in schema locating files::
+* Using multiple schema locating files::
+
+
+File: nxml-mode.info,  Node: Schema locating file syntax basics,  Next: Using the document's URI to locate a schema,  Up: Schema locating files
+
+6.2.1 Schema locating file syntax basics
+----------------------------------------
+
+There is a schema for schema locating files in the file `locate.rnc' in
+the schema directory.  Schema locating files must be valid with respect
+to this schema.
+
+   The document element of a schema locating file must be
+`locatingRules' and the namespace URI must be
+`http://thaiopensource.com/ns/locating-rules/1.0'.  The children of the
+document element specify rules. The order of the children is the same
+as the order of the rules.  Here's a complete example of a schema
+locating file:
+
+     <?xml version="1.0"?>
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <namespace ns="http://www.w3.org/1999/xhtml" uri="xhtml.rnc"/>
+       <documentElement localName="book" uri="docbook.rnc"/>
+     </locatingRules>
+
+This says to use the schema `xhtml.rnc' for a document with namespace
+`http://www.w3.org/1999/xhtml', and to use the schema `docbook.rnc' for
+a document whose local name is `book'.  If the document element had
+both a namespace URI of `http://www.w3.org/1999/xhtml' and a local name
+of `book', then the matching rule that comes first will be used and so
+the schema `xhtml.rnc' would be used.  There is no precedence between
+different types of rule; the first matching rule of any type is used.
+
+   As usual with XML-related technologies, resources are identified by
+URIs.  The `uri' attribute identifies the schema by specifying the URI.
+The URI may be relative.  If so, it is resolved relative to the URI of
+the schema locating file that contains attribute. This means that if
+the value of `uri' attribute does not contain a `/', then it will refer
+to a filename in the same directory as the schema locating file.
+
+
+File: nxml-mode.info,  Node: Using the document's URI to locate a schema,  Next: Using the document element to locate a schema,  Prev: Schema locating file syntax basics,  Up: Schema locating files
+
+6.2.2 Using the document's URI to locate a schema
+-------------------------------------------------
+
+A `uri' rule locates a schema based on the URI of the document.  The
+`uri' attribute specifies the URI of the schema.  The `resource'
+attribute can be used to specify the schema for a particular document.
+For example,
+
+     <uri resource="spec.xml" uri="docbook.rnc"/>
+
+specifies that the schema for `spec.xml' is `docbook.rnc'.
+
+   The `pattern' attribute can be used instead of the `resource'
+attribute to specify the schema for any document whose URI matches a
+pattern.  The pattern has the same syntax as an absolute or relative
+URI except that the path component of the URI can use a `*' character
+to stand for zero or more characters within a path segment (i.e., any
+character other `/').  Typically, the URI pattern looks like a relative
+URI, but, whereas a relative URI in the `resource' attribute is
+resolved into a particular absolute URI using the base URI of the
+schema locating file, a relative URI pattern matches if it matches some
+number of complete path segments of the document's URI ending with the
+last path segment of the document's URI. For example,
+
+     <uri pattern="*.xsl" uri="xslt.rnc"/>
+
+specifies that the schema for documents with a URI whose path ends with
+`.xsl' is `xslt.rnc'.
+
+   A `transformURI' rule locates a schema by transforming the URI of
+the document. The `fromPattern' attribute specifies a URI pattern with
+the same meaning as the `pattern' attribute of the `uri' element.  The
+`toPattern' attribute is a URI pattern that is used to generate the URI
+of the schema.  Each `*' in the `toPattern' is replaced by the string
+that matched the corresponding `*' in the `fromPattern'.  The resulting
+string is appended to the initial part of the document's URI that was
+not explicitly matched by the `fromPattern'.  The rule matches only if
+the transformed URI identifies an existing resource.  For example, the
+rule
+
+     <transformURI fromPattern="*.xml" toPattern="*.rnc"/>
+
+would transform the URI `file:///home/jjc/docs/spec.xml' into the URI
+`file:///home/jjc/docs/spec.rnc'.  Thus, this rule specifies that to
+locate a schema for a document `FOO.xml', Emacs should test whether a
+file `FOO.rnc' exists in the same directory as `FOO.xml', and, if so,
+should use it as the schema.
+
+
+File: nxml-mode.info,  Node: Using the document element to locate a schema,  Next: Using type identifiers in schema locating files,  Prev: Using the document's URI to locate a schema,  Up: Schema locating files
+
+6.2.3 Using the document element to locate a schema
+---------------------------------------------------
+
+A `documentElement' rule locates a schema based on the local name and
+prefix of the document element. For example, a rule
+
+     <documentElement prefix="xsl" localName="stylesheet" uri="xslt.rnc"/>
+
+specifies that when the name of the document element is
+`xsl:stylesheet', then `xslt.rnc' should be used as the schema. Either
+the `prefix' or `localName' attribute may be omitted to allow any
+prefix or local name.
+
+   A `namespace' rule locates a schema based on the namespace URI of
+the document element. For example, a rule
+
+     <namespace ns="http://www.w3.org/1999/XSL/Transform" uri="xslt.rnc"/>
+
+specifies that when the namespace URI of the document is
+`http://www.w3.org/1999/XSL/Transform', then `xslt.rnc' should be used
+as the schema.
+
+
+File: nxml-mode.info,  Node: Using type identifiers in schema locating files,  Next: Using multiple schema locating files,  Prev: Using the document element to locate a schema,  Up: Schema locating files
+
+6.2.4 Using type identifiers in schema locating files
+-----------------------------------------------------
+
+Type identifiers allow a level of indirection in locating the schema
+for a document.  Instead of associating the document directly with a
+schema URI, the document is associated with a type identifier, which is
+in turn associated with a schema URI. nXML mode does not constrain the
+format of type identifiers.  They can be simply strings without any
+formal structure or they can be public identifiers or URIs.  Note that
+these type identifiers have nothing to do with the DOCTYPE declaration.
+When comparing type identifiers, whitespace is normalized in the same
+way as with the `xsd:token' datatype: leading and trailing whitespace
+is stripped; other sequences of whitespace are normalized to a single
+space character.
+
+   Each of the rules described in previous sections that uses a `uri'
+attribute to specify a schema, can instead use a `typeId' attribute to
+specify a type identifier.  The type identifier can be associated with
+a URI using a `typeId' element. For example,
+
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <namespace ns="http://www.w3.org/1999/xhtml" typeId="XHTML"/>
+       <typeId id="XHTML" typeId="XHTML Strict"/>
+       <typeId id="XHTML Strict" uri="xhtml-strict.rnc"/>
+       <typeId id="XHTML Transitional" uri="xhtml-transitional.rnc"/>
+     </locatingRules>
+
+declares three type identifiers `XHTML' (representing the default
+variant of XHTML to be used), `XHTML Strict' and `XHTML Transitional'.
+Such a schema locating file would use `xhtml-strict.rnc' for a document
+whose namespace is `http://www.w3.org/1999/xhtml'.  But it is
+considerably more flexible than a schema locating file that simply
+specified
+
+     <namespace ns="http://www.w3.org/1999/xhtml" uri="xhtml-strict.rnc"/>
+
+A user can easily use `C-c C-s C-t' to select between XHTML Strict and
+XHTML Transitional. Also, a user can easily add a catalog
+
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <typeId id="XHTML" typeId="XHTML Transitional"/>
+     </locatingRules>
+
+that makes the default variant of XHTML be XHTML Transitional.
+
+
+File: nxml-mode.info,  Node: Using multiple schema locating files,  Prev: Using type identifiers in schema locating files,  Up: Schema locating files
+
+6.2.5 Using multiple schema locating files
+------------------------------------------
+
+The `include' element includes rules from another schema locating file.
+The behavior is exactly as if the rules from that file were included in
+place of the `include' element.  Relative URIs are resolved into
+absolute URIs before the inclusion is performed. For example,
+
+     <include rules="../rules.xml"/>
+
+includes the rules from `rules.xml'.
+
+   The process of locating a schema takes as input a list of schema
+locating files.  The rules in all these files and in the files they
+include are resolved into a single list of rules, which are applied
+strictly in order.  Sometimes this order is not what is needed.  For
+example, suppose you have two schema locating files, a private file
+
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <namespace ns="http://www.w3.org/1999/xhtml" uri="xhtml.rnc"/>
+     </locatingRules>
+
+followed by a public file
+
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <transformURI pathSuffix=".xml" replacePathSuffix=".rnc"/>
+       <namespace ns="http://www.w3.org/1999/XSL/Transform" typeId="XSLT"/>
+     </locatingRules>
+
+The effect of these two files is that the XHTML `namespace' rule takes
+precedence over the `transformURI' rule, which is almost certainly not
+what is needed.  This can be solved by adding an `applyFollowingRules'
+to the private file.
+
+     <locatingRules xmlns="http://thaiopensource.com/ns/locating-rules/1.0">
+       <applyFollowingRules ruleType="transformURI"/>
+       <namespace ns="http://www.w3.org/1999/xhtml" uri="xhtml.rnc"/>
+     </locatingRules>
+
+
+File: nxml-mode.info,  Node: DTDs,  Next: Limitations,  Prev: Locating a schema,  Up: Top
+
+7 DTDs
+******
+
+nXML mode is designed to support the creation of standalone XML
+documents that do not depend on a DTD.  Although it is common practice
+to insert a DOCTYPE declaration referencing an external DTD, this has
+undesirable side-effects.  It means that the document is no longer
+self-contained. It also means that different XML parsers may interpret
+the document in different ways, since the XML Recommendation does not
+require XML parsers to read the DTD.  With DTDs, it was impractical to
+get validation without using an external DTD or reference to an
+parameter entity.  With RELAX NG and other schema languages, you can
+simultaneously get the benefits of validation and standalone XML
+documents.  Therefore, I recommend that you do not reference an
+external DOCTYPE in your XML documents.
+
+   One problem is entities for characters. Typically, as well as
+providing validation, DTDs also provide a set of character entities for
+documents to use. Schemas cannot provide this functionality, because
+schema validation happens after XML parsing.  The recommended solution
+is to either use the Unicode characters directly, or, if this is
+impractical, use character references.  nXML mode supports this by
+providing commands for entering characters and character references
+using the Unicode names, and can display the glyph corresponding to a
+character reference.
+
+
+File: nxml-mode.info,  Node: Limitations,  Next: GNU Free Documentation License,  Prev: DTDs,  Up: Top
+
+8 Limitations
+*************
+
+nXML mode has some limitations:
+
+   * DTD support is limited.  Internal parsed general entities declared
+     in the internal subset are supported provided they do not contain
+     elements. Other usage of DTDs is ignored.
+
+   * The restrictions on RELAX NG schemas in section 7 of the RELAX NG
+     specification are not enforced.
+
+
+File: nxml-mode.info,  Node: GNU Free Documentation License,  Prev: Limitations,  Up: Top
+
+Appendix A GNU Free Documentation License
+*****************************************
+
+                     Version 1.3, 3 November 2008
+
+     Copyright (C) 2000, 2001, 2002, 2007, 2008, 2009 Free Software Foundation, Inc.
+     `http://fsf.org/'
+
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+
+  0. PREAMBLE
+
+     The purpose of this License is to make a manual, textbook, or other
+     functional and useful document "free" in the sense of freedom: to
+     assure everyone the effective freedom to copy and redistribute it,
+     with or without modifying it, either commercially or
+     noncommercially.  Secondarily, this License preserves for the
+     author and publisher a way to get credit for their work, while not
+     being considered responsible for modifications made by others.
+
+     This License is a kind of "copyleft", which means that derivative
+     works of the document must themselves be free in the same sense.
+     It complements the GNU General Public License, which is a copyleft
+     license designed for free software.
+
+     We have designed this License in order to use it for manuals for
+     free software, because free software needs free documentation: a
+     free program should come with manuals providing the same freedoms
+     that the software does.  But this License is not limited to
+     software manuals; it can be used for any textual work, regardless
+     of subject matter or whether it is published as a printed book.
+     We recommend this License principally for works whose purpose is
+     instruction or reference.
+
+  1. APPLICABILITY AND DEFINITIONS
+
+     This License applies to any manual or other work, in any medium,
+     that contains a notice placed by the copyright holder saying it
+     can be distributed under the terms of this License.  Such a notice
+     grants a world-wide, royalty-free license, unlimited in duration,
+     to use that work under the conditions stated herein.  The
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You
+     accept the license if you copy, modify or distribute the work in a
+     way requiring permission under copyright law.
+
+     A "Modified Version" of the Document means any work containing the
+     Document or a portion of it, either copied verbatim, or with
+     modifications and/or translated into another language.
+
+     A "Secondary Section" is a named appendix or a front-matter section
+     of the Document that deals exclusively with the relationship of the
+     publishers or authors of the Document to the Document's overall
+     subject (or to related matters) and contains nothing that could
+     fall directly within that overall subject.  (Thus, if the Document
+     is in part a textbook of mathematics, a Secondary Section may not
+     explain any mathematics.)  The relationship could be a matter of
+     historical connection with the subject or with related matters, or
+     of legal, commercial, philosophical, ethical or political position
+     regarding them.
+
+     The "Invariant Sections" are certain Secondary Sections whose
+     titles are designated, as being those of Invariant Sections, in
+     the notice that says that the Document is released under this
+     License.  If a section does not fit the above definition of
+     Secondary then it is not allowed to be designated as Invariant.
+     The Document may contain zero Invariant Sections.  If the Document
+     does not identify any Invariant Sections then there are none.
+
+     The "Cover Texts" are certain short passages of text that are
+     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
+     that says that the Document is released under this License.  A
+     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
+     be at most 25 words.
+
+     A "Transparent" copy of the Document means a machine-readable copy,
+     represented in a format whose specification is available to the
+     general public, that is suitable for revising the document
+     straightforwardly with generic text editors or (for images
+     composed of pixels) generic paint programs or (for drawings) some
+     widely available drawing editor, and that is suitable for input to
+     text formatters or for automatic translation to a variety of
+     formats suitable for input to text formatters.  A copy made in an
+     otherwise Transparent file format whose markup, or absence of
+     markup, has been arranged to thwart or discourage subsequent
+     modification by readers is not Transparent.  An image format is
+     not Transparent if used for any substantial amount of text.  A
+     copy that is not "Transparent" is called "Opaque".
+
+     Examples of suitable formats for Transparent copies include plain
+     ASCII without markup, Texinfo input format, LaTeX input format,
+     SGML or XML using a publicly available DTD, and
+     standard-conforming simple HTML, PostScript or PDF designed for
+     human modification.  Examples of transparent image formats include
+     PNG, XCF and JPG.  Opaque formats include proprietary formats that
+     can be read and edited only by proprietary word processors, SGML or
+     XML for which the DTD and/or processing tools are not generally
+     available, and the machine-generated HTML, PostScript or PDF
+     produced by some word processors for output purposes only.
+
+     The "Title Page" means, for a printed book, the title page itself,
+     plus such following pages as are needed to hold, legibly, the
+     material this License requires to appear in the title page.  For
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
+
+     A section "Entitled XYZ" means a named subunit of the Document
+     whose title either is precisely XYZ or contains XYZ in parentheses
+     following text that translates XYZ in another language.  (Here XYZ
+     stands for a specific section name mentioned below, such as
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
+     to this definition.
+
+     The Document may include Warranty Disclaimers next to the notice
+     which states that this License applies to the Document.  These
+     Warranty Disclaimers are considered to be included by reference in
+     this License, but only as regards disclaiming warranties: any other
+     implication that these Warranty Disclaimers may have is void and
+     has no effect on the meaning of this License.
+
+  2. VERBATIM COPYING
+
+     You may copy and distribute the Document in any medium, either
+     commercially or noncommercially, provided that this License, the
+     copyright notices, and the license notice saying this License
+     applies to the Document are reproduced in all copies, and that you
+     add no other conditions whatsoever to those of this License.  You
+     may not use technical measures to obstruct or control the reading
+     or further copying of the copies you make or distribute.  However,
+     you may accept compensation in exchange for copies.  If you
+     distribute a large enough number of copies you must also follow
+     the conditions in section 3.
+
+     You may also lend copies, under the same conditions stated above,
+     and you may publicly display copies.
+
+  3. COPYING IN QUANTITY
+
+     If you publish printed copies (or copies in media that commonly
+     have printed covers) of the Document, numbering more than 100, and
+     the Document's license notice requires Cover Texts, you must
+     enclose the copies in covers that carry, clearly and legibly, all
+     these Cover Texts: Front-Cover Texts on the front cover, and
+     Back-Cover Texts on the back cover.  Both covers must also clearly
+     and legibly identify you as the publisher of these copies.  The
+     front cover must present the full title with all words of the
+     title equally prominent and visible.  You may add other material
+     on the covers in addition.  Copying with changes limited to the
+     covers, as long as they preserve the title of the Document and
+     satisfy these conditions, can be treated as verbatim copying in
+     other respects.
+
+     If the required texts for either cover are too voluminous to fit
+     legibly, you should put the first ones listed (as many as fit
+     reasonably) on the actual cover, and continue the rest onto
+     adjacent pages.
+
+     If you publish or distribute Opaque copies of the Document
+     numbering more than 100, you must either include a
+     machine-readable Transparent copy along with each Opaque copy, or
+     state in or with each Opaque copy a computer-network location from
+     which the general network-using public has access to download
+     using public-standard network protocols a complete Transparent
+     copy of the Document, free of added material.  If you use the
+     latter option, you must take reasonably prudent steps, when you
+     begin distribution of Opaque copies in quantity, to ensure that
+     this Transparent copy will remain thus accessible at the stated
+     location until at least one year after the last time you
+     distribute an Opaque copy (directly or through your agents or
+     retailers) of that edition to the public.
+
+     It is requested, but not required, that you contact the authors of
+     the Document well before redistributing any large number of
+     copies, to give them a chance to provide you with an updated
+     version of the Document.
+
+  4. MODIFICATIONS
+
+     You may copy and distribute a Modified Version of the Document
+     under the conditions of sections 2 and 3 above, provided that you
+     release the Modified Version under precisely this License, with
+     the Modified Version filling the role of the Document, thus
+     licensing distribution and modification of the Modified Version to
+     whoever possesses a copy of it.  In addition, you must do these
+     things in the Modified Version:
+
+       A. Use in the Title Page (and on the covers, if any) a title
+          distinct from that of the Document, and from those of
+          previous versions (which should, if there were any, be listed
+          in the History section of the Document).  You may use the
+          same title as a previous version if the original publisher of
+          that version gives permission.
+
+       B. List on the Title Page, as authors, one or more persons or
+          entities responsible for authorship of the modifications in
+          the Modified Version, together with at least five of the
+          principal authors of the Document (all of its principal
+          authors, if it has fewer than five), unless they release you
+          from this requirement.
+
+       C. State on the Title page the name of the publisher of the
+          Modified Version, as the publisher.
+
+       D. Preserve all the copyright notices of the Document.
+
+       E. Add an appropriate copyright notice for your modifications
+          adjacent to the other copyright notices.
+
+       F. Include, immediately after the copyright notices, a license
+          notice giving the public permission to use the Modified
+          Version under the terms of this License, in the form shown in
+          the Addendum below.
+
+       G. Preserve in that license notice the full lists of Invariant
+          Sections and required Cover Texts given in the Document's
+          license notice.
+
+       H. Include an unaltered copy of this License.
+
+       I. Preserve the section Entitled "History", Preserve its Title,
+          and add to it an item stating at least the title, year, new
+          authors, and publisher of the Modified Version as given on
+          the Title Page.  If there is no section Entitled "History" in
+          the Document, create one stating the title, year, authors,
+          and publisher of the Document as given on its Title Page,
+          then add an item describing the Modified Version as stated in
+          the previous sentence.
+
+       J. Preserve the network location, if any, given in the Document
+          for public access to a Transparent copy of the Document, and
+          likewise the network locations given in the Document for
+          previous versions it was based on.  These may be placed in
+          the "History" section.  You may omit a network location for a
+          work that was published at least four years before the
+          Document itself, or if the original publisher of the version
+          it refers to gives permission.
+
+       K. For any section Entitled "Acknowledgements" or "Dedications",
+          Preserve the Title of the section, and preserve in the
+          section all the substance and tone of each of the contributor
+          acknowledgements and/or dedications given therein.
+
+       L. Preserve all the Invariant Sections of the Document,
+          unaltered in their text and in their titles.  Section numbers
+          or the equivalent are not considered part of the section
+          titles.
+
+       M. Delete any section Entitled "Endorsements".  Such a section
+          may not be included in the Modified Version.
+
+       N. Do not retitle any existing section to be Entitled
+          "Endorsements" or to conflict in title with any Invariant
+          Section.
+
+       O. Preserve any Warranty Disclaimers.
+
+     If the Modified Version includes new front-matter sections or
+     appendices that qualify as Secondary Sections and contain no
+     material copied from the Document, you may at your option
+     designate some or all of these sections as invariant.  To do this,
+     add their titles to the list of Invariant Sections in the Modified
+     Version's license notice.  These titles must be distinct from any
+     other section titles.
+
+     You may add a section Entitled "Endorsements", provided it contains
+     nothing but endorsements of your Modified Version by various
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
+
+     You may add a passage of up to five words as a Front-Cover Text,
+     and a passage of up to 25 words as a Back-Cover Text, to the end
+     of the list of Cover Texts in the Modified Version.  Only one
+     passage of Front-Cover Text and one of Back-Cover Text may be
+     added by (or through arrangements made by) any one entity.  If the
+     Document already includes a cover text for the same cover,
+     previously added by you or by arrangement made by the same entity
+     you are acting on behalf of, you may not add another; but you may
+     replace the old one, on explicit permission from the previous
+     publisher that added the old one.
+
+     The author(s) and publisher(s) of the Document do not by this
+     License give permission to use their names for publicity for or to
+     assert or imply endorsement of any Modified Version.
+
+  5. COMBINING DOCUMENTS
+
+     You may combine the Document with other documents released under
+     this License, under the terms defined in section 4 above for
+     modified versions, provided that you include in the combination
+     all of the Invariant Sections of all of the original documents,
+     unmodified, and list them all as Invariant Sections of your
+     combined work in its license notice, and that you preserve all
+     their Warranty Disclaimers.
+
+     The combined work need only contain one copy of this License, and
+     multiple identical Invariant Sections may be replaced with a single
+     copy.  If there are multiple Invariant Sections with the same name
+     but different contents, make the title of each such section unique
+     by adding at the end of it, in parentheses, the name of the
+     original author or publisher of that section if known, or else a
+     unique number.  Make the same adjustment to the section titles in
+     the list of Invariant Sections in the license notice of the
+     combined work.
+
+     In the combination, you must combine any sections Entitled
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
+
+  6. COLLECTIONS OF DOCUMENTS
+
+     You may make a collection consisting of the Document and other
+     documents released under this License, and replace the individual
+     copies of this License in the various documents with a single copy
+     that is included in the collection, provided that you follow the
+     rules of this License for verbatim copying of each of the
+     documents in all other respects.
+
+     You may extract a single document from such a collection, and
+     distribute it individually under this License, provided you insert
+     a copy of this License into the extracted document, and follow
+     this License in all other respects regarding verbatim copying of
+     that document.
+
+  7. AGGREGATION WITH INDEPENDENT WORKS
+
+     A compilation of the Document or its derivatives with other
+     separate and independent documents or works, in or on a volume of
+     a storage or distribution medium, is called an "aggregate" if the
+     copyright resulting from the compilation is not used to limit the
+     legal rights of the compilation's users beyond what the individual
+     works permit.  When the Document is included in an aggregate, this
+     License does not apply to the other works in the aggregate which
+     are not themselves derivative works of the Document.
+
+     If the Cover Text requirement of section 3 is applicable to these
+     copies of the Document, then if the Document is less than one half
+     of the entire aggregate, the Document's Cover Texts may be placed
+     on covers that bracket the Document within the aggregate, or the
+     electronic equivalent of covers if the Document is in electronic
+     form.  Otherwise they must appear on printed covers that bracket
+     the whole aggregate.
+
+  8. TRANSLATION
+
+     Translation is considered a kind of modification, so you may
+     distribute translations of the Document under the terms of section
+     4.  Replacing Invariant Sections with translations requires special
+     permission from their copyright holders, but you may include
+     translations of some or all Invariant Sections in addition to the
+     original versions of these Invariant Sections.  You may include a
+     translation of this License, and all the license notices in the
+     Document, and any Warranty Disclaimers, provided that you also
+     include the original English version of this License and the
+     original versions of those notices and disclaimers.  In case of a
+     disagreement between the translation and the original version of
+     this License or a notice or disclaimer, the original version will
+     prevail.
+
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
+     Preserve its Title (section 1) will typically require changing the
+     actual title.
+
+  9. TERMINATION
+
+     You may not copy, modify, sublicense, or distribute the Document
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
+
+ 10. FUTURE REVISIONS OF THIS LICENSE
+
+     The Free Software Foundation may publish new, revised versions of
+     the GNU Free Documentation License from time to time.  Such new
+     versions will be similar in spirit to the present version, but may
+     differ in detail to address new problems or concerns.  See
+     `http://www.gnu.org/copyleft/'.
+
+     Each version of the License is given a distinguishing version
+     number.  If the Document specifies that a particular numbered
+     version of this License "or any later version" applies to it, you
+     have the option of following the terms and conditions either of
+     that specified version or of any later version that has been
+     published (not as a draft) by the Free Software Foundation.  If
+     the Document does not specify a version number of this License,
+     you may choose any version ever published (not as a draft) by the
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
+
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
+
+ADDENDUM: How to use this License for your documents
+====================================================
+
+To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and license
+notices just after the title page:
+
+       Copyright (C)  YEAR  YOUR NAME.
+       Permission is granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version 1.3
+       or any later version published by the Free Software Foundation;
+       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+       Texts.  A copy of the license is included in the section entitled ``GNU
+       Free Documentation License''.
+
+   If you have Invariant Sections, Front-Cover Texts and Back-Cover
+Texts, replace the "with...Texts." line with this:
+
+         with the Invariant Sections being LIST THEIR TITLES, with
+         the Front-Cover Texts being LIST, and with the Back-Cover Texts
+         being LIST.
+
+   If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License, to
+permit their use in free software.
+
+
+
+Tag Table:
+Node: Top1029
+Node: Introduction2079
+Node: Completion4253
+Node: Inserting end-tags8258
+Node: Paragraphs9576
+Node: Outlining11836
+Node: Locating a schema17453
+Node: Commands for locating a schema18900
+Node: Schema locating files21524
+Node: Schema locating file syntax basics22417
+Node: Using the document's URI to locate a schema24309
+Node: Using the document element to locate a schema26835
+Node: Using type identifiers in schema locating files27901
+Node: Using multiple schema locating files30317
+Node: DTDs32145
+Node: Limitations33609
+Node: GNU Free Documentation License34077
+
+End Tag Table

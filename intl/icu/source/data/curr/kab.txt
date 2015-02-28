@@ -81,7 +81,7 @@ kab{
         }
         GBP{
             "£",
-            "Apund Sterling Aglizi",
+            "Apund Aglizi",
         }
         GHC{
             "GHC",
@@ -232,5 +232,5 @@ kab{
             "Adular Azimbabwi",
         }
     }
-    Version{"2.1.6.69"}
+    Version{"2.1.10.42"}
 }

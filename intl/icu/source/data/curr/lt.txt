@@ -397,7 +397,7 @@ lt{
         }
         GBP{
             "GBP",
-            "Didžiosios Britanijos svaras sterlingų",
+            "Didžiosios Britanijos svaras",
         }
         GEK{
             "GEK",
@@ -1835,10 +1835,10 @@ lt{
             other{"Prancūzijos frankų"}
         }
         GBP{
-            few{"Didžiosios Britanijos svarai sterlingų"}
-            many{"Didžiosios Britanijos svaro sterlingų"}
-            one{"Didžiosios Britanijos svaras sterlingų"}
-            other{"Didžiosios Britanijos svarų sterlingų"}
+            few{"Didžiosios Britanijos svarai"}
+            many{"Didžiosios Britanijos svaro"}
+            one{"Didžiosios Britanijos svaras"}
+            other{"Didžiosios Britanijos svarų"}
         }
         GEK{
             few{"Gruzinų kupon larits"}
@@ -3041,5 +3041,5 @@ lt{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

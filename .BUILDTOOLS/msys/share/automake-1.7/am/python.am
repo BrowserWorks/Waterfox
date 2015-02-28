@@ -1,0 +1,87 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1999, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%PYTHON_INSTALL = $(INSTALL_DATA)
+?!BASE?%DIR%PYTHON_INSTALL = $(install_sh_DATA)
+?EXEC?.PHONY install-exec-am: install-%DIR%PYTHON
+?!EXEC?.PHONY install-data-am: install-%DIR%PYTHON
+install-%DIR%PYTHON: $(%DIR%_PYTHON)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+	@list='$(%DIR%_PYTHON)'; dlist=''; for p in $$list; do\
+## A file can be in the source directory or the build directory.
+	  if test -f "$$p"; then b=; else b="$(srcdir)/"; fi; \
+	  if test -f $$b$$p; then \
+## Compute basename of source file.  Unless this is a nobase_ target, we
+## want to install 'python/foo.py' as '$(DESTDIR)$(%NDIR%dir)/foo.py',
+## not '$(DESTDIR)$(%NDIR%dir)/python/foo.py'.
+?BASE?	    d=`echo "$$p" | sed -e 's,^.*/,,'`; \
+?!BASE?	    d="$$p"; \
+	    dlist="$$dlist $$d"; \
+## Don't perform translation, since script name is important.
+	    echo " $(%DIR%PYTHON_INSTALL) $$b$$p $(DESTDIR)$(%NDIR%dir)/$$d"; \
+	    $(%DIR%PYTHON_INSTALL) $$b$$p $(DESTDIR)$(%NDIR%dir)/$$d; \
+	  else :; fi; \
+	done; \
+## Byte-compile must be done at install time, since file times are
+## encoded in the actual files.
+	PYTHON=$(PYTHON) $(py_compile) --basedir $(DESTDIR)$(%NDIR%dir) $$dlist
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%PYTHON
+uninstall-%DIR%PYTHON:
+	@$(NORMAL_UNINSTALL)
+	list='$(%DIR%_PYTHON)'; for p in $$list; do \
+?BASE?	  d=`echo "$$p" | sed -e 's,^.*/,,'`; \
+?!BASE?	  d="$$p"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$d; \
+## This is to remove the .pyc and .pyo byte compiled versions (a bit
+## of a hack).
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$${d}c; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$${d}o; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## There is nothing to clean here since files are
+## byte-compiled when (and where) they are installed.
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += $(%DIR%_PYTHON)
+endif %?DIST%

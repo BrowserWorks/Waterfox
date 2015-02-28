@@ -27,14 +27,6 @@ public: // new functions
 
     FT2FontEntry *GetFontEntry();
 
-    static already_AddRefed<gfxFT2Font>
-    GetOrMakeFont(const nsAString& aName, const gfxFontStyle *aStyle,
-                  bool aNeedsBold = false);
-
-    static already_AddRefed<gfxFT2Font>
-    GetOrMakeFont(FT2FontEntry *aFontEntry, const gfxFontStyle *aStyle,
-                  bool aNeedsBold = false);
-
     struct CachedGlyphData {
         CachedGlyphData()
             : glyphIndex(0xffffffffU) { }
@@ -68,7 +60,8 @@ public: // new functions
                                         FontCacheSizes* aSizes) const;
 
 #ifdef USE_SKIA
-    virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions> GetGlyphRenderingOptions();
+    virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
+        GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) MOZ_OVERRIDE;
 #endif
 
 protected:

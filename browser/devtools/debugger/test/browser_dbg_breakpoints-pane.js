@@ -9,12 +9,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  let gTab, gDebuggee, gPanel, gDebugger;
+  let gTab, gPanel, gDebugger;
   let gEditor, gSources, gBreakpoints, gBreakpointsAdded, gBreakpointsRemoving;
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -24,7 +23,7 @@ function test() {
     gBreakpointsRemoving = gBreakpoints._removing;
 
     waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1).then(performTest);
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 
   let breakpointsAdded = 0;
@@ -36,7 +35,7 @@ function test() {
       "Should only be getting stack frames while paused.");
     is(gSources.itemCount, 2,
       "Found the expected number of sources.");
-    is(gEditor.getText().indexOf("debugger"), 172,
+    is(gEditor.getText().indexOf("debugger"), 166,
       "The correct source was loaded initially.");
     is(gSources.selectedValue, gSources.values[1],
       "The correct source is selected.");
@@ -136,21 +135,21 @@ function test() {
     function addBreakpoints(aIncrementFlag) {
       let deferred = promise.defer();
 
-      gPanel.addBreakpoint({ url: gSources.selectedValue, line: 6 }).then(aClient => {
+      gPanel.addBreakpoint({ actor: gSources.selectedValue, line: 6 }).then(aClient => {
         onBreakpointAdd(aClient, {
           increment: aIncrementFlag,
           line: 6,
-          text: "eval(\"debugger;\");"
+          text: "debugger;"
         });
 
-        gPanel.addBreakpoint({ url: gSources.selectedValue, line: 7 }).then(aClient => {
+        gPanel.addBreakpoint({ actor: gSources.selectedValue, line: 7 }).then(aClient => {
           onBreakpointAdd(aClient, {
             increment: aIncrementFlag,
             line: 7,
             text: "function foo() {}"
           });
 
-          gPanel.addBreakpoint({ url: gSources.selectedValue, line: 9 }).then(aClient => {
+          gPanel.addBreakpoint({ actor: gSources.selectedValue, line: 9 }).then(aClient => {
             onBreakpointAdd(aClient, {
               increment: aIncrementFlag,
               line: 9,

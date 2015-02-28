@@ -86,6 +86,14 @@ browser.jar:
     content/browser/devtools/profiler.js                               (profiler/profiler.js)
     content/browser/devtools/ui-recordings.js                          (profiler/ui-recordings.js)
     content/browser/devtools/ui-profile.js                             (profiler/ui-profile.js)
+#ifdef MOZ_DEVTOOLS_PERFTOOLS
+    content/browser/devtools/performance.xul                           (performance/performance.xul)
+    content/browser/devtools/performance/controller.js                 (performance/controller.js)
+    content/browser/devtools/performance/views/main.js                 (performance/views/main.js)
+    content/browser/devtools/performance/views/overview.js             (performance/views/overview.js)
+    content/browser/devtools/performance/views/details.js              (performance/views/details.js)
+    content/browser/devtools/performance/views/call-tree.js            (performance/views/call-tree.js)
+#endif
     content/browser/devtools/responsivedesign/resize-commands.js       (responsivedesign/resize-commands.js)
     content/browser/devtools/commandline.css                           (commandline/commandline.css)
     content/browser/devtools/commandlineoutput.xhtml                   (commandline/commandlineoutput.xhtml)
@@ -97,7 +105,7 @@ browser.jar:
     content/browser/devtools/framework/toolbox.xul                     (framework/toolbox.xul)
     content/browser/devtools/framework/options-panel.css               (framework/options-panel.css)
     content/browser/devtools/framework/toolbox-process-window.xul      (framework/toolbox-process-window.xul)
-    content/browser/devtools/framework/toolbox-process-window.js       (framework/toolbox-process-window.js)
+*   content/browser/devtools/framework/toolbox-process-window.js       (framework/toolbox-process-window.js)
     content/browser/devtools/framework/dev-edition-promo.xul           (framework/dev-edition-promo/dev-edition-promo.xul)
 *   content/browser/devtools/framework/dev-edition-promo.css           (framework/dev-edition-promo/dev-edition-promo.css)
     content/browser/devtools/framework/dev-edition-logo.png            (framework/dev-edition-promo/dev-edition-logo.png)

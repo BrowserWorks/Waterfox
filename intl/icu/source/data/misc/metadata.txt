@@ -27,6 +27,7 @@ metadata:table(nofallback){
         ave{"ae"}
         aym{"ay"}
         ayr{"ay"}
+        az_AZ{"az_Latn_AZ"}
         aze{"az"}
         azj{"az"}
         bak{"ba"}
@@ -41,6 +42,7 @@ metadata:table(nofallback){
         bod{"bo"}
         bos{"bs"}
         bre{"br"}
+        bs_BA{"bs_Latn_BA"}
         bul{"bg"}
         bur{"my"}
         bxk{"luy"}
@@ -102,6 +104,9 @@ metadata:table(nofallback){
         gug{"gn"}
         guj{"gu"}
         gya{"gba"}
+        ha_GH{"ha_Latn_GH"}
+        ha_NE{"ha_Latn_NE"}
+        ha_NG{"ha_Latn_NG"}
         hat{"ht"}
         hau{"ha"}
         hbs{"sr_Latn"}
@@ -154,6 +159,7 @@ metadata:table(nofallback){
         kik{"ki"}
         kin{"rw"}
         kir{"ky"}
+        kk_KZ{"kk_Cyrl_KZ"}
         kmr{"ku"}
         knc{"kr"}
         kng{"kg"}
@@ -162,8 +168,10 @@ metadata:table(nofallback){
         kon{"kg"}
         kor{"ko"}
         kpv{"kv"}
+        ks_IN{"ks_Arab_IN"}
         kua{"kj"}
         kur{"ku"}
+        ky_KG{"ky_Cyrl_KG"}
         lao{"lo"}
         lat{"la"}
         lav{"lv"}
@@ -185,11 +193,15 @@ metadata:table(nofallback){
         mkd{"mk"}
         mlg{"mg"}
         mlt{"mt"}
+        mn_MN{"mn_Cyrl_MN"}
         mnk{"man"}
         mo{"ro_MD"}
         mol{"ro_MD"}
         mon{"mn"}
         mri{"mi"}
+        ms_BN{"ms_Latn_BN"}
+        ms_MY{"ms_Latn_MY"}
+        ms_SG{"ms_Latn_SG"}
         msa{"ms"}
         mup{"raj"}
         mya{"my"}
@@ -217,6 +229,8 @@ metadata:table(nofallback){
         orm{"om"}
         ory{"or"}
         oss{"os"}
+        pa_IN{"pa_Guru_IN"}
+        pa_PK{"pa_Arab_PK"}
         pan{"pa"}
         pbu{"ps"}
         per{"fa"}
@@ -241,6 +255,7 @@ metadata:table(nofallback){
         sgn_BE_NL{"vgt"}
         sgn_CH_DE{"sgg"}
         sh{"sr_Latn"}
+        shi_MA{"shi_Tfng_MA"}
         sin{"si"}
         slk{"sk"}
         slo{"sk"}
@@ -254,6 +269,10 @@ metadata:table(nofallback){
         spa{"es"}
         spy{"kln"}
         sqi{"sq"}
+        sr_BA{"sr_Cyrl_BA"}
+        sr_ME{"sr_Latn_ME"}
+        sr_RS{"sr_Cyrl_RS"}
+        sr_XK{"sr_Cyrl_XK"}
         src{"sc"}
         srd{"sc"}
         srp{"sr"}
@@ -280,12 +299,17 @@ metadata:table(nofallback){
         tur{"tr"}
         tw{"ak"}
         twi{"ak"}
+        tzm_MA{"tzm_Latn_MA"}
+        ug_CN{"ug_Arab_CN"}
         uig{"ug"}
         ukr{"uk"}
         umu{"del"}
         urd{"ur"}
+        uz_AF{"uz_Arab_AF"}
+        uz_UZ{"uz_Latn_UZ"}
         uzb{"uz"}
         uzn{"uz"}
+        vai_LR{"vai_Vaii_LR"}
         ven{"ve"}
         vie{"vi"}
         vol{"vo"}
@@ -299,6 +323,11 @@ metadata:table(nofallback){
         yid{"yi"}
         yor{"yo"}
         zai{"zap"}
+        zh_CN{"zh_Hans_CN"}
+        zh_HK{"zh_Hant_HK"}
+        zh_MO{"zh_Hant_MO"}
+        zh_SG{"zh_Hans_SG"}
+        zh_TW{"zh_Hant_TW"}
         zh_guoyu{"zh"}
         zh_hakka{"hak"}
         zh_min_nan{"nan"}

@@ -4,6 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsMathMLmencloseFrame.h"
+
+#include "gfx2DGlue.h"
+#include "gfxUtils.h"
+#include "mozilla/gfx/2D.h"
+#include "mozilla/gfx/PathHelpers.h"
 #include "nsPresContext.h"
 #include "nsRenderingContext.h"
 #include "nsWhitespaceTokenizer.h"
@@ -12,6 +17,9 @@
 #include "gfxContext.h"
 #include "nsMathMLChar.h"
 #include <algorithm>
+
+using namespace mozilla;
+using namespace mozilla::gfx;
 
 //
 // <menclose> -- enclose content with a stretching symbol such
@@ -335,16 +343,18 @@ nsMathMLmencloseFrame::PlaceInternal(nsRenderingContext& aRenderingContext,
   // Thickness of bars and font metrics
   nscoord onePixel = nsPresContext::CSSPixelsToAppUnits(1);
 
+  float fontSizeInflation = nsLayoutUtils::FontSizeInflationFor(this);
   nsRefPtr<nsFontMetrics> fm;
-  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm));
-  aRenderingContext.SetFont(fm);
+  nsLayoutUtils::GetFontMetricsForFrame(this, getter_AddRefs(fm),
+                                        fontSizeInflation);
   GetRuleThickness(aRenderingContext, fm, mRuleThickness);
   if (mRuleThickness < onePixel) {
     mRuleThickness = onePixel;
   }
 
   char16_t one = '1';
-  nsBoundingMetrics bmOne = aRenderingContext.GetBoundingMetrics(&one, 1);
+  nsBoundingMetrics bmOne =
+    nsLayoutUtils::AppUnitBoundsOfString(&one, 1, *fm, aRenderingContext);
 
   ///////////////
   // General rules: the menclose element takes the size of the enclosed content.
@@ -474,7 +484,7 @@ nsMathMLmencloseFrame::PlaceInternal(nsRenderingContext& aRenderingContext,
   if (IsToDraw(NOTATION_LONGDIV)) {
     if (aWidthOnly) {
         nscoord longdiv_width = mMathMLChar[mLongDivCharIndex].
-          GetMaxWidth(PresContext(), aRenderingContext);
+          GetMaxWidth(PresContext(), aRenderingContext, fontSizeInflation);
 
         // Update horizontal parameters
         dx_left = std::max(dx_left, longdiv_width);
@@ -487,6 +497,7 @@ nsMathMLmencloseFrame::PlaceInternal(nsRenderingContext& aRenderingContext,
 
       // height(longdiv) should be >= height(base) + psi + mRuleThickness
       mMathMLChar[mLongDivCharIndex].Stretch(PresContext(), aRenderingContext,
+                                             fontSizeInflation,
                                              NS_STRETCH_DIRECTION_VERTICAL,
                                              contSize, bmLongdivChar,
                                              NS_STRETCH_LARGER, false);
@@ -515,7 +526,7 @@ nsMathMLmencloseFrame::PlaceInternal(nsRenderingContext& aRenderingContext,
     
     if (aWidthOnly) {
       nscoord radical_width = mMathMLChar[mRadicalCharIndex].
-        GetMaxWidth(PresContext(), aRenderingContext);
+        GetMaxWidth(PresContext(), aRenderingContext, fontSizeInflation);
       
       // Update horizontal parameters
       *dx_leading = std::max(*dx_leading, radical_width);
@@ -528,6 +539,7 @@ nsMathMLmencloseFrame::PlaceInternal(nsRenderingContext& aRenderingContext,
 
       // height(radical) should be >= height(base) + psi + mRadicalRuleThickness
       mMathMLChar[mRadicalCharIndex].Stretch(PresContext(), aRenderingContext,
+                                             fontSizeInflation,
                                              NS_STRETCH_DIRECTION_VERTICAL,
                                              contSize, bmRadicalChar,
                                              NS_STRETCH_LARGER,
@@ -759,94 +771,86 @@ private:
 void nsDisplayNotation::Paint(nsDisplayListBuilder* aBuilder,
                               nsRenderingContext* aCtx)
 {
-  // get the gfxRect
+  DrawTarget& aDrawTarget = *aCtx->GetDrawTarget();
   nsPresContext* presContext = mFrame->PresContext();
-  gfxRect rect = presContext->AppUnitsToGfxUnits(mRect + ToReferenceFrame());
 
-  // paint the frame with the current text color
-  aCtx->SetColor(mFrame->GetVisitedDependentColor(eCSSProperty_color));
+  Float strokeWidth = presContext->AppUnitsToGfxUnits(mThickness);
 
-  // change line width to mThickness
-  gfxContext *gfxCtx = aCtx->ThebesContext();
-  gfxFloat e = presContext->AppUnitsToGfxUnits(mThickness);
-  gfxCtx->Save();
-  gfxCtx->SetLineWidth(e);
+  Rect rect = NSRectToRect(mRect + ToReferenceFrame(),
+                           presContext->AppUnitsPerDevPixel());
+  rect.Deflate(strokeWidth / 2.f);
 
-  rect.Deflate(e / 2.0);
+  ColorPattern color(ToDeviceColor(
+                       mFrame->GetVisitedDependentColor(eCSSProperty_color)));
+
+  StrokeOptions strokeOptions(strokeWidth);
 
   switch(mType)
-    {
-    case NOTATION_CIRCLE:
-      gfxCtx->NewPath();
-      gfxCtx->Ellipse(rect.Center(), rect.Size());
-      gfxCtx->Stroke();
-      break;
-
-    case NOTATION_ROUNDEDBOX:
-      gfxCtx->NewPath();
-      gfxCtx->RoundedRectangle(rect, gfxCornerSizes(3 * e), true);
-      gfxCtx->Stroke();
-      break;
-
-    case NOTATION_UPDIAGONALSTRIKE:
-      gfxCtx->NewPath();
-      gfxCtx->Line(rect.BottomLeft(), rect.TopRight());
-      gfxCtx->Stroke();
-      break;
-
-    case NOTATION_DOWNDIAGONALSTRIKE:
-      gfxCtx->NewPath();
-      gfxCtx->Line(rect.TopLeft(), rect.BottomRight());
-      gfxCtx->Stroke();
-      break;
-
+  {
+    case NOTATION_CIRCLE: {
+      RefPtr<Path> ellipse =
+        MakePathForEllipse(aDrawTarget, rect.Center(), rect.Size());
+      aDrawTarget.Stroke(ellipse, color, strokeOptions);
+      return;
+    }
+    case NOTATION_ROUNDEDBOX: {
+      Float radius = 3 * strokeWidth;
+      RectCornerRadii radii(radius, radius);
+      RefPtr<Path> roundedRect =
+        MakePathForRoundedRect(aDrawTarget, rect, radii, true);
+      aDrawTarget.Stroke(roundedRect, color, strokeOptions);
+      return;
+    }
+    case NOTATION_UPDIAGONALSTRIKE: {
+      aDrawTarget.StrokeLine(rect.BottomLeft(), rect.TopRight(),
+                             color, strokeOptions);
+      return;
+    }
+    case NOTATION_DOWNDIAGONALSTRIKE: {
+      aDrawTarget.StrokeLine(rect.TopLeft(), rect.BottomRight(),
+                             color, strokeOptions);
+      return;
+    }
     case NOTATION_UPDIAGONALARROW: {
       // Compute some parameters to draw the updiagonalarrow. The values below
       // are taken from MathJax's HTML-CSS output.
-      gfxFloat W = rect.Width(); gfxFloat H = rect.Height();
-      gfxFloat l = sqrt(W*W + H*H);
-      gfxFloat f = gfxFloat(kArrowHeadSize) * e / l;
-      gfxFloat w = W * f; gfxFloat h = H * f;
+      Float W = rect.Width(); gfxFloat H = rect.Height();
+      Float l = sqrt(W*W + H*H);
+      Float f = Float(kArrowHeadSize) * strokeWidth / l;
+      Float w = W * f; gfxFloat h = H * f;
 
       // Draw the arrow shaft
-      gfxCtx->NewPath();
-      gfxCtx->Line(rect.BottomLeft(), rect.TopRight() + gfxPoint(-.7*w, .7*h));
-      gfxCtx->Stroke();
+      aDrawTarget.StrokeLine(rect.BottomLeft(),
+                             rect.TopRight() + Point(-.7*w, .7*h),
+                             color, strokeOptions);
 
       // Draw the arrow head
-      gfxCtx->NewPath();
-      gfxPoint p[] = {
-        rect.TopRight(),
-        rect.TopRight() + gfxPoint(-w -.4*h, std::max(-e / 2.0, h - .4*w)),
-        rect.TopRight() + gfxPoint(-.7*w, .7*h),
-        rect.TopRight() + gfxPoint(std::min(e / 2.0, -w + .4*h), h + .4*w),
-        rect.TopRight()
-      };
-      gfxCtx->Polygon(p, MOZ_ARRAY_LENGTH(p));
-      gfxCtx->Fill();
+      RefPtr<PathBuilder> builder = aDrawTarget.CreatePathBuilder();
+      builder->MoveTo(rect.TopRight());
+      builder->LineTo(rect.TopRight() + Point(-w -.4*h, std::max(-strokeWidth / 2.0, h - .4*w)));
+      builder->LineTo(rect.TopRight() + Point(-.7*w, .7*h));
+      builder->LineTo(rect.TopRight() + Point(std::min(strokeWidth / 2.0, -w + .4*h), h + .4*w));
+      builder->Close();
+      RefPtr<Path> path = builder->Finish();
+      aDrawTarget.Fill(path, color);
+      return;
     }
-      break;
-
     case NOTATION_PHASORANGLE: {
       // Compute some parameters to draw the angled line,
       // that uses a slope of 2 (angle = tan^-1(2)).
       // H = w * tan(angle) = w * 2
-      gfxFloat w = gfxFloat(kPhasorangleWidth) * e;
-      gfxFloat H = 2 * w;
+      Float w = Float(kPhasorangleWidth) * strokeWidth;
+      Float H = 2 * w;
 
       // Draw the angled line
-      gfxCtx->NewPath();
-      gfxCtx->Line(rect.BottomLeft(), rect.BottomLeft() + gfxPoint(w, -H));
-      gfxCtx->Stroke();
-      break;
+      aDrawTarget.StrokeLine(rect.BottomLeft(),
+                             rect.BottomLeft() + Point(w, -H),
+                             color, strokeOptions);
+      return;
     }
-
     default:
       NS_NOTREACHED("This notation can not be drawn using nsDisplayNotation");
-      break;
-    }
-
-  gfxCtx->Restore();
+  }
 }
 
 void

@@ -25,6 +25,7 @@
 using mozilla::plugins::PluginInstanceParent;
 
 #include "nsWindowGfx.h"
+#include "nsAppRunner.h"
 #include <windows.h>
 #include "gfxImageSurface.h"
 #include "gfxUtils.h"
@@ -36,11 +37,12 @@ using mozilla::plugins::PluginInstanceParent;
 #include "mozilla/RefPtr.h"
 #include "nsGfxCIID.h"
 #include "gfxContext.h"
-#include "nsRenderingContext.h"
 #include "prmem.h"
 #include "WinUtils.h"
 #include "nsIWidgetListener.h"
 #include "mozilla/unused.h"
+#include "nsDebug.h"
+#include "nsIXULRuntime.h"
 
 #ifdef MOZ_ENABLE_D3D9_LAYER
 #include "LayerManagerD3D9.h"
@@ -185,14 +187,17 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
   if (mozilla::ipc::MessageChannel::IsSpinLoopActive() && mPainting)
     return false;
 
-  if (mWindowType == eWindowType_plugin) {
-
-    /**
-     * After we CallUpdateWindow to the child, occasionally a WM_PAINT message
-     * is posted to the parent event loop with an empty update rect. Do a
-     * dummy paint so that Windows stops dispatching WM_PAINT in an inifinite
-     * loop. See bug 543788.
-     */
+  // After we CallUpdateWindow to the child, occasionally a WM_PAINT message
+  // is posted to the parent event loop with an empty update rect. Do a
+  // dummy paint so that Windows stops dispatching WM_PAINT in an inifinite
+  // loop. See bug 543788.
+  if (IsPlugin()) {
+    // XXX Ignore for now when we're running with full blown e10s
+    if (mozilla::BrowserTabsRemoteAutostart()) {
+      printf_stderr("nsWindow::OnPaint() bailing on paint!\n");
+      ValidateRect(mWnd, nullptr);
+      return true;
+    }
     RECT updateRect;
     if (!GetUpdateRect(mWnd, &updateRect, FALSE) ||
         (updateRect.left == updateRect.right &&
@@ -374,8 +379,6 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
             gfxPlatform::GetPlatform()->CreateDrawTargetForSurface(targetSurface,
                                                                    IntSize(paintRect.right - paintRect.left,
                                                                    paintRect.bottom - paintRect.top));
-          nsRefPtr<gfxContext> thebesContext = new gfxContext(dt);
-
           // don't need to double buffer with anything but GDI
           BufferMode doubleBuffering = mozilla::layers::BufferMode::BUFFER_NONE;
           if (IsRenderMode(gfxWindowsPlatform::RENDER_GDI) ||
@@ -391,15 +394,16 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
               case eTransparencyTransparent:
                 // If we're rendering with translucency, we're going to be
                 // rendering the whole window; make sure we clear it first
-                thebesContext->SetOperator(gfxContext::OPERATOR_CLEAR);
-                thebesContext->Paint();
-                thebesContext->SetOperator(gfxContext::OPERATOR_OVER);
+                dt->ClearRect(Rect(0.f, 0.f,
+                                   dt->GetSize().width, dt->GetSize().height));
                 break;
             }
 #else
             doubleBuffering = mozilla::layers::BufferMode::BUFFERED;
 #endif
           }
+
+          nsRefPtr<gfxContext> thebesContext = new gfxContext(dt);
 
           {
             AutoLayerManagerSetup
@@ -542,6 +546,7 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
         break;
 #endif
       case LayersBackend::LAYERS_CLIENT:
+        gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
         result = listener->PaintWindow(this, region);
         break;
       default:

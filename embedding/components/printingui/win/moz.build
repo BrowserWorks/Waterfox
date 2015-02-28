@@ -11,6 +11,10 @@ UNIFIED_SOURCES += [
     'nsPrintProgressParams.cpp',
 ]
 
+EXPORTS += [
+    'nsPrintDialogUtil.h',
+]
+
 FAIL_ON_WARNINGS = True
 
 FINAL_LIBRARY = 'xul'

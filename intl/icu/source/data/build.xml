@@ -137,6 +137,7 @@
 		  <remap sourcePath="/CurrencyUnitPatterns" targetDir="curr" />
 		  <remap sourcePath="/currencySpacing" targetDir="curr" />
 		  <remap sourcePath="/zoneStrings" targetDir="zone" />
+		  <remap sourcePath="/durationUnits" targetDir="unit" />
 		  <remap sourcePath="/units" targetDir="unit" />
 		  <remap sourcePath="/unitsShort" targetDir="unit" />
 		  <remap sourcePath="/unitsNarrow" targetDir="unit" />

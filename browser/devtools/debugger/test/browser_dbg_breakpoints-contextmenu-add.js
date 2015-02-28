@@ -8,12 +8,11 @@
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
 function test() {
-  let gTab, gDebuggee, gPanel, gDebugger;
+  let gTab, gPanel, gDebugger;
   let gEditor, gSources, gContextMenu, gBreakpoints, gBreakpointsAdded;
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -29,7 +28,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 
   function performTest() {
@@ -67,7 +66,7 @@ function test() {
          "1 breakpoint correctly added");
       is(gEditor.getBreakpoints().length, 1,
          "1 breakpoint currently shown in the editor.");
-      ok(gBreakpoints._getAdded({ url: gSources.values[1], line: 7 }),
+      ok(gBreakpoints._getAdded({ actor: gSources.values[1], line: 7 }),
          "Breakpoint on line 7 exists");
     });
   }
@@ -89,7 +88,7 @@ function test() {
          "2 breakpoints correctly added");
       is(gEditor.getBreakpoints().length, 2,
          "2 breakpoints currently shown in the editor.");
-      ok(gBreakpoints._getAdded({ url: gSources.values[1], line: 8 }),
+      ok(gBreakpoints._getAdded({ actor: gSources.values[1], line: 8 }),
          "Breakpoint on line 8 exists");
     });
   }

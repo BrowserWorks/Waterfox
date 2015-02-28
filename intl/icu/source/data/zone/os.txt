@@ -10,7 +10,7 @@
  * ICU <specials> source: <path>/common/main/os.xml
  */
 os{
-    Version{"2.1.7.53"}
+    Version{"2.1.10.42"}
     zoneStrings{
         "Asia:Tbilisi"{
             ec{"Тбилис"}

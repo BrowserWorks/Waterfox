@@ -13,19 +13,13 @@ import signal
 import subprocess
 import sys
 import tempfile
-from urlparse import urlparse
 import zipfile
 import mozinfo
 
 __all__ = [
   "ZipFileReader",
-  "addCommonOptions",
   "dumpLeakLog",
-  "isURL",
   "processLeakLog",
-  "replaceBackSlashes",
-  'KeyValueParseError',
-  'parseKeyValue',
   'systemMemory',
   'environment',
   'dumpScreen',
@@ -108,11 +102,6 @@ class ZipFileReader(object):
     for name in self._zipfile.namelist():
       self._extractname(name, path)
 
-def isURL(thing):
-  """Return True if |thing| looks like a URL."""
-  # We want to download URLs like http://... but not Windows paths like c:\...
-  return len(urlparse(thing).scheme) >= 2
-
 # Python does not provide strsignal() even in the very latest 3.x.
 # This is a reasonable fake.
 def strsig(n):
@@ -149,30 +138,6 @@ def printstatus(status, name = ""):
   else:
     # This is probably a can't-happen condition on Unix, but let's be defensive
     print "TEST-INFO | %s: undecodable exit status %04x\n" % (name, status)
-
-def addCommonOptions(parser, defaults={}):
-  parser.add_option("--xre-path",
-                    action = "store", type = "string", dest = "xrePath",
-                    # individual scripts will set a sane default
-                    default = None,
-                    help = "absolute path to directory containing XRE (probably xulrunner)")
-  if 'SYMBOLS_PATH' not in defaults:
-    defaults['SYMBOLS_PATH'] = None
-  parser.add_option("--symbols-path",
-                    action = "store", type = "string", dest = "symbolsPath",
-                    default = defaults['SYMBOLS_PATH'],
-                    help = "absolute path to directory containing breakpad symbols, or the URL of a zip file containing symbols")
-  parser.add_option("--debugger",
-                    action = "store", dest = "debugger",
-                    help = "use the given debugger to launch the application")
-  parser.add_option("--debugger-args",
-                    action = "store", dest = "debuggerArgs",
-                    help = "pass the given args to the debugger _before_ "
-                           "the application on the command line")
-  parser.add_option("--debugger-interactive",
-                    action = "store_true", dest = "debuggerInteractive",
-                    help = "prevents the test harness from redirecting "
-                        "stdout and stderr for interactive debuggers")
 
 def dumpLeakLog(leakLogFile, filter = False):
   """Process the leak log, without parsing it.
@@ -378,30 +343,6 @@ def processLeakLog(leakLogFile, options):
       leakThreshold = leakThresholds.get(processType, 0)
       processSingleLeakFile(thisFile, processType, leakThreshold,
                             processType in ignoreMissingLeaks)
-
-def replaceBackSlashes(input):
-  return input.replace('\\', '/')
-
-class KeyValueParseError(Exception):
-  """error when parsing strings of serialized key-values"""
-  def __init__(self, msg, errors=()):
-    self.errors = errors
-    Exception.__init__(self, msg)
-
-def parseKeyValue(strings, separator='=', context='key, value: '):
-  """
-  parse string-serialized key-value pairs in the form of
-  `key = value`. Returns a list of 2-tuples.
-  Note that whitespace is not stripped.
-  """
-
-  # syntax check
-  missing = [string for string in strings if separator not in string]
-  if missing:
-    raise KeyValueParseError("Error: syntax error in %s" % (context,
-                                                            ','.join(missing)),
-                                                            errors=missing)
-  return [string.split(separator, 1) for string in strings]
 
 def systemMemory():
   """

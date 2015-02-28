@@ -8,7 +8,6 @@ const nsIFilePicker       = Components.interfaces.nsIFilePicker;
 const nsIProperties       = Components.interfaces.nsIProperties;
 const NS_DIRECTORYSERVICE_CONTRACTID = "@mozilla.org/file/directory_service;1";
 const NS_IOSERVICE_CONTRACTID = "@mozilla.org/network/io-service;1";
-const nsITreeBoxObject = Components.interfaces.nsITreeBoxObject;
 const nsIFileView = Components.interfaces.nsIFileView;
 const NS_FILEVIEW_CONTRACTID = "@mozilla.org/filepicker/fileview;1";
 const nsITreeView = Components.interfaces.nsITreeView;
@@ -46,13 +45,13 @@ function filepickerLoad() {
     const title = o.title;
     filePickerMode = o.mode;
     if (o.displayDirectory) {
-      const directory = o.displayDirectory.path;
+      var directory = o.displayDirectory.path;
     }
 
     const initialText = o.defaultString;
-    const filterTitles = o.filters.titles;
-    const filterTypes = o.filters.types;
-    const numFilters = filterTitles.length;
+    var filterTitles = o.filters.titles;
+    var filterTypes = o.filters.types;
+    var numFilters = filterTitles.length;
 
     document.title = title;
     allowURLs = o.allowURLs;
@@ -125,7 +124,7 @@ function filepickerLoad() {
   if (filePickerMode == nsIFilePicker.modeOpenMultiple)
     tree.removeAttribute("seltype");
 
-  tree.treeBoxObject.view = treeView;
+  tree.view = treeView;
 
   // Start out with the ok button disabled since nothing will be
   // selected and nothing will be in the text field.

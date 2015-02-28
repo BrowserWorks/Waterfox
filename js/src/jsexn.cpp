@@ -40,7 +40,6 @@ using namespace js::types;
 
 using mozilla::ArrayLength;
 using mozilla::PodArrayZero;
-using mozilla::PodZero;
 
 static void
 exn_finalize(FreeOp *fop, JSObject *obj);
@@ -289,11 +288,17 @@ js::ComputeStackString(JSContext *cx)
                 return nullptr;
 
             /* Now the filename. */
-            const char *cfilename = i.scriptFilename();
-            if (!cfilename)
-                cfilename = "";
-            if (!sb.append(cfilename, strlen(cfilename)))
-                return nullptr;
+
+            /* First, try the `//# sourceURL=some-display-url.js` directive. */
+            if (const char16_t *display = i.scriptDisplayURL()) {
+                if (!sb.append(display, js_strlen(display)))
+                    return nullptr;
+            }
+            /* Second, try the actual filename. */
+            else if (const char *filename = i.scriptFilename()) {
+                if (!sb.append(filename, strlen(filename)))
+                    return nullptr;
+            }
 
             uint32_t column = 0;
             uint32_t line = i.computeLine(&column);
@@ -484,16 +489,6 @@ exn_toSource(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 #endif
-
-/* JSProto_ ordering for exceptions shall match JSEXN_ constants. */
-JS_STATIC_ASSERT(JSEXN_ERR == 0);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_INTERNALERR  == JSProto_InternalError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_EVALERR      == JSProto_EvalError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_RANGEERR     == JSProto_RangeError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_REFERENCEERR == JSProto_ReferenceError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_SYNTAXERR    == JSProto_SyntaxError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_TYPEERR      == JSProto_TypeError);
-JS_STATIC_ASSERT(JSProto_Error + JSEXN_URIERR       == JSProto_URIError);
 
 /* static */ JSObject *
 ErrorObject::createProto(JSContext *cx, JSProtoKey key)
@@ -807,7 +802,7 @@ ErrorReport::init(JSContext *cx, HandleValue exn)
         }
 
         reportp = &ownedReport;
-        PodZero(&ownedReport);
+        new (reportp) JSErrorReport();
         ownedReport.filename = filename.ptr();
         ownedReport.lineno = lineno;
         ownedReport.exnType = int16_t(JSEXN_NONE);
@@ -859,7 +854,7 @@ ErrorReport::populateUncaughtExceptionReport(JSContext *cx, ...)
 void
 ErrorReport::populateUncaughtExceptionReportVA(JSContext *cx, va_list ap)
 {
-    PodZero(&ownedReport);
+    new (&ownedReport) JSErrorReport();
     ownedReport.flags = JSREPORT_ERROR;
     ownedReport.errorNumber = JSMSG_UNCAUGHT_EXCEPTION;
     // XXXbz this assumes the stack we have right now is still

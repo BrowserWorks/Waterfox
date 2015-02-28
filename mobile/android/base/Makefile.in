@@ -103,6 +103,7 @@ java_bundled_libs := $(subst $(NULL) ,:,$(strip $(java_bundled_libs)))
 # All the jars we're compiling from source. (not to be confused with
 # java_bundled_libs, which holds the jars which we're including as binaries).
 ALL_JARS = \
+  constants.jar \
   gecko-R.jar \
   gecko-browser.jar \
   gecko-mozglue.jar \
@@ -156,6 +157,19 @@ endif
 
 proguard_config_dir=$(topsrcdir)/mobile/android/config/proguard
 
+# This stanza ensures that the set of GeckoView classes does not depend on too
+# much of Fennec, where "too much" is defined as the set of potentially
+# non-GeckoView classes that GeckoView already depended on at a certain point in
+# time.  The idea is to set a high-water mark that is not to be crossed.
+classycle_jar := $(topsrcdir)/mobile/android/build/classycle/classycle-1.4.1.jar
+.geckoview.deps: geckoview.ddf $(classycle_jar) $(ALL_JARS)
+	java -cp $(classycle_jar) \
+		classycle.dependency.DependencyChecker \
+		-mergeInnerClasses \
+		-dependencies=@$< \
+		$(ALL_JARS)
+	@$(TOUCH) $@
+
 # First, we delete debugging information from libraries. Having line-number
 # information for libraries for which we lack the source isn't useful, so this
 # saves us a bit of space. Importantly, Proguard has a bug causing it to
@@ -182,7 +196,7 @@ proguard_config_dir=$(topsrcdir)/mobile/android/config/proguard
 # outputs are fresher than the target, preventing a subsequent
 # invocation from thinking Proguard's outputs are stale.  This is safe
 # because Make removes the target file if any recipe command fails.
-.proguard.deps: .bundled.proguard.deps $(ALL_JARS) $(proguard_config_dir)/proguard.cfg
+.proguard.deps: .geckoview.deps .bundled.proguard.deps $(ALL_JARS) $(proguard_config_dir)/proguard.cfg
 	$(REPORT_BUILD)
 	@$(TOUCH) $@
 	java \
@@ -222,14 +236,6 @@ GeneratedJNIWrappers.cpp: $(ANNOTATION_PROCESSOR_JAR_FILES)
 GeneratedJNIWrappers.cpp: $(ALL_JARS)
 	$(JAVA) -classpath gecko-mozglue.jar:$(JAVA_BOOTCLASSPATH):$(JAVA_CLASSPATH):$(ANNOTATION_PROCESSOR_JAR_FILES) org.mozilla.gecko.annotationProcessors.AnnotationProcessor $(ALL_JARS)
 
-# Like generated/org/mozilla/fennec_$USERID.
-android_package_dir = $(addprefix generated/,$(subst .,/,$(ANDROID_PACKAGE_NAME)))
-
-# These _PP_JAVAFILES are specified in moz.build and defined in
-# backend.mk, which is included by config.mk.  Therefore this needs to
-# be defined after config.mk is included.
-PP_JAVAFILES := $(filter-out generated/org/mozilla/gecko/R.java,$(gecko-mozglue_PP_JAVAFILES) $(gecko-browser_PP_JAVAFILES))
-
 manifest := \
   AndroidManifest.xml.in \
   WebappManifestFragment.xml.frag.in \
@@ -241,27 +247,19 @@ PP_TARGETS += manifest
 # generates these files into generated/org/mozilla/gecko for
 # consumption by the build system and IDEs.
 
-preprocessed := $(addsuffix .in,$(subst generated/org/mozilla/gecko/,,$(filter generated/org/mozilla/gecko/%,$(PP_JAVAFILES))))
+# The list in moz.build looks like
+# 'preprocessed/org/mozilla/gecko/AppConstants.java'.  The list in
+# constants_PP_JAVAFILES looks like
+# 'generated/preprocessed/org/mozilla/gecko/AppConstants.java'.  We
+# need to write AppConstants.java.in to
+# generated/preprocessed/org/mozilla/gecko.
+preprocessed := $(addsuffix .in,$(subst generated/preprocessed/org/mozilla/gecko/,,$(filter generated/preprocessed/org/mozilla/gecko/%,$(constants_PP_JAVAFILES))))
 
-preprocessed_PATH := generated/org/mozilla/gecko
+preprocessed_PATH := generated/preprocessed/org/mozilla/gecko
 preprocessed_KEEP_PATH := 1
 preprocessed_FLAGS := --marker='//\\\#'
 
 PP_TARGETS += preprocessed
-
-# Certain source files have Java package name @ANDROID_PACKAGE_NAME@.
-# We hate these files but they are necessary for backwards
-# compatibility.  These special rules generate these files into
-# generated/org/mozilla/{firefox,firefox_beta,fennec,fennec_$USER} for
-# consumption by the build system and IDEs.
-
-preprocessed_package := $(addsuffix .in,$(subst $(android_package_dir)/,,$(filter $(android_package_dir)/%,$(PP_JAVAFILES))))
-
-preprocessed_package_PATH := $(android_package_dir)
-preprocessed_package_KEEP_PATH := 1
-preprocessed_package_FLAGS := --marker='//\\\#'
-
-PP_TARGETS += preprocessed_package
 
 include $(topsrcdir)/config/rules.mk
 
@@ -400,6 +398,8 @@ extra_packages := $(subst $(NULL) ,:,$(strip $(extra_packages)))
 # thinking aapt's outputs are stale.  This is safe because Make
 # removes the target file if any recipe command fails.
 
+CONSTRAINED_AAPT_CONFIGURATIONS := mdpi,hdpi
+
 define aapt_command
 $(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
 	@$$(TOUCH) $$@
@@ -416,7 +416,7 @@ $(1): $$(call mkdir_deps,$(filter-out ./,$(dir $(3) $(4) $(5)))) $(2)
 		-F $(3) \
 		-J $(4) \
 		--output-text-symbols $(5) \
-		$(if $(MOZ_ANDROID_RESOURCE_CONSTRAINED),-c hdpi,) \
+		$(if $(MOZ_ANDROID_RESOURCE_CONSTRAINED),-c $(CONSTRAINED_AAPT_CONFIGURATIONS),) \
 		--ignore-assets "$$(ANDROID_AAPT_IGNORE)"
 endef
 
@@ -449,10 +449,10 @@ update-generated-wrappers:
 
 .PHONY: update-generated-wrappers
 
-# This target is only used by the Eclipse integration. It rebuilds
-# resources that end up in omni.ja, does most of the packaging step,
-# and then updates omni.ja in place. If you're not using Eclipse, you
-# should be using |mach build mobile/android && mach package|.
+# This target is only used by IDE integrations. It rebuilds resources
+# that end up in omni.ja, does most of the packaging step, and then
+# updates omni.ja in place. If you're not using an IDE, you should be
+# using |mach build mobile/android && mach package|.
 $(abspath $(DIST)/fennec/$(OMNIJAR_NAME)): FORCE
 	$(REPORT_BUILD)
 	$(MAKE) -C ../locales
@@ -464,6 +464,13 @@ $(abspath $(DIST)/fennec/$(OMNIJAR_NAME)): FORCE
 	$(MAKE) -C ../installer stage-package
 	rsync --update $(DIST)/fennec/$(notdir $(OMNIJAR_NAME)) $@
 	$(RM) $(DIST)/fennec/$(notdir $(OMNIJAR_NAME))
+
+# Targets built very early during a Gradle build.
+gradle-targets: .aapt.deps
+
+gradle-omnijar: $(abspath $(DIST)/fennec/$(OMNIJAR_NAME))
+
+.PHONY: gradle-targets gradle-omnijar
 
 libs:: geckoview_resources.zip classes.dex jni-stubs.inc GeneratedJNIWrappers.cpp fennec_ids.txt
 	$(INSTALL) geckoview_resources.zip $(FINAL_TARGET)

@@ -208,9 +208,19 @@ nsContextMenu.prototype = {
     // Send media URL (but not for canvas, since it's a big data: URL)
     this.showItem("context-sendimage", this.onImage);
     this.showItem("context-sendvideo", this.onVideo);
+    this.showItem("context-castvideo", this.onVideo);
     this.showItem("context-sendaudio", this.onAudio);
     this.setItemAttr("context-sendvideo", "disabled", !this.mediaURL);
     this.setItemAttr("context-sendaudio", "disabled", !this.mediaURL);
+    // getServicesForVideo alone would be sufficient here (it depends on
+    // SimpleServiceDiscovery.services), but SimpleServiceDiscovery is garanteed
+    // to be already loaded, since we load it on startup, and CastingApps isn't,
+    // so check SimpleServiceDiscovery.services first to avoid needing to load
+    // CastingApps.jsm if we don't need to.
+    let shouldShowCast = this.mediaURL &&
+                         SimpleServiceDiscovery.services.length > 0 &&
+                         CastingApps.getServicesForVideo(this.target).length > 0;
+    this.setItemAttr("context-castvideo", "disabled", !shouldShowCast);
   },
 
   initViewItems: function CM_initViewItems() {
@@ -518,17 +528,16 @@ nsContextMenu.prototype = {
 
   // Set various context menu attributes based on the state of the world.
   setTarget: function (aNode, aRangeParent, aRangeOffset) {
-    // If gContextMenuContentData is not null, this event was forwarded from a
-    // child process, so use that information instead.
+    // gContextMenuContentData.isRemote tells us if the event came from a remote
+    // process. gContextMenuContentData can be null if something (like tests)
+    // opens the context menu directly.
     let editFlags;
-    if (gContextMenuContentData) {
-      this.isRemote = true;
+    this.isRemote = gContextMenuContentData && gContextMenuContentData.isRemote;
+    if (this.isRemote) {
       aNode = gContextMenuContentData.event.target;
       aRangeParent = gContextMenuContentData.event.rangeParent;
       aRangeOffset = gContextMenuContentData.event.rangeOffset;
       editFlags = gContextMenuContentData.editFlags;
-    } else {
-      this.isRemote = false;
     }
 
     const xulNS = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
@@ -618,7 +627,10 @@ nsContextMenu.prototype = {
         this.onCanvas = true;
       }
       else if (this.target instanceof HTMLVideoElement) {
-        this.mediaURL = this.target.currentSrc || this.target.src;
+        let mediaURL = this.target.currentSrc || this.target.src;
+        if (this.isMediaURLReusable(mediaURL)) {
+          this.mediaURL = mediaURL;
+        }
         // Firefox always creates a HTMLVideoElement when loading an ogg file
         // directly. If the media is actually audio, be smarter and provide a
         // context menu with audio operations.
@@ -631,13 +643,16 @@ nsContextMenu.prototype = {
       }
       else if (this.target instanceof HTMLAudioElement) {
         this.onAudio = true;
-        this.mediaURL = this.target.currentSrc || this.target.src;
+        let mediaURL = this.target.currentSrc || this.target.src;
+        if (this.isMediaURLReusable(mediaURL)) {
+          this.mediaURL = mediaURL;
+        }
       }
       else if (editFlags & (SpellCheckHelper.INPUT | SpellCheckHelper.TEXTAREA)) {
         this.onTextInput = (editFlags & SpellCheckHelper.TEXTINPUT) !== 0;
         this.onEditableArea = (editFlags & SpellCheckHelper.EDITABLE) !== 0;
         if (this.onEditableArea) {
-          if (gContextMenuContentData) {
+          if (this.isRemote) {
             InlineSpellCheckerUI.initFromRemote(gContextMenuContentData.spellInfo);
           }
           else {
@@ -762,7 +777,7 @@ nsContextMenu.prototype = {
         this.hasBGImage        = false;
         this.isDesignMode      = true;
         this.onEditableArea = true;
-        if (gContextMenuContentData) {
+        if (this.isRemote) {
           InlineSpellCheckerUI.initFromRemote(gContextMenuContentData.spellInfo);
         }
         else {
@@ -1027,6 +1042,7 @@ nsContextMenu.prototype = {
   },
 
   saveVideoFrameAsImage: function () {
+    let mm = this.browser.messageManager;
     let name = "";
     if (this.mediaURL) {
       try {
@@ -1038,13 +1054,18 @@ nsContextMenu.prototype = {
     }
     if (!name)
       name = "snapshot.jpg";
-    var video = this.target;
-    var canvas = document.createElementNS("http://www.w3.org/1999/xhtml", "canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    var ctxDraw = canvas.getContext("2d");
-    ctxDraw.drawImage(video, 0, 0);
-    saveImageURL(canvas.toDataURL("image/jpeg", ""), name, "SaveImageTitle", true, false, document.documentURIObject, this.target.ownerDocument);
+
+    mm.sendAsyncMessage("ContextMenu:SaveVideoFrameAsImage", {}, {
+      target: this.target,
+    });
+
+    let onMessage = (message) => {
+      mm.removeMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
+      let dataURL = message.data.dataURL;
+      saveImageURL(dataURL, name, "SaveImageTitle", true, false,
+                   document.documentURIObject, this.target.ownerDocument);
+    };
+    mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
 
   fullScreenVideo: function () {
@@ -1316,6 +1337,25 @@ nsContextMenu.prototype = {
     MailIntegration.sendMessage(this.mediaURL, "");
   },
 
+  castVideo: function() {
+    CastingApps.openExternal(this.target, window);
+  },
+
+  populateCastVideoMenu: function(popup) {
+    let videoEl = this.target;
+    popup.innerHTML = null;
+    let doc = popup.ownerDocument;
+    let services = CastingApps.getServicesForVideo(videoEl);
+    services.forEach(service => {
+      let item = doc.createElement("menuitem");
+      item.setAttribute("label", service.friendlyName);
+      item.addEventListener("command", event => {
+        CastingApps.sendVideoToService(videoEl, service);
+      });
+      popup.appendChild(item);
+    });
+  },
+
   playPlugin: function() {
     gPluginHandler.contextMenuCommand(this.browser, this.target, "play");
   },
@@ -1468,6 +1508,10 @@ nsContextMenu.prototype = {
   // Returns true if anything is selected.
   isContentSelection: function() {
     return !this.focusedWindow.getSelection().isCollapsed;
+  },
+
+  isMediaURLReusable: function(aURL) {
+    return !/^(?:blob|mediasource):/.test(aURL);
   },
 
   toString: function () {
@@ -1729,31 +1773,18 @@ nsContextMenu.prototype = {
   },
 
   _getTelemetryPageContextInfo: function() {
-    if (this.isContentSelected) {
-      return "selection";
-    }
-    if (this.onLink) {
-      if (this.onImage || this.onCanvas) {
-        return "image-link";
+    let rv = [];
+    for (let k of ["isContentSelected", "onLink", "onImage", "onCanvas", "onVideo", "onAudio",
+                   "onTextInput", "onSocial"]) {
+      if (this[k]) {
+        rv.push(k.replace(/^(?:is|on)(.)/, (match, firstLetter) => firstLetter.toLowerCase()));
       }
-      return "link";
     }
-    if (this.onImage) {
-      return "image"
+    if (!rv.length) {
+      rv.push('other');
     }
-    if (this.onCanvas) {
-      return "canvas";
-    }
-    if (this.onVideo || this.onAudio) {
-      return "media";
-    }
-    if (this.onTextInput) {
-      return "input";
-    }
-    if (this.onSocial) {
-      return "social";
-    }
-    return "other";
+
+    return JSON.stringify(rv);
   },
 
   _checkTelemetryForMenu: function(aXulMenu) {

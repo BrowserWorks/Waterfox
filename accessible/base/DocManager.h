@@ -17,6 +17,8 @@ namespace a11y {
 
 class Accessible;
 class DocAccessible;
+class xpcAccessibleDocument;
+class DocAccessibleParent;
 
 /**
  * Manage the document accessible life cycle.
@@ -59,10 +61,33 @@ public:
   /**
    * Called by document accessible when it gets shutdown.
    */
-  inline void NotifyOfDocumentShutdown(nsIDocument* aDocument)
+  void NotifyOfDocumentShutdown(DocAccessible* aDocument,
+                                nsIDocument* aDOMDocument);
+
+  /**
+   * Return XPCOM accessible document.
+   */
+  xpcAccessibleDocument* GetXPCDocument(DocAccessible* aDocument);
+  xpcAccessibleDocument* GetCachedXPCDocument(DocAccessible* aDocument) const
+    { return mXPCDocumentCache.GetWeak(aDocument); }
+
+  /*
+   * Notification that a top level document in a content process has gone away.
+   */
+  void RemoteDocShutdown(DocAccessibleParent* aDoc)
   {
-    mDocAccessibleCache.Remove(aDocument);
-    RemoveListeners(aDocument);
+    DebugOnly<bool> result = mRemoteDocuments.RemoveElement(aDoc);
+    MOZ_ASSERT(result, "Why didn't we find the document!");
+  }
+
+  /*
+   * Notify of a new top level document in a content process.
+   */
+  void RemoteDocAdded(DocAccessibleParent* aDoc)
+  {
+    MOZ_ASSERT(!mRemoteDocuments.Contains(aDoc),
+               "How did we already have the doc!");
+    mRemoteDocuments.AppendElement(aDoc);
   }
 
 #ifdef DEBUG
@@ -110,9 +135,6 @@ private:
    */
   DocAccessible* CreateDocOrRootAccessible(nsIDocument* aDocument);
 
-  typedef nsRefPtrHashtable<nsPtrHashKey<const nsIDocument>, DocAccessible>
-    DocAccessibleHashtable;
-
   /**
    * Get first entry of the document accessible from cache.
    */
@@ -143,7 +165,18 @@ private:
                             DocAccessible* aDocAccessible, void* aUserArg);
 #endif
 
+  typedef nsRefPtrHashtable<nsPtrHashKey<const nsIDocument>, DocAccessible>
+    DocAccessibleHashtable;
   DocAccessibleHashtable mDocAccessibleCache;
+
+  typedef nsRefPtrHashtable<nsPtrHashKey<const DocAccessible>, xpcAccessibleDocument>
+    XPCDocumentHashtable;
+  XPCDocumentHashtable mXPCDocumentCache;
+
+  /*
+   * The list of remote top level documents.
+   */
+  nsTArray<DocAccessibleParent*> mRemoteDocuments;
 };
 
 /**

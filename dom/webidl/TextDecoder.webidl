@@ -11,14 +11,14 @@
  */
 
 [Constructor(optional DOMString label = "utf-8", optional TextDecoderOptions options),
- Exposed=(Window,Worker)]
+ Exposed=(Window,Worker,System)]
 interface TextDecoder {
   [Constant]
   readonly attribute DOMString encoding;
+  [Constant]
+  readonly attribute boolean fatal;
   [Throws]
-  DOMString decode();
-  [Throws]
-  DOMString decode(ArrayBufferView input, optional TextDecodeOptions options);
+  USVString decode(optional BufferSource input, optional TextDecodeOptions options);
 };
 
 dictionary TextDecoderOptions {

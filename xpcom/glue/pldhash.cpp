@@ -191,13 +191,14 @@ PLDHashTable*
 PL_NewDHashTable(const PLDHashTableOps* aOps, void* aData, uint32_t aEntrySize,
                  uint32_t aLength)
 {
-  PLDHashTable* table = (PLDHashTable*)malloc(sizeof(*table));
+  PLDHashTable* table = (PLDHashTable*)aOps->allocTable(NULL, sizeof(*table));
+
   if (!table) {
     return nullptr;
   }
   if (!PL_DHashTableInit(table, aOps, aData, aEntrySize, fallible_t(),
                          aLength)) {
-    free(table);
+    aOps->freeTable(NULL, table);
     return nullptr;
   }
   return table;
@@ -207,7 +208,7 @@ void
 PL_DHashTableDestroy(PLDHashTable* aTable)
 {
   PL_DHashTableFinish(aTable);
-  free(aTable);
+  aTable->ops->freeTable(NULL, aTable);
 }
 
 /*
@@ -706,7 +707,7 @@ PLDHashTable::Enumerate(PLDHashEnumerator aEtor, void* aArg)
   uint32_t i = 0;
   bool didRemove = false;
 
-  if (ChaosMode::isActive()) {
+  if (ChaosMode::isActive(ChaosMode::HashTableIteration)) {
     // Start iterating at a random point in the hashtable. It would be
     // even more chaotic to iterate in fully random order, but that's a lot
     // more work.
@@ -854,7 +855,7 @@ PLDHashTable::Iterator::Iterator(const PLDHashTable* aTable)
   uint32_t tableSize = capacity * mTable->EntrySize();
   char* entryLimit = mEntryAddr + tableSize;
 
-  if (ChaosMode::isActive()) {
+  if (ChaosMode::isActive(ChaosMode::HashTableIteration)) {
     // Start iterating at a random point in the hashtable. It would be
     // even more chaotic to iterate in fully random order, but that's a lot
     // more work.

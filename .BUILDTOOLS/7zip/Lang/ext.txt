@@ -1,0 +1,454 @@
+﻿;!@Lang@!UTF-8!
+; Language file for 7-Zip 4.20
+; Translated by Miguel Ángel Navareño
+;
+;
+;
+;
+
+00000000 = "Extremaduran"
+00000001 = "Ettremeñu"
+00000002 = ""
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "Cunfigurazión de 7-Zip"
+
+; Info Page
+01000100 = "Azerca e 7-Zip"
+01000103 = "7-Zip eg 'software' libri i a gattug pagug. Peru puei apoyal el desarrollu e 7-Zip meyanti'l rregittru el pograma."
+01000105 = "Rregittral"
+
+; Folders Page
+01000200 = "Direttoriug"
+01000210 = "Direttoriu e labu&tu"
+01000211 = "Direttoriu temporal del &sittema"
+01000212 = "Direttoriu &attual"
+01000213 = "&Eppezifical:"
+01000214 = "Usal sólu pa dippositibug ettrayíblig"
+
+01000281 = "Eppezifical localizazión pa ficherug d'archibug tenporalig."
+
+; System Page
+01000300 = "Sittema"
+01000301 = "Integral 7-Zip nel menú cuntettual"
+01000302 = "Menú cuntettual en caccâ"
+01000310 = "Elementug del menú cuntettual:"
+
+; Language Page
+01000400 = "Idioma"
+01000401 = "Idioma:"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "Cumandug de 7-Zip"
+02000103 = "Abril archibu"
+02000104 = "Abril archibu selezionáu."
+02000105 = "Ettrayel ficherug..."
+02000106 = "Etrayel ficherug del archibu selezionáu."
+02000107 = "Añîl al archibu..."
+02000108 = "Añîl lug ficherug selezionáug al archibu."
+02000109 = "Cunprebal archibu"
+0200010A = "Cunprebal l'integriá el archibu selezionáu."
+0200010B = "Ettrayel equí"
+0200010C = "Ettrayel ficherug del archibu selezionáu al direttoriu attual."
+0200010D = "Ettrayel en {0}"
+0200010E = "Ettrayel ficherug n'un suddirettoriu."
+0200010F = "Añîl a {0}"
+02000110 = "Añîl lug elementug selezionaug al archibu."
+02000111 = "Cunprimil i enbial pol correu-e..."
+02000112 = "Cunprimil archibug selezionaug nel ficheru i enbialu pol correu-e."
+02000113 = "Cunprimil en {0} i enbial pol correu"
+02000114 = "Cunprimil archibug selezionaug nel ficheru i enbialu pol correu-e."
+
+02000140 = "<Carpeta>"
+02000141 = "<Archibu>"
+
+; Properties
+02000203 = "Rruta"
+02000204 = "Nombri"
+02000205 = "Ettensión"
+02000206 = "Direttoriu"
+02000207 = "Tamañu"
+02000208 = "Tamañu cunprimíu"
+02000209 = "Atributug"
+0200020A = "Creáu'l"
+0200020B = "Últimu azesu"
+0200020C = "Moificáu"
+0200020D = "Sóliu"
+0200020E = "Cumentáu"
+0200020F = "Encrittáu"
+02000210 = "Eppandíu enantig"
+02000211 = "Eppandíu endippuég"
+02000212 = "Idionariu"
+02000213 = "CRC"
+02000214 = "Tipu"
+02000215 = "Anti"
+02000216 = "Métou"
+02000217 = "S.O. d'orijin"
+02000218 = "Sittema d'archibug"
+02000219 = "Usuariu"
+0200021A = "Grupu"
+0200021B = "Bloqui"
+0200021C = "Cumentariu"
+0200021D = "Posizión"
+
+; Status bar 
+02000301 = "{0} elementu(g) selezionaug"
+02000302 = "{0} elementu(g)"
+
+; List Context Menu
+02000401 = "&Colunnag..."
+
+02000411 = "&Abril"
+02000412 = "&Ettrayel..."
+
+; ToolBar
+02000501 = "Ettrayel"
+
+; Messages 
+02000601 = "Nu se puei attualizal etti tipu d'archibu."
+02000602 = "Nu s'a puíu attualizal l'archibu {0}"
+02000603 = "Nu s'a puíu creal el direttoriu '{0}'"
+02000604 = "Tipu d'archibu nu soportáu."
+02000605 = "Yerru"
+02000606 = "Elementug en demasía"
+02000607 = "Nu ái nengún pograma asoziáu cun etta ettensión d'archibu"
+02000608 = "Sin yerrug"
+
+; Dialogs
+02000702 = "Azettal"
+02000705 = "&Si"
+02000707 = "Sí a &tô"
+02000709 = "&Nu"
+0200070B = "Nu a t&ô"
+
+02000710 = "Canzelal"
+02000711 = "&Canzelal"
+02000713 = "&Fechal"
+02000714 = "Paral"
+02000715 = "Rreinizial"
+
+02000720 = "Ayûa"
+
+; Extract dialog
+02000800 = "Ettrayel"
+02000801 = "E&ttrayel a:"
+02000802 = "Cunseña"
+
+02000810 = "Móu e rruta"
+02000811 = "Rruta cunpleta"
+02000812 = "Rruta rrelatiba"
+02000813 = "Sin rruta"
+
+02000820 = "Móu e sobreccrebil"
+02000821 = "Preguntal enantig"
+02000822 = "Sobreccrebil sin preguntal"
+02000823 = "Cunserbal ficherug esittentig"
+02000824 = "Rrenombral de jorma automática"
+02000825 = "Autu-rrenombral ficherug esittentig"
+
+02000830 = "Ficherug"
+02000831 = "Ficherug &selezionaug"
+02000832 = "&Tolog archibug"
+
+02000881 = "Eppezifical dettinu pa lug ficherug ettrayíug."
+
+02000890 = "Ettrayendu"
+
+; Overwrite dialog
+02000900 = "Cunfirmal rrenplazu de ficherug"
+02000901 = "El direttoriu ya caltieni un ficheru d'igual nombri."
+02000902 = "¿Suttituyil el ficheru esittenti"
+02000903 = "pol etti otru?"
+
+02000911 = "Eccambial nombri e jorma a&utomática"
+
+02000982 = "{0} 'bytes'"
+02000983 = "moificâu'l"
+
+; Messages dialog
+02000A00 = "Mensajig de diannótticu"
+
+02000A80 = "Mensaji"
+
+02000A91 = "Métou e cunpresión nu andarríu '{0}'."
+02000A92 = "Yerru e datug en '{0}'. El ficheru gtá changarráu."
+02000A93 = "Yerru e CRC '{0}'. El ficheru gtá changarráu."
+
+; Password dialog
+02000B00 = "Introuzil cunseña"
+02000B01 = "Introuzil cunseña:"
+02000B02 = "&Muettral cunseña"
+
+; Progress dialog
+02000C00 = "Progresu"
+02000C01 = "Tienpu traccurríu:"
+02000C02 = "Tienpu rrettanti:"
+02000C03 = "Tamañu:"
+02000C04 = "Beloziâ:"
+
+02000C10 = "Se&gundu planu"
+02000C11 = "&Primel planu"
+02000C12 = "&Pausal"
+02000C13 = "A&cuntinal"
+
+02000C20 = "En pausa"
+
+02000C30 = "¿De siguru que quieri canzelal la operazión?"
+
+; Compress dialog
+02000D00 = "Añîl a archibu"
+02000D01 = "&Archibu:"
+02000D02 = "&Móu d'attualizazión:"
+02000D03 = "&Jormatu d'archibu:"
+02000D04 = "Mé&tou e cunpresión:"
+02000D05 = "&Creal archibu sóliu"
+02000D06 = "&Parámetrug:"
+02000D07 = "Ozionig"
+02000D08 = "Creal archibu SF&X"
+02000D09 = "Multi-ilu"
+02000D0A = "Encrittal &nombrig de ficheru"
+02000D0B = "Nive&l de cunpresión:"
+02000D0C = "Tamañu el i&dionariu:"
+02000D0D = "Tama&ñu e parabra:"
+02000D0E = "Usu e memoria pa cunpresión:"
+02000D0F = "Usu e memoria pa deccunpresión:"
+
+02000D40 = "Desapartal en &balandronig, 'bytes':"
+
+02000D81 = "Sin cumpresión"
+02000D82 = "Normal"
+02000D83 = "Másima"
+02000D84 = "Rreppajila"
+02000D85 = "La mág rreppajila"
+02000D86 = "'Ultra'"
+
+02000D90 = "Epploral"
+
+02000DA1 = "Añîl i rrenplazal ficherug"
+02000DA2 = "Attualizal i añîl ficherug"
+02000DA3 = "Sólu attualizal ficherug esittentig"
+02000DA4 = "Sincrunizal ficherug"
+
+02000DB1 = "Tolog ficherug"
+
+02000DC0 = "Cunprimiendu"
+
+; Columns dialog
+02000E00 = "Colunnag"
+02000E01 = "Selezioni lag colunnag que quiera muettral n'etti direttoriu. Pa rreordinal lag colunnag usi lag teclag AvPg o RePg."
+02000E02 = "La colunna selezionâ debi tenel una &anchura e"
+02000E03 = "'pixels'."
+
+02000E10 = "Mobel pa &zimará"
+02000E11 = "Mobel pa em&bahu"
+02000E12 = "&Muettral"
+02000E13 = "&Eccuendel"
+02000E14 = "Fijal"
+
+02000E81 = "Títulu"
+02000E82 = "Anchura"
+
+; Testing
+02000F90 = "Cunprebandu"
+
+
+; File Manager
+
+03000000 = "7-Zip - gettol de ficherug"
+
+; Menu
+03000102 = "&Archibu"
+03000103 = "&Eital"
+03000104 = "&Bel"
+03000105 = "&Jerramientag"
+03000106 = "&Ayûa"
+03000107 = "&Amelgaôrig"
+
+; File
+03000210 = "&Abril"
+03000211 = "Abril &dentru"
+03000212 = "Abril &juera"
+03000220 = "&Bel"
+03000221 = "&Eîtal"
+03000230 = "Rrenom&bral"
+03000231 = "&Copial a..."
+03000232 = "&Mobel pa..."
+03000233 = "&Eliminal"
+03000240 = "Propieaig"
+03000241 = "Cume&ntariu"
+03000250 = "Creal direttoriu"
+03000251 = "Creal ficheru"
+03000260 = "&Salil"
+03000270 = "Desa&partal ficheru..."
+03000271 = "Cun&binal ficherug..."
+
+; Edit
+03000310 = "&Dejadel"
+03000311 = "&Rrejadel"
+03000320 = "&Sajal"
+03000321 = "&Copial"
+03000322 = "&Pegal"
+03000323 = "&Eliminal"
+03000330 = "Selezional &tô"
+03000331 = "Deselezional tô"
+03000332 = "&Inbertil selezión"
+03000333 = "Selezional..."
+03000334 = "Deselezional..."
+03000335 = "Selezional pol tipu"
+03000336 = "Deselezional pol tipu"
+
+; View
+03000410 = "Icunug g&randig"
+03000411 = "&Icunug caquerug"
+03000412 = "&Littâu"
+03000413 = "&Detallig"
+03000420 = "Sin ordinal"
+03000430 = "Abril direttoriu rraíz"
+03000431 = "Subil un nibel"
+03000432 = "Ittoriual de direttoriug..."
+03000440 = "&Attualizal"
+03000450 = "&2 panelig"
+03000451 = "&Barrag de jerramientag"
+03000460 = "Barra e jerramientag 'Archibu'"
+03000461 = "Barra e jerramientag Ettándal"
+03000462 = "Botonig grandig"
+03000463 = "Muettral tettu enug botonig"
+
+; Tools
+03000510 = "&Ozionig..."
+03000511 = "Pre&ba del patrón de cunpresión"
+
+; Help
+03000610 = "&Calteníug..."
+03000620 = "&Azerca e 7-Zip.."
+
+; Favorites
+03000710 = "&Añîl direttoriu a Amelgaôrig cumu"
+03000720 = "Añîl a amelgaorig"
+
+; Options Dialog
+
+03010000 = "Ozionig"
+
+; Plugins
+03010100 = "'Plugins'"
+03010101 = "'&Plugins':"
+03010110 = "Ozionig..."
+
+; Edit
+03010200 = "Eitol"
+03010201 = "&Eitol:"
+
+; System
+03010300 = "Sittema"
+03010302 = "Asozial 7-Zip cun jormatug:"
+03010310 = "'Plugin'"
+
+; Settings
+03010400 = "Propieaig"
+03010401 = "Muettral l'elementu \"..\""
+03010402 = "Muettral icunug propiug del ficheru"
+03010410 = "Muettral menú el sittema"
+03010420 = "&Selezional fila(g) enteriza(g)"
+03010421 = "Muettral líneag e la &cuairícula"
+
+; Strings
+
+03020201 = "Copial"
+03020202 = "Mobel"
+03020203 = "Copial a:"
+03020204 = "Mobel pa:"
+03020205 = "Copiandu..."
+03020206 = "Mobiendu..."
+03020207 = "Nu se puein mobel u copial elementug pa etti tipu e direttoriug."
+03020208 = "Operazión nu atarugâ."
+
+03020210 = "Cunfirmal eliminazión del ficheru"
+03020211 = "Cunfirmal eliminazión del direttoriu"
+03020212 = "Cunfirmal eliminazión múltipli e ficherug"
+03020213 = "¿De siguru que quieri eliminal '{0}'?"
+03020214 = "¿De siguru que quieri eliminal el direttoriu '{0}' i tol su calteníu?"
+03020215 = "¿De siguru que quieri eliminal ettug {0} elementug?"
+03020216 = "Eliminandu..."
+03020217 = "S'alcuentráu'n yerru al eliminal el ficheru u direttoriu"
+
+03020220 = "Rrenombrandu..."
+03020221 = "S'alcuentráu'n yerru al rrenombral el ficheru u direttoriu"
+
+03020230 = "Creal direttoriu"
+03020231 = "Nonbri e carpeta:"
+03020232 = "Nuebu direttoriu"
+03020233 = "S'alcuentráu'n yerru al creal el direttoriu"
+
+03020240 = "Creal ficheru"
+03020241 = "Nombri e ficheru:"
+03020242 = "Nuebu ficheru"
+03020243 = "S'alcuentráu'n yerru al creal el ficheru"
+
+03020250 = "Selezional"
+03020251 = "Deselezional"
+03020252 = "Ocultal:"
+
+03020260 = "Ittorial de direttoriug"
+
+03020280 = "El ficheru '{0}' jué moificâu.\n¿Attualizalu nel archibu?"
+03020281 = "Nu s'a puíu attualizal el archibu\n'{0}'"
+03020282 = "Nu s'a puíu ejecutal l'eitol."
+03020283 = "Abriendu..."
+
+03020290 = "Cumentariu"
+03020291 = "&Cumentariu:"
+
+030202A0 = "Sittema"
+
+03020300 = "'Mi PC'"
+03020301 = "'Entorno de red'"
+
+03020400 = "Añîl"
+03020401 = "Ettrayel"
+03020402 = "Prebal"
+
+03020420 = "Copial"
+03020421 = "Mobel"
+03020422 = "Eliminal"
+03020423 = "Injormazión"
+
+03020500 = "Desapartal el ficheru"
+03020501 = "&Desapartal a:"
+03020510 = "Desapartandu..."
+
+03020600 = "Cunbinal ficherug"
+03020601 = "&Cunbinal en"
+03020610 = "Cunbinandu..."
+
+; Computer
+03031100 = "Tamañu total"
+03031101 = "Eppaziu libri"
+03031102 = "Tamañu el 'clúster'"
+03031103 = "Etiqueta"
+
+; Network
+03031200 = "Nombri local"
+03031201 = "Probeôl"
+
+; Benchmark Dialog
+
+03080000 = "Preba el patrón de cunpresión"
+03080001 = "Usu e memoria:"
+03080002 = "Cunprimiendu"
+03080003 = "Deccunprimiendu"
+03080004 = "Beloziâ"
+03080005 = "Rrazón"
+03080006 = "Rrazón total"
+03080007 = "Attual"
+03080008 = "Rresultáu"
+03080009 = "Correttug:"
+0308000A = "Yerrug:"
+
+;!@LangEnd@!

@@ -232,9 +232,12 @@ CopyRect(DataSourceSurface* aSrc, DataSourceSurface* aDest,
     MOZ_CRASH("we should never be getting invalid rects at this point");
   }
 
-  MOZ_ASSERT(aSrc->GetFormat() == aDest->GetFormat(), "different surface formats");
-  MOZ_ASSERT(IntRect(IntPoint(), aSrc->GetSize()).Contains(aSrcRect), "source rect too big for source surface");
-  MOZ_ASSERT(IntRect(IntPoint(), aDest->GetSize()).Contains(aSrcRect - aSrcRect.TopLeft() + aDestPoint), "dest surface too small");
+  MOZ_RELEASE_ASSERT(aSrc->GetFormat() == aDest->GetFormat(),
+                     "different surface formats");
+  MOZ_RELEASE_ASSERT(IntRect(IntPoint(), aSrc->GetSize()).Contains(aSrcRect),
+                     "source rect too big for source surface");
+  MOZ_RELEASE_ASSERT(IntRect(IntPoint(), aDest->GetSize()).Contains(IntRect(aDestPoint, aSrcRect.Size())),
+                     "dest surface too small");
 
   if (aSrcRect.IsEmpty()) {
     return;
@@ -1156,7 +1159,7 @@ FilterNodeTransformSoftware::Render(const IntRect& aRect)
   IntRect srcRect = SourceRectForOutputRect(aRect);
 
   RefPtr<DataSourceSurface> input =
-    GetInputDataSourceSurface(IN_TRANSFORM_IN, srcRect, NEED_COLOR_CHANNELS);
+    GetInputDataSourceSurface(IN_TRANSFORM_IN, srcRect);
 
   if (!input) {
     return nullptr;
@@ -1168,8 +1171,22 @@ FilterNodeTransformSoftware::Render(const IntRect& aRect)
     return input.forget();
   }
 
+  RefPtr<DataSourceSurface> surf =
+    Factory::CreateDataSourceSurface(aRect.Size(), input->GetFormat(), true);
+
+  if (!surf) {
+    return nullptr;
+  }
+
+  DataSourceSurface::MappedSurface mapping;
+  surf->Map(DataSourceSurface::MapType::WRITE, &mapping);
+
   RefPtr<DrawTarget> dt =
-    Factory::CreateDrawTarget(BackendType::CAIRO, aRect.Size(), input->GetFormat());
+    Factory::CreateDrawTargetForData(BackendType::CAIRO,
+                                     mapping.mData,
+                                     surf->GetSize(),
+                                     mapping.mStride,
+                                     surf->GetFormat());
   if (!dt) {
     return nullptr;
   }
@@ -1178,9 +1195,9 @@ FilterNodeTransformSoftware::Render(const IntRect& aRect)
   dt->SetTransform(transform);
   dt->DrawSurface(input, r, r, DrawSurfaceOptions(mFilter));
 
-  RefPtr<SourceSurface> result = dt->Snapshot();
-  RefPtr<DataSourceSurface> resultData = result->GetDataSurface();
-  return resultData.forget();
+  dt->Flush();
+  surf->Unmap();
+  return surf.forget();
 }
 
 void
@@ -1619,7 +1636,16 @@ FilterNodeTileSoftware::Render(const IntRect& aRect)
           return nullptr;
         }
       }
-      MOZ_ASSERT(input->GetFormat() == target->GetFormat(), "different surface formats from the same input?");
+
+      if (input->GetFormat() != target->GetFormat()) {
+        // Different rectangles of the input can have different formats. If
+        // that happens, just convert everything to B8G8R8A8.
+        target = FilterProcessing::ConvertToB8G8R8A8(target);
+        input = FilterProcessing::ConvertToB8G8R8A8(input);
+        if (MOZ2D_WARN_IF(!target) || MOZ2D_WARN_IF(!input)) {
+          return nullptr;
+        }
+      }
 
       CopyRect(input, target, srcRect - srcRect.TopLeft(), destRect.TopLeft() - aRect.TopLeft());
     }

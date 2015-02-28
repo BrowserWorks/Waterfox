@@ -433,7 +433,12 @@ TimeZone::createTimeZone(const UnicodeString& ID)
     }
     if (result == 0) {
         U_DEBUG_TZ_MSG(("failed to load time zone with id - falling to Etc/Unknown(GMT)"));
-        result = getUnknown().clone();
+        const TimeZone& unknown = getUnknown();
+        if (&unknown == NULL) { //  Illegal NULL reference!
+          U_DEBUG_TZ_MSG(("failed to getUnknown()"));
+        } else {
+          result = unknown.clone();
+        }
     }
     return result;
 }

@@ -25,8 +25,6 @@ namespace layers {
   class Image;
 }
 
-class RecorderProfileManager;
-
 class CameraControlImpl : public ICameraControl
 {
 public:
@@ -49,14 +47,12 @@ public:
   virtual nsresult StopRecording() MOZ_OVERRIDE;
   virtual nsresult ResumeContinuousFocus() MOZ_OVERRIDE;
 
-  already_AddRefed<RecorderProfileManager> GetRecorderProfileManager();
   uint32_t GetCameraId() { return mCameraId; }
 
   virtual void Shutdown() MOZ_OVERRIDE;
 
   // Event handlers called directly from outside this class.
   void OnShutter();
-  void OnClosed();
   void OnUserError(CameraControlListener::UserContext aContext, nsresult aError);
   void OnSystemError(CameraControlListener::SystemContext aContext, nsresult aError);
   void OnAutoFocusMoving(bool aIsMoving);
@@ -72,7 +68,8 @@ protected:
   void OnRecorderStateChange(CameraControlListener::RecorderState aState,
                              int32_t aStatus = -1, int32_t aTrackNumber = -1);
   void OnPreviewStateChange(CameraControlListener::PreviewState aState);
-  void OnHardwareStateChange(CameraControlListener::HardwareState aState);
+  void OnHardwareStateChange(CameraControlListener::HardwareState aState,
+                             nsresult aReason);
   void OnConfigurationChange();
 
   // When we create a new CameraThread, we keep a static reference to it so
@@ -128,8 +125,6 @@ protected:
   virtual nsresult PushParametersImpl() = 0;
   virtual nsresult PullParametersImpl() = 0;
 
-  virtual already_AddRefed<RecorderProfileManager> GetRecorderProfileManagerImpl() = 0;
-
   void OnShutterInternal();
   void OnClosedInternal();
 
@@ -139,6 +134,7 @@ protected:
 
   CameraControlListener::PreviewState   mPreviewState;
   CameraControlListener::HardwareState  mHardwareState;
+  nsresult                              mHardwareStateChangeReason;
 
 private:
   CameraControlImpl(const CameraControlImpl&) MOZ_DELETE;

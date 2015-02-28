@@ -237,7 +237,7 @@ TimerThread::Run()
     if (mSleeping) {
       // Sleep for 0.1 seconds while not firing timers.
       uint32_t milliseconds = 100;
-      if (ChaosMode::isActive()) {
+      if (ChaosMode::isActive(ChaosMode::TimerScheduling)) {
         milliseconds = ChaosMode::randomUint32LessThan(200);
       }
       waitFor = PR_MillisecondsToInterval(milliseconds);
@@ -324,7 +324,7 @@ TimerThread::Run()
         // interval is so small we should not wait at all).
         double microseconds = (timeout - now).ToMilliseconds() * 1000;
 
-        if (ChaosMode::isActive()) {
+        if (ChaosMode::isActive(ChaosMode::TimerScheduling)) {
           // The mean value of sFractions must be 1 to ensure that
           // the average of a long sequence of timeouts converges to the
           // actual sum of their times.
@@ -460,6 +460,8 @@ TimerThread::AddTimerInternal(nsTimerImpl* aTimer)
   NS_ADDREF(aTimer);
 
 #ifdef MOZ_TASK_TRACER
+  // Create a FakeTracedTask, and dispatch it here. This is the start point of
+  // the latency.
   aTimer->DispatchTracedTask();
 #endif
 

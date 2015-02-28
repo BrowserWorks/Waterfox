@@ -6,6 +6,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "Task",
   "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesUtils",
   "resource://gre/modules/PlacesUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+  "resource://testing-common/PlacesTestUtils.jsm");
 
 function closeAllNotifications () {
   let notificationBox = document.getElementById("global-notificationbox");
@@ -108,16 +110,16 @@ function promiseWaitForCondition(aConditionFn) {
   return deferred.promise;
 }
 
-function promiseWaitForEvent(object, eventName, capturing = false) {
+function promiseWaitForEvent(object, eventName, capturing = false, chrome = false) {
   return new Promise((resolve) => {
     function listener(event) {
       info("Saw " + eventName);
-      object.removeEventListener(eventName, listener, capturing);
+      object.removeEventListener(eventName, listener, capturing, chrome);
       resolve(event);
     }
 
     info("Waiting for " + eventName);
-    object.addEventListener(eventName, listener, capturing);
+    object.addEventListener(eventName, listener, capturing, chrome);
   });
 }
 
@@ -663,6 +665,19 @@ function assertWebRTCIndicatorStatus(expected) {
   }
 
   if (!("nsISystemStatusBar" in Ci)) {
+    if (!expected) {
+      let win = Services.wm.getMostRecentWindow("Browser:WebRTCGlobalIndicator");
+      if (win) {
+        yield new Promise((resolve, reject) => {
+          win.addEventListener("unload", (e) => {
+            if (e.target == win.document) {
+              win.removeEventListener("unload", arguments.callee);
+              resolve();
+            }
+          }, false);
+        });
+      }
+    }
     let indicator = Services.wm.getEnumerator("Browser:WebRTCGlobalIndicator");
     let hasWindow = indicator.hasMoreElements();
     is(hasWindow, !!expected, "popup " + msg);
@@ -744,7 +759,7 @@ function is_element_hidden(element, msg) {
 function promisePopupEvent(popup, eventSuffix) {
   let endState = {shown: "open", hidden: "closed"}[eventSuffix];
 
-  if (popup.state = endState)
+  if (popup.state == endState)
     return Promise.resolve();
 
   let eventType = "popup" + eventSuffix;
@@ -763,6 +778,16 @@ function promisePopupShown(popup) {
 
 function promisePopupHidden(popup) {
   return promisePopupEvent(popup, "hidden");
+}
+
+function promiseNotificationShown(notification) {
+  let win = notification.browser.ownerDocument.defaultView;
+  if (win.PopupNotifications.panel.state == "open") {
+    return Promise.resolved();
+  }
+  let panelPromise = promisePopupShown(win.PopupNotifications.panel);
+  notification.reshow();
+  return panelPromise;
 }
 
 // NOTE: If you're using this, and attempting to interact with one of the

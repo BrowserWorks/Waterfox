@@ -1,0 +1,94 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1998, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+man%SECTION%dir = $(mandir)/man%SECTION%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+## MANS primary are always installed in mandir, hence install-data
+## is hard coded.
+
+.PHONY: install-man
+?INSTALL-MAN?install-data-am: install-man
+?INSTALL-MAN?am__installdirs += $(DESTDIR)$(man%SECTION%dir)
+.PHONY install-man: install-man%SECTION%
+install-man%SECTION%: $(man%SECTION%_MANS) $(man_MANS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(man%SECTION%dir)
+	@list='$(man%SECTION%_MANS) $(dist_man%SECTION%_MANS) $(nodist_man%SECTION%_MANS)'; \
+## Extract all items from man_MANS that should go in this section.
+## This must be done dynamically to support conditionals.
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+## Have to accept files like `foo.1c'.
+	    *.%SECTION%*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+## Find the file.
+	  if test -f $(srcdir)/$$i; then file=$(srcdir)/$$i; \
+	  else file=$$i; fi; \
+## Change the extension if needed.
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  case "$$ext" in \
+	    %SECTION%*) ;; \
+	    *) ext='%SECTION%' ;; \
+	  esac; \
+## Extract basename of man page and run it through the program rename
+## transform.
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " $(INSTALL_DATA) $$file $(DESTDIR)$(man%SECTION%dir)/$$inst"; \
+	  $(INSTALL_DATA) $$file $(DESTDIR)$(man%SECTION%dir)/$$inst; \
+	done
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+## This is just completely gross.
+.PHONY: uninstall-man
+?INSTALL-MAN?uninstall-am: uninstall-man
+.PHONY uninstall-man: uninstall-man%SECTION%
+uninstall-man%SECTION%:
+	@$(NORMAL_UNINSTALL)
+	@list='$(man%SECTION%_MANS) $(dist_man%SECTION%_MANS) $(nodist_man%SECTION%_MANS)'; \
+## Extract all items from man_MANS that should go in this section.
+## This must be done dynamically to support conditionals.
+	l2='$(man_MANS) $(dist_man_MANS) $(nodist_man_MANS)'; \
+	for i in $$l2; do \
+	  case "$$i" in \
+## Have to accept files like `foo.1c'.
+	    *.%SECTION%*) list="$$list $$i" ;; \
+	  esac; \
+	done; \
+	for i in $$list; do \
+## Extract basename of man page and run it through the program rename
+## transform.
+	  ext=`echo $$i | sed -e 's/^.*\\.//'`; \
+	  inst=`echo $$i | sed -e 's/\\.[0-9a-z]*$$//'`; \
+	  inst=`echo $$inst | sed -e 's/^.*\///'`; \
+	  inst=`echo $$inst | sed '$(transform)'`.$$ext; \
+	  echo " rm -f $(DESTDIR)$(man%SECTION%dir)/$$inst"; \
+	  rm -f $(DESTDIR)$(man%SECTION%dir)/$$inst; \
+	done

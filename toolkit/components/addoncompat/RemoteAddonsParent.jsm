@@ -109,20 +109,16 @@ let ContentPolicyParent = {
                .getService(Ci.nsIMessageBroadcaster);
     ppmm.addMessageListener("Addons:ContentPolicy:Run", this);
 
-    this._policies = [];
+    this._policies = new Map();
   },
 
-  addContentPolicy: function(cid) {
-    this._policies.push(cid);
+  addContentPolicy: function(name, cid) {
+    this._policies.set(name, cid);
     NotificationTracker.add(["content-policy"]);
   },
 
-  removeContentPolicy: function(cid) {
-    let index = this._policies.lastIndexOf(cid);
-    if (index > -1) {
-      this._policies.splice(index, 1);
-    }
-
+  removeContentPolicy: function(name) {
+    this._policies.delete(name);
     NotificationTracker.remove(["content-policy"]);
   },
 
@@ -135,15 +131,25 @@ let ContentPolicyParent = {
   },
 
   shouldLoad: function(aData, aObjects) {
-    for (let policyCID of this._policies) {
-      let policy = Cc[policyCID].getService(Ci.nsIContentPolicy);
+    for (let policyCID of this._policies.values()) {
+      let policy;
       try {
-        let result = policy.shouldLoad(aObjects.contentType,
-                                       aObjects.contentLocation,
-                                       aObjects.requestOrigin,
+        policy = Cc[policyCID].getService(Ci.nsIContentPolicy);
+      } catch (e) {
+        // Current Gecko behavior is to ignore entries that don't QI.
+        continue;
+      }
+      try {
+        let contentLocation = BrowserUtils.makeURI(aData.contentLocation);
+        let requestOrigin = aData.requestOrigin ? BrowserUtils.makeURI(aData.requestOrigin) : null;
+
+        let result = policy.shouldLoad(aData.contentType,
+                                       contentLocation,
+                                       requestOrigin,
                                        aObjects.node,
-                                       aObjects.mimeTypeGuess,
-                                       null);
+                                       aData.mimeTypeGuess,
+                                       null,
+                                       aData.requestPrincipal);
         if (result != Ci.nsIContentPolicy.ACCEPT && result != 0)
           return result;
       } catch (e) {
@@ -163,7 +169,7 @@ let CategoryManagerInterposition = new Interposition("CategoryManagerInterpositi
 CategoryManagerInterposition.methods.addCategoryEntry =
   function(addon, target, category, entry, value, persist, replace) {
     if (category == "content-policy") {
-      ContentPolicyParent.addContentPolicy(entry);
+      ContentPolicyParent.addContentPolicy(entry, value);
     }
 
     target.addCategoryEntry(category, entry, value, persist, replace);
@@ -172,7 +178,7 @@ CategoryManagerInterposition.methods.addCategoryEntry =
 CategoryManagerInterposition.methods.deleteCategoryEntry =
   function(addon, target, category, entry, persist) {
     if (category == "content-policy") {
-      ContentPolicyParent.remoteContentPolicy(entry);
+      ContentPolicyParent.removeContentPolicy(entry);
     }
 
     target.deleteCategoryEntry(category, entry, persist);
@@ -233,7 +239,7 @@ let AboutProtocolParent = {
     let contractID = msg.data.contractID;
     let module = Cc[contractID].getService(Ci.nsIAboutModule);
     try {
-      let channel = module.newChannel(uri);
+      let channel = module.newChannel(uri, null);
       channel.notificationCallbacks = msg.objects.notificationCallbacks;
       channel.loadGroup = {notificationCallbacks: msg.objects.loadGroupNotificationCallbacks};
       let stream = channel.open();
@@ -253,7 +259,7 @@ let ComponentRegistrarInterposition = new Interposition("ComponentRegistrarInter
 
 ComponentRegistrarInterposition.methods.registerFactory =
   function(addon, target, class_, className, contractID, factory) {
-    if (contractID.startsWith("@mozilla.org/network/protocol/about;1?")) {
+    if (contractID && contractID.startsWith("@mozilla.org/network/protocol/about;1?")) {
       AboutProtocolParent.registerFactory(class_, className, contractID, factory);
     }
 
@@ -378,7 +384,7 @@ let EventTargetParent = {
       // Check if |target| is somewhere on the patch from the
       // <tabbrowser> up to the root element.
       let window = target.ownerDocument.defaultView;
-      if (target.contains(window.gBrowser)) {
+      if (window && target.contains(window.gBrowser)) {
         return window;
       }
     }
@@ -571,6 +577,17 @@ ContentDocShellTreeItemInterposition.getters.rootTreeItem =
       .QueryInterface(Ci.nsIDocShellTreeItem);
   };
 
+function chromeGlobalForContentWindow(window)
+{
+    return window
+      .QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIWebNavigation)
+      .QueryInterface(Ci.nsIDocShellTreeItem)
+      .rootTreeItem
+      .QueryInterface(Ci.nsIInterfaceRequestor)
+      .getInterface(Ci.nsIContentFrameMessageManager);
+}
+
 // This object manages sandboxes created with content principals in
 // the parent. We actually create these sandboxes in the child process
 // so that the code loaded into them runs there. The resulting sandbox
@@ -578,16 +595,7 @@ ContentDocShellTreeItemInterposition.getters.rootTreeItem =
 let SandboxParent = {
   componentsMap: new WeakMap(),
 
-  makeContentSandbox: function(principal, ...rest) {
-    // The chrome global in the content process.
-    let chromeGlobal = principal
-      .QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIWebNavigation)
-      .QueryInterface(Ci.nsIDocShellTreeItem)
-      .rootTreeItem
-      .QueryInterface(Ci.nsIInterfaceRequestor)
-      .getInterface(Ci.nsIContentFrameMessageManager);
-
+  makeContentSandbox: function(chromeGlobal, principals, ...rest) {
     if (rest.length) {
       // Do a shallow copy of the options object into the child
       // process. This way we don't have to access it through a Chrome
@@ -606,7 +614,7 @@ let SandboxParent = {
 
     // Make a sandbox in the child.
     let cu = chromeGlobal.Components.utils;
-    let sandbox = cu.Sandbox(principal, ...rest);
+    let sandbox = cu.Sandbox(principals, ...rest);
 
     // We need to save the sandbox in the child so it won't get
     // GCed. The child will drop this reference at the next
@@ -632,14 +640,31 @@ let SandboxParent = {
 let ComponentsUtilsInterposition = new Interposition("ComponentsUtilsInterposition");
 
 ComponentsUtilsInterposition.methods.Sandbox =
-  function(addon, target, principal, ...rest) {
-    if (principal &&
-        typeof(principal) == "object" &&
-        Cu.isCrossProcessWrapper(principal) &&
-        principal instanceof Ci.nsIDOMWindow) {
-      return SandboxParent.makeContentSandbox(principal, ...rest);
+  function(addon, target, principals, ...rest) {
+    // principals can be a window object, a list of window objects, or
+    // something else (a string, for example).
+    if (principals &&
+        typeof(principals) == "object" &&
+        Cu.isCrossProcessWrapper(principals) &&
+        principals instanceof Ci.nsIDOMWindow) {
+      let chromeGlobal = chromeGlobalForContentWindow(principals);
+      return SandboxParent.makeContentSandbox(chromeGlobal, principals, ...rest);
+    } else if (principals &&
+               typeof(principals) == "object" &&
+               "every" in principals &&
+               principals.length &&
+               principals.every(e => e instanceof Ci.nsIDOMWindow && Cu.isCrossProcessWrapper(e))) {
+      let chromeGlobal = chromeGlobalForContentWindow(principals[0]);
+
+      // The principals we pass to the content process must use an
+      // Array object from the content process.
+      let array = new chromeGlobal.Array();
+      for (let i = 0; i < principals.length; i++) {
+        array[i] = principals[i];
+      }
+      return SandboxParent.makeContentSandbox(chromeGlobal, array, ...rest);
     } else {
-      return Components.utils.Sandbox(principal, ...rest);
+      return Components.utils.Sandbox(principals, ...rest);
     }
   };
 
@@ -709,7 +734,8 @@ RemoteBrowserElementInterposition.getters.contentWindow = function(addon, target
 };
 
 let DummyContentDocument = {
-  readyState: "loading"
+  readyState: "loading",
+  location: { href: "about:blank" }
 };
 
 RemoteBrowserElementInterposition.getters.contentDocument = function(addon, target) {

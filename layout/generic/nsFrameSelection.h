@@ -17,6 +17,7 @@
 #include "nsIDOMElement.h"
 #include "WordMovementType.h"
 #include "CaretAssociationHint.h"
+#include "nsBidiPresUtils.h"
 
 class nsRange;
 class nsTableOuterFrame;
@@ -62,7 +63,7 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
   nsPeekOffsetStruct(nsSelectionAmount aAmount,
                      nsDirection aDirection,
                      int32_t aStartOffset,
-                     nscoord aDesiredX,
+                     nsPoint aDesiredPos,
                      bool aJumpLines,
                      bool aScrollViewStop,
                      bool aIsKeyboardSelect,
@@ -95,9 +96,10 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
   //               Used with: eSelectCharacter, eSelectWord
   int32_t mStartOffset;
   
-  // mDesiredX: The desired x coordinate for the caret.
-  //            Used with: eSelectLine.
-  nscoord mDesiredX;
+  // mDesiredPos: The desired inline coordinate for the caret
+  //              (one of .x or .y will be used, depending on line's writing mode)
+  //              Used with: eSelectLine.
+  nsPoint mDesiredPos;
 
   // mWordMovementType: An enum that determines whether to prefer the start or end of a word
   //                    or to use the default beahvior, which is a combination of 
@@ -145,8 +147,8 @@ struct nsPrevNextBidiLevels
 {
   void SetData(nsIFrame* aFrameBefore,
                nsIFrame* aFrameAfter,
-               uint8_t aLevelBefore,
-               uint8_t aLevelAfter)
+               nsBidiLevel aLevelBefore,
+               nsBidiLevel aLevelAfter)
   {
     mFrameBefore = aFrameBefore;
     mFrameAfter = aFrameAfter;
@@ -155,8 +157,8 @@ struct nsPrevNextBidiLevels
   }
   nsIFrame* mFrameBefore;
   nsIFrame* mFrameAfter;
-  uint8_t mLevelBefore;
-  uint8_t mLevelAfter;
+  nsBidiLevel mLevelBefore;
+  nsBidiLevel mLevelAfter;
 };
 
 namespace mozilla {
@@ -403,15 +405,25 @@ public:
    *  @param aLevel the caret bidi level
    *  This method is virtual since it gets called from outside of layout.
    */
-  virtual void SetCaretBidiLevel (uint8_t aLevel);
+  virtual void SetCaretBidiLevel(nsBidiLevel aLevel);
   /** GetCaretBidiLevel gets the caret bidi level
    *  This method is virtual since it gets called from outside of layout.
    */
-  virtual uint8_t GetCaretBidiLevel() const;
+  virtual nsBidiLevel GetCaretBidiLevel() const;
   /** UndefineCaretBidiLevel sets the caret bidi level to "undefined"
    *  This method is virtual since it gets called from outside of layout.
    */
   virtual void UndefineCaretBidiLevel();
+
+  /** PhysicalMove will generally be called from the nsiselectioncontroller implementations.
+   *  the effect being the selection will move one unit 'aAmount' in the
+   *  given aDirection.
+   * @param aDirection  the direction to move the selection
+   * @param aAmount     amount of movement (char/line; word/page; eol/doc)
+   * @param aExtend     continue selection
+   */
+  /*unsafe*/
+  nsresult PhysicalMove(int16_t aDirection, int16_t aAmount, bool aExtend);
 
   /** CharacterMove will generally be called from the nsiselectioncontroller implementations.
    *  the effect being the selection will move one character left or right.
@@ -554,7 +566,7 @@ public:
    */
   nsresult GetFrameFromLevel(nsIFrame *aFrameIn,
                              nsDirection aDirection,
-                             uint8_t aBidiLevel,
+                             nsBidiLevel aBidiLevel,
                              nsIFrame **aFrameOut) const;
 
   /**
@@ -584,8 +596,6 @@ public:
   void DisconnectFromPresShell();
   nsresult ClearNormalSelection();
 
-  static CaretAssociateHint GetHintForPosition(nsIContent* aContent, int32_t aOffset);
-
 private:
   ~nsFrameSelection();
 
@@ -599,7 +609,7 @@ private:
   void BidiLevelFromMove(nsIPresShell* aPresShell,
                          nsIContent *aNode,
                          uint32_t aContentOffset,
-                         uint32_t aKeycode,
+                         nsSelectionAmount aAmount,
                          CaretAssociateHint aHint);
   void BidiLevelFromClick(nsIContent *aNewFocus, uint32_t aContentOffset);
   nsPrevNextBidiLevels GetPrevNextBidiLevels(nsIContent *aNode,
@@ -633,16 +643,22 @@ private:
 #endif /* DEBUG */
 
   void ResizeBuffer(uint32_t aNewBufSize);
-/*HELPER METHODS*/
-  nsresult     MoveCaret(uint32_t aKeycode, bool aContinueSelection,
-                         nsSelectionAmount aAmount);
-  nsresult     MoveCaret(uint32_t aKeycode, bool aContinueSelection,
-                         nsSelectionAmount aAmount,
-                         bool aVisualMovement);
 
-  nsresult     FetchDesiredX(nscoord &aDesiredX); //the x position requested by the Key Handling for up down
-  void         InvalidateDesiredX(); //do not listen to mDesiredX you must get another.
-  void         SetDesiredX(nscoord aX); //set the mDesiredX
+/*HELPER METHODS*/
+  // Whether MoveCaret should use logical or visual movement,
+  // or follow the bidi.edit.caret_movement_style preference.
+  enum CaretMovementStyle {
+    eLogical,
+    eVisual,
+    eUsePrefStyle
+  };
+  nsresult     MoveCaret(nsDirection aDirection, bool aContinueSelection,
+                         nsSelectionAmount aAmount,
+                         CaretMovementStyle aMovementStyle);
+
+  nsresult     FetchDesiredPos(nsPoint &aDesiredPos); //the position requested by the Key Handling for up down
+  void         InvalidateDesiredPos(); //do not listen to mDesiredPos you must get another.
+  void         SetDesiredPos(nsPoint aPos); //set the mDesiredPos
 
   uint32_t     GetBatching() const {return mBatching; }
   bool         GetNotifyFrames() const { return mNotifyFrames; }
@@ -707,9 +723,9 @@ private:
   int16_t mDisplaySelection; //for visual display purposes.
 
   CaretAssociateHint mHint;   //hint to tell if the selection is at the end of this line or beginning of next
-  uint8_t mCaretBidiLevel;
+  nsBidiLevel mCaretBidiLevel;
 
-  int32_t mDesiredX;
+  nsPoint mDesiredPos;
   uint32_t mDelayedMouseEventClickCount;
   bool mDelayedMouseEventIsShift;
   bool mDelayedMouseEventValid;
@@ -719,7 +735,7 @@ private:
   bool mDragSelectingCells;
   bool mDragState;   //for drag purposes
   bool mMouseDoubleDownState; //has the doubleclick down happened
-  bool mDesiredXSet;
+  bool mDesiredPosSet;
 
   int8_t mCaretMovementStyle;
 };

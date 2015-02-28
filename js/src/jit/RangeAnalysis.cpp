@@ -30,6 +30,7 @@ using mozilla::FloorLog2;
 using mozilla::IsInfinite;
 using mozilla::IsNaN;
 using mozilla::IsNegative;
+using mozilla::IsNegativeZero;
 using mozilla::NegativeInfinity;
 using mozilla::PositiveInfinity;
 using mozilla::Swap;
@@ -225,6 +226,10 @@ RangeAnalysis::addBetaNodes()
                     bound = intbound;
             }
             comp.setDouble(conservativeLower, bound);
+
+            // Negative zero is not less than zero.
+            if (bound == 0)
+                comp.refineToExcludeNegativeZero();
             break;
           case JSOP_GE:
             comp.setDouble(bound, conservativeUpper);
@@ -237,13 +242,34 @@ RangeAnalysis::addBetaNodes()
                     bound = intbound;
             }
             comp.setDouble(bound, conservativeUpper);
+
+            // Negative zero is not greater than zero.
+            if (bound == 0)
+                comp.refineToExcludeNegativeZero();
             break;
+          case JSOP_STRICTEQ:
+            // A strict comparison can test for things other than numeric value.
+            if (!compare->isNumericComparison())
+                continue;
+            // Otherwise fall through to handle JSOP_STRICTEQ the same as JSOP_EQ.
           case JSOP_EQ:
             comp.setDouble(bound, bound);
             break;
-          default:
-            continue; // well, for neq we could have
+          case JSOP_STRICTNE:
+            // A strict comparison can test for things other than numeric value.
+            if (!compare->isNumericComparison())
+                continue;
+            // Otherwise fall through to handle JSOP_STRICTNE the same as JSOP_NE.
+          case JSOP_NE:
+            // Negative zero is not not-equal to zero.
+            if (bound == 0) {
+                comp.refineToExcludeNegativeZero();
+                break;
+            }
+            continue; // well, we could have
                       // [-\inf, bound-1] U [bound+1, \inf] but we only use contiguous ranges.
+          default:
+            continue;
         }
 
         if (JitSpewEnabled(JitSpew_Range)) {
@@ -358,14 +384,51 @@ Range::print(Sprinter &sp) const
     }
 
     sp.printf("]");
-    if (IsExponentInteresting(this)) {
-        if (max_exponent_ == IncludesInfinityAndNaN)
-            sp.printf(" (U inf U NaN)", max_exponent_);
-        else if (max_exponent_ == IncludesInfinity)
-            sp.printf(" (U inf)");
-        else
-            sp.printf(" (< pow(2, %d+1))", max_exponent_);
+
+    bool includesNaN = max_exponent_ == IncludesInfinityAndNaN;
+    bool includesNegativeInfinity = max_exponent_ >= IncludesInfinity && !hasInt32LowerBound_;
+    bool includesPositiveInfinity = max_exponent_ >= IncludesInfinity && !hasInt32UpperBound_;
+    bool includesNegativeZero = canBeNegativeZero_;
+
+    if (includesNaN ||
+        includesNegativeInfinity ||
+        includesPositiveInfinity ||
+        includesNegativeZero)
+    {
+        sp.printf(" (");
+        bool first = true;
+        if (includesNaN) {
+            if (first)
+                first = false;
+            else
+                sp.printf(" ");
+            sp.printf("U NaN");
+        }
+        if (includesNegativeInfinity) {
+            if (first)
+                first = false;
+            else
+                sp.printf(" ");
+            sp.printf("U -Infinity");
+        }
+        if (includesPositiveInfinity) {
+            if (first)
+                first = false;
+            else
+                sp.printf(" ");
+            sp.printf("U Infinity");
+        }
+        if (includesNegativeZero) {
+            if (first)
+                first = false;
+            else
+                sp.printf(" ");
+            sp.printf("U -0");
+        }
+        sp.printf(")");
     }
+    if (max_exponent_ < IncludesInfinity && IsExponentInteresting(this))
+        sp.printf(" (< pow(2, %d+1))", max_exponent_);
 }
 
 void
@@ -417,7 +480,12 @@ Range::intersect(TempAllocator &alloc, const Range *lhs, const Range *rhs, bool 
 
     bool newHasInt32LowerBound = lhs->hasInt32LowerBound_ || rhs->hasInt32LowerBound_;
     bool newHasInt32UpperBound = lhs->hasInt32UpperBound_ || rhs->hasInt32UpperBound_;
-    bool newFractional = lhs->canHaveFractionalPart_ && rhs->canHaveFractionalPart_;
+
+    FractionalPartFlag newCanHaveFractionalPart = FractionalPartFlag(lhs->canHaveFractionalPart_ &&
+                                                                     rhs->canHaveFractionalPart_);
+    NegativeZeroFlag newMayIncludeNegativeZero = NegativeZeroFlag(lhs->canBeNegativeZero_ &&
+                                                                  rhs->canBeNegativeZero_);
+
     uint16_t newExponent = Min(lhs->max_exponent_, rhs->max_exponent_);
 
     // NaN is a special value which is neither greater than infinity or less than
@@ -445,8 +513,8 @@ Range::intersect(TempAllocator &alloc, const Range *lhs, const Range *rhs, bool 
     // When intersecting F[0,2] (< pow(2, 0+1)) with a range like F[2,4],
     // the naive intersection is I[2,2], but since the max exponent tells us
     // that the value is always less than 2, the intersection is actually empty.
-    if (lhs->canHaveFractionalPart_ != rhs->canHaveFractionalPart_ ||
-        (lhs->canHaveFractionalPart_ &&
+    if (lhs->canHaveFractionalPart() != rhs->canHaveFractionalPart() ||
+        (lhs->canHaveFractionalPart() &&
          newHasInt32LowerBound && newHasInt32UpperBound &&
          newLower == newUpper))
     {
@@ -464,7 +532,9 @@ Range::intersect(TempAllocator &alloc, const Range *lhs, const Range *rhs, bool 
     }
 
     return new(alloc) Range(newLower, newHasInt32LowerBound, newUpper, newHasInt32UpperBound,
-                            newFractional, newExponent);
+                            newCanHaveFractionalPart,
+                            newMayIncludeNegativeZero,
+                            newExponent);
 }
 
 void
@@ -475,11 +545,19 @@ Range::unionWith(const Range *other)
 
     bool newHasInt32LowerBound = hasInt32LowerBound_ && other->hasInt32LowerBound_;
     bool newHasInt32UpperBound = hasInt32UpperBound_ && other->hasInt32UpperBound_;
-    bool newFractional = canHaveFractionalPart_ || other->canHaveFractionalPart_;
+
+    FractionalPartFlag newCanHaveFractionalPart =
+        FractionalPartFlag(canHaveFractionalPart_ ||
+                           other->canHaveFractionalPart_);
+    NegativeZeroFlag newMayIncludeNegativeZero = NegativeZeroFlag(canBeNegativeZero_ ||
+                                                                  other->canBeNegativeZero_);
+
     uint16_t newExponent = Max(max_exponent_, other->max_exponent_);
 
     rawInitialize(newLower, newHasInt32LowerBound, newUpper, newHasInt32UpperBound,
-                  newFractional, newExponent);
+                  newCanHaveFractionalPart,
+                  newMayIncludeNegativeZero,
+                  newExponent);
 }
 
 Range::Range(const MDefinition *def)
@@ -550,9 +628,14 @@ ExponentImpliedByDouble(double d)
 void
 Range::setDouble(double l, double h)
 {
+    MOZ_ASSERT(!(l > h));
+
     // Infer lower_, upper_, hasInt32LowerBound_, and hasInt32UpperBound_.
     if (l >= INT32_MIN && l <= INT32_MAX) {
         lower_ = int32_t(::floor(l));
+        hasInt32LowerBound_ = true;
+    } else if (l >= INT32_MAX) {
+        lower_ = INT32_MAX;
         hasInt32LowerBound_ = true;
     } else {
         lower_ = INT32_MIN;
@@ -560,6 +643,9 @@ Range::setDouble(double l, double h)
     }
     if (h >= INT32_MIN && h <= INT32_MAX) {
         upper_ = int32_t(::ceil(h));
+        hasInt32UpperBound_ = true;
+    } else if (h <= INT32_MIN) {
+        upper_ = INT32_MIN;
         hasInt32UpperBound_ = true;
     } else {
         upper_ = INT32_MAX;
@@ -571,17 +657,40 @@ Range::setDouble(double l, double h)
     uint16_t hExp = ExponentImpliedByDouble(h);
     max_exponent_ = Max(lExp, hExp);
 
-    // Infer the canHaveFractionalPart_ field. We can have a fractional part
-    // if the range crosses through the neighborhood of zero. We won't have a
-    // fractional value if the value is always beyond the point at which
-    // double precision can't represent fractional values.
+    canHaveFractionalPart_ = ExcludesFractionalParts;
+    canBeNegativeZero_ = ExcludesNegativeZero;
+
+    // Infer the canHaveFractionalPart_ setting. We can have a
+    // fractional part if the range crosses through the neighborhood of zero. We
+    // won't have a fractional value if the value is always beyond the point at
+    // which double precision can't represent fractional values.
     uint16_t minExp = Min(lExp, hExp);
     bool includesNegative = IsNaN(l) || l < 0;
     bool includesPositive = IsNaN(h) || h > 0;
     bool crossesZero = includesNegative && includesPositive;
-    canHaveFractionalPart_ = crossesZero || minExp < MaxTruncatableExponent;
+    if (crossesZero || minExp < MaxTruncatableExponent)
+        canHaveFractionalPart_ = IncludesFractionalParts;
+
+    // Infer the canBeNegativeZero_ setting. We can have a negative zero if
+    // either bound is zero.
+    if (!(l > 0) && !(h < 0))
+        canBeNegativeZero_ = IncludesNegativeZero;
 
     optimize();
+}
+
+void
+Range::setDoubleSingleton(double d)
+{
+    setDouble(d, d);
+
+    // The above setDouble call is for comparisons, and treats negative zero
+    // as equal to zero. We're aiming for a minimum range, so we can clear the
+    // negative zero flag if the value isn't actually negative zero.
+    if (!IsNegativeZero(d))
+        canBeNegativeZero_ = ExcludesNegativeZero;
+
+    assertInvariants();
 }
 
 static inline bool
@@ -611,7 +720,12 @@ Range::add(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     if (lhs->canBeInfiniteOrNaN() && rhs->canBeInfiniteOrNaN())
         e = Range::IncludesInfinityAndNaN;
 
-    return new(alloc) Range(l, h, lhs->canHaveFractionalPart() || rhs->canHaveFractionalPart(), e);
+    return new(alloc) Range(l, h,
+                            FractionalPartFlag(lhs->canHaveFractionalPart() ||
+                                               rhs->canHaveFractionalPart()),
+                            NegativeZeroFlag(lhs->canBeNegativeZero() &&
+                                             rhs->canBeNegativeZero()),
+                            e);
 }
 
 Range *
@@ -635,7 +749,12 @@ Range::sub(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     if (lhs->canBeInfiniteOrNaN() && rhs->canBeInfiniteOrNaN())
         e = Range::IncludesInfinityAndNaN;
 
-    return new(alloc) Range(l, h, lhs->canHaveFractionalPart() || rhs->canHaveFractionalPart(), e);
+    return new(alloc) Range(l, h,
+                            FractionalPartFlag(lhs->canHaveFractionalPart() ||
+                                               rhs->canHaveFractionalPart()),
+                            NegativeZeroFlag(lhs->canBeNegativeZero() &&
+                                             rhs->canBeZero()),
+                            e);
 }
 
 Range *
@@ -796,7 +915,12 @@ Range::not_(TempAllocator &alloc, const Range *op)
 Range *
 Range::mul(TempAllocator &alloc, const Range *lhs, const Range *rhs)
 {
-    bool fractional = lhs->canHaveFractionalPart() || rhs->canHaveFractionalPart();
+    FractionalPartFlag newCanHaveFractionalPart = FractionalPartFlag(lhs->canHaveFractionalPart_ ||
+                                                                     rhs->canHaveFractionalPart_);
+
+    NegativeZeroFlag newMayIncludeNegativeZero =
+        NegativeZeroFlag((lhs->canHaveSignBitSet() && rhs->canBeFiniteNonNegative()) ||
+                         (rhs->canHaveSignBitSet() && lhs->canBeFiniteNonNegative()));
 
     uint16_t exponent;
     if (!lhs->canBeInfiniteOrNaN() && !rhs->canBeInfiniteOrNaN()) {
@@ -817,7 +941,10 @@ Range::mul(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     }
 
     if (MissingAnyInt32Bounds(lhs, rhs))
-        return new(alloc) Range(NoInt32LowerBound, NoInt32UpperBound, fractional, exponent);
+        return new(alloc) Range(NoInt32LowerBound, NoInt32UpperBound,
+                                newCanHaveFractionalPart,
+                                newMayIncludeNegativeZero,
+                                exponent);
     int64_t a = (int64_t)lhs->lower() * (int64_t)rhs->lower();
     int64_t b = (int64_t)lhs->lower() * (int64_t)rhs->upper();
     int64_t c = (int64_t)lhs->upper() * (int64_t)rhs->lower();
@@ -825,7 +952,9 @@ Range::mul(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     return new(alloc) Range(
         Min( Min(a, b), Min(c, d) ),
         Max( Max(a, b), Max(c, d) ),
-        fractional, exponent);
+        newCanHaveFractionalPart,
+        newMayIncludeNegativeZero,
+        exponent);
 }
 
 Range *
@@ -911,12 +1040,17 @@ Range::abs(TempAllocator &alloc, const Range *op)
 {
     int32_t l = op->lower_;
     int32_t u = op->upper_;
+    FractionalPartFlag canHaveFractionalPart = op->canHaveFractionalPart_;
+
+    // Abs never produces a negative zero.
+    NegativeZeroFlag canBeNegativeZero = ExcludesNegativeZero;
 
     return new(alloc) Range(Max(Max(int32_t(0), l), u == INT32_MIN ? INT32_MAX : -u),
                             true,
                             Max(Max(int32_t(0), u), l == INT32_MIN ? INT32_MAX : -l),
                             op->hasInt32Bounds() && l != INT32_MIN,
-                            op->canHaveFractionalPart_,
+                            canHaveFractionalPart,
+                            canBeNegativeZero,
                             op->max_exponent_);
 }
 
@@ -927,11 +1061,17 @@ Range::min(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     if (lhs->canBeNaN() || rhs->canBeNaN())
         return nullptr;
 
+    FractionalPartFlag newCanHaveFractionalPart = FractionalPartFlag(lhs->canHaveFractionalPart_ ||
+                                                                     rhs->canHaveFractionalPart_);
+    NegativeZeroFlag newMayIncludeNegativeZero = NegativeZeroFlag(lhs->canBeNegativeZero_ ||
+                                                                  rhs->canBeNegativeZero_);
+
     return new(alloc) Range(Min(lhs->lower_, rhs->lower_),
                             lhs->hasInt32LowerBound_ && rhs->hasInt32LowerBound_,
                             Min(lhs->upper_, rhs->upper_),
                             lhs->hasInt32UpperBound_ || rhs->hasInt32UpperBound_,
-                            lhs->canHaveFractionalPart_ || rhs->canHaveFractionalPart_,
+                            newCanHaveFractionalPart,
+                            newMayIncludeNegativeZero,
                             Max(lhs->max_exponent_, rhs->max_exponent_));
 }
 
@@ -942,11 +1082,17 @@ Range::max(TempAllocator &alloc, const Range *lhs, const Range *rhs)
     if (lhs->canBeNaN() || rhs->canBeNaN())
         return nullptr;
 
+    FractionalPartFlag newCanHaveFractionalPart = FractionalPartFlag(lhs->canHaveFractionalPart_ ||
+                                                                     rhs->canHaveFractionalPart_);
+    NegativeZeroFlag newMayIncludeNegativeZero = NegativeZeroFlag(lhs->canBeNegativeZero_ ||
+                                                                  rhs->canBeNegativeZero_);
+
     return new(alloc) Range(Max(lhs->lower_, rhs->lower_),
                             lhs->hasInt32LowerBound_ || rhs->hasInt32LowerBound_,
                             Max(lhs->upper_, rhs->upper_),
                             lhs->hasInt32UpperBound_ && rhs->hasInt32UpperBound_,
-                            lhs->canHaveFractionalPart_ || rhs->canHaveFractionalPart_,
+                            newCanHaveFractionalPart,
+                            newMayIncludeNegativeZero,
                             Max(lhs->max_exponent_, rhs->max_exponent_));
 }
 
@@ -970,7 +1116,7 @@ Range::floor(TempAllocator &alloc, const Range *op)
     else if(copy->max_exponent_ < MaxFiniteExponent)
         copy->max_exponent_++;
 
-    copy->canHaveFractionalPart_ = false;
+    copy->canHaveFractionalPart_ = ExcludesFractionalParts;
     copy->assertInvariants();
     return copy;
 }
@@ -989,9 +1135,22 @@ Range::ceil(TempAllocator &alloc, const Range *op)
     else if (copy->max_exponent_ < MaxFiniteExponent)
         copy->max_exponent_++;
 
-    copy->canHaveFractionalPart_ = false;
+    copy->canHaveFractionalPart_ = ExcludesFractionalParts;
     copy->assertInvariants();
     return copy;
+}
+
+Range *
+Range::sign(TempAllocator &alloc, const Range *op)
+{
+    if (op->canBeNaN())
+        return nullptr;
+
+    return new(alloc) Range(Max(Min(op->lower_, 1), -1),
+                            Max(Min(op->upper_, 1), -1),
+                            Range::ExcludesFractionalParts,
+                            NegativeZeroFlag(op->canBeNegativeZero()),
+                            0);
 }
 
 bool
@@ -999,8 +1158,8 @@ Range::negativeZeroMul(const Range *lhs, const Range *rhs)
 {
     // The result can only be negative zero if both sides are finite and they
     // have differing signs.
-    return (lhs->canBeFiniteNegative() && rhs->canBeFiniteNonNegative()) ||
-           (rhs->canBeFiniteNegative() && lhs->canBeFiniteNonNegative());
+    return (lhs->canHaveSignBitSet() && rhs->canBeFiniteNonNegative()) ||
+           (rhs->canHaveSignBitSet() && lhs->canBeFiniteNonNegative());
 }
 
 bool
@@ -1012,6 +1171,7 @@ Range::update(const Range *other)
         upper_ != other->upper_ ||
         hasInt32UpperBound_ != other->hasInt32UpperBound_ ||
         canHaveFractionalPart_ != other->canHaveFractionalPart_ ||
+        canBeNegativeZero_ != other->canBeNegativeZero_ ||
         max_exponent_ != other->max_exponent_;
     if (changed) {
         lower_ = other->lower_;
@@ -1019,6 +1179,7 @@ Range::update(const Range *other)
         upper_ = other->upper_;
         hasInt32UpperBound_ = other->hasInt32UpperBound_;
         canHaveFractionalPart_ = other->canHaveFractionalPart_;
+        canBeNegativeZero_ = other->canBeNegativeZero_;
         max_exponent_ = other->max_exponent_;
         assertInvariants();
     }
@@ -1079,7 +1240,7 @@ MConstant::computeRange(TempAllocator &alloc)
 {
     if (value().isNumber()) {
         double d = value().toNumber();
-        setRange(Range::NewDoubleRange(alloc, d, d));
+        setRange(Range::NewDoubleSingletonRange(alloc, d));
     } else if (value().isBoolean()) {
         bool b = value().toBoolean();
         setRange(Range::NewInt32Range(alloc, b, b));
@@ -1282,6 +1443,8 @@ MMul::computeRange(TempAllocator &alloc)
     if (canBeNegativeZero())
         canBeNegativeZero_ = Range::negativeZeroMul(&left, &right);
     Range *next = Range::mul(alloc, &left, &right);
+    if (!next->canBeNegativeZero())
+        canBeNegativeZero_ = false;
     // Truncated multiplications could overflow in both directions
     if (isTruncated())
         next->wrapAroundToInt32();
@@ -1368,7 +1531,18 @@ MMod::computeRange(TempAllocator &alloc)
     int64_t lower = lhs.lower() >= 0 ? 0 : -absBound;
     int64_t upper = lhs.upper() <= 0 ? 0 : absBound;
 
-    setRange(new(alloc) Range(lower, upper, lhs.canHaveFractionalPart() || rhs.canHaveFractionalPart(),
+    Range::FractionalPartFlag newCanHaveFractionalPart =
+        Range::FractionalPartFlag(lhs.canHaveFractionalPart() ||
+                                  rhs.canHaveFractionalPart());
+
+    // If the lhs can have the sign bit set and we can return a zero, it'll be a
+    // negative zero.
+    Range::NegativeZeroFlag newMayIncludeNegativeZero =
+        Range::NegativeZeroFlag(lhs.canHaveSignBitSet());
+
+    setRange(new(alloc) Range(lower, upper,
+                              newCanHaveFractionalPart,
+                              newMayIncludeNegativeZero,
                               Min(lhs.exponent(), rhs.exponent())));
 }
 
@@ -1388,11 +1562,17 @@ MDiv::computeRange(TempAllocator &alloc)
     // Something simple for now: When dividing by a positive rhs, the result
     // won't be further from zero than lhs.
     if (lhs.lower() >= 0 && rhs.lower() >= 1) {
-        setRange(new(alloc) Range(0, lhs.upper(), true, lhs.exponent()));
+        setRange(new(alloc) Range(0, lhs.upper(),
+                                  Range::IncludesFractionalParts,
+                                  Range::IncludesNegativeZero,
+                                  lhs.exponent()));
     } else if (unsigned_ && rhs.lower() >= 1) {
         // We shouldn't set the unsigned flag if the inputs can have
         // fractional parts.
         MOZ_ASSERT(!lhs.canHaveFractionalPart() && !rhs.canHaveFractionalPart());
+        // We shouldn't set the unsigned flag if the inputs can be
+        // negative zero.
+        MOZ_ASSERT(!lhs.canBeNegativeZero() && !rhs.canBeNegativeZero());
         // Unsigned division by a non-zero rhs will return a uint32 value.
         setRange(Range::NewUInt32Range(alloc, 0, UINT32_MAX));
     }
@@ -1414,7 +1594,11 @@ MSqrt::computeRange(TempAllocator &alloc)
 
     // Something simple for now: When taking the sqrt of a positive value, the
     // result won't be further from zero than the input.
-    setRange(new(alloc) Range(0, input.upper(), true, input.exponent()));
+    // And, sqrt of an integer may have a fractional part.
+    setRange(new(alloc) Range(0, input.upper(),
+                              Range::IncludesFractionalParts,
+                              input.canBeNegativeZero(),
+                              input.exponent()));
 }
 
 void
@@ -1561,16 +1745,7 @@ MMathFunction::computeRange(TempAllocator &alloc)
             setRange(Range::NewDoubleRange(alloc, -1.0, 1.0));
         break;
       case Sign:
-        if (!opRange.canBeNaN()) {
-            // Note that Math.sign(-0) is -0, and we treat -0 as equal to 0.
-            int32_t lower = -1;
-            int32_t upper = 1;
-            if (opRange.hasInt32LowerBound() && opRange.lower() >= 0)
-                lower = 0;
-            if (opRange.hasInt32UpperBound() && opRange.upper() <= 0)
-                upper = 0;
-            setRange(Range::NewInt32Range(alloc, lower, upper));
-        }
+        setRange(Range::sign(alloc, &opRange));
         break;
     default:
         break;
@@ -1580,7 +1755,12 @@ MMathFunction::computeRange(TempAllocator &alloc)
 void
 MRandom::computeRange(TempAllocator &alloc)
 {
-    setRange(Range::NewDoubleRange(alloc, 0.0, 1.0));
+    Range *r = Range::NewDoubleRange(alloc, 0.0, 1.0);
+
+    // Random never returns negative zero.
+    r->refineToExcludeNegativeZero();
+
+    setRange(r);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2025,14 +2205,14 @@ RangeAnalysis::analyze()
                     Range *range = ins->ptr()->range();
                     if (range && range->hasInt32LowerBound() && range->lower() >= 0 &&
                         range->hasInt32UpperBound() && (uint32_t) range->upper() < minHeapLength) {
-                        ins->setSkipBoundsCheck(true);
+                        ins->removeBoundsCheck();
                     }
                 } else if (iter->isAsmJSStoreHeap()) {
                     MAsmJSStoreHeap *ins = iter->toAsmJSStoreHeap();
                     Range *range = ins->ptr()->range();
                     if (range && range->hasInt32LowerBound() && range->lower() >= 0 &&
                         range->hasInt32UpperBound() && (uint32_t) range->upper() < minHeapLength) {
-                        ins->setSkipBoundsCheck(true);
+                        ins->removeBoundsCheck();
                     }
                 }
             }
@@ -2083,22 +2263,12 @@ RangeAnalysis::addRangeAssertions()
             // Beta nodes and interrupt checks are required to be located at the
             // beginnings of basic blocks, so we must insert range assertions
             // after any such instructions.
-            MInstructionIterator insertIter = ins->isPhi()
-                                            ? block->begin()
-                                            : block->begin(ins->toInstruction());
-            while (insertIter->isBeta() ||
-                   insertIter->isInterruptCheck() ||
-                   insertIter->isInterruptCheckPar() ||
-                   insertIter->isConstant() ||
-                   insertIter->isRecoveredOnBailout())
-            {
-                insertIter++;
-            }
+            MInstruction *insertAt = block->safeInsertTop(ins);
 
-            if (*insertIter == *iter)
-                block->insertAfter(*insertIter,  guard);
+            if (insertAt == *iter)
+                block->insertAfter(insertAt,  guard);
             else
-                block->insertBefore(*insertIter, guard);
+                block->insertBefore(insertAt, guard);
         }
     }
 
@@ -2125,16 +2295,20 @@ Range::wrapAroundToInt32()
     if (!hasInt32Bounds()) {
         setInt32(JSVAL_INT_MIN, JSVAL_INT_MAX);
     } else if (canHaveFractionalPart()) {
-        canHaveFractionalPart_ = false;
-
         // Clearing the fractional field may provide an opportunity to refine
         // lower_ or upper_.
+        canHaveFractionalPart_ = ExcludesFractionalParts;
+        canBeNegativeZero_ = ExcludesNegativeZero;
         refineInt32BoundsByExponent(max_exponent_,
                                     &lower_, &hasInt32LowerBound_,
                                     &upper_, &hasInt32UpperBound_);
 
         assertInvariants();
+    } else {
+        // If nothing else, we can clear the negative zero flag.
+        canBeNegativeZero_ = ExcludesNegativeZero;
     }
+    MOZ_ASSERT(isInt32());
 }
 
 void
@@ -2151,6 +2325,7 @@ Range::wrapAroundToBoolean()
     wrapAroundToInt32();
     if (!isBoolean())
         setInt32(0, 1);
+    MOZ_ASSERT(isBoolean());
 }
 
 bool
@@ -2708,7 +2883,6 @@ AdjustTruncatedInputs(TempAllocator &alloc, MDefinition *truncated)
             continue;
 
         if (input->isToDouble() && input->getOperand(0)->type() == MIRType_Int32) {
-            MOZ_ASSERT(input->range()->isInt32());
             truncated->replaceOperand(i, input->getOperand(0));
         } else {
             MInstruction *op;
@@ -2947,7 +3121,7 @@ void
 MToInt32::collectRangeInfoPreTrunc()
 {
     Range inputRange(input());
-    if (!inputRange.canBeZero())
+    if (!inputRange.canBeNegativeZero())
         canBeNegativeZero_ = false;
 }
 
@@ -2979,7 +3153,7 @@ MPowHalf::collectRangeInfoPreTrunc()
     Range inputRange(input());
     if (!inputRange.canBeInfiniteOrNaN() || inputRange.hasInt32LowerBound())
         operandIsNeverNegativeInfinity_ = true;
-    if (!inputRange.canBeZero())
+    if (!inputRange.canBeNegativeZero())
         operandIsNeverNegativeZero_ = true;
     if (!inputRange.canBeNaN())
         operandIsNeverNaN_ = true;

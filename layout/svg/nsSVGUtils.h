@@ -34,7 +34,6 @@ class nsIContent;
 class nsIDocument;
 class nsIFrame;
 class nsPresContext;
-class nsRenderingContext;
 class nsStyleContext;
 class nsStyleCoord;
 class nsSVGClipPathFrame;
@@ -188,6 +187,7 @@ class nsSVGUtils
 {
 public:
   typedef mozilla::dom::Element Element;
+  typedef mozilla::gfx::AntialiasMode AntialiasMode;
   typedef mozilla::gfx::FillRule FillRule;
   typedef mozilla::gfx::GeneralPattern GeneralPattern;
 
@@ -279,7 +279,7 @@ public:
    * redrawn, in device pixel coordinates relative to the outer svg */
   static void
   PaintFrameWithEffects(nsIFrame *aFrame,
-                        nsRenderingContext *aContext,
+                        gfxContext& aContext,
                         const gfxMatrix& aTransform,
                         const nsIntRect *aDirtyRect = nullptr);
 
@@ -503,7 +503,7 @@ public:
 
   static float GetOpacity(nsStyleSVGOpacitySource aOpacityType,
                           const float& aOpacity,
-                          gfxTextContextPaint *aOuterContextPaint);
+                          gfxTextContextPaint *aContextPaint);
 
   /*
    * @return false if there is no stroke
@@ -532,6 +532,11 @@ public:
   static FillRule ToFillRule(uint8_t aFillRule) {
     return aFillRule == NS_STYLE_FILL_RULE_EVENODD ?
              FillRule::FILL_EVEN_ODD : FillRule::FILL_WINDING;
+  }
+
+  static AntialiasMode ToAntialiasMode(uint8_t aTextRendering) {
+    return aTextRendering == NS_STYLE_TEXT_RENDERING_OPTIMIZESPEED ?
+             AntialiasMode::NONE : AntialiasMode::SUBPIXEL;
   }
 
   /**

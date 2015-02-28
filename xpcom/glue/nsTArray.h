@@ -11,6 +11,7 @@
 #include "mozilla/Alignment.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/BinarySearch.h"
+#include "mozilla/MathAlgorithms.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
 #include "mozilla/TypeTraits.h"
@@ -2002,6 +2003,13 @@ public:
   {
   }
 
+  template<typename Allocator>
+  self_type& operator=(const nsTArray_Impl<E, Allocator>& other)
+  {
+    Base::operator=(other);
+    return *this;
+  }
+
   operator const AutoFallibleTArray<E, N>&() const
   {
     return *reinterpret_cast<const AutoFallibleTArray<E, N>*>(this);
@@ -2030,6 +2038,13 @@ public:
   explicit AutoFallibleTArray(nsTArray_Impl<E, Allocator>&& aOther)
     : Base(mozilla::Move(aOther))
   {
+  }
+
+  template<typename Allocator>
+  self_type& operator=(const nsTArray_Impl<E, Allocator>& other)
+  {
+    Base::operator=(other);
+    return *this;
   }
 
   operator const nsAutoTArray<E, N>&() const

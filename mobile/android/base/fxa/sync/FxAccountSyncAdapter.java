@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountClient;
 import org.mozilla.gecko.background.fxa.FxAccountClient20;
+import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.fxa.SkewHandler;
 import org.mozilla.gecko.browserid.BrowserIDKeyPair;
 import org.mozilla.gecko.browserid.JSONWebTokenUtils;
@@ -315,7 +316,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
 
       @Override
       public void handleSuccess(final TokenServerToken token) {
-        FxAccountConstants.pii(LOG_TAG, "Got token! uid is " + token.uid + " and endpoint is " + token.endpoint + ".");
+        FxAccountUtils.pii(LOG_TAG, "Got token! uid is " + token.uid + " and endpoint is " + token.endpoint + ".");
 
         if (!didReceiveBackoff) {
           // We must be OK to touch this token server.
@@ -358,9 +359,9 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
         FxAccountGlobalSession globalSession = null;
         try {
           final ClientsDataDelegate clientsDataDelegate = new SharedPreferencesClientsDataDelegate(sharedPrefs, getContext());
-          if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
-            FxAccountConstants.pii(LOG_TAG, "Client device name is: '" + clientsDataDelegate.getClientName() + "'.");
-            FxAccountConstants.pii(LOG_TAG, "Client device data last modified: " + clientsDataDelegate.getLastModifiedTimestamp());
+          if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
+            FxAccountUtils.pii(LOG_TAG, "Client device name is: '" + clientsDataDelegate.getClientName() + "'.");
+            FxAccountUtils.pii(LOG_TAG, "Client device data last modified: " + clientsDataDelegate.getLastModifiedTimestamp());
           }
 
           // We compute skew over time using SkewHandler. This yields an unchanging
@@ -434,10 +435,19 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     Logger.setThreadLogTag(FxAccountConstants.GLOBAL_LOG_TAG);
     Logger.resetLogging();
 
+    final Context context = getContext();
+    final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
+
     Logger.info(LOG_TAG, "Syncing FxAccount" +
         " account named like " + Utils.obfuscateEmail(account.name) +
         " for authority " + authority +
         " with instance " + this + ".");
+
+    Logger.info(LOG_TAG, "Account last synced at: " + fxAccount.getLastSyncedTimestamp());
+
+    if (FxAccountUtils.LOG_PERSONAL_INFORMATION) {
+      fxAccount.dump();
+    }
 
     final EnumSet<FirefoxAccounts.SyncHint> syncHints = FirefoxAccounts.getHintsToSyncFromBundle(extras);
     FirefoxAccounts.logSyncHints(syncHints);
@@ -448,12 +458,6 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
       Logger.info(LOG_TAG, "Not syncing FxAccount " + Utils.obfuscateEmail(account.name) +
                            ": minimum interval not met.");
       return;
-    }
-
-    final Context context = getContext();
-    final AndroidFxAccount fxAccount = new AndroidFxAccount(context, account);
-    if (FxAccountConstants.LOG_PERSONAL_INFORMATION) {
-      fxAccount.dump();
     }
 
     // Pickle in a background thread to avoid strict mode warnings.

@@ -209,7 +209,7 @@ fil{
         }
         GBP{
             "£",
-            "British Pound Sterling",
+            "British Pound",
         }
         GEL{
             "GEL",
@@ -900,8 +900,8 @@ fil{
             other{"Falkland Islands pounds"}
         }
         GBP{
-            one{"British pound sterling"}
-            other{"British pounds sterling"}
+            one{"British pound"}
+            other{"British pounds"}
         }
         GEL{
             one{"Georgian lari"}
@@ -1348,5 +1348,5 @@ fil{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

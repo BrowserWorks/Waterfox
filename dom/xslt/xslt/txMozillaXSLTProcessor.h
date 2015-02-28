@@ -17,6 +17,7 @@
 #include "nsWrapperCache.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/ErrorResult.h"
+#include "mozilla/net/ReferrerPolicy.h"
 
 class nsINode;
 class nsIDOMNode;
@@ -156,7 +157,7 @@ public:
     static void Shutdown();
 
 private:
-    txMozillaXSLTProcessor(nsISupports* aOwner);
+    explicit txMozillaXSLTProcessor(nsISupports* aOwner);
     /**
      * Default destructor for txMozillaXSLTProcessor
      */
@@ -185,7 +186,8 @@ private:
 };
 
 extern nsresult TX_LoadSheet(nsIURI* aUri, txMozillaXSLTProcessor* aProcessor,
-                             nsIDocument* aLoaderDocument);
+                             nsIDocument* aLoaderDocument,
+                             mozilla::net::ReferrerPolicy aReferrerPolicy);
 
 extern nsresult TX_CompileStylesheet(nsINode* aNode,
                                      txMozillaXSLTProcessor* aProcessor,

@@ -8,7 +8,6 @@
 #include "mozilla/unused.h"
 #include "nsPrintfCString.h"
 #include "nsIWeakReferenceUtils.h"
-#include "CameraRecorderProfiles.h"
 #include "CameraCommon.h"
 #include "nsGlobalWindow.h"
 #include "DeviceStorageFileDescriptor.h"
@@ -23,6 +22,7 @@ CameraControlImpl::CameraControlImpl(uint32_t aCameraId)
   , mCameraId(aCameraId)
   , mPreviewState(CameraControlListener::kPreviewStopped)
   , mHardwareState(CameraControlListener::kHardwareClosed)
+  , mHardwareStateChangeReason(NS_OK)
 {
   DOM_CAMERA_LOGT("%s:%d : this=%p\n", __func__, __LINE__, this);
 
@@ -65,12 +65,6 @@ CameraControlImpl::~CameraControlImpl()
   }
 }
 
-already_AddRefed<RecorderProfileManager>
-CameraControlImpl::GetRecorderProfileManager()
-{
-  return GetRecorderProfileManagerImpl();
-}
-
 void
 CameraControlImpl::Shutdown()
 {
@@ -78,7 +72,8 @@ CameraControlImpl::Shutdown()
 }
 
 void
-CameraControlImpl::OnHardwareStateChange(CameraControlListener::HardwareState aNewState)
+CameraControlImpl::OnHardwareStateChange(CameraControlListener::HardwareState aNewState,
+                                         nsresult aReason)
 {
   // This callback can run on threads other than the Main Thread and
   //  the Camera Thread. On Gonk, it may be called from the camera's
@@ -91,20 +86,22 @@ CameraControlImpl::OnHardwareStateChange(CameraControlListener::HardwareState aN
   }
 
 #ifdef PR_LOGGING
-  const char* state[] = { "open", "closed", "failed" };
+  const char* state[] = { "closed", "open", "failed" };
   MOZ_ASSERT(aNewState >= 0);
   if (static_cast<unsigned int>(aNewState) < sizeof(state) / sizeof(state[0])) {
-    DOM_CAMERA_LOGI("New hardware state is '%s'\n", state[aNewState]);
+    DOM_CAMERA_LOGI("New hardware state is '%s' (reason=0x%x)\n",
+      state[aNewState], aReason);
   } else {
     DOM_CAMERA_LOGE("OnHardwareStateChange: got invalid HardwareState value %d\n", aNewState);
   }
 #endif
 
   mHardwareState = aNewState;
+  mHardwareStateChangeReason = aReason;
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
-    l->OnHardwareStateChange(mHardwareState);
+    l->OnHardwareStateChange(mHardwareState, mHardwareStateChangeReason);
   }
 }
 
@@ -114,7 +111,7 @@ CameraControlImpl::OnConfigurationChange()
   MOZ_ASSERT(NS_GetCurrentThread() == mCameraThread);
   RwLockAutoEnterRead lock(mListenerLock);
 
-  DOM_CAMERA_LOGI("OnConfigurationChange : %d listeners\n", mListeners.Length());
+  DOM_CAMERA_LOGI("OnConfigurationChange : %zu listeners\n", mListeners.Length());
 
   for (uint32_t i = 0; i < mListeners.Length(); ++i) {
     CameraControlListener* l = mListeners[i];
@@ -190,19 +187,6 @@ CameraControlImpl::OnShutter()
 }
 
 void
-CameraControlImpl::OnClosed()
-{
-  // This callback can run on threads other than the Main Thread and
-  //  the Camera Thread.
-  RwLockAutoEnterRead lock(mListenerLock);
-
-  for (uint32_t i = 0; i < mListeners.Length(); ++i) {
-    CameraControlListener* l = mListeners[i];
-    l->OnHardwareStateChange(CameraControlListener::kHardwareClosed);
-  }
-}
-
-void
 CameraControlImpl::OnRecorderStateChange(CameraControlListener::RecorderState aState,
                                          int32_t aStatus, int32_t aTrackNumber)
 {
@@ -269,7 +253,7 @@ CameraControlImpl::OnNewPreviewFrame(layers::Image* aImage, uint32_t aWidth, uin
   //  On Gonk, it is called from the camera driver's preview thread.
   RwLockAutoEnterRead lock(mListenerLock);
 
-  DOM_CAMERA_LOGI("OnNewPreviewFrame: we have %d preview frame listener(s)\n",
+  DOM_CAMERA_LOGI("OnNewPreviewFrame: we have %zu preview frame listener(s)\n",
     mListeners.Length());
 
   bool consumed = false;
@@ -713,7 +697,7 @@ CameraControlImpl::AddListenerImpl(already_AddRefed<CameraControlListener> aList
 
   // Update the newly-added listener's state
   l->OnConfigurationChange(mCurrentConfiguration);
-  l->OnHardwareStateChange(mHardwareState);
+  l->OnHardwareStateChange(mHardwareState, mHardwareStateChangeReason);
   l->OnPreviewStateChange(mPreviewState);
 }
 

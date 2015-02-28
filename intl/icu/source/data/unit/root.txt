@@ -11,6 +11,13 @@
  */
 root{
     Version{"2.1.7.12"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
+    units:alias{"/LOCALE/unitsShort"}
+    unitsNarrow:alias{"/LOCALE/unitsShort"}
     unitsShort{
         acceleration{
             g-force{

@@ -459,7 +459,7 @@ void CollationThaiTest::TestReordering(void) {
   const char *testcontraction[] = { "\\u0E41ab", ">", "\\u0E41c"}; // After UCA 4.1 Thai are normal so won't break a contraction
   UnicodeString rules;
   parseChars(rules, rule);
-  LocalPointer<RuleBasedCollator> rcoll(new RuleBasedCollator(rules, status));
+  LocalPointer<RuleBasedCollator> rcoll(new RuleBasedCollator(rules, status), status);
   if(U_SUCCESS(status)) {
     compareArray(*rcoll, testcontraction, 3);
   } else {

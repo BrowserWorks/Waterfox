@@ -1,0 +1,63 @@
+If you read this file _as_is_, just ignore the funny characters you see.
+It is written in the POD format (see pod/perlpod.pod) which is specially
+designed to be readable as is.
+
+=head1 NAME
+
+README.macos - Perl under Mac OS (Classic)
+
+
+=head1 SYNOPSIS
+
+This document briefly describes perl under Mac OS (Classic).
+If you are running perl under Mac OS X, you don't want to be
+here (unless you are in the Classic environment under Mac OS X).
+
+When we say "Mac OS" below, we mean pre-Mac OS X, which includes
+Mac OS 7, 8, and 9.
+
+
+=head1 DESCRIPTION
+
+The perl 5.6.1 source itself builds on Mac OS, with some additional
+pieces. Support for Mac OS is now in the perl core, and MacPerl will be
+able to, in the future, keep in closer sync with regular perl releases.
+
+At this time, though, it is very buggy, and is under development.  An
+alpha release is available, with work progressing toward a beta.
+
+To build perl for Mac OS (as an MPW tool), you will need the addition
+of the "macos" subdirectory, distributed separately.  It includes extra
+source files, config files, and make files.  It also includes a lot of
+extra Mac-specific modules.
+
+To build the MacPerl application, you will also need the "macperl"
+directory, which includes the source files for creating the
+application itself.
+
+All of this is available from the development site, via
+HTTP and anonymous CVS.
+
+	http://dev.macperl.org/
+
+The source is also in the main perl repository in the maint-5.6/macperl
+branch.
+
+You will also need compilers and libraries, all of them freely
+available.  These are linked to from the SourceForge site. Go that site
+for all things having to do with MacPerl development.
+
+MacPerl 5.2.0r4 is available on the CPAN and on SourceForge.  It
+is based on perl 5.004.
+
+
+=head1 AUTHOR
+
+perl was ported to Mac OS by Matthias Neeracher
+E<lt>neeracher@mac.comE<gt>.  It is currently maintained by Chris
+Nandor E<lt>pudge@pobox.comE<gt>.
+
+
+=head1 DATE
+
+Last modified 2001.07.19.

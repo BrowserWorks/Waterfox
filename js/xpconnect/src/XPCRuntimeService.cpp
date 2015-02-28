@@ -4,15 +4,17 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "xpcprivate.h"
+
 #include "nsContentUtils.h"
 #include "BackstagePass.h"
 #include "nsIProgrammingLanguage.h"
 #include "nsDOMClassInfo.h"
 #include "nsIPrincipal.h"
 
-#include "mozilla/dom/workers/Workers.h"
+#include "mozilla/dom/ResolveSystemBinding.h"
 
-using mozilla::dom::workers::ResolveWorkerClasses;
+using mozilla::dom::ResolveSystemBinding;
 
 NS_INTERFACE_MAP_BEGIN(BackstagePass)
   NS_INTERFACE_MAP_ENTRY(nsIGlobalObject)
@@ -29,7 +31,7 @@ NS_IMPL_RELEASE(BackstagePass)
 // The nsIXPCScriptable map declaration that will generate stubs for us...
 #define XPC_MAP_CLASSNAME           BackstagePass
 #define XPC_MAP_QUOTED_CLASSNAME   "BackstagePass"
-#define                             XPC_MAP_WANT_NEWRESOLVE
+#define                             XPC_MAP_WANT_RESOLVE
 #define                             XPC_MAP_WANT_ENUMERATE
 #define                             XPC_MAP_WANT_FINALIZE
 #define                             XPC_MAP_WANT_PRECREATE
@@ -43,34 +45,46 @@ NS_IMPL_RELEASE(BackstagePass)
                             nsIXPCScriptable::DONT_REFLECT_INTERFACE_NAMES
 #include "xpc_map_end.h" /* This will #undef the above */
 
-/* bool newResolve (in nsIXPConnectWrappedNative wrapper, in JSContextPtr cx, in JSObjectPtr obj, in jsval id, out JSObjectPtr objp); */
+
+JSObject *
+BackstagePass::GetGlobalJSObject()
+{
+    if (mWrapper)
+        return mWrapper->GetFlatJSObject();
+    return nullptr;
+}
+
+void
+BackstagePass::SetGlobalObject(JSObject* global)
+{
+    nsISupports* p = XPCWrappedNative::Get(global);
+    MOZ_ASSERT(p);
+    mWrapper = static_cast<XPCWrappedNative*>(p);
+}
+
 NS_IMETHODIMP
-BackstagePass::NewResolve(nsIXPConnectWrappedNative *wrapper,
-                          JSContext * cx, JSObject * objArg,
-                          jsid idArg, JSObject * *objpArg,
-                          bool *_retval)
+BackstagePass::Resolve(nsIXPConnectWrappedNative *wrapper,
+                       JSContext * cx, JSObject * objArg,
+                       jsid idArg, bool *resolvedp,
+                       bool *_retval)
 {
     JS::RootedObject obj(cx, objArg);
     JS::RootedId id(cx, idArg);
 
     bool resolved;
-    *objpArg = nullptr;
-
     *_retval = !!JS_ResolveStandardClass(cx, obj, id, &resolved);
     NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
 
     if (resolved) {
-        *objpArg = obj;
+        *resolvedp = true;
         return NS_OK;
     }
 
-    JS::RootedObject objp(cx, *objpArg);
-
-    *_retval = ResolveWorkerClasses(cx, obj, id, &objp);
+    *_retval = ResolveSystemBinding(cx, obj, id, &resolved);
     NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
 
-    if (objp) {
-        *objpArg = objp;
+    if (resolved) {
+        *resolvedp = true;
         return NS_OK;
     }
 
@@ -86,8 +100,8 @@ BackstagePass::Enumerate(nsIXPConnectWrappedNative *wrapper, JSContext *cx,
     *_retval = JS_EnumerateStandardClasses(cx, obj);
     NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
 
-    JS::RootedObject ignored(cx);
-    *_retval = ResolveWorkerClasses(cx, obj, JSID_VOIDHANDLE, &ignored);
+    bool ignored = false;
+    *_retval = ResolveSystemBinding(cx, obj, JSID_VOIDHANDLE, &ignored);
     NS_ENSURE_TRUE(*_retval, NS_ERROR_FAILURE);
 
     return NS_OK;

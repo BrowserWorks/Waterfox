@@ -349,7 +349,7 @@ az{
         }
         GBP{
             "£",
-            "Britaniya Funt Sterlinqi",
+            "Britaniya Funt",
         }
         GEK{
             "GEK",
@@ -1462,8 +1462,8 @@ az{
             other{"Fransız markası"}
         }
         GBP{
-            one{"Britaniya funt sterlinqi"}
-            other{"Britaniya funt sterlinqi"}
+            one{"Britaniya funt"}
+            other{"Britaniya funt"}
         }
         GEK{
             one{"Gürcüstan kupon lariti"}
@@ -2186,5 +2186,5 @@ az{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

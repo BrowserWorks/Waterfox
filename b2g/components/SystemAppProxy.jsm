@@ -89,8 +89,14 @@ let SystemAppProxy = {
   },
 
   // Now deprecated, use sendCustomEvent with a custom event name
-  dispatchEvent: function systemApp_sendChromeEvent(details, target) {
+  dispatchEvent: function systemApp_dispatchEvent(details, target) {
     return this._sendCustomEvent('mozChromeEvent', details, false, target);
+  },
+
+  dispatchKeyboardEvent: function systemApp_dispatchKeyboardEvent(type, details) {
+    let content = this._frame ? this._frame.contentWindow : null;
+    let e = new content.KeyboardEvent(type, details);
+    content.dispatchEvent(e);
   },
 
   // Listen for dom events on the system app
@@ -117,23 +123,16 @@ let SystemAppProxy = {
     }
   },
 
-  getAppFrames: function systemApp_getAppFrames() {
+  getFrames: function systemApp_getFrames() {
     let systemAppFrame = this._frame;
     if (!systemAppFrame) {
       return [];
     }
-
     let list = [systemAppFrame];
-
-    // List all app frames hosted in the system app: the homescreen,
-    // all regular apps, activities, rocket bar, attention screen and the keyboard.
-    // Bookmark apps and other system app internal frames like captive portal
-    // are also hosted in system app, but they are not using mozapp attribute.
-    let frames = systemAppFrame.contentDocument.querySelectorAll("iframe[mozapp]");
+    let frames = systemAppFrame.contentDocument.querySelectorAll('iframe');
     for (let i = 0; i < frames.length; i++) {
       list.push(frames[i]);
     }
-
     return list;
   }
 };

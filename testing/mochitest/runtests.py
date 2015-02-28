@@ -12,6 +12,7 @@ import sys
 SCRIPT_DIR = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
 sys.path.insert(0, SCRIPT_DIR);
 
+from urlparse import urlparse
 import ctypes
 import glob
 import json
@@ -35,9 +36,6 @@ import bisection
 
 from automationutils import (
     environment,
-    isURL,
-    KeyValueParseError,
-    parseKeyValue,
     processLeakLog,
     dumpScreen,
     ShutdownLeaks,
@@ -517,6 +515,8 @@ class MochitestUtilsMixin(object):
         self.urlOpts.append("timeout=%d" % options.timeout)
       if options.closeWhenDone:
         self.urlOpts.append("closeWhenDone=1")
+      if options.webapprtContent:
+        self.urlOpts.append("testRoot=webapprtContent")
       if options.logFile:
         self.urlOpts.append("logFile=" + encodeURIComponent(options.logFile))
         self.urlOpts.append("fileLevel=" + encodeURIComponent(options.fileLevel))
@@ -577,6 +577,8 @@ class MochitestUtilsMixin(object):
       return "a11y"
     elif options.webapprtChrome:
       return "webapprt-chrome"
+    elif options.webapprtContent:
+      return "webapprt-content"
     else:
       return "mochitest"
 
@@ -632,6 +634,8 @@ class MochitestUtilsMixin(object):
         self.testRoot = 'a11y'
       elif options.webapprtChrome:
         self.testRoot = 'webapprtChrome'
+      elif options.webapprtContent:
+        self.testRoot = 'webapprtContent'
       elif options.chrome:
         self.testRoot = 'chrome'
       else:
@@ -661,7 +665,6 @@ class MochitestUtilsMixin(object):
 
     tests = self.getActiveTests(options, disabled)
     paths = []
-
     for test in tests:
       if testsToFilter and (test['path'] not in testsToFilter):
         continue
@@ -762,6 +765,12 @@ class MochitestUtilsMixin(object):
     with open(os.path.join(options.profilePath, "extensions", "staged", "mochikit@mozilla.org", "chrome.manifest"), "a") as mfile:
       mfile.write(chrome)
 
+  def getChromeTestDir(self, options):
+    dir = os.path.join(os.path.abspath("."), SCRIPT_DIR) + "/"
+    if mozinfo.isWin:
+      dir = "file:///" + dir.replace("\\", "/")
+    return dir
+
   def addChromeToProfile(self, options):
     "Adds MochiKit chrome tests to the profile."
 
@@ -786,9 +795,7 @@ toolbar#nav-bar {
     manifest = os.path.join(options.profilePath, "tests.manifest")
     with open(manifest, "w") as manifestFile:
       # Register chrome directory.
-      chrometestDir = os.path.join(os.path.abspath("."), SCRIPT_DIR) + "/"
-      if mozinfo.isWin:
-        chrometestDir = "file:///" + chrometestDir.replace("\\", "/")
+      chrometestDir = self.getChromeTestDir(options)
       manifestFile.write("content mochitests %s contentaccessible=yes\n" % chrometestDir)
 
       if options.testingModulesDir is not None:
@@ -884,6 +891,9 @@ class SSLTunnel:
         redirhost = match.group("redirhost")
         config.write("redirhost:%s:%s:%s:%s\n" %
                      (loc.host, loc.port, self.sslPort, redirhost))
+
+      if option in ('ssl3', 'rc4', 'failHandshake'):
+        config.write("%s:%s:%s:%s\n" % (option, loc.host, loc.port, self.sslPort))
 
   def buildConfig(self, locations):
     """Create the ssltunnel configuration file"""
@@ -1033,6 +1043,27 @@ def findTestMediaDevices(log):
   # Hardcode the name since it's always the same.
   info['audio'] = 'Sine source at 440 Hz'
   return info
+
+class KeyValueParseError(Exception):
+  """error when parsing strings of serialized key-values"""
+  def __init__(self, msg, errors=()):
+    self.errors = errors
+    Exception.__init__(self, msg)
+
+def parseKeyValue(strings, separator='=', context='key, value: '):
+  """
+  parse string-serialized key-value pairs in the form of
+  `key = value`. Returns a list of 2-tuples.
+  Note that whitespace is not stripped.
+  """
+
+  # syntax check
+  missing = [string for string in strings if separator not in string]
+  if missing:
+    raise KeyValueParseError("Error: syntax error in %s" % (context,
+                                                            ','.join(missing)),
+                                                            errors=missing)
+  return [string.split(separator, 1) for string in strings]
 
 class Mochitest(MochitestUtilsMixin):
   certdbNew = False
@@ -1237,6 +1268,14 @@ class Mochitest(MochitestUtilsMixin):
     # These variables are necessary for correct application startup; change
     # via the commandline at your own risk.
     browserEnv["XPCOM_DEBUG_BREAK"] = "stack"
+
+    # When creating child processes on Windows pre-Vista (e.g. Windows XP) we
+    # don't normally inherit stdout/err handles, because you can only do it by
+    # inheriting all other inheritable handles as well.
+    # We need to inherit them for plain mochitests for test logging purposes, so
+    # we do so on the basis of a specific environment variable.
+    if self.getTestFlavor(options) == "mochitest":
+      browserEnv["MOZ_WIN_INHERIT_STD_HANDLES_PRE_VISTA"] = "1"
 
     # interpolate environment passed with options
     try:
@@ -1589,8 +1628,6 @@ class Mochitest(MochitestUtilsMixin):
     paths = []
 
     for test in tests:
-      if test.get('expected') == 'fail':
-        raise Exception('fail-if encountered for test: %s. There is no support for fail-if in Mochitests.' % test['name'])
       pathAbs = os.path.abspath(test['path'])
       assert pathAbs.startswith(self.testRootAbs)
       tp = pathAbs[len(self.testRootAbs):].replace('\\', '/').strip('/')
@@ -1604,8 +1641,10 @@ class Mochitest(MochitestUtilsMixin):
         continue
 
       testob = {'path': tp}
-      if test.has_key('disabled'):
+      if 'disabled' in test:
         testob['disabled'] = test['disabled']
+      if 'expected' in test:
+        testob['expected'] = test['expected']
       paths.append(testob)
 
     def path_sort(ob1, ob2):
@@ -1635,7 +1674,7 @@ class Mochitest(MochitestUtilsMixin):
 
     testsToRun = []
     for test in tests:
-      if test.has_key('disabled'):
+      if 'disabled' in test:
         continue
       testsToRun.append(test['path'])
 
@@ -1678,6 +1717,10 @@ class Mochitest(MochitestUtilsMixin):
     """ Prepare, configure, run tests and cleanup """
 
     self.setTestRoot(options)
+
+    # Until we have all green, this only runs on bc* jobs (not dt* jobs)
+    if options.browserChrome and not options.subsuite:
+      options.runByDir = True
 
     if not options.runByDir:
       return self.runMochitests(options, onLaunch)
@@ -2063,7 +2106,9 @@ class Mochitest(MochitestUtilsMixin):
     if "MOZ_HIDE_RESULTS_TABLE" in os.environ and os.environ["MOZ_HIDE_RESULTS_TABLE"] == "1":
       options.hideResultsTable = True
 
-    d = dict((k, v) for k, v in options.__dict__.iteritems() if not k.startswith('log'))
+    d = dict((k, v) for k, v in options.__dict__.items() if
+        (not k.startswith('log_') or
+         not any([k.endswith(fmt) for fmt in commandline.log_formatters.keys()])))
     d['testRoot'] = self.testRoot
     content = json.dumps(d)
 
@@ -2118,7 +2163,7 @@ def main():
 
   options.utilityPath = mochitest.getFullPath(options.utilityPath)
   options.certPath = mochitest.getFullPath(options.certPath)
-  if options.symbolsPath and not isURL(options.symbolsPath):
+  if options.symbolsPath and len(urlparse(options.symbolsPath).scheme) < 2:
     options.symbolsPath = mochitest.getFullPath(options.symbolsPath)
 
   return_code = mochitest.runTests(options)

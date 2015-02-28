@@ -457,7 +457,7 @@ mozJSComponentLoader::FindTargetObject(JSContext* aCx,
     if (mReuseLoaderGlobal) {
         JSFunction *fun = js::GetOutermostEnclosingFunctionOfScriptedCaller(aCx);
         if (fun) {
-            JSObject *funParent = js::GetObjectParent(JS_GetFunctionObject(fun));
+            JSObject *funParent = js::GetObjectEnvironmentObjectForFunction(fun);
             if (JS_GetClass(funParent) == &kFakeBackstagePassJSClass)
                 targetObject = funParent;
         }
@@ -783,9 +783,14 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
             if (!mReuseLoaderGlobal) {
                 Compile(cx, obj, options, buf, fileSize32, &script);
             } else {
-                CompileFunction(cx, obj, options,
-                                nullptr, 0, nullptr,
-                                buf, fileSize32, &function);
+                // Note: exceptions will get handled further down;
+                // don't early return for them here.
+                AutoObjectVector scopeChain(cx);
+                if (scopeChain.append(obj)) {
+                    CompileFunction(cx, scopeChain,
+                                    options, nullptr, 0, nullptr,
+                                    buf, fileSize32, &function);
+                }
             }
 
             PR_MemUnmap(buf, fileSize32);
@@ -829,9 +834,14 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
                 script = Compile(cx, obj, options, buf,
                                      fileSize32);
             } else {
-                function = CompileFunction(cx, obj, options,
-                                           nullptr, 0, nullptr,
-                                           buf, fileSize32);
+                // Note: exceptions will get handled further down;
+                // don't early return for them here.
+                AutoObjectVector scopeChain(cx);
+                if (scopeChain.append(obj)) {
+                    CompileFunction(cx, scopeChain,
+                                    options, nullptr, 0, nullptr,
+                                    buf, fileSize32, &function);
+                }
             }
 
             free(buf);
@@ -869,9 +879,14 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
             if (!mReuseLoaderGlobal) {
                 Compile(cx, obj, options, buf, bytesRead, &script);
             } else {
-                CompileFunction(cx, obj, options,
-                                nullptr, 0, nullptr,
-                                buf, bytesRead, &function);
+                // Note: exceptions will get handled further down;
+                // don't early return for them here.
+                AutoObjectVector scopeChain(cx);
+                if (scopeChain.append(obj)) {
+                    CompileFunction(cx, scopeChain,
+                                    options, nullptr, 0, nullptr,
+                                    buf, bytesRead, &function);
+                }
             }
         }
         // Propagate the exception, if one exists. Also, don't leave the stale
@@ -920,7 +935,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
     bool ok = false;
 
     {
-        // We're going to run script via JS_ExecuteScriptVersion or
+        // We're going to run script via JS_ExecuteScript or
         // JS_CallFunction, so we need an AutoEntryScript.
         // This is Gecko-specific and not in any spec.
         dom::AutoEntryScript aes(NativeGlobal(CurrentGlobalOrNull(cx)));
@@ -928,7 +943,7 @@ mozJSComponentLoader::ObjectForLocation(ComponentLoaderInfo &aInfo,
         if (aPropagateExceptions)
             ContextOptionsRef(cx).setDontReportUncaught(true);
         if (script) {
-            ok = JS_ExecuteScriptVersion(cx, obj, script, JSVERSION_LATEST);
+            ok = JS_ExecuteScript(cx, obj, script);
         } else {
             RootedValue rval(cx);
             ok = JS_CallFunction(cx, obj, function, JS::HandleValueArray::empty(), &rval);

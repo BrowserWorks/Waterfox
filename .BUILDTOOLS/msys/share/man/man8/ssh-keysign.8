@@ -1,0 +1,58 @@
+.TH SSH-KEYSIGN 8 "May 24, 2002" ""
+.SH NAME
+\fBssh-keysign\fP
+\- ssh helper program for host-based authentication
+.SH SYNOPSIS
+.br
+\fBssh-keysign\fP
+.SH DESCRIPTION
+\fBssh-keysign\fP
+is used by
+\fBssh\fP(1)
+to access the local host keys and generate the digital signature
+required during host-based authentication with SSH protocol version 2.
+
+\fBssh-keysign\fP
+is disabled by default and can only be enabled in the
+global client configuration file
+\fI/etc/ssh/ssh_config\fP
+by setting
+\fBEnableSSHKeysign\fP
+to
+``yes''.
+
+\fBssh-keysign\fP
+is not intended to be invoked by the user, but from
+\fBssh\fP(1).
+See
+\fBssh\fP(1)
+and
+\fBsshd\fP(8)
+for more information about host-based authentication.
+.SH FILES
+.TP
+.B /etc/ssh/ssh_config
+Controls whether
+\fBssh-keysign\fP
+is enabled.
+.TP
+.B /etc/ssh/ssh_host_dsa_key, /etc/ssh/ssh_host_rsa_key
+These files contain the private parts of the host keys used to
+generate the digital signature.
+They should be owned by root, readable only by root, and not
+accessible to others.
+Since they are readable only by root,
+\fBssh-keysign\fP
+must be set-uid root if host-based authentication is used.
+.SH SEE ALSO
+\fBssh\fP(1),
+\fBssh-keygen\fP(1),
+\fBssh_config\fP(5),
+\fBsshd\fP(8)
+.SH HISTORY
+\fBssh-keysign\fP
+first appeared in
+OpenBSD 3.2 .
+.SH AUTHORS
+
+Markus Friedl <markus@openbsd.org>

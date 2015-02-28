@@ -4,7 +4,7 @@
   <head>
     <title>Input Time</title>
      <meta name=viewport content="width=device-width, maximum-scale=1.0, user-scalable=no" />
-	  <link rel="help" href="http://www.w3.org/TR/html5/the-input-element.html#the-input-element">
+	  <link rel="help" href="https://html.spec.whatwg.org/multipage/#the-input-element">
    <script src="/resources/testharness.js"></script>
     <script src="/resources/testharnessreport.js"></script>
   </head>
@@ -15,13 +15,13 @@
 							<input type="time "id="chkDefaultValue" />
 							<input type="time" id="chkStep" />
 							<input type="time" id="chkSetValueTest" />
-							<input type="time" id="chkSupportAttribute" min="01:01:01.001" max="12:12:12.012" step="600" /> 
+							<input type="time" id="chkSupportAttribute" min="01:01:01.001" max="12:12:12.012" step="600" />
     	</div>
 		<div id="log">
     </div>
-	
+
 	<script type="text/javascript">
-		
+
 /* check default value */
 test(function(){ assert_equals(document.getElementById("chkDefaultValue").value, "");
 }, "time element of default time value");

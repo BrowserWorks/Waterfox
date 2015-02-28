@@ -15,6 +15,7 @@
 #include "jsprototypes.h"
 #include "jsweakmap.h"
 
+#include "builtin/AtomicsObject.h"
 #include "builtin/Eval.h"
 #if EXPOSE_INTL_API
 # include "builtin/Intl.h"
@@ -239,6 +240,11 @@ GlobalObject::create(JSContext *cx, const Class *clasp)
 
     Rooted<GlobalObject *> global(cx, &obj->as<GlobalObject>());
 
+    // Initialize the private slot to null if present, as GC can call class
+    // hooks before the caller gets to set this to a non-garbage value.
+    if (clasp->flags & JSCLASS_HAS_PRIVATE)
+        global->setPrivate(nullptr);
+
     cx->compartment()->initGlobal(*global);
 
     if (!global->setQualifiedVarObj(cx))
@@ -318,10 +324,24 @@ InitBareBuiltinCtor(JSContext *cx, Handle<GlobalObject*> global, JSProtoKey prot
 GlobalObject::initSelfHostingBuiltins(JSContext *cx, Handle<GlobalObject*> global,
                                       const JSFunctionSpec *builtins)
 {
-    /* Define a top-level property 'undefined' with the undefined value. */
+    // Define a top-level property 'undefined' with the undefined value.
     if (!JSObject::defineProperty(cx, global, cx->names().undefined, UndefinedHandleValue,
                                   JS_PropertyStub, JS_StrictPropertyStub,
                                   JSPROP_PERMANENT | JSPROP_READONLY))
+    {
+        return false;
+    }
+
+    // Define a top-level property 'std_iterator' with the name of the method
+    // used by for-of loops to create an iterator.
+    RootedValue std_iterator(cx);
+#ifdef JS_HAS_SYMBOLS
+    std_iterator.setSymbol(cx->wellKnownSymbols().get(JS::SymbolCode::iterator));
+#else
+    std_iterator.setString(cx->names().std_iterator);
+#endif
+    if (!JS_DefineProperty(cx, global, "std_iterator", std_iterator,
+                           JSPROP_PERMANENT | JSPROP_READONLY))
     {
         return false;
     }

@@ -81,7 +81,7 @@ seh{
         }
         GBP{
             "£",
-            "Libra esterlina britânica",
+            "Libra britânica",
         }
         GHC{
             "GHC",
@@ -240,5 +240,5 @@ seh{
             "Dólar do Zimbábue",
         }
     }
-    Version{"2.1.6.69"}
+    Version{"2.1.10.42"}
 }

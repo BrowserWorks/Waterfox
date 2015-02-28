@@ -1,0 +1,65 @@
+GNUS NEWS -- history of user-visible changes.
+
+Copyright (C) 1999-2013 Free Software Foundation, Inc.
+See the end of the file for license conditions.
+
+Please send Gnus bug reports to bugs@gnus.org.
+For older news, see Gnus info node "New Features".
+
+
+* New features
+
+** New package `gnus-notifications.el' can send notifications when you
+   receive new messages.
+
+** If you have the "tnef" program installed, Gnus will display ms-tnef
+   files, aka "winmail.dat".
+
+** Archives (like tar and zip files) will be automatically unpacked,
+   and the files inside the packages will be displayed as MIME parts.
+
+** shr has a new command `z' that cycles through image sizes.
+
+** `backtab' in the summary buffer now selects the previous link in
+   the article buffer.
+
+** Using the "X-Message-SMTP-Method" header in Message buffers now
+   allows specifying how messages are to be sent.  For example:
+
+   X-Message-SMTP-Method: smtp smtp.fsf.org 587
+
+** Gnus keeps track of non-existent articles for nnimap groups, so
+   that sparse IMAP folders now list a correct number of messages in
+   them.
+
+** Gnus will guess the real type of MIME parts of type
+   application/octet-stream based on the file suffix.  So an
+   application/octet-stream with a name of "rms.jpg" will be displayed
+   as an image/jpeg type by default, for instance.
+
+** `nnimap-inbox' can now be a list of mail box names.
+   
+* For older news, see Gnus info node "New Features".
+
+----------------------------------------------------------------------
+
+This file is part of GNU Emacs.
+
+GNU Emacs is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+GNU Emacs is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+
+Local variables:
+mode: outline
+paragraph-separate: "[ 	]*$"
+end:

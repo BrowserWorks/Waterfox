@@ -514,7 +514,7 @@ let onmouseover = function(e) {
   let region = e.target.getAttribute("data-box");
 
   tooltip.textContent = e.target.getAttribute("tooltip");
-  this.layoutview.showBoxModel({region: region});
+  this.layoutview.showBoxModel({region});
 
   return false;
 }.bind(window);
@@ -548,7 +548,9 @@ window.setPanel = function(panel) {
 };
 
 window.onunload = function() {
-  this.layoutview.destroy();
+  if (this.layoutview) {
+    this.layoutview.destroy();
+  }
   if (elts) {
     for (let i = 0; i < elts.length; i++) {
       let elt = elts[i];

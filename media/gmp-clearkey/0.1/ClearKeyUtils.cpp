@@ -2,13 +2,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include <assert.h>
+#include <algorithm>
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <vector>
 
 #include "ClearKeyUtils.h"
+#include "mozilla/ArrayUtils.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/Endian.h"
 #include "mozilla/NullPtr.h"
 #include "openaes/oaes_lib.h"
@@ -40,7 +42,7 @@ static void
 IncrementIV(vector<uint8_t>& aIV) {
   using mozilla::BigEndian;
 
-  assert(aIV.size() == 16);
+  MOZ_ASSERT(aIV.size() == 16);
   BigEndian::writeUint64(&aIV[8], BigEndian::readUint64(&aIV[8]) + 1);
 }
 
@@ -48,8 +50,8 @@ IncrementIV(vector<uint8_t>& aIV) {
 ClearKeyUtils::DecryptAES(const vector<uint8_t>& aKey,
                           vector<uint8_t>& aData, vector<uint8_t>& aIV)
 {
-  assert(aIV.size() == CLEARKEY_KEY_LEN);
-  assert(aKey.size() == CLEARKEY_KEY_LEN);
+  MOZ_ASSERT(aIV.size() == CLEARKEY_KEY_LEN);
+  MOZ_ASSERT(aKey.size() == CLEARKEY_KEY_LEN);
 
   OAES_CTX* aes = oaes_alloc();
   oaes_key_import_data(aes, &aKey[0], aKey.size());
@@ -62,7 +64,9 @@ ClearKeyUtils::DecryptAES(const vector<uint8_t>& aKey,
     vector<uint8_t> enc(encLen);
     oaes_encrypt(aes, &aIV[0], CLEARKEY_KEY_LEN, &enc[0], &encLen);
 
-    for (size_t j = 0; j < CLEARKEY_KEY_LEN; j++) {
+    MOZ_ASSERT(encLen >= 2 * OAES_BLOCK_SIZE + CLEARKEY_KEY_LEN);
+    size_t blockLen = std::min(aData.size() - i, CLEARKEY_KEY_LEN);
+    for (size_t j = 0; j < blockLen; j++) {
       aData[i + j] ^= enc[2 * OAES_BLOCK_SIZE + j];
     }
     IncrementIV(aIV);
@@ -92,7 +96,7 @@ EncodeBase64Web(vector<uint8_t> aBinary, string& aEncoded)
 
   auto out = aEncoded.begin();
   auto data = aBinary.begin();
-  for (int i = 0; i < aEncoded.length(); i++) {
+  for (string::size_type i = 0; i < aEncoded.length(); i++) {
     if (shift) {
       out[i] = (*data << (6 - shift)) & sMask;
       data++;
@@ -103,7 +107,12 @@ EncodeBase64Web(vector<uint8_t> aBinary, string& aEncoded)
     out[i] += (*data >> (shift + 2)) & sMask;
     shift = (shift + 2) % 8;
 
-    out[i] = sAlphabet[out[i]];
+    // Cast idx to size_t before using it as an array-index,
+    // to pacify clang 'Wchar-subscripts' warning:
+    size_t idx = static_cast<size_t>(out[i]);
+    MOZ_ASSERT(idx < MOZ_ARRAY_LENGTH(sAlphabet),
+               "out of bounds index for 'sAlphabet'");
+    out[i] = sAlphabet[idx];
   }
 
   return true;

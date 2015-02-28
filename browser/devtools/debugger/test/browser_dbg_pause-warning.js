@@ -7,13 +7,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_inline-script.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gTarget, gToolbox;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gTarget = gPanel.target;
@@ -28,7 +27,9 @@ function testPause() {
     ok(gTarget.isThreadPaused,
       "target.isThreadPaused has been updated to true.");
 
-    gToolbox.once("inspector-selected", testNotificationIsUp1);
+    gToolbox.once("inspector-selected").then(inspector => {
+      inspector.once("inspector-updated").then(testNotificationIsUp1);
+    });
     gToolbox.selectTool("inspector");
   });
 
@@ -90,7 +91,6 @@ function testResume() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gTarget = null;

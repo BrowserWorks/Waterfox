@@ -264,7 +264,10 @@ class TickSample {
         lr(NULL),
 #endif
         context(NULL),
-        isSamplingCurrentThread(false) {}
+        isSamplingCurrentThread(false),
+        threadProfile(nullptr),
+        rssMemory(0),
+        ussMemory(0) {}
 
   void PopulateContext(void* aContext);
 
@@ -417,6 +420,9 @@ class ThreadInfo {
   void SetPendingDelete();
   bool IsPendingDelete() const { return mPendingDelete; }
 
+#ifdef MOZ_NUWA_PROCESS
+  void SetThreadId(int aThreadId) { mThreadId = aThreadId; }
+#endif
 
   /**
    * May be null for the main thread if the profiler was started during startup

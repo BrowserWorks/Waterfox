@@ -31,7 +31,7 @@
 
 #include "jit/ExecutableAllocator.h"
 
-#define UNW_FLAG_EHANDLER  0x01 //Define this manually because ICL does not call the correct unwind headers
+#define UNW_FLAG_EHANDLER  0x01 //Define this manually because ICL 14 SP1+VS2010 does not call the correct unwind headers
 
 using namespace js::jit;
 
@@ -161,7 +161,7 @@ RegisterExecutableMemory(void *p, size_t bytes, size_t pageSize)
     // mov imm64, rax
     r->thunk[0]  = 0x48;
     r->thunk[1]  = 0xb8;
-    void *handler = &ExceptionHandler;
+    void *handler = JS_FUNC_TO_DATA_PTR(void *, ExceptionHandler);
     memcpy(&r->thunk[2], &handler, 8);
 
     // jmp rax
@@ -251,22 +251,6 @@ ExecutablePool::Allocation ExecutableAllocator::systemAlloc(size_t n)
 void ExecutableAllocator::systemRelease(const ExecutablePool::Allocation& alloc)
 {
     DeallocateExecutableMemory(alloc.pages, alloc.size, pageSize);
-}
-
-void
-ExecutablePool::toggleAllCodeAsAccessible(bool accessible)
-{
-    char* begin = m_allocation.pages;
-    size_t size = m_freePtr - begin;
-
-    if (size) {
-        // N.B. DEP is not on automatically in Windows XP, so be sure to use
-        // PAGE_NOACCESS instead of PAGE_READWRITE when making inaccessible.
-        DWORD oldProtect;
-        int flags = accessible ? PAGE_EXECUTE_READWRITE : PAGE_NOACCESS;
-        if (!VirtualProtect(begin, size, flags, &oldProtect))
-            MOZ_CRASH();
-    }
 }
 
 #if ENABLE_ASSEMBLER_WX_EXCLUSIVE

@@ -29,6 +29,8 @@
 #include "nsISSLStatus.h"
 #include "nsISSLStatusProvider.h"
 #include "nsISupportsPriority.h"
+#include "nsStandardURL.h"
+#include "nsURLHelper.h"
 #include "prprf.h"
 #include "prnetdb.h"
 #include "sslt.h"
@@ -214,10 +216,10 @@ Http2Session::LogIO(Http2Session *self, Http2Stream *stream,
                     const char *label,
                     const char *data, uint32_t datalen)
 {
-  if (!LOG4_ENABLED())
+  if (!LOG5_ENABLED())
     return;
 
-  LOG4(("Http2Session::LogIO %p stream=%p id=0x%X [%s]",
+  LOG5(("Http2Session::LogIO %p stream=%p id=0x%X [%s]",
         self, stream, stream ? stream->StreamID() : 0, label));
 
   // Max line is (16 * 3) + 10(prefix) + newline + null
@@ -231,7 +233,7 @@ Http2Session::LogIO(Http2Session *self, Http2Stream *stream,
     if (!(index % 16)) {
       if (index) {
         *line = 0;
-        LOG4(("%s", linebuf));
+        LOG5(("%s", linebuf));
       }
       line = linebuf;
       PR_snprintf(line, 128, "%08X: ", index);
@@ -243,7 +245,7 @@ Http2Session::LogIO(Http2Session *self, Http2Stream *stream,
   }
   if (index) {
     *line = 0;
-    LOG4(("%s", linebuf));
+    LOG5(("%s", linebuf));
   }
 }
 
@@ -833,7 +835,7 @@ Http2Session::SendHello()
   }
 
   // Advertise the Push RWIN for the session, and on each new pull stream
-  // send a window update with END_FLOW_CONTROL
+  // send a window update
   CopyAsNetwork16(packet + kFrameHeaderBytes + (6 * numberOfEntries), SETTINGS_TYPE_INITIAL_WINDOW);
   CopyAsNetwork32(packet + kFrameHeaderBytes + (6 * numberOfEntries) + 2, mPushAllowance);
   numberOfEntries++;
@@ -942,9 +944,7 @@ Http2Session::CleanupStream(Http2Stream *aStream, nsresult aResult,
     return;
   }
 
-  Http2PushedStream *pushSource = nullptr;
-
-  if (NS_SUCCEEDED(aResult) && aStream->DeferCleanupOnSuccess()) {
+  if (aStream->DeferCleanup(aResult)) {
     LOG3(("Http2Session::CleanupStream 0x%X deferred\n", aStream->StreamID()));
     return;
   }
@@ -954,11 +954,17 @@ Http2Session::CleanupStream(Http2Stream *aStream, nsresult aResult,
     return;
   }
 
-  pushSource = aStream->PushSource();
+  Http2PushedStream *pushSource = aStream->PushSource();
+  if (pushSource) {
+    // aStream is a synthetic  attached to an even push
+    MOZ_ASSERT(pushSource->GetConsumerStream() == aStream);
+    MOZ_ASSERT(!aStream->StreamID());
+    MOZ_ASSERT(!(pushSource->StreamID() & 0x1));
+    pushSource->SetConsumerStream(nullptr);
+  }
 
   if (!aStream->RecvdFin() && !aStream->RecvdReset() && aStream->StreamID()) {
-    LOG3(("Stream had not processed recv FIN, sending RST code %X\n",
-          aResetCode));
+    LOG3(("Stream had not processed recv FIN, sending RST code %X\n", aResetCode));
     GenerateRstStream(aResetCode, aStream->StreamID());
   }
 
@@ -1577,8 +1583,24 @@ Http2Session::RecvPushPromise(Http2Session *self)
     new Http2PushTransactionBuffer();
   transactionBuffer->SetConnection(self);
   Http2PushedStream *pushedStream =
-    new Http2PushedStream(transactionBuffer, self,
-                                 associatedStream, promisedID);
+    new Http2PushedStream(transactionBuffer, self, associatedStream, promisedID);
+
+  self->mDecompressBuffer.Append(self->mInputFrameBuffer + kFrameHeaderBytes + paddingControlBytes + promiseLen,
+                                 self->mInputFrameDataSize - paddingControlBytes - promiseLen - paddingLength);
+
+  rv = pushedStream->ConvertPushHeaders(&self->mDecompressor,
+                                        self->mDecompressBuffer,
+                                        pushedStream->GetRequestString());
+
+  if (rv == NS_ERROR_NOT_IMPLEMENTED) {
+    LOG3(("Http2Session::PushPromise Semantics not Implemented\n"));
+    self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
+    delete pushedStream;
+    return NS_OK;
+  }
+
+  if (NS_FAILED(rv))
+    return rv;
 
   // Ownership of the pushed stream is by the transaction hash, just as it
   // is for a client initiated stream. Errors that aren't fatal to the
@@ -1586,22 +1608,6 @@ Http2Session::RecvPushPromise(Http2Session *self)
   // to remove the stream from that hash.
   self->mStreamTransactionHash.Put(transactionBuffer, pushedStream);
   self->mPushedStreams.AppendElement(pushedStream);
-
-  self->mDecompressBuffer.Append(self->mInputFrameBuffer + kFrameHeaderBytes + paddingControlBytes + promiseLen,
-                                 self->mInputFrameDataSize - paddingControlBytes - promiseLen - paddingLength);
-
-  nsAutoCString requestHeaders;
-  rv = pushedStream->ConvertPushHeaders(&self->mDecompressor,
-                                        self->mDecompressBuffer, requestHeaders);
-
-  if (rv == NS_ERROR_NOT_IMPLEMENTED) {
-    LOG3(("Http2Session::PushPromise Semantics not Implemented\n"));
-    self->GenerateRstStream(REFUSED_STREAM_ERROR, promisedID);
-    return NS_OK;
-  }
-
-  if (NS_FAILED(rv))
-    return rv;
 
   if (self->RegisterStreamID(pushedStream, promisedID) == kDeadStreamID) {
     LOG3(("Http2Session::RecvPushPromise registerstreamid failed\n"));
@@ -1625,20 +1631,45 @@ Http2Session::RecvPushPromise(Http2Session *self)
     return NS_OK;
   }
 
-  if (!associatedStream->Origin().Equals(pushedStream->Origin())) {
-    LOG3(("Http2Session::RecvPushPromise pushed stream mismatched origin\n"));
+  nsRefPtr<nsStandardURL> associatedURL, pushedURL;
+  rv = Http2Stream::MakeOriginURL(associatedStream->Origin(), associatedURL);
+  if (NS_SUCCEEDED(rv)) {
+    rv = Http2Stream::MakeOriginURL(pushedStream->Origin(), pushedURL);
+  }
+  LOG3(("Http2Session::RecvPushPromise %p checking %s == %s", self,
+        associatedStream->Origin().get(), pushedStream->Origin().get()));
+  bool match = false;
+  if (NS_SUCCEEDED(rv)) {
+    rv = associatedURL->Equals(pushedURL, &match);
+  }
+  if (NS_FAILED(rv)) {
+    // Fallback to string equality of origins. This won't be guaranteed to be as
+    // liberal as we want it to be, but it will at least be safe
+    match = associatedStream->Origin().Equals(pushedStream->Origin());
+  }
+  if (!match) {
+    LOG3(("Http2Session::RecvPushPromise %p pushed stream mismatched origin "
+          "associated origin %s .. pushed origin %s\n", self,
+          associatedStream->Origin().get(), pushedStream->Origin().get()));
     self->CleanupStream(pushedStream, NS_ERROR_FAILURE, REFUSED_STREAM_ERROR);
     self->ResetDownstreamState();
     return NS_OK;
   }
 
-  if (!cache->RegisterPushedStreamHttp2(key, pushedStream)) {
-    LOG3(("Http2Session::RecvPushPromise registerPushedStream Failed\n"));
-    self->CleanupStream(pushedStream, NS_ERROR_FAILURE, INTERNAL_ERROR);
-    self->ResetDownstreamState();
-    return NS_OK;
+  if (pushedStream->TryOnPush()) {
+    LOG3(("Http2Session::RecvPushPromise %p channel implements nsIHttpPushListener "
+          "stream %p will not be placed into session cache.\n", self, pushedStream));
+  } else {
+    LOG3(("Http2Session::RecvPushPromise %p place stream into session cache\n", self));
+    if (!cache->RegisterPushedStreamHttp2(key, pushedStream)) {
+      LOG3(("Http2Session::RecvPushPromise registerPushedStream Failed\n"));
+      self->CleanupStream(pushedStream, NS_ERROR_FAILURE, INTERNAL_ERROR);
+      self->ResetDownstreamState();
+      return NS_OK;
+    }
   }
 
+  pushedStream->SetHTTPState(Http2Stream::RESERVED_BY_REMOTE);
   static_assert(Http2Stream::kWorstPriority >= 0,
                 "kWorstPriority out of range");
   uint8_t priorityWeight = (nsISupportsPriority::PRIORITY_LOWEST + 1) -
@@ -1719,6 +1750,9 @@ Http2Session::RecvGoAway(Http2Session *self)
     Http2Stream *stream =
       static_cast<Http2Stream *>(self->mGoAwayStreamsToRestart.PopFront());
 
+    if (statusCode == HTTP_1_1_REQUIRED) {
+      stream->Transaction()->DisableSpdy();
+    }
     self->CloseStream(stream, NS_ERROR_NET_RESET);
     if (stream->HasRegisteredID())
       self->mStreamIDHash.Remove(stream->StreamID());
@@ -1732,6 +1766,9 @@ Http2Session::RecvGoAway(Http2Session *self)
   for (uint32_t count = 0; count < size; ++count) {
     Http2Stream *stream =
       static_cast<Http2Stream *>(self->mQueuedStreams.PopFront());
+    if (statusCode == HTTP_1_1_REQUIRED) {
+      stream->Transaction()->DisableSpdy();
+    }
     self->CloseStream(stream, NS_ERROR_NET_RESET);
     self->mStreamTransactionHash.Remove(stream->Transaction());
   }
@@ -2546,14 +2583,20 @@ Http2Session::WriteSegments(nsAHttpSegmentWriter *writer,
     // equivalent to cancel.
     if (mDownstreamRstReason == REFUSED_STREAM_ERROR) {
       streamCleanupCode = NS_ERROR_NET_RESET;      // can retry this 100% safely
+      mInputFrameDataStream->Transaction()->ReuseConnectionOnRestartOK(true);
+    } else if (mDownstreamRstReason == HTTP_1_1_REQUIRED) {
+      streamCleanupCode = NS_ERROR_NET_RESET;
+      mInputFrameDataStream->Transaction()->ReuseConnectionOnRestartOK(true);
+      mInputFrameDataStream->Transaction()->DisableSpdy();
     } else {
       streamCleanupCode = mInputFrameDataStream->RecvdData() ?
         NS_ERROR_NET_PARTIAL_TRANSFER :
         NS_ERROR_NET_INTERRUPT;
     }
 
-    if (mDownstreamRstReason == COMPRESSION_ERROR)
+    if (mDownstreamRstReason == COMPRESSION_ERROR) {
       mShouldGoAway = true;
+    }
 
     // mInputFrameDataStream is reset by ChangeDownstreamState
     Http2Stream *stream = mInputFrameDataStream;
@@ -3196,6 +3239,11 @@ Http2Session::BufferOutput(const char *buf,
 bool // static
 Http2Session::ALPNCallback(nsISupports *securityInfo)
 {
+  if (!gHttpHandler->IsH2MandatorySuiteEnabled()) {
+    LOG3(("Http2Session::ALPNCallback Mandatory Cipher Suite Unavailable\n"));
+    return false;
+  }
+
   nsCOMPtr<nsISSLSocketControl> ssl = do_QueryInterface(securityInfo);
   LOG3(("Http2Session::ALPNCallback sslsocketcontrol=%p\n", ssl.get()));
   if (ssl) {

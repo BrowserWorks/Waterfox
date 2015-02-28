@@ -33,6 +33,7 @@
 
 using namespace js;
 using namespace js::gc;
+using namespace js::jit;
 
 using mozilla::DebugOnly;
 
@@ -55,8 +56,10 @@ JSCompartment::JSCompartment(Zone *zone, const JS::CompartmentOptions &options =
     lastAnimationTime(0),
     regExps(runtime_),
     globalWriteBarriered(false),
+    neuteredTypedObjects(0),
     propertyTree(thisForCtor()),
     selfHostingScriptSource(nullptr),
+    lazyArrayBuffers(nullptr),
     gcIncomingGrayPointers(nullptr),
     gcWeakMapList(nullptr),
     gcPreserveJitCode(options.preserveJitCode()),
@@ -83,6 +86,7 @@ JSCompartment::~JSCompartment()
     js_delete(scriptCountsMap);
     js_delete(debugScriptMap);
     js_delete(debugScopes);
+    js_delete(lazyArrayBuffers);
     js_free(enumerators);
 
     runtime_->numCompartments--;
@@ -99,8 +103,6 @@ JSCompartment::init(JSContext *cx)
      */
     if (cx)
         cx->runtime()->dateTimeInfo.updateTimeZoneAdjustment();
-
-    activeAnalysis = false;
 
     if (!crossCompartmentWrappers.init(0))
         return false;
@@ -125,17 +127,17 @@ JSRuntime::createJitRuntime(JSContext *cx)
     // accessed by other threads with an exclusive context.
     AutoLockForExclusiveAccess atomsLock(cx);
 
-    // The runtime will only be created on its owning thread, but reads of a
-    // runtime's jitRuntime() can occur when another thread is requesting an
-    // interrupt.
-    AutoLockForInterrupt lock(this);
-
     MOZ_ASSERT(!jitRuntime_);
 
-    jitRuntime_ = cx->new_<jit::JitRuntime>();
-
-    if (!jitRuntime_)
+    jit::JitRuntime *jrt = cx->new_<jit::JitRuntime>();
+    if (!jrt)
         return nullptr;
+
+    // Protect jitRuntime_ from being observed (by InterruptRunningJitCode)
+    // while it is being initialized. Unfortunately, initialization depends on
+    // jitRuntime_ being non-null, so we can't just wait to assign jitRuntime_.
+    JitRuntime::AutoMutateBackedges amb(jrt);
+    jitRuntime_ = jrt;
 
     if (!jitRuntime_->initialize(cx)) {
         js_delete(jitRuntime_);
@@ -512,7 +514,7 @@ JSCompartment::markCrossCompartmentWrappers(JSTracer *trc)
              * We have a cross-compartment wrapper. Its private pointer may
              * point into the compartment being collected, so we should mark it.
              */
-            MarkSlot(trc, wrapper->slotOfPrivate(), "cross-compartment wrapper");
+            MarkValue(trc, wrapper->slotOfPrivate(), "cross-compartment wrapper");
         }
     }
 }
@@ -562,7 +564,7 @@ void
 JSCompartment::sweepGlobalObject(FreeOp *fop)
 {
     if (global_.unbarrieredGet() && IsObjectAboutToBeFinalizedFromAnyThread(global_.unsafeGet())) {
-        if (debugMode())
+        if (isDebuggee())
             Debugger::detachAllDebuggersFromGlobal(fop, global_);
         global_.set(nullptr);
     }
@@ -658,6 +660,7 @@ void JSCompartment::fixupAfterMovingGC()
     fixupNewTypeObjectTable(newTypeObjects);
     fixupNewTypeObjectTable(lazyTypeObjects);
     fixupInitialShapeTable();
+    fixupBaseShapeTable();
 }
 
 void
@@ -713,17 +716,6 @@ JSCompartment::setObjectMetadataCallback(js::ObjectMetadataCallback callback)
     ReleaseAllJITCode(runtime_->defaultFreeOp());
 
     objectMetadataCallback = callback;
-}
-
-bool
-JSCompartment::hasScriptsOnStack()
-{
-    for (ActivationIterator iter(runtimeFromMainThread()); !iter.done(); ++iter) {
-        if (iter->compartment() == this)
-            return true;
-    }
-
-    return false;
 }
 
 static bool
@@ -798,58 +790,12 @@ JSCompartment::ensureDelazifyScriptsForDebugMode(JSContext *cx)
     return true;
 }
 
-bool
-JSCompartment::updateJITForDebugMode(JSContext *maybecx, AutoDebugModeInvalidation &invalidate)
-{
-    // The AutoDebugModeInvalidation argument makes sure we can't forget to
-    // invalidate, but it is also important not to run any scripts in this
-    // compartment until the invalidate is destroyed.  That is the caller's
-    // responsibility.
-    return jit::UpdateForDebugMode(maybecx, this, invalidate);
-}
-
-bool
-JSCompartment::enterDebugMode(JSContext *cx)
-{
-    AutoDebugModeInvalidation invalidate(this);
-    return enterDebugMode(cx, invalidate);
-}
-
-bool
-JSCompartment::enterDebugMode(JSContext *cx, AutoDebugModeInvalidation &invalidate)
-{
-    if (!debugMode()) {
-        debugModeBits |= DebugMode;
-        if (!updateJITForDebugMode(cx, invalidate))
-            return false;
-    }
-    return true;
-}
-
-bool
-JSCompartment::leaveDebugMode(JSContext *cx)
-{
-    AutoDebugModeInvalidation invalidate(this);
-    return leaveDebugMode(cx, invalidate);
-}
-
-bool
-JSCompartment::leaveDebugMode(JSContext *cx, AutoDebugModeInvalidation &invalidate)
-{
-    if (debugMode()) {
-        leaveDebugModeUnderGC();
-        if (!updateJITForDebugMode(cx, invalidate))
-            return false;
-    }
-    return true;
-}
-
 void
-JSCompartment::leaveDebugModeUnderGC()
+JSCompartment::unsetIsDebuggee()
 {
-    if (debugMode()) {
-        debugModeBits &= ~DebugMode;
-        DebugScopes::onCompartmentLeaveDebugMode(this);
+    if (isDebuggee()) {
+        debugModeBits &= ~DebugExecutionMask;
+        DebugScopes::onCompartmentUnsetIsDebuggee(this);
     }
 }
 
@@ -871,6 +817,7 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                                       size_t *compartmentObject,
                                       size_t *compartmentTables,
                                       size_t *innerViewsArg,
+                                      size_t *lazyArrayBuffersArg,
                                       size_t *crossCompartmentWrappersArg,
                                       size_t *regexpCompartment,
                                       size_t *savedStacksSet)
@@ -883,6 +830,8 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
                         + newTypeObjects.sizeOfExcludingThis(mallocSizeOf)
                         + lazyTypeObjects.sizeOfExcludingThis(mallocSizeOf);
     *innerViewsArg += innerViews.sizeOfExcludingThis(mallocSizeOf);
+    if (lazyArrayBuffers)
+        *lazyArrayBuffersArg += lazyArrayBuffers->sizeOfIncludingThis(mallocSizeOf);
     *crossCompartmentWrappersArg += crossCompartmentWrappers.sizeOfExcludingThis(mallocSizeOf);
     *regexpCompartment += regExps.sizeOfExcludingThis(mallocSizeOf);
     *savedStacksSet += savedStacks_.sizeOfExcludingThis(mallocSizeOf);

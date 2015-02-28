@@ -1,0 +1,129 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2001
+##  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%PROGRAMS_INSTALL = $(INSTALL_PROGRAM)
+?!BASE?%DIR%PROGRAMS_INSTALL = $(install_sh_PROGRAM)
+?EXEC?.PHONY install-exec-am: install-%DIR%PROGRAMS
+?!EXEC?.PHONY install-data-am: install-%DIR%PROGRAMS
+install-%DIR%PROGRAMS: $(%DIR%_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_PROGRAMS)'; for p in $$list; do \
+## On Cygwin with libtool test won't see `foo.exe' but instead `foo'.
+## So we check for both.
+	  p1=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+	  if test -f $$p \
+?LIBTOOL?	     || test -f $$p1 \
+	  ; then \
+## Compute basename of source file.  Unless this is a nobase_ target, we
+## want to install 'python/foo.py' as '$(DESTDIR)$(%NDIR%dir)/foo.yo',
+## not '$(DESTDIR)$(%NDIR%dir)/python/foo.yo'.
+## However in all cases $(transform) applies only to the basename,
+## so we have to strip the directory part.
+	    f=`echo "$$p1" | sed 's,^.*/,,;$(transform);s/$$/$(EXEEXT)/'`; \
+## Prepend the directory part if nobase_ is used.
+?!BASE?	    f=`echo "$$p1" | sed 's|[^/]*$$||'`"$$f"; \
+## Note that we explicitly set the libtool mode.  This avoids any
+## lossage if the install program doesn't have a name that libtool
+## expects.
+?LIBTOOL?	   echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(%DIR%PROGRAMS_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+?LIBTOOL?	   $(INSTALL_PROGRAM_ENV) $(LIBTOOL) --mode=install $(%DIR%PROGRAMS_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f || exit 1; \
+?!LIBTOOL?	   echo " $(INSTALL_PROGRAM_ENV) $(%DIR%PROGRAMS_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+?!LIBTOOL?	   $(INSTALL_PROGRAM_ENV) $(%DIR%PROGRAMS_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f || exit 1; \
+	  else :; fi; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%PROGRAMS
+uninstall-%DIR%PROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_PROGRAMS)'; for p in $$list; do \
+## Remove any leading directory before applying $(transform).
+	  f=`echo "$$p" | sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+## Prepend the directory part if nobase_ is used.
+?!BASE?	  f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$f; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%PROGRAMS
+clean-%DIR%PROGRAMS:
+?!LIBTOOL?	-test -z "$(%DIR%_PROGRAMS)" || rm -f $(%DIR%_PROGRAMS)
+## Under Cygwin, we build `program$(EXEEXT)'.  However, if this
+## program uses a Libtool library, Libtool will move it in
+## `_libs/program$(EXEEXT)' and create a `program' wrapper (without
+## `$(EXEEXT)').  Therefore, if Libtool is used, we must try to erase
+## both `program$(EXEEXT)' and `program'.
+## Cleaning the `_libs/' or `.libs/' directory is done from clean-libtool.
+## FIXME: In the future (i.e., when it works) it would be nice to delegate
+## this task to `libtool --mode=clean'.
+?LIBTOOL?	@list='$(%DIR%_PROGRAMS)'; for p in $$list; do \
+?LIBTOOL?	  f=`echo $$p|sed 's/$(EXEEXT)$$//'`; \
+?LIBTOOL?	  echo " rm -f $$p $$f"; \
+?LIBTOOL?	  rm -f $$p $$f ; \
+?LIBTOOL?	done
+
+
+## ---------- ##
+## Checking.  ##
+## ---------- ##
+
+if %?CK-OPTS%
+.PHONY installcheck-am: installcheck-%DIR%PROGRAMS
+installcheck-%DIR%PROGRAMS: $(%DIR%_PROGRAMS)
+	bad=0; pid=$$$$; list="$(%DIR%_PROGRAMS)"; for p in $$list; do \
+	  case ' $(AM_INSTALLCHECK_STD_OPTIONS_EXEMPT) ' in \
+## Match $(srcdir)/$$p in addition to $$p because Sun make might rewrite
+## filenames in AM_INSTALLCHECK_STD_OPTIONS_EXEMPT during VPATH builds.
+	   *" $$p "* | *" $(srcdir)/$$p "*) continue;; \
+	  esac; \
+## Strip the directory and $(EXEEXT) before applying $(transform).
+	  f=`echo "$$p" | \
+	     sed 's,^.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/'`; \
+## Insert the directory back if nobase_ is used.
+?!BASE?	  f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	  for opt in --help --version; do \
+	    if $(DESTDIR)$(%NDIR%dir)/$$f $$opt > c$${pid}_.out 2> c$${pid}_.err \
+	         && test -n "`cat c$${pid}_.out`" \
+	         && test -z "`cat c$${pid}_.err`"; then :; \
+	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
+	  done; \
+	done; rm -f c$${pid}_.???; exit $$bad
+endif %?CK-OPTS%

@@ -111,11 +111,13 @@ class BaselineInspector
 
     NativeObject *getTemplateObject(jsbytecode *pc);
     NativeObject *getTemplateObjectForNative(jsbytecode *pc, Native native);
+    JSObject *getTemplateObjectForClassHook(jsbytecode *pc, const Class *clasp);
 
     DeclEnvObject *templateDeclEnvObject();
     CallObject *templateCallObject();
 
-    JSObject *commonGetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonGetter);
+    JSObject *commonGetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonGetter,
+                                    Shape **globalShape);
     JSObject *commonSetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonSetter);
 };
 

@@ -28,6 +28,7 @@ let TargetFactory = devtools.TargetFactory;
 let Toolbox = devtools.Toolbox;
 
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/debugger/test/";
+const FRAME_SCRIPT_URL = getRootDirectory(gTestPath) + "code_frame-script.js";
 
 gDevTools.testing = true;
 SimpleTest.registerCleanupFunction(() => {
@@ -85,6 +86,9 @@ function addTab(aUrl, aWindow) {
   targetWindow.focus();
   let tab = targetBrowser.selectedTab = targetBrowser.addTab(aUrl);
   let linkedBrowser = tab.linkedBrowser;
+
+  info("Loading frame script with url " + FRAME_SCRIPT_URL + ".");
+  linkedBrowser.messageManager.loadFrameScript(FRAME_SCRIPT_URL, false);
 
   linkedBrowser.addEventListener("load", function onLoad() {
     linkedBrowser.removeEventListener("load", onLoad, true);
@@ -242,7 +246,7 @@ function waitForTime(aDelay) {
 
 function waitForSourceShown(aPanel, aUrl) {
   return waitForDebuggerEvents(aPanel, aPanel.panelWin.EVENTS.SOURCE_SHOWN).then(aSource => {
-    let sourceUrl = aSource.url;
+    let sourceUrl = aSource.url || aSource.introductionUrl;
     info("Source shown: " + sourceUrl);
 
     if (!sourceUrl.contains(aUrl)) {
@@ -257,15 +261,18 @@ function waitForEditorLocationSet(aPanel) {
   return waitForDebuggerEvents(aPanel, aPanel.panelWin.EVENTS.EDITOR_LOCATION_SET);
 }
 
-function ensureSourceIs(aPanel, aUrl, aWaitFlag = false) {
-  if (aPanel.panelWin.DebuggerView.Sources.selectedValue.contains(aUrl)) {
-    ok(true, "Expected source is shown: " + aUrl);
+function ensureSourceIs(aPanel, aUrlOrSource, aWaitFlag = false) {
+  let sources = aPanel.panelWin.DebuggerView.Sources;
+
+  if (sources.selectedValue === aUrlOrSource ||
+      sources.selectedItem.attachment.source.url.contains(aUrlOrSource)) {
+    ok(true, "Expected source is shown: " + aUrlOrSource);
     return promise.resolve(null);
   }
   if (aWaitFlag) {
-    return waitForSourceShown(aPanel, aUrl);
+    return waitForSourceShown(aPanel, aUrlOrSource);
   }
-  ok(false, "Expected source was not already shown: " + aUrl);
+  ok(false, "Expected source was not already shown: " + aUrlOrSource);
   return promise.reject(null);
 }
 
@@ -563,11 +570,7 @@ AddonDebugger.prototype = {
     let addonActor = yield getAddonActorForUrl(this.client, aUrl);
 
     let targetOptions = {
-      form: {
-        addonActor: addonActor.actor,
-        consoleActor: addonActor.consoleActor,
-        title: addonActor.name
-      },
+      form: addonActor,
       client: this.client,
       chrome: true
     };
@@ -658,7 +661,7 @@ AddonDebugger.prototype = {
     }
 
     for (let source of sources) {
-      let { label, group } = debuggerWin.DebuggerView.Sources.getItemByValue(source.url).attachment;
+      let { label, group } = debuggerWin.DebuggerView.Sources.getItemByValue(source.actor).attachment;
 
       if (!groupmap.has(group)) {
         ok(false, "Saw a source group not in the UI: " + group);
@@ -776,13 +779,14 @@ function toggleBlackBoxing(aPanel, aSource = null) {
   return blackBoxChanged;
 }
 
-function selectSourceAndGetBlackBoxButton(aPanel, aSource) {
+function selectSourceAndGetBlackBoxButton(aPanel, aUrl) {
   function returnBlackboxButton() {
     return getBlackBoxButton(aPanel);
   }
 
-  aPanel.panelWin.DebuggerView.Sources.selectedValue = aSource;
-  return ensureSourceIs(aPanel, aSource, true).then(returnBlackboxButton);
+  let sources = aPanel.panelWin.DebuggerView.Sources;
+  sources.selectedValue = getSourceActor(sources, aUrl);
+  return ensureSourceIs(aPanel, aUrl, true).then(returnBlackboxButton);
 }
 
 // Variables view inspection popup helpers
@@ -936,4 +940,71 @@ function popPrefs() {
   let deferred = promise.defer();
   SpecialPowers.popPrefEnv(deferred.resolve);
   return deferred.promise;
+}
+
+function sendMessageToTab(tab, name, data, objects) {
+  info("Sending message with name " + name + " to tab.");
+
+  tab.linkedBrowser.messageManager.sendAsyncMessage(name, data, objects);
+}
+
+function waitForMessageFromTab(tab, name) {
+  info("Waiting for message with name " + name + " from tab.");
+
+  return new Promise(function (resolve) {
+    let messageManager = tab.linkedBrowser.messageManager;
+    messageManager.addMessageListener(name, function listener(message) {
+      messageManager.removeMessageListener(name, listener);
+      resolve(message);
+    });
+  });
+}
+
+function callInTab(tab, name) {
+  info("Calling function with name " + name + " in tab.");
+
+  sendMessageToTab(tab, "test:call", {
+    name: name,
+    args: Array.prototype.slice.call(arguments, 2)
+  });
+  waitForMessageFromTab(tab, "test:call");
+}
+
+function evalInTab(tab, string) {
+  info("Evalling string " + string + " in tab.");
+
+  sendMessageToTab(tab, "test:eval", {
+    string: string,
+  });
+  waitForMessageFromTab(tab, "test:eval");
+}
+
+function sendMouseClickToTab(tab, target) {
+  info("Sending mouse click to tab.");
+
+  sendMessageToTab(tab, "test:click", undefined, {
+    target: target
+  });
+}
+
+// Source helpers
+
+function getSelectedSourceURL(aSources) {
+  return (aSources.selectedItem &&
+          aSources.selectedItem.attachment.source.url);
+}
+
+function getSourceURL(aSources, aActor) {
+  let item = aSources.getItemByValue(aActor);
+  return item && item.attachment.source.url;
+}
+
+function getSourceActor(aSources, aURL) {
+  let item = aSources.getItemForAttachment(a => a.source.url === aURL);
+  return item && item.value;
+}
+
+function getSourceForm(aSources, aURL) {
+  let item = aSources.getItemByValue(getSourceActor(gSources, aURL));
+  return item.attachment.source;
 }

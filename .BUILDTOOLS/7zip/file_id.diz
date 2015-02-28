@@ -1,0 +1,13 @@
+7-Zip v4.42
+--------------------
+- Highest compression ratio in new 7z format
+- Free archiver distributed under the GNU LGPL
+- 7z, ZIP, RAR, CAB, ARJ, LZH, GZIP, BZIP2, Z, CHM, TAR, 
+  CPIO, RPM and DEB formats support
+- Highest compression ratio for ZIP format
+- Fast compression and decompression
+- Self-extracting capability
+- Strong AES-256 encryption
+- Powerful file manager
+- Powerful command line version
+- Plugin for FAR Manager

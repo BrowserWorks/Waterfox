@@ -10,12 +10,17 @@
 
 #include "nsPlaceholderFrame.h"
 
+#include "gfxUtils.h"
+#include "mozilla/gfx/2D.h"
 #include "nsDisplayList.h"
 #include "nsFrameManager.h"
 #include "nsLayoutUtils.h"
 #include "nsPresContext.h"
 #include "nsRenderingContext.h"
 #include "nsIFrameInlines.h"
+
+using namespace mozilla;
+using namespace mozilla::gfx;
 
 nsIFrame*
 NS_NewPlaceholderFrame(nsIPresShell* aPresShell, nsStyleContext* aContext,
@@ -184,15 +189,26 @@ nsPlaceholderFrame::CanContinueTextRun() const
   return mOutOfFlowFrame->CanContinueTextRun();
 }
 
-nsIFrame*
-nsPlaceholderFrame::GetParentStyleContextFrame() const
+nsStyleContext*
+nsPlaceholderFrame::GetParentStyleContext(nsIFrame** aProviderFrame) const
 {
   NS_PRECONDITION(GetParent(), "How can we not have a parent here?");
+
+  nsIContent* parentContent = mContent ? mContent->GetParent() : nullptr;
+  if (parentContent) {
+    nsStyleContext* sc =
+      PresContext()->FrameManager()->GetDisplayContentsStyleFor(parentContent);
+    if (sc) {
+      *aProviderFrame = nullptr;
+      return sc;
+    }
+  }
 
   // Lie about our pseudo so we can step out of all anon boxes and
   // pseudo-elements.  The other option would be to reimplement the
   // {ib} split gunk here.
-  return CorrectStyleParentFrame(GetParent(), nsGkAtoms::placeholderFrame);
+  *aProviderFrame = CorrectStyleParentFrame(GetParent(), nsGkAtoms::placeholderFrame);
+  return *aProviderFrame ? (*aProviderFrame)->StyleContext() : nullptr;
 }
 
 
@@ -201,15 +217,21 @@ static void
 PaintDebugPlaceholder(nsIFrame* aFrame, nsRenderingContext* aCtx,
                       const nsRect& aDirtyRect, nsPoint aPt)
 {
-  aCtx->SetColor(NS_RGB(0, 255, 255));
+  ColorPattern cyan(ToDeviceColor(Color(0.f, 1.f, 1.f, 1.f)));
+  DrawTarget* drawTarget = aCtx->GetDrawTarget();
+  int32_t appUnitsPerDevPixel = aFrame->PresContext()->AppUnitsPerDevPixel();
+
   nscoord x = nsPresContext::CSSPixelsToAppUnits(-5);
-  aCtx->FillRect(aPt.x + x, aPt.y,
-                 nsPresContext::CSSPixelsToAppUnits(13),
-                 nsPresContext::CSSPixelsToAppUnits(3));
+  nsRect r(aPt.x + x, aPt.y,
+           nsPresContext::CSSPixelsToAppUnits(13),
+           nsPresContext::CSSPixelsToAppUnits(3));
+  drawTarget->FillRect(NSRectToRect(r, appUnitsPerDevPixel), cyan);
+
   nscoord y = nsPresContext::CSSPixelsToAppUnits(-10);
-  aCtx->FillRect(aPt.x, aPt.y + y,
-                 nsPresContext::CSSPixelsToAppUnits(3),
-                 nsPresContext::CSSPixelsToAppUnits(10));
+  r = nsRect(aPt.x, aPt.y + y,
+             nsPresContext::CSSPixelsToAppUnits(3),
+             nsPresContext::CSSPixelsToAppUnits(10));
+  drawTarget->FillRect(NSRectToRect(r, appUnitsPerDevPixel), cyan);
 }
 #endif // DEBUG
 

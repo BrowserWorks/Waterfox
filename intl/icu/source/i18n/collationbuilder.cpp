@@ -450,8 +450,8 @@ CollationBuilder::addReset(int32_t strength, const UnicodeString &str,
             }
             nodes.setElementAt(node, index);
             int32_t nextIndex = nextIndexFromNode(node);
-            // Insert default nodes with weights 02 and 05, reset to the 02 node.
-            node = nodeFromWeight16(BEFORE_WEIGHT16) | nodeFromStrength(strength);
+            // Insert default nodes with weights 01 and 05, reset to the 01 node.
+            node = nodeFromWeight16(Collation::BEFORE_WEIGHT16) | nodeFromStrength(strength);
             index = insertNodeBetween(index, nextIndex, node, errorCode);
             node = nodeFromWeight16(Collation::COMMON_WEIGHT16) | hasBefore3 |
                     nodeFromStrength(strength);
@@ -961,7 +961,7 @@ CollationBuilder::findCommonNode(int32_t index, int32_t strength) const {
     index = nextIndexFromNode(node);
     node = nodes.elementAti(index);
     U_ASSERT(!isTailoredNode(node) && strengthFromNode(node) == strength &&
-            weight16FromNode(node) == BEFORE_WEIGHT16);
+            weight16FromNode(node) == Collation::BEFORE_WEIGHT16);
     // Skip to the explicit common node.
     do {
         index = nextIndexFromNode(node);
@@ -1398,7 +1398,7 @@ CollationBuilder::makeTailoredCEs(UErrorCode &errorCode) {
                                 // Gap at the beginning of the tertiary CE range.
                                 t = rootElements.getTertiaryBoundary() - 0x100;
                                 tLimit = rootElements.getFirstTertiaryCE() & Collation::ONLY_TERTIARY_MASK;
-                            } else if(t == BEFORE_WEIGHT16) {
+                            } else if(t == Collation::BEFORE_WEIGHT16) {
                                 tLimit = Collation::COMMON_WEIGHT16;
                             } else if(!pIsTailored && !sIsTailored) {
                                 // p and s are root weights.
@@ -1441,7 +1441,7 @@ CollationBuilder::makeTailoredCEs(UErrorCode &errorCode) {
                                     // Gap at the beginning of the secondary CE range.
                                     s = rootElements.getSecondaryBoundary() - 0x100;
                                     sLimit = rootElements.getFirstSecondaryCE() >> 16;
-                                } else if(s == BEFORE_WEIGHT16) {
+                                } else if(s == Collation::BEFORE_WEIGHT16) {
                                     sLimit = Collation::COMMON_WEIGHT16;
                                 } else if(!pIsTailored) {
                                     // p is a root primary.
@@ -1563,9 +1563,8 @@ CEFinalizer::~CEFinalizer() {}
 void
 CollationBuilder::finalizeCEs(UErrorCode &errorCode) {
     if(U_FAILURE(errorCode)) { return; }
-    LocalPointer<CollationDataBuilder> newBuilder(new CollationDataBuilder(errorCode));
-    if(newBuilder.isNull()) {
-        errorCode = U_MEMORY_ALLOCATION_ERROR;
+    LocalPointer<CollationDataBuilder> newBuilder(new CollationDataBuilder(errorCode), errorCode);
+    if(U_FAILURE(errorCode)) {
         return;
     }
     newBuilder->initForTailoring(baseData, errorCode);

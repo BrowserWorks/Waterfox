@@ -54,7 +54,7 @@ ImageClient::CreateImageClient(CompositableType aCompositableHostType,
   case CompositableType::IMAGE_BRIDGE:
     result = new ImageClientBridge(aForwarder, aFlags);
     break;
-  case CompositableType::BUFFER_UNKNOWN:
+  case CompositableType::UNKNOWN:
     result = nullptr;
     break;
 #ifdef MOZ_WIDGET_GONK
@@ -192,10 +192,9 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
 
       if (image->GetFormat() == ImageFormat::EGLIMAGE) {
         EGLImageImage* typedImage = static_cast<EGLImageImage*>(image);
-        const EGLImageImage::Data* data = typedImage->GetData();
-
-        texture = new EGLImageTextureClient(mTextureFlags, data->mImage,
-                                           size, data->mInverted);
+        texture = new EGLImageTextureClient(mTextureFlags,
+                                           typedImage,
+                                           size);
 #ifdef MOZ_WIDGET_ANDROID
       } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
         SurfaceTextureImage* typedImage = static_cast<SurfaceTextureImage*>(image);

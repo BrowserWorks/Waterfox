@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2009-2013, International Business Machines Corporation and
+ * Copyright (c) 2009-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -529,6 +529,24 @@ static void TestUSpoofCAPI(void) {
         status = U_ZERO_ERROR;
 
     TEST_TEARDOWN;
+
+    /*
+     * get Inclusion and Recommended sets
+     */
+    TEST_SETUP
+        const USet *inclusions = NULL;
+        const USet *recommended = NULL;
+
+        inclusions = uspoof_getInclusionSet(&status);
+        TEST_ASSERT_SUCCESS(status);
+        TEST_ASSERT_EQ(TRUE, uset_isFrozen(inclusions));
+
+        status = U_ZERO_ERROR;
+        recommended = uspoof_getRecommendedSet(&status);
+        TEST_ASSERT_SUCCESS(status);
+        TEST_ASSERT_EQ(TRUE, uset_isFrozen(recommended));
+    TEST_TEARDOWN;
+
 }
 
 #endif  /* UCONFIG_NO_REGULAR_EXPRESSIONS */

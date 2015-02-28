@@ -369,7 +369,7 @@ bs{
         }
         GBP{
             "GBP",
-            "Britanska funta sterlinga",
+            "Britanska funta",
         }
         GEK{
             "GEK",
@@ -1648,9 +1648,9 @@ bs{
             other{"francuskih franaka"}
         }
         GBP{
-            few{"britanske funte sterlinga"}
-            one{"britanska funta sterlinga"}
-            other{"britanskih funti sterlinga"}
+            few{"britanske funte"}
+            one{"britanska funta"}
+            other{"britanskih funti"}
         }
         GEK{
             few{"gruzijska kupon larita"}
@@ -2628,5 +2628,5 @@ bs{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

@@ -417,8 +417,12 @@ public class LocalBrowserDB {
             faviconField.setAccessible(true);
 
             return faviconField.getInt(null);
-        } catch (IllegalAccessException | NoSuchFieldException  ex) {
-            Log.wtf(LOGTAG, "Reflection error fetching favicon: " + name, ex);
+        } catch (IllegalAccessException | NoSuchFieldException e) {
+            // We'll end up here for any default bookmark that doesn't have a favicon in
+            // resources/raw/ (i.e., about:firefox). When this happens, the Favicons service will
+            // fall back to the default branding icon for about pages. Non-about pages should always
+            // specify an icon; otherwise, the placeholder globe favicon will be used.
+            Log.d(LOGTAG, "No raw favicon resource found for " + name);
         }
 
         Log.e(LOGTAG, "Failed to find favicon resource ID for " + name);
@@ -431,18 +435,13 @@ public class LocalBrowserDB {
      *         compatible with the favicon decoder (most probably a PNG or ICO file).
      */
     private static ConsumedInputStream getDefaultFaviconFromPath(Context context, String name) {
-        int faviconId = getFaviconId(name);
+        final int faviconId = getFaviconId(name);
         if (faviconId == FAVICON_ID_NOT_FOUND) {
             return null;
         }
 
-        String path = context.getString(faviconId);
-
-        String apkPath = context.getPackageResourcePath();
-        File apkFile = new File(apkPath);
-        String bitmapPath = "jar:jar:" + apkFile.toURI() + "!/" + AppConstants.OMNIJAR_NAME + "!/" + path;
-
-        InputStream iStream = GeckoJarReader.getStream(bitmapPath);
+        final String bitmapPath = GeckoJarReader.getJarURL(context, context.getString(faviconId));
+        final InputStream iStream = GeckoJarReader.getStream(bitmapPath);
 
         return IOUtils.readFully(iStream, DEFAULT_FAVICON_BUFFER_SIZE);
     }

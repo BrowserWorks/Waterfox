@@ -1069,8 +1069,18 @@ class IDLInterface(IDLObjectWithScope):
     def isExposedInAnyWorker(self):
         return len(self.getWorkerExposureSet()) > 0
 
-    def isExposedOnlyInSomeWorkers(self):
-        assert self.isExposedInAnyWorker()
+    def isExposedInSystemGlobals(self):
+        return 'BackstagePass' in self.exposureSet
+
+    def isExposedInSomeButNotAllWorkers(self):
+        """
+        Returns true if the Exposed extended attribute for this interface
+        exposes it in some worker globals but not others.  The return value does
+        not depend on whether the interface is exposed in Window or System
+        globals.
+        """
+        if not self.isExposedInAnyWorker():
+            return False
         workerScopes = self.parentScope.globalNameMapping["Worker"]
         return len(workerScopes.difference(self.exposureSet)) > 0
 
@@ -1222,7 +1232,7 @@ class IDLInterface(IDLObjectWithScope):
                 self.parentScope.globalNames.add(self.identifier.name)
                 self.parentScope.globalNameMapping[self.identifier.name].add(self.identifier.name)
                 self._isOnGlobalProtoChain = True
-            elif (identifier == "NeedNewResolve" or
+            elif (identifier == "NeedResolve" or
                   identifier == "OverrideBuiltins" or
                   identifier == "ChromeOnly" or
                   identifier == "Unforgeable" or
@@ -1562,7 +1572,7 @@ class IDLType(IDLObject):
         'any',
         'domstring',
         'bytestring',
-        'scalarvaluestring',
+        'usvstring',
         'object',
         'date',
         'void',
@@ -1615,7 +1625,7 @@ class IDLType(IDLObject):
     def isDOMString(self):
         return False
 
-    def isScalarValueString(self):
+    def isUSVString(self):
         return False
 
     def isVoid(self):
@@ -1801,8 +1811,8 @@ class IDLNullableType(IDLType):
     def isDOMString(self):
         return self.inner.isDOMString()
 
-    def isScalarValueString(self):
-        return self.inner.isScalarValueString()
+    def isUSVString(self):
+        return self.inner.isUSVString()
 
     def isFloat(self):
         return self.inner.isFloat()
@@ -1929,7 +1939,7 @@ class IDLSequenceType(IDLType):
     def isDOMString(self):
         return False
 
-    def isScalarValueString(self):
+    def isUSVString(self):
         return False
 
     def isVoid(self):
@@ -2057,6 +2067,10 @@ class IDLUnionType(IDLType):
 
     def __eq__(self, other):
         return isinstance(other, IDLUnionType) and self.memberTypes == other.memberTypes
+
+    def __hash__(self):
+        assert self.isComplete()
+        return self.name.__hash__()
 
     def isVoid(self):
         return False
@@ -2199,7 +2213,7 @@ class IDLArrayType(IDLType):
     def isDOMString(self):
         return False
 
-    def isScalarValueString(self):
+    def isUSVString(self):
         return False
 
     def isVoid(self):
@@ -2297,8 +2311,8 @@ class IDLTypedefType(IDLType, IDLObjectWithIdentifier):
     def isDOMString(self):
         return self.inner.isDOMString()
 
-    def isScalarValueString(self):
-        return self.inner.isScalarValueString()
+    def isUSVString(self):
+        return self.inner.isUSVString()
 
     def isVoid(self):
         return self.inner.isVoid()
@@ -2398,7 +2412,7 @@ class IDLWrapperType(IDLType):
     def isDOMString(self):
         return False
 
-    def isScalarValueString(self):
+    def isUSVString(self):
         return False
 
     def isVoid(self):
@@ -2552,7 +2566,7 @@ class IDLBuiltinType(IDLType):
         'any',
         'domstring',
         'bytestring',
-        'scalarvaluestring',
+        'usvstring',
         'object',
         'date',
         'void',
@@ -2587,7 +2601,7 @@ class IDLBuiltinType(IDLType):
             Types.any: IDLType.Tags.any,
             Types.domstring: IDLType.Tags.domstring,
             Types.bytestring: IDLType.Tags.bytestring,
-            Types.scalarvaluestring: IDLType.Tags.scalarvaluestring,
+            Types.usvstring: IDLType.Tags.usvstring,
             Types.object: IDLType.Tags.object,
             Types.date: IDLType.Tags.date,
             Types.void: IDLType.Tags.void,
@@ -2621,7 +2635,7 @@ class IDLBuiltinType(IDLType):
     def isString(self):
         return self._typeTag == IDLBuiltinType.Types.domstring or \
                self._typeTag == IDLBuiltinType.Types.bytestring or \
-               self._typeTag == IDLBuiltinType.Types.scalarvaluestring
+               self._typeTag == IDLBuiltinType.Types.usvstring
 
     def isByteString(self):
         return self._typeTag == IDLBuiltinType.Types.bytestring
@@ -2629,8 +2643,8 @@ class IDLBuiltinType(IDLType):
     def isDOMString(self):
         return self._typeTag == IDLBuiltinType.Types.domstring
 
-    def isScalarValueString(self):
-        return self._typeTag == IDLBuiltinType.Types.scalarvaluestring
+    def isUSVString(self):
+        return self._typeTag == IDLBuiltinType.Types.usvstring
 
     def isInteger(self):
         return self._typeTag <= IDLBuiltinType.Types.unsigned_long_long
@@ -2784,9 +2798,9 @@ BuiltinTypes = {
       IDLBuiltinType.Types.bytestring:
           IDLBuiltinType(BuiltinLocation("<builtin type>"), "ByteString",
                          IDLBuiltinType.Types.bytestring),
-      IDLBuiltinType.Types.scalarvaluestring:
-          IDLBuiltinType(BuiltinLocation("<builtin type>"), "ScalarValueString",
-                         IDLBuiltinType.Types.scalarvaluestring),
+      IDLBuiltinType.Types.usvstring:
+          IDLBuiltinType(BuiltinLocation("<builtin type>"), "USVString",
+                         IDLBuiltinType.Types.usvstring),
       IDLBuiltinType.Types.object:
           IDLBuiltinType(BuiltinLocation("<builtin type>"), "Object",
                          IDLBuiltinType.Types.object),
@@ -2921,10 +2935,10 @@ class IDLValue(IDLObject):
                 raise WebIDLError("Trying to convert unrestricted value %s to non-unrestricted"
                                   % self.value, [location]);
             return self
-        elif self.type.isString() and type.isScalarValueString():
-            # Allow ScalarValueStrings to use default value just like
+        elif self.type.isString() and type.isUSVString():
+            # Allow USVStrings to use default value just like
             # DOMString.  No coercion is required in this case as Codegen.py
-            # treats ScalarValueString just like DOMString, but with an
+            # treats USVString just like DOMString, but with an
             # extra normalization step.
             assert self.type.isDOMString()
             return self
@@ -4154,7 +4168,7 @@ class Tokenizer(object):
         "Date": "DATE",
         "DOMString": "DOMSTRING",
         "ByteString": "BYTESTRING",
-        "ScalarValueString": "SCALARVALUESTRING",
+        "USVString": "USVSTRING",
         "any": "ANY",
         "boolean": "BOOLEAN",
         "byte": "BYTE",
@@ -5118,7 +5132,7 @@ class Parser(Tokenizer):
                   | DATE
                   | DOMSTRING
                   | BYTESTRING
-                  | SCALARVALUESTRING
+                  | USVSTRING
                   | ANY
                   | ATTRIBUTE
                   | BOOLEAN
@@ -5391,11 +5405,11 @@ class Parser(Tokenizer):
         """
         p[0] = IDLBuiltinType.Types.bytestring
 
-    def p_PrimitiveOrStringTypeScalarValueString(self, p):
+    def p_PrimitiveOrStringTypeUSVString(self, p):
         """
-            PrimitiveOrStringType : SCALARVALUESTRING
+            PrimitiveOrStringType : USVSTRING
         """
-        p[0] = IDLBuiltinType.Types.scalarvaluestring
+        p[0] = IDLBuiltinType.Types.usvstring
 
     def p_UnsignedIntegerTypeUnsigned(self, p):
         """
@@ -5609,6 +5623,10 @@ class Parser(Tokenizer):
         self._globalScope.primaryGlobalName = "FakeTestPrimaryGlobal"
         self._globalScope.globalNames.add("FakeTestPrimaryGlobal")
         self._globalScope.globalNameMapping["FakeTestPrimaryGlobal"].add("FakeTestPrimaryGlobal")
+        # And we add the special-cased "System" global name, which
+        # doesn't have any corresponding interfaces.
+        self._globalScope.globalNames.add("System")
+        self._globalScope.globalNameMapping["System"].add("BackstagePass")
         self._installBuiltins(self._globalScope)
         self._productions = []
 
@@ -5684,6 +5702,7 @@ class Parser(Tokenizer):
     # Builtin IDL defined by WebIDL
     _builtins = """
         typedef unsigned long long DOMTimeStamp;
+        typedef (ArrayBufferView or ArrayBuffer) BufferSource;
     """
 
 def main():

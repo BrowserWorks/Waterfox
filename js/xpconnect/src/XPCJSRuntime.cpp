@@ -14,7 +14,6 @@
 #include "XPCWrapper.h"
 #include "XPCJSMemoryReporter.h"
 #include "WrapperFactory.h"
-#include "dom_quickstubs.h"
 #include "mozJSComponentLoader.h"
 
 #include "nsIMemoryInfoDumper.h"
@@ -822,8 +821,6 @@ XPCJSRuntime::FinalizeCallback(JSFreeOp *fop,
             self->mDetachedWrappedNativeProtoMap->
                 Enumerate(DetachedWrappedNativeProtoMarker, nullptr);
 
-            DOM_MarkInterfaces();
-
             // Mark the sets used in the call contexts. There is a small
             // chance that a wrapper's set will change *while* a call is
             // happening which uses that wrapper's old interfface set. So,
@@ -1503,8 +1500,6 @@ void XPCJSRuntime::DestroyJSContextStack()
 
 void XPCJSRuntime::SystemIsBeingShutDown()
 {
-    DOM_ClearInterfaces();
-
     if (mDetachedWrappedNativeProtoMap)
         mDetachedWrappedNativeProtoMap->
             Enumerate(DetachedWrappedNativeProtoShutdownMarker, nullptr);
@@ -2278,6 +2273,10 @@ ReportCompartmentStats(const JS::CompartmentStats &cStats,
         cStats.innerViewsTable,
         "The table for array buffer inner views.");
 
+    ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("lazy-array-buffers"),
+        cStats.lazyArrayBuffersTable,
+        "The table for typed object lazy array buffers.");
+
     ZCREPORT_BYTES(cJSPathPrefix + NS_LITERAL_CSTRING("cross-compartment-wrapper-table"),
         cStats.crossCompartmentWrappersTable,
         "The cross-compartment wrapper table.");
@@ -2667,8 +2666,7 @@ class OrphanReporter : public JS::ObjectPrivateVisitor
 static bool
 StartsWithExplicit(nsACString& s)
 {
-    const char* e = "explicit/";
-    return Substring(s, 0, strlen(e)).Equals(e);
+    return StringBeginsWith(s, NS_LITERAL_CSTRING("explicit/"));
 }
 #endif
 
@@ -3013,7 +3011,7 @@ AccumulateTelemetryCallback(int id, uint32_t sample)
         Telemetry::Accumulate(Telemetry::GC_SCC_SWEEP_MAX_PAUSE_MS, sample);
         break;
       case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:
-        MOZ_ASSERT(sample <= 3);
+        MOZ_ASSERT(sample <= 5);
         Telemetry::Accumulate(Telemetry::JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT, sample);
         break;
       default:
@@ -3183,8 +3181,6 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
    mCompilationScope(MOZ_THIS_IN_INITIALIZER_LIST()->Runtime(), nullptr),
    mAsyncSnowWhiteFreer(new AsyncFreeSnowWhite())
 {
-    DOM_InitInterfaces();
-
     // these jsids filled in later when we have a JSContext to work with.
     mStrIDs[0] = JSID_VOID;
 
@@ -3253,11 +3249,11 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     const size_t kStackQuota =  2 * kDefaultStackQuota;
     const size_t kTrustedScriptBuffer = 246 * 1024;
 #elif defined(XP_WIN)
-    // 1MB is the default stack size on Windows, so use 900k. And since 32-bit
-    // Windows stack frames are 3.4k each, let's use a buffer of 48k and double
-    // that for 64-bit.
+    // 1MB is the default stack size on Windows, so use 900k.
+    // Windows PGO stack frames have unfortunately gotten pretty large lately. :-(
     const size_t kStackQuota = 900 * 1024;
-    const size_t kTrustedScriptBuffer = 12 * sizeof(size_t) * 1024;
+    const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8) ? 120 * 1024
+                                                              : 80 * 1024;
     // The following two configurations are linux-only. Given the numbers above,
     // we use 50k and 100k trusted buffers on 32-bit and 64-bit respectively.
 #elif defined(DEBUG)
@@ -3315,7 +3311,7 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     ///
     // Note we do have to retain the source code in memory for scripts compiled in
     // compileAndGo mode and compiled function bodies (from
-    // JS_CompileFunction*). In practice, this means content scripts and event
+    // JS::CompileFunction). In practice, this means content scripts and event
     // handlers.
     UniquePtr<XPCJSSourceHook> hook(new XPCJSSourceHook);
     js::SetSourceHook(runtime, Move(hook));

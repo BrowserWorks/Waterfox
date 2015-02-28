@@ -1,0 +1,46 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1998, 1999, 2001  Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+?GENERIC?%EXT%%DERIVED-EXT%:
+?!GENERIC?%OBJ%: %SOURCE%
+if %?MORE-THAN-ONE%
+	$(SHELL) $(YLWRAP) `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE% y.tab.c %OBJ% y.tab.h %BASE%.h y.output %BASE%.output -- %COMPILE%
+else !%?MORE-THAN-ONE%
+	%COMPILE% `test -f '%SOURCE%' || echo '$(srcdir)/'`%SOURCE%
+## Edit out `#line' or `#' directives.
+	sed '/^#/ s|y\.tab\.c|%OBJ%|' y.tab.c >%OBJ%
+	rm -f y.tab.c
+## Edit out Bison multiple inclusion guards.  It may be BISON_Y_TAB_H,
+## or Y_TAB_H depending upon the version, that's why the regexp is
+## so loose.
+	if test -f y.tab.h; then \
+	  to=`echo "%BASE%_H" | sed \
+                -e 'y/abcdefghijklmnopqrstuvwxyz/ABCDEFGHIJKLMNOPQRSTUVWXYZ/' \
+                -e 's/[^ABCDEFGHIJKLMNOPQRSTUVWXYZ]/_/g'`; \
+	  sed "/^#/ s/Y_TAB_H/$$to/g" y.tab.h >%BASE%.ht; \
+	  rm -f y.tab.h; \
+	  if cmp -s %BASE%.ht %BASE%.h; then \
+	    rm -f %BASE%.ht ;\
+	  else \
+	    mv %BASE%.ht %BASE%.h; \
+	  fi; \
+	fi
+	if test -f y.output; then \
+	  mv y.output %BASE%.output; \
+	fi
+endif !%?MORE-THAN-ONE%

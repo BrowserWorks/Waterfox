@@ -18,6 +18,7 @@
 #define DOM_CAMERA_GONKCAMERACONTROL_H
 
 #include "base/basictypes.h"
+#include "nsRefPtrHashtable.h"
 #include <media/MediaProfiles.h>
 #include "mozilla/ReentrantMonitor.h"
 #include "DeviceStorage.h"
@@ -79,6 +80,10 @@ public:
   virtual nsresult Get(uint32_t aKey, nsTArray<nsString>& aValues) MOZ_OVERRIDE;
   virtual nsresult Get(uint32_t aKey, nsTArray<double>& aValues) MOZ_OVERRIDE;
 
+  virtual nsresult GetRecorderProfiles(nsTArray<nsString>& aProfiles) MOZ_OVERRIDE;
+  virtual ICameraControl::RecorderProfile* 
+    GetProfileInfo(const nsAString& aProfile) MOZ_OVERRIDE;
+
   nsresult PushParameters();
   nsresult PullParameters();
 
@@ -93,6 +98,8 @@ protected:
   using CameraControlImpl::OnConfigurationChange;
   using CameraControlImpl::OnUserError;
 
+  typedef nsTArray<Size>::index_type SizeIndex;
+
   virtual void BeginBatchParameterSet() MOZ_OVERRIDE;
   virtual void EndBatchParameterSet() MOZ_OVERRIDE;
 
@@ -101,6 +108,8 @@ protected:
   nsresult SetConfigurationInternal(const Configuration& aConfig);
   nsresult SetPictureConfiguration(const Configuration& aConfig);
   nsresult SetVideoConfiguration(const Configuration& aConfig);
+  nsresult StartInternal(const Configuration* aInitialConfig);
+  nsresult StopInternal();
 
   template<class T> nsresult SetAndPush(uint32_t aKey, const T& aValue);
 
@@ -120,16 +129,20 @@ protected:
   virtual nsresult ResumeContinuousFocusImpl() MOZ_OVERRIDE;
   virtual nsresult PushParametersImpl() MOZ_OVERRIDE;
   virtual nsresult PullParametersImpl() MOZ_OVERRIDE;
-  virtual already_AddRefed<RecorderProfileManager> GetRecorderProfileManagerImpl() MOZ_OVERRIDE;
-  already_AddRefed<GonkRecorderProfileManager> GetGonkRecorderProfileManager();
 
   nsresult SetupRecording(int aFd, int aRotation, uint64_t aMaxFileSizeBytes,
                           uint64_t aMaxVideoLengthMs);
   nsresult SetupRecordingFlash(bool aAutoEnableLowLightTorch);
-  nsresult SetPreviewSize(const Size& aSize);
-  nsresult SetVideoSize(const Size& aSize);
+  nsresult SelectVideoAndPreviewSize(const Configuration& aConfig, const Size& aVideoSize);
+  nsresult SetVideoAndPreviewSize(const Size& aPreviewSize, const Size& aVideoSize);
+  nsresult MaybeAdjustVideoSize();
   nsresult PausePreview();
   nsresult GetSupportedSize(const Size& aSize, const nsTArray<Size>& supportedSizes, Size& best);
+
+  nsresult LoadRecorderProfiles();
+  static PLDHashOperator Enumerate(const nsAString& aProfileName,
+                                   RecorderProfile* aProfile,
+                                   void* aUserArg);
 
   friend class SetPictureSize;
   friend class SetThumbnailSize;
@@ -157,16 +170,14 @@ protected:
 
   nsRefPtr<mozilla::layers::ImageContainer> mImageContainer;
 
-  android::MediaProfiles*   mMediaProfiles;
   nsRefPtr<android::GonkRecorder> mRecorder;
   // Touching mRecorder happens inside this monitor because the destructor
   // can run on any thread, and we need to be able to clean up properly if
   // GonkCameraControl goes away.
   ReentrantMonitor          mRecorderMonitor;
 
-  // Camcorder profile settings for the desired quality level
-  nsRefPtr<GonkRecorderProfileManager> mProfileManager;
-  nsRefPtr<GonkRecorderProfile> mRecorderProfile;
+  // Supported recorder profiles
+  nsRefPtrHashtable<nsStringHashKey, RecorderProfile> mRecorderProfiles;
 
   nsRefPtr<DeviceStorageFile> mVideoFile;
   nsString                  mFileFormat;
@@ -188,7 +199,6 @@ void OnAutoFocusMoving(nsGonkCameraControl* gc, bool aIsMoving);
 void OnFacesDetected(nsGonkCameraControl* gc, camera_frame_metadata_t* aMetaData);
 void OnNewPreviewFrame(nsGonkCameraControl* gc, layers::TextureClient* aBuffer);
 void OnShutter(nsGonkCameraControl* gc);
-void OnClosed(nsGonkCameraControl* gc);
 void OnSystemError(nsGonkCameraControl* gc,
                    CameraControlListener::SystemContext aWhere,
                    int32_t aArg1, int32_t aArg2);

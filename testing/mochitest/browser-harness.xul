@@ -119,7 +119,8 @@
     var gErrorCount = 0;
 
     function browserTest(aTestFile) {
-      this.path = aTestFile;
+      this.path = aTestFile['url'];
+      this.expected = aTestFile['expected'];
       this.dumper = gDumper;
       this.results = [];
       this.scope = null;
@@ -308,7 +309,6 @@
         return;
 
       var boxObject = document.getElementById("results").parentNode.boxObject;
-      boxObject.QueryInterface(Components.interfaces.nsIScrollBoxObject);
       boxObject.scrollToElement(line);
     }
   ]]></script>

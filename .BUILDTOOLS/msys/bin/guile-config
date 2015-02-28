@@ -1,0 +1,299 @@
+#!/usr/bin/guile \
+-e main -s
+!#
+;;;; guile-config --- utility for linking programs with Guile
+;;;; Jim Blandy <jim@red-bean.com> --- September 1997
+;;;; 
+;;;; 	Copyright (C) 1998, 2001 Free Software Foundation, Inc.
+;;;; 
+;;;; This program is free software; you can redistribute it and/or modify
+;;;; it under the terms of the GNU General Public License as published by
+;;;; the Free Software Foundation; either version 2, or (at your option)
+;;;; any later version.
+;;;; 
+;;;; This program is distributed in the hope that it will be useful,
+;;;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;;; GNU General Public License for more details.
+;;;; 
+;;;; You should have received a copy of the GNU General Public License
+;;;; along with this software; see the file COPYING.  If not, write to
+;;;; the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+;;;; Boston, MA 02111-1307 USA
+;;;; 
+;;;; As a special exception, the Free Software Foundation gives permission
+;;;; for additional uses of the text contained in its release of GUILE.
+;;;; 
+;;;; The exception is that, if you link the GUILE library with other files
+;;;; to produce an executable, this does not by itself cause the
+;;;; resulting executable to be covered by the GNU General Public License.
+;;;; Your use of that executable is in no way restricted on account of
+;;;; linking the GUILE library code into it.
+;;;; 
+;;;; This exception does not however invalidate any other reasons why
+;;;; the executable file might be covered by the GNU General Public License.
+;;;; 
+;;;; This exception applies only to the code released by the
+;;;; Free Software Foundation under the name GUILE.  If you copy
+;;;; code from other Free Software Foundation releases into a copy of
+;;;; GUILE, as the General Public License permits, the exception does
+;;;; not apply to the code that you add in this way.  To avoid misleading
+;;;; anyone as to the status of such modified files, you must delete
+;;;; this exception notice from them.
+;;;; 
+;;;; If you write modifications of your own for GUILE, it is your choice
+;;;; whether to permit this exception to apply to your modifications.
+;;;; If you do not wish that, delete this exception notice.
+
+;;; TODO:
+;;; * Add some plausible structure for returning the right exit status,
+;;;   just something that encourages people to do the correct thing.
+;;; * Implement the static library support.  This requires that
+;;;   some portion of the module system be done.
+
+(use-modules (ice-9 string-fun))
+
+
+;;;; main function, command-line processing
+
+;;; The script's entry point.
+(define (main args)
+  (set-program-name! (car args))
+  (let ((args (cdr args)))
+    (cond
+     ((null? args) (show-help '())
+		   (quit 1))
+     ((assoc (car args) command-table)
+      => (lambda (row)
+	   (set! subcommand-name (car args))
+	   ((cadr row) (cdr args))))
+     (else (show-help '())
+	   (quit 1)))))
+
+(define program-name #f)
+(define subcommand-name #f)
+(define program-version "1.6.0")
+
+;;; Given an executable path PATH, set program-name to something
+;;; appropriate f or use in error messages (i.e., with leading
+;;; directory names stripped).
+(define (set-program-name! path)
+  (set! program-name (basename path)))
+
+(define (show-help args)
+  (cond
+   ((null? args) (show-help-overview))
+   ((assoc (car args) command-table)
+    => (lambda (row) ((caddr row))))
+   (else
+    (show-help-overview))))
+
+(define (show-help-overview)
+  (display-line-error "Usage: ")
+  (for-each (lambda (row) ((cadddr row)))
+	    command-table))
+
+(define (usage-help)
+  (let ((dle display-line-error)
+	(p program-name))
+    (dle "  " p " --help      - show usage info (this message)")
+    (dle "  " p " --help SUBCOMMAND - show help for SUBCOMMAND")))
+
+(define (show-version args)
+  (display-line-error program-name " - Guile version " program-version))
+
+(define (help-version)
+  (let ((dle display-line-error))
+    (dle "Usage: " program-name " --version")
+    (dle "Show the version of this script.  This is also the version of")
+    (dle "Guile this script was installed with.")))
+
+(define (usage-version)
+  (display-line-error
+   "  " program-name " --version   - show installed script and Guile version"))
+
+
+;;;; the "link" subcommand
+
+;;; Write a set of linker flags to standard output to include the
+;;; libraries that libguile needs to link against.
+;;;
+;;; In the long run, we want to derive these flags from Guile module
+;;; declarations files that are installed along the load path.  For
+;;; now, we're just going to reach into Guile's configuration info and
+;;; hack it out.
+(define (build-link args)
+
+  ;; If PATH has the form FOO/libBAR.a, return the substring
+  ;; BAR, otherwise return #f.
+  (define (match-lib path)
+    (let* ((base (basename path))
+	   (len (string-length base)))
+      (if (and (> len 5)
+	       (string=? (substring base 0 3) "lib")
+	       (string=? (substring base (- len 2)) ".a"))
+	  (substring base 3 (- len 2))
+	  #f)))
+
+  (if (> (length args) 0)
+      (error
+       (string-append program-name
+		      " link: arguments to subcommand not yet implemented")))
+
+  (let ((libdir (get-build-info 'libdir))
+        (other-flags
+         (let loop ((libs
+                     ;; Get the string of linker flags we used to build
+                     ;; Guile, and break it up into a list.
+                     (separate-fields-discarding-char #\space
+                                                      (get-build-info 'LIBS)
+                                                      list)))
+            
+           (cond
+            ((null? libs) '())
+            
+            ;; Turn any "FOO/libBAR.a" elements into "-lBAR".
+            ((match-lib (car libs))
+             => (lambda (bar)
+                  (cons (string-append "-l" bar)
+                        (loop (cdr libs)))))
+            
+            ;; Remove any empty strings that may have seeped in there.
+            ((string=? (car libs) "") (loop (cdr libs)))
+            
+            (else (cons (car libs) (loop (cdr libs))))))))
+    
+    ;; Include libguile itself in the list, along with the directory
+    ;; it was installed in, but do *not* add /usr/lib since that may
+    ;; prevent other programs from specifying non-/usr/lib versions
+    ;; via their foo-config scripts.  If *any* app puts -L/usr/lib in
+    ;; the output of its foo-config script then it may prevent the use
+    ;; a non-/usr/lib install of anything that also has a /usr/lib
+    ;; install. For now we hard-code /usr/lib, but later maybe we can
+    ;; do something more dynamic (i.e. what do we need.
+    
+    ;; Display the flags, separated by spaces.
+    (if (or (string=? libdir "/usr/lib")
+            (string=? libdir "/usr/lib/"))
+        (display-separated (cons "-lguile" other-flags))
+        (display-separated (cons
+                            (string-append "-L" (get-build-info 'libdir))
+                            (cons "-lguile" other-flags))))
+    (newline)))
+
+(define (help-link)
+  (let ((dle display-line-error))
+    (dle "Usage: " program-name " link")
+    (dle "Print linker flags for building the `guile' executable.")
+    (dle "Print the linker command-line flags necessary to link against")
+    (dle "the Guile library, and any other libraries it requires.")))
+
+(define (usage-link)
+  (display-line-error
+   "  " program-name " link        - print libraries to link with"))
+
+
+
+;;;; The "compile" subcommand
+
+(define (build-compile args)
+  (if (> (length args) 0)
+      (error
+       (string-append program-name
+		      " compile: no arguments expected")))
+
+  ;; See gcc manual wrt fixincludes.  Search for "Use of
+  ;; `-I/usr/include' may cause trouble."  For now we hard-code this.
+  ;; Later maybe we can do something more dynamic.
+  (if (not (string=? (get-build-info 'includedir) "/usr/include"))
+      (display-line "-I" (get-build-info 'includedir))))
+
+(define (help-compile)
+  (let ((dle display-line-error))
+    (dle "Usage: " program-name " compile")
+    (dle "Print C compiler flags for compiling code that uses Guile.")
+    (dle "This includes any `-I' flags needed to find Guile's header files.")))
+
+(define (usage-compile)
+  (display-line-error
+   "  " program-name " compile     - print C compiler flags to compile with"))
+
+
+;;;; The "info" subcommand
+
+(define (build-info args)
+  (cond
+   ((null? args) (show-all-vars))
+   ((null? (cdr args)) (show-var (car args)))
+   (else (display-line-error "Usage: " program-name " info [VAR]")
+	 (quit 2))))
+
+(define (show-all-vars)
+  (for-each (lambda (binding)
+	      (display-line (car binding) " = " (cdr binding)))
+	    %guile-build-info))
+
+(define (show-var var)
+  (display (get-build-info (string->symbol var)))
+  (newline))
+
+(define (help-info)
+  (let ((d display-line-error))
+    (d "Usage: " program-name " info [VAR]")
+    (d "Display the value of the Makefile variable VAR used when Guile")
+    (d "was built.  If VAR is omitted, display all Makefile variables.")
+    (d "Use this command to find out where Guile was installed,")
+    (d "where it will look for Scheme code at run-time, and so on.")))
+
+(define (usage-info)
+  (display-line-error
+   "  " program-name " info [VAR]  - print Guile build directories"))
+
+
+;;;; trivial utilities
+
+(define (get-build-info name)
+  (let ((val (assq name %guile-build-info)))
+    (if (not (pair? val))
+	(begin
+	  (display-line-error
+	   program-name " " subcommand-name ": no such build-info: " name)
+	  (quit 2)))
+    (cdr val)))
+
+(define (display-line . args)
+  (apply display-line-port (current-output-port) args))
+
+(define (display-line-error . args)
+  (apply display-line-port (current-error-port) args))
+
+(define (display-line-port port . args)
+  (for-each (lambda (arg) (display arg port))
+	    args)
+  (newline port))
+
+(define (display-separated args)
+  (if (not (null? args))
+      (begin
+        (display (car args))
+        (for-each
+         (lambda (arg) (display " ") (display arg))
+         (cdr args)))))
+
+
+;;;; the command table
+
+;;; We define this down here, so Guile builds the list after all the
+;;; functions have been defined.
+(define command-table
+  (list
+   (list "--version" show-version help-version usage-version)
+   (list "--help" show-help show-help-overview usage-help)
+   (list "link" build-link help-link usage-link)
+   (list "compile" build-compile help-compile usage-compile)
+   (list "info" build-info help-info usage-info)))
+
+
+;;; Local Variables:
+;;; mode: scheme
+;;; End:

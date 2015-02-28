@@ -104,7 +104,18 @@ public:
     COPY_OPT_FIELD(mSessionId, -1)
     COPY_OPT_FIELD(mMajorVersion, -1)
     COPY_OPT_FIELD(mMinorVersion, -1)
-    COPY_OPT_FIELD(mPowerLevel, -1)
+
+    if (mEvent.mRfState != -1) {
+      event.mRfState.Construct();
+      RFState rfState = static_cast<RFState>(mEvent.mRfState);
+      MOZ_ASSERT(rfState < RFState::EndGuard_);
+      event.mRfState.Value() = rfState;
+    }
+
+    if (mEvent.mErrorCode != -1) {
+      event.mErrorMsg.Construct();
+      event.mErrorMsg.Value() = static_cast<NfcErrorMessage>(mEvent.mErrorCode);
+    }
 
     if (mEvent.mTechList.Length() > 0) {
       int length = mEvent.mTechList.Length();
@@ -152,9 +163,14 @@ public:
       }
     }
 
+    if (mEvent.mTagType != -1) {
+      event.mTagType.Construct();
+      event.mTagType.Value() = static_cast<NFCTagType>(mEvent.mTagType);
+    }
+
+    COPY_OPT_FIELD(mMaxNDEFSize, -1)
     COPY_OPT_FIELD(mIsReadOnly, -1)
-    COPY_OPT_FIELD(mCanBeMadeReadOnly, -1)
-    COPY_OPT_FIELD(mMaxSupportedLength, -1)
+    COPY_OPT_FIELD(mIsFormatable, -1)
 
     // HCI Event Transaction parameters.
     if (mEvent.mOriginType != -1) {
@@ -257,7 +273,7 @@ NfcService::FactoryCreate()
 }
 
 NS_IMETHODIMP
-NfcService::Start(nsINfcEventListener* aListener)
+NfcService::Start(nsINfcGonkEventListener* aListener)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aListener);

@@ -1,0 +1,243 @@
+## automake - create Makefile.in from Makefile.am
+
+## Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## ----------- ##
+## Variables.  ##
+## ----------- ##
+
+if %?LOCAL-TEXIS%
+if ! %?CYGNUS%
+MAKEINFO = @MAKEINFO@
+TEXI2DVI = texi2dvi
+
+else %?CYGNUS%
+
+## Find these programs wherever they may lie.  Yes, this has
+## intimate knowledge of the structure of the texinfo distribution.
+MAKEINFO = `if test -f $(top_builddir)/../texinfo/makeinfo/makeinfo; then \
+            echo $(top_builddir)/../texinfo/makeinfo/makeinfo; \
+          else \
+            echo makeinfo; \
+          fi`
+
+TEXI2DVI = `if test -f $(top_srcdir)/../texinfo/util/texi2dvi; then \
+             echo $(top_srcdir)/../texinfo/util/texi2dvi; \
+           else \
+             echo texi2dvi; \
+           fi`
+endif %?CYGNUS%
+
+TEXI2PDF = $(TEXI2DVI) --pdf --batch
+endif %?LOCAL-TEXIS%
+
+
+## ---------- ##
+## Building.  ##
+## ---------- ##
+
+## The way to make PostScript, for those who want it.
+if %?LOCAL-TEXIS%
+DVIPS = dvips
+.dvi.ps:
+	$(DVIPS) -o $@ $<
+endif %?LOCAL-TEXIS%
+
+.PHONY: info info-am dvi dvi-am pdf pdf-am
+if %?SUBDIRS%
+RECURSIVE_TARGETS += info-recursive dvi-recursive pdf-recursive ps-recursive
+.PHONY info: info-recursive
+.PHONY dvi: dvi-recursive
+.PHONY pdf: pdf-recursive
+.PHONY ps: ps-recursive
+else !%?SUBDIRS%
+info: info-am
+dvi: dvi-am
+pdf: pdf-am
+ps: ps-am
+endif !%?SUBDIRS%
+
+if %?LOCAL-TEXIS%
+info-am: $(INFO_DEPS)
+dvi-am: $(DVIS)
+pdf-am: $(PDFS)
+ps-am: $(PSS)
+else ! %?LOCAL-TEXIS%
+info-am:
+dvi-am:
+pdf-am:
+ps-am:
+endif ! %?LOCAL-TEXIS%
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+## Look in both . and srcdir because the info pages might have been
+## rebuilt in the build directory.  Can't cd to srcdir; that might
+## break a possible install-sh reference.
+##
+## Funny name due to --cygnus influence; we want to reserve
+## `install-info' for the user.
+##
+## TEXINFOS primary are always installed in infodir, hence install-data
+## is hard coded.
+if %?INSTALL-INFO%
+if %?LOCAL-TEXIS%
+am__installdirs += $(DESTDIR)$(infodir)
+install-data-am: install-info-am
+endif %?LOCAL-TEXIS%
+if %?SUBDIRS%
+RECURSIVE_TARGETS += install-info-recursive
+.PHONY install-info: install-info-recursive
+else !%?SUBDIRS%
+install-info: install-info-am
+endif !%?SUBDIRS%
+endif %?INSTALL-INFO%
+
+.PHONY: install-info-am
+
+if %?LOCAL-TEXIS%
+install-info-am: $(INFO_DEPS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(infodir)
+	@list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  if test -f $$file; then d=.; else d=$(srcdir); fi; \
+	  for ifile in echo $$d/$$file $$d/$$file-[0-9] $$d/$$file-[0-9][0-9]; do \
+	    if test -f $$ifile; then \
+## Strip leading '$$d/'.
+	      relfile=`expr "$$ifile" : "$$d/\(.*\)"`; \
+	      echo " $(INSTALL_DATA) $$ifile $(DESTDIR)$(infodir)/$$relfile"; \
+	      $(INSTALL_DATA) $$ifile $(DESTDIR)$(infodir)/$$relfile; \
+	    else : ; fi; \
+	  done; \
+	done
+	@$(POST_INSTALL)
+## Only run this code if install-info actually exists, and it is not
+## the Debian install-info.  FIXME: once Debian install-info goes
+## away, we can remove this hack.  Debian install-info v1.8.3
+## prints version info to stderr.
+##
+## Do not use
+##    install-info --version 2>&1 | sed 1q | grep -s -v -i debian
+## as if install-info does not exist, grep -v will be happy, and
+## therefore the code will be triggered although install-info is missing.
+	@if (install-info --version && \
+	     install-info --version | grep -i -v debian) >/dev/null 2>&1; then \
+	  list='$(INFO_DEPS)'; \
+	  for file in $$list; do \
+## Run `:' after install-info in case install-info fails.  We really
+## don't care about failures here, because they can be spurious.  For
+## instance if you don't have a dir file, install-info will fail.  I
+## think instead it should create a new dir file for you.  This bug
+## causes the `make distcheck' target to fail reliably.
+	    echo " install-info --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/$$file";\
+## Use `|| :' here because Sun make passes -e to sh; if install-info
+## fails then we'd fail if we used `;'.
+	    install-info --info-dir=$(DESTDIR)$(infodir) $(DESTDIR)$(infodir)/$$file || :;\
+	  done; \
+	else : ; fi
+else ! %?LOCAL-TEXIS%
+install-info-am:
+endif ! %?LOCAL-TEXIS%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+?SUBDIRS?RECURSIVE_TARGETS += uninstall-info-recursive
+?SUBDIRS?.PHONY uninstall-info: uninstall-info-recursive
+?INSTALL-INFO?uninstall-am: uninstall-info-am
+
+.PHONY: uninstall-info-am
+
+if %?LOCAL-TEXIS%
+uninstall-info-am:
+	$(PRE_UNINSTALL)
+## Run two loops here so that we can handle PRE_UNINSTALL and
+## NORMAL_UNINSTALL correctly.  Debian install-info v1.8.3 prints
+## version info to stderr.
+	@if (install-info --version && \
+	     install-info --version | grep -i -v debian) >/dev/null 2>&1; then \
+	  list='$(INFO_DEPS)'; \
+	  for file in $$list; do \
+## install-info needs the actual info file.  We use the installed one,
+## rather than relying on one still being in srcdir or builddir.
+	    echo " install-info --info-dir=$(DESTDIR)$(infodir) --remove $(DESTDIR)$(infodir)/$$file"; \
+	    install-info --info-dir=$(DESTDIR)$(infodir) --remove $(DESTDIR)$(infodir)/$$file; \
+	  done; \
+	else :; fi
+	@$(NORMAL_UNINSTALL)
+	@list='$(INFO_DEPS)'; \
+	for file in $$list; do \
+	  (if cd $(DESTDIR)$(infodir); then \
+	     echo " rm -f $$file $$file-[0-9] $$file-[0-9][0-9])"; \
+	     rm -f $$file $$file-[0-9] $$file-[0-9][0-9]; \
+	   else :; fi); \
+	done
+else ! %?LOCAL-TEXIS%
+uninstall-info-am:
+endif ! %?LOCAL-TEXIS%
+
+if %?LOCAL-TEXIS%
+.PHONY: dist-info
+dist-info: $(INFO_DEPS)
+	list='$(INFO_DEPS)'; \
+	for base in $$list; do \
+	  if test -f $$base; then d=.; else d=$(srcdir); fi; \
+	  for file in $$d/$$base*; do \
+## Strip leading '$$d/'.
+	    relfile=`expr "$$file" : "$$d/\(.*\)"`; \
+	    test -f $(distdir)/$$relfile || \
+	      cp -p $$file $(distdir)/$$relfile; \
+	  done; \
+	done
+endif %?LOCAL-TEXIS%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## The funny name is due to --cygnus influence; in Cygnus mode,
+## `clean-info' is a target that users can use.
+
+if %?LOCAL-TEXIS%
+.PHONY: mostlyclean-aminfo
+mostlyclean-am: mostlyclean-aminfo
+mostlyclean-aminfo:
+	-rm -f %TEXICLEAN%
+
+.PHONY: maintainer-clean-aminfo
+maintainer-clean-am: maintainer-clean-aminfo
+maintainer-clean-aminfo:
+## Eww.  But how else can we find all the output files from makeinfo?
+	list='$(INFO_DEPS)'; for i in $$list; do \
+	  rm -f $$i; \
+	  if test "`echo $$i-[0-9]*`" != "$$i-[0-9]*"; then \
+	    rm -f $$i-[0-9]*; \
+	  fi; \
+	done
+
+?CYGNUS?.PHONY: clean-info
+?CYGNUS?clean-info: mostlyclean-aminfo
+endif %?LOCAL-TEXIS%

@@ -4,6 +4,9 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "nsPluginStreamListenerPeer.h"
+#include "nsIContentPolicy.h"
+#include "nsContentPolicyUtils.h"
+#include "nsIDOMElement.h"
 #include "nsIStreamConverterService.h"
 #include "nsIHttpChannel.h"
 #include "nsIHttpChannelInternal.h"
@@ -11,6 +14,7 @@
 #include "nsMimeTypes.h"
 #include "nsISupportsPrimitives.h"
 #include "nsNetCID.h"
+#include "nsPluginInstanceOwner.h"
 #include "nsPluginLogging.h"
 #include "nsIURI.h"
 #include "nsIURL.h"
@@ -475,6 +479,37 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
     }
   }
 
+  nsAutoCString contentType;
+  rv = channel->GetContentType(contentType);
+  if (NS_FAILED(rv))
+    return rv;
+
+  // Check ShouldProcess with content policy
+  nsRefPtr<nsPluginInstanceOwner> owner;
+  if (mPluginInstance) {
+    owner = mPluginInstance->GetOwner();
+  }
+  nsCOMPtr<nsIDOMElement> element;
+  nsCOMPtr<nsIDocument> doc;
+  if (owner) {
+    owner->GetDOMElement(getter_AddRefs(element));
+    owner->GetDocument(getter_AddRefs(doc));
+  }
+  nsCOMPtr<nsIPrincipal> principal = doc ? doc->NodePrincipal() : nullptr;
+
+  int16_t shouldLoad = nsIContentPolicy::ACCEPT;
+  rv = NS_CheckContentProcessPolicy(nsIContentPolicy::TYPE_OBJECT_SUBREQUEST,
+                                    mURL,
+                                    principal,
+                                    element,
+                                    contentType,
+                                    nullptr,
+                                    &shouldLoad);
+  if (NS_FAILED(rv) || NS_CP_REJECTED(shouldLoad)) {
+    mRequestFailed = true;
+    return NS_ERROR_CONTENT_BLOCKED;
+  }
+
   // Get the notification callbacks from the channel and save it as
   // week ref we'll use it in nsPluginStreamInfo::RequestRead() when
   // we'll create channel for byte range request.
@@ -507,11 +542,6 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
     mLength = uint32_t(length);
   }
 
-  nsAutoCString aContentType; // XXX but we already got the type above!
-  rv = channel->GetContentType(aContentType);
-  if (NS_FAILED(rv))
-    return rv;
-
   nsCOMPtr<nsIURI> aURL;
   rv = channel->GetURI(getter_AddRefs(aURL));
   if (NS_FAILED(rv))
@@ -519,13 +549,13 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
 
   aURL->GetSpec(mURLSpec);
 
-  if (!aContentType.IsEmpty())
-    mContentType = aContentType;
+  if (!contentType.IsEmpty())
+    mContentType = contentType;
 
 #ifdef PLUGIN_LOGGING
   PR_LOG(nsPluginLogging::gPluginLog, PLUGIN_LOG_NOISY,
          ("nsPluginStreamListenerPeer::OnStartRequest this=%p request=%p mime=%s, url=%s\n",
-          this, request, aContentType.get(), mURLSpec.get()));
+          this, request, contentType.get(), mURLSpec.get()));
 
   PR_LogFlush();
 #endif
@@ -640,8 +670,11 @@ nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
   nsresult rv = NS_OK;
 
   nsRefPtr<nsPluginInstanceOwner> owner = mPluginInstance->GetOwner();
+  nsCOMPtr<nsIDOMElement> element;
   nsCOMPtr<nsIDocument> doc;
   if (owner) {
+    rv = owner->GetDOMElement(getter_AddRefs(element));
+    NS_ENSURE_SUCCESS(rv, rv);
     rv = owner->GetDocument(getter_AddRefs(doc));
     NS_ENSURE_SUCCESS(rv, rv);
   }
@@ -649,22 +682,32 @@ nsPluginStreamListenerPeer::RequestRead(NPByteRange* rangeList)
   nsCOMPtr<nsIInterfaceRequestor> callbacks = do_QueryReferent(mWeakPtrChannelCallbacks);
   nsCOMPtr<nsILoadGroup> loadGroup = do_QueryReferent(mWeakPtrChannelLoadGroup);
 
-  nsCOMPtr<nsIPrincipal> principal = doc ? doc->NodePrincipal() : nullptr;
-  if (!principal) {
-    principal = do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
-    NS_ENSURE_SUCCESS(rv, rv);
-  }
-
   nsCOMPtr<nsIChannel> channel;
-  rv = NS_NewChannelInternal(getter_AddRefs(channel),
-                             mURL,
-                             doc,
-                             principal,
-                             nsILoadInfo::SEC_NORMAL,
-                             nsIContentPolicy::TYPE_OTHER,
-                             nullptr,   // aChannelPolicy
-                             loadGroup,
-                             callbacks);
+  nsCOMPtr<nsINode> requestingNode(do_QueryInterface(element));
+  if (requestingNode) {
+    rv = NS_NewChannel(getter_AddRefs(channel),
+                       mURL,
+                       requestingNode,
+                       nsILoadInfo::SEC_NORMAL,
+                       nsIContentPolicy::TYPE_OTHER,
+                       loadGroup,
+                       callbacks);
+  }
+  else {
+    // in this else branch we really don't know where the load is coming
+    // from and in fact should use something better than just using
+    // a nullPrincipal as the loadingPrincipal.
+    nsCOMPtr<nsIPrincipal> principal =
+      do_CreateInstance("@mozilla.org/nullprincipal;1", &rv);
+    NS_ENSURE_SUCCESS(rv, rv);
+    rv = NS_NewChannel(getter_AddRefs(channel),
+                       mURL,
+                       principal,
+                       nsILoadInfo::SEC_NORMAL,
+                       nsIContentPolicy::TYPE_OTHER,
+                       loadGroup,
+                       callbacks);
+  }
 
   if (NS_FAILED(rv))
     return rv;

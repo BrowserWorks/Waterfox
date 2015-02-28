@@ -10,15 +10,22 @@
 
 #include "gfxBlur.h"
 #include "gfxContext.h"
+#include "mozilla/gfx/PathHelpers.h"
+#include "mozilla/gfx/Rect.h"
 #include "nsLayoutUtils.h"
 #include "nsStyleStruct.h"
 #include "nsIFrame.h"
 
+class gfxDrawable;
 class nsStyleContext;
 class nsPresContext;
 class nsRenderingContext;
 
 namespace mozilla {
+
+namespace gfx {
+class DrawTarget;
+}
 
 namespace layers {
 class ImageContainer;
@@ -136,6 +143,33 @@ public:
    * like to be in app units.
    */
   mozilla::CSSSizeOrRatio ComputeIntrinsicSize();
+
+  /**
+   * Computes the placement for a background image, or for the image data
+   * inside of a replaced element.
+   *
+   * @param aPos The CSS <position> value that specifies the image's position.
+   * @param aOriginBounds The box to which the tiling position should be
+   *          relative. For background images, this should correspond to
+   *          'background-origin' for the frame, except when painting on the
+   *          canvas, in which case the origin bounds should be the bounds
+   *          of the root element's frame. For a replaced element, this should
+   *          be the element's content-box.
+   * @param aTopLeft [out] The top-left corner where an image tile should be
+   *          drawn.
+   * @param aAnchorPoint [out] A point which should be pixel-aligned by
+   *          nsLayoutUtils::DrawImage. This is the same as aTopLeft, unless
+   *          CSS specifies a percentage (including 'right' or 'bottom'), in
+   *          which case it's that percentage within of aOriginBounds. So
+   *          'right' would set aAnchorPoint.x to aOriginBounds.XMost().
+   *
+   * Points are returned relative to aOriginBounds.
+   */
+  static void ComputeObjectAnchorPoint(const nsStyleBackground::Position& aPos,
+                                       const nsSize& aOriginBounds,
+                                       const nsSize& aImageSize,
+                                       nsPoint* aTopLeft,
+                                       nsPoint* aAnchorPoint);
 
   /**
    * Compute the size of the rendered image using either the 'cover' or
@@ -283,6 +317,10 @@ struct nsBackgroundLayerState {
 };
 
 struct nsCSSRendering {
+  typedef mozilla::gfx::DrawTarget DrawTarget;
+  typedef mozilla::gfx::Float Float;
+  typedef mozilla::gfx::Rect Rect;
+  typedef mozilla::gfx::RectCornerRadii RectCornerRadii;
   typedef nsIFrame::Sides Sides;
 
   /**
@@ -310,7 +348,7 @@ struct nsCSSRendering {
 
   static void ComputePixelRadii(const nscoord *aAppUnitsRadii,
                                 nscoord aAppUnitsPerPixel,
-                                gfxCornerSizes *oBorderRadii);
+                                RectCornerRadii *oBorderRadii);
 
   /**
    * Render the border for an element using css rendering rules
@@ -480,7 +518,7 @@ struct nsCSSRendering {
     gfxRect mDirtyRectGfx;
 
     nscoord mRadii[8];
-    gfxCornerSizes mClippedRadii;
+    RectCornerRadii mClippedRadii;
     bool mHasRoundedCorners;
     bool mHasAdditionalBGClipArea;
 
@@ -588,6 +626,7 @@ struct nsCSSRendering {
                                      nscolor              aBorderColor,
                                      const nsStyleBackground* aBGColor,
                                      const nsRect&        aBorderRect,
+                                     int32_t              aAppUnitsPerDevPixel,
                                      int32_t              aAppUnitsPerCSSPixel,
                                      uint8_t              aStartBevelSide = 0,
                                      nscoord              aStartBevelOffset = 0,
@@ -640,11 +679,11 @@ struct nsCSSRendering {
    *                              used for strikeout line and overline too.
    */
   static void PaintDecorationLine(nsIFrame* aFrame,
-                                  gfxContext* aGfxContext,
-                                  const gfxRect& aDirtyRect,
+                                  DrawTarget& aDrawTarget,
+                                  const Rect& aDirtyRect,
                                   const nscolor aColor,
                                   const gfxPoint& aPt,
-                                  const gfxFloat aICoordInFrame,
+                                  const Float aICoordInFrame,
                                   const gfxSize& aLineSize,
                                   const gfxFloat aAscent,
                                   const gfxFloat aOffset,
@@ -769,12 +808,12 @@ protected:
    *                              and aClippedRect.pos.
    *     @param aCycleLength      the width of one cycle of the line style.
    */
-  static gfxRect ExpandPaintingRectForDecorationLine(
+  static Rect ExpandPaintingRectForDecorationLine(
                    nsIFrame* aFrame,
                    const uint8_t aStyle,
-                   const gfxRect &aClippedRect,
-                   const gfxFloat aICoordInFrame,
-                   const gfxFloat aCycleLength,
+                   const Rect &aClippedRect,
+                   const Float aICoordInFrame,
+                   const Float aCycleLength,
                    bool aVertical);
 };
 
@@ -792,6 +831,8 @@ protected:
  * This is very useful for creating drop shadows or silhouettes.
  */
 class nsContextBoxBlur {
+  typedef mozilla::gfx::RectCornerRadii RectCornerRadii;
+
 public:
   enum {
     FORCE_MASK = 0x01
@@ -897,7 +938,7 @@ public:
   static void BlurRectangle(gfxContext* aDestinationCtx,
                             const nsRect& aRect,
                             int32_t aAppUnitsPerDevPixel,
-                            gfxCornerSizes* aCornerRadii,
+                            RectCornerRadii* aCornerRadii,
                             nscoord aBlurRadius,
                             const gfxRGBA& aShadowColor,
                             const nsRect& aDirtyRect,

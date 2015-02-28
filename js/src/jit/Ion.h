@@ -12,7 +12,6 @@
 #include "jscntxt.h"
 #include "jscompartment.h"
 
-#include "jit/CompileInfo.h"
 #include "jit/CompileWrappers.h"
 #include "jit/JitOptions.h"
 
@@ -93,7 +92,7 @@ MethodStatus CanEnterInParallel(JSContext *cx, HandleScript script);
 
 MethodStatus
 Recompile(JSContext *cx, HandleScript script, BaselineFrame *osrFrame, jsbytecode *osrPc,
-          bool constructing);
+          bool constructing, bool force);
 
 enum JitExecStatus
 {
@@ -126,9 +125,9 @@ JitExecStatus FastInvoke(JSContext *cx, HandleFunction fun, CallArgs &args);
 
 // Walk the stack and invalidate active Ion frames for the invalid scripts.
 void Invalidate(types::TypeZone &types, FreeOp *fop,
-                const Vector<types::RecompileInfo> &invalid, bool resetUses = true,
+                const types::RecompileInfoVector &invalid, bool resetUses = true,
                 bool cancelOffThread = true);
-void Invalidate(JSContext *cx, const Vector<types::RecompileInfo> &invalid, bool resetUses = true,
+void Invalidate(JSContext *cx, const types::RecompileInfoVector &invalid, bool resetUses = true,
                 bool cancelOffThread = true);
 bool Invalidate(JSContext *cx, JSScript *script, ExecutionMode mode, bool resetUses = true,
                 bool cancelOffThread = true);
@@ -201,12 +200,6 @@ void PurgeCaches(JSScript *script);
 size_t SizeOfIonData(JSScript *script, mozilla::MallocSizeOf mallocSizeOf);
 void DestroyJitScripts(FreeOp *fop, JSScript *script);
 void TraceJitScripts(JSTracer* trc, JSScript *script);
-
-void RequestInterruptForIonCode(JSRuntime *rt, JSRuntime::InterruptMode mode);
-
-bool RematerializeAllFrames(JSContext *cx, JSCompartment *comp);
-bool UpdateForDebugMode(JSContext *maybecx, JSCompartment *comp,
-                        AutoDebugModeInvalidation &invalidate);
 
 bool JitSupportsFloatingPoint();
 bool JitSupportsSimd();

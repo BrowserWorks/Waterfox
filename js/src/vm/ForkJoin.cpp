@@ -210,7 +210,7 @@ class ForkJoinOperation
     TrafficLight appendCallTargetsToWorklist(uint32_t index, ExecutionStatus *status);
     TrafficLight appendCallTargetToWorklist(HandleScript script, ExecutionStatus *status);
     bool addToWorklist(HandleScript script);
-    inline bool hasScript(Vector<types::RecompileInfo> &scripts, JSScript *script);
+    inline bool hasScript(const types::RecompileInfoVector &scripts, JSScript *script);
 }; // class ForkJoinOperation
 
 class ForkJoinShared : public ParallelJob, public Monitor
@@ -1107,30 +1107,26 @@ ForkJoinOperation::reportBailoutWarnings()
                 sp.printf(" (%s:%u)", script->filename(), PCToLineNumber(script, frame->pc()));
 
                 // Format bindings.
-                BindingVector bindings(cx_);
-                if (!FillBindingVector(script, &bindings))
-                    return false;
-
                 unsigned scopeSlot = 0;
-                for (unsigned i = 0; i < bindings.length(); i++) {
+                for (BindingIter bi(script); bi; bi++) {
                     JSAutoByteString nameBytes;
                     const char *nameChars = nullptr;
-                    RootedPropertyName bindingName(cx_, bindings[i].name());
+                    RootedPropertyName bindingName(cx_, bi->name());
                     nameChars = nameBytes.encodeUtf8(cx_, bindingName);
                     if (!nameChars)
                         return false;
 
                     RootedValue arg(cx_);
-                    if (bindings[i].aliased()) {
+                    if (bi->aliased()) {
                         arg = frame->callObj().getSlot(scopeSlot);
                         scopeSlot++;
-                    } else if (i < frame->numFormalArgs()) {
+                    } else if (bi->kind() == Binding::ARGUMENT) {
                         if (script->argsObjAliasesFormals() && frame->hasArgsObj())
-                            arg = frame->argsObj().arg(i);
+                            arg = frame->argsObj().arg(bi.argIndex());
                         else
-                            arg = frame->unaliasedActual(i, DONT_CHECK_ALIASING);
+                            arg = frame->unaliasedActual(bi.argIndex(), DONT_CHECK_ALIASING);
                     } else {
-                        arg = frame->unaliasedLocal(i - frame->numFormalArgs(), DONT_CHECK_ALIASING);
+                        arg = frame->unaliasedLocal(bi.frameIndex());
                     }
 
                     JSAutoByteString valueBytes;
@@ -1139,7 +1135,7 @@ ForkJoinOperation::reportBailoutWarnings()
                         return false;
 
                     sp.printf("\n      %s %s = %s",
-                              bindings[i].kind() == Binding::ARGUMENT ? "arg" : "var",
+                              bi->kind() == Binding::ARGUMENT ? "arg" : "var",
                               nameChars, valueChars);
                 }
             }
@@ -1155,7 +1151,7 @@ ForkJoinOperation::reportBailoutWarnings()
 bool
 ForkJoinOperation::invalidateBailedOutScripts()
 {
-    Vector<types::RecompileInfo> invalid(cx_);
+    types::RecompileInfoVector invalid;
     for (uint32_t i = 0; i < bailoutRecords_.length(); i++) {
         switch (bailoutRecords_[i].cause) {
           // No bailout.
@@ -1312,10 +1308,10 @@ ForkJoinOperation::recoverFromBailout(ExecutionStatus *status)
 }
 
 bool
-ForkJoinOperation::hasScript(Vector<types::RecompileInfo> &scripts, JSScript *script)
+ForkJoinOperation::hasScript(const types::RecompileInfoVector &invalid, JSScript *script)
 {
-    for (uint32_t i = 0; i < scripts.length(); i++) {
-        if (scripts[i] == script->parallelIonScript()->recompileInfo())
+    for (uint32_t i = 0; i < invalid.length(); i++) {
+        if (invalid[i].compilerOutput(cx_)->script() == script)
             return true;
     }
     return false;
@@ -1440,7 +1436,7 @@ ForkJoinShared::execute()
     // Sometimes a GC request occurs *just before* we enter into the
     // parallel section.  Rather than enter into the parallel section
     // and then abort, we just check here and abort early.
-    if (cx_->runtime()->interruptPar)
+    if (cx_->runtime()->hasPendingInterruptPar())
         return TP_RETRY_SEQUENTIALLY;
 
     AutoLockMonitor lock(*this);
@@ -1518,7 +1514,7 @@ ForkJoinShared::executeFromWorker(ThreadPoolWorker *worker, uintptr_t stackLimit
 
     // Don't use setIonStackLimit() because that acquires the ionStackLimitLock, and the
     // lock has not been initialized in these cases.
-    thisThread.jitStackLimit = stackLimit;
+    thisThread.initJitStackLimitPar(stackLimit);
     executePortion(&thisThread, worker);
     TlsPerThreadData.set(nullptr);
 
@@ -1551,7 +1547,7 @@ ForkJoinShared::executeFromMainThread(ThreadPoolWorker *worker)
     //
     // Thus, use GetNativeStackLimit instead of just propagating the
     // main thread's.
-    thisThread.jitStackLimit = GetNativeStackLimit(cx_);
+    thisThread.initJitStackLimitPar(GetNativeStackLimit(cx_));
     executePortion(&thisThread, worker);
     TlsPerThreadData.set(oldData);
 
@@ -1647,7 +1643,7 @@ ForkJoinShared::executePortion(PerThreadData *perThread, ThreadPoolWorker *worke
 void
 ForkJoinShared::setAbortFlagDueToInterrupt(ForkJoinContext &cx)
 {
-    MOZ_ASSERT(cx_->runtime()->interruptPar);
+    MOZ_ASSERT(cx_->runtime()->hasPendingInterruptPar());
     // The GC Needed flag should not be set during parallel
     // execution.  Instead, one of the requestGC() or
     // requestZoneGC() methods should be invoked.
@@ -1667,9 +1663,7 @@ ForkJoinShared::setAbortFlagAndRequestInterrupt(bool fatal)
     abort_ = true;
     fatal_ = fatal_ || fatal;
 
-    // Note: The ForkJoin trigger here avoids the expensive memory protection needed to
-    // interrupt Ion code compiled for sequential execution.
-    cx_->runtime()->requestInterrupt(JSRuntime::RequestInterruptAnyThreadForkJoin);
+    cx_->runtime()->requestInterrupt(JSRuntime::RequestInterruptCanWait);
 }
 
 void
@@ -1826,7 +1820,7 @@ ForkJoinContext::hasAcquiredJSContext() const
 bool
 ForkJoinContext::check()
 {
-    if (runtime()->interruptPar) {
+    if (runtime()->hasPendingInterruptPar()) {
         shared_->setAbortFlagDueToInterrupt(*this);
         return false;
     }
@@ -1879,41 +1873,6 @@ ParallelBailoutRecord::reset()
 {
     RematerializedFrame::FreeInVector(frames());
     cause = ParallelBailoutNone;
-}
-
-void
-ParallelBailoutRecord::rematerializeFrames(ForkJoinContext *cx, JitFrameIterator &frameIter)
-{
-    // This function is infallible. These are only called when we are already
-    // erroring out. If we OOM here, free what we've allocated and return. Error
-    // reporting is then unable to give the user detailed stack information.
-
-    MOZ_ASSERT(frames().empty());
-
-    for (; !frameIter.done(); ++frameIter) {
-        if (!frameIter.isIonJS())
-            continue;
-
-        InlineFrameIterator inlineIter(cx, &frameIter);
-        Vector<RematerializedFrame *> inlineFrames(cx);
-
-        if (!RematerializedFrame::RematerializeInlineFrames(cx, frameIter.fp(),
-                                                            inlineIter, inlineFrames))
-        {
-            RematerializedFrame::FreeInVector(inlineFrames);
-            RematerializedFrame::FreeInVector(frames());
-            return;
-        }
-
-        // Reverse the inline frames into the main vector.
-        while (!inlineFrames.empty()) {
-            if (!frames().append(inlineFrames.popCopy())) {
-                RematerializedFrame::FreeInVector(inlineFrames);
-                RematerializedFrame::FreeInVector(frames());
-                return;
-            }
-        }
-    }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2271,13 +2230,6 @@ js::ParallelTestsShouldPass(JSContext *cx)
            !js_JitOptions.eagerCompilation &&
            js_JitOptions.baselineWarmUpThreshold != 0 &&
            cx->runtime()->gcZeal() == 0;
-}
-
-void
-js::RequestInterruptForForkJoin(JSRuntime *rt, JSRuntime::InterruptMode mode)
-{
-    if (mode != JSRuntime::RequestInterruptAnyThreadDontStopIon)
-        rt->interruptPar = true;
 }
 
 bool

@@ -11,10 +11,10 @@ def Libxul(name):
     if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
         # This is going to be a framework named "XUL", not an ordinary library named
         # "libxul.dylib"
-        Framework(name)
+        GeckoFramework(name, linkage=None)
         SHARED_LIBRARY_NAME = 'XUL'
     else:
-        SharedLibrary(name)
+        GeckoSharedLibrary(name, linkage=None)
         SHARED_LIBRARY_NAME = 'xul'
 
     DELAYLOAD_DLLS += [
@@ -111,11 +111,6 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         'sandboxbroker',
     ]
 
-if CONFIG['MOZ_DMD']:
-    USE_LIBS += [
-        'dmd',
-    ]
-
 USE_LIBS += [
     'gkmedias',
     'mozalloc',
@@ -125,7 +120,7 @@ USE_LIBS += [
     'zlib',
 ]
 
-if CONFIG['ENABLE_INTL_API']:
+if CONFIG['USE_ICU']:
     USE_LIBS += [
         'icu',
     ]

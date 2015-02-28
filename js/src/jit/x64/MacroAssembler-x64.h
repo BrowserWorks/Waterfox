@@ -552,8 +552,20 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
     // Common interface.
     /////////////////////////////////////////////////////////////////
     void reserveStack(uint32_t amount) {
-        if (amount)
-            subq(Imm32(amount), StackPointer);
+        if (amount) {
+            // On windows, we cannot skip very far down the stack without touching the
+            // memory pages in-between.  This is a corner-case code for situations where the
+            // Ion frame data for a piece of code is very large.  To handle this special case,
+            // for frames over 1k in size we allocate memory on the stack incrementally, touching
+            // it as we go.
+            uint32_t amountLeft = amount;
+            while (amountLeft > 4096) {
+                subq(Imm32(4096), StackPointer);
+                store32(Imm32(0), Address(StackPointer, 0));
+                amountLeft -= 4096;
+            }
+            subq(Imm32(amountLeft), StackPointer);
+        }
         framePushed_ += amount;
     }
     void freeStack(uint32_t amount) {
@@ -766,7 +778,8 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
             load32(Address(ScratchReg, 0x0), dest);
         }
     }
-    void storePtr(ImmWord imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmWord imm, T address) {
         if ((intptr_t)imm.value <= INT32_MAX && (intptr_t)imm.value >= INT32_MIN) {
             movq(Imm32((int32_t)imm.value), Operand(address));
         } else {
@@ -774,10 +787,12 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
             movq(ScratchReg, Operand(address));
         }
     }
-    void storePtr(ImmPtr imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmPtr imm, T address) {
         storePtr(ImmWord(uintptr_t(imm.value)), address);
     }
-    void storePtr(ImmGCPtr imm, const Address &address) {
+    template <typename T>
+    void storePtr(ImmGCPtr imm, T address) {
         movq(imm, ScratchReg);
         movq(ScratchReg, Operand(address));
     }
@@ -939,6 +954,10 @@ class MacroAssemblerX64 : public MacroAssemblerX86Shared
         MOZ_ASSERT(cond == Equal || cond == NotEqual);
         cmpl(ToUpper32(operand), Imm32(Upper32Of(GetShiftedTag(JSVAL_TYPE_NULL))));
         j(cond, label);
+    }
+    void branchTestNull(Condition cond, const Address &address, Label *label) {
+        MOZ_ASSERT(cond == Equal || cond == NotEqual);
+        branchTestNull(cond, Operand(address), label);
     }
 
     // Perform a type-test on a full Value loaded into a register.

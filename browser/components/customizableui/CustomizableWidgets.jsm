@@ -308,7 +308,7 @@ const CustomizableWidgets = [
                 aEvent.target.ownerDocument &&
                 aEvent.target.ownerDocument.defaultView;
       if (win && typeof win.saveDocument == "function") {
-        win.saveDocument(win.content.document);
+        win.saveDocument(win.gBrowser.selectedBrowser.contentDocumentAsCPOW);
       }
     }
   }, {
@@ -399,8 +399,6 @@ const CustomizableWidgets = [
     }
   }, {
     id: "social-share-button",
-    tooltiptext: "social-share-button.label",
-    label: "social-share-button.tooltiptext",
     // custom build our button so we can attach to the share command
     type: "custom",
     onBuild: function(aDocument) {
@@ -925,12 +923,12 @@ const CustomizableWidgets = [
       win.MailIntegration.sendLinkForWindow(win.content);
     }
   }, {
-    id: "loop-button-throttled",
+    id: "loop-button",
     type: "custom",
-    label: "Hello",
-    tooltiptext: "loop-call-button2.tooltiptext",
-    defaultArea: !Services.prefs.getBoolPref("loop.throttled2") && CustomizableUI.AREA_NAVBAR,
-    introducedInVersion: 3,
+    label: "loop-call-button3.label",
+    tooltiptext: "loop-call-button3.tooltiptext",
+    defaultArea: CustomizableUI.AREA_NAVBAR,
+    introducedInVersion: 4,
     onBuild: function(aDocument) {
       // If we're not supposed to see the button, return zip.
       if (!Services.prefs.getBoolPref("loop.enabled")) {
@@ -946,7 +944,7 @@ const CustomizableWidgets = [
       node.setAttribute("tooltiptext", CustomizableUI.getLocalizedProperty(this, "tooltiptext"));
       node.setAttribute("removable", "true");
       node.addEventListener("command", function(event) {
-        aDocument.defaultView.LoopUI.openCallPanel(event);
+        aDocument.defaultView.LoopUI.togglePanel(event);
       });
 
       return node;

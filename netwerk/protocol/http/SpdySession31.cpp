@@ -158,10 +158,10 @@ void
 SpdySession31::LogIO(SpdySession31 *self, SpdyStream31 *stream, const char *label,
                      const char *data, uint32_t datalen)
 {
-  if (!LOG4_ENABLED())
+  if (!LOG5_ENABLED())
     return;
 
-  LOG4(("SpdySession31::LogIO %p stream=%p id=0x%X [%s]",
+  LOG5(("SpdySession31::LogIO %p stream=%p id=0x%X [%s]",
         self, stream, stream ? stream->StreamID() : 0, label));
 
   // Max line is (16 * 3) + 10(prefix) + newline + null
@@ -175,7 +175,7 @@ SpdySession31::LogIO(SpdySession31 *self, SpdyStream31 *stream, const char *labe
     if (!(index % 16)) {
       if (index) {
         *line = 0;
-        LOG4(("%s", linebuf));
+        LOG5(("%s", linebuf));
       }
       line = linebuf;
       PR_snprintf(line, 128, "%08X: ", index);
@@ -187,7 +187,7 @@ SpdySession31::LogIO(SpdySession31 *self, SpdyStream31 *stream, const char *labe
   }
   if (index) {
     *line = 0;
-    LOG4(("%s", linebuf));
+    LOG5(("%s", linebuf));
   }
 }
 
@@ -1460,7 +1460,7 @@ SpdySession31::HandleNoop(SpdySession31 *self)
 {
   MOZ_ASSERT(self->mFrameControlType == CONTROL_TYPE_NOOP);
 
-  // Should not be receiving noop frames in spdy/3, so we'll just
+  // Should not be receiving noop frames in spdy/3.1, so we'll just
   // make a log and ignore it
 
   LOG3(("SpdySession31::HandleNoop %p NOP.", self));

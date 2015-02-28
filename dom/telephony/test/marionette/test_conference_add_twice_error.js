@@ -26,7 +26,7 @@ function testConferenceTwoCallsTwice() {
     .then(() => gRemoteDial(inNumber))
     .then(call => { inCall = call; })
     .then(() => gCheckAll(outCall, [outCall, inCall], '', [],
-                          [outInfo.active, inInfo.incoming]))
+                          [outInfo.active, inInfo.waiting]))
     .then(() => gAnswer(inCall))
     .then(() => gCheckAll(inCall, [outCall, inCall], '', [],
                           [outInfo.held, inInfo.active]))
@@ -41,8 +41,6 @@ function testConferenceTwoCallsTwice() {
 // Start the test
 startTest(function() {
   testConferenceTwoCallsTwice()
-    .then(null, error => {
-      ok(false, 'promise rejects during test.');
-    })
+    .catch(error => ok(false, "Promise reject: " + error))
     .then(finish);
 });

@@ -29,12 +29,6 @@
 #include "mozilla/StaticPtr.h"
 #include "cutils/properties.h"
 #include "gfx2DGlue.h"
-#include "GeckoTouchDispatcher.h"
-
-#ifdef MOZ_ENABLE_PROFILER_SPS
-#include "GeckoProfiler.h"
-#include "ProfilerMarkers.h"
-#endif
 
 #if ANDROID_VERSION >= 17
 #include "libdisplay/FramebufferSurface.h"
@@ -75,8 +69,6 @@ using namespace mozilla::layers;
 namespace mozilla {
 
 #if ANDROID_VERSION >= 17
-nsecs_t sAndroidInitTime = 0;
-mozilla::TimeStamp sMozInitTime;
 static void
 HookInvalidate(const struct hwc_procs* aProcs)
 {
@@ -116,6 +108,7 @@ HwcComposer2D::HwcComposer2D()
 #if ANDROID_VERSION >= 17
     , mPrevRetireFence(Fence::NO_FENCE)
     , mPrevDisplayFence(Fence::NO_FENCE)
+    , mLastVsyncTime(0)
 #endif
     , mPrepared(false)
     , mHasHWVsync(false)
@@ -161,8 +154,6 @@ HwcComposer2D::Init(hwc_display_t dpy, hwc_surface_t sur, gl::GLContext* aGLCont
     }
 
     if (RegisterHwcEventCallback()) {
-        sAndroidInitTime = systemTime(SYSTEM_TIME_MONOTONIC);
-        sMozInitTime = TimeStamp::Now();
         EnableVsync(true);
     }
 #else
@@ -218,7 +209,7 @@ HwcComposer2D::RegisterHwcEventCallback()
     device->registerProcs(device, &sHWCProcs);
     mHasHWVsync = true;
 
-    if (!gfxPrefs::FrameUniformityHWVsyncEnabled()) {
+    if (!gfxPrefs::HardwareVsyncEnabled()) {
         device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
         mHasHWVsync = false;
     }
@@ -240,15 +231,13 @@ HwcComposer2D::RunVsyncEventControl(bool aEnable)
 void
 HwcComposer2D::Vsync(int aDisplay, nsecs_t aVsyncTimestamp)
 {
-#ifdef MOZ_ENABLE_PROFILER_SPS
-    if (profiler_is_active()) {
-      nsecs_t timeSinceInit = aVsyncTimestamp - sAndroidInitTime;
-      TimeStamp vsyncTime = sMozInitTime + TimeDuration::FromMicroseconds(timeSinceInit / 1000);
-      CompositorParent::PostInsertVsyncProfilerMarker(vsyncTime);
+    TimeStamp vsyncTime = mozilla::TimeStamp::FromSystemTime(aVsyncTimestamp);
+    nsecs_t vsyncInterval = aVsyncTimestamp - mLastVsyncTime;
+    if (vsyncInterval < 16000000 || vsyncInterval > 17000000) {
+      LOGE("Non-uniform vsync interval: %lld\n", vsyncInterval);
     }
-#endif
-
-    GeckoTouchDispatcher::NotifyVsync(aVsyncTimestamp);
+    mLastVsyncTime = aVsyncTimestamp;
+    VsyncDispatcher::GetInstance()->NotifyVsync(vsyncTime);
 }
 
 // Called on the "invalidator" thread (run from HAL).
@@ -393,23 +382,14 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     }
 
     LayerRenderState state = aLayer->GetRenderState();
-    nsIntSize surfaceSize;
 
-    if (state.mSurface.get()) {
-        surfaceSize = state.mSize;
-    } else {
-        if (aLayer->AsColorLayer() && mColorFill) {
-            fillColor = true;
-        } else {
-            LOGD("%s Layer doesn't have a gralloc buffer", aLayer->Name());
-            return false;
-        }
-    }
-    // Buffer rotation is not to be confused with the angled rotation done by a transform matrix
-    // It's a fancy PaintedLayer feature used for scrolling
-    if (state.BufferRotated()) {
-        LOGD("%s Layer has a rotated buffer", aLayer->Name());
-        return false;
+    if (!state.mSurface.get()) {
+      if (aLayer->AsColorLayer() && mColorFill) {
+        fillColor = true;
+      } else {
+          LOGD("%s Layer doesn't have a gralloc buffer", aLayer->Name());
+          return false;
+      }
     }
 
     nsIntRect visibleRect = visibleRegion.GetBounds();
@@ -418,7 +398,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     if (fillColor) {
         bufferRect = nsIntRect(visibleRect);
     } else {
-        if(state.mHasOwnOffset) {
+        if (state.mHasOwnOffset) {
             bufferRect = nsIntRect(state.mOffset.x, state.mOffset.y,
                                    state.mSize.width, state.mSize.height);
         } else {
@@ -426,6 +406,17 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
             //surface size as its buffer bounds
             bufferRect = nsIntRect(0, 0, state.mSize.width, state.mSize.height);
         }
+        // In some cases the visible rect assigned to the layer can be larger
+        // than the layer's surface, e.g., an ImageLayer with a small Image
+        // in it.
+        visibleRect.IntersectRect(visibleRect, bufferRect);
+    }
+
+    // Buffer rotation is not to be confused with the angled rotation done by a transform matrix
+    // It's a fancy PaintedLayer feature used for scrolling
+    if (state.BufferRotated()) {
+        LOGD("%s Layer has a rotated buffer", aLayer->Name());
+        return false;
     }
 
     hwc_rect_t sourceCrop, displayFrame;
@@ -445,8 +436,12 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
 
     // Do not compose any layer below full-screen Opaque layer
     // Note: It can be generalized to non-fullscreen Opaque layers.
-    bool isOpaque = (opacity == 0xFF) && (aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE);
-    if (current && isOpaque) {
+    bool isOpaque = opacity == 0xFF &&
+        (state.mFlags & LayerRenderStateFlags::OPAQUE);
+    // Currently we perform opacity calculation using the *bounds* of the layer.
+    // We can only make this assumption if we're not dealing with a complex visible region.
+    bool isSimpleVisibleRegion = visibleRegion.Contains(visibleRect);
+    if (current && isOpaque && isSimpleVisibleRegion) {
         nsIntRect displayRect = nsIntRect(displayFrame.left, displayFrame.top,
             displayFrame.right - displayFrame.left, displayFrame.bottom - displayFrame.top);
         if (displayRect.Contains(mScreenRect)) {

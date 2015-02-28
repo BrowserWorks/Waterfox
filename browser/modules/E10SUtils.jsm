@@ -19,7 +19,8 @@ this.E10SUtils = {
     if (aURL.startsWith("about:") &&
         aURL.toLowerCase() != "about:home" &&
         aURL.toLowerCase() != "about:blank" &&
-        !aURL.toLowerCase().startsWith("about:neterror")) {
+        !aURL.toLowerCase().startsWith("about:neterror") &&
+        !aURL.toLowerCase().startsWith("about:certerror")) {
       return false;
     }
 
@@ -50,8 +51,11 @@ this.E10SUtils = {
     let sessionHistory = aDocShell.getInterface(Ci.nsIWebNavigation).sessionHistory;
 
     messageManager.sendAsyncMessage("Browser:LoadURI", {
-      uri: aURI.spec,
-      referrer: aReferrer ? aReferrer.spec : null,
+      loadOptions: {
+        uri: aURI.spec,
+        flags: Ci.nsIWebNavigation.LOAD_FLAGS_NONE,
+        referrer: aReferrer ? aReferrer.spec : null,
+      },
       historyIndex: sessionHistory.requestedIndex,
     });
     return false;

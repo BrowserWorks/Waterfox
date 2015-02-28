@@ -626,7 +626,7 @@ SessionStore.prototype = {
     if (aBrowser.__SS_restore)
       return;
 
-    let aHistory = aHistory || { entries: [{ url: aBrowser.currentURI.spec, title: aBrowser.contentTitle }], index: 1 };
+    aHistory = aHistory || { entries: [{ url: aBrowser.currentURI.spec, title: aBrowser.contentTitle }], index: 1 };
 
     let tabData = {};
     tabData.entries = aHistory.entries;
@@ -806,7 +806,7 @@ SessionStore.prototype = {
 
       let persist = Cc["@mozilla.org/embedding/browser/nsWebBrowserPersist;1"].createInstance(Ci.nsIWebBrowserPersist);
       persist.persistFlags = Ci.nsIWebBrowserPersist.PERSIST_FLAGS_REPLACE_EXISTING_FILES | Ci.nsIWebBrowserPersist.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
-      persist.saveURI(source, null, null, null, null, file);
+      persist.saveURI(source, null, null, 0, null, null, file);
 
       aStringValue = target.spec;
     }

@@ -352,23 +352,10 @@ static inline void
 WeakMapPostWriteBarrier(JSRuntime *rt, ObjectValueMap *weakMap, JSObject *key)
 {
 #ifdef JSGC_GENERATIONAL
-    /*
-     * Strip the barriers from the type before inserting into the store buffer.
-     * This will automatically ensure that barriers do not fire during GC.
-     *
-     * Some compilers complain about instantiating the WeakMap class for
-     * unbarriered type arguments, so we cast to a HashMap instead.  Because of
-     * WeakMap's multiple inheritace, We need to do this in two stages, first to
-     * the HashMap base class and then to the unbarriered version.
-     */
-    ObjectValueMap::Base *baseHashMap = static_cast<ObjectValueMap::Base *>(weakMap);
-
-    typedef HashMap<JSObject *, Value> UnbarrieredMap;
-    UnbarrieredMap *unbarrieredMap = reinterpret_cast<UnbarrieredMap *>(baseHashMap);
-
-    typedef HashKeyRef<UnbarrieredMap, JSObject *> Ref;
+    // Strip the barriers from the type before inserting into the store buffer.
+    // This will automatically ensure that barriers do not fire during GC.
     if (key && IsInsideNursery(key))
-        rt->gc.storeBuffer.putGeneric(Ref((unbarrieredMap), key));
+        rt->gc.storeBuffer.putGeneric(UnbarrieredRef(weakMap, key));
 #endif
 }
 
@@ -535,9 +522,60 @@ static bool
 WeakMap_construct(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    JSObject *obj = NewBuiltinClassInstance(cx, &WeakMapObject::class_);
+    RootedObject obj(cx, NewBuiltinClassInstance(cx, &WeakMapObject::class_));
     if (!obj)
         return false;
+
+    // ES6 23.3.1.1 steps 5-6, 11.
+    if (args.hasDefined(0)) {
+        // Steps 7d-e.
+        JS::ForOfIterator iter(cx);
+        if (!iter.init(args[0]))
+            return false;
+
+        RootedValue pairVal(cx);
+        RootedObject pairObject(cx);
+        RootedValue keyVal(cx);
+        RootedObject keyObject(cx);
+        RootedValue val(cx);
+        while (true) {
+            // Steps 12a-e.
+            bool done;
+            if (!iter.next(&pairVal, &done))
+                return false;
+            if (done)
+                break;
+
+            // Step 12f.
+            if (!pairVal.isObject()) {
+                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
+                                     JSMSG_INVALID_MAP_ITERABLE, "WeakMap");
+                return false;
+            }
+
+            pairObject = &pairVal.toObject();
+            if (!pairObject)
+                return false;
+
+            // Steps 12g-h.
+            if (!JSObject::getElement(cx, pairObject, pairObject, 0, &keyVal))
+                return false;
+
+            // Steps 12i-j.
+            if (!JSObject::getElement(cx, pairObject, pairObject, 1, &val))
+                return false;
+
+            // Steps 12k-l.
+            if (keyVal.isPrimitive()) {
+                JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_NOT_NONNULL_OBJECT);
+                return false;
+            }
+
+            keyObject = &keyVal.toObject();
+            if (!SetWeakMapEntry(cx, obj, keyObject, val))
+                return false;
+        }
+    }
 
     args.rval().setObject(*obj);
     return true;

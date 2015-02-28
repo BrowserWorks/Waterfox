@@ -4,14 +4,19 @@
 
 package org.mozilla.gecko.tabs;
 
+import org.mozilla.gecko.NewTabletUI;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.Tab;
 import org.mozilla.gecko.widget.TabThumbnailWrapper;
 
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.util.TypedValue;
+import android.view.TouchDelegate;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.Checkable;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,7 +32,7 @@ public class TabsLayoutItemView extends LinearLayout
     private int mTabId;
     private TextView mTitle;
     private ImageView mThumbnail;
-    private ImageButton mCloseButton;
+    private ImageView mCloseButton;
     private TabThumbnailWrapper mThumbnailWrapper;
 
     public TabsLayoutItemView(Context context, AttributeSet attrs) {
@@ -43,6 +48,11 @@ public class TabsLayoutItemView extends LinearLayout
         }
 
         return drawableState;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 
     @Override
@@ -82,8 +92,35 @@ public class TabsLayoutItemView extends LinearLayout
         super.onFinishInflate();
         mTitle = (TextView) findViewById(R.id.title);
         mThumbnail = (ImageView) findViewById(R.id.thumbnail);
-        mCloseButton = (ImageButton) findViewById(R.id.close);
+        mCloseButton = (ImageView) findViewById(R.id.close);
         mThumbnailWrapper = (TabThumbnailWrapper) findViewById(R.id.wrapper);
+
+        if (NewTabletUI.isEnabled(getContext())) {
+            growCloseButtonHitArea();
+        }
+    }
+
+    private void growCloseButtonHitArea() {
+        getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override
+            public boolean onPreDraw() {
+                getViewTreeObserver().removeOnPreDrawListener(this);
+
+                // Ideally we want the close button hit area to be 40x40dp but we are constrained by the height of the parent, so
+                // we make it as tall as the parent view and 40dp across.
+                final int targetHitArea = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 40, getResources().getDisplayMetrics());;
+
+                final Rect hitRect = new Rect();
+                hitRect.top = 0;
+                hitRect.right = getWidth();
+                hitRect.left = getWidth() - targetHitArea;
+                hitRect.bottom = targetHitArea;
+
+                setTouchDelegate(new TouchDelegate(hitRect, mCloseButton));
+
+                return true;
+            }
+        });
     }
 
     protected void assignValues(Tab tab)  {
@@ -94,16 +131,14 @@ public class TabsLayoutItemView extends LinearLayout
         mTabId = tab.getId();
 
         Drawable thumbnailImage = tab.getThumbnail();
-        if (thumbnailImage != null) {
-            mThumbnail.setImageDrawable(thumbnailImage);
-        } else {
-            mThumbnail.setImageResource(R.drawable.tab_thumbnail_default);
-        }
+        mThumbnail.setImageDrawable(thumbnailImage);
+
         if (mThumbnailWrapper != null) {
             mThumbnailWrapper.setRecording(tab.isRecording());
         }
         mTitle.setText(tab.getDisplayTitle());
         mCloseButton.setTag(this);
+
     }
 
     public int getTabId() {
@@ -114,7 +149,7 @@ public class TabsLayoutItemView extends LinearLayout
         mThumbnail.setImageDrawable(thumbnail);
     }
 
-    public void setCloseVisibile(boolean visible) {
+    public void setCloseVisible(boolean visible) {
         mCloseButton.setVisibility(visible ? View.VISIBLE : View.INVISIBLE);
     }
 }

@@ -135,7 +135,7 @@ var AccessFuTest = {
     testFunc();
   },
 
-  runTests: function AccessFuTest_runTests() {
+  runTests: function AccessFuTest_runTests(aAdditionalPrefs) {
     if (gTestFuncs.length === 0) {
       ok(false, "No tests specified!");
       SimpleTest.finish();
@@ -156,10 +156,11 @@ var AccessFuTest = {
       Logger.logLevel = Logger.DEBUG;
     };
 
-    SpecialPowers.pushPrefEnv({
-      'set': [['accessibility.accessfu.notify_output', 1],
-              ['dom.mozSettings.enabled', true]]
-    }, function () {
+    var prefs = [['accessibility.accessfu.notify_output', 1],
+      ['dom.mozSettings.enabled', true]];
+    prefs.push.apply(prefs, aAdditionalPrefs);
+
+    SpecialPowers.pushPrefEnv({ 'set': prefs }, function () {
       if (AccessFuTest._waitForExplicitFinish) {
         // Run all test functions asynchronously.
         AccessFuTest.nextTest();
@@ -364,19 +365,29 @@ var ContentMessages = {
     }
   },
 
-  adjustRangeUp: {
-    name: 'AccessFu:AdjustRange',
-    json: {
-      origin: 'top',
-      direction: 'backward'
+  moveOrAdjustUp: function moveOrAdjustUp(aRule) {
+    return {
+      name: 'AccessFu:MoveCursor',
+      json: {
+        origin: 'top',
+        action: 'movePrevious',
+        inputType: 'gesture',
+        rule: (aRule || 'Simple'),
+        adjustRange: true
+      }
     }
   },
 
-  adjustRangeDown: {
-    name: 'AccessFu:AdjustRange',
-    json: {
-      origin: 'top',
-      direction: 'forward'
+  moveOrAdjustDown: function moveOrAdjustUp(aRule) {
+    return {
+      name: 'AccessFu:MoveCursor',
+      json: {
+        origin: 'top',
+        action: 'moveNext',
+        inputType: 'gesture',
+        rule: (aRule || 'Simple'),
+        adjustRange: true
+      }
     }
   },
 
@@ -615,6 +626,15 @@ function ExpectedValueChange(aValue, aOptions) {
 
 ExpectedValueChange.prototype = Object.create(ExpectedPresent.prototype);
 
+function ExpectedTextChanged(aValue, aOptions) {
+  ExpectedPresent.call(this, {
+    eventType: 'text-change',
+    data: aValue
+  }, null, aOptions);
+}
+
+ExpectedTextChanged.prototype = Object.create(ExpectedPresent.prototype);
+
 function ExpectedEditState(aEditState, aOptions) {
   ExpectedMessage.call(this, 'AccessFu:Input', aOptions);
   this.json = aEditState;
@@ -653,6 +673,12 @@ function ExpectedAnnouncement(aAnnouncement, aOptions) {
 }
 
 ExpectedAnnouncement.prototype = Object.create(ExpectedPresent.prototype);
+
+function ExpectedNoMove(aOptions) {
+  ExpectedPresent.call(this, {eventType: 'no-move' }, null, aOptions);
+}
+
+ExpectedNoMove.prototype = Object.create(ExpectedPresent.prototype);
 
 var AndroidEvent = {
   VIEW_CLICKED: 0x01,

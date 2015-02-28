@@ -154,9 +154,6 @@ CreateTextureHostD3D11(const SurfaceDescriptor& aDesc,
                                         aDesc.get_SurfaceDescriptorD3D10());
       break;
     }
-    case SurfaceDescriptor::TSurfaceStreamDescriptor: {
-      MOZ_CRASH("Should never hit this.");
-    }
     default: {
       NS_WARNING("Unsupported SurfaceDescriptor type");
     }
@@ -176,9 +173,9 @@ TextureClientD3D11::~TextureClientD3D11()
 {
   if (mActor) {
     if (mTexture) {
-      KeepUntilFullDeallocation(new TKeepAlive<ID3D10Texture2D>(mTexture10));
+      KeepUntilFullDeallocation(MakeUnique<TKeepAlive<ID3D10Texture2D>>(mTexture10));
     } else if (mTexture10) {
-      KeepUntilFullDeallocation(new TKeepAlive<ID3D11Texture2D>(mTexture));
+      KeepUntilFullDeallocation(MakeUnique<TKeepAlive<ID3D11Texture2D>>(mTexture));
     }
   }
 #ifdef DEBUG
@@ -291,14 +288,7 @@ TextureClientD3D11::Unlock()
     HRESULT hr = device->CreateTexture2D(&desc, nullptr, byRef(tex));
 
     if (FAILED(hr)) {
-      // Temporary patch; see bug 1095289 before bug 1074952 is fixed
-      static int limitDueTo1095289 = 0;
-      if (limitDueTo1095289 < 5) {
-        gfx::gfxCriticalError() << "[D3D11] CreateTexture2D failure (1) " << mSize << " Code: " << gfx::hexa(hr);
-      } else if (limitDueTo1095289 == 5) {
-        gfx::gfxCriticalError() << "[D3D11] CreateTexture2D failure (1-stopping further reports after 5+ occurences) " << mSize << " Code: " << gfx::hexa(hr);
-      }
-      limitDueTo1095289 += 1;
+      gfxCriticalError() << "[D3D11] CreateTexture2D failure " << mSize << " Code: " << gfx::hexa(hr);
       return;
     }
 
@@ -327,6 +317,7 @@ TextureClientD3D11::BorrowDrawTarget()
   MOZ_ASSERT(mIsLocked, "Calling TextureClient::BorrowDrawTarget without locking :(");
 
   if (!mIsLocked || (!mTexture && !mTexture10)) {
+    gfxCriticalError() << "Attempted to borrow a DrawTarget without locking the texture.";
     return nullptr;
   }
 
@@ -343,6 +334,9 @@ TextureClientD3D11::BorrowDrawTarget()
   {
     MOZ_ASSERT(mTexture10);
     mDrawTarget = Factory::CreateDrawTargetForD3D10Texture(mTexture10, mFormat);
+  }
+  if (!mDrawTarget) {
+      gfxWarning() << "Invalid draw target for borrowing";
   }
   return mDrawTarget;
 }
@@ -385,14 +379,7 @@ TextureClientD3D11::AllocateForSurface(gfx::IntSize aSize, TextureAllocationFlag
   }
 
   if (FAILED(hr)) {
-    // Temporary patch; see bug 1095289 before bug 1074952 is fixed
-    static int limitDueTo1095289 = 0;
-    if (limitDueTo1095289 < 5) {
-      gfx::gfxCriticalError() << "[D3D11] CreateTexture2D failure (2) " << aSize << " Code: " << gfx::hexa(hr);
-    } else if (limitDueTo1095289 == 5) {
-      gfx::gfxCriticalError() << "[D3D11] CreateTexture2D failure (2-stopping further reports after 5+ occurences) " << aSize << " Code: " << gfx::hexa(hr);
-    }
-    limitDueTo1095289 += 1;
+    gfxCriticalError() << "[D3D11] CreateTexture2D failure " << aSize << " Code: " << gfx::hexa(hr);
     return false;
   }
 
@@ -431,11 +418,11 @@ TextureClientD3D11::ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor)
 DXGITextureHostD3D11::DXGITextureHostD3D11(TextureFlags aFlags,
                                            const SurfaceDescriptorD3D10& aDescriptor)
   : TextureHost(aFlags)
+  , mSize(aDescriptor.size())
   , mHandle(aDescriptor.handle())
   , mFormat(aDescriptor.format())
   , mIsLocked(false)
 {
-  OpenSharedHandle();
 }
 
 bool
@@ -670,6 +657,18 @@ CompositingRenderTargetD3D11::CompositingRenderTargetD3D11(ID3D11Texture2D* aTex
   if (FAILED(hr)) {
     LOGD3D11("Failed to create RenderTargetView.");
   }
+}
+
+void
+CompositingRenderTargetD3D11::BindRenderTarget(ID3D11DeviceContext* aContext)
+{
+  if (mClearOnBind) {
+    FLOAT clear[] = { 0, 0, 0, 0 };
+    aContext->ClearRenderTargetView(mRTView, clear);
+    mClearOnBind = false;
+  }
+  ID3D11RenderTargetView* view = mRTView;
+  aContext->OMSetRenderTargets(1, &view, nullptr);
 }
 
 IntSize

@@ -88,11 +88,18 @@ const SNAPSHOT_SCHEMA = {
           required: true,
           type: "string",
         },
+        buildID: {
+          required: true,
+          type: "string",
+        },
         userAgent: {
           required: true,
           type: "string",
         },
         vendor: {
+          type: "string",
+        },
+        updateChannel: {
           type: "string",
         },
         supportURL: {
@@ -384,6 +391,24 @@ const SNAPSHOT_SCHEMA = {
     },
     experiments: {
       type: "array",
+    },
+    sandbox: {
+      required: false,
+      type: "object",
+      properties: {
+	hasSeccompBPF: {
+	  required: true,
+	  type: "boolean"
+	},
+	canSandboxContent: {
+	  required: false,
+	  type: "boolean"
+	},
+	canSandboxMedia: {
+	  required: false,
+	  type: "boolean"
+	},
+      },
     },
   },
 };

@@ -61,6 +61,7 @@ namespace jit {
     _(JSOP_UINT24)             \
     _(JSOP_DOUBLE)             \
     _(JSOP_STRING)             \
+    _(JSOP_SYMBOL)             \
     _(JSOP_OBJECT)             \
     _(JSOP_CALLSITEOBJ)        \
     _(JSOP_REGEXP)             \
@@ -104,21 +105,26 @@ namespace jit {
     _(JSOP_INITPROP)           \
     _(JSOP_INITPROP_GETTER)    \
     _(JSOP_INITPROP_SETTER)    \
-    _(JSOP_ENDINIT)            \
     _(JSOP_ARRAYPUSH)          \
     _(JSOP_GETELEM)            \
     _(JSOP_SETELEM)            \
+    _(JSOP_STRICTSETELEM)      \
     _(JSOP_CALLELEM)           \
     _(JSOP_DELELEM)            \
+    _(JSOP_STRICTDELELEM)      \
     _(JSOP_IN)                 \
     _(JSOP_GETGNAME)           \
     _(JSOP_BINDGNAME)          \
     _(JSOP_SETGNAME)           \
+    _(JSOP_STRICTSETGNAME)     \
     _(JSOP_SETNAME)            \
+    _(JSOP_STRICTSETNAME)      \
     _(JSOP_GETPROP)            \
     _(JSOP_SETPROP)            \
+    _(JSOP_STRICTSETPROP)      \
     _(JSOP_CALLPROP)           \
     _(JSOP_DELPROP)            \
+    _(JSOP_STRICTDELPROP)      \
     _(JSOP_LENGTH)             \
     _(JSOP_GETXPROP)           \
     _(JSOP_GETALIASEDVAR)      \
@@ -145,9 +151,11 @@ namespace jit {
     _(JSOP_FUNAPPLY)           \
     _(JSOP_NEW)                \
     _(JSOP_EVAL)               \
+    _(JSOP_STRICTEVAL)         \
     _(JSOP_SPREADCALL)         \
     _(JSOP_SPREADNEW)          \
     _(JSOP_SPREADEVAL)         \
+    _(JSOP_STRICTSPREADEVAL)   \
     _(JSOP_IMPLICITTHIS)       \
     _(JSOP_INSTANCEOF)         \
     _(JSOP_TYPEOF)             \
@@ -173,6 +181,12 @@ namespace jit {
     _(JSOP_MOREITER)           \
     _(JSOP_ISNOITER)           \
     _(JSOP_ENDITER)            \
+    _(JSOP_GENERATOR)          \
+    _(JSOP_INITIALYIELD)       \
+    _(JSOP_YIELD)              \
+    _(JSOP_DEBUGAFTERYIELD)    \
+    _(JSOP_FINALYIELDRVAL)     \
+    _(JSOP_RESUME)             \
     _(JSOP_CALLEE)             \
     _(JSOP_SETRVAL)            \
     _(JSOP_RETRVAL)            \
@@ -196,6 +210,10 @@ class BaselineCompiler : public BaselineCompilerSpecific
     // Native code offset right after debug prologue and epilogue, or
     // equivalent positions when debug mode is off.
     CodeOffsetLabel postDebugPrologueOffset_;
+
+    // For each INITIALYIELD or YIELD op, this Vector maps the yield index
+    // to the bytecode offset of the next op.
+    Vector<uint32_t>            yieldOffsets_;
 
     // Whether any on stack arguments are modified.
     bool modifiesArguments_;
@@ -277,6 +295,8 @@ class BaselineCompiler : public BaselineCompilerSpecific
     bool emitUninitializedLexicalCheck(const ValueOperand &val);
 
     bool addPCMappingEntry(bool addIndexEntry);
+
+    bool addYieldOffset();
 
     void getScopeCoordinateObject(Register reg);
     Address getScopeCoordinateAddressFromObject(Register objReg, Register reg);

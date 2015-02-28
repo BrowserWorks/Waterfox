@@ -26,9 +26,14 @@ class nsIDOMNode;
 class nsIDocumentEncoder;
 class nsIEditRules;
 class nsIOutputStream;
-class nsISelection;
 class nsISelectionController;
 class nsITransferable;
+
+namespace mozilla {
+namespace dom {
+class Selection;
+}
+}
 
 /**
  * The text editor implementation.
@@ -91,6 +96,7 @@ public:
   NS_IMETHOD CanCut(bool *aCanCut);
   NS_IMETHOD Copy();
   NS_IMETHOD CanCopy(bool *aCanCopy);
+  NS_IMETHOD CanDelete(bool *aCanDelete);
   NS_IMETHOD Paste(int32_t aSelectionType);
   NS_IMETHOD CanPaste(int32_t aSelectionType, bool *aCanPaste);
   NS_IMETHOD PasteTransferable(nsITransferable *aTransferable);
@@ -116,7 +122,7 @@ public:
   NS_IMETHOD EndOperation();
 
   /** make the given selection span the entire document */
-  NS_IMETHOD SelectEntireDocument(nsISelection *aSelection);
+  virtual nsresult SelectEntireDocument(mozilla::dom::Selection* aSelection);
 
   virtual nsresult HandleKeyPressEvent(nsIDOMKeyEvent* aKeyEvent);
 
@@ -149,7 +155,7 @@ public:
    * If done, also update aAction to what's actually left to do after the
    * extension.
    */
-  nsresult ExtendSelectionForDelete(nsISelection* aSelection,
+  nsresult ExtendSelectionForDelete(mozilla::dom::Selection* aSelection,
                                     nsIEditor::EDirection *aAction);
 
   // Return true if the data is safe to insert as the source and destination
@@ -198,7 +204,11 @@ protected:
   /* small utility routine to test the eEditorReadonly bit */
   bool IsModifiable();
 
-  bool CanCutOrCopy();
+  enum PasswordFieldAllowed {
+    ePasswordFieldAllowed,
+    ePasswordFieldNotAllowed
+  };
+  bool CanCutOrCopy(PasswordFieldAllowed aPasswordFieldAllowed);
   bool FireClipboardEvent(int32_t aType, int32_t aSelectionType);
 
   bool UpdateMetaCharset(nsIDOMDocument* aDocument,

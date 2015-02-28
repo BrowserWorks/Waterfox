@@ -370,8 +370,6 @@ struct ParallelBailoutRecord
         joinCause(ParallelBailoutExecution);
         ionBailoutKind = kind;
     }
-
-    void rematerializeFrames(ForkJoinContext *cx, jit::JitFrameIterator &frameIter);
 };
 
 class ForkJoinShared;
@@ -545,8 +543,6 @@ class LockedJSContext
 bool InExclusiveParallelSection();
 
 bool ParallelTestsShouldPass(JSContext *cx);
-
-void RequestInterruptForForkJoin(JSRuntime *rt, JSRuntime::InterruptMode mode);
 
 bool intrinsic_SetForkJoinTargetRegion(JSContext *cx, unsigned argc, Value *vp);
 extern const JSJitInfo intrinsic_SetForkJoinTargetRegionInfo;

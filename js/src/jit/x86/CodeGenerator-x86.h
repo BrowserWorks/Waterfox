@@ -29,17 +29,20 @@ class CodeGeneratorX86 : public CodeGeneratorX86Shared
     ValueOperand ToTempValue(LInstruction *ins, size_t pos);
 
     template<typename T>
-    bool loadAndNoteViewTypeElement(Scalar::Type vt, const T &srcAddr,
+    bool loadAndNoteViewTypeElement(AsmJSHeapAccess::ViewType vt, const T &srcAddr,
+                                    const LDefinition *out);
+    template<typename T>
+    void loadViewTypeElement(AsmJSHeapAccess::ViewType vt, const T &srcAddr,
                              const LDefinition *out);
     template<typename T>
-    void loadViewTypeElement(Scalar::Type vt, const T &srcAddr,
-                                       const LDefinition *out);
-    template<typename T>
-    void storeAndNoteViewTypeElement(Scalar::Type vt, const LAllocation *value,
+    void storeAndNoteViewTypeElement(AsmJSHeapAccess::ViewType vt, const LAllocation *value,
                                      const T &dstAddr);
     template<typename T>
-    void storeViewTypeElement(Scalar::Type vt, const LAllocation *value,
+    void storeViewTypeElement(AsmJSHeapAccess::ViewType vt, const LAllocation *value,
                               const T &dstAddr);
+
+    void memoryBarrier(MemoryBarrierBits barrier);
+
   public:
     CodeGeneratorX86(MIRGenerator *gen, LIRGraph *graph, MacroAssembler *masm);
 
@@ -61,6 +64,8 @@ class CodeGeneratorX86 : public CodeGeneratorX86Shared
     bool visitAsmJSCall(LAsmJSCall *ins);
     bool visitAsmJSLoadHeap(LAsmJSLoadHeap *ins);
     bool visitAsmJSStoreHeap(LAsmJSStoreHeap *ins);
+    bool visitAsmJSCompareExchangeHeap(LAsmJSCompareExchangeHeap *ins);
+    bool visitAsmJSAtomicBinopHeap(LAsmJSAtomicBinopHeap *ins);
     bool visitAsmJSLoadGlobalVar(LAsmJSLoadGlobalVar *ins);
     bool visitAsmJSStoreGlobalVar(LAsmJSStoreGlobalVar *ins);
     bool visitAsmJSLoadFuncPtr(LAsmJSLoadFuncPtr *ins);

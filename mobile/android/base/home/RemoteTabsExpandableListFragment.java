@@ -235,7 +235,7 @@ public class RemoteTabsExpandableListFragment extends HomeFragment implements Re
         // we can add/remove it at will.
         mList.addFooterView(mFooterView, null, true);
 
-        // Intialize adapter
+        // Initialize adapter
         mAdapter = new RemoteTabsExpandableListAdapter(R.layout.home_remote_tabs_group, R.layout.home_remote_tabs_child, null);
         mList.setAdapter(mAdapter);
 
@@ -392,14 +392,14 @@ public class RemoteTabsExpandableListFragment extends HomeFragment implements Re
         }
     }
 
-    private class CursorLoaderCallbacks implements LoaderCallbacks<Cursor> {
+    private class CursorLoaderCallbacks extends TransitionAwareCursorLoaderCallbacks {
         @Override
         public Loader<Cursor> onCreateLoader(int id, Bundle args) {
             return new RemoteTabsCursorLoader(getActivity());
         }
 
         @Override
-        public void onLoadFinished(Loader<Cursor> loader, Cursor c) {
+        public void onLoadFinishedAfterTransitions(Loader<Cursor> loader, Cursor c) {
             final List<RemoteClient> clients = TabsAccessor.getClientsFromCursor(c);
 
             // Filter the hidden clients out of the clients list. The clients
@@ -421,6 +421,7 @@ public class RemoteTabsExpandableListFragment extends HomeFragment implements Re
 
         @Override
         public void onLoaderReset(Loader<Cursor> loader) {
+            super.onLoaderReset(loader);
             mAdapter.replaceClients(null);
         }
     }

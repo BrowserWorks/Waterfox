@@ -420,7 +420,7 @@ class ManifestParser(object):
 
     ### methods for reading manifests
 
-    def _read(self, root, filename, defaults, defaults_only=False):
+    def _read(self, root, filename, defaults, defaults_only=False, parentmanifest=None):
         """
         Internal recursive method for reading and parsing manifests.
         Stores all found tests in self.tests
@@ -492,7 +492,7 @@ class ManifestParser(object):
                 include_file = read_file('include:')
                 if include_file:
                     include_defaults = data.copy()
-                    self._read(root, include_file, include_defaults)
+                    self._read(root, include_file, include_defaults, parentmanifest=filename)
                 continue
 
             # otherwise an item
@@ -533,6 +533,13 @@ class ManifestParser(object):
             test['subsuite'] = subsuite
             test['path'] = path
             test['relpath'] = _relpath
+
+            if parentmanifest is not None:
+                # If a test was included by a parent manifest we may need to
+                # indicate that in the test object for the sake of identifying
+                # a test, particularly in the case a test file is included by
+                # multiple manifests.
+                test['ancestor-manifest'] = parentmanifest
 
             # append the item
             self.tests.append(test)
@@ -765,7 +772,7 @@ class ManifestParser(object):
             print >> fp, '[%s]' % path
 
             # reserved keywords:
-            reserved = ['path', 'name', 'here', 'manifest', 'relpath']
+            reserved = ['path', 'name', 'here', 'manifest', 'relpath', 'ancestor-manifest']
             for key in sorted(test.keys()):
                 if key in reserved:
                     continue
@@ -1156,7 +1163,7 @@ class TestManifest(ManifestParser):
         # Look for conditional subsuites, and replace them with the subsuite itself
         # (if the condition is true), or nothing.
         for test in tests:
-            subsuite = test.get('subsuite')
+            subsuite = test.get('subsuite', '')
             if ',' in subsuite:
                 try:
                     subsuite, condition = subsuite.split(',')
@@ -1172,7 +1179,7 @@ class TestManifest(ManifestParser):
 
         # Filter on current subsuite
         if options:
-            if  options.subsuite:
+            if hasattr(options, 'subsuite') and options.subsuite:
                 tests = [test for test in tests if options.subsuite == test['subsuite']]
             else:
                 tests = [test for test in tests if not test['subsuite']]

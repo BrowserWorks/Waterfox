@@ -45,7 +45,6 @@
 #include "mozilla/dom/quota/FileStreams.h"
 #include "mozilla/dom/quota/OriginOrPatternString.h"
 #include "mozilla/dom/quota/QuotaManager.h"
-#include "mozilla/dom/quota/StoragePrivilege.h"
 #include "mozilla/dom/quota/UsageInfo.h"
 #include "mozilla/ipc/BackgroundParent.h"
 #include "mozilla/ipc/BackgroundUtils.h"
@@ -151,6 +150,8 @@ const fallible_t fallible = fallible_t();
 const uint32_t kFileCopyBufferSize = 32768;
 
 const char kJournalDirectoryName[] = "journals";
+
+const char kFileManagerDirectoryNameSuffix[] = ".files";
 
 const char kPrefIndexedDBEnabled[] = "dom.indexedDB.enabled";
 
@@ -2197,11 +2198,25 @@ SetDefaultPragmas(mozIStorageConnection* aConnection)
     // refcount function. This behavior changes with enabled recursive triggers,
     // so the statement fires the delete trigger first and then the insert
     // trigger.
-    "PRAGMA recursive_triggers = ON;";
+    "PRAGMA recursive_triggers = ON;"
+    // We don't need SQLite's table locks because we manage transaction ordering
+    // ourselves and we know we will never allow a write transaction to modify
+    // an object store that a read transaction is in the process of using.
+    "PRAGMA read_uncommitted = TRUE;"
+    // No more PRAGMAs.
+    ;
 
   nsresult rv = aConnection->ExecuteSimpleSQL(NS_LITERAL_CSTRING(query));
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
+  }
+
+  if (IndexedDatabaseManager::FullSynchronous()) {
+    rv = aConnection->ExecuteSimpleSQL(
+                             NS_LITERAL_CSTRING("PRAGMA synchronous = FULL;"));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
 
   return NS_OK;
@@ -3058,7 +3073,6 @@ public:
   ClearInputStream()
   {
     AssertIsOnBackgroundThread();
-    MOZ_ASSERT(mBlobImpl);
 
     mBlobImpl = nullptr;
   }
@@ -3883,7 +3897,6 @@ protected:
   nsCString mOrigin;
   nsCString mDatabaseId;
   State mState;
-  StoragePrivilege mStoragePrivilege;
   bool mIsApp;
   bool mHasUnlimStoragePerm;
   bool mEnforcingQuota;
@@ -5117,7 +5130,7 @@ public:
 
   virtual void
   OnOriginClearCompleted(PersistenceType aPersistenceType,
-                         const OriginOrPatternString& aOriginOrPattern)
+                         const nsACString& aOrigin)
                          MOZ_OVERRIDE;
 
   virtual void
@@ -5427,19 +5440,23 @@ ConvertFileIdsToArray(const nsAString& aFileIds,
 
 bool
 GetDatabaseBaseFilename(const nsAString& aFilename,
-                        nsAString& aDatabaseBaseFilename)
+                        nsDependentSubstring& aDatabaseBaseFilename)
 {
   MOZ_ASSERT(!aFilename.IsEmpty());
+  MOZ_ASSERT(aDatabaseBaseFilename.IsEmpty());
 
   NS_NAMED_LITERAL_STRING(sqlite, ".sqlite");
 
-  if (!StringEndsWith(aFilename, sqlite)) {
+  if (!StringEndsWith(aFilename, sqlite) ||
+      aFilename.Length() == sqlite.Length()) {
     return false;
   }
 
-  aDatabaseBaseFilename =
-    Substring(aFilename, 0, aFilename.Length() - sqlite.Length());
+  MOZ_ASSERT(aFilename.Length() > sqlite.Length());
 
+  aDatabaseBaseFilename.Rebind(aFilename,
+                               0,
+                               aFilename.Length() - sqlite.Length());
   return true;
 }
 
@@ -5924,7 +5941,8 @@ Factory::AllocPBackgroundIDBFactoryRequestParent(
 
   const DatabaseMetadata& metadata = commonParams->metadata();
   if (NS_WARN_IF(metadata.persistenceType() != PERSISTENCE_TYPE_PERSISTENT &&
-                 metadata.persistenceType() != PERSISTENCE_TYPE_TEMPORARY)) {
+                 metadata.persistenceType() != PERSISTENCE_TYPE_TEMPORARY &&
+                 metadata.persistenceType() != PERSISTENCE_TYPE_DEFAULT)) {
     ASSERT_UNLESS_FUZZING();
     return nullptr;
   }
@@ -8599,14 +8617,14 @@ Cursor::RecvContinue(const CursorRequestParams& aParams)
 FileManager::FileManager(PersistenceType aPersistenceType,
                          const nsACString& aGroup,
                          const nsACString& aOrigin,
-                         StoragePrivilege aPrivilege,
-                         const nsAString& aDatabaseName)
+                         const nsAString& aDatabaseName,
+                         bool aEnforcingQuota)
   : mPersistenceType(aPersistenceType)
   , mGroup(aGroup)
   , mOrigin(aOrigin)
-  , mPrivilege(aPrivilege)
   , mDatabaseName(aDatabaseName)
   , mLastFileId(0)
+  , mEnforcingQuota(aEnforcingQuota)
   , mInvalidated(false)
 { }
 
@@ -9149,6 +9167,12 @@ QuotaClient::GetType()
   return QuotaClient::IDB;
 }
 
+struct FileManagerInitInfo
+{
+  nsCOMPtr<nsIFile> mDirectory;
+  nsCOMPtr<nsIFile> mDatabaseFile;
+};
+
 nsresult
 QuotaClient::InitOrigin(PersistenceType aPersistenceType,
                         const nsACString& aGroup,
@@ -9169,8 +9193,9 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
   // and also get the usage.
 
   nsAutoTArray<nsString, 20> subdirsToProcess;
-  nsAutoTArray<nsCOMPtr<nsIFile> , 20> unknownFiles;
+  nsTArray<nsCOMPtr<nsIFile>> unknownFiles;
   nsTHashtable<nsStringHashKey> validSubdirs(20);
+  nsAutoTArray<FileManagerInitInfo, 20> initInfos;
 
   nsCOMPtr<nsISimpleEnumerator> entries;
   rv = directory->GetDirectoryEntries(getter_AddRefs(entries));
@@ -9178,9 +9203,12 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
     return rv;
   }
 
+  const NS_ConvertASCIItoUTF16 filesSuffix(kFileManagerDirectoryNameSuffix);
+
   bool hasMore;
   while (NS_SUCCEEDED((rv = entries->HasMoreElements(&hasMore))) &&
-         hasMore && (!aUsageInfo || !aUsageInfo->Canceled())) {
+         hasMore &&
+         (!aUsageInfo || !aUsageInfo->Canceled())) {
     nsCOMPtr<nsISupports> entry;
     rv = entries->GetNext(getter_AddRefs(entry));
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -9196,13 +9224,6 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
       return rv;
     }
 
-    if (StringEndsWith(leafName, NS_LITERAL_STRING(".sqlite-journal"))) {
-      continue;
-    }
-
-    if (leafName.EqualsLiteral(DSSTORE_FILE_NAME)) {
-      continue;
-    }
 
     bool isDirectory;
     rv = file->IsDirectory(&isDirectory);
@@ -9211,17 +9232,29 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
     }
 
     if (isDirectory) {
-      if (!validSubdirs.GetEntry(leafName)) {
+      if (!StringEndsWith(leafName, filesSuffix) ||
+          !validSubdirs.GetEntry(leafName)) {
         subdirsToProcess.AppendElement(leafName);
       }
       continue;
     }
 
-    nsString dbBaseFilename;
+    // Skip SQLite and Desktop Service Store (.DS_Store) files.
+    // Desktop Service Store file is only used on Mac OS X, but the profile
+    // can be shared across different operating systems, so we check it on
+    // all platforms.
+    if (StringEndsWith(leafName, NS_LITERAL_STRING(".sqlite-journal")) ||
+        leafName.EqualsLiteral(DSSTORE_FILE_NAME)) {
+      continue;
+    }
+
+    nsDependentSubstring dbBaseFilename;
     if (!GetDatabaseBaseFilename(leafName, dbBaseFilename)) {
       unknownFiles.AppendElement(file);
       continue;
     }
+
+    nsString fmDirectoryBaseName = dbBaseFilename + filesSuffix;
 
     nsCOMPtr<nsIFile> fmDirectory;
     rv = directory->Clone(getter_AddRefs(fmDirectory));
@@ -9229,20 +9262,111 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
       return rv;
     }
 
-    rv = fmDirectory->Append(dbBaseFilename);
+    rv = fmDirectory->Append(fmDirectoryBaseName);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
 
-    rv = FileManager::InitDirectory(fmDirectory, file, aPersistenceType, aGroup,
+    FileManagerInitInfo* initInfo = initInfos.AppendElement();
+    initInfo->mDirectory.swap(fmDirectory);
+    initInfo->mDatabaseFile.swap(file);
+
+    validSubdirs.PutEntry(fmDirectoryBaseName);
+  }
+
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+  for (uint32_t count = subdirsToProcess.Length(), i = 0; i < count; i++) {
+    const nsString& subdirName = subdirsToProcess[i];
+
+    // If the directory has the correct suffix then it must exist in
+    // validSubdirs.
+    if (StringEndsWith(subdirName, filesSuffix)) {
+      if (NS_WARN_IF(!validSubdirs.GetEntry(subdirName))) {
+        return NS_ERROR_UNEXPECTED;
+      }
+
+      continue;
+    }
+
+    // The directory didn't have the right suffix but we might need to rename
+    // it. Check to see if we have a database that references this directory.
+    nsString subdirNameWithSuffix = subdirName + filesSuffix;
+    if (!validSubdirs.GetEntry(subdirNameWithSuffix)) {
+      // Windows doesn't allow a directory to end with a dot ('.'), so we have
+      // to check that possibility here too.
+      // We do this on all platforms, because the origin directory may have
+      // been created on Windows and now accessed on different OS.
+      subdirNameWithSuffix = subdirName + NS_LITERAL_STRING(".") + filesSuffix;
+      if (NS_WARN_IF(!validSubdirs.GetEntry(subdirNameWithSuffix))) {
+        return NS_ERROR_UNEXPECTED;
+      }
+    }
+
+    // We do have a database that uses this directory so we should rename it
+    // now. However, first check to make sure that we're not overwriting
+    // something else.
+    nsCOMPtr<nsIFile> subdir;
+    rv = directory->Clone(getter_AddRefs(subdir));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    rv = subdir->Append(subdirNameWithSuffix);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    bool exists;
+    rv = subdir->Exists(&exists);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    if (exists) {
+      IDB_REPORT_INTERNAL_ERR();
+      return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
+    }
+
+    rv = directory->Clone(getter_AddRefs(subdir));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    rv = subdir->Append(subdirName);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    DebugOnly<bool> isDirectory;
+    MOZ_ASSERT(NS_SUCCEEDED(subdir->IsDirectory(&isDirectory)));
+    MOZ_ASSERT(isDirectory);
+
+    rv = subdir->RenameTo(nullptr, subdirNameWithSuffix);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+  }
+
+  for (uint32_t count = initInfos.Length(), i = 0; i < count; i++) {
+    FileManagerInitInfo& initInfo = initInfos[i];
+    MOZ_ASSERT(initInfo.mDirectory);
+    MOZ_ASSERT(initInfo.mDatabaseFile);
+
+    rv = FileManager::InitDirectory(initInfo.mDirectory,
+                                    initInfo.mDatabaseFile,
+                                    aPersistenceType,
+                                    aGroup,
                                     aOrigin);
     if (NS_WARN_IF(NS_FAILED(rv))) {
       return rv;
     }
 
-    if (aUsageInfo) {
+    if (aUsageInfo && !aUsageInfo->Canceled()) {
       int64_t fileSize;
-      rv = file->GetFileSize(&fileSize);
+      rv = initInfo.mDatabaseFile->GetFileSize(&fileSize);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
@@ -9252,33 +9376,21 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
       aUsageInfo->AppendToDatabaseUsage(uint64_t(fileSize));
 
       uint64_t usage;
-      rv = FileManager::GetUsage(fmDirectory, &usage);
+      rv = FileManager::GetUsage(initInfo.mDirectory, &usage);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
       }
 
       aUsageInfo->AppendToFileUsage(usage);
     }
-
-    validSubdirs.PutEntry(dbBaseFilename);
   }
 
-  if (NS_WARN_IF(NS_FAILED(rv))) {
-    return rv;
-  }
-
-  for (uint32_t i = 0; i < subdirsToProcess.Length(); i++) {
-    const nsString& subdir = subdirsToProcess[i];
-    if (NS_WARN_IF(!validSubdirs.GetEntry(subdir))) {
-      return NS_ERROR_UNEXPECTED;
-    }
-  }
-
-  for (uint32_t i = 0; i < unknownFiles.Length(); i++) {
+  // We have to do this after file manager initialization.
+  for (uint32_t count = unknownFiles.Length(), i = 0; i < count; i++) {
     nsCOMPtr<nsIFile>& unknownFile = unknownFiles[i];
 
-    // Some temporary SQLite files could disappear, so we have to check if the
-    // unknown file still exists.
+    // Some temporary SQLite files could disappear during file manager
+    // initialization, so we have to check if the unknown file still exists.
     bool exists;
     rv = unknownFile->Exists(&exists);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -9286,14 +9398,7 @@ QuotaClient::InitOrigin(PersistenceType aPersistenceType,
     }
 
     if (exists) {
-      nsString leafName;
-      unknownFile->GetLeafName(leafName);
-
-      // The journal file may exists even after db has been correctly opened.
-      if (NS_WARN_IF(!StringEndsWith(leafName,
-                                     NS_LITERAL_STRING(".sqlite-journal")))) {
-        return NS_ERROR_UNEXPECTED;
-      }
+      return NS_ERROR_UNEXPECTED;
     }
   }
 
@@ -9325,14 +9430,13 @@ QuotaClient::GetUsageForOrigin(PersistenceType aPersistenceType,
 }
 
 void
-QuotaClient::OnOriginClearCompleted(
-                                  PersistenceType aPersistenceType,
-                                  const OriginOrPatternString& aOriginOrPattern)
+QuotaClient::OnOriginClearCompleted(PersistenceType aPersistenceType,
+                                    const nsACString& aOrigin)
 {
   AssertIsOnIOThread();
 
   if (IndexedDatabaseManager* mgr = IndexedDatabaseManager::Get()) {
-    mgr->InvalidateFileManagers(aPersistenceType, aOriginOrPattern);
+    mgr->InvalidateFileManagers(aPersistenceType, aOrigin);
   }
 }
 
@@ -10343,7 +10447,6 @@ FactoryOp::FactoryOp(Factory* aFactory,
   , mContentParent(Move(aContentParent))
   , mCommonParams(aCommonParams)
   , mState(State_Initial)
-  , mStoragePrivilege(mozilla::dom::quota::Content)
   , mIsApp(false)
   , mHasUnlimStoragePerm(false)
   , mEnforcingQuota(true)
@@ -10577,7 +10680,9 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(mState == State_Initial || mState == State_PermissionRetry);
 
-  if (NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
+  const PrincipalInfo& principalInfo = mCommonParams.principalInfo();
+  if (principalInfo.type() != PrincipalInfo::TSystemPrincipalInfo &&
+      NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
     if (aContentParent) {
       // The DOM in the other process should have kept us from receiving any
       // indexedDB messages so assume that the child is misbehaving.
@@ -10593,7 +10698,6 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
 
   PersistenceType persistenceType = mCommonParams.metadata().persistenceType();
 
-  const PrincipalInfo& principalInfo = mCommonParams.principalInfo();
   MOZ_ASSERT(principalInfo.type() != PrincipalInfo::TNullPrincipalInfo);
 
   if (principalInfo.type() == PrincipalInfo::TSystemPrincipalInfo) {
@@ -10647,9 +10751,12 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
     }
 
     if (State_Initial == mState) {
-      QuotaManager::GetInfoForChrome(&mGroup, &mOrigin, &mStoragePrivilege,
-                                     &mIsApp, &mHasUnlimStoragePerm);
-      MOZ_ASSERT(mStoragePrivilege == mozilla::dom::quota::Chrome);
+      QuotaManager::GetInfoForChrome(&mGroup, &mOrigin, &mIsApp,
+                                     &mHasUnlimStoragePerm);
+
+      MOZ_ASSERT(!QuotaManager::IsFirstPromptRequired(persistenceType, mOrigin,
+                                                      mIsApp));
+
       mEnforcingQuota =
         QuotaManager::IsQuotaEnforced(persistenceType, mOrigin, mIsApp,
                                       mHasUnlimStoragePerm);
@@ -10668,14 +10775,27 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
     return rv;
   }
 
+  nsCString group;
+  nsCString origin;
+  bool isApp;
+  bool hasUnlimStoragePerm;
+  rv = QuotaManager::GetInfoFromPrincipal(principal, &group, &origin,
+                                          &isApp, &hasUnlimStoragePerm);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
+
+#if defined(MOZ_WIDGET_ANDROID) || defined(MOZ_WIDGET_GONK)
+  if (persistenceType == PERSISTENCE_TYPE_PERSISTENT &&
+      !QuotaManager::IsOriginWhitelistedForPersistentStorage(origin) &&
+      !isApp) {
+    return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
+  }
+#endif
+
   PermissionRequestBase::PermissionValue permission;
 
-  if (persistenceType == PERSISTENCE_TYPE_TEMPORARY) {
-    // Temporary storage doesn't need to check the permission.
-    permission = PermissionRequestBase::kPermissionAllowed;
-  } else {
-    MOZ_ASSERT(persistenceType == PERSISTENCE_TYPE_PERSISTENT);
-
+  if (QuotaManager::IsFirstPromptRequired(persistenceType, origin, isApp)) {
 #ifdef MOZ_CHILD_PERMISSIONS
     if (aContentParent) {
       if (NS_WARN_IF(!AssertAppPrincipal(aContentParent, principal))) {
@@ -10696,18 +10816,16 @@ FactoryOp::CheckPermission(ContentParent* aContentParent,
         return rv;
       }
     }
+  } else {
+    permission = PermissionRequestBase::kPermissionAllowed;
   }
 
   if (permission != PermissionRequestBase::kPermissionDenied &&
       State_Initial == mState) {
-    rv = QuotaManager::GetInfoFromPrincipal(principal, persistenceType, &mGroup,
-                                            &mOrigin, &mStoragePrivilege,
-                                            &mIsApp, &mHasUnlimStoragePerm);
-    if (NS_WARN_IF(NS_FAILED(rv))) {
-      return rv;
-    }
-
-    MOZ_ASSERT(mStoragePrivilege != mozilla::dom::quota::Chrome);
+    mGroup = group;
+    mOrigin = origin;
+    mIsApp = isApp;
+    mHasUnlimStoragePerm = hasUnlimStoragePerm;
 
     mEnforcingQuota =
       QuotaManager::IsQuotaEnforced(persistenceType, mOrigin, mIsApp,
@@ -10870,21 +10988,13 @@ FactoryOp::FinishOpen()
   MOZ_ASSERT(!mContentParent);
   MOZ_ASSERT(!QuotaClient::IsShuttingDownOnMainThread());
 
-  PersistenceType persistenceType = mCommonParams.metadata().persistenceType();
-
-  // XXX This is temporary, but we don't currently support the explicit
-  //     'persistent' storage type.
-  if (persistenceType == PERSISTENCE_TYPE_PERSISTENT &&
-      mCommonParams.metadata().persistenceTypeIsExplicit()) {
-    IDB_REPORT_INTERNAL_ERR();
-    return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
-  }
-
   QuotaManager* quotaManager = QuotaManager::GetOrCreate();
   if (NS_WARN_IF(!quotaManager)) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   }
+
+  PersistenceType persistenceType = mCommonParams.metadata().persistenceType();
 
   nsresult rv =
     quotaManager->
@@ -11173,7 +11283,9 @@ OpenDatabaseOp::DoDatabaseWork()
     return rv;
   }
 
-  rv = fmDirectory->Append(filename);
+  const NS_ConvertASCIItoUTF16 filesSuffix(kFileManagerDirectoryNameSuffix);
+
+  rv = fmDirectory->Append(filename + filesSuffix);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -11231,8 +11343,8 @@ OpenDatabaseOp::DoDatabaseWork()
     fileManager = new FileManager(persistenceType,
                                   mGroup,
                                   mOrigin,
-                                  mStoragePrivilege,
-                                  databaseName);
+                                  databaseName,
+                                  mEnforcingQuota);
 
     rv = fileManager->Init(fmDirectory, connection);
     if (NS_WARN_IF(NS_FAILED(rv))) {
@@ -12610,7 +12722,7 @@ VersionChangeOp::RunOnIOThread()
   if (exists) {
     int64_t fileSize;
 
-    if (mDeleteDatabaseOp->mStoragePrivilege != Chrome) {
+    if (mDeleteDatabaseOp->mEnforcingQuota) {
       rv = dbFile->GetFileSize(&fileSize);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
@@ -12622,7 +12734,7 @@ VersionChangeOp::RunOnIOThread()
       return rv;
     }
 
-    if (mDeleteDatabaseOp->mStoragePrivilege != Chrome) {
+    if (mDeleteDatabaseOp->mEnforcingQuota) {
       quotaManager->DecreaseUsageForOrigin(persistenceType,
                                            mDeleteDatabaseOp->mGroup,
                                            mDeleteDatabaseOp->mOrigin,
@@ -12660,7 +12772,10 @@ VersionChangeOp::RunOnIOThread()
     return rv;
   }
 
-  rv = fmDirectory->Append(mDeleteDatabaseOp->mDatabaseFilenameBase);
+  const NS_ConvertASCIItoUTF16 filesSuffix(kFileManagerDirectoryNameSuffix);
+
+  rv = fmDirectory->Append(mDeleteDatabaseOp->mDatabaseFilenameBase +
+                           filesSuffix);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
@@ -12684,7 +12799,7 @@ VersionChangeOp::RunOnIOThread()
 
     uint64_t usage = 0;
 
-    if (mDeleteDatabaseOp->mStoragePrivilege != Chrome) {
+    if (mDeleteDatabaseOp->mEnforcingQuota) {
       rv = FileManager::GetUsage(fmDirectory, &usage);
       if (NS_WARN_IF(NS_FAILED(rv))) {
         return rv;
@@ -12696,7 +12811,7 @@ VersionChangeOp::RunOnIOThread()
       return rv;
     }
 
-    if (mDeleteDatabaseOp->mStoragePrivilege != Chrome) {
+    if (mDeleteDatabaseOp->mEnforcingQuota) {
       quotaManager->DecreaseUsageForOrigin(persistenceType,
                                            mDeleteDatabaseOp->mGroup,
                                            mDeleteDatabaseOp->mOrigin,
@@ -14328,12 +14443,14 @@ ObjectStoreAddOrPutRequestOp::CopyFileData(nsIInputStream* aInputStream,
     }
   } while (true);
 
-  nsresult rv2 = aOutputStream->Flush();
-  if (NS_WARN_IF(NS_FAILED(rv2))) {
-    return NS_SUCCEEDED(rv) ? rv2 : rv;
+  if (NS_SUCCEEDED(rv)) {
+    rv = aOutputStream->Flush();
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
 
-  rv2 = aOutputStream->Close();
+  nsresult rv2 = aOutputStream->Close();
   if (NS_WARN_IF(NS_FAILED(rv2))) {
     return NS_SUCCEEDED(rv) ? rv2 : rv;
   }
@@ -14707,9 +14824,31 @@ ObjectStoreAddOrPutRequestOp::DoDatabaseWork(TransactionBase* aTransaction)
           }
           if (NS_WARN_IF(NS_FAILED(rv))) {
             // Try to remove the file if the copy failed.
-            if (NS_FAILED(diskFile->Remove(false))) {
-              NS_WARNING("Failed to remove file after copying failed!");
+            nsresult rv2;
+            int64_t fileSize;
+
+            if (mFileManager->EnforcingQuota()) {
+              rv2 = diskFile->GetFileSize(&fileSize);
+              if (NS_WARN_IF(NS_FAILED(rv2))) {
+                return rv;
+              }
             }
+
+            rv2 = diskFile->Remove(false);
+            if (NS_WARN_IF(NS_FAILED(rv2))) {
+              return rv;
+            }
+
+            if (mFileManager->EnforcingQuota()) {
+              QuotaManager* quotaManager = QuotaManager::Get();
+              MOZ_ASSERT(quotaManager);
+
+              quotaManager->DecreaseUsageForOrigin(mFileManager->Type(),
+                                                   mFileManager->Group(),
+                                                   mFileManager->Origin(),
+                                                   fileSize);
+            }
+
             return rv;
           }
 

@@ -8,6 +8,7 @@
 
 #include "js/Value.h"
 
+#include "mozilla/TimeStamp.h"
 #include "mozilla/dom/BindingDeclarations.h"
 #include "mozilla/dom/Promise.h"
 #include "mozilla/dom/PromiseDebuggingBinding.h"
@@ -34,6 +35,52 @@ PromiseDebugging::GetState(GlobalObject&, Promise& aPromise,
     aState.mReason = aPromise.mResult;
     break;
   }
+}
+
+/* static */ void
+PromiseDebugging::GetAllocationStack(GlobalObject&, Promise& aPromise,
+                                     JS::MutableHandle<JSObject*> aStack)
+{
+  aStack.set(aPromise.mAllocationStack);
+}
+
+/* static */ void
+PromiseDebugging::GetRejectionStack(GlobalObject&, Promise& aPromise,
+                                    JS::MutableHandle<JSObject*> aStack)
+{
+  aStack.set(aPromise.mRejectionStack);
+}
+
+/* static */ void
+PromiseDebugging::GetFullfillmentStack(GlobalObject&, Promise& aPromise,
+                                       JS::MutableHandle<JSObject*> aStack)
+{
+  aStack.set(aPromise.mFullfillmentStack);
+}
+
+/* static */ void
+PromiseDebugging::GetDependentPromises(GlobalObject&, Promise& aPromise,
+                                       nsTArray<nsRefPtr<Promise>>& aPromises)
+{
+  aPromise.GetDependentPromises(aPromises);
+}
+
+/* static */ double
+PromiseDebugging::GetPromiseLifetime(GlobalObject&, Promise& aPromise)
+{
+  return (TimeStamp::Now() - aPromise.mCreationTimestamp).ToMilliseconds();
+}
+
+/* static */ double
+PromiseDebugging::GetTimeToSettle(GlobalObject&, Promise& aPromise,
+                                  ErrorResult& aRv)
+{
+  if (aPromise.mState == Promise::Pending) {
+    aRv.Throw(NS_ERROR_UNEXPECTED);
+    return 0;
+  }
+  return (aPromise.mSettlementTimestamp -
+          aPromise.mCreationTimestamp).ToMilliseconds();
 }
 
 } // namespace dom

@@ -67,6 +67,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "RecentWindow",
                                   "resource:///modules/RecentWindow.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Promise",
                                   "resource://gre/modules/Promise.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Task",
+                                  "resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DownloadsLogger",
                                   "resource:///modules/DownloadsLogger.jsm");
 
@@ -143,6 +145,13 @@ PrefObserver.register({
  * and provides shared methods for all the instances of the user interface.
  */
 this.DownloadsCommon = {
+  /**
+   * Constants with the different types of unblock messages.
+   */
+  BLOCK_VERDICT_MALWARE: "Malware",
+  BLOCK_VERDICT_POTENTIALLY_UNWANTED: "PotentiallyUnwanted",
+  BLOCK_VERDICT_UNCOMMON: "Uncommon",
+
   log: function DC_log(...aMessageArgs) {
     delete this.log;
     this.log = function DC_log(...aMessageArgs) {
@@ -404,13 +413,12 @@ this.DownloadsCommon = {
     if (shouldApplySmoothing) {
       // Apply hysteresis to favor downward over upward swings.  Trust only 30%
       // of the new value if lower, and 10% if higher (exponential smoothing).
-      let (diff = aSeconds - aLastSeconds) {
-        aSeconds = aLastSeconds + (diff < 0 ? .3 : .1) * diff;
-      }
+      let diff = aSeconds - aLastSeconds;
+      aSeconds = aLastSeconds + (diff < 0 ? .3 : .1) * diff;
 
       // If the new time is similar, reuse something close to the last time
       // left, but subtract a little to provide forward progress.
-      let diff = aSeconds - aLastSeconds;
+      diff = aSeconds - aLastSeconds;
       let diffPercent = diff / aLastSeconds * 100;
       if (Math.abs(diff) < 5 || Math.abs(diffPercent) < 5) {
         aSeconds = aLastSeconds - (diff < 0 ? .4 : .2);
@@ -511,7 +519,69 @@ this.DownloadsCommon = {
         }
       }
     }
-  }
+  },
+
+  /**
+   * Displays an alert message box which asks the user if they want to
+   * unblock the downloaded file or not.
+   *
+   * @param aType
+   *        The type of malware the downloaded file contains.
+   * @param aOwnerWindow
+   *        The window with which this action is associated.
+   *
+   * @return True to unblock the file, false to keep the user safe and
+   *         cancel the operation.
+   */
+  confirmUnblockDownload: Task.async(function* DP_confirmUnblockDownload(aType, aOwnerWindow) {
+    let s = DownloadsCommon.strings;
+    let title = s.unblockHeader;
+    let buttonFlags = (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_0) +
+                      (Ci.nsIPrompt.BUTTON_TITLE_IS_STRING * Ci.nsIPrompt.BUTTON_POS_1);
+    let type = "";
+    let message = s.unblockTip;
+    let okButton = s.unblockButtonContinue;
+    let cancelButton = s.unblockButtonCancel;
+
+    switch (aType) {
+      case this.BLOCK_VERDICT_MALWARE:
+        type = s.unblockTypeMalware;
+        break;
+      case this.BLOCK_VERDICT_POTENTIALLY_UNWANTED:
+        type = s.unblockTypePotentiallyUnwanted;
+        break;
+      case this.BLOCK_VERDICT_UNCOMMON:
+        type = s.unblockTypeUncommon;
+        break;
+    }
+
+    if (type) {
+      message = type + "\n\n" + message;
+    }
+
+    Services.ww.registerNotification(function onOpen(subj, topic) {
+      if (topic == "domwindowopened" && subj instanceof Ci.nsIDOMWindow) {
+        // Make sure to listen for "DOMContentLoaded" because it is fired
+        // before the "load" event.
+        subj.addEventListener("DOMContentLoaded", function onLoad() {
+          subj.removeEventListener("DOMContentLoaded", onLoad);
+          if (subj.document.documentURI ==
+              "chrome://global/content/commonDialog.xul") {
+            Services.ww.unregisterNotification(onOpen);
+            let dialog = subj.document.getElementById("commonDialog");
+            if (dialog) {
+              // Change the dialog to use a warning icon.
+              dialog.classList.add("alert-dialog");
+            }
+          }
+        });
+      }
+    });
+
+    let rv = Services.prompt.confirmEx(aOwnerWindow, title, message, buttonFlags,
+                                       cancelButton, okButton, null, null, {});
+    return (rv == 1);
+  }),
 };
 
 /**

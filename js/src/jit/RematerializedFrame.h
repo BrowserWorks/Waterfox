@@ -10,6 +10,7 @@
 #include "jsfun.h"
 
 #include "jit/JitFrameIterator.h"
+#include "jit/JitFrames.h"
 
 #include "vm/Stack.h"
 
@@ -24,6 +25,12 @@ class RematerializedFrame
 {
     // See DebugScopes::updateLiveScopes.
     bool prevUpToDate_;
+
+    // Propagated to the Baseline frame once this is popped.
+    bool isDebuggee_;
+
+    // Has a call object been pushed?
+    bool hasCallObj_;
 
     // The fp of the top frame associated with this possibly inlined frame.
     uint8_t *top_;
@@ -42,16 +49,15 @@ class RematerializedFrame
     Value thisValue_;
     Value slots_[1];
 
-    RematerializedFrame(ThreadSafeContext *cx, uint8_t *top, unsigned numActualArgs,
+    RematerializedFrame(JSContext *cx, uint8_t *top, unsigned numActualArgs,
                         InlineFrameIterator &iter);
 
   public:
-    static RematerializedFrame *New(ThreadSafeContext *cx, uint8_t *top,
-                                    InlineFrameIterator &iter);
+    static RematerializedFrame *New(JSContext *cx, uint8_t *top, InlineFrameIterator &iter);
 
     // Rematerialize all remaining frames pointed to by |iter| into |frames|
     // in older-to-younger order, e.g., frames[0] is the oldest frame.
-    static bool RematerializeInlineFrames(ThreadSafeContext *cx, uint8_t *top,
+    static bool RematerializeInlineFrames(JSContext *cx, uint8_t *top,
                                           InlineFrameIterator &iter,
                                           Vector<RematerializedFrame *> &frames);
 
@@ -69,8 +75,23 @@ class RematerializedFrame
         prevUpToDate_ = true;
     }
 
+    bool isDebuggee() const {
+        return isDebuggee_;
+    }
+    void setIsDebuggee() {
+        isDebuggee_ = true;
+    }
+    void unsetIsDebuggee() {
+        MOZ_ASSERT(!script()->isDebuggee());
+        isDebuggee_ = false;
+    }
+
     uint8_t *top() const {
         return top_;
+    }
+    JSScript *outerScript() const {
+        JitFrameLayout *jsFrame = (JitFrameLayout *)top_;
+        return ScriptFromCalleeToken(jsFrame->calleeToken());
     }
     jsbytecode *pc() const {
         return pc_;
@@ -85,8 +106,12 @@ class RematerializedFrame
     JSObject *scopeChain() const {
         return scopeChain_;
     }
+    void pushOnScopeChain(ScopeObject &scope);
+    bool initFunctionScopeObjects(JSContext *cx);
+
     bool hasCallObj() const {
-        return maybeFun() && fun()->isHeavyweight();
+        MOZ_ASSERT(fun()->isHeavyweight());
+        return hasCallObj_;
     }
     CallObject &callObj() const;
 
@@ -144,16 +169,8 @@ class RematerializedFrame
         return slots_ + numActualArgs_;
     }
 
-    Value &unaliasedVar(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) {
-        MOZ_ASSERT_IF(checkAliasing, !script()->varIsAliased(i));
+    Value &unaliasedLocal(unsigned i) {
         MOZ_ASSERT(i < script()->nfixed());
-        return locals()[i];
-    }
-    Value &unaliasedLocal(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) {
-        MOZ_ASSERT(i < script()->nfixed());
-#ifdef DEBUG
-        CheckLocalUnaliased(checkAliasing, script(), i);
-#endif
         return locals()[i];
     }
     Value &unaliasedFormal(unsigned i, MaybeCheckAliasing checkAliasing = CHECK_ALIASING) {

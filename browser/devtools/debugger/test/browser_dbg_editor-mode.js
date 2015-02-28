@@ -8,13 +8,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_editor-mode.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -29,7 +28,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 }
 
@@ -41,7 +40,7 @@ function testInitialSource() {
     "Found the expected editor mode.");
   is(gEditor.getText().search(/firstCall/), -1,
     "The first source is not displayed.");
-  is(gEditor.getText().search(/debugger/), 141,
+  is(gEditor.getText().search(/debugger/), 135,
     "The second source is displayed.");
   is(gEditor.getText().search(/banana/), -1,
     "The third source is not displayed.");
@@ -85,7 +84,6 @@ function testSwitch2() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

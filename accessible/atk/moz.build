@@ -35,6 +35,7 @@ LOCAL_INCLUDES += [
     '/accessible/base',
     '/accessible/generic',
     '/accessible/html',
+    '/accessible/ipc',
     '/accessible/xpcom',
     '/accessible/xul',
     '/other-licenses/atk-1.0',
@@ -48,3 +49,5 @@ if CONFIG['MOZ_ENABLE_GTK']:
 
 if CONFIG['MOZ_ENABLE_DBUS']:
     CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
+
+include('/ipc/chromium/chromium-config.mozbuild')

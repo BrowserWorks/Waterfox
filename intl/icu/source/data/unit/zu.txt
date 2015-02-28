@@ -10,7 +10,12 @@
  * ICU <specials> source: <path>/common/main/zu.xml
  */
 zu{
-    Version{"2.1.8.18"}
+    Version{"2.1.10.42"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         acceleration{
             g-force{

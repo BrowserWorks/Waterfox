@@ -9,6 +9,8 @@
  * 'capture-logs-success' event with detail.logFilenames representing each log
  * file's filename in the directory. If an error occurs it will instead produce
  * a 'capture-logs-error' event.
+ * We send a capture-logs-start events to notify the system app and the user,
+ * since dumping can be a bit long sometimes.
  */
 
 /* enable Mozilla javascript extensions and global strictness declaration,
@@ -54,24 +56,9 @@ function debug(msg) {
 const EXCITEMENT_THRESHOLD = 500;
 const DEVICE_MOTION_EVENT = 'devicemotion';
 const SCREEN_CHANGE_EVENT = 'screenchange';
+const CAPTURE_LOGS_START_EVENT = 'capture-logs-start';
 const CAPTURE_LOGS_ERROR_EVENT = 'capture-logs-error';
 const CAPTURE_LOGS_SUCCESS_EVENT = 'capture-logs-success';
-
-// Map of files which have log-type information to their parsers
-const LOGS_WITH_PARSERS = {
-  '/dev/__properties__': LogParser.prettyPrintPropertiesArray,
-  '/dev/log/main': LogParser.prettyPrintLogArray,
-  '/dev/log/system': LogParser.prettyPrintLogArray,
-  '/dev/log/radio': LogParser.prettyPrintLogArray,
-  '/dev/log/events': LogParser.prettyPrintLogArray,
-  '/proc/cmdline': LogParser.prettyPrintArray,
-  '/proc/kmsg': LogParser.prettyPrintArray,
-  '/proc/meminfo': LogParser.prettyPrintArray,
-  '/proc/uptime': LogParser.prettyPrintArray,
-  '/proc/version': LogParser.prettyPrintArray,
-  '/proc/vmallocinfo': LogParser.prettyPrintArray,
-  '/proc/vmstat': LogParser.prettyPrintArray
-};
 
 let LogShake = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIObserver]),
@@ -87,6 +74,23 @@ let LogShake = {
    * debouncing.
    */
   captureRequested: false,
+
+  /**
+   * Map of files which have log-type information to their parsers
+   */
+  LOGS_WITH_PARSERS: {
+    '/dev/log/main': LogParser.prettyPrintLogArray,
+    '/dev/log/system': LogParser.prettyPrintLogArray,
+    '/dev/log/radio': LogParser.prettyPrintLogArray,
+    '/dev/log/events': LogParser.prettyPrintLogArray,
+    '/proc/cmdline': LogParser.prettyPrintArray,
+    '/proc/kmsg': LogParser.prettyPrintArray,
+    '/proc/meminfo': LogParser.prettyPrintArray,
+    '/proc/uptime': LogParser.prettyPrintArray,
+    '/proc/version': LogParser.prettyPrintArray,
+    '/proc/vmallocinfo': LogParser.prettyPrintArray,
+    '/proc/vmstat': LogParser.prettyPrintArray
+  },
 
   /**
    * Start existing, observing motion events if the screen is turned on.
@@ -165,7 +169,8 @@ let LogShake = {
     if (excitement > EXCITEMENT_THRESHOLD) {
       if (!this.captureRequested) {
         this.captureRequested = true;
-        captureLogs().then(logResults => {
+        SystemAppProxy._sendCustomEvent(CAPTURE_LOGS_START_EVENT, {});
+        this.captureLogs().then(logResults => {
           // On resolution send the success event to the requester
           SystemAppProxy._sendCustomEvent(CAPTURE_LOGS_SUCCESS_EVENT, {
             logFilenames: logResults.logFilenames,
@@ -188,6 +193,50 @@ let LogShake = {
     } else {
       this.stopDeviceMotionListener();
     }
+  },
+
+  /**
+   * Captures and saves the current device logs, returning a promise that will
+   * resolve to an array of log filenames.
+   */
+  captureLogs: function() {
+    let logArrays = this.readLogs();
+    return saveLogs(logArrays);
+  },
+
+  /**
+   * Read in all log files, returning their formatted contents
+   */
+  readLogs: function() {
+    let logArrays = {};
+
+    try {
+      logArrays["properties"] =
+        LogParser.prettyPrintPropertiesArray(LogCapture.readProperties());
+    } catch (ex) {
+      Cu.reportError("Unable to get device properties: " + ex);
+    }
+
+    for (let loc in this.LOGS_WITH_PARSERS) {
+      let logArray;
+      try {
+        logArray = LogCapture.readLogFile(loc);
+        if (!logArray) {
+          continue;
+        }
+      } catch (ex) {
+        Cu.reportError("Unable to LogCapture.readLogFile('" + loc + "'): " + ex);
+        continue;
+      }
+
+      try {
+        logArrays[loc] = this.LOGS_WITH_PARSERS[loc](logArray);
+      } catch (ex) {
+        Cu.reportError("Unable to parse content of '" + loc + "': " + ex);
+        continue;
+      }
+    }
+    return logArrays;
   },
 
   /**
@@ -218,33 +267,7 @@ function getLogDirectory() {
   d = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
   let timestamp = d.toISOString().slice(0, -5).replace(/[:T]/g, '-');
   // return directory name of format 'logs/timestamp/'
-  return OS.Path.join('logs', timestamp, '');
-}
-
-/**
- * Captures and saves the current device logs, returning a promise that will
- * resolve to an array of log filenames.
- */
-function captureLogs() {
-  let logArrays = readLogs();
-  return saveLogs(logArrays);
-}
-
-/**
- * Read in all log files, returning their formatted contents
- */
-function readLogs() {
-  let logArrays = {};
-  for (let loc in LOGS_WITH_PARSERS) {
-    let logArray = LogCapture.readLogFile(loc);
-    if (!logArray) {
-      continue;
-    }
-    let prettyLogArray = LOGS_WITH_PARSERS[loc](logArray);
-
-    logArrays[loc] = prettyLogArray;
-  }
-  return logArrays;
+  return OS.Path.join('logs', timestamp);
 }
 
 /**
@@ -281,7 +304,7 @@ function saveLogs(logArrays) {
       // The filename represents the relative path within the SD card, not the
       // absolute path because Gaia will refer to it using the DeviceStorage
       // API
-      let filename = dirName + getLogFilename(logLocation);
+      let filename = OS.Path.join(dirName, getLogFilename(logLocation));
       logFilenames.push(filename);
       let saveRequest = OS.File.writeAtomic(OS.Path.join(sdcardPrefix, filename), logArray);
       saveRequests.push(saveRequest);

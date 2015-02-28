@@ -149,18 +149,10 @@ bool
 VectorToIdArray(JSContext *cx, AutoIdVector &props, JSIdArray **idap);
 
 bool
-GetIterator(JSContext *cx, HandleObject obj, unsigned flags, MutableHandleValue vp);
+GetIterator(JSContext *cx, HandleObject obj, unsigned flags, MutableHandleObject objp);
 
 JSObject *
 GetIteratorObject(JSContext *cx, HandleObject obj, unsigned flags);
-
-bool
-VectorToKeyIterator(JSContext *cx, HandleObject obj, unsigned flags, AutoIdVector &props,
-                    MutableHandleValue vp);
-
-bool
-VectorToValueIterator(JSContext *cx, HandleObject obj, unsigned flags, AutoIdVector &props,
-                      MutableHandleValue vp);
 
 /*
  * Creates either a key or value iterator, depending on flags. For a value
@@ -168,7 +160,10 @@ VectorToValueIterator(JSContext *cx, HandleObject obj, unsigned flags, AutoIdVec
  */
 bool
 EnumeratedIdVectorToIterator(JSContext *cx, HandleObject obj, unsigned flags, AutoIdVector &props,
-                             MutableHandleValue vp);
+                             MutableHandleObject objp);
+
+bool
+NewEmptyPropertyIterator(JSContext *cx, unsigned flags, MutableHandleObject objp);
 
 /*
  * Convert the value stored in *vp to its iteration object. The flags should
@@ -218,39 +213,6 @@ extern JSObject *
 CreateItrResultObject(JSContext *cx, HandleValue value, bool done);
 
 } /* namespace js */
-
-/*
- * Generator state codes.
- */
-enum JSGeneratorState
-{
-    JSGEN_NEWBORN,  /* not yet started */
-    JSGEN_OPEN,     /* started by a .next() or .send(undefined) call */
-    JSGEN_RUNNING,  /* currently executing via .next(), etc., call */
-    JSGEN_CLOSING,  /* close method is doing asynchronous return */
-    JSGEN_CLOSED    /* closed, cannot be started or closed again */
-};
-
-struct JSGenerator
-{
-    js::HeapPtrObject    obj;
-    JSGeneratorState     state;
-    js::InterpreterRegs  regs;
-    JSGenerator          *prevGenerator;
-    js::InterpreterFrame *fp;
-#if JS_BITS_PER_WORD == 32
-    uint32_t             padding;
-#endif
-
-    js::HeapValue *stackSnapshot() {
-        static_assert(sizeof(JSGenerator) % sizeof(js::HeapValue) == 0,
-                      "The generator must have Value alignment for JIT access.");
-        return reinterpret_cast<js::HeapValue *>(this + 1);
-    }
-};
-
-extern JSObject *
-js_NewGenerator(JSContext *cx, const js::InterpreterRegs &regs);
 
 extern JSObject *
 js_InitIteratorClasses(JSContext *cx, js::HandleObject obj);

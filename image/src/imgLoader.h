@@ -22,6 +22,7 @@
 #include "nsIChannel.h"
 #include "nsIThreadRetargetableStreamListener.h"
 #include "imgIRequest.h"
+#include "mozilla/net/ReferrerPolicy.h"
 
 class imgLoader;
 class imgRequestProxy;
@@ -29,7 +30,6 @@ class imgINotificationObserver;
 class nsILoadGroup;
 class imgCacheExpirationTracker;
 class imgMemoryReporter;
-class nsIChannelPolicy;
 
 namespace mozilla {
 namespace image {
@@ -150,7 +150,7 @@ private: // methods
   void SetHasNoProxies(bool hasNoProxies);
 
   // Private, unimplemented copy constructor.
-  imgCacheEntry(const imgCacheEntry &);
+  imgCacheEntry(const imgCacheEntry&);
 
 private: // data
   nsAutoRefCnt mRefCnt;
@@ -218,6 +218,7 @@ public:
   typedef mozilla::image::ImageURL ImageURL;
   typedef nsRefPtrHashtable<nsCStringHashKey, imgCacheEntry> imgCacheTable;
   typedef nsTHashtable<nsPtrHashKey<imgRequest>> imgSet;
+  typedef mozilla::net::ReferrerPolicy ReferrerPolicy;
   typedef mozilla::Mutex Mutex;
 
   NS_DECL_ISUPPORTS
@@ -252,15 +253,17 @@ public:
   nsresult LoadImage(nsIURI *aURI,
                      nsIURI *aInitialDocumentURI,
                      nsIURI *aReferrerURI,
+                     ReferrerPolicy aReferrerPolicy,
                      nsIPrincipal* aLoadingPrincipal,
                      nsILoadGroup *aLoadGroup,
                      imgINotificationObserver *aObserver,
                      nsISupports *aCX,
                      nsLoadFlags aLoadFlags,
                      nsISupports *aCacheKey,
-                     nsIChannelPolicy *aPolicy,
+                     nsContentPolicyType aContentPolicyType,
                      const nsAString& initiatorType,
                      imgRequestProxy **_retval);
+
   nsresult LoadImageWithChannel(nsIChannel *channel,
                                 imgINotificationObserver *aObserver,
                                 nsISupports *aCX,
@@ -336,22 +339,25 @@ private: // methods
 
   bool ValidateEntry(imgCacheEntry *aEntry, nsIURI *aKey,
                        nsIURI *aInitialDocumentURI, nsIURI *aReferrerURI,
+                       ReferrerPolicy aReferrerPolicy,
                        nsILoadGroup *aLoadGroup,
                        imgINotificationObserver *aObserver, nsISupports *aCX,
-                       nsLoadFlags aLoadFlags, bool aCanMakeNewChannel,
+                       nsLoadFlags aLoadFlags,
+                       nsContentPolicyType aContentPolicyType,
+                       bool aCanMakeNewChannel,
                        imgRequestProxy **aProxyRequest,
-                       nsIChannelPolicy *aPolicy,
                        nsIPrincipal* aLoadingPrincipal,
                        int32_t aCORSMode);
 
   bool ValidateRequestWithNewChannel(imgRequest *request, nsIURI *aURI,
                                        nsIURI *aInitialDocumentURI,
                                        nsIURI *aReferrerURI,
+                                       ReferrerPolicy aReferrerPolicy,
                                        nsILoadGroup *aLoadGroup,
                                        imgINotificationObserver *aObserver,
                                        nsISupports *aCX, nsLoadFlags aLoadFlags,
+                                       nsContentPolicyType aContentPolicyType,
                                        imgRequestProxy **aProxyRequest,
-                                       nsIChannelPolicy *aPolicy,
                                        nsIPrincipal* aLoadingPrincipal,
                                        int32_t aCORSMode);
 

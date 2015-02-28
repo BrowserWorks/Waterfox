@@ -9,6 +9,7 @@
 #include "mozilla/AddonPathService.h"
 #include "mozilla/BasicEvents.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/EventDispatcher.h"
 #include "mozilla/EventListenerManager.h"
 #ifdef MOZ_B2G
@@ -26,6 +27,7 @@
 #include "nsCOMArray.h"
 #include "nsCOMPtr.h"
 #include "nsContentUtils.h"
+#include "nsDocShell.h"
 #include "nsDOMCID.h"
 #include "nsError.h"
 #include "nsGkAtoms.h"
@@ -861,18 +863,6 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
     }
   }
 
-  JS::AutoObjectVector scopeChain(cx);
-  { // scope for curScope
-    // We append all the non-globals on our desired scope chain.
-    JS::Rooted<JSObject*> curScope(cx, &v.toObject());
-    while (curScope && !JS_IsGlobalObject(curScope)) {
-      if (!scopeChain.append(curScope)) {
-        return NS_ERROR_OUT_OF_MEMORY;
-      }
-      curScope = JS_GetParent(curScope);
-    }
-  }
-
   if (addonId) {
     JS::Rooted<JSObject*> vObj(cx, &v.toObject());
     JS::Rooted<JSObject*> addonScope(cx, xpc::GetAddonScope(cx, vObj, addonId));
@@ -880,20 +870,25 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
       return NS_ERROR_FAILURE;
     }
     JSAutoCompartment ac(cx, addonScope);
-    for (size_t i = 0; i < scopeChain.length(); ++i) {
-      if (!JS_WrapObject(cx, scopeChain[i])) {
-        return NS_ERROR_FAILURE;
-      }
-    }
 
-    // And wrap v as well, since scopeChain might be empty so we can't
-    // reliably use it to enter a compartment.
+    // Wrap our event target into the addon scope, since that's where we want to
+    // do all our work.
     if (!JS_WrapValue(cx, &v)) {
       return NS_ERROR_FAILURE;
     }
   }
   JS::Rooted<JSObject*> target(cx, &v.toObject());
   JSAutoCompartment ac(cx, target);
+
+  // Now that we've entered the compartment we actually care about, create our
+  // scope chain.  Note that we start with |element|, not aElement, because
+  // mTarget is different from aElement in the <body> case, where mTarget is a
+  // Window, and in that case we do not want the scope chain to include the body
+  // or the document.
+  JS::AutoObjectVector scopeChain(cx);
+  if (!nsJSUtils::GetScopeChainForElement(cx, element, scopeChain)) {
+    return NS_ERROR_OUT_OF_MEMORY;
+  }
 
   nsDependentAtomString str(attrName);
   // Most of our names are short enough that we don't even have to malloc
@@ -905,7 +900,7 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
   NS_ENSURE_TRUE(jsStr, NS_ERROR_OUT_OF_MEMORY);
 
   // Get the reflector for |aElement|, so that we can pass to setElement.
-  if (NS_WARN_IF(!WrapNewBindingObject(cx, target, aElement, &v))) {
+  if (NS_WARN_IF(!GetOrCreateDOMReflector(cx, target, aElement, &v))) {
     return NS_ERROR_FAILURE;
   }
   JS::CompileOptions options(cx);
@@ -913,8 +908,7 @@ EventListenerManager::CompileEventHandlerInternal(Listener* aListener,
          .setFileAndLine(url.get(), lineNo)
          .setVersion(JSVERSION_DEFAULT)
          .setElement(&v.toObject())
-         .setElementAttributeName(jsStr)
-         .setDefineOnScope(false);
+         .setElementAttributeName(jsStr);
 
   JS::Rooted<JSObject*> handler(cx);
   result = nsJSUtils::CompileFunction(jsapi, scopeChain, options,
@@ -977,6 +971,67 @@ EventListenerManager::HandleEventSubType(Listener* aListener,
   return result;
 }
 
+nsIDocShell*
+EventListenerManager::GetDocShellForTarget()
+{
+  nsCOMPtr<nsINode> node(do_QueryInterface(mTarget));
+  nsIDocument* doc = nullptr;
+  nsIDocShell* docShell = nullptr;
+
+  if (node) {
+    doc = node->OwnerDoc();
+    if (!doc->GetDocShell()) {
+      bool ignore;
+      nsCOMPtr<nsPIDOMWindow> window =
+        do_QueryInterface(doc->GetScriptHandlingObject(ignore));
+      if (window) {
+        doc = window->GetExtantDoc();
+      }
+    }
+  } else {
+    nsCOMPtr<nsPIDOMWindow> window = GetTargetAsInnerWindow();
+    if (window) {
+      doc = window->GetExtantDoc();
+    }
+  }
+
+  if (!doc) {
+    nsCOMPtr<DOMEventTargetHelper> helper(do_QueryInterface(mTarget));
+    if (helper) {
+      nsPIDOMWindow* window = helper->GetOwner();
+      if (window) {
+        doc = window->GetExtantDoc();
+      }
+    }
+  }
+
+  if (doc) {
+    docShell = doc->GetDocShell();
+  }
+
+  return docShell;
+}
+
+class EventTimelineMarker : public nsDocShell::TimelineMarker
+{
+public:
+  EventTimelineMarker(nsDocShell* aDocShell, TracingMetadata aMetaData,
+                      uint16_t aPhase, const nsAString& aCause)
+    : nsDocShell::TimelineMarker(aDocShell, "DOMEvent", aMetaData, aCause)
+    , mPhase(aPhase)
+  {
+  }
+
+  virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker)
+  {
+    aMarker.mType.Construct(GetCause());
+    aMarker.mEventPhase.Construct(mPhase);
+  }
+
+private:
+  uint16_t mPhase;
+};
+
 /**
 * Causes a check for event listeners and processing by them if they exist.
 * @param an event listener
@@ -997,7 +1052,7 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
   nsAutoTObserverArray<Listener, 2>::EndLimitedIterator iter(mListeners);
   Maybe<nsAutoPopupStatePusher> popupStatePusher;
   if (mIsMainThreadELM) {
-    popupStatePusher.emplace(Event::GetEventPopupControlState(aEvent));
+    popupStatePusher.emplace(Event::GetEventPopupControlState(aEvent, *aDOMEvent));
   }
 
   bool hasListener = false;
@@ -1028,9 +1083,38 @@ EventListenerManager::HandleEventInternal(nsPresContext* aPresContext,
             }
           }
 
+          // Maybe add a marker to the docshell's timeline, but only
+          // bother with all the logic if some docshell is recording.
+          nsCOMPtr<nsIDocShell> docShell;
+          bool isTimelineRecording = false;
+          if (mIsMainThreadELM &&
+              nsDocShell::gProfileTimelineRecordingsCount > 0 &&
+              listener->mListenerType != Listener::eNativeListener) {
+            docShell = GetDocShellForTarget();
+            if (docShell) {
+              docShell->GetRecordProfileTimelineMarkers(&isTimelineRecording);
+            }
+            if (isTimelineRecording) {
+              nsDocShell* ds = static_cast<nsDocShell*>(docShell.get());
+              nsAutoString typeStr;
+              (*aDOMEvent)->GetType(typeStr);
+              uint16_t phase;
+              (*aDOMEvent)->GetEventPhase(&phase);
+              mozilla::UniquePtr<nsDocShell::TimelineMarker> marker =
+                MakeUnique<EventTimelineMarker>(ds, TRACING_INTERVAL_START,
+                                                phase, typeStr);
+              ds->AddProfileTimelineMarker(marker);
+            }
+          }
+
           if (NS_FAILED(HandleEventSubType(listener, *aDOMEvent,
                                            aCurrentTarget))) {
             aEvent->mFlags.mExceptionHasBeenRisen = true;
+          }
+
+          if (isTimelineRecording) {
+            nsDocShell* ds = static_cast<nsDocShell*>(docShell.get());
+            ds->AddProfileTimelineMarker("DOMEvent", TRACING_INTERVAL_END);
           }
         }
       }

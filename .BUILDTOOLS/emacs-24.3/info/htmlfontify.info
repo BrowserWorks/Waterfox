@@ -1,0 +1,1891 @@
+This is
+/misc/emacs/bzr/emacs24-merge/doc/misc/../../info/htmlfontify.info,
+produced by makeinfo version 4.13 from
+/misc/emacs/bzr/emacs24-merge/doc/misc/htmlfontify.texi.
+
+This manual documents Htmlfontify, a source code -> crosslinked +
+formatted + syntax colorized html transformer.
+
+   Copyright (C) 2002, 2003, 2013 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover texts
+     being "A GNU Manual," and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     "GNU Free Documentation License".
+
+     (a) The FSF's Back-Cover Text is: "You have the freedom to copy and
+     modify this GNU manual."
+
+INFO-DIR-SECTION Emacs misc features
+START-INFO-DIR-ENTRY
+* Htmlfontify: (htmlfontify).    Convert source code to html.
+END-INFO-DIR-ENTRY
+
+
+File: htmlfontify.info,  Node: Top,  Next: Introduction,  Up: (dir)
+
+Htmlfontify
+***********
+
+This manual documents Htmlfontify, a source code -> crosslinked +
+formatted + syntax colorized html transformer.
+
+   Copyright (C) 2002, 2003, 2013 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover texts
+     being "A GNU Manual," and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     "GNU Free Documentation License".
+
+     (a) The FSF's Back-Cover Text is: "You have the freedom to copy and
+     modify this GNU manual."
+
+* Menu:
+
+* Introduction::                   About Htmlfontify.
+* Usage & Examples::               How to use Htmlfontify.
+* Customization::                  Fine-tuning Htmlfontify's behaviour.
+* Requirements::                   External programs used by Htmlfontify.
+* GNU Free Documentation License:: The license for this documentation.
+* Index::                          Index of contents.
+
+
+File: htmlfontify.info,  Node: Introduction,  Next: Usage & Examples,  Prev: Top,  Up: Top
+
+1 Introduction
+**************
+
+Htmlfontify provides a means of converting individual Emacs buffers,
+source files, or entire source trees to html, preserving formatting and
+Emacs colorization / syntax highlighting as much as possible through
+careful application of CSS stylesheets and html tags.
+
+   It can also turn instances of functions, methods and (for some
+languages) variables and other constructs and items into links to their
+definitions, and create an index file (or files) of all such symbols,
+also linked to their points of definition.
+
+   Htmlfontify also provides several customization items, which should
+allow it to mesh more-or-less seamlessly with various templating or
+publishing systems (in the event, for instance, that you don't want to
+produce the html pages directly).
+
+
+File: htmlfontify.info,  Node: Usage & Examples,  Next: Customization,  Prev: Introduction,  Up: Top
+
+2 Usage & Examples
+******************
+
+Htmlfontify can be used both interactively and as part of another elisp
+function.  If you're running it in a modern Emacs, it will also run
+when attached to a terminal (i.e., without X) or even when in batch
+mode.
+
+* Menu:
+
+* Interactive::               Using Htmlfontify interactively.
+* Non-interactive::           Using Htmlfontify from elisp.
+* Variables::                 Variables (other than customization entries).
+* Data Structures::           Important data structures.
+* Examples::                  Example(s) of Htmlfontify in use.
+
+
+File: htmlfontify.info,  Node: Interactive,  Next: Non-interactive,  Up: Usage & Examples
+
+2.1 Interactive
+===============
+
+Htmlfontify provides the following interactive functions:
+
+`htmlfontify-buffer'
+
+       (htmlfontify-buffer &optional SRCDIR FILE)
+
+     Create a new buffer, named for the current buffer + a .html
+     extension, containing an inline CSS-stylesheet and formatted
+     CSS-markup html that reproduces the look of the current Emacs
+     buffer as closely as possible.
+
+     "Dangerous" characters in the existing buffer are turned into html
+     entities, so you should even be able to do html-within-html
+     fontified display.
+
+     You should, however, note that random control or eight-bit
+     characters such as ^L (\x0c) or ¤ (\xa4) won't get mapped yet.
+
+     If the SRCDIR and FILE arguments are set, lookup etags derived
+     entries in the *note hfy-tags-cache:: and add html anchors and
+     hyperlinks as appropriate.
+
+`htmlfontify-run-etags'
+
+       (htmlfontify-run-etags SRCDIR)
+
+     Load the etags cache for SRCDIR.  See *note hfy-load-tags-cache::.
+
+`htmlfontify-copy-and-link-dir'
+
+       (htmlfontify-copy-and-link-dir SRCDIR DSTDIR &optional F-EXT L-EXT)
+
+     Trawl SRCDIR and write fontified-and-hyperlinked output in DSTDIR.
+     F-EXT and L-EXT specify values for *note hfy-extn:: and *note
+     hfy-link-extn::.
+
+     You may also want to set *note hfy-page-header:: and *note
+     hfy-page-footer::.
+
+`htmlfontify-load-rgb-file'
+
+       (htmlfontify-load-rgb-file &optional FILE)
+
+     Load an X11 style rgb.txt file (search `hfy-rgb-load-path' if FILE
+     is not specified).
+
+     Note that this is not necessary if all you want is the standard X11
+     (XFree86 4.1.0) color name -> rgb triplet mapping.  Htmlfontify has
+     a copy built in, for use when it cannot contact an X server.
+
+     Loads the variable `hfy-rgb-txt-color-map', which is used by *note
+     hfy-fallback-color-values::.
+
+`htmlfontify-unload-rgb-file'
+
+       (htmlfontify-unload-rgb-file)
+
+     Unload the currently loaded X11 style rgb.txt file (if any).
+
+
+File: htmlfontify.info,  Node: Non-interactive,  Next: Variables,  Prev: Interactive,  Up: Usage & Examples
+
+2.2 Non-interactive
+===================
+
+In addition to the aforementioned interactive methods, Htmlfontify
+provides the following non-interactive ones:
+
+`hfy-face-to-style'
+
+       (hfy-face-to-style FN)
+
+     Take FN, a font or `defface' style font specification, (as
+     returned by `face-attr-construct' or *note
+     hfy-face-attr-for-class::) and return a *note hfy-style-assoc::.
+
+     See also: *note hfy-face-to-style-i::, *note hfy-flatten-style::.
+
+`hfy-fallback-color-values'
+
+       (hfy-fallback-color-values COLOR-STRING)
+
+     Use a fallback method for obtaining the rgb values for a color.
+     If *note htmlfontify-load-rgb-file:: has been called, it uses the
+     color map specified, otherwise it uses Htmlfontify's built in map.
+
+`hfy-combined-face-spec'
+
+       (hfy-combined-face-spec FACE)
+
+     Return a `defface' style alist of possible specifications for
+     FACE, with any entries resulting from user customization
+     (`custom-set-faces') taking precedence.
+
+     See also: *note hfy-default-face-def::
+
+`hfy-word-regex'
+
+       (hfy-word-regex STRING)
+
+     Return a regex that matches STRING as the first `match-string',
+     with non word characters on either side (vaguely emulating the
+     perl `\b' regex atom).
+
+`hfy-force-fontification'
+
+       (hfy-force-fontification)
+
+     Emacs's fontification is designed for interactive use.  As such,
+     it sometimes does things like deferring fontification until a
+     section of the buffer is exposed and rendered, or until Emacs is
+     idle for a while.  Sometimes, in non-interactive circumstances, or
+     if it can't see X, it doesn't bother with some of the harder
+     stuff.  While this is all great from the perspective of a user
+     waiting for Emacs to load a 20000 line file and colorize it, it's
+     a pain from the point of view from non-interactive code.  This
+     function lies, cheats, steals and generally bullies Emacs into
+     fontifying a buffer from start to finish, with all the extra
+     frills, whether it thinks it needs to or not.  Oh yes: it operates
+     on the current buffer.
+
+`hfy-link-style-string'
+
+       (hfy-link-style-string STYLE-STRING)
+
+     Replace the end of a CSS style declaration STYLE-STRING with the
+     contents of the variable *note hfy-src-doc-link-style::, removing
+     text matching the regex *note hfy-src-doc-link-unstyle:: first, if
+     necessary.
+
+`hfy-prepare-index-i'
+
+       (hfy-prepare-index-i SRCDIR DSTDIR FILENAME &optional STUB MAP)
+
+     Prepare a tags index buffer for SRCDIR.  *note hfy-tags-cache::
+     must already have an entry for SRCDIR for this to work.  *note
+     hfy-page-header::, *note hfy-page-footer::, *note hfy-link-extn::
+     and *note hfy-extn:: all play a part here.
+
+     If STUB is set, prepare an (appropriately named) index buffer
+     specifically for entries beginning with STUB.
+
+     If MAP is set, use that instead of *note hfy-tags-cache::.
+
+`hfy-compile-stylesheet'
+
+       (hfy-compile-stylesheet)
+
+     Trawl the current buffer, construct and return a *note
+     hfy-sheet-assoc::.
+
+`hfy-css-name'
+
+       (hfy-css-name FN)
+
+     Strip some of the boring bits from a font-name and return a CSS
+     style name.  If FN is a `defface' attribute list, either construct
+     a name for it, store it in the cache, and return it, or just fetch
+     it from the cache if it's already there.
+
+`hfy-make-directory'
+
+       (hfy-make-directory DIR)
+
+     Approximate equivalent of `mkdir -p DIR'.
+
+`hfy-triplet'
+
+       (hfy-triplet COLOR)
+
+     Takes a color name (string) and return a CSS rgb(R, G, B) triplet
+     string.  Uses the definition of "white" to map the numbers to the
+     0-255 range, so if you've redefined white, (especially if you've
+     redefined it to have a triplet member lower than that of the color
+     you are processing, strange things may happen).
+
+`hfy-default-footer'
+
+       (hfy-default-footer FILE)
+
+     Default value for *note hfy-page-footer::
+
+`hfy-list-files'
+
+       (hfy-list-files DIRECTORY)
+
+     Return a list of files under DIRECTORY.  Strips any leading `./'
+     from each filename.
+
+`hfy-color-vals'
+
+       (hfy-color-vals COLOR)
+
+     Where COLOR is a color name or #XXXXXX style triplet, return a
+     list of 3 (16 bit) rgb values for said color.  If a window system
+     is unavailable, calls *note hfy-fallback-color-values::.
+
+`hfy-href-stub'
+
+       (hfy-href-stub THIS-FILE DEF-FILES TAG)
+
+     Return an href stub for a tag href: if DEF-FILES (list of files
+     containing definitions for the tag in question) contains only one
+     entry, the href should link straight to that file.  Otherwise, the
+     link should be to the index file.
+
+     We are not yet concerned with the file extensions/tag line number
+     and so on at this point.
+
+     If *note hfy-split-index:: is set, and the href will be to an
+     index file rather than a source file, append a `.X' to *note
+     hfy-index-file::, where `X' is the uppercased first character of
+     TAG.
+
+     See also: *note hfy-relstub::, *note hfy-index-file::.
+
+`hfy-line-number'
+
+       (hfy-line-number)
+
+     Returns the line number of the point in the current buffer.
+
+`hfy-merge-adjacent-spans'
+
+       (hfy-merge-adjacent-spans FACE-MAP)
+
+     Where FACE-MAP is a *note hfy-facemap-assoc:: for the current
+     buffer, this function merges adjacent style blocks which are of
+     the same value and are separated by nothing more interesting than
+     whitespace.
+
+     `<span class="foo">narf</span> <span class="foo">brain</span>'
+
+     (as interpreted from FACE-MAP) would become:
+
+     `<span class="foo">narf brain</span>'
+
+     Returns a modified copy of FACE-MAP (also a *note
+     hfy-facemap-assoc::).
+
+`hfy-mark-tag-names'
+
+       (hfy-mark-tag-names SRCDIR FILE)
+
+     Mark tags in FILE (lookup SRCDIR in *note hfy-tags-cache::) with
+     the `hfy-anchor' property, with a value of `tag.line-number'.
+
+`hfy-weight'
+
+       (hfy-weight WEIGHT)
+
+     Derive a font-weight CSS specifier from an Emacs weight
+     specification symbol.
+
+`hfy-size'
+
+       (hfy-size HEIGHT)
+
+     Derive a CSS font-size specifier from an Emacs font `:height'
+     attribute.  Does not cope with the case where height is a function
+     to be applied to the height of the underlying font.
+
+`hfy-default-header'
+
+       (hfy-default-header FILE STYLE)
+
+     Default value for *note hfy-page-header::
+
+`hfy-family'
+
+       (hfy-family FAMILY)
+
+     Derives a CSS font-family specifier from an Emacs `:family'
+     attribute.
+
+`hfy-mark-tag-hrefs'
+
+       (hfy-mark-tag-hrefs SRCDIR FILE)
+
+     Mark href start points with the `hfy-link' property (value: href
+     string).
+
+     Mark href end points with the `hfy-endl' property (value `t').
+
+     Avoid overlapping links, and mark links in descending length of
+     tag name in order to prevent subtags from usurping supertags;
+     e.g., "term" for "terminal").
+
+`hfy-box'
+
+       (hfy-box BOX)
+
+     Derive CSS border-* attributes from the Emacs `:box' attribute.
+
+`hfy-box-to-style'
+
+       (hfy-box-to-style SPEC)
+
+     Convert a complex `:box' Emacs font attribute set to a list of CSS
+     border-* attributes.  Don't call this directly--it is called by
+     *note hfy-box:: when necessary.
+
+`hfy-html-enkludge-buffer'
+
+       (hfy-html-enkludge-buffer)
+
+     Mark dangerous `["<>]' characters with the `hfy-quoteme' property.
+
+     See also *note hfy-html-dekludge-buffer::.
+
+`hfy-buffer'
+
+       (hfy-buffer)
+
+     Generate and return an Htmlfontify html output buffer for the
+     current buffer.  May trample an existing buffer.
+
+`hfy-fontified-p'
+
+       (hfy-fontified-p)
+
+     `font-lock' doesn't like to say a buffer's been fontified when in
+     batch mode, but we want to know if we should fontify or raw copy,
+     so in batch mode we check for non-default face properties.
+     Otherwise we test `font-lock-mode' and `font-lock-fontified' for
+     truth.
+
+`hfy-lookup'
+
+       (hfy-lookup FACE STYLE)
+
+     Where STYLE is a *note hfy-sheet-assoc:: and FACE is an Emacs face,
+     return the relevant CSS style name.
+
+`hfy-fontify-buffer'
+
+       (hfy-fontify-buffer &optional SRCDIR FILE)
+
+     Implement the guts of *note htmlfontify-buffer::.
+
+`hfy-color'
+
+       (hfy-color COLOR)
+
+     Convert an Emacs :foreground property to a CSS color property.
+
+`hfy-flatten-style'
+
+       (hfy-flatten-style STYLE)
+
+     Take STYLE (see *note hfy-face-to-style-i::, *note
+     hfy-face-to-style::) and merge any multiple attributes
+     appropriately.  Currently only font-size is merged down to a
+     single occurrence--others may need special handling, but I haven't
+     encountered them yet.  Returns a *note hfy-style-assoc::.
+
+`hfy-size-to-int'
+
+       (hfy-size-to-int SPEC)
+
+     Convert SPEC, a CSS font-size specifier, back to an Emacs
+     `:height' attribute value.  Used while merging multiple font-size
+     attributes.
+
+`hfy-sprintf-stylesheet'
+
+       (hfy-sprintf-stylesheet CSS FILE)
+
+     Generates a header, via *note hfy-page-header::, for FILE,
+     containing the stylesheet derived from CSS, which is a *note
+     hfy-sheet-assoc::.  Returns a string containing the same.
+
+`hfy-relstub'
+
+       (hfy-relstub FILE &optional START)
+
+     Return a `../' stub of the appropriate length for the current
+     source tree depth (as determined from FILE).
+
+`hfy-compile-face-map'
+
+       (hfy-compile-face-map)
+
+     Compile and return a *note hfy-facemap-assoc:: for the current
+     buffer.
+
+`hfy-prepare-index'
+
+       (hfy-prepare-index SRCDIR DSTDIR)
+
+     Return as list of index buffer(s), as determined by *note
+     hfy-split-index::.  Uses *note hfy-prepare-index-i:: to do this.
+
+`hfy-prepare-tag-map'
+
+       (hfy-prepare-tag-map SRCDIR DSTDIR)
+
+     Prepare the counterpart(s) to the index buffer(s)--a list of
+     buffers with the same structure, but listing (and linking to)
+     instances of tags (as opposed to their definitions).
+
+     See also: *note hfy-prepare-index::, *note hfy-split-index::
+
+`hfy-subtract-maps'
+
+       (hfy-subtract-maps SRCDIR)
+
+     Internal function--strips definitions of tags from the instance
+     map.  See: *note hfy-tags-cache:: and *note hfy-tags-rmap::
+
+`hfy-face-to-style-i'
+
+       (hfy-face-to-style-i FN)
+
+     The guts of *note hfy-face-to-style::.  FN should be a `defface'
+     font specification, as returned by `face-attr-construct' or *note
+     hfy-face-attr-for-class::.  Note that this function does not get
+     font-sizes right if they are based on inherited modifiers (via the
+     :inherit) attribute, and any other modifiers that are cumulative
+     if they appear multiple times need to be merged by the user--*note
+     hfy-flatten-style:: should do this.
+
+`hfy-face-to-css'
+
+       (hfy-face-to-css FN)
+
+     Take FN, a font or `defface' specification (c.f.
+     `face-attr-construct') and return a CSS style specification.
+
+     See also: *note hfy-face-to-style::
+
+`hfy-html-quote'
+
+       (hfy-html-quote CHAR-STRING)
+
+     Map a string (usually 1 character long) to an html safe string
+     (entity) if need be.
+
+`hfy-link-style'
+
+       (hfy-link-style STYLE-STRING)
+
+     Convert the CSS style spec STYLE-STRING to its equivalent
+     hyperlink style.
+
+     See: *note hfy-link-style-fun::.
+
+`hfy-p-to-face'
+
+       (hfy-p-to-face PROPS)
+
+     Given PROPS, a list of text-properties, return the value of the
+     face property, or nil.
+
+`hfy-box-to-border-assoc'
+
+       (hfy-box-to-border-assoc SPEC)
+
+     Helper function for *note hfy-box-to-style::.
+
+`hfy-face-attr-for-class'
+
+       (hfy-face-attr-for-class FACE &optional CLASS)
+
+     Return the face attributes for FACE.  If CLASS is set, it must be
+     a `defface' alist key [see below].  Prior to version 0.18, the
+     first face specification returned by *note hfy-combined-face-spec::
+     which _didn't_ clash with CLASS was returned.  In versions from
+     0.18 onwards, each font attribute list is scored, and the
+     non-conflicting list with the highest score is returned.  (A
+     specification with a class of `t' is considered to match any class
+     you specify.  This matches Emacs's behaviour when deciding on
+     which face attributes to use, to the best of my understanding ).
+
+     If CLASS is nil, then you just get get whatever
+     `face-attr-construct' returns; i.e., the current specification in
+     effect for FACE.
+
+     See *note hfy-display-class:: for details of valid values for
+     CLASS.
+
+`hfy-face-at'
+
+       (hfy-face-at P)
+
+     Find face in effect at point P.  If overlays are to be considered
+     (see *note hfy-optimisations::) then this may return a `defface'
+     style list of face properties instead of a face symbol.
+
+`hfy-bgcol'
+
+       (hfy-bgcol COLOR)
+
+     As per *note hfy-color:: but for background colors.
+
+`hfy-kludge-cperl-mode'
+
+       (hfy-kludge-cperl-mode)
+
+     cperl mode does its best to not do some of its fontification when
+     not in a windowing system--we try to trick it...
+
+`hfy-href'
+
+       (hfy-href THIS-FILE DEF-FILES TAG TAG-MAP)
+
+     Return a relative href to the tag in question, based on
+
+     THIS-FILE *note hfy-link-extn:: *note hfy-extn:: DEF-FILES TAG and
+     TAG-MAP
+
+     THIS-FILE is the current source file DEF-FILES is a list of file
+     containing possible link endpoints for TAG TAG is the TAG in
+     question TAG-MAP is the entry in *note hfy-tags-cache::.
+
+`hfy-shell'
+
+       (hfy-shell)
+
+     Returns a best guess at a Bourne compatible shell to use: If the
+     current shell doesn't look promising, fall back to *note
+     hfy-shell-file-name::.
+
+`hfy-load-tags-cache'
+
+       (hfy-load-tags-cache SRCDIR)
+
+     Run *note hfy-etags-cmd:: on SRCDIR: load *note hfy-tags-cache::
+     and *note hfy-tags-sortl::.
+
+`hfy-parse-tags-buffer'
+
+       (hfy-parse-tags-buffer SRCDIR BUFFER)
+
+     Parse a BUFFER containing etags formatted output, loading the
+     *note hfy-tags-cache:: and *note hfy-tags-sortl:: entries for
+     SRCDIR.
+
+`hfy-interq'
+
+       (hfy-interq SET-A SET-B)
+
+     Return the intersection (using `eq') of 2 lists.
+
+`hfy-text-p'
+
+       (hfy-text-p SRCDIR FILE)
+
+     Is SRCDIR/FILE text?  Uses *note hfy-istext-command:: to determine
+     this.
+
+`hfy-opt'
+
+       (hfy-opt SYMBOL)
+
+     Is *note hfy-optimisations:: member SYMBOL set or not?
+
+`hfy-dirname'
+
+       (hfy-dirname FILE)
+
+     Return everything preceding the last `/' from a relative filename,
+     on the assumption that this will produce a relative directory
+     name.  Hardly bombproof, but good enough in the context in which
+     it is being used.
+
+`hfy-html-dekludge-buffer'
+
+       (hfy-html-dekludge-buffer)
+
+     Transform all dangerous characters marked with the `hfy-quoteme'
+     property using *note hfy-html-quote::
+
+     See also *note hfy-html-enkludge-buffer::.
+
+`hfy-copy-and-fontify-file'
+
+       (hfy-copy-and-fontify-file SRCDIR DSTDIR FILE)
+
+     Open FILE in SRCDIR--if fontified, write a fontified copy to DSTDIR
+     adding an extension of *note hfy-extn::.  Fontification is
+     actually done by *note htmlfontify-buffer::.  If the buffer is not
+     fontified, just copy it.
+
+`hfy-decor'
+
+       (hfy-decor TAG VAL)
+
+     Derive CSS text-decoration specifiers from various Emacs font
+     attributes.
+
+`hfy-slant'
+
+       (hfy-slant SLANT)
+
+     Derive a font-style CSS specifier from the Emacs :slant
+     attribute--CSS does not define the reverse-* styles, so just maps
+     those to the regular specifiers.
+
+`hfy-tags-for-file'
+
+       (hfy-tags-for-file SRCDIR FILE)
+
+     List of etags tags that have definitions in this FILE.  Looks up
+     the tags cache in *note hfy-tags-cache:: using SRCDIR as the key.
+
+`hfy-width'
+
+       (hfy-width WIDTH)
+
+     Convert an Emacs `:width' attribute to a CSS font-stretch
+     attribute.
+
+
+
+File: htmlfontify.info,  Node: Variables,  Next: Data Structures,  Prev: Non-interactive,  Up: Usage & Examples
+
+2.3 Variables
+=============
+
+Important variables that are not customization items:
+
+`hfy-tags-cache'
+     This is an alist of the form:
+
+       (("/src/dir/0" . tag-hash0) ("/src/dir/1" tag-hash1) ... )
+
+     Each tag hash entry then contains entries of the form:
+
+       "tag_string" => (("file/name.ext" line char) ... )
+
+     i.e., an alist mapping (relative) file paths to line and character
+     offsets.
+
+     See *note hfy-load-tags-cache::.
+
+`hfy-tags-rmap'
+     `hfy-tags-rmap' is an alist of the form:
+
+       (("/src/dir" . tag-rmap-hash))
+
+     Where tag-rmap-hash has entries of the form:
+
+       "tag_string" => ( "file/name.ext" line char )
+
+     Unlike *note hfy-tags-cache:: these are the locations of
+     occurrences of tagged items, not the locations of their
+     definitions.
+
+`hfy-tags-sortl'
+     `hfy-tags-sortl' is an alist of the form:
+
+       (("/src/dir" . (tag0 tag1 tag2)) ... )
+
+     Where the tags are stored in descending order of length.
+
+     See: *note hfy-load-tags-cache::.
+
+
+
+File: htmlfontify.info,  Node: Data Structures,  Next: Examples,  Prev: Variables,  Up: Usage & Examples
+
+2.4 Data Structures
+===================
+
+Some of the (informal) data structures used in Htmlfontify are detailed
+here:
+
+`hfy-style-assoc'
+     An assoc representing/describing an Emacs face.  Properties may be
+     repeated, in which case later properties should be treated as if
+     they were inherited from a "parent" font.  (For some properties,
+     only the first encountered value is of any importance, for others
+     the values might be cumulative, and for others they might be
+     cumulative in a complex way.)
+
+     Some examples:
+
+       (hfy-face-to-style 'default) =>
+
+         (("background"      . "rgb(0, 0, 0)"      )
+          ("color"           . "rgb(255, 255, 255)")
+          ("font-style"      . "normal"            )
+          ("font-weight"     . "500"               )
+          ("font-stretch"    . "normal"            )
+          ("font-family"     . "misc-fixed"        )
+          ("font-size"       . "13pt"              )
+          ("text-decoration" . "none"              ))
+
+       (hfy-face-to-style 'Info-title-3-face) =>
+
+         (("font-weight"     . "700"        )
+          ("font-family"     . "helv"       )
+          ("font-size"       . "120%"       )
+          ("text-decoration" . "none")      )
+
+`hfy-sheet-assoc'
+     An assoc with elements of the form `(face-name style-name .
+     style-string)'.  The actual stylesheet for each page is derived
+     from one of these.
+
+       '((default       "default" . "{ background: black; color: white}")
+         (font-lock-string-face "string"  . "{ color: rgb(64,224,208) }"))
+
+`hfy-facemap-assoc'
+     An assoc of `(point . FACE-SYMBOL)' or `(point . `defface'
+     attribute list)' and `(point . end)' elements, in descending order
+     of point value (i.e., from the file's end to its beginning).  The
+     map is in reverse order because inserting a `<style>' tag (or any
+     other string) at POINT invalidates the map for all entries with a
+     greater value of point. By traversing the map from greatest to
+     least POINT, we still invalidate the map as we go, but only those
+     points we have already dealt with (and therefore no longer care
+     about) will be invalid at any time.
+
+       '((64820 . end)
+         (64744 . font-lock-comment-face)
+         (64736 . end)
+         (64722 . font-lock-string-face)
+         (64630 . end)
+         (64623 . font-lock-string-face)
+         (64449 . end)
+         ;; Big similar section elided.  You get the idea.
+         (5459 . end)
+         (5431 . (:inherit font-lock-keyword-face :background "7e7e7e"))
+         (5431 . end)
+         (4285 . font-lock-constant-face)
+         (4285 . end)
+         (4221 . font-lock-comment-face)
+         (4221 . end)
+         (4197 . font-lock-constant-face)
+         (4197 . end)
+         (1 . font-lock-comment-face))
+
+
+
+File: htmlfontify.info,  Node: Examples,  Prev: Data Structures,  Up: Usage & Examples
+
+2.5 Examples
+============
+
+The following is a lump of code I use to fontify source code on my
+site, `http://rtfm.etla.org/' (which was the reason, incidentally, that
+Htmlfontify was written in the first place).
+
+  (defvar rtfm-section nil)
+
+  ;; Constructs an appropriate header string to fit in with rtfm's
+  ;; templating system, based on the file and the stylesheet string
+  (defun rtfm-build-page-header (file style)
+    (format "#define  TEMPLATE red+black.html
+  #define  DEBUG    1
+  #include <build/menu-dirlist|>\n
+  html-css-url := /css/red+black.css
+  title        := rtfm.etla.org ( %s / src/%s )
+  bodytag      :=
+  head         <=STYLESHEET;\n
+  %s
+  STYLESHEET
+  main-title   := rtfm / %s / src/%s\n
+  main-content <=MAIN_CONTENT;\n" rtfm-section file style rtfm-section file))
+
+  ;; the footer:
+  (defun rtfm-build-page-footer (file) "\nMAIN_CONTENT\n")
+
+  (defun rtfm-fontify-buffer (section)
+    (interactive "s section[eg- emacs / p4-blame]: ")
+    (require 'htmlfontify)
+    (let ((hfy-page-header  'rtfm-build-page-header)
+  	(hfy-page-footer  'rtfm-build-page-footer)
+  	(rtfm-section                     section))
+      (htmlfontify-buffer)
+      )
+    )
+
+  ;; Here's the function I actually call---it asks me for a section label,
+  ;; and source and destination directories, and then binds a couple of
+  ;; customization variable in a let before calling htmlfontify:
+  (defun rtfm-build-source-docs (section srcdir destdir)
+    (interactive
+     "s section[eg- emacs / p4-blame]:\nD source-dir: \nD output-dir: ")
+    (require 'htmlfontify)
+    (hfy-load-tags-cache srcdir)
+    (let ((hfy-page-header  'rtfm-build-page-header)
+  	(hfy-page-footer  'rtfm-build-page-footer)
+  	(rtfm-section                     section)
+  	(hfy-index-file                   "index")
+  	(auto-mode-alist (append auto-mode-alist
+  				 '(("dbi\\(shell\\|gtk\\)$" . cperl-mode)
+  				   ("\\.xpm$"               . c-mode    ))))
+  	)
+      (htmlfontify-run-etags srcdir)
+      (htmlfontify-copy-and-link-dir srcdir destdir ".src" ".html")))
+
+
+File: htmlfontify.info,  Node: Customization,  Next: Requirements,  Prev: Usage & Examples,  Up: Top
+
+3 Customization
+***************
+
+Htmlfontify provides the following variable and customization entries:
+
+`hfy-link-style-fun'
+     Set this to a function, which will be called with one argument (a
+     `{ foo: bar; ...}' CSS style-string)--it should return a copy of
+     its argument, altered so as to make any changes you want made for
+     text which is a hyperlink, in addition to being in the class to
+     which that style would normally be applied.
+
+`hfy-html-quote-regex'
+     Regex to match (with a single back-reference per match) strings in
+     HTML which should be quoted with *note hfy-html-quote:: (and *note
+     hfy-html-quote-map::) to make them safe.
+
+`hfy-page-footer'
+     As *note hfy-page-header::, but generates the output footer (and
+     takes only 1 argument, the filename).
+
+`hfy-display-class'
+     Display class to use to determine which display class to use when
+     calculating a face's attributes.  This is useful when, for
+     example, you are running Emacs on a tty or in batch mode, and want
+     Htmlfontify to have access to the face spec you would use if you
+     were connected to an X display.
+
+     Some valid class specification elements are:
+
+         '(class      color)
+         '(class      grayscale)
+         '(background dark)
+         '(background light)
+         '(type       x-toolkit)
+         '(type       tty)
+         '(type       motif)
+         '(type       lucid)
+
+     Multiple values for a tag may be combined, to indicate that any
+     one or more of these values in the specification key constitutes a
+     match, eg:
+
+     '((class color grayscale) (type tty)) would match any of:
+         '((class color))
+         '((class grayscale))
+         '((class color grayscale)))
+         '((class color foo))
+         '((type  tty))
+         '((type  tty) (class color))
+     and so on.
+
+`hfy-page-header'
+     Function called with two arguments (the filename relative to the
+     top level source directory being etag'd and fontified), and a
+     string containing the `<style>...</style>' text to embed in the
+     document--the string returned will be used as the header for the
+     htmlfontified version of the source file.
+
+     See also: *note hfy-page-footer::
+
+`hfy-src-doc-link-style'
+     String to add to the `<style> a' variant of an Htmlfontify CSS
+     class.
+
+`hfy-fast-lock-save'
+     Minimum size of a buffer for cached fontification.  This value is
+     temporarily assigned to `fast-lock-minimum-size' during
+     html-fontification.
+
+     Only buffers more than this can have associated Font Lock cache
+     files saved.
+
+     If nil, means cache files are never created.
+
+     If a list, each element should be a cons pair of the form
+     `(MAJOR-MODE . SIZE)', where MAJOR-MODE is a symbol or t (meaning
+     the default).  For example:
+
+        ((c-mode     . 25600  )
+         (c++-mode   . 25600  )
+         (rmail-mode . 1048576))
+
+     means that the minimum size is 25K for buffers in C or C++ modes,
+     one megabyte for buffers in Rmail mode, and size is irrelevant
+     (i.e., no saves) otherwise.
+
+`hfy-split-index'
+     Whether or not to split the index *note hfy-index-file::
+     alphabetically on the first letter of each tag.  Useful when the
+     index would otherwise be large and take a long time to render or
+     be difficult to navigate.
+
+`hfy-find-cmd'
+     "find" command used to harvest a list of files to attempt to
+     fontify.
+
+`hfy-extn'
+     File extension used for output files
+
+`hfy-default-face-def'
+     Fallback `defface' specification for the face `default', used when
+     *note hfy-display-class:: has been set (the normal Htmlfontify way
+     of extracting potentially non-current face information doesn't
+     necessarily work for `default').
+
+     For example, I customize this to:
+
+       ((t :background "black" :foreground "white" :family "misc-fixed"))
+
+`hfy-init-kludge-hooks'
+     List of functions to call when starting htmlfontify-buffer to do
+     any kludging necessary to get highlighting modes to behave as you
+     want, even when not running under a window system.
+
+`hfy-shell-file-name'
+     Should be set to a Bourne compatible shell, which will be invoked
+     for the more complex shell interactions needed by Htmlfontify.
+     Currently this is only required/used when using GNU etags, see
+     *note hfy-etags-cmd-alist:: for details.
+
+`hfy-optimisations'
+     Optimizations to turn on.  So far, the following have been
+     implemented:
+
+    `merge-adjacent-tags'
+          If two (or more) span tags are adjacent, identical and
+          separated by nothing more than whitespace, they will be
+          merged into one span.
+
+    `zap-comment-links'
+          Suppress hyperlinking of tags found in comments.
+
+    `zap-string-links'
+          Suppress hyperlinking of tags found in strings.
+
+    `div-wrapper'
+          Add `<div class="default"> </div>' tags around the fontified
+          body.  (Some people like this because they cut and paste the
+          html into a page with different colors than the fontified
+          code.)
+
+    `keep-overlays'
+          Preserve overlay highlighting (c.f. `ediff' or
+          `goo-font-lock') as well as basic faces.  Can result in
+          extremely verbose highlighting if there are many overlays (as
+          is the case with `goo-font-lock').
+
+
+     And the following are planned but not yet available:
+
+    `kill-context-leak'
+          Suppress hyperlinking between files highlighted by different
+          modes.
+
+
+     Note: like compiler optimizations, these optimize the _output_ of
+     the code, not the processing of the source itself, and are
+     therefore likely to slow Htmlfontify down, at least a little.
+     Except for skip-refontification, which can never slow you down,
+     but may result in incomplete fontification.
+
+`hfy-src-doc-link-unstyle'
+     Regex to remove from the <style> a variant of an Htmlfontify CSS
+     class.
+
+`hfy-link-extn'
+     File extension used for href links--useful where the Htmlfontify
+     output files are going to be processed again, with a resulting
+     change in file extension.  If `nil', then any code using this
+     should fall back to *note hfy-extn::.
+
+`hfy-istext-command'
+     Command to run with the name of a file, to see whether it is a
+     text file or not.  The command should emit a string containing the
+     word `text' if the file is a text file, and a string not
+     containing `text' otherwise.
+
+`hfy-etags-cmd-alist'
+     An alist of possible shell commands that will generate etags
+     output that Htmlfontify can use.  `%s' will be replaced by *note
+     hfy-etags-bin::.
+
+`hfy-etags-bin'
+     The location of the etags binary (we begin by assuming it's in
+     your path).
+
+     Note that if etags is not in your path, you will need to alter the
+     shell commands in *note hfy-etags-cmd-alist::.
+
+     [As of version 0.17, this requirement has been removed: it should
+     all just work(tm).]
+
+`hfy-etags-cmd'
+     An etags shell command to run in the source directory to generate
+     a tags file for the whole source tree from there on down.  The
+     command should emit the etags output on standard output.
+
+     Two canned commands are provided--they drive Emacs's etags and
+     exuberant-ctags's etags respectively.
+
+`hfy-etag-regex'
+     Regex used to parse an etags entry: must have 3 subexps,
+     corresponding, in order, to:
+
+       1. The tag
+
+       2. The line
+
+       3. The character (point) at which the tag occurs
+
+`hfy-index-file'
+     Name (sans extension) of the index file produced during
+     fontification-and-hyperlinking.
+
+`hfy-instance-file'
+     Name (sans extension) of the tag usage index file produced during
+     fontification-and-hyperlinking.
+
+`hfy-html-quote-map'
+     An alist of character -> entity mappings used to make the text
+     html-safe.
+
+
+
+File: htmlfontify.info,  Node: Requirements,  Next: GNU Free Documentation License,  Prev: Customization,  Up: Top
+
+4 Requirements
+**************
+
+Htmlfontify has a couple of external requirements:
+
+   * GNU Emacs 20.7+ or 21.1+
+
+     Other versions may work--these have been used successfully by the
+     author.  If you intend to use Htmlfontify in batch mode, 21.1+ is
+     pretty much required.  The author does not know if XEmacs, NTemacs,
+     or J.Random Emacs will run Htmlfontify, but reports/patches/bags of
+     money are always welcome.
+
+   * A copy of etags (exuberant-ctags or GNU etags).  Htmlfontify
+     attempts to autodetect the version you have and customize itself
+     accordingly, but you should be able to override this.
+
+     See: *note Customization::
+
+   * A copy of find (e.g., GNU find) that provides the `-path'
+     predicate.
+
+     You may be able to work around this with a suitable clever shell
+     command and the customization entry: *note hfy-find-cmd::
+
+   * A copy of sed (e.g., GNU sed).
+
+   * A copy of the `file' command.
+
+
+
+File: htmlfontify.info,  Node: GNU Free Documentation License,  Next: Index,  Prev: Requirements,  Up: Top
+
+Appendix A GNU Free Documentation License
+*****************************************
+
+                     Version 1.3, 3 November 2008
+
+  Copyright (C) 2000, 2001, 2002, 2007, 2008, 2009 Free Software Foundation, Inc.
+  `http://fsf.org/'
+
+  Everyone is permitted to copy and distribute verbatim copies
+  of this license document, but changing it is not allowed.
+
+  0. PREAMBLE
+
+     The purpose of this License is to make a manual, textbook, or other
+     functional and useful document "free" in the sense of freedom: to
+     assure everyone the effective freedom to copy and redistribute it,
+     with or without modifying it, either commercially or
+     noncommercially.  Secondarily, this License preserves for the
+     author and publisher a way to get credit for their work, while not
+     being considered responsible for modifications made by others.
+
+     This License is a kind of "copyleft", which means that derivative
+     works of the document must themselves be free in the same sense.
+     It complements the GNU General Public License, which is a copyleft
+     license designed for free software.
+
+     We have designed this License in order to use it for manuals for
+     free software, because free software needs free documentation: a
+     free program should come with manuals providing the same freedoms
+     that the software does.  But this License is not limited to
+     software manuals; it can be used for any textual work, regardless
+     of subject matter or whether it is published as a printed book.
+     We recommend this License principally for works whose purpose is
+     instruction or reference.
+
+  1. APPLICABILITY AND DEFINITIONS
+
+     This License applies to any manual or other work, in any medium,
+     that contains a notice placed by the copyright holder saying it
+     can be distributed under the terms of this License.  Such a notice
+     grants a world-wide, royalty-free license, unlimited in duration,
+     to use that work under the conditions stated herein.  The
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You
+     accept the license if you copy, modify or distribute the work in a
+     way requiring permission under copyright law.
+
+     A "Modified Version" of the Document means any work containing the
+     Document or a portion of it, either copied verbatim, or with
+     modifications and/or translated into another language.
+
+     A "Secondary Section" is a named appendix or a front-matter section
+     of the Document that deals exclusively with the relationship of the
+     publishers or authors of the Document to the Document's overall
+     subject (or to related matters) and contains nothing that could
+     fall directly within that overall subject.  (Thus, if the Document
+     is in part a textbook of mathematics, a Secondary Section may not
+     explain any mathematics.)  The relationship could be a matter of
+     historical connection with the subject or with related matters, or
+     of legal, commercial, philosophical, ethical or political position
+     regarding them.
+
+     The "Invariant Sections" are certain Secondary Sections whose
+     titles are designated, as being those of Invariant Sections, in
+     the notice that says that the Document is released under this
+     License.  If a section does not fit the above definition of
+     Secondary then it is not allowed to be designated as Invariant.
+     The Document may contain zero Invariant Sections.  If the Document
+     does not identify any Invariant Sections then there are none.
+
+     The "Cover Texts" are certain short passages of text that are
+     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
+     that says that the Document is released under this License.  A
+     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
+     be at most 25 words.
+
+     A "Transparent" copy of the Document means a machine-readable copy,
+     represented in a format whose specification is available to the
+     general public, that is suitable for revising the document
+     straightforwardly with generic text editors or (for images
+     composed of pixels) generic paint programs or (for drawings) some
+     widely available drawing editor, and that is suitable for input to
+     text formatters or for automatic translation to a variety of
+     formats suitable for input to text formatters.  A copy made in an
+     otherwise Transparent file format whose markup, or absence of
+     markup, has been arranged to thwart or discourage subsequent
+     modification by readers is not Transparent.  An image format is
+     not Transparent if used for any substantial amount of text.  A
+     copy that is not "Transparent" is called "Opaque".
+
+     Examples of suitable formats for Transparent copies include plain
+     ASCII without markup, Texinfo input format, LaTeX input format,
+     SGML or XML using a publicly available DTD, and
+     standard-conforming simple HTML, PostScript or PDF designed for
+     human modification.  Examples of transparent image formats include
+     PNG, XCF and JPG.  Opaque formats include proprietary formats that
+     can be read and edited only by proprietary word processors, SGML or
+     XML for which the DTD and/or processing tools are not generally
+     available, and the machine-generated HTML, PostScript or PDF
+     produced by some word processors for output purposes only.
+
+     The "Title Page" means, for a printed book, the title page itself,
+     plus such following pages as are needed to hold, legibly, the
+     material this License requires to appear in the title page.  For
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
+
+     A section "Entitled XYZ" means a named subunit of the Document
+     whose title either is precisely XYZ or contains XYZ in parentheses
+     following text that translates XYZ in another language.  (Here XYZ
+     stands for a specific section name mentioned below, such as
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
+     to this definition.
+
+     The Document may include Warranty Disclaimers next to the notice
+     which states that this License applies to the Document.  These
+     Warranty Disclaimers are considered to be included by reference in
+     this License, but only as regards disclaiming warranties: any other
+     implication that these Warranty Disclaimers may have is void and
+     has no effect on the meaning of this License.
+
+  2. VERBATIM COPYING
+
+     You may copy and distribute the Document in any medium, either
+     commercially or noncommercially, provided that this License, the
+     copyright notices, and the license notice saying this License
+     applies to the Document are reproduced in all copies, and that you
+     add no other conditions whatsoever to those of this License.  You
+     may not use technical measures to obstruct or control the reading
+     or further copying of the copies you make or distribute.  However,
+     you may accept compensation in exchange for copies.  If you
+     distribute a large enough number of copies you must also follow
+     the conditions in section 3.
+
+     You may also lend copies, under the same conditions stated above,
+     and you may publicly display copies.
+
+  3. COPYING IN QUANTITY
+
+     If you publish printed copies (or copies in media that commonly
+     have printed covers) of the Document, numbering more than 100, and
+     the Document's license notice requires Cover Texts, you must
+     enclose the copies in covers that carry, clearly and legibly, all
+     these Cover Texts: Front-Cover Texts on the front cover, and
+     Back-Cover Texts on the back cover.  Both covers must also clearly
+     and legibly identify you as the publisher of these copies.  The
+     front cover must present the full title with all words of the
+     title equally prominent and visible.  You may add other material
+     on the covers in addition.  Copying with changes limited to the
+     covers, as long as they preserve the title of the Document and
+     satisfy these conditions, can be treated as verbatim copying in
+     other respects.
+
+     If the required texts for either cover are too voluminous to fit
+     legibly, you should put the first ones listed (as many as fit
+     reasonably) on the actual cover, and continue the rest onto
+     adjacent pages.
+
+     If you publish or distribute Opaque copies of the Document
+     numbering more than 100, you must either include a
+     machine-readable Transparent copy along with each Opaque copy, or
+     state in or with each Opaque copy a computer-network location from
+     which the general network-using public has access to download
+     using public-standard network protocols a complete Transparent
+     copy of the Document, free of added material.  If you use the
+     latter option, you must take reasonably prudent steps, when you
+     begin distribution of Opaque copies in quantity, to ensure that
+     this Transparent copy will remain thus accessible at the stated
+     location until at least one year after the last time you
+     distribute an Opaque copy (directly or through your agents or
+     retailers) of that edition to the public.
+
+     It is requested, but not required, that you contact the authors of
+     the Document well before redistributing any large number of
+     copies, to give them a chance to provide you with an updated
+     version of the Document.
+
+  4. MODIFICATIONS
+
+     You may copy and distribute a Modified Version of the Document
+     under the conditions of sections 2 and 3 above, provided that you
+     release the Modified Version under precisely this License, with
+     the Modified Version filling the role of the Document, thus
+     licensing distribution and modification of the Modified Version to
+     whoever possesses a copy of it.  In addition, you must do these
+     things in the Modified Version:
+
+       A. Use in the Title Page (and on the covers, if any) a title
+          distinct from that of the Document, and from those of
+          previous versions (which should, if there were any, be listed
+          in the History section of the Document).  You may use the
+          same title as a previous version if the original publisher of
+          that version gives permission.
+
+       B. List on the Title Page, as authors, one or more persons or
+          entities responsible for authorship of the modifications in
+          the Modified Version, together with at least five of the
+          principal authors of the Document (all of its principal
+          authors, if it has fewer than five), unless they release you
+          from this requirement.
+
+       C. State on the Title page the name of the publisher of the
+          Modified Version, as the publisher.
+
+       D. Preserve all the copyright notices of the Document.
+
+       E. Add an appropriate copyright notice for your modifications
+          adjacent to the other copyright notices.
+
+       F. Include, immediately after the copyright notices, a license
+          notice giving the public permission to use the Modified
+          Version under the terms of this License, in the form shown in
+          the Addendum below.
+
+       G. Preserve in that license notice the full lists of Invariant
+          Sections and required Cover Texts given in the Document's
+          license notice.
+
+       H. Include an unaltered copy of this License.
+
+       I. Preserve the section Entitled "History", Preserve its Title,
+          and add to it an item stating at least the title, year, new
+          authors, and publisher of the Modified Version as given on
+          the Title Page.  If there is no section Entitled "History" in
+          the Document, create one stating the title, year, authors,
+          and publisher of the Document as given on its Title Page,
+          then add an item describing the Modified Version as stated in
+          the previous sentence.
+
+       J. Preserve the network location, if any, given in the Document
+          for public access to a Transparent copy of the Document, and
+          likewise the network locations given in the Document for
+          previous versions it was based on.  These may be placed in
+          the "History" section.  You may omit a network location for a
+          work that was published at least four years before the
+          Document itself, or if the original publisher of the version
+          it refers to gives permission.
+
+       K. For any section Entitled "Acknowledgements" or "Dedications",
+          Preserve the Title of the section, and preserve in the
+          section all the substance and tone of each of the contributor
+          acknowledgements and/or dedications given therein.
+
+       L. Preserve all the Invariant Sections of the Document,
+          unaltered in their text and in their titles.  Section numbers
+          or the equivalent are not considered part of the section
+          titles.
+
+       M. Delete any section Entitled "Endorsements".  Such a section
+          may not be included in the Modified Version.
+
+       N. Do not retitle any existing section to be Entitled
+          "Endorsements" or to conflict in title with any Invariant
+          Section.
+
+       O. Preserve any Warranty Disclaimers.
+
+     If the Modified Version includes new front-matter sections or
+     appendices that qualify as Secondary Sections and contain no
+     material copied from the Document, you may at your option
+     designate some or all of these sections as invariant.  To do this,
+     add their titles to the list of Invariant Sections in the Modified
+     Version's license notice.  These titles must be distinct from any
+     other section titles.
+
+     You may add a section Entitled "Endorsements", provided it contains
+     nothing but endorsements of your Modified Version by various
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
+
+     You may add a passage of up to five words as a Front-Cover Text,
+     and a passage of up to 25 words as a Back-Cover Text, to the end
+     of the list of Cover Texts in the Modified Version.  Only one
+     passage of Front-Cover Text and one of Back-Cover Text may be
+     added by (or through arrangements made by) any one entity.  If the
+     Document already includes a cover text for the same cover,
+     previously added by you or by arrangement made by the same entity
+     you are acting on behalf of, you may not add another; but you may
+     replace the old one, on explicit permission from the previous
+     publisher that added the old one.
+
+     The author(s) and publisher(s) of the Document do not by this
+     License give permission to use their names for publicity for or to
+     assert or imply endorsement of any Modified Version.
+
+  5. COMBINING DOCUMENTS
+
+     You may combine the Document with other documents released under
+     this License, under the terms defined in section 4 above for
+     modified versions, provided that you include in the combination
+     all of the Invariant Sections of all of the original documents,
+     unmodified, and list them all as Invariant Sections of your
+     combined work in its license notice, and that you preserve all
+     their Warranty Disclaimers.
+
+     The combined work need only contain one copy of this License, and
+     multiple identical Invariant Sections may be replaced with a single
+     copy.  If there are multiple Invariant Sections with the same name
+     but different contents, make the title of each such section unique
+     by adding at the end of it, in parentheses, the name of the
+     original author or publisher of that section if known, or else a
+     unique number.  Make the same adjustment to the section titles in
+     the list of Invariant Sections in the license notice of the
+     combined work.
+
+     In the combination, you must combine any sections Entitled
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
+
+  6. COLLECTIONS OF DOCUMENTS
+
+     You may make a collection consisting of the Document and other
+     documents released under this License, and replace the individual
+     copies of this License in the various documents with a single copy
+     that is included in the collection, provided that you follow the
+     rules of this License for verbatim copying of each of the
+     documents in all other respects.
+
+     You may extract a single document from such a collection, and
+     distribute it individually under this License, provided you insert
+     a copy of this License into the extracted document, and follow
+     this License in all other respects regarding verbatim copying of
+     that document.
+
+  7. AGGREGATION WITH INDEPENDENT WORKS
+
+     A compilation of the Document or its derivatives with other
+     separate and independent documents or works, in or on a volume of
+     a storage or distribution medium, is called an "aggregate" if the
+     copyright resulting from the compilation is not used to limit the
+     legal rights of the compilation's users beyond what the individual
+     works permit.  When the Document is included in an aggregate, this
+     License does not apply to the other works in the aggregate which
+     are not themselves derivative works of the Document.
+
+     If the Cover Text requirement of section 3 is applicable to these
+     copies of the Document, then if the Document is less than one half
+     of the entire aggregate, the Document's Cover Texts may be placed
+     on covers that bracket the Document within the aggregate, or the
+     electronic equivalent of covers if the Document is in electronic
+     form.  Otherwise they must appear on printed covers that bracket
+     the whole aggregate.
+
+  8. TRANSLATION
+
+     Translation is considered a kind of modification, so you may
+     distribute translations of the Document under the terms of section
+     4.  Replacing Invariant Sections with translations requires special
+     permission from their copyright holders, but you may include
+     translations of some or all Invariant Sections in addition to the
+     original versions of these Invariant Sections.  You may include a
+     translation of this License, and all the license notices in the
+     Document, and any Warranty Disclaimers, provided that you also
+     include the original English version of this License and the
+     original versions of those notices and disclaimers.  In case of a
+     disagreement between the translation and the original version of
+     this License or a notice or disclaimer, the original version will
+     prevail.
+
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
+     Preserve its Title (section 1) will typically require changing the
+     actual title.
+
+  9. TERMINATION
+
+     You may not copy, modify, sublicense, or distribute the Document
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
+
+ 10. FUTURE REVISIONS OF THIS LICENSE
+
+     The Free Software Foundation may publish new, revised versions of
+     the GNU Free Documentation License from time to time.  Such new
+     versions will be similar in spirit to the present version, but may
+     differ in detail to address new problems or concerns.  See
+     `http://www.gnu.org/copyleft/'.
+
+     Each version of the License is given a distinguishing version
+     number.  If the Document specifies that a particular numbered
+     version of this License "or any later version" applies to it, you
+     have the option of following the terms and conditions either of
+     that specified version or of any later version that has been
+     published (not as a draft) by the Free Software Foundation.  If
+     the Document does not specify a version number of this License,
+     you may choose any version ever published (not as a draft) by the
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
+
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
+
+ADDENDUM: How to use this License for your documents
+====================================================
+
+To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and license
+notices just after the title page:
+
+    Copyright (C)  YEAR  YOUR NAME.
+    Permission is granted to copy, distribute and/or modify this document
+    under the terms of the GNU Free Documentation License, Version 1.3
+    or any later version published by the Free Software Foundation;
+    with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+    Texts.  A copy of the license is included in the section entitled ``GNU
+    Free Documentation License''.
+
+   If you have Invariant Sections, Front-Cover Texts and Back-Cover
+Texts, replace the "with...Texts." line with this:
+
+      with the Invariant Sections being LIST THEIR TITLES, with
+      the Front-Cover Texts being LIST, and with the Back-Cover Texts
+      being LIST.
+
+   If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License, to
+permit their use in free software.
+
+
+File: htmlfontify.info,  Node: Index,  Prev: GNU Free Documentation License,  Up: Top
+
+Index
+*****
+
+CONCEPTS
+ [index ]
+* Menu:
+
+* Data Structures:                       Data Structures.      (line  6)
+* Examples:                              Examples.             (line  6)
+* functions (interactive):               Interactive.          (line  6)
+* functions (noninteractive):            Non-interactive.      (line  6)
+* hfy-facemap-assoc:                     Data Structures.      (line 46)
+* hfy-sheet-assoc:                       Data Structures.      (line 38)
+* hfy-style-assoc:                       Data Structures.      (line 10)
+* Interactive:                           Interactive.          (line  6)
+* Introduction:                          Introduction.         (line  6)
+* Noninteractive:                        Non-interactive.      (line  6)
+* Requirements, Prerequisites:           Requirements.         (line  6)
+* Usage & Examples:                      Usage & Examples.     (line  6)
+* variables:                             Variables.            (line  6)
+* variables (customization):             Customization.        (line  6)
+
+
+FUNCTIONS
+ [index ]
+* Menu:
+
+* hfy-bgcol:                             Non-interactive.     (line 431)
+* hfy-box:                               Non-interactive.     (line 230)
+* hfy-box-to-border-assoc:               Non-interactive.     (line 396)
+* hfy-box-to-style:                      Non-interactive.     (line 236)
+* hfy-buffer:                            Non-interactive.     (line 252)
+* hfy-color:                             Non-interactive.     (line 282)
+* hfy-color-vals:                        Non-interactive.     (line 131)
+* hfy-combined-face-spec:                Non-interactive.     (line  28)
+* hfy-compile-face-map:                  Non-interactive.     (line 321)
+* hfy-compile-stylesheet:                Non-interactive.     (line  86)
+* hfy-copy-and-fontify-file:             Non-interactive.     (line 517)
+* hfy-css-name:                          Non-interactive.     (line  93)
+* hfy-decor:                             Non-interactive.     (line 526)
+* hfy-default-footer:                    Non-interactive.     (line 118)
+* hfy-default-header:                    Non-interactive.     (line 204)
+* hfy-dirname:                           Non-interactive.     (line 499)
+* hfy-face-at:                           Non-interactive.     (line 423)
+* hfy-face-attr-for-class:               Non-interactive.     (line 402)
+* hfy-face-to-css:                       Non-interactive.     (line 364)
+* hfy-face-to-style:                     Non-interactive.     (line  10)
+* hfy-face-to-style-i:                   Non-interactive.     (line 352)
+* hfy-fallback-color-values:             Non-interactive.     (line  20)
+* hfy-family:                            Non-interactive.     (line 210)
+* hfy-flatten-style:                     Non-interactive.     (line 288)
+* hfy-fontified-p:                       Non-interactive.     (line 259)
+* hfy-fontify-buffer:                    Non-interactive.     (line 276)
+* hfy-force-fontification:               Non-interactive.     (line  46)
+* hfy-href:                              Non-interactive.     (line 444)
+* hfy-href-stub:                         Non-interactive.     (line 139)
+* hfy-html-dekludge-buffer:              Non-interactive.     (line 508)
+* hfy-html-enkludge-buffer:              Non-interactive.     (line 244)
+* hfy-html-quote:                        Non-interactive.     (line 373)
+* hfy-interq:                            Non-interactive.     (line 480)
+* hfy-kludge-cperl-mode:                 Non-interactive.     (line 437)
+* hfy-line-number:                       Non-interactive.     (line 158)
+* hfy-link-style:                        Non-interactive.     (line 380)
+* hfy-link-style-string:                 Non-interactive.     (line  63)
+* hfy-list-files:                        Non-interactive.     (line 124)
+* hfy-load-tags-cache:                   Non-interactive.     (line 465)
+* hfy-lookup:                            Non-interactive.     (line 269)
+* hfy-make-directory:                    Non-interactive.     (line 102)
+* hfy-mark-tag-hrefs:                    Non-interactive.     (line 217)
+* hfy-mark-tag-names:                    Non-interactive.     (line 182)
+* hfy-merge-adjacent-spans:              Non-interactive.     (line 164)
+* hfy-opt:                               Non-interactive.     (line 493)
+* hfy-p-to-face:                         Non-interactive.     (line 389)
+* hfy-parse-tags-buffer:                 Non-interactive.     (line 472)
+* hfy-prepare-index:                     Non-interactive.     (line 328)
+* hfy-prepare-index-i:                   Non-interactive.     (line  72)
+* hfy-prepare-tag-map:                   Non-interactive.     (line 335)
+* hfy-relstub:                           Non-interactive.     (line 314)
+* hfy-shell:                             Non-interactive.     (line 457)
+* hfy-size:                              Non-interactive.     (line 196)
+* hfy-size-to-int:                       Non-interactive.     (line 298)
+* hfy-slant:                             Non-interactive.     (line 533)
+* hfy-sprintf-stylesheet:                Non-interactive.     (line 306)
+* hfy-subtract-maps:                     Non-interactive.     (line 345)
+* hfy-tags-for-file:                     Non-interactive.     (line 541)
+* hfy-text-p:                            Non-interactive.     (line 486)
+* hfy-triplet:                           Non-interactive.     (line 108)
+* hfy-weight:                            Non-interactive.     (line 189)
+* hfy-width:                             Non-interactive.     (line 548)
+* hfy-word-regex:                        Non-interactive.     (line  38)
+* htmlfontify-buffer:                    Interactive.         (line   9)
+* htmlfontify-copy-and-link-dir:         Interactive.         (line  35)
+* htmlfontify-load-rgb-file:             Interactive.         (line  46)
+* htmlfontify-run-etags:                 Interactive.         (line  29)
+* htmlfontify-unload-rgb-file:           Interactive.         (line  60)
+
+
+VARIABLES & CUSTOMIZATION
+ [index ]
+* Menu:
+
+* hfy-default-face-def:                  Customization.       (line 104)
+* hfy-display-class:                     Customization.       (line  25)
+* hfy-etag-regex:                        Customization.       (line 205)
+* hfy-etags-bin:                         Customization.       (line 187)
+* hfy-etags-cmd:                         Customization.       (line 197)
+* hfy-etags-cmd-alist:                   Customization.       (line 182)
+* hfy-extn:                              Customization.       (line 101)
+* hfy-fast-lock-save:                    Customization.       (line  69)
+* hfy-find-cmd:                          Customization.       (line  97)
+* hfy-html-quote-map:                    Customization.       (line 223)
+* hfy-html-quote-regex:                  Customization.       (line  16)
+* hfy-index-file:                        Customization.       (line 215)
+* hfy-init-kludge-hooks:                 Customization.       (line 114)
+* hfy-instance-file:                     Customization.       (line 219)
+* hfy-istext-command:                    Customization.       (line 176)
+* hfy-link-extn:                         Customization.       (line 170)
+* hfy-link-style-fun:                    Customization.       (line   9)
+* hfy-optimisations:                     Customization.       (line 125)
+* hfy-page-footer:                       Customization.       (line  21)
+* hfy-page-header:                       Customization.       (line  56)
+* hfy-shell-file-name:                   Customization.       (line 119)
+* hfy-split-index:                       Customization.       (line  91)
+* hfy-src-doc-link-style:                Customization.       (line  65)
+* hfy-src-doc-link-unstyle:              Customization.       (line 166)
+* hfy-tags-cache:                        Variables.           (line   9)
+* hfy-tags-rmap:                         Variables.           (line  23)
+* hfy-tags-sortl:                        Variables.           (line  36)
+
+
+
+
+Tag Table:
+Node: Top1051
+Node: Introduction2279
+Node: Usage & Examples3166
+Node: Interactive3854
+Ref: htmlfontify-buffer4060
+Ref: htmlfontify-run-etags4835
+Ref: htmlfontify-copy-and-link-dir4980
+Ref: htmlfontify-load-rgb-file5336
+Ref: htmlfontify-unload-rgb-file5835
+Node: Non-interactive5941
+Ref: hfy-face-to-style6226
+Ref: hfy-fallback-color-values6541
+Ref: hfy-combined-face-spec6829
+Ref: hfy-word-regex7105
+Ref: hfy-force-fontification7330
+Ref: hfy-link-style-string8176
+Ref: hfy-prepare-index-i8474
+Ref: hfy-compile-stylesheet9013
+Ref: hfy-css-name9147
+Ref: hfy-make-directory9455
+Ref: hfy-triplet9551
+Ref: hfy-default-footer9939
+Ref: hfy-list-files10039
+Ref: hfy-color-vals10188
+Ref: hfy-href-stub10438
+Ref: hfy-line-number11134
+Ref: hfy-merge-adjacent-spans11254
+Ref: hfy-mark-tag-names11792
+Ref: hfy-weight11985
+Ref: hfy-size12114
+Ref: hfy-default-header12359
+Ref: hfy-family12461
+Ref: hfy-mark-tag-hrefs12593
+Ref: hfy-box12971
+Ref: hfy-box-to-style13083
+Ref: hfy-html-enkludge-buffer13322
+Ref: hfy-buffer13493
+Ref: hfy-fontified-p13655
+Ref: hfy-lookup13984
+Ref: hfy-fontify-buffer14153
+Ref: hfy-color14273
+Ref: hfy-flatten-style14389
+Ref: hfy-size-to-int14760
+Ref: hfy-sprintf-stylesheet14969
+Ref: hfy-relstub15220
+Ref: hfy-compile-face-map15405
+Ref: hfy-prepare-index15539
+Ref: hfy-prepare-tag-map15738
+Ref: hfy-subtract-maps16062
+Ref: hfy-face-to-style-i16255
+Ref: hfy-face-to-css16774
+Ref: hfy-html-quote16984
+Ref: hfy-link-style17134
+Ref: hfy-p-to-face17314
+Ref: hfy-box-to-border-assoc17469
+Ref: hfy-face-attr-for-class17587
+Ref: hfy-face-at18504
+Ref: hfy-bgcol18744
+Ref: hfy-kludge-cperl-mode18853
+Ref: hfy-href19023
+Ref: hfy-shell19434
+Ref: hfy-load-tags-cache19638
+Ref: hfy-parse-tags-buffer19804
+Ref: hfy-interq20012
+Ref: hfy-text-p20114
+Ref: hfy-opt20242
+Ref: hfy-dirname20343
+Ref: hfy-html-dekludge-buffer20631
+Ref: hfy-copy-and-fontify-file20858
+Ref: hfy-decor21166
+Ref: hfy-slant21292
+Ref: hfy-tags-for-file21510
+Ref: hfy-width21705
+Node: Variables21813
+Ref: hfy-tags-cache22029
+Ref: hfy-tags-rmap22394
+Ref: hfy-tags-sortl22744
+Node: Data Structures22943
+Ref: hfy-style-assoc23189
+Ref: hfy-sheet-assoc24314
+Ref: hfy-facemap-assoc24643
+Node: Examples25866
+Node: Customization28001
+Ref: hfy-link-style-fun28231
+Ref: hfy-html-quote-regex28585
+Ref: hfy-page-footer28794
+Ref: hfy-display-class28928
+Ref: hfy-page-header29973
+Ref: hfy-src-doc-link-style30362
+Ref: hfy-fast-lock-save30464
+Ref: hfy-split-index31218
+Ref: hfy-find-cmd31467
+Ref: hfy-extn31559
+Ref: hfy-default-face-def31625
+Ref: hfy-init-kludge-hooks32015
+Ref: hfy-shell-file-name32235
+Ref: hfy-optimisations32509
+Ref: hfy-src-doc-link-unstyle33977
+Ref: hfy-link-extn34076
+Ref: hfy-istext-command34346
+Ref: hfy-etags-cmd-alist34605
+Ref: hfy-etags-bin34780
+Ref: hfy-etags-cmd35104
+Ref: hfy-etag-regex35435
+Ref: hfy-index-file35645
+Ref: hfy-instance-file35764
+Ref: hfy-html-quote-map35894
+Node: Requirements35980
+Node: GNU Free Documentation License37049
+Node: Index62184
+
+End Tag Table

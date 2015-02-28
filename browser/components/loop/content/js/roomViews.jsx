@@ -67,8 +67,18 @@ loop.roomViews = (function(mozL10n) {
     getInitialState: function() {
       return {
         copiedUrl: false,
-        newRoomName: ""
+        newRoomName: "",
+        error: null,
       };
+    },
+
+    componentWillMount: function() {
+      this.listenTo(this.props.roomStore, "change:error",
+                    this.onRoomError);
+    },
+
+    componentWillUnmount: function() {
+      this.stopListening(this.props.roomStore);
     },
 
     handleTextareaKeyDown: function(event) {
@@ -106,9 +116,23 @@ loop.roomViews = (function(mozL10n) {
       this.setState({copiedUrl: true});
     },
 
+    onRoomError: function() {
+      // Only update the state if we're mounted, to avoid the problem where
+      // stopListening doesn't nuke the active listeners during a event
+      // processing.
+      if (this.isMounted()) {
+        this.setState({error: this.props.roomStore.getStoreState("error")});
+      }
+    },
+
     render: function() {
+      var cx = React.addons.classSet;
       return (
         <div className="room-invitation-overlay">
+          <p className={cx({"error": !!this.state.error,
+                            "error-display-area": true})}>
+            {mozL10n.get("rooms_name_change_failed_label")}
+          </p>
           <form onSubmit={this.handleFormSubmit}>
             <textarea rows="2" type="text" className="input-room-name"
               valueLink={this.linkState("newRoomName")}
@@ -194,7 +218,6 @@ loop.roomViews = (function(mozL10n) {
         publishVideo: !this.state.videoMuted,
         style: {
           audioLevelDisplayMode: "off",
-          bugDisplayMode: "off",
           buttonDisplayMode: "off",
           nameDisplayMode: "off",
           videoDisabledDisplayMode: "off"
@@ -276,10 +299,16 @@ loop.roomViews = (function(mozL10n) {
           />;
         }
         case ROOM_STATES.ENDED: {
-          return <sharedViews.FeedbackView
-            feedbackStore={this.props.feedbackStore}
-            onAfterFeedbackReceived={this.closeWindow}
-          />;
+          if (this.state.used)
+            return <sharedViews.FeedbackView
+              feedbackStore={this.props.feedbackStore}
+              onAfterFeedbackReceived={this.closeWindow}
+            />;
+
+          // In case the room was not used (no one was here), we
+          // bypass the feedback form.
+          this.closeWindow();
+          return null;
         }
         default: {
           return (

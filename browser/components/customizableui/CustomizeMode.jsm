@@ -473,7 +473,7 @@ CustomizeMode.prototype = {
         toolbar.removeAttribute("customizing");
 
       this.window.PanelUI.endBatchUpdate();
-      delete this._lastLightWeightTheme;
+      delete this._lastLightweightTheme;
       this._changed = false;
       this._transitioning = false;
       this._handler.isExitingCustomizeMode = false;
@@ -1545,24 +1545,24 @@ CustomizeMode.prototype = {
       button.setAttribute("hidden", "true");
     }
   },
-  toggleDevEditionTheme: function() {
+
+  toggleDevEditionTheme: function(shouldEnable) {
     const DEFAULT_THEME_ID = "{972ce4c6-7e08-4474-a285-3208198ce6fd}";
-    let button = this.document.getElementById("customization-devedition-theme-button");
-    let shouldEnable = button.hasAttribute("checked");
 
     Services.prefs.setBoolPref(kDeveditionThemePref, shouldEnable);
-    if (LightweightThemeManager.currentTheme && shouldEnable) {
-      this._lastLightWeightTheme = LightweightThemeManager.currentTheme;
+
+    let currentLWT = LightweightThemeManager.currentTheme;
+    if (currentLWT && shouldEnable) {
+      this._lastLightweightTheme = currentLWT;
       AddonManager.getAddonByID(DEFAULT_THEME_ID, function(aDefaultTheme) {
         // Theoretically, this could race if people are /very/ quick in switching
         // something else here, so doublecheck:
-        if (button.hasAttribute("checked")) {
+        if (Services.prefs.getBoolPref(kDeveditionThemePref)) {
           aDefaultTheme.userDisabled = false;
         }
       });
-    } else if (!LightweightThemeManager.currentTheme && !shouldEnable &&
-               this._lastLightWeightTheme) {
-      LightweightThemeManager.currentTheme = this._lastLightWeightTheme;
+    } else if (!currentLWT && !shouldEnable && this._lastLightweightTheme) {
+      LightweightThemeManager.currentTheme = this._lastLightweightTheme;
     }
   },
 
@@ -1944,8 +1944,14 @@ CustomizeMode.prototype = {
       aEvent.dataTransfer.mozGetDataAt(kDragDataTypePrefix + documentId, 0);
 
     let draggedWrapper = document.getElementById("wrapper-" + draggedItemId);
-    draggedWrapper.hidden = false;
-    draggedWrapper.removeAttribute("mousedown");
+
+    // DraggedWrapper might no longer available if a widget node is
+    // destroyed after starting (but before stopping) a drag.
+    if (draggedWrapper) {
+      draggedWrapper.hidden = false;
+      draggedWrapper.removeAttribute("mousedown");
+    }
+
     if (this._dragOverItem) {
       this._cancelDragActive(this._dragOverItem);
       this._dragOverItem = null;

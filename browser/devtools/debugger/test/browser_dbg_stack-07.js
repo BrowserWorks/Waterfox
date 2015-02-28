@@ -9,13 +9,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources, gFrames, gClassicFrames, gToolbar;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -25,29 +24,29 @@ function test() {
     gToolbar = gDebugger.DebuggerView.Toolbar;
 
     waitForSourceAndCaretAndScopes(gPanel, "-02.js", 1).then(performTest);
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 }
 
 function performTest() {
   return Task.spawn(function() {
     yield selectBottomFrame();
-    testBottomFrame(0);
+    testBottomFrame(4);
 
     yield performStep("StepOver");
-    testTopFrame(3);
+    testTopFrame(1);
 
     yield selectBottomFrame();
     testBottomFrame(4);
 
     yield performStep("StepIn");
-    testTopFrame(2);
+    testTopFrame(1);
 
     yield selectBottomFrame();
     testBottomFrame(4);
 
     yield performStep("StepOut");
-    testTopFrame(2);
+    testTopFrame(1);
 
     yield resumeDebuggerThenCloseAndFinish(gPanel);
   });
@@ -91,14 +90,13 @@ function performTest() {
       "The second source is now selected in the widget.");
     is(gEditor.getText().search(/firstCall/), -1,
       "The second source is displayed.");
-    is(gEditor.getText().search(/debugger/), 172,
+    is(gEditor.getText().search(/debugger/), 166,
       "The first source is not displayed.");
   }
 }
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

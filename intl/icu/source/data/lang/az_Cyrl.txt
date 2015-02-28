@@ -23,5 +23,8 @@ az_Cyrl{
         ru{"русҹа"}
         zh{"чинҹә"}
     }
-    Version{"2.1.6.69"}
+    Scripts{
+        Cyrl{"Кирил"}
+    }
+    Version{"2.1.10.34"}
 }

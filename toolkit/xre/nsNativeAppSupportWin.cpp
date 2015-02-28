@@ -251,12 +251,12 @@ private:
  *    WWW_OpenURL topic and the params as specified in the default value of the
  *    ddeexec registry key (e.g. "%1",,0,0,,,, where '%1' is the url to open)
  *    for the verb (e.g. open).
- * 2. If the application is not running it is launched with the -requestPending
- *    and the -url argument.
- * 2.1  If the application does not need to restart and the -requestPending
+ * 2. If the application is not running it is launched with the --requestPending
+ *    and the --url argument.
+ * 2.1  If the application does not need to restart and the --requestPending
  *      argument is present the accompanying url will not be used. Instead the
  *      application will wait for the DDE message to open the url.
- * 2.2  If the application needs to restart the -requestPending argument is
+ * 2.2  If the application needs to restart the --requestPending argument is
  *      removed from the arguments used to restart the application and the url
  *      will be handled normally.
  *
@@ -278,7 +278,7 @@ public:
     // The "old" Start method (renamed).
     NS_IMETHOD StartDDE();
     // Utility function to handle a Win32-specific command line
-    // option: "-console", which dynamically creates a Windows
+    // option: "--console", which dynamically creates a Windows
     // console.
     void CheckConsole();
 
@@ -332,10 +332,45 @@ NS_IMPL_ADDREF_INHERITED(nsNativeAppSupportWin, nsNativeAppSupportBase)
 NS_IMPL_RELEASE_INHERITED(nsNativeAppSupportWin, nsNativeAppSupportBase)
 
 void
+UseParentConsole()
+{
+    // Try to attach console to the parent process.
+    // It will succeed when the parent process is a command line,
+    // so that stdio will be displayed in it.
+    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+        // Change std handles to refer to new console handles.
+        // Before doing so, ensure that stdout/stderr haven't been
+        // redirected to a valid file.
+        // The return value for _fileno(<a std handle>) for GUI apps was changed over.
+        // Until VC7, it was -1. Starting from VC8, it was changed to -2.
+        // http://msdn.microsoft.com/en-us/library/zs6wbdhx%28v=vs.80%29.aspx
+        // Starting from VC11, the return value was cahnged to 0 for stdin,
+        // 1 for stdout, 2 for stdout. Accroding to Microsoft, this is a bug
+        // which will be fixed in VC14.
+        // https://connect.microsoft.com/VisualStudio/feedback/details/785119/
+        // Although the document does not make it explicit, it looks like
+        // the return value from _get_osfhandle(_fileno(<a std handle>)) also
+        // changed to -2 and VC11 and 12 do not have a bug about _get_osfhandle().
+        // We support VC10 or later, so it's sufficient to compare the return
+        // value with -2.
+        if (_fileno(stdout) == -2 ||
+            _get_osfhandle(fileno(stdout)) == -2)
+            freopen("CONOUT$", "w", stdout);
+        // Merge stderr into CONOUT$ since there isn't any `CONERR$`.
+        // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683231%28v=vs.85%29.aspx
+        if (_fileno(stderr) == -2 ||
+            _get_osfhandle(fileno(stderr)) == -2)
+            freopen("CONOUT$", "w", stderr);
+        if (_fileno(stdin) == -2 || _get_osfhandle(fileno(stdin)) == -2)
+            freopen("CONIN$", "r", stdin);
+    }
+}
+
+void
 nsNativeAppSupportWin::CheckConsole() {
     for ( int i = 1; i < gArgc; i++ ) {
-        if ( strcmp( "-console", gArgv[i] ) == 0
-             ||
+        if ( strcmp( "-console", gArgv[i] ) == 0 ||
+             strcmp( "--console", gArgv[i] ) == 0 ||
              strcmp( "/console", gArgv[i] ) == 0 ) {
             // Users wants to make sure we have a console.
             // Try to allocate one.
@@ -396,24 +431,7 @@ nsNativeAppSupportWin::CheckConsole() {
         } else if ( strcmp( "-attach-console", gArgv[i] ) == 0
                     ||
                     strcmp( "/attach-console", gArgv[i] ) == 0 ) {
-            // Try to attach console to the parent process.
-            // It will succeed when the parent process is a command line,
-            // so that stdio will be displayed in it.
-            if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-                // Change std handles to refer to new console handles.
-                // Before doing so, ensure that stdout/stderr haven't been
-                // redirected to a valid file
-                if (_fileno(stdout) == -1 ||
-                    _get_osfhandle(fileno(stdout)) == -1)
-                    freopen("CONOUT$", "w", stdout);
-                // Merge stderr into CONOUT$ since there isn't any `CONERR$`.
-                // http://msdn.microsoft.com/en-us/library/windows/desktop/ms683231%28v=vs.85%29.aspx
-                if (_fileno(stderr) == -1 ||
-                    _get_osfhandle(fileno(stderr)) == -1)
-                    freopen("CONOUT$", "w", stderr);
-                if (_fileno(stdin) == -1 || _get_osfhandle(fileno(stdin)) == -1)
-                    freopen("CONIN$", "r", stdin);
-            }
+            UseParentConsole();
         }
     }
 

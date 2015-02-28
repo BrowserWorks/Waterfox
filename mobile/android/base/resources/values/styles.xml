@@ -127,6 +127,25 @@
         <item name="android:ellipsize">middle</item>
     </style>
 
+    <style name="Widget.ReadingListRow" />
+
+    <style name="Widget.ReadingListRow.Title">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemTitle</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="Widget.ReadingListRow.Description">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemDescription</item>
+        <item name="android:maxLines">3</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
+
+    <style name="Widget.ReadingListRow.ReadTime">
+        <item name="android:textColor">@color/text_color_highlight</item>
+    </style>
+
     <style name="Widget.BookmarkFolderView" parent="Widget.TwoLinePageRow.Title">
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">none</item>
@@ -183,8 +202,9 @@
         <item name="android:numColumns">auto_fit</item>
         <item name="android:columnWidth">@dimen/tabs_grid_view_column_width</item>
         <item name="android:horizontalSpacing">2dp</item>
-        <item name="android:verticalSpacing">2dp</item>
+        <item name="android:verticalSpacing">@dimen/new_tablet_tab_panel_grid_vspacing</item>
         <item name="android:drawSelectorOnTop">true</item>
+        <item name="android:clipToPadding">false</item>
     </style>
 
     <style name="Widget.BookmarkItemView" parent="Widget.TwoLinePageRow"/>
@@ -325,6 +345,10 @@
 
     <style name="TextAppearance.EmptyMessage" parent="TextAppearance.Large"/>
 
+    <style name="TextAppearance.EmptyHint" parent="TextAppearance.Medium">
+        <item name="android:textColor">#FFA62F</item>
+    </style>
+
     <style name="TextAppearance.Micro">
         <item name="android:textSize">12sp</item>
         <item name="android:textColor">?android:attr/textColorTertiary</item>
@@ -461,13 +485,13 @@
          <item name="android:layout_weight">0.0</item>
     </style>
 
-    <!-- TabsTray List -->
-    <style name="TabsListBase">
+    <!-- TabsLayout -->
+    <style name="TabsLayoutBase">
          <item name="android:background">@android:color/transparent</item>
          <item name="android:listSelector">@android:color/transparent</item>
     </style>
 
-    <style name="TabsList" parent="TabsListBase">
+    <style name="TabsLayout" parent="TabsLayoutBase">
          <item name="android:orientation">vertical</item>
          <item name="android:scrollbars">vertical</item>
     </style>
@@ -478,16 +502,6 @@
 
     <style name="TabsItemClose">
          <item name="android:nextFocusLeft">@+id/info</item>
-    </style>
-
-    <!-- RemoteTabsList -->
-    <style name="RemoteTabsList" parent="android:style/Widget.ListView">
-         <item name="android:listSelector">@android:color/transparent</item>
-         <item name="android:cacheColorHint">@android:color/transparent</item>
-         <item name="android:divider">@android:color/transparent</item>
-         <item name="android:dividerHeight">1dip</item>
-         <item name="android:childDivider">@drawable/remote_tabs_child_divider</item>
-         <item name="android:groupIndicator">@android:color/transparent</item>
     </style>
 
     <!-- Tabs panel -->
@@ -596,15 +610,15 @@
         <item name="android:drawSelectorOnTop">true</item>
     </style>
 
-    <!-- TabsTray Row -->
-    <style name="TabRowTextAppearance">
+    <!-- TabsLayout Row -->
+    <style name="TabLayoutItemTextAppearance">
         <item name="android:textColor">#FFFFFFFF</item>
         <item name="android:singleLine">true</item>
         <item name="android:ellipsize">middle</item>
     </style>
 
-    <!-- TabsTray RemoteTabs Row Url -->
-    <style name="TabRowTextAppearance.Url">
+    <!-- TabsLayout RemoteTabs Row Url -->
+    <style name="TabLayoutItemTextAppearance.Url">
         <item name="android:textColor">#FFA4A7A9</item>
     </style>
 
@@ -737,7 +751,7 @@
     </style>
 
     <style name="GeckoActionBar">
-        <item name="android:background">@drawable/ab_stacked_transparent_light_holo</item>
+        <item name="android:background">@drawable/ab_background</item>
     </style>
 
     <style name="GeckoActionBar.Title">

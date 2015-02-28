@@ -10,7 +10,12 @@
  * ICU <specials> source: <path>/common/main/lt.xml
  */
 lt{
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
+    durationUnits{
+        hm{"hh:mm"}
+        hms{"hh:mm:ss"}
+        ms{"mm:ss"}
+    }
     units{
         acceleration{
             g-force{

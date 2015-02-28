@@ -21,6 +21,8 @@ Cu.import("resource://gre/modules/TelemetryPing.jsm", this);
 Cu.import("resource://gre/modules/TelemetryFile.jsm", this);
 Cu.import("resource://gre/modules/Task.jsm", this);
 Cu.import("resource://gre/modules/Promise.jsm", this);
+Cu.import("resource://gre/modules/Preferences.jsm");
+Cu.import("resource://gre/modules/osfile.jsm", this);
 
 const IGNORE_HISTOGRAM = "test::ignore_me";
 const IGNORE_HISTOGRAM_TO_CLONE = "MEMORY_HEAP_ALLOCATED";
@@ -88,8 +90,9 @@ function setupTestData() {
   Telemetry.newHistogram(IGNORE_HISTOGRAM, "never", Telemetry.HISTOGRAM_BOOLEAN);
   Telemetry.histogramFrom(IGNORE_CLONED_HISTOGRAM, IGNORE_HISTOGRAM_TO_CLONE);
   Services.startup.interrupted = true;
-  Telemetry.registerAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM, 1, 5, 6,
-                                   Telemetry.HISTOGRAM_LINEAR);
+  Telemetry.registerAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM,
+                                   Telemetry.HISTOGRAM_LINEAR,
+                                   1, 5, 6);
   let h1 = Telemetry.getAddonHistogram(ADDON_NAME, ADDON_HISTOGRAM);
   h1.add(1);
   let h2 = Telemetry.getHistogramById("TELEMETRY_TEST_COUNT");
@@ -495,6 +498,12 @@ add_task(function* asyncSetup() {
 
   if ("@mozilla.org/datareporting/service;1" in Cc) {
     gDataReportingClientID = yield gDatareportingService.getClientID();
+
+    // We should have cached the client id now. Lets confirm that by
+    // checking the client id before the async ping setup is finished.
+    let promisePingSetup = TelemetryPing.reset();
+    do_check_eq(TelemetryPing.clientID, gDataReportingClientID);
+    yield promisePingSetup;
   }
 });
 
@@ -582,6 +591,20 @@ add_task(function* test_runOldPingFile() {
 
   yield TelemetryPing.testLoadHistograms(histogramsFile);
   do_check_false(histogramsFile.exists());
+});
+
+add_task(function* test_savedSessionClientID() {
+  // Assure that we store the ping properly when saving sessions on shutdown.
+  // We make the TelemetryPings shutdown to trigger a session save.
+  const dir = TelemetryFile.pingDirectoryPath;
+  yield OS.File.removeDir(dir, {ignoreAbsent: true});
+  yield OS.File.makeDir(dir);
+  yield TelemetryPing.shutdown();
+
+  yield TelemetryFile.loadSavedPings();
+  Assert.equal(TelemetryFile.pingsLoaded, 1);
+  let ping = TelemetryFile.popPendingPings().next();
+  Assert.equal(ping.value.payload.clientID, gDataReportingClientID);
 });
 
 add_task(function* stopServer(){

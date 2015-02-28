@@ -136,7 +136,7 @@ static int32_t
 usprep_internal_flushCache(UBool noRefCount){
     UStringPrepProfile *profile = NULL;
     UStringPrepKey  *key  = NULL;
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     int32_t deletedNum = 0;
     const UHashElement *e;
 

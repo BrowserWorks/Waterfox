@@ -11,7 +11,7 @@ en_SS{
     Currencies{
         GBP{
             "GB£",
-            "British Pound Sterling",
+            "British Pound",
         }
         SSP{
             "£",

@@ -18,6 +18,7 @@
 
 #include "gc/GCInternals.h"
 #include "gc/Marking.h"
+#include "gc/Zone.h"
 
 #include "vm/Symbol.h"
 
@@ -119,6 +120,38 @@ JS_TraceRuntime(JSTracer *trc)
     TraceRuntime(trc);
 }
 
+JS_PUBLIC_API(void)
+JS_TraceIncomingCCWs(JSTracer *trc, const JS::ZoneSet &zones)
+{
+    for (js::ZonesIter z(trc->runtime(), SkipAtoms); !z.done(); z.next()) {
+        Zone *zone = z.get();
+        if (!zone || zones.has(zone))
+            continue;
+
+        for (js::CompartmentsInZoneIter c(zone); !c.done(); c.next()) {
+            JSCompartment *comp = c.get();
+            if (!comp)
+                continue;
+
+            for (JSCompartment::WrapperEnum e(comp); !e.empty(); e.popFront()) {
+                const CrossCompartmentKey &key = e.front().key();
+                // StringWrappers are just used to avoid copying strings across
+                // zones multiple times, and don't hold a strong reference.
+                if (key.kind == CrossCompartmentKey::StringWrapper)
+                    continue;
+                JSObject *obj = static_cast<JSObject *>(key.wrapped);
+                // Ignore CCWs whose wrapped value doesn't live in our given set
+                // of zones.
+                if (!zones.has(obj->zone()))
+                    continue;
+
+                MarkObjectUnbarriered(trc, &obj, "cross-compartment wrapper");
+                MOZ_ASSERT(obj == key.wrapped);
+            }
+        }
+    }
+}
+
 static size_t
 CountDecimalDigits(size_t num)
 {
@@ -204,7 +237,7 @@ JS_GetTraceThingInfo(char *buf, size_t bufsize, JSTracer *trc, void *thing,
                     PutEscapedString(buf, bufsize, fun->displayAtom(), 0);
                 }
             } else if (obj->getClass()->flags & JSCLASS_HAS_PRIVATE) {
-                JS_snprintf(buf, bufsize, " %p", obj->fakeNativeGetPrivate());
+                JS_snprintf(buf, bufsize, " %p", obj->as<NativeObject>().getPrivate());
             } else {
                 JS_snprintf(buf, bufsize, " <no private>");
             }

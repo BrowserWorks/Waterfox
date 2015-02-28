@@ -5,37 +5,38 @@
 
 #include "WebGLVertexArray.h"
 
-#include "WebGLContext.h"
+#include "GLContext.h"
+#include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "WebGLBuffer.h"
+#include "WebGLContext.h"
 #include "WebGLVertexArrayGL.h"
 #include "WebGLVertexArrayFake.h"
-#include "mozilla/dom/WebGLRenderingContextBinding.h"
-#include "GLContext.h"
 
-using namespace mozilla;
+namespace mozilla {
 
 JSObject*
-WebGLVertexArray::WrapObject(JSContext *cx) {
+WebGLVertexArray::WrapObject(JSContext* cx)
+{
     return dom::WebGLVertexArrayBinding::Wrap(cx, this);
 }
 
-WebGLVertexArray::WebGLVertexArray(WebGLContext* context)
-    : WebGLBindableName<VAOBinding>()
-    , WebGLContextBoundObject(context)
+WebGLVertexArray::WebGLVertexArray(WebGLContext* webgl)
+    : WebGLBindable<VAOBinding>()
+    , WebGLContextBoundObject(webgl)
+    , mGLName(0)
 {
-    context->mVertexArrays.insertBack(this);
+    mContext->mVertexArrays.insertBack(this);
 }
 
 WebGLVertexArray*
-WebGLVertexArray::Create(WebGLContext* context)
+WebGLVertexArray::Create(WebGLContext* webgl)
 {
     WebGLVertexArray* array;
-    if (context->gl->IsSupported(gl::GLFeature::vertex_array_object)) {
-        array = new WebGLVertexArrayGL(context);
+    if (webgl->gl->IsSupported(gl::GLFeature::vertex_array_object)) {
+        array = new WebGLVertexArrayGL(webgl);
     } else {
-        array = new WebGLVertexArrayFake(context);
+        array = new WebGLVertexArrayFake(webgl);
     }
-
     return array;
 }
 
@@ -49,29 +50,21 @@ WebGLVertexArray::Delete()
     mAttribs.Clear();
 }
 
-bool
-WebGLVertexArray::EnsureAttrib(GLuint index, const char *info)
+void
+WebGLVertexArray::EnsureAttrib(GLuint index)
 {
-    if (index >= GLuint(mContext->mGLMaxVertexAttribs)) {
-        if (index == GLuint(-1)) {
-            mContext->ErrorInvalidValue("%s: index -1 is invalid. That probably comes from a getAttribLocation() call, "
-                                        "where this return value -1 means that the passed name didn't correspond to an active attribute in "
-                                        "the specified program.", info);
-        } else {
-            mContext->ErrorInvalidValue("%s: index %d is out of range", info, index);
-        }
-        return false;
-    }
-    else if (index >= mAttribs.Length()) {
+    MOZ_ASSERT(index < GLuint(mContext->mGLMaxVertexAttribs));
+
+    if (index >= mAttribs.Length()) {
         mAttribs.SetLength(index + 1);
     }
-
-    return true;
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(WebGLVertexArray,
-  mAttribs,
-  mElementArrayBuffer)
+                                      mAttribs,
+                                      mElementArrayBuffer)
 
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLVertexArray, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLVertexArray, Release)
+
+} // namespace mozilla

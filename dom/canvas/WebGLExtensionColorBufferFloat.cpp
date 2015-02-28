@@ -8,12 +8,12 @@
 #include "mozilla/dom/WebGLRenderingContextBinding.h"
 #include "WebGLContext.h"
 
-using namespace mozilla;
+namespace mozilla {
 
-WebGLExtensionColorBufferFloat::WebGLExtensionColorBufferFloat(WebGLContext* context)
-    : WebGLExtensionBase(context)
+WebGLExtensionColorBufferFloat::WebGLExtensionColorBufferFloat(WebGLContext* webgl)
+    : WebGLExtensionBase(webgl)
 {
-    MOZ_ASSERT(IsSupported(context));
+    MOZ_ASSERT(IsSupported(webgl), "Don't construct extension if unsupported.");
 }
 
 WebGLExtensionColorBufferFloat::~WebGLExtensionColorBufferFloat()
@@ -21,10 +21,17 @@ WebGLExtensionColorBufferFloat::~WebGLExtensionColorBufferFloat()
 }
 
 bool
-WebGLExtensionColorBufferFloat::IsSupported(const WebGLContext* context)
+WebGLExtensionColorBufferFloat::IsSupported(const WebGLContext* webgl)
 {
-    return context->GL()->IsSupported(gl::GLFeature::renderbuffer_color_float) &&
-           context->GL()->IsSupported(gl::GLFeature::frag_color_float);
+    gl::GLContext* gl = webgl->GL();
+
+    // ANGLE supports this, but doesn't have a way to advertize its support,
+    // since it's compliant with WEBGL_color_buffer_float's clamping, but not
+    // EXT_color_buffer_float.
+    return gl->IsSupported(gl::GLFeature::renderbuffer_color_float) ||
+           gl->IsANGLE();
 }
 
 IMPL_WEBGL_EXTENSION_GOOP(WebGLExtensionColorBufferFloat)
+
+} // namespace mozilla

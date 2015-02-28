@@ -25,6 +25,9 @@ EXPORTS.mozilla.dom += [
     'TextMetrics.h',
 ]
 
+# http://support.microsoft.com/kb/143208
+DEFINES['NOMINMAX'] = True
+
 # Canvas 2D and common sources
 UNIFIED_SOURCES += [
     'CanvasImageCache.cpp',
@@ -55,7 +58,6 @@ UNIFIED_SOURCES += [
     'WebGLActiveInfo.cpp',
     'WebGLBuffer.cpp',
     'WebGLContext.cpp',
-    'WebGLContextAsyncQueries.cpp',
     'WebGLContextBuffers.cpp',
     'WebGLContextDraw.cpp',
     'WebGLContextExtensions.cpp',
@@ -64,6 +66,7 @@ UNIFIED_SOURCES += [
     'WebGLContextLossHandler.cpp',
     'WebGLContextReporter.cpp',
     'WebGLContextState.cpp',
+    'WebGLContextUnchecked.cpp',
     'WebGLContextUtils.cpp',
     'WebGLContextValidate.cpp',
     'WebGLContextVertexArray.cpp',
@@ -124,11 +127,11 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
-    '/content/base/src',
-    '/content/html/content/src',
-    '/content/svg/content/src',
-    '/content/xul/content/src',
     '/dom/base',
+    '/dom/html',
+    '/dom/svg',
+    '/dom/xul',
+    '/gfx/gl',
     '/image/src',
     '/js/xpconnect/src',
     '/layout/generic',

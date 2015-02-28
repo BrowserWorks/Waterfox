@@ -281,17 +281,28 @@ exports["test Hide Before Show"] = function(assert, done) {
   const { Panel } = require('sdk/panel');
 
   let showCalled = false;
-  let panel = Panel({
+  let hideCalled = false;
+  let panel1 = Panel({
     onShow: function () {
       showCalled = true;
     },
     onHide: function () {
-      assert.ok(!showCalled, 'must not emit show if was hidden before');
-      done();
+      hideCalled = true;
     }
   });
-  panel.show();
-  panel.hide();
+  panel1.show();
+  panel1.hide();
+
+  let panel2 = Panel({
+    onShow: function () {
+      assert.ok(!showCalled, 'should not emit show');
+      assert.ok(!hideCalled, 'should not emit hide');
+      panel1.destroy();
+      panel2.destroy();
+      done();
+    },
+  });
+  panel2.show();
 };
 
 exports["test Several Show Hides"] = function(assert, done) {
@@ -664,7 +675,7 @@ exports["test console.log in Panel"] = function(assert, done) {
   }
 };
 
-if (isWindowPBSupported) {
+/*if (isWindowPBSupported) {
   exports.testPanelDoesNotShowInPrivateWindowNoAnchor = function(assert, done) {
     let { loader } = LoaderWithHookedConsole(module, ignorePassingDOMNodeWarning);
     let { Panel } = loader.require("sdk/panel");
@@ -772,7 +783,7 @@ if (isWindowPBSupported) {
       then(testShowPanel.bind(null, assert, panel)).
       then(done, assert.fail.bind(assert));
   }
-}
+}*/
 
 function testShowPanel(assert, panel) {
   let { promise, resolve } = defer();
@@ -1275,6 +1286,64 @@ exports["test panel addon global object"] = function*(assert) {
   yield wait(panel.port, "document-to-addon");
 
   assert.pass("Received an event from the document");
+
+  loader.unload();
+}
+
+exports["test panel load doesn't show"] = function*(assert) {
+  let loader = Loader(module);
+
+  let panel = loader.require("sdk/panel").Panel({
+    contentScript: "addEventListener('load', function(event) { self.postMessage('load'); });",
+    contentScriptWhen: "start",
+    contentURL: "data:text/html;charset=utf-8,",
+  });
+
+  let shown = defer();
+  let messaged = defer();
+
+  panel.once("show", function() {
+    shown.resolve();
+  });
+
+  panel.once("message", function() {
+    messaged.resolve();
+  });
+
+  panel.show();
+  yield all([shown.promise, messaged.promise]);
+  assert.ok(true, "Saw panel display");
+
+  panel.on("show", function() {
+    assert.fail("Should not have seen another show event")
+  });
+
+  messaged = defer();
+  panel.once("message", function() {
+    assert.ok(true, "Saw panel reload");
+    messaged.resolve();
+  });
+
+  panel.contentURL = "data:text/html;charset=utf-8,<html/>";
+
+  yield messaged.promise;
+  loader.unload();
+}
+
+exports["test Panel without contentURL and contentScriptWhen=start should show"] = function*(assert) {
+  let loader = Loader(module);
+
+  let panel = loader.require("sdk/panel").Panel({
+    contentScriptWhen: "start",
+    // No contentURL, the bug only shows up when contentURL is not explicitly set.
+  });
+
+  yield new Promise(resolve => {
+    panel.once("show", resolve);
+    panel.show();
+  });
+
+  assert.pass("Received show event");
 
   loader.unload();
 }

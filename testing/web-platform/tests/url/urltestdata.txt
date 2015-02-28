@@ -27,10 +27,10 @@ http://f:\s21\s/\sb\s?\sd\s#\se\s
 :/  s:http h:example.org p:/foo/:/
 :\\  s:http h:example.org p:/foo/:/
 :#  s:http h:example.org p:/foo/: f:#
-#  s:http h:example.org p:/foo/bar f:#
-#/  s:http h:example.org p:/foo/bar f:#/
-#\\  s:http h:example.org p:/foo/bar f:#\\
-#;?  s:http h:example.org p:/foo/bar f:#;?
+\#  s:http h:example.org p:/foo/bar f:#
+\#/  s:http h:example.org p:/foo/bar f:#/
+\#\\  s:http h:example.org p:/foo/bar f:#\\
+\#;?  s:http h:example.org p:/foo/bar f:#;?
 ?  s:http h:example.org p:/foo/bar q:?
 /  s:http h:example.org p:/
 :23  s:http h:example.org p:/foo/:23
@@ -91,13 +91,21 @@ mailto:example.com/  s:mailto p:example.com/
 /a/\s/c  s:http h:example.org p:/a/%20/c
 /a%2fc  s:http h:example.org p:/a%2fc
 /a/%2f/c  s:http h:example.org p:/a/%2f/c
-#\u03B2  s:http h:example.org p:/foo/bar f:#\u03B2
+\#\u03B2  s:http h:example.org p:/foo/bar f:#%CE%B2
 data:text/html,test#test  s:data p:text/html,test f:#test
 
 # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/file.html
+
+# Basic canonicalization, uppercase should be converted to lowercase
 file:c:\\foo\\bar.html file:///tmp/mock/path s:file p:/c:/foo/bar.html
+
+# Spaces should fail
 \s\sFile:c|////foo\\bar.html  s:file p:/c:////foo/bar.html
+
+# This should fail
 C|/foo/bar  s:file p:/C:/foo/bar
+
+# This should fail
 /C|\\foo\\bar  s:file p:/C:/foo/bar
 //C|/foo/bar  s:file p:/C:/foo/bar
 //server/file  s:file h:server p:/file
@@ -158,7 +166,7 @@ http://www.google.com/foo?bar=baz# about:blank s:http h:www.google.com p:/foo q:
 http://www.google.com/foo?bar=baz#\s\u00BB  s:http h:www.google.com p:/foo q:?bar=baz f:#\s%C2%BB
 http://[www.google.com]/
 http://www.google.com  s:http h:www.google.com p:/
-http://192.0x00A80001  s:http h:192.0x00a80001 p:/
+http://192.0x00A80001  s:http h:192.168.0.1 p:/
 http://www/foo%2Ehtml  s:http h:www p:/foo%2Ehtml
 http://www/foo/%2E/html  s:http h:www p:/foo/html
 http://user:pass@/
@@ -248,6 +256,7 @@ test.txt  s:http h:www.example.com p:/test.txt
 ../../test.txt  s:http h:www.example.com p:/test.txt
 \u4E2D/test.txt  s:http h:www.example.com p:/%E4%B8%AD/test.txt
 http://www.example2.com  s:http h:www.example2.com p:/
+//www.example2.com  s:http h:www.example2.com p:/
 
 # Based on http://trac.webkit.org/browser/trunk/LayoutTests/fast/url/host.html
 
@@ -260,21 +269,24 @@ http://example\sexample.com
 # This should fail
 http://Goo%20\sgoo%7C|.com
 
-# This should fail
+# U+3000 is mapped to U+0020 (space) which is disallowed
 http://GOO\u00a0\u3000goo.com
 
 # Other types of space (no-break, zero-width, zero-width-no-break) are
 # name-prepped away to nothing.
+# U+200B, U+2060, and U+FEFF, are ignored
 http://GOO\u200b\u2060\ufeffgoo.com  s:http p:/ h:googoo.com
 
 # Ideographic full stop (full-width period for Chinese, etc.) should be
 # treated as a dot.
+# U+3002 is mapped to U+002E (dot)
 http://www.foo\u3002bar.com  s:http p:/ h:www.foo.bar.com
 
 # Invalid unicode characters should fail...
+# U+FDD0 is disallowed; %ef%b7%90 is U+FDD0
 http://\ufdd0zyx.com
 
-# ...This is the same as previous but with with escaped.
+# ...This is the same as previous but escaped.
 http://%ef%b7%90zyx.com
 
 # Test name prepping, fullwidth input should be converted to ASCII and NOT
@@ -302,8 +314,10 @@ http://%25
 http://hello%00
 
 # Escaped numbers should be treated like IP addresses if they are.
-http://%30%78%63%30%2e%30%32%35%30.01  s:http p:/ h:127.0.0.1
-http://%30%78%63%30%2e%30%32%35%30.01%2e
+# No special handling for IPv4 or IPv4-like URLs
+http://%30%78%63%30%2e%30%32%35%30.01  s:http p:/ h:192.168.0.1
+http://%30%78%63%30%2e%30%32%35%30.01%2e  s:http p:/ h:0xc0.0250.01.
+http://192.168.0.257
 
 # Invalid escaping should trigger the regular host error handling.
 http://%3g%78%63%30%2e%30%32%35%30%2E.01
@@ -316,6 +330,11 @@ http://192.168.0.1\shello
 # These are "0Xc0.0250.01" in fullwidth.
 http://\uff10\uff38\uff43\uff10\uff0e\uff10\uff12\uff15\uff10\uff0e\uff10\uff11  s:http p:/ h:192.168.0.1
 
-# Broken IP addresses.
-http://192.168.0.257
+# Broken IPv6
 http://[google.com]
+
+# Misc Unicode
+http://foo:\uD83D\uDCA9@example.com/bar  s:http h:example.com p:/bar u:foo pass:%F0%9F%92%A9
+
+# resolving a relative reference against an unknown scheme results in an error
+x test:test

@@ -136,6 +136,10 @@
         ""
       </field>
 
+      <field name="_contentWaitingCount">
+        0
+      </field>
+
       <property name="_numPinnedTabs" readonly="true">
         <getter><![CDATA[
           for (var i = 0; i < this.tabs.length; i++) {
@@ -1095,6 +1099,7 @@
             }
 
             if (!this._previewMode) {
+              this.mCurrentTab.lastAccessed = Infinity;
               this.mCurrentTab.removeAttribute("unread");
               oldTab.lastAccessed = Date.now();
 
@@ -1180,8 +1185,15 @@
                   findBar._findField.getAttribute("focused") == "true");
               }
 
+              // If focus is in the tab bar, retain it there.
+              if (document.activeElement == oldTab) {
+                // We need to explicitly focus the new tab, because
+                // tabbox.xml does this only in some cases.
+                this.mCurrentTab.focus();
+              }
+
               if (!gMultiProcessBrowser)
-                this._adjustFocusAfterTabSwitch(this.mCurrentTab, oldTab);
+                this._adjustFocusAfterTabSwitch(this.mCurrentTab);
             }
 
             this.tabContainer._setPositionalAttributes();
@@ -1194,17 +1206,12 @@
 
       <method name="_adjustFocusAfterTabSwitch">
         <parameter name="newTab"/>
-        <parameter name="oldTab"/>
         <body><![CDATA[
         let newBrowser = this.getBrowserForTab(newTab);
 
-        // When focus is in the tab bar, retain it there.
-        if (document.activeElement == oldTab) {
-          // We need to explicitly focus the new tab, because
-          // tabbox.xml does this only in some cases.
-          this.mCurrentTab.focus();
+        // Don't steal focus from the tab bar.
+        if (document.activeElement == newTab)
           return;
-        }
 
         // If there's a tabmodal prompt showing, focus it.
         if (newBrowser.hasAttribute("tabmodalPromptShowing")) {
@@ -1465,6 +1472,8 @@
             let index = tab._tPos;
             let filter = this.mTabFilters[index];
             aBrowser.webProgress.removeProgressListener(filter);
+            // Make sure the browser is destroyed so it unregisters from observer notifications
+            aBrowser.destroy();
 
             // Change the "remote" attribute.
             let parent = aBrowser.parentNode;
@@ -1479,10 +1488,12 @@
             // Restore the progress listener.
             aBrowser.webProgress.addProgressListener(filter, Ci.nsIWebProgress.NOTIFY_ALL);
 
-            if (aShouldBeRemote)
+            if (aShouldBeRemote) {
               tab.setAttribute("remote", "true");
-            else
+            } else {
               tab.removeAttribute("remote");
+              aBrowser.messageManager.sendAsyncMessage("Browser:AppTab", { isAppTab: tab.pinned })
+            }
 
             if (wasActive)
               aBrowser.focus();
@@ -1630,6 +1641,7 @@
             t.linkedBrowser = b;
             this._tabForBrowser.set(b, t);
             t._tPos = position;
+            t.lastAccessed = Date.now();
             this.tabContainer._setPositionalAttributes();
 
             // Prevent the superfluous initial load of a blank document
@@ -2559,15 +2571,6 @@
             if (this.tabs.length == 1)
               return null;
 
-            let event = new CustomEvent("TabBecomingWindow", {
-              bubbles: true,
-              cancelable: true
-            });
-            aTab.dispatchEvent(event);
-            if (event.defaultPrevented) {
-              return null;
-            }
-
             var options = "chrome,dialog=no,all";
             for (var name in aOptions)
               options += "," + name + "=" + aOptions[name];
@@ -2832,18 +2835,16 @@
 
       <method name="attachFormFill">
         <body><![CDATA[
-          for (var i = 0; i < this.mPanelContainer.childNodes.length; ++i) {
-            var cb = this.getBrowserAtIndex(i);
-            cb.attachFormFill();
+          for (let browser of this.browsers) {
+            browser.attachFormFill();
           }
         ]]></body>
       </method>
 
       <method name="detachFormFill">
         <body><![CDATA[
-          for (var i = 0; i < this.mPanelContainer.childNodes.length; ++i) {
-            var cb = this.getBrowserAtIndex(i);
-            cb.detachFormFill();
+          for (let browser of this.browsers) {
+            browser.detachFormFill();
           }
         ]]></body>
       </method>
@@ -3079,10 +3080,13 @@
               let spellInfo = aMessage.data.spellInfo;
               if (spellInfo)
                 spellInfo.target = aMessage.target.messageManager;
-              gContextMenuContentData = { event: aMessage.objects.event,
+              gContextMenuContentData = { isRemote: true,
+                                          event: aMessage.objects.event,
+                                          popupNode: aMessage.objects.popupNode,
                                           browser: browser,
                                           editFlags: aMessage.data.editFlags,
-                                          spellInfo: spellInfo };
+                                          spellInfo: spellInfo,
+                                          addonInfo: aMessage.data.addonInfo };
               let popup = browser.ownerDocument.getElementById("contentAreaContextMenu");
               let event = gContextMenuContentData.event;
               let pos = browser.mapScreenCoordinatesFromContent(event.screenX, event.screenY);
@@ -3095,6 +3099,13 @@
                 return;
               this.selectedTab = tab;
               window.focus();
+              break;
+            }
+            case "Browser:Init": {
+              let tab = this.getTabForBrowser(browser);
+              if (!tab)
+                return;
+              browser.messageManager.sendAsyncMessage("Browser:AppTab", { isAppTab: tab.pinned })
               break;
             }
           }
@@ -3120,6 +3131,7 @@
           this.mCurrentTab.linkedPanel = uniqueId;
           this.mCurrentTab._tPos = 0;
           this.mCurrentTab._fullyOpen = true;
+          this.mCurrentTab.lastAccessed = Infinity;
           this.mCurrentTab.linkedBrowser = this.mCurrentBrowser;
           this._tabForBrowser.set(this.mCurrentBrowser, this.mCurrentTab);
 
@@ -3154,6 +3166,7 @@
             messageManager.addMessageListener("DOMTitleChanged", this);
             messageManager.addMessageListener("DOMWindowClose", this);
             messageManager.addMessageListener("contextmenu", this);
+            messageManager.addMessageListener("Browser:Init", this);
 
             // If this window has remote tabs, switch to our tabpanels fork
             // which does asynchronous tab switching.
@@ -3230,6 +3243,31 @@
         </body>
       </method>
 
+      <method name="_showBusySpinnerRemoteBrowser">
+        <parameter name="aBrowser"/>
+        <body><![CDATA[
+          aBrowser.setAttribute("pendingpaint", "true");
+          if (this._contentWaitingCount <= 0) {
+            // We are not currently spinning
+            this.setAttribute("pendingpaint", "true");
+            this._contentWaitingCount = 1;
+          } else {
+            this._contentWaitingCount++;
+          }
+        ]]></body>
+      </method>
+
+      <method name="_hideBusySpinnerRemoteBrowser">
+        <parameter name="aBrowser"/>
+        <body><![CDATA[
+          aBrowser.removeAttribute("pendingpaint");
+          this._contentWaitingCount--;
+          if (this._contentWaitingCount <= 0) {
+            this.removeAttribute("pendingpaint");
+          }
+        ]]></body>
+      </method>
+
       <method name="_prepareForTabSwitch">
         <parameter name="toTab"/>
         <parameter name="fromTab"/>
@@ -3268,16 +3306,19 @@
 
             let timeoutPromise = new Promise((aResolve, aReject) => {
               timeoutId = setTimeout(() => {
+                this._showBusySpinnerRemoteBrowser(toBrowser);
                 attemptTabSwitch(aResolve, aReject);
               }, kTabSwitchTimeout);
             });
 
             let paintPromise = new Promise((aResolve, aReject) => {
-              toBrowser.addEventListener("MozAfterRemotePaint", function onRemotePaint() {
+              let onRemotePaint = () => {
                 toBrowser.removeEventListener("MozAfterRemotePaint", onRemotePaint);
+                this._hideBusySpinnerRemoteBrowser(toBrowser);
                 clearTimeout(timeoutId);
                 attemptTabSwitch(aResolve, aReject);
-              });
+              };
+              toBrowser.addEventListener("MozAfterRemotePaint", onRemotePaint);
               toBrowser.QueryInterface(Ci.nsIFrameLoaderOwner)
                        .frameLoader
                        .requestNotifyAfterRemotePaint();
@@ -3323,7 +3364,7 @@
         <parameter name="toTab"/>
         <parameter name="fromTab"/>
         <body><![CDATA[
-          this._adjustFocusAfterTabSwitch(toTab, fromTab);
+          this._adjustFocusAfterTabSwitch(toTab);
           this._deactivateContent(fromTab);
 
           let toBrowser = this.getBrowserForTab(toTab);
@@ -3423,7 +3464,7 @@
             return;
 
           var tab = this._getTabForContentWindow(contentWin);
-          if (tab.hasAttribute("pending"))
+          if (!tab || tab.hasAttribute("pending"))
             return;
 
           var titleChanged = this.setTabTitle(tab);
@@ -4500,7 +4541,7 @@
         canvas.height = 90 * scale;
         if (!gMultiProcessBrowser) {
           // Bug 863512 - Make page thumbnails work in e10s
-          PageThumbs.captureToCanvas(browser.contentWindow, canvas);
+          PageThumbs.captureToCanvas(browser, canvas);
         }
         dt.setDragImage(canvas, -16 * scale, -16 * scale);
 
@@ -4902,13 +4943,12 @@
 
       <property name="lastAccessed">
         <getter>
-          return this.selected ? Date.now() : this._lastAccessed;
+          return this._lastAccessed == Infinity ? Date.now() : this._lastAccessed;
         </getter>
         <setter>
           this._lastAccessed = val;
         </setter>
       </property>
-      <field name="_lastAccessed">0</field>
 
       <field name="mOverCloseButton">false</field>
       <field name="mCorrespondingMenuitem">null</field>
@@ -5327,13 +5367,54 @@
           }, () => {
             // If the promise rejected, that means we don't want to actually
             // flip the deck, so we cancel the tab switch.
-            gBrowser._cancelTabSwitch(toTab);
+            // We need to nullcheck the method we're about to call because
+            // the binding might be dead at this point.
+            if (gBrowser._cancelTabSwitch)
+              gBrowser._cancelTabSwitch(toTab);
           });
 
           return val;
         ]]>
         </setter>
       </property>
+    </implementation>
+  </binding>
+
+  <binding id="tabbrowser-browser"
+           extends="chrome://global/content/bindings/browser.xml#browser">
+    <implementation>
+      <!-- throws exception for unknown schemes -->
+      <method name="loadURIWithFlags">
+        <parameter name="aURI"/>
+        <parameter name="aFlags"/>
+        <parameter name="aReferrerURI"/>
+        <parameter name="aCharset"/>
+        <parameter name="aPostData"/>
+        <body>
+          <![CDATA[
+            _loadURIWithFlags(this, aURI, aFlags, aReferrerURI, aCharset, aPostData);
+          ]]>
+        </body>
+      </method>
+    </implementation>
+  </binding>
+
+  <binding id="tabbrowser-remote-browser"
+           extends="chrome://global/content/bindings/remote-browser.xml#remote-browser">
+    <implementation>
+      <!-- throws exception for unknown schemes -->
+      <method name="loadURIWithFlags">
+        <parameter name="aURI"/>
+        <parameter name="aFlags"/>
+        <parameter name="aReferrerURI"/>
+        <parameter name="aCharset"/>
+        <parameter name="aPostData"/>
+        <body>
+          <![CDATA[
+            _loadURIWithFlags(this, aURI, aFlags, aReferrerURI, aCharset, aPostData);
+          ]]>
+        </body>
+      </method>
     </implementation>
   </binding>
 

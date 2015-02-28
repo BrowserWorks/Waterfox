@@ -1450,7 +1450,7 @@ CssRuleView.prototype = {
     if (refreshOnPrefs.indexOf(pref) > -1) {
       let element = this._viewedElement;
       this._viewedElement = null;
-      this.highlight(element);
+      this.selectElement(element);
     }
   },
 
@@ -1460,10 +1460,12 @@ CssRuleView.prototype = {
       this.menuitemSources.setAttribute("checked", isEnabled);
     }
 
-    // update text of source links
-    for (let rule of this._elementStyle.rules) {
-      if (rule.editor) {
-        rule.editor.updateSourceLink();
+    // update text of source links if the rule-view is populated
+    if (this._elementStyle) {
+      for (let rule of this._elementStyle.rules) {
+        if (rule.editor) {
+          rule.editor.updateSourceLink();
+        }
       }
     }
   },
@@ -1529,12 +1531,12 @@ CssRuleView.prototype = {
   },
 
   /**
-   * Update the highlighted element.
+   * Update the view with a new selected element.
    *
    * @param {NodeActor} aElement
    *        The node whose style rules we'll inspect.
    */
-  highlight: function(aElement) {
+  selectElement: function(aElement) {
     if (this._viewedElement === aElement) {
       return promise.resolve(undefined);
     }

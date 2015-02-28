@@ -4,13 +4,19 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-Program(CONFIG['MOZ_CHILD_PROCESS_NAME'])
-
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'android':
+    Program(CONFIG['MOZ_CHILD_PROCESS_NAME'])
     SOURCES += [
         'MozillaRuntimeMainAndroid.cpp',
     ]
 else:
+    kwargs = {
+        'linkage': None,
+    }
+    if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
+        kwargs['msvcrt'] = 'static'
+    GeckoProgram(CONFIG['MOZ_CHILD_PROCESS_NAME'], **kwargs)
+
     SOURCES += [
         'MozillaRuntimeMain.cpp',
     ]
@@ -27,6 +33,13 @@ LOCAL_INCLUDES += [
     '/xpcom/base',
 ]
 
+# We link GMPLoader into plugin-container on desktop so that its code is
+# covered by the desktop DRM vendor's voucher.
+if CONFIG['OS_TARGET'] != 'Android':
+    SOURCES += [
+        '../../dom/media/gmp/GMPLoader.cpp',
+    ]
+
 if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
     # For sandbox includes and the include dependencies those have
     LOCAL_INCLUDES += [
@@ -35,6 +48,7 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         '/security/sandbox/chromium',
     ]
     USE_LIBS += [
+        'rlz',
         'sandbox_staticruntime_s',
     ]
     DELAYLOAD_DLLS += [
@@ -42,7 +56,15 @@ if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_ARCH'] == 'WINNT':
         'nss3.dll',
         'xul.dll'
     ]
-    USE_STATIC_LIBS = True
+    DEFINES['HASH_NODE_ID_WITH_DEVICE_ID'] = 1;
+    SOURCES += [
+        'sha256.c',
+    ]
+
+if CONFIG['MOZ_SANDBOX'] and CONFIG['OS_TARGET'] == 'Linux':
+    USE_LIBS += [
+        'mozsandbox',
+    ]
 
 if CONFIG['_MSC_VER']:
     # Always enter a Windows program through wmain, whether or not we're
@@ -62,7 +84,7 @@ LDFLAGS += [CONFIG['MOZ_ALLOW_HEAP_EXECUTE_FLAGS']]
 if CONFIG['OS_ARCH'] == 'WINNT' and not CONFIG['GNU_CC']:
     LDFLAGS += ['/HEAP:0x40000']
 
-# Windows builds have dll linkage warnings due to USE_STATIC_LIBS
+# Windows builds have dll linkage warnings due to msvcrt static linkage
 if CONFIG['OS_ARCH'] != 'WINNT':
     FAIL_ON_WARNINGS = True
 

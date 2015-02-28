@@ -20,6 +20,7 @@ class nsIURI;
 struct gfxFontFeature;
 struct gfxAlternateValue;
 struct nsCSSValueList;
+struct nsStylePosition;
 
 // Style utility functions
 class nsStyleUtil {
@@ -113,6 +114,23 @@ public:
   static bool IsSignificantChild(nsIContent* aChild,
                                    bool aTextIsSignificant,
                                    bool aWhitespaceIsSignificant);
+  /**
+   * Returns true if our object-fit & object-position properties might cause
+   * a replaced element's contents to overflow its content-box (requiring
+   * clipping), or false if we can be sure that this won't happen.
+   *
+   * This lets us optimize by skipping clipping when we can tell it's
+   * unnecessary (particularly with the default values of these properties).
+   *
+   * @param aStylePos The nsStylePosition whose object-fit & object-position
+   *                  properties should be checked for potential overflow.
+   * @return false if we can be sure that the object-fit & object-position
+   *         properties on 'aStylePos' cannot cause a replaced element's
+   *         contents to overflow its content-box. Otherwise (if overflow is
+   *         is possible), returns true.
+   */
+  static bool ObjectPropsMightCauseOverflow(const nsStylePosition* aStylePos);
+
   /*
    *  Does this principal have a CSP that blocks the application of
    *  inline styles? Returns false if application of the style should

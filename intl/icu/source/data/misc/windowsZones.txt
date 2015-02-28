@@ -78,6 +78,10 @@ windowsZones:table(nofallback){
             BD{"Asia/Dhaka"}
             BT{"Asia/Thimphu"}
         }
+        "Belarus Standard Time"{
+            001{"Europe/Minsk"}
+            BY{"Europe/Minsk"}
+        }
         "Canada Central Standard Time"{
             001{"America/Regina"}
             CA{"America/Regina America/Swift_Current"}
@@ -309,7 +313,6 @@ windowsZones:table(nofallback){
         }
         "Kaliningrad Standard Time"{
             001{"Europe/Kaliningrad"}
-            BY{"Europe/Minsk"}
             RU{"Europe/Kaliningrad"}
         }
         "Korea Standard Time"{
@@ -328,7 +331,7 @@ windowsZones:table(nofallback){
         }
         "Magadan Standard Time"{
             001{"Asia/Magadan"}
-            RU{"Asia/Magadan Asia/Anadyr Asia/Kamchatka Asia/Srednekolymsk"}
+            RU{"Asia/Magadan"}
         }
         "Mauritius Standard Time"{
             001{"Indian/Mauritius"}
@@ -370,7 +373,7 @@ windowsZones:table(nofallback){
         }
         "N. Central Asia Standard Time"{
             001{"Asia/Novosibirsk"}
-            RU{"Asia/Novosibirsk Asia/Novokuznetsk Asia/Omsk"}
+            RU{"Asia/Novosibirsk Asia/Omsk"}
         }
         "Namibia Standard Time"{
             001{"Africa/Windhoek"}
@@ -391,11 +394,11 @@ windowsZones:table(nofallback){
         }
         "North Asia East Standard Time"{
             001{"Asia/Irkutsk"}
-            RU{"Asia/Irkutsk"}
+            RU{"Asia/Irkutsk Asia/Chita"}
         }
         "North Asia Standard Time"{
             001{"Asia/Krasnoyarsk"}
-            RU{"Asia/Krasnoyarsk"}
+            RU{"Asia/Krasnoyarsk Asia/Novokuznetsk"}
         }
         "Pacific SA Standard Time"{
             001{"America/Santiago"}
@@ -428,9 +431,21 @@ windowsZones:table(nofallback){
             ES{"Europe/Madrid Africa/Ceuta"}
             FR{"Europe/Paris"}
         }
+        "Russia Time Zone 10"{
+            001{"Asia/Srednekolymsk"}
+            RU{"Asia/Srednekolymsk"}
+        }
+        "Russia Time Zone 11"{
+            001{"Asia/Kamchatka"}
+            RU{"Asia/Kamchatka Asia/Anadyr"}
+        }
+        "Russia Time Zone 3"{
+            001{"Europe/Samara"}
+            RU{"Europe/Samara"}
+        }
         "Russian Standard Time"{
             001{"Europe/Moscow"}
-            RU{"Europe/Moscow Europe/Samara Europe/Simferopol Europe/Volgograd"}
+            RU{"Europe/Moscow Europe/Simferopol Europe/Volgograd"}
         }
         "SA Eastern Standard Time"{
             001{"America/Cayenne"}
@@ -671,12 +686,12 @@ windowsZones:table(nofallback){
             FM{"Pacific/Truk"}
             GU{"Pacific/Guam"}
             MP{"Pacific/Saipan"}
-            PG{"Pacific/Port_Moresby"}
+            PG{"Pacific/Port_Moresby Pacific/Bougainville"}
             ZZ{"Etc/GMT-10"}
         }
         "Yakutsk Standard Time"{
             001{"Asia/Yakutsk"}
-            RU{"Asia/Yakutsk Asia/Chita Asia/Khandyga"}
+            RU{"Asia/Yakutsk Asia/Khandyga"}
         }
     }
 }

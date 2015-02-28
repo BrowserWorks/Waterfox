@@ -101,12 +101,12 @@ function showPointerTypes() {
     var pointertype_log = document.getElementById("pointertype-log");
     var pointertypes = Object.keys(detected_pointertypes);
     pointertype_log.innerHTML = pointertypes.length ?
-    pointertypes.join(",") : "(none)";
+        pointertypes.join(",") : "(none)";
     complete_notice.style.display = "block";
 }
 
 function log(msg, el) {
-    if (++count > 16){
+    if (++count > 10){
       count = 0;
       el.innerHTML = ' ';
     }
@@ -126,9 +126,34 @@ function updateDescriptionComplete() {
     document.getElementById('desc').innerHTML = "Test Description: Test complete";
 }
 
+function updateDescriptionSecondStepTouchActionElement(target, scrollReturnInterval) {
+    window.setTimeout(function() {
+    objectScroller(target, 'up', 0);}
+    , scrollReturnInterval);
+    document.getElementById('desc').innerHTML = "Test Description: Try to scroll element RIGHT moving your outside of the red border";
+}
+
+function updateDescriptionThirdStepTouchActionElement(target, scrollReturnInterval) {
+    window.setTimeout(function() {
+    objectScroller(target, 'left', 0);}
+    , scrollReturnInterval);
+    document.getElementById('desc').innerHTML = "Test Description: Try to scroll element DOWN then RIGHT starting your touch inside of the element. Then tap complete button";
+}
+
+function updateDescriptionFourthStepTouchActionElement(target, scrollReturnInterval) {
+    document.getElementById('desc').innerHTML = "Test Description: Try to scroll element RIGHT starting your touch inside of the element";
+}
+
+function objectScroller(target, direction, value) {
+    if (direction == 'up') {
+        target.scrollTop = 0;
+    } else if (direction == 'left') {
+        target.scrollLeft = 0;
+    }
+}
+
 function sPointerCapture(e) {
     try {
-        isPointerCapture = true;
         target0.setPointerCapture(e.pointerId);
     }
     catch(e) {
@@ -137,30 +162,9 @@ function sPointerCapture(e) {
 
 function rPointerCapture(e) {
     try {
-        isPointerCapture = false;
+        captureButton.value = 'Set Capture';
         target0.releasePointerCapture(e.pointerId);
     }
     catch(e) {
-    }
-}
-
-// declare the follwoing variables to use this function: previousPointerX, previousPointerY, currentPointerX, currentPointerY;
-// init previousPointerX, previousPointerY before calling of the function; in "pointerdown" event handler for example
-function checkDirection(testToStep, isVertical, currentMoveCount, moveCountToPass, delta, event) {
-    if(!isVertical) {
-        if(currentMoveCount > moveCountToPass / 2) { // avoid immediate triggering while vertical scroll is still performed
-                testToStep.step( function() {
-                currentPointerY = event.clientY;
-                assert_approx_equals(previousPointerY, currentPointerY, delta, "scroll move was along horisontal line: ");
-                previousPointerY = currentPointerY;
-            });
-        }
-    }
-    else {
-        testToStep.step( function() {
-            currentPointerX = event.clientX;
-            assert_approx_equals(previousPointerX, currentPointerX, delta, "scroll move was along vertical line: ");
-            previousPointerX = currentPointerX;
-        });
     }
 }

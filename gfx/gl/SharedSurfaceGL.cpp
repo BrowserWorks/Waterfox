@@ -26,12 +26,14 @@ SharedSurface_Basic::Create(GLContext* gl,
     UniquePtr<SharedSurface_Basic> ret;
     gl->MakeCurrent();
 
-    GLContext::ScopedLocalErrorCheck localError(gl);
+    GLContext::LocalErrorScope localError(*gl);
     GLuint tex = CreateTexture(gl, formats.color_texInternalFormat,
                                formats.color_texFormat,
                                formats.color_texType,
                                size);
-    GLenum err = localError.GetLocalError();
+
+    GLenum err = localError.GetError();
+    MOZ_ASSERT_IF(err != LOCAL_GL_NO_ERROR, err == LOCAL_GL_OUT_OF_MEMORY);
     if (err) {
         gl->fDeleteTextures(1, &tex);
         return Move(ret);
@@ -48,6 +50,8 @@ SharedSurface_Basic::Create(GLContext* gl,
         break;
     case LOCAL_GL_RGBA:
     case LOCAL_GL_RGBA8:
+    case LOCAL_GL_BGRA:
+    case LOCAL_GL_BGRA8_EXT:
         format = SurfaceFormat::B8G8R8A8;
         break;
     default:
@@ -83,14 +87,6 @@ SharedSurface_Basic::SharedSurface_Basic(GLContext* gl,
 
     DebugOnly<GLenum> status = mGL->fCheckFramebufferStatus(LOCAL_GL_FRAMEBUFFER);
     MOZ_ASSERT(status == LOCAL_GL_FRAMEBUFFER_COMPLETE);
-
-    int32_t stride = gfx::GetAlignedStride<4>(size.width * BytesPerPixel(format));
-    mData = gfx::Factory::CreateDataSourceSurfaceWithStride(size, format, stride);
-    // Leave the extra return for clarity, in case we decide more code should
-    // be added after this check, that should run even if mData is null.
-    if (NS_WARN_IF(!mData)) {
-        return;
-    }
 }
 
 SharedSurface_Basic::~SharedSurface_Basic()
@@ -102,54 +98,6 @@ SharedSurface_Basic::~SharedSurface_Basic()
         mGL->fDeleteFramebuffers(1, &mFB);
 
     mGL->fDeleteTextures(1, &mTex);
-}
-
-void
-SharedSurface_Basic::Fence()
-{
-    // The constructor can fail to get us mData, we should deal with it:
-    if (NS_WARN_IF(!mData)) {
-        return;
-    }
-
-    mGL->MakeCurrent();
-    ScopedBindFramebuffer autoFB(mGL, mFB);
-    ReadPixelsIntoDataSurface(mGL, mData);
-}
-
-bool
-SharedSurface_Basic::WaitSync()
-{
-    return true;
-}
-
-bool
-SharedSurface_Basic::PollSync()
-{
-    return true;
-}
-
-void
-SharedSurface_Basic::Fence_ContentThread_Impl()
-{
-}
-
-bool
-SharedSurface_Basic::WaitSync_ContentThread_Impl()
-{
-    mGL->MakeCurrent();
-    ScopedBindFramebuffer autoFB(mGL, mFB);
-    ReadPixelsIntoDataSurface(mGL, mData);
-    return true;
-}
-
-bool
-SharedSurface_Basic::PollSync_ContentThread_Impl()
-{
-    mGL->MakeCurrent();
-    ScopedBindFramebuffer autoFB(mGL, mFB);
-    ReadPixelsIntoDataSurface(mGL, mData);
-    return true;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -175,17 +123,18 @@ SharedSurface_GLTexture::Create(GLContext* prodGL,
     UniquePtr<SharedSurface_GLTexture> ret;
 
     if (!tex) {
-      GLContext::ScopedLocalErrorCheck localError(prodGL);
+        GLContext::LocalErrorScope localError(*prodGL);
 
-      tex = CreateTextureForOffscreen(prodGL, formats, size);
+        tex = CreateTextureForOffscreen(prodGL, formats, size);
 
-      GLenum err = localError.GetLocalError();
-      if (err) {
-          prodGL->fDeleteTextures(1, &tex);
-          return Move(ret);
-      }
+        GLenum err = localError.GetError();
+        MOZ_ASSERT_IF(err != LOCAL_GL_NO_ERROR, err == LOCAL_GL_OUT_OF_MEMORY);
+        if (err) {
+            prodGL->fDeleteTextures(1, &tex);
+            return Move(ret);
+        }
 
-      ownsTex = true;
+        ownsTex = true;
     }
 
     ret.reset( new SharedSurface_GLTexture(prodGL, consGL, size,

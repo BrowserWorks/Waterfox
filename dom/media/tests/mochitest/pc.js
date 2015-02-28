@@ -613,16 +613,16 @@ PeerConnectionTest.prototype.close = function PCT_close(onSuccess) {
     }
   }
 
-  function signalingstatechangeLocalClose(state) {
-    info("'onsignalingstatechange' event '" + state + "' received");
-    is(state, "closed", "onsignalingstatechange event is closed");
+  function signalingstatechangeLocalClose(e) {
+    info("'signalingstatechange' event received");
+    is(e.target.signalingState, "closed", "signalingState is closed");
     self.waitingForLocal = false;
     verifyClosed();
   }
 
-  function signalingstatechangeRemoteClose(state) {
-    info("'onsignalingstatechange' event '" + state + "' received");
-    is(state, "closed", "onsignalingstatechange event is closed");
+  function signalingstatechangeRemoteClose(e) {
+    info("'signalingstatechange' event received");
+    is(e.target.signalingState, "closed", "signalingState is closed");
     self.waitingForRemote = false;
     verifyClosed();
   }
@@ -674,6 +674,17 @@ PeerConnectionTest.prototype.setStepTimeout = function(ms) {
   this._stepTimeout = setTimeout(function() {
     ok(false, "Step timed out: " + this.chain.currentStepLabel);
     this.next();
+  }.bind(this), ms);
+};
+
+/**
+ * Set a timeout for the over all PeerConnectionTest
+ * @param {long] ms the number of milliseconds to allow for the test
+ */
+PeerConnectionTest.prototype.setTimeout = function(ms) {
+  this._timeout = setTimeout(function() {
+    ok(false, "PeerConnectionTest timed out");
+    this.teardown();
   }.bind(this), ms);
 };
 
@@ -744,9 +755,10 @@ function PCT_setLocalDescription(peer, desc, stateExpected, onSuccess) {
     }
   }
 
-  peer.onsignalingstatechange = function (state) {
-    info(peer + ": 'onsignalingstatechange' event '" + state + "' received");
-    if(stateExpected === state && eventFired == false) {
+  peer.onsignalingstatechange = function (e) {
+    info(peer + ": 'signalingstatechange' event received");
+    var state = e.target.signalingState;
+    if(stateExpected === state && !eventFired) {
       eventFired = true;
       peer.setLocalDescStableEventDate = new Date();
       check_next_test();
@@ -812,9 +824,10 @@ function PCT_setRemoteDescription(peer, desc, stateExpected, onSuccess) {
     }
   }
 
-  peer.onsignalingstatechange = function (state) {
-    info(peer + ": 'onsignalingstatechange' event '" + state + "' received");
-    if(stateExpected === state && eventFired == false) {
+  peer.onsignalingstatechange = function(e) {
+    info(peer + ": 'signalingstatechange' event received");
+    var state = e.target.signalingState;
+    if(stateExpected === state && !eventFired) {
       eventFired = true;
       peer.setRemoteDescStableEventDate = new Date();
       check_next_test();
@@ -1303,6 +1316,8 @@ DataChannelTest.prototype = Object.create(PeerConnectionTest.prototype, {
           is(channel.readyState, "open", peer + " dataChannels[0] switched to state: 'open'");
           dcOpened = true;
           onSuccess();
+        } else {
+          info("dataChannelConnected() called, but data channel was open already");
         }
       }
 
@@ -1532,7 +1547,10 @@ function PeerConnectionWrapper(label, configuration, h264) {
   this.onAddStreamFired = false;
   this.addStreamCallbacks = {};
 
-  this.remoteDescriptionSet = false;
+  this._local_ice_candidates = [];
+  this._remote_ice_candidates = [];
+  this._ice_candidates_to_add = [];
+  this.holdIceCandidates = true;
   this.endOfTrickleIce = false;
   this.localRequiresTrickleIce = false;
   this.remoteRequiresTrickleIce  = false;
@@ -1616,7 +1634,6 @@ function PeerConnectionWrapper(label, configuration, h264) {
    * failure will be raised if an event of this type is caught.
    *
    * @param {Object} aEvent
-   *        Event data which includes the newly created data channel
    */
   this._pc.onsignalingstatechange = function (anEvent) {
     info(self + ": 'onsignalingstatechange' event fired");
@@ -1849,10 +1866,15 @@ PeerConnectionWrapper.prototype = {
    */
   setLocalDescription : function PCW_setLocalDescription(desc, onSuccess) {
     var self = this;
-    this._pc.setLocalDescription(desc, function () {
-      info(self + ": Successfully set the local description");
-      onSuccess();
-    }, generateErrorCallback());
+
+    if (onSuccess) {
+      this._pc.setLocalDescription(desc, function () {
+        info(self + ": Successfully set the local description");
+        onSuccess();
+      }, generateErrorCallback());
+    } else {
+      this._pc.setLocalDescription(desc);
+    }
   },
 
   /**
@@ -1884,17 +1906,15 @@ PeerConnectionWrapper.prototype = {
    */
   setRemoteDescription : function PCW_setRemoteDescription(desc, onSuccess) {
     var self = this;
+
+    if (!onSuccess) {
+      this._pc.setRemoteDescription(desc);
+      this.addStoredIceCandidates();
+      return;
+    }
     this._pc.setRemoteDescription(desc, function () {
       info(self + ": Successfully set remote description");
-      self.remoteDescriptionSet = true;
-      if ((self._ice_candidates_to_add) &&
-          (self._ice_candidates_to_add.length > 0)) {
-        info("adding stored ice candidates");
-        for (var i = 0; i < self._ice_candidates_to_add.length; i++) {
-          self.addIceCandidate(self._ice_candidates_to_add[i]);
-        }
-        self._ice_candidates_to_add = [];
-      }
+      self.addStoredIceCandidates();
       onSuccess();
     }, generateErrorCallback());
   },
@@ -1925,7 +1945,7 @@ PeerConnectionWrapper.prototype = {
   logSignalingState: function PCW_logSignalingState() {
     var self = this;
 
-    function _logSignalingState(state) {
+    function _logSignalingState(e) {
       var newstate = self._pc.signalingState;
       var oldstate = self.signalingStateLog[self.signalingStateLog.length - 1]
       if (Object.keys(signalingStateTransitions).indexOf(oldstate) != -1) {
@@ -1951,14 +1971,28 @@ PeerConnectionWrapper.prototype = {
     var self = this;
 
     self._remote_ice_candidates.push(candidate);
-    if (self.signalingstate === 'closed') {
+    if (self.signalingState === 'closed') {
       info("Received ICE candidate for closed PeerConnection - discarding");
       return;
     }
-    if (self.remoteDescriptionSet) {
+    if (!self.holdIceCandidates) {
       self.addIceCandidate(candidate);
     } else {
       self._ice_candidates_to_add.push(candidate);
+    }
+  },
+
+  addStoredIceCandidates : function PCW_addStoredIceCandidates() {
+    var self = this;
+
+    self.holdIceCandidates = false;
+    if ((self._ice_candidates_to_add) &&
+        (self._ice_candidates_to_add.length > 0)) {
+      info("adding stored ice candidates");
+      for (var i = 0; i < self._ice_candidates_to_add.length; i++) {
+        self.addIceCandidate(self._ice_candidates_to_add[i]);
+      }
+      self._ice_candidates_to_add = [];
     }
   },
 
@@ -2102,9 +2136,6 @@ PeerConnectionWrapper.prototype = {
   setupIceCandidateHandler : function
     PCW_setupIceCandidateHandler(test, candidateHandler, endHandler) {
     var self = this;
-    self._local_ice_candidates = [];
-    self._remote_ice_candidates = [];
-    self._ice_candidates_to_add = [];
 
     candidateHandler = candidateHandler || test.iceCandidateHandler.bind(test);
     endHandler = endHandler || test.signalEndOfTrickleIce.bind(test);
@@ -2335,10 +2366,11 @@ PeerConnectionWrapper.prototype = {
     }
   },
 
-  verifySdp : function PCW_verifySdp(desc, expectedType, constraints,
-      offerOptions, trickleIceCallback) {
+  verifySdp : function PCW_verifySdp(desc, expectedType, offerConstraintsList,
+      answerConstraintsList, offerOptions, trickleIceCallback) {
     info("Examining this SessionDescription: " + JSON.stringify(desc));
-    info("constraints: " + JSON.stringify(constraints));
+    info("offerConstraintsList: " + JSON.stringify(offerConstraintsList));
+    info("answerConstraintsList: " + JSON.stringify(answerConstraintsList));
     info("offerOptions: " + JSON.stringify(offerOptions));
     ok(desc, "SessionDescription is not null");
     is(desc.type, expectedType, "SessionDescription type is " + expectedType);
@@ -2357,11 +2389,11 @@ PeerConnectionWrapper.prototype = {
     }
     //TODO: how can we check for absence/presence of m=application?
 
-    //TODO: how to handle media contraints + offer options
-    var audioTracks = this.countAudioTracksInMediaConstraint(constraints);
-    if (constraints.length === 0) {
-      audioTracks = this.audioInOfferOptions(offerOptions);
-    }
+    var audioTracks =
+      Math.max(this.countAudioTracksInMediaConstraint(offerConstraintsList),
+               this.countAudioTracksInMediaConstraint(answerConstraintsList)) ||
+      this.audioInOfferOptions(offerOptions);
+
     info("expected audio tracks: " + audioTracks);
     if (audioTracks == 0) {
       ok(!desc.sdp.contains("m=audio"), "audio m-line is absent from SDP");
@@ -2374,11 +2406,11 @@ PeerConnectionWrapper.prototype = {
 
     }
 
-    //TODO: how to handle media contraints + offer options
-    var videoTracks = this.countVideoTracksInMediaConstraint(constraints);
-    if (constraints.length === 0) {
-      videoTracks = this.videoInOfferOptions(offerOptions);
-    }
+    var videoTracks =
+      Math.max(this.countVideoTracksInMediaConstraint(offerConstraintsList),
+               this.countVideoTracksInMediaConstraint(answerConstraintsList)) ||
+      this.videoInOfferOptions(offerOptions);
+
     info("expected video tracks: " + videoTracks);
     if (videoTracks == 0) {
       ok(!desc.sdp.contains("m=video"), "video m-line is absent from SDP");
@@ -2563,6 +2595,48 @@ PeerConnectionWrapper.prototype = {
   },
 
   /**
+   * Compares the Ice server configured for this PeerConnectionWrapper
+   * with the ICE candidates received in the RTCP stats.
+   *
+   * @param {object} stats
+   *        The stats to be verified for relayed vs. direct connection.
+   */
+  checkStatsIceConnectionType : function PCW_checkStatsIceConnectionType(stats)
+  {
+    var lId;
+    var rId;
+    Object.keys(stats).forEach(function(name) {
+      if ((stats[name].type === "candidatepair") &&
+          (stats[name].selected)) {
+        lId = stats[name].localCandidateId;
+        rId = stats[name].remoteCandidateId;
+      }
+    });
+    info("checkStatsIceConnectionType verifying: local=" +
+         JSON.stringify(stats[lId]) + " remote=" + JSON.stringify(stats[rId]));
+    if ((typeof stats[lId] === 'undefined') ||
+        (typeof stats[rId] === 'undefined')) {
+      info("checkStatsIceConnectionType failed to find candidatepair IDs");
+      return;
+    }
+    var lType = stats[lId].candidateType;
+    var rType = stats[rId].candidateType;
+    var lIp = stats[lId].ipAddress;
+    var rIp = stats[rId].ipAddress;
+    if ((this.configuration) && (typeof this.configuration.iceServers !== 'undefined')) {
+      info("Ice Server configured");
+      // Note: the IP comparising is a workaround for bug 1097333
+      //       And this will fail if a TURN server address is a DNS name!
+      var serverIp = this.configuration.iceServers[0].url.split(':')[1];
+      ok((lType === "relayed" || rType === "relayed") ||
+         (lIp === serverIp || rIp === serverIp), "One peer uses a relay");
+    } else {
+      info("P2P configured");
+      ok(((lType !== "relayed") && (rType !== "relayed")), "Pure peer to peer call without a relay");
+    }
+  },
+
+  /**
    * Property-matching function for finding a certain stat in passed-in stats
    *
    * @param {object} stats
@@ -2606,11 +2680,12 @@ PeerConnectionWrapper.prototype = {
    *        Callback to execute when the data channel has been opened
    */
   registerDataChannelOpenEvents : function (onDataChannelOpened) {
-    info(this + ": Register callbacks for 'ondatachannel' and 'onopen'");
+    info(this + ": Register callback for 'ondatachannel'");
 
     this.ondatachannel = function (targetChannel) {
-      targetChannel.onopen = onDataChannelOpened;
       this.dataChannels.push(targetChannel);
+      info(this + ": 'ondatachannel' fired, registering 'onopen' callback");
+      targetChannel.onopen = onDataChannelOpened;
     };
   },
 

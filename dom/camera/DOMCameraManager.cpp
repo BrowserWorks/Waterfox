@@ -59,7 +59,7 @@ nsDOMCameraManager::nsDOMCameraManager(nsPIDOMWindow* aWindow)
   , mWindow(aWindow)
 {
   /* member initializers and constructor code */
-  DOM_CAMERA_LOGT("%s:%d : this=%p, windowId=%llx\n", __func__, __LINE__, this, mWindowId);
+  DOM_CAMERA_LOGT("%s:%d : this=%p, windowId=%" PRIx64 "\n", __func__, __LINE__, this, mWindowId);
   MOZ_COUNT_CTOR(nsDOMCameraManager);
 }
 
@@ -264,6 +264,14 @@ CameraPermissionRequest::GetTypes(nsIArray** aTypes)
                                                          aTypes);
 }
 
+#ifdef MOZ_WIDGET_GONK
+/* static */ void
+nsDOMCameraManager::PreinitCameraHardware()
+{
+  nsDOMCameraControl::PreinitCameraHardware();
+}
+#endif
+
 already_AddRefed<Promise>
 nsDOMCameraManager::GetCamera(const nsAString& aCamera,
                               const CameraConfiguration& aInitialConfig,
@@ -311,6 +319,14 @@ nsDOMCameraManager::GetCamera(const nsAString& aCamera,
   }
 
   nsCOMPtr<nsIPrincipal> principal = sop->GetPrincipal();
+  // If we are a CERTIFIED app, we can short-circuit the permission check,
+  // which gets us a performance win.
+  uint16_t status = nsIPrincipal::APP_STATUS_NOT_INSTALLED;
+  principal->GetAppStatus(&status);
+  if (status == nsIPrincipal::APP_STATUS_CERTIFIED && CheckPermission(mWindow)) {
+    PermissionAllowed(cameraId, aInitialConfig, successCallback, errorCallback, promise);
+    return promise.forget();
+  }
 
   nsCOMPtr<nsIRunnable> permissionRequest =
     new CameraPermissionRequest(principal, mWindow, this, cameraId, aInitialConfig,
@@ -356,7 +372,7 @@ nsDOMCameraManager::PermissionCancelled(uint32_t aCameraId,
 void
 nsDOMCameraManager::Register(nsDOMCameraControl* aDOMCameraControl)
 {
-  DOM_CAMERA_LOGI(">>> Register( aDOMCameraControl = %p ) mWindowId = 0x%llx\n", aDOMCameraControl, mWindowId);
+  DOM_CAMERA_LOGI(">>> Register( aDOMCameraControl = %p ) mWindowId = 0x%" PRIx64 "\n", aDOMCameraControl, mWindowId);
   MOZ_ASSERT(NS_IsMainThread());
 
   // Put the camera control into the hash table
@@ -371,7 +387,7 @@ nsDOMCameraManager::Register(nsDOMCameraControl* aDOMCameraControl)
 void
 nsDOMCameraManager::Shutdown(uint64_t aWindowId)
 {
-  DOM_CAMERA_LOGI(">>> Shutdown( aWindowId = 0x%llx )\n", aWindowId);
+  DOM_CAMERA_LOGI(">>> Shutdown( aWindowId = 0x%" PRIx64 " )\n", aWindowId);
   MOZ_ASSERT(NS_IsMainThread());
 
   CameraControls* controls = sActiveWindows->Get(aWindowId);

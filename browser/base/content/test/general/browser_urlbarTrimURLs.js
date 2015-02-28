@@ -5,7 +5,7 @@
 function testVal(originalValue, targetValue) {
   gURLBar.value = originalValue;
   gURLBar.valueIsTyped = false;
-  is(gURLBar.value, targetValue || originalValue, "url bar value set");
+  is(gURLBar.textValue, targetValue || originalValue, "url bar value set");
 }
 
 function test() {
@@ -41,7 +41,9 @@ function test() {
   testVal("ftp://ftpx.mozilla.org/", "ftp://ftpx.mozilla.org");
 
   testVal("https://user:pass@mozilla.org/", "https://user:pass@mozilla.org");
+  testVal("https://user@mozilla.org/", "https://user@mozilla.org");
   testVal("http://user:pass@mozilla.org/", "http://user:pass@mozilla.org");
+  testVal("http://user@mozilla.org/", "user@mozilla.org");
   testVal("http://sub.mozilla.org:666/", "sub.mozilla.org:666");
 
   testVal("https://[fe80::222:19ff:fe11:8c76]/file.ext");
@@ -55,7 +57,16 @@ function test() {
   testVal("jar:http://mozilla.org/example.jar!/");
   testVal("view-source:http://mozilla.org/");
 
+  // Behaviour for hosts with no dots depends on the whitelist:
+  let fixupWhitelistPref = "browser.fixup.domainwhitelist.localhost";
+  Services.prefs.setBoolPref(fixupWhitelistPref, false);
   testVal("http://localhost");
+  Services.prefs.setBoolPref(fixupWhitelistPref, true);
+  testVal("http://localhost", "localhost");
+  Services.prefs.clearUserPref(fixupWhitelistPref);
+
+  testVal("http:// invalid url");
+
   testVal("http://someotherhostwithnodots");
   testVal("http://localhost/ foo bar baz");
   testVal("http://localhost.localdomain/ foo bar baz", "localhost.localdomain/ foo bar baz");
@@ -85,7 +96,7 @@ function test() {
 
 function testCopy(originalValue, targetValue, cb) {
   waitForClipboard(targetValue, function () {
-    is(gURLBar.value, originalValue, "url bar copy value set");
+    is(gURLBar.textValue, originalValue, "url bar copy value set");
 
     gURLBar.focus();
     gURLBar.select();

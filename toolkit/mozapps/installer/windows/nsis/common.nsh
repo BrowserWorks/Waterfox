@@ -5091,7 +5091,7 @@
 
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWinVista}
+        ${OrUnless} ${AtLeastWin7}
           MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
           ; Nothing initialized so no need to call OnEndCommon
           Quit
@@ -6111,8 +6111,10 @@
         ${LogMsg} "OS Name    : Windows 7"
       ${ElseIf} ${IsWin8}
         ${LogMsg} "OS Name    : Windows 8"
-      ${ElseIf} ${AtLeastWin8}
-        ${LogMsg} "OS Name    : Above Windows 8"
+      ${ElseIf} ${IsWin8.1}
+        ${LogMsg} "OS Name    : Windows 8.1"
+      ${ElseIf} ${AtLeastWin8.1}
+        ${LogMsg} "OS Name    : Above Windows 8.1"
       ${Else}
         ${LogMsg} "OS Name    : Unable to detect"
       ${EndIf}

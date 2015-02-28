@@ -49,10 +49,16 @@ let check_history = Task.async(function*() {
   }
 });
 
+function clear_history() {
+  gExpectedHistory.index = -1;
+  gExpectedHistory.entries = [];
+}
+
 // Waits for a load and updates the known history
 let waitForLoad = Task.async(function*(uri) {
   info("Loading " + uri);
-  gBrowser.loadURI(uri);
+  // Longwinded but this ensures we don't just shortcut to LoadInNewProcess
+  gBrowser.selectedBrowser.webNavigation.loadURI(uri, Ci.nsIWebNavigation.LOAD_FLAGS_NONE, null, null, null);
 
   yield waitForDocLoadComplete();
   gExpectedHistory.index++;
@@ -60,6 +66,28 @@ let waitForLoad = Task.async(function*(uri) {
     uri: gBrowser.currentURI.spec,
     title: gBrowser.contentTitle
   });
+});
+
+// Waits for a load and updates the known history
+let waitForLoadWithFlags = Task.async(function*(uri, flags = Ci.nsIWebNavigation.LOAD_FLAGS_NONE) {
+  info("Loading " + uri + " flags = " + flags);
+  gBrowser.selectedBrowser.loadURIWithFlags(uri, flags, null, null, null);
+
+  yield waitForDocLoadComplete();
+  if (!(flags & Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY)) {
+
+    if (flags & Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY) {
+      gExpectedHistory.entries.pop();
+    }
+    else {
+      gExpectedHistory.index++;
+    }
+
+    gExpectedHistory.entries.push({
+      uri: gBrowser.currentURI.spec,
+      title: gBrowser.contentTitle
+    });
+  }
 });
 
 let back = Task.async(function*() {
@@ -78,11 +106,8 @@ let forward = Task.async(function*() {
 
 // Tests that navigating from a page that should be in the remote process and
 // a page that should be in the main process works and retains history
-add_task(function*() {
-  SimpleTest.requestCompleteLog();
-
-  let remoting = Services.prefs.getBoolPref("browser.tabs.remote.autostart");
-  let expectedRemote = remoting ? "true" : "";
+add_task(function* test_navigation() {
+  let expectedRemote = gMultiProcessBrowser ? "true" : "";
 
   info("1");
   // Create a tab and load a remote page in it
@@ -138,5 +163,97 @@ add_task(function*() {
   yield check_history();
 
   info("9");
+  yield back();
+  is(gBrowser.selectedTab.getAttribute("remote"), "", "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+  yield check_history();
+
+  info("10");
+  // Load a new remote page, this should replace the last history entry
+  gExpectedHistory.entries.splice(gExpectedHistory.entries.length - 1, 1);
+  yield waitForLoad("http://example.com/" + DUMMY_PATH);
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+  yield check_history();
+
+  info("11");
   gBrowser.removeCurrentTab();
+  clear_history();
+});
+
+// Tests that calling gBrowser.loadURI or browser.loadURI to load a page in a
+// different process updates the browser synchronously
+add_task(function* test_synchronous() {
+  let expectedRemote = gMultiProcessBrowser ? "true" : "";
+
+  info("1");
+  // Create a tab and load a remote page in it
+  gBrowser.selectedTab = gBrowser.addTab("about:blank", {skipAnimation: true});
+  let {permanentKey} = gBrowser.selectedBrowser;
+  yield waitForLoad("http://example.org/" + DUMMY_PATH);
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+
+  info("2");
+  // Load another page
+  info("Loading about:robots");
+  gBrowser.selectedBrowser.loadURI("about:robots");
+  is(gBrowser.selectedTab.getAttribute("remote"), "", "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+
+  yield waitForDocLoadComplete();
+  is(gBrowser.selectedTab.getAttribute("remote"), "", "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+
+  info("3");
+  // Load the remote page again
+  info("Loading http://example.org/" + DUMMY_PATH);
+  gBrowser.loadURI("http://example.org/" + DUMMY_PATH);
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+
+  yield waitForDocLoadComplete();
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  is(gBrowser.selectedBrowser.permanentKey, permanentKey, "browser.permanentKey is still the same");
+
+  info("4");
+  gBrowser.removeCurrentTab();
+  clear_history();
+});
+
+// Tests that load flags are correctly passed through to the child process with
+// normal loads
+add_task(function* test_loadflags() {
+  let expectedRemote = gMultiProcessBrowser ? "true" : "";
+
+  info("1");
+  // Create a tab and load a remote page in it
+  gBrowser.selectedTab = gBrowser.addTab("about:blank", {skipAnimation: true});
+  yield waitForLoadWithFlags("about:robots");
+  is(gBrowser.selectedTab.getAttribute("remote"), "", "Remote attribute should be correct");
+  yield check_history();
+
+  info("2");
+  // Load a page in the remote process with some custom flags
+  yield waitForLoadWithFlags("http://example.com/" + DUMMY_PATH, Ci.nsIWebNavigation.LOAD_FLAGS_BYPASS_HISTORY);
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  yield check_history();
+
+  info("3");
+  // Load a non-remote page
+  yield waitForLoadWithFlags("about:robots");
+  is(gBrowser.selectedTab.getAttribute("remote"), "", "Remote attribute should be correct");
+  yield check_history();
+
+  info("4");
+  // Load another remote page
+  yield waitForLoadWithFlags("http://example.org/" + DUMMY_PATH, Ci.nsIWebNavigation.LOAD_FLAGS_REPLACE_HISTORY);
+  is(gBrowser.selectedTab.getAttribute("remote"), expectedRemote, "Remote attribute should be correct");
+  yield check_history();
+
+  is(gExpectedHistory.entries.length, 2, "Should end with the right number of history entries");
+
+  info("5");
+  gBrowser.removeCurrentTab();
+  clear_history();
 });

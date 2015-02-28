@@ -1,0 +1,71 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## -------------------------- ##
+## Creating the installdirs.  ##
+## -------------------------- ##
+?SUBDIRS?.PHONY: installdirs installdirs-am installdirs-recursive
+?SUBDIRS?installdirs: installdirs-recursive
+?SUBDIRS?installdirs-am:%installdirs-local%
+?SUBDIRS??am__installdirs?	$(mkinstalldirs) %am__installdirs%
+
+?!SUBDIRS?.PHONY: installdirs
+?!SUBDIRS?installdirs:%installdirs-local%
+?!SUBDIRS??am__installdirs?	$(mkinstalldirs) %am__installdirs%
+
+
+## ----------------- ##
+## Install targets.  ##
+## ----------------- ##
+
+.PHONY: install install-exec install-data uninstall
+
+?SUBDIRS?.PHONY: install-recursive install-exec-recursive install-data-recursive uninstall-recursive
+?SUBDIRS?install: install-recursive
+?SUBDIRS?install-exec: install-exec-recursive
+?SUBDIRS?install-data: install-data-recursive
+?SUBDIRS?uninstall: uninstall-recursive
+
+.PHONY: install-exec-am install-data-am uninstall-am
+?!SUBDIRS?install: install-am
+?!SUBDIRS?install-exec: install-exec-am
+?!SUBDIRS?install-data: install-data-am
+?!SUBDIRS?uninstall: uninstall-am
+
+.PHONY: install-am
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+
+
+.PHONY: installcheck
+?SUBDIRS?installcheck: installcheck-recursive
+?!SUBDIRS?installcheck: installcheck-am
+?!SUBDIRS?.PHONY: installcheck-am
+?!SUBDIRS?installcheck-am:
+
+## If you ever modify this, keep in mind that INSTALL_PROGRAM is used
+## in subdirectories, so never set it to a value relative to the top
+## directory.
+.PHONY: install-strip
+install-strip:
+## Use double quotes here because we might need to interpolate some
+## backquotes at runtime.
+	$(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
+	  INSTALL_STRIP_FLAG=-s \
+	  `test -z '$(STRIP)' || \
+	    echo "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'"` install

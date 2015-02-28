@@ -9,11 +9,11 @@
 #include "nsISupportsImpl.h"
 #include "nsWrapperCache.h"
 
+#include "mozilla/dom/Fetch.h"
 #include "mozilla/dom/InternalRequest.h"
 // Required here due to certain WebIDL enums/classes being declared in both
 // files.
 #include "mozilla/dom/RequestBinding.h"
-#include "mozilla/dom/UnionTypes.h"
 
 class nsPIDOMWindow;
 
@@ -21,10 +21,13 @@ namespace mozilla {
 namespace dom {
 
 class Headers;
+class InternalHeaders;
 class Promise;
+class RequestOrUSVString;
 
 class Request MOZ_FINAL : public nsISupports
                         , public nsWrapperCache
+                        , public FetchBody<Request>
 {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Request)
@@ -74,13 +77,22 @@ public:
     aReferrer.AsAString() = NS_ConvertUTF8toUTF16(mRequest->mReferrerURL);
   }
 
-  Headers* Headers_() const { return mRequest->Headers_(); }
+  InternalHeaders*
+  GetInternalHeaders() const
+  {
+    return mRequest->Headers();
+  }
+
+  Headers* Headers_();
+
+  void
+  GetBody(nsIInputStream** aStream) { return mRequest->GetBody(aStream); }
 
   static already_AddRefed<Request>
-  Constructor(const GlobalObject& aGlobal, const RequestOrScalarValueString& aInput,
+  Constructor(const GlobalObject& aGlobal, const RequestOrUSVString& aInput,
               const RequestInit& aInit, ErrorResult& rv);
 
-  nsISupports* GetParentObject() const
+  nsIGlobalObject* GetParentObject() const
   {
     return mOwner;
   }
@@ -88,51 +100,15 @@ public:
   already_AddRefed<Request>
   Clone() const;
 
-  already_AddRefed<Promise>
-  ArrayBuffer(ErrorResult& aRv);
-
-  already_AddRefed<Promise>
-  Blob(ErrorResult& aRv);
-
-  already_AddRefed<Promise>
-  Json(ErrorResult& aRv);
-
-  already_AddRefed<Promise>
-  Text(ErrorResult& aRv);
-
-  bool
-  BodyUsed() const
-  {
-    return mBodyUsed;
-  }
-
   already_AddRefed<InternalRequest>
   GetInternalRequest();
 private:
-  enum ConsumeType
-  {
-    CONSUME_ARRAYBUFFER,
-    CONSUME_BLOB,
-    // FormData not supported right now,
-    CONSUME_JSON,
-    CONSUME_TEXT,
-  };
-
   ~Request();
-
-  already_AddRefed<Promise>
-  ConsumeBody(ConsumeType aType, ErrorResult& aRv);
-
-  void
-  SetBodyUsed()
-  {
-    mBodyUsed = true;
-  }
 
   nsCOMPtr<nsIGlobalObject> mOwner;
   nsRefPtr<InternalRequest> mRequest;
-  bool mBodyUsed;
-  nsCString mMimeType;
+  // Lazily created.
+  nsRefPtr<Headers> mHeaders;
 };
 
 } // namespace dom

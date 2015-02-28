@@ -1,0 +1,454 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 4.07 beta
+; Diterjemahkan oleh M. Rofiq Setiawan
+; 
+; 
+; 
+;
+
+00000000 = "Indonesian"
+00000001 = "Bahasa Indonesia"
+00000002 = "33"
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "Konfigurasi 7-Zip"
+
+; Info Page
+01000100 = "Tentang 7-Zip"
+01000103 = "7-Zip adalah software freeware. Support pembangunan 7-Zip dgn melakukan registrasi."
+01000105 = "Register"
+
+; Folders Page
+01000200 = "Folder"
+01000210 = "Folder Kerja"
+01000211 = "Folder temp sistem"
+01000212 = "Sekarang"
+01000213 = "Ditentukan:"
+01000214 = "Hanya utk removable drives"
+
+01000281 = "Tentukan lokasi untuk arsip file temporer."
+
+; System Page
+01000300 = "Sistem"
+01000301 = "Integrasikan 7-Zip ke shell konteks menu"
+01000302 = "Cascaded konteks menu"
+01000310 = "Item pada konteks menu:"
+
+; Language Page
+01000400 = "Bahasa"
+01000401 = "Bahasa:"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "Perintah dlm 7-Zip"
+02000103 = "Buka Arsip"
+02000104 = "Buka Arsip terpilih."
+02000105 = "Ekstrak file..."
+02000106 = "Ekstrak file arsip terpilih."
+02000107 = "Tambahkan ke arsip..."
+02000108 = "Tambahkan item yg terpilih ke arsip."
+02000109 = "Test arsip"
+0200010A = "Test integritas dari arsip terpilih."
+0200010B = "Ekstrak di sini"
+0200010C = "Ekstrak file arsip yg terpilih ke folder ini."
+0200010D = "Ekstrak ke {0}"
+0200010E = "Ekstrak file ke subfolder."
+0200010F = "Tambahkan ke {0}"
+02000110 = "Tambahkan item terpilih ke arsip."
+02000111 = "Kompres dan kirimkan via email..."
+02000112 = "Kompres item yg terpilih ke arsip dan kirim via email."
+02000113 = "Kompres ke {0} dan kirimkan via email"
+02000114 = "Kompres item yg terpilih ke arsip dan kirim via email."
+
+02000140 = "<Folder>"
+02000141 = "<Arsip>"
+
+; Properties
+02000203 = "Path"
+02000204 = "Nama"
+02000205 = "Ekstensi"
+02000206 = "Folder"
+02000207 = "Ukuran"
+02000208 = "Ukuran paket"
+02000209 = "Atribut"
+0200020A = "Dibuat"
+0200020B = "Diakses"
+0200020C = "dimodifikasi"
+0200020D = "Solid"
+0200020E = "Komentar"
+0200020F = "Terenkripsi"
+02000210 = "Split Sebelum"
+02000211 = "Split Setelah"
+02000212 = "Dictionary"
+02000213 = "CRC"
+02000214 = "Tipe"
+02000215 = "Anti"
+02000216 = "Metode"
+02000217 = "Sistem Operasi"
+02000218 = "Sistem file"
+02000219 = "User"
+0200021A = "Grup"
+0200021B = "Blok"
+0200021C = "Komentar"
+0200021D = "Posisi"
+
+; Status bar 
+02000301 = "{0} buah objek telah terpilih"
+02000302 = "{0} buah objek"
+
+; List Context Menu
+02000401 = "Kolom..."
+
+02000411 = "Buka"
+02000412 = "Ekstrak..."
+
+; ToolBar
+02000501 = "Ekstrak"
+
+; Messages 
+02000601 = "7-Zip tak mendukung peng-update-an utk arsip ini."
+02000602 = "Tak dapat membuat arsip {0}"
+02000603 = "Tak dapat membuat folder '{0}'"
+02000604 = "7-Zip tak mendukung file arsip jenis ini."
+02000605 = "Error"
+02000606 = "Terlalu banyak item"
+02000607 = "Tak ada aplikasi yang diasosiasikan dgn ekstensi dr nama file yg diberikan"
+02000608 = "Tidak ada error"
+
+; Dialogs
+02000702 = "OK"
+02000705 = "&Ya"
+02000707 = "Yas untuk semua"
+02000709 = "Tidak"
+0200070B = "Tidak untuk semua"
+
+02000710 = "Batal"
+02000711 = "Batal"
+02000713 = "Keluar"
+02000714 = "Stop"
+02000715 = "Restart"
+
+02000720 = "Pertolongan"
+
+; Extract dialog
+02000800 = "Ekstrak"
+02000801 = "Ekstrak ke:"
+02000802 = "Password"
+
+02000810 = "Mode path"
+02000811 = "Pathname penuh"
+02000812 = "Pathname sekarang"
+02000813 = "Tidak pakai"
+
+02000820 = "Mode overwrite"
+02000821 = "Konfirmasikan sebelum meng-overwrite"
+02000822 = "Overwrite tanpa konfirmasi"
+02000823 = "Lewati file yg ada"
+02000824 = "Ubah nama otomatis"
+02000825 = "Ubah nama secara otomatis terhadap file yg ada"
+
+02000830 = "File"
+02000831 = "File yg terpilih"
+02000832 = "Semua file"
+
+02000881 = "Tentukan lokasi utk pengekstrakan file."
+
+02000890 = "Sedang mengekstrak"
+
+; Overwrite dialog
+02000900 = "Konfirmasi pen-replace-an file"
+02000901 = "Folder tujuan telah berisi file yg telah terproses."
+02000902 = "Maukah Anda me-replace file yg ada"
+02000903 = "dengan yg ini?"
+
+02000911 = "Ubah nama otomatis"
+
+02000982 = "{0} bytes"
+02000983 = "Dimodifikasi pada"
+
+; Messages dialog
+02000A00 = "Pesan diagnosa"
+
+02000A80 = "Message"
+
+02000A91 = "Metode pengompresan utk '{0}' tak didukung 7-Zip."
+02000A92 = "Data error di '{0}'. File ini rusak."
+02000A93 = "CRC gagal di '{0}'. File ini rusak."
+
+; Password dialog
+02000B00 = "Ketikkan password"
+02000B01 = "Ketikkan password:"
+02000B02 = "Perlihatkan password"
+
+; Progress dialog
+02000C00 = "Proses"
+02000C01 = "Telah berlalu :"
+02000C02 = "Selesai dalam :"
+02000C03 = "Ukuran File :"
+02000C04 = "Kecepatan:"
+
+02000C10 = "&Background"
+02000C11 = "&Foreground"
+02000C12 = "&Berhenti"
+02000C13 = "&Lanjutkan"
+
+02000C20 = "Terhenti"
+
+02000C30 = "Anda yakin utk membatalkannya?"
+
+; Compress dialog
+02000D00 = "Tambahkan ke arsip"
+02000D01 = "Arsip:"
+02000D02 = "Mode update:"
+02000D03 = "Format arsip:"
+02000D04 = "Metode kompresi:"
+02000D05 = "Buat Arsip solid"
+02000D06 = "&Parameter:"
+02000D07 = "Opsi"
+02000D08 = "Buat arsip SF&X"
+02000D09 = "Multi-threading"
+02000D0A = "Enkripsi nama file"
+02000D0B = "Level kompresi:"
+02000D0C = "Ukuran dictionary:"
+02000D0D = "Ukuran word :"
+02000D0E = "Memori utk men-kompresi:"
+02000D0F = "Memori utk men-dekompres:"
+
+02000D40 = "Bagi/belah ke &volumes, bytes:"
+
+02000D81 = "Utk penyimpanan"
+02000D82 = "Normal"
+02000D83 = "Maksimum"
+02000D84 = "Cepat"
+02000D85 = "Supercepat"
+02000D86 = "Ultra"
+
+02000D90 = "Browse"
+
+02000DA1 = "Tambah dan replace file"
+02000DA2 = "Update dan tambah file"
+02000DA3 = "Perbaharui file yg ada"
+02000DA4 = "Sinkronisasikan file"
+
+02000DB1 = "Semua File"
+
+02000DC0 = "men-kompresi"
+
+; Columns dialog
+02000E00 = "Kolom"
+02000E01 = "Cek the columns that you would like to make visible in this folder. Use the Move Up and Move Down buttons to reorder the columns."
+02000E02 = "The selected column should be"
+02000E03 = "pixels &wide."
+
+02000E10 = "Pindah ke atas"
+02000E11 = "Pindah ke bawah"
+02000E12 = "Perlihatkan"
+02000E13 = "Sembunyikan"
+02000E14 = "Set"
+
+02000E81 = "Judul"
+02000E82 = "Lebar"
+
+; Testing
+02000F90 = "Pengetesan Arsip"
+
+
+; File Manager
+
+03000000 = "7-Zip File Manager"
+
+; Menu
+03000102 = "&File"
+03000103 = "&Edit"
+03000104 = "&View"
+03000105 = "&Tool"
+03000106 = "&Pertolongan"
+03000107 = "F&avorit"
+
+; File
+03000210 = "&Buka"
+03000211 = "Buka &Inside"
+03000212 = "Buka O&utside"
+03000220 = "&View"
+03000221 = "&Edit"
+03000230 = "Ubah nama"
+03000231 = "Salin ke..."
+03000232 = "Pindahkan ke..."
+03000233 = "Hapus"
+03000240 = "P&roperties"
+03000241 = "Komentar"
+03000250 = "Buat Folder"
+03000251 = "Buat File"
+03000260 = "Keluar"
+03000270 = "Bagi/belah file..."
+03000271 = "Gabung file..."
+
+; Edit
+03000310 = "&Undo"
+03000311 = "&Redo"
+03000320 = "Cu&t"
+03000321 = "Salin"
+03000322 = "&Paste"
+03000323 = "Hapus"
+03000330 = "Pilih semua"
+03000331 = "Jangan pilih semua"
+03000332 = "Pilih kebalikannya"
+03000333 = "Pilih..."
+03000334 = "Tak memilih..."
+03000335 = "Pilih berdasarkan tipe"
+03000336 = "Tak memilih berdasarkan Tipe"
+
+; View
+03000410 = "Ikon besar"
+03000411 = "Ikon kecil"
+03000412 = "&List"
+03000413 = "&Detail"
+03000420 = "Tak beraturan"
+03000430 = "Buka Root Folder"
+03000431 = "Ke atas satu Level"
+03000432 = "Folder History..."
+03000440 = "&Refresh"
+03000450 = "&2 Panel"
+03000451 = "&Toolbar"
+03000460 = "Toolbar Arsip"
+03000461 = "Toolbar Standard"
+03000462 = "Tombol Besar"
+03000463 = "Perlihatkan teks tombol"
+
+; Tools
+03000510 = "&Opsi..."
+03000511 = "&Benchmark"
+
+; Help
+03000610 = "Petunjuk..."
+03000620 = "Tentang 7-Zip..."
+
+; Favorites
+03000710 = "Tambah folder ke Favorit sebagai"
+03000720 = "Bookmark"
+
+; Options Dialog
+
+03010000 = "Opsi"
+
+; Plugins
+03010100 = "Plugin"
+03010101 = "&Plugin:"
+03010110 = "Opsi..."
+
+; Edit
+03010200 = "Editor"
+03010201 = "&Editor:"
+
+; System
+03010300 = "Sistem"
+03010302 = "Asosiasikan 7-Zip dengan:"
+03010310 = "Plugin"
+
+; Settings
+03010400 = "Setting"
+03010401 = "Perlihatkan \"..\" item"
+03010402 = "Perlihatkan ikon asli dari file"
+03010410 = "Perlihatkan menu sistem"
+03010420 = "&Full row select"
+03010421 = "Perlihatkan grid line"
+
+; Strings
+
+03020201 = "Salin"
+03020202 = "Pindahkan"
+03020203 = "Salin ke:"
+03020204 = "Pindah ke:"
+03020205 = "Sedang menyalin..."
+03020206 = "Sedang memindah..."
+03020207 = "Anda tak bisa memindah atau menyalin item utk folder yg demikian."
+03020208 = "Operasi tak didukung."
+
+03020210 = "Konfirmasi penghapusan file"
+03020211 = "Konfirmasi penghapusan folder"
+03020212 = "Konfirmasi penghapusan file-file"
+03020213 = "Yakin utk menghapus '{0}'?"
+03020214 = "Yakin utk menghapus folder '{0}' dan semua isinya?"
+03020215 = "Yakin utk menghapus item {0}?"
+03020216 = "Penghapusan..."
+03020217 = "Error ketika menghapus file / folder"
+
+03020220 = "Renaming..."
+03020221 = "Error ketika merubah nama file / folder"
+
+03020230 = "Buat Folder"
+03020231 = "Nama folder:"
+03020232 = "Folder baru"
+03020233 = "Error, tidak dapat membuat folder"
+
+03020240 = "Buat File"
+03020241 = "Nama File:"
+03020242 = "File baru"
+03020243 = "Error, tidak dapat membuat file"
+
+03020250 = "Pilih"
+03020251 = "Tak memilih"
+03020252 = "Mask:"
+
+03020260 = "FolderHistory"
+
+03020280 = "File '{0}' telah termodifikasi.\nApakah Anda ingin meng-updatenya pada arsip?"
+03020281 = "Tidak dapat meng-update file\n'{0}'"
+03020282 = "Tak dapat membuka editor."
+03020283 = "Membuka..."
+
+03020290 = "Komentar"
+03020291 = "Komentar:"
+
+030202A0 = "Sistem"
+
+03020300 = "Komputer"
+03020301 = "Network"
+
+03020400 = "Tambah"
+03020401 = "Ekstrak"
+03020402 = "Test"
+
+03020420 = "Salin"
+03020421 = "Pindah"
+03020422 = "Hapus"
+03020423 = "Info"
+
+03020500 = "Bagi/belah File"
+03020501 = "Bagi/belah ke:"
+03020510 = "Pembelahan file..."
+
+03020600 = "Combine Files"
+03020601 = "Gabung ke:"
+03020610 = "Penggabungan file..."
+
+; Computer
+03031100 = "Ukuran total"
+03031101 = "Ruang Kosong"
+03031102 = "Ukuran Cluster"
+03031103 = "Label"
+
+; Network
+03031200 = "Local Name"
+03031201 = "Provider"
+
+; Benchmark Dialog
+
+03080000 = "Benchmark"
+03080001 = "Penggunaan memori:"
+03080002 = "Compressing"
+03080003 = "Decompressing"
+03080004 = "Kecepatan"
+03080005 = "Rating"
+03080006 = "Total Rating"
+03080007 = "Sekarang"
+03080008 = "Resulting"
+03080009 = "Passes:"
+0308000A = "Error:"
+
+;!@LangEnd@!

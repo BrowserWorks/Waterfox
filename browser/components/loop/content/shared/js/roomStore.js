@@ -101,6 +101,7 @@ loop.store = loop.store || {};
       "getAllRoomsError",
       "openRoom",
       "renameRoom",
+      "renameRoomError",
       "updateRoomList"
     ],
 
@@ -124,7 +125,7 @@ loop.store = loop.store || {};
         error: null,
         pendingCreation: false,
         pendingInitialRetrieval: false,
-        rooms: []
+        rooms: [],
       };
     },
 
@@ -430,13 +431,17 @@ loop.store = loop.store || {};
         return;
       }
 
+      this.setStoreState({error: null});
       this._mozLoop.rooms.rename(actionData.roomToken, newRoomName,
         function(err) {
           if (err) {
-            // XXX Give this a proper UI - bug 1100595.
-            console.error("Failed to rename the room", err);
+            this.dispatchAction(new sharedActions.RenameRoomError({error: err}));
           }
-        });
+        }.bind(this));
+    },
+
+    renameRoomError: function(actionData) {
+      this.setStoreState({error: actionData.error});
     }
   });
 })(document.mozL10n || navigator.mozL10n);

@@ -1,6 +1,5 @@
 import cgi
 import json
-import logging
 import os
 import traceback
 import urllib
@@ -9,14 +8,13 @@ import urlparse
 from constants import content_types
 from pipes import Pipeline, template
 from ranges import RangeParser
+from request import Authentication
 from response import MultipartContent
 from utils import HTTPException
 
-logger = logging.getLogger("wptserve")
-
 __all__ = ["file_handler", "python_script_handler",
            "FunctionHandler", "handler", "json_handler",
-           "as_is_handler", "ErrorHandler"]
+           "as_is_handler", "ErrorHandler", "BasicAuthHandler"]
 
 
 def guess_content_type(path):
@@ -27,9 +25,34 @@ def guess_content_type(path):
     return "application/octet-stream"
 
 
+
+def filesystem_path(base_path, request, url_base="/"):
+    if base_path is None:
+        base_path = request.doc_root
+
+    path = request.url_parts.path
+
+    if path.startswith(url_base):
+        path = path[len(url_base):]
+
+    if ".." in path:
+        raise HTTPException(404)
+
+    new_path = os.path.join(base_path, path)
+
+    # Otherwise setting path to / allows access outside the root directory
+    if not new_path.startswith(base_path):
+        raise HTTPException(404)
+
+    return new_path
+
 class DirectoryHandler(object):
+    def __init__(self, base_path=None, url_base="/"):
+        self.base_path = base_path
+        self.url_base = url_base
+
     def __call__(self, request, response):
-        path = request.filesystem_path
+        path = filesystem_path(self.base_path, request, self.url_base)
 
         assert os.path.isdir(path)
 
@@ -45,8 +68,13 @@ class DirectoryHandler(object):
        "items": "\n".join(self.list_items(request, path))}
 
     def list_items(self, request, path):
+        # TODO: this won't actually list all routes, only the
+        # ones that correspond to a real filesystem path. It's
+        # not possible to list every route that will match
+        # something, but it should be possible to at least list the
+        # statically defined ones
         base_path = request.url_parts.path
-        filesystem_base = request.filesystem_path
+
         if not base_path.endswith("/"):
             base_path += "/"
         if base_path != "/":
@@ -55,7 +83,7 @@ class DirectoryHandler(object):
                    {"link": link, "name": ".."})
         for item in sorted(os.listdir(path)):
             link = cgi.escape(urllib.quote(item))
-            if os.path.isdir(os.path.join(filesystem_base, item)):
+            if os.path.isdir(os.path.join(path, item)):
                 link += "/"
                 class_ = "dir"
             else:
@@ -68,11 +96,16 @@ directory_handler = DirectoryHandler()
 
 
 class FileHandler(object):
+    def __init__(self, base_path=None, url_base="/"):
+        self.base_path = base_path
+        self.url_base = url_base
+        self.directory_handler = DirectoryHandler(self.base_path)
+
     def __call__(self, request, response):
-        path = request.filesystem_path
+        path = filesystem_path(self.base_path, request, self.url_base)
 
         if os.path.isdir(path):
-            return directory_handler(request, response)
+            return self.directory_handler(request, response)
         try:
             #This is probably racy with some other process trying to change the file
             file_size = os.stat(path).st_size
@@ -123,7 +156,8 @@ class FileHandler(object):
         except IOError:
             return []
         else:
-            data = template(request, data)
+            if use_sub:
+                data = template(request, data)
             return [tuple(item.strip() for item in line.split(":", 1))
                     for line in data.splitlines() if line]
 
@@ -167,26 +201,32 @@ class FileHandler(object):
 file_handler = FileHandler()
 
 
-def python_script_handler(request, response):
-    path = request.filesystem_path
+class PythonScriptHandler(object):
+    def __init__(self, base_path=None, url_base="/"):
+        self.base_path = base_path
+        self.url_base = url_base
 
-    try:
-        environ = {"__file__": path}
-        execfile(path, environ, environ)
-        if "main" in environ:
-            handler = FunctionHandler(environ["main"])
-            handler(request, response)
-        else:
-            raise HTTPException(500)
-    except IOError:
-        raise HTTPException(404)
+    def __call__(self, request, response):
+        path = filesystem_path(self.base_path, request, self.url_base)
 
+        try:
+            environ = {"__file__": path}
+            execfile(path, environ, environ)
+            if "main" in environ:
+                handler = FunctionHandler(environ["main"])
+                handler(request, response)
+            else:
+                raise HTTPException(500, "No main function in script %s" % path)
+        except IOError:
+            raise HTTPException(404)
+
+python_script_handler = PythonScriptHandler()
 
 def FunctionHandler(func):
     def inner(request, response):
         try:
             rv = func(request, response)
-        except:
+        except Exception:
             msg = traceback.format_exc()
             raise HTTPException(500, message=msg)
         if rv is not None:
@@ -226,15 +266,50 @@ def json_handler(func):
     return FunctionHandler(inner)
 
 
-def as_is_handler(request, response):
-    path = request.filesystem_path
-    try:
-        with open(path) as f:
-            response.writer.write_content(f.read())
-        response.close_connection = True
-    except IOError:
-        raise HTTPException(404)
+class AsIsHandler(object):
+    def __init__(self, base_path=None, url_base="/"):
+        self.base_path = base_path
+        self.url_base = url_base
 
+    def __call__(self, request, response):
+        path = filesystem_path(self.base_path, request, self.url_base)
+
+        try:
+            with open(path) as f:
+                response.writer.write_content(f.read())
+            response.close_connection = True
+        except IOError:
+            raise HTTPException(404)
+
+as_is_handler = AsIsHandler()
+
+class BasicAuthHandler(object):
+    def __init__(self, handler, user, password):
+        """
+         A Basic Auth handler
+
+         :Args:
+         - handler: a secondary handler for the request after authentication is successful (example file_handler)
+         - user: string of the valid user name or None if any / all credentials are allowed
+         - password: string of the password required
+        """
+        self.user = user
+        self.password = password
+        self.handler = handler
+
+    def __call__(self, request, response):
+        if "authorization" not in request.headers:
+            response.status = 401
+            response.headers.set("WWW-Authenticate", "Basic")
+            return response
+        else:
+            auth = Authentication(request.headers)
+            if self.user is not None and (self.user != auth.username or self.password != auth.password):
+                response.set_error(403, "Invalid username or password")
+                return response
+            return self.handler(request, response)
+
+basic_auth_handler = BasicAuthHandler(file_handler, None, None)
 
 class ErrorHandler(object):
     def __init__(self, status):

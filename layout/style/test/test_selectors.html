@@ -867,9 +867,13 @@ function run() {
                          emptyset, classset(["a", "b", "nomatch"]));
 
     // Test serialization of pseudo-elements.
-    should_serialize_to("p:first-letter", "p:first-letter");
-    should_serialize_to("div>p:first-letter", "div > p:first-letter");
-    should_serialize_to("span +div:first-line", "span + div:first-line");
+    should_serialize_to("p::first-letter", "p::first-letter");
+    should_serialize_to("p:first-letter", "p::first-letter");
+    should_serialize_to("div>p:first-letter", "div > p::first-letter");
+    should_serialize_to("span +div:first-line", "span + div::first-line");
+
+    // Test serialization of non CSS2 pseudo-element.
+    should_serialize_to("input::-moz-placeholder", "input::-moz-placeholder");
 
     // Test default namespaces, including inside :not().
     var html_default_ns = "@namespace url(http://www.w3.org/1999/xhtml);";
@@ -924,6 +928,7 @@ function run() {
     test_parseable(":-moz-locale-dir(rtl)");
     test_parseable(":-moz-locale-dir(rTl)");
     test_parseable(":-moz-locale-dir(LTR)");
+    test_parseable(":-moz-locale-dir(other)");
     if (document.body.matches(":-moz-locale-dir(ltr)")) {
         test_selector_in_html("a:-moz-locale-dir(LTr)", single_a,
                               set_single, empty_set);
@@ -943,14 +948,16 @@ function run() {
         test_selector_in_html("a:-moz-locale-dir(LTr)", single_a,
                               empty_set, set_single);
     }
+    test_selector_in_html("a:-moz-locale-dir(other)", single_a,
+                          empty_set, set_single);
 
-    test_balanced_unparseable(":-moz-locale-dir(other)");
     test_balanced_unparseable(":-moz-locale-dir()");
     test_balanced_unparseable(":-moz-locale-dir(())");
     test_balanced_unparseable(":-moz-locale-dir(3())");
     test_balanced_unparseable(":-moz-locale-dir(f{})");
     test_balanced_unparseable(":-moz-locale-dir('ltr')");
     test_balanced_unparseable(":-moz-locale-dir(ltr, other)");
+    test_balanced_unparseable(":-moz-locale-dir(ltr other)");
     test_balanced_unparseable(":-moz-locale-dir");
 
     // Test :-moz-dir()
@@ -958,6 +965,7 @@ function run() {
     test_parseable(":-moz-dir(rtl)");
     test_parseable(":-moz-dir(rTl)");
     test_parseable(":-moz-dir(LTR)");
+    test_parseable(":-moz-dir(other)");
     if (document.body.matches(":-moz-dir(ltr)")) {
         test_selector_in_html("a:-moz-dir(LTr)", single_a,
                               set_single, empty_set);
@@ -977,14 +985,16 @@ function run() {
         test_selector_in_html("a:-moz-dir(LTr)", single_a,
                               empty_set, set_single);
     }
+    test_selector_in_html("a:-moz-dir(other)", single_a,
+                          empty_set, set_single);
 
-    test_balanced_unparseable(":-moz-dir(other)");
     test_balanced_unparseable(":-moz-dir()");
     test_balanced_unparseable(":-moz-dir(())");
     test_balanced_unparseable(":-moz-dir(3())");
     test_balanced_unparseable(":-moz-dir(f{})");
     test_balanced_unparseable(":-moz-dir('ltr')");
     test_balanced_unparseable(":-moz-dir(ltr, other)");
+    test_balanced_unparseable(":-moz-dir(ltr other)");
     test_balanced_unparseable(":-moz-dir");
 
     // Test -moz-lwtheme and -moz-lwtheme-[darktext|brighttext]
@@ -1014,6 +1024,9 @@ function run() {
     test_parseable(":-moz-handler-disabled");
     test_parseable(":-moz-handler-blocked");
     test_parseable(":-moz-handler-crashed");
+
+    // We're not in a UA sheet, so this should be invalid.
+    test_balanced_unparseable(":-moz-native-anonymous");
 
     // Case sensitivity of tag selectors
     function setup_cased_spans(body) {

@@ -35,6 +35,7 @@
       <command id="cmd_newApp" oncommand="Cmds.newApp()" label="&projectMenu_newApp_label;"/>
       <command id="cmd_importPackagedApp" oncommand="Cmds.importPackagedApp()" label="&projectMenu_importPackagedApp_label;"/>
       <command id="cmd_importHostedApp" oncommand="Cmds.importHostedApp()" label="&projectMenu_importHostedApp_label;"/>
+      <command id="cmd_showDevicePrefs" label="&runtimeMenu_showDevicePrefs_label;" oncommand="Cmds.showDevicePrefs()"/>
       <command id="cmd_removeProject" oncommand="Cmds.removeProject()" label="&projectMenu_remove_label;"/>
       <command id="cmd_showProjectPanel" oncommand="Cmds.showProjectPanel()"/>
       <command id="cmd_showRuntimePanel" oncommand="Cmds.showRuntimePanel()"/>
@@ -50,6 +51,9 @@
       <command id="cmd_play" oncommand="Cmds.play()"/>
       <command id="cmd_stop" oncommand="Cmds.stop()" label="&projectMenu_stop_label;"/>
       <command id="cmd_toggleToolbox" oncommand="Cmds.toggleToolbox()"/>
+      <command id="cmd_zoomin" label="&viewMenu_zoomin_label;" oncommand="Cmds.zoomIn()"/>
+      <command id="cmd_zoomout" label="&viewMenu_zoomout_label;" oncommand="Cmds.zoomOut()"/>
+      <command id="cmd_resetzoom" label="&viewMenu_resetzoom_label;" oncommand="Cmds.resetZoom()"/>
     </commandset>
   </commandset>
 
@@ -68,6 +72,7 @@
         <menuitem command="cmd_removeProject" accesskey="&projectMenu_remove_accesskey;"/>
         <menuseparator/>
         <menuitem command="cmd_showPrefs" label="&projectMenu_showPrefs_label;" accesskey="&projectMenu_showPrefs_accesskey;"/>
+        <menuitem command="cmd_showAddons" label="&projectMenu_manageComponents_label;" accesskey="&projectMenu_manageComponents_accesskey;"/>
       </menupopup>
     </menu>
 
@@ -77,6 +82,7 @@
         <menuitem command="cmd_takeScreenshot" accesskey="&runtimeMenu_takeScreenshot_accesskey;"/>
         <menuitem command="cmd_showPermissionsTable" accesskey="&runtimeMenu_showPermissionTable_accesskey;"/>
         <menuitem command="cmd_showRuntimeDetails" accesskey="&runtimeMenu_showDetails_accesskey;"/>
+        <menuitem command="cmd_showDevicePrefs" accesskey="&runtimeMenu_showDevicePrefs_accesskey;"/>
         <menuseparator/>
         <menuitem command="cmd_disconnectRuntime" accesskey="&runtimeMenu_disconnect_accesskey;"/>
       </menupopup>
@@ -85,7 +91,10 @@
     <menu id="menu-view" label="&viewMenu_label;" accesskey="&viewMenu_accesskey;">
       <menupopup id="menu-ViewPopup">
         <menuitem command="cmd_toggleEditor" key="key_toggleEditor" accesskey="&viewMenu_toggleEditor_accesskey;"/>
-        <menuitem command="cmd_showAddons" label="&viewMenu_showAddons_label;" accesskey="&viewMenu_showAddons_accesskey;"/>
+        <menuseparator/>
+        <menuitem command="cmd_zoomin" key="key_zoomin" accesskey="&viewMenu_zoomin_accesskey;"/>
+        <menuitem command="cmd_zoomout" key="key_zoomout" accesskey="&viewMenu_zoomout_accesskey;"/>
+        <menuitem command="cmd_resetzoom" key="key_resetzoom" accesskey="&viewMenu_resetzoom_accesskey;"/>
       </menupopup>
     </menu>
 
@@ -97,6 +106,10 @@
     <key key="&key_play;" id="key_play" command="cmd_play" modifiers="accel"/>
     <key key="&key_toggleEditor;" id="key_toggleEditor" command="cmd_toggleEditor" modifiers="accel"/>
     <key keycode="&key_toggleToolbox;" id="key_toggleToolbox" command="cmd_toggleToolbox"/>
+    <key key="&key_zoomin;" id="key_zoomin" command="cmd_zoomin" modifiers="accel"/>
+    <key key="&key_zoomin2;" id="key_zoomin2" command="cmd_zoomin" modifiers="accel"/>
+    <key key="&key_zoomout;" id="key_zoomout" command="cmd_zoomout" modifiers="accel"/>
+    <key key="&key_resetzoom;" id="key_resetzoom" command="cmd_resetzoom" modifiers="accel"/>
   </keyset>
 
   <tooltip id="aHTMLTooltip" page="true"/>
@@ -151,20 +164,21 @@
     <!-- Runtime panel -->
     <panel id="runtime-panel" type="arrow" position="bottomcenter topright" consumeoutsideclicks="true" animate="false">
       <vbox flex="1">
-        <label class="panel-header">&runtimePanel_USBDevices;</label>
+        <label class="panel-header">&runtimePanel_usb;</label>
         <toolbarbutton class="panel-item" label="&runtimePanel_nousbdevice;" id="runtime-panel-nousbdevice" command="cmd_showTroubleShooting"/>
         <toolbarbutton class="panel-item" label="&runtimePanel_noadbhelper;" id="runtime-panel-noadbhelper" command="cmd_showAddons"/>
         <vbox id="runtime-panel-usb"></vbox>
-        <label class="panel-header" id="runtime-header-wifi">&runtimePanel_WiFiDevices;</label>
+        <label class="panel-header" id="runtime-header-wifi">&runtimePanel_wifi;</label>
         <vbox id="runtime-panel-wifi"></vbox>
-        <label class="panel-header">&runtimePanel_simulators;</label>
+        <label class="panel-header">&runtimePanel_simulator;</label>
         <vbox id="runtime-panel-simulator"></vbox>
         <toolbarbutton class="panel-item" label="&runtimePanel_installsimulator;" id="runtime-panel-installsimulator" command="cmd_showAddons"/>
-        <label class="panel-header">&runtimePanel_custom;</label>
+        <label class="panel-header">&runtimePanel_other;</label>
         <vbox id="runtime-panel-other"></vbox>
         <vbox flex="1" id="runtime-actions">
           <toolbarbutton class="panel-item" id="runtime-details" command="cmd_showRuntimeDetails"/>
           <toolbarbutton class="panel-item" id="runtime-permissions" command="cmd_showPermissionsTable"/>
+          <toolbarbutton class="panel-item" id="runtime-preferences" command="cmd_showDevicePrefs"/>
           <toolbarbutton class="panel-item" id="runtime-screenshot"  command="cmd_takeScreenshot"/>
           <toolbarbutton class="panel-item" id="runtime-disconnect"  command="cmd_disconnectRuntime"/>
         </vbox>
@@ -182,6 +196,7 @@
       <iframe id="deck-panel-permissionstable" flex="1" src="permissionstable.xhtml"/>
       <iframe id="deck-panel-runtimedetails" flex="1" src="runtimedetails.xhtml"/>
       <iframe id="deck-panel-monitor" flex="1" lazysrc="monitor.xhtml"/>
+      <iframe id="deck-panel-devicepreferences" flex="1" src="devicepreferences.xhtml"/>
     </deck>
     <splitter hidden="true" class="devtools-horizontal-splitter" orient="vertical"/>
     <!-- toolbox iframe will be inserted here -->

@@ -8,13 +8,10 @@
 # linux) to the information; I certainly wouldn't want anyone parsing this
 # information and having behaviour depend on it
 
-import json
 import os
 import platform
 import re
 import sys
-
-import mozfile
 
 # keep a copy of the os module since updating globals overrides this
 _os = os
@@ -32,7 +29,8 @@ info = {'os': unknown,
         'processor': unknown,
         'version': unknown,
         'os_version': unknown,
-        'bits': unknown }
+        'bits': unknown,
+        'has_sandbox': unknown }
 (system, node, release, version, machine, processor) = platform.uname()
 (bits, linkage) = platform.architecture()
 
@@ -93,6 +91,16 @@ info.update({'processor': processor,
              'bits': int(bits),
             })
 
+if info['os'] == 'linux':
+    import ctypes
+    import errno
+    PR_SET_SECCOMP = 22
+    SECCOMP_MODE_FILTER = 2
+    ctypes.CDLL("libc.so.6", use_errno=True).prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, 0)
+    info['has_sandbox'] = ctypes.get_errno() == errno.EFAULT
+else:
+    info['has_sandbox'] = True
+
 # standard value of choices, for easy inspection
 choices = {'os': ['linux', 'bsd', 'win', 'mac', 'unix'],
            'bits': [32, 64],
@@ -121,6 +129,9 @@ def update(new_info):
     """
 
     if isinstance(new_info, basestring):
+        # lazy import
+        import mozfile
+        import json
         f = mozfile.load(new_info)
         new_info = json.loads(f.read())
         f.close()
@@ -196,6 +207,8 @@ def main(args=None):
 
     # args are JSON blobs to override info
     if args:
+        # lazy import
+        import json
         for arg in args:
             if _os.path.exists(arg):
                 string = file(arg).read()

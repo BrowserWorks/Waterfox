@@ -237,7 +237,7 @@ lv{
         }
         GBP{
             "£",
-            "Lielbritānijas sterliņu mārciņa",
+            "Lielbritānijas mārciņa",
         }
         GEL{
             "GEL",
@@ -1123,9 +1123,9 @@ lv{
             zero{"Folklenda Salu mārciņas"}
         }
         GBP{
-            one{"Lielbritānijas sterliņu mārciņa"}
-            other{"Lielbritānijas sterliņu mārciņas"}
-            zero{"Lielbritānijas sterliņu mārciņas"}
+            one{"Lielbritānijas mārciņa"}
+            other{"Lielbritānijas mārciņas"}
+            zero{"Lielbritānijas mārciņas"}
         }
         GEL{
             one{"Gruzijas lari"}
@@ -1738,5 +1738,5 @@ lv{
         other{"{0} {1}"}
         zero{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

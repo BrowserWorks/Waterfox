@@ -7,7 +7,7 @@
     <link rel="author" title="Aharon Lanin" href="mailto:aharon@google.com" />
     <link rel="author" title="Shai Berger" href="mailto:shai@platonix.com" />
     <link rel="author" title="HTML5 bidi test WG" href="mailto:html5bidi@googlegroups.com" />
-    <link rel="help" href="http://dev.w3.org/html5/spec/Overview.html#the-bdi-element" />
+    <link rel="help" href="https://html.spec.whatwg.org/multipage/#the-bdi-element" />
     <meta name="assert" content="
       'For the purposes of applying the bidirectional algorithm to the paragraph-level
       container that a bdi element finds itself within, the bdi element must be treated
@@ -36,7 +36,7 @@
         &#x202D; - The LRO (left-to-right override) formatting character.
         &#x202C; - The PDF (pop directional formatting) formatting character; closes LRO.
       If the BDIs in the test's first DIV were SPANs, the &#x05D1; would be rendered to the left
-      of the &#x05D0;.      
+      of the &#x05D0;.
     </div>
     <div class="test">
       <div dir="ltr"><bdi>[&#x05D0;]</bdi> &gt; <bdi>[&#x05D1;]</bdi>...</div>

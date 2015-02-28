@@ -10,7 +10,7 @@
 
 ##############################################################################
 # Keep the following in sync with the version - see common/unicode/uvernum.h
-U_ICUDATA_NAME=icudt54
+U_ICUDATA_NAME=icudt55
 ##############################################################################
 U_ICUDATA_ENDIAN_SUFFIX=l
 UNICODE_VERSION=7.0
@@ -720,6 +720,7 @@ CLEAN : GODATA
 	-@erase "*.brk"
 	-@erase "*.res"
 	-@erase "*.txt"
+	-@erase "*.dict"
 	@cd "$(ICUBLD_PKG)\$(ICUCOL)"
 	-@erase "*.res"
 	-@erase "*.txt"

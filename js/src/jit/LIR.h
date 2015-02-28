@@ -554,6 +554,7 @@ class LDefinition
           case MIRType_String:
           case MIRType_Symbol:
           case MIRType_Object:
+          case MIRType_ObjectOrNull:
             return LDefinition::OBJECT;
           case MIRType_Double:
             return LDefinition::DOUBLE;
@@ -658,7 +659,8 @@ class LNode
     virtual void setOperand(size_t index, const LAllocation &a) = 0;
 
     // Returns information about temporary registers needed. Each temporary
-    // register is an LUse with a TEMPORARY policy, or a fixed register.
+    // register is an LDefinition with a fixed or virtual register and
+    // either GENERAL, FLOAT32, or DOUBLE type.
     virtual size_t numTemps() const = 0;
     virtual LDefinition *getTemp(size_t index) = 0;
     virtual void setTemp(size_t index, const LDefinition &a) = 0;
@@ -1233,12 +1235,13 @@ class LSnapshot : public TempObject
 };
 
 struct SafepointNunboxEntry {
+    uint32_t typeVreg;
     LAllocation type;
     LAllocation payload;
 
     SafepointNunboxEntry() { }
-    SafepointNunboxEntry(LAllocation type, LAllocation payload)
-      : type(type), payload(payload)
+    SafepointNunboxEntry(uint32_t typeVreg, LAllocation type, LAllocation payload)
+      : typeVreg(typeVreg), type(type), payload(payload)
     { }
 };
 
@@ -1291,9 +1294,6 @@ class LSafepoint : public TempObject
 #ifdef JS_NUNBOX32
     // List of registers (in liveRegs) and stack slots which contain pieces of Values.
     NunboxList nunboxParts_;
-
-    // Number of nunboxParts which are not completely filled in.
-    uint32_t partialNunboxes_;
 #elif JS_PUNBOX64
     // The subset of liveRegs which have Values.
     GeneralRegisterSet valueRegs_;
@@ -1321,7 +1321,6 @@ class LSafepoint : public TempObject
       , valueSlots_(alloc)
 #ifdef JS_NUNBOX32
       , nunboxParts_(alloc)
-      , partialNunboxes_(0)
 #endif
       , slotsOrElementsSlots_(alloc)
     {
@@ -1440,8 +1439,8 @@ class LSafepoint : public TempObject
 
 #ifdef JS_NUNBOX32
 
-    bool addNunboxParts(LAllocation type, LAllocation payload) {
-        bool result = nunboxParts_.append(NunboxEntry(type, payload));
+    bool addNunboxParts(uint32_t typeVreg, LAllocation type, LAllocation payload) {
+        bool result = nunboxParts_.append(NunboxEntry(typeVreg, type, payload));
         if (result)
             assertInvariants();
         return result;
@@ -1453,30 +1452,16 @@ class LSafepoint : public TempObject
                 return true;
             if (nunboxParts_[i].type == LUse(typeVreg, LUse::ANY)) {
                 nunboxParts_[i].type = type;
-                partialNunboxes_--;
                 return true;
             }
         }
-        partialNunboxes_++;
 
         // vregs for nunbox pairs are adjacent, with the type coming first.
         uint32_t payloadVreg = typeVreg + 1;
-        bool result = nunboxParts_.append(NunboxEntry(type, LUse(payloadVreg, LUse::ANY)));
+        bool result = nunboxParts_.append(NunboxEntry(typeVreg, type, LUse(payloadVreg, LUse::ANY)));
         if (result)
             assertInvariants();
         return result;
-    }
-
-    bool hasNunboxType(LAllocation type) const {
-        if (type.isArgument())
-            return true;
-        if (type.isStackSlot() && hasValueSlot(type.toStackSlot()->slot() + 1))
-            return true;
-        for (size_t i = 0; i < nunboxParts_.length(); i++) {
-            if (nunboxParts_[i].type == type)
-                return true;
-        }
-        return false;
     }
 
     bool addNunboxPayload(uint32_t payloadVreg, LAllocation payload) {
@@ -1484,21 +1469,32 @@ class LSafepoint : public TempObject
             if (nunboxParts_[i].payload == payload)
                 return true;
             if (nunboxParts_[i].payload == LUse(payloadVreg, LUse::ANY)) {
-                partialNunboxes_--;
                 nunboxParts_[i].payload = payload;
                 return true;
             }
         }
-        partialNunboxes_++;
 
         // vregs for nunbox pairs are adjacent, with the type coming first.
         uint32_t typeVreg = payloadVreg - 1;
-        bool result = nunboxParts_.append(NunboxEntry(LUse(typeVreg, LUse::ANY), payload));
+        bool result = nunboxParts_.append(NunboxEntry(typeVreg, LUse(typeVreg, LUse::ANY), payload));
         if (result)
             assertInvariants();
         return result;
     }
 
+    LAllocation findTypeAllocation(uint32_t typeVreg) {
+        // Look for some allocation for the specified type vreg, to go with a
+        // partial nunbox entry for the payload. Note that we don't need to
+        // look at the value slots in the safepoint, as these aren't used by
+        // register allocators which add partial nunbox entries.
+        for (size_t i = 0; i < nunboxParts_.length(); i++) {
+            if (nunboxParts_[i].typeVreg == typeVreg && !nunboxParts_[i].type.isUse())
+                return nunboxParts_[i].type;
+        }
+        return LUse(typeVreg, LUse::ANY);
+    }
+
+#ifdef DEBUG
     bool hasNunboxPayload(LAllocation payload) const {
         if (payload.isArgument())
             return true;
@@ -1510,13 +1506,10 @@ class LSafepoint : public TempObject
         }
         return false;
     }
+#endif
 
     NunboxList &nunboxParts() {
         return nunboxParts_;
-    }
-
-    uint32_t partialNunboxes() {
-        return partialNunboxes_;
     }
 
 #elif JS_PUNBOX64

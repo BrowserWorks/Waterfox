@@ -27,7 +27,7 @@ UOBJECT_DEFINE_RTTI_IMPLEMENTATION(MeasureUnit)
 // the "End generated code" comment is auto generated code
 // and must not be edited manually. For instructions on how to correctly
 // update this code, refer to:
-// https://sites.google.com/site/icusite/design/formatting/measureformat/updating-measure-unit
+// http://site.icu-project.org/design/formatting/measureformat/updating-measure-unit
 //
 // Start generated code
 
@@ -77,6 +77,7 @@ static const int32_t gIndexes[] = {
     121
 };
 
+// Must be sorted alphabetically.
 static const char * const gTypes[] = {
     "acceleration",
     "angle",
@@ -99,6 +100,7 @@ static const char * const gTypes[] = {
     "volume"
 };
 
+// Must be grouped by type and sorted alphabetically within each type.
 static const char * const gSubTypes[] = {
     "g-force",
     "meter-per-second-squared",
@@ -481,6 +483,16 @@ static const char * const gSubTypes[] = {
     "quart",
     "tablespoon",
     "teaspoon"
+};
+
+// Must be sorted by first value and then second value.
+static int32_t unitPerUnitToSingleUnit[][4] = {
+        {318, 288, 16, 0},
+        {320, 294, 16, 1},
+        {322, 288, 16, 2},
+        {322, 372, 3, 1},
+        {338, 10, 14, 4},
+        {374, 318, 3, 0}
 };
 
 MeasureUnit *MeasureUnit::createGForce(UErrorCode &status) {
@@ -1098,6 +1110,34 @@ StringEnumeration* MeasureUnit::getAvailableTypes(UErrorCode &errorCode) {
 
 int32_t MeasureUnit::getIndexCount() {
     return gIndexes[UPRV_LENGTHOF(gIndexes) - 1];
+}
+
+MeasureUnit *MeasureUnit::resolveUnitPerUnit(
+        const MeasureUnit &unit, const MeasureUnit &perUnit) {
+    int32_t unitOffset = unit.getOffset();
+    int32_t perUnitOffset = perUnit.getOffset();
+
+    // binary search for (unitOffset, perUnitOffset)
+    int32_t start = 0;
+    int32_t end = UPRV_LENGTHOF(unitPerUnitToSingleUnit);
+    while (start < end) {
+        int32_t mid = (start + end) / 2;
+        int32_t *midRow = unitPerUnitToSingleUnit[mid];
+        if (unitOffset < midRow[0]) {
+            end = mid;
+        } else if (unitOffset > midRow[0]) {
+            start = mid + 1;
+        } else if (perUnitOffset < midRow[1]) {
+            end = mid;
+        } else if (perUnitOffset > midRow[1]) {
+            start = mid + 1;
+        } else {
+            // We found a resolution for our unit / per-unit combo
+            // return it.
+            return new MeasureUnit(midRow[2], midRow[3]);
+        }
+    }
+    return NULL;
 }
 
 MeasureUnit *MeasureUnit::create(int typeId, int subTypeId, UErrorCode &status) {

@@ -30,6 +30,8 @@ loop.store.ActiveRoomStore = (function() {
     READY: "room-ready",
     // Obtaining media from the user
     MEDIA_WAIT: "room-media-wait",
+    // Joining the room is taking place
+    JOINING: "room-joining",
     // The room is known to be joined on the loop-server
     JOINED: "room-joined",
     // The room is connected to the sdk server.
@@ -91,7 +93,12 @@ loop.store.ActiveRoomStore = (function() {
         roomState: ROOM_STATES.INIT,
         audioMuted: false,
         videoMuted: false,
-        failureReason: undefined
+        failureReason: undefined,
+        // Tracks if the room has been used during this
+        // session. 'Used' means at least one call has been placed
+        // with it. Entering and leaving the room without seeing
+        // anyone is not considered as 'used'
+        used: false
       };
     },
 
@@ -292,6 +299,8 @@ loop.store.ActiveRoomStore = (function() {
      * granted and starts joining the room.
      */
     gotMediaPermission: function() {
+      this.setStoreState({roomState: ROOM_STATES.JOINING});
+
       this._mozLoop.rooms.join(this._storeState.roomToken,
         function(error, responseData) {
           if (error) {
@@ -385,7 +394,10 @@ loop.store.ActiveRoomStore = (function() {
      * Handles recording when a remote peer has connected to the servers.
      */
     remotePeerConnected: function() {
-      this.setStoreState({roomState: ROOM_STATES.HAS_PARTICIPANTS});
+      this.setStoreState({
+        roomState: ROOM_STATES.HAS_PARTICIPANTS,
+        used: true
+      });
 
       // We've connected with a third-party, therefore stop displaying the ToS etc.
       this._mozLoop.setLoopPref("seenToS", "seen");
@@ -465,7 +477,8 @@ loop.store.ActiveRoomStore = (function() {
         delete this._timeout;
       }
 
-      if (this._storeState.roomState === ROOM_STATES.JOINED ||
+      if (this._storeState.roomState === ROOM_STATES.JOINING ||
+          this._storeState.roomState === ROOM_STATES.JOINED ||
           this._storeState.roomState === ROOM_STATES.SESSION_CONNECTED ||
           this._storeState.roomState === ROOM_STATES.HAS_PARTICIPANTS) {
         this._mozLoop.rooms.leave(this._storeState.roomToken,

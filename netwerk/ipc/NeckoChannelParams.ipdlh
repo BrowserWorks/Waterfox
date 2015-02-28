@@ -32,7 +32,9 @@ struct HttpChannelOpenArgs
   OptionalURIParams           original;
   OptionalURIParams           doc;
   OptionalURIParams           referrer;
+  uint32_t                    referrerPolicy;
   OptionalURIParams           apiRedirectTo;
+  OptionalURIParams           topWindowURI;
   uint32_t                    loadFlags;
   RequestHeaderTuples         requestHeaders;
   nsCString                   requestMethod;
@@ -42,7 +44,7 @@ struct HttpChannelOpenArgs
   uint8_t                     redirectionLimit;
   bool                        allowPipelining;
   bool                        allowSTS;
-  bool                        forceAllowThirdPartyCookie;
+  uint32_t                    thirdPartyFlags;
   bool                        resumeAt;
   uint64_t                    startPos;
   nsCString                   entityID;
@@ -51,6 +53,7 @@ struct HttpChannelOpenArgs
   bool                        allowSpdy;
   OptionalFileDescriptorSet   fds;
   PrincipalInfo               requestingPrincipalInfo;
+  PrincipalInfo               triggeringPrincipalInfo;
   uint32_t                    securityFlags;
   uint32_t                    contentPolicyType;
 };
@@ -77,6 +80,7 @@ struct FTPChannelOpenArgs
   nsCString                 entityID;
   OptionalInputStreamParams uploadStream;
   PrincipalInfo             requestingPrincipalInfo;
+  PrincipalInfo             triggeringPrincipalInfo;
   uint32_t                  securityFlags;
   uint32_t                  contentPolicyType;
 };
@@ -92,9 +96,15 @@ union FTPChannelCreationArgs
   FTPChannelConnectArgs;   // Used for redirected-to channels
 };
 
+struct HttpChannelDiverterArgs
+{
+  PHttpChannel mChannel;
+  bool mApplyConversion;
+};
+
 union ChannelDiverterArgs
 {
-  PHttpChannel;
+  HttpChannelDiverterArgs;
   PFTPChannel;
 };
 

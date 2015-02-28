@@ -7,31 +7,26 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_recursion-stack.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gSources, gUtils;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gSources = gDebugger.DebuggerView.Sources;
     gUtils = gDebugger.SourceUtils;
 
-    waitForSourceShown(gPanel, ".html").then(() => {
-      addSourceAndCheckOrder(1, () => {
-        addSourceAndCheckOrder(2, () => {
-          addSourceAndCheckOrder(3, () => {
-            closeDebuggerAndFinish(gPanel);
-          });
-        });
-      });
-    });
+    waitForSourceShown(gPanel, ".html")
+      .then(addSourceAndCheckOrder.bind(null, 1))
+      .then(addSourceAndCheckOrder.bind(null, 2))
+      .then(addSourceAndCheckOrder.bind(null, 3))
+      .then(() => { closeDebuggerAndFinish(gPanel); });
   });
 }
 
-function addSourceAndCheckOrder(aMethod, aCallback) {
+function addSourceAndCheckOrder(aMethod) {
   gSources.empty();
   gSources.suppressSelectionEvents = true;
 
@@ -50,13 +45,16 @@ function addSourceAndCheckOrder(aMethod, aCallback) {
     return Math.random() - 0.5;
   });
 
+  let id = 0;
+
   switch (aMethod) {
     case 1:
       for (let { href, leaf } of urls) {
         let url = href + leaf;
+        let actor = 'actor' + id++;
         let label = gUtils.getSourceLabel(url);
         let dummy = document.createElement("label");
-        gSources.push([dummy, url], {
+        gSources.push([dummy, actor], {
           staged: true,
           attachment: {
             label: label
@@ -69,9 +67,10 @@ function addSourceAndCheckOrder(aMethod, aCallback) {
     case 2:
       for (let { href, leaf } of urls) {
         let url = href + leaf;
+        let actor = 'actor' + id++;
         let label = gUtils.getSourceLabel(url);
         let dummy = document.createElement("label");
-        gSources.push([dummy, url], {
+        gSources.push([dummy, actor], {
           staged: false,
           attachment: {
             label: label
@@ -85,9 +84,10 @@ function addSourceAndCheckOrder(aMethod, aCallback) {
       for (; i < urls.length / 2; i++) {
         let { href, leaf } = urls[i];
         let url = href + leaf;
+        let actor = 'actor' + id++;
         let label = gUtils.getSourceLabel(url);
         let dummy = document.createElement("label");
-        gSources.push([dummy, url], {
+        gSources.push([dummy, actor], {
           staged: true,
           attachment: {
             label: label
@@ -99,9 +99,10 @@ function addSourceAndCheckOrder(aMethod, aCallback) {
       for (; i < urls.length; i++) {
         let { href, leaf } = urls[i];
         let url = href + leaf;
+        let actor = 'actor' + id++;
         let label = gUtils.getSourceLabel(url);
         let dummy = document.createElement("label");
-        gSources.push([dummy, url], {
+        gSources.push([dummy, actor], {
           staged: false,
           attachment: {
             label: label
@@ -112,7 +113,6 @@ function addSourceAndCheckOrder(aMethod, aCallback) {
   }
 
   checkSourcesOrder(aMethod);
-  aCallback();
 }
 
 function checkSourcesOrder(aMethod) {
@@ -129,7 +129,6 @@ function checkSourcesOrder(aMethod) {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gSources = null;

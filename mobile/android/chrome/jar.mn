@@ -22,6 +22,7 @@ chrome.jar:
   content/aboutReader.html             (content/aboutReader.html)
   content/aboutReader.js               (content/aboutReader.js)
   content/Readability.js               (content/Readability.js)
+  content/Reader.js                    (content/Reader.js)
   content/JSDOMParser.js               (content/JSDOMParser.js)
   content/readerWorker.js              (content/readerWorker.js)
   content/aboutHome.xhtml              (content/aboutHome.xhtml)
@@ -39,6 +40,7 @@ chrome.jar:
   content/SelectHelper.js              (content/SelectHelper.js)
   content/SelectionHandler.js          (content/SelectionHandler.js)
 * content/WebappRT.js                  (content/WebappRT.js)
+  content/EmbedRT.js                   (content/EmbedRT.js)
   content/InputWidgetHelper.js         (content/InputWidgetHelper.js)
   content/WebrtcUI.js                  (content/WebrtcUI.js)
   content/MemoryObserver.js            (content/MemoryObserver.js)
@@ -60,6 +62,9 @@ chrome.jar:
 #ifdef MOZ_DEVICES
   content/aboutDevices.xhtml           (content/aboutDevices.xhtml)
   content/aboutDevices.js              (content/aboutDevices.js)
+#endif
+#ifdef NIGHTLY_BUILD
+  content/WebcompatReporter.js         (content/WebcompatReporter.js)
 #endif
 
 % content branding %content/branding/

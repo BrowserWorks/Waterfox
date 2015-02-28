@@ -7,8 +7,8 @@ Runs the reftest test harness.
 """
 
 from optparse import OptionParser
+from urlparse import urlparse
 import collections
-import json
 import multiprocessing
 import os
 import re
@@ -16,17 +16,14 @@ import shutil
 import signal
 import subprocess
 import sys
-import tempfile
 import threading
 
-SCRIPT_DIRECTORY = os.path.abspath(os.path.realpath(os.path.dirname(__file__)))
+SCRIPT_DIRECTORY = os.path.abspath(os.path.realpath(os.path.dirname(sys.argv[0])))
 sys.path.insert(0, SCRIPT_DIRECTORY)
 
 from automationutils import (
-    addCommonOptions,
     dumpScreen,
     environment,
-    isURL,
     processLeakLog
 )
 import mozcrash
@@ -35,7 +32,6 @@ import mozinfo
 import mozprocess
 import mozprofile
 import mozrunner
-from mozrunner.utils import findInPath as which
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -223,6 +219,8 @@ class RefTest(object):
     prefs['browser.newtabpage.directory.source'] = 'data:application/json,{"reftest":1}'
     prefs['browser.newtabpage.directory.ping'] = ''
 
+    #Don't use auto-enabled e10s
+    prefs['browser.tabs.remote.autostart.1'] = False
     if options.e10s:
       prefs['browser.tabs.remote.autostart'] = True
 
@@ -563,7 +561,9 @@ class RefTest(object):
     return status
 
   def runSerialTests(self, testPath, options, cmdlineArgs = None):
-    debuggerInfo = mozdebug.get_debugger_info(options.debugger, options.debuggerArgs,
+    debuggerInfo = None
+    if options.debugger:
+      debuggerInfo = mozdebug.get_debugger_info(options.debugger, options.debuggerArgs,
         options.debuggerInteractive);
 
     profileDir = None
@@ -617,12 +617,35 @@ class ReftestOptions(OptionParser):
   def __init__(self):
     OptionParser.__init__(self)
     defaults = {}
-    addCommonOptions(self)
-
+    self.add_option("--xre-path",
+                    action = "store", type = "string", dest = "xrePath",
+                    # individual scripts will set a sane default
+                    default = None,
+                    help = "absolute path to directory containing XRE (probably xulrunner)")
+    self.add_option("--symbols-path",
+                    action = "store", type = "string", dest = "symbolsPath",
+                    default = None,
+                    help = "absolute path to directory containing breakpad symbols, or the URL of a zip file containing symbols")
+    self.add_option("--debugger",
+                    action = "store", dest = "debugger",
+                    help = "use the given debugger to launch the application")
+    self.add_option("--debugger-args",
+                    action = "store", dest = "debuggerArgs",
+                    help = "pass the given args to the debugger _before_ "
+                           "the application on the command line")
+    self.add_option("--debugger-interactive",
+                    action = "store_true", dest = "debuggerInteractive",
+                    help = "prevents the test harness from redirecting "
+                        "stdout and stderr for interactive debuggers")
     self.add_option("--appname",
                     action = "store", type = "string", dest = "app",
-                    default = build_obj.get_binary_path() if build_obj else None,
                     help = "absolute path to application, overriding default")
+    # Certain paths do not make sense when we're cross compiling Fennec.  This
+    # logic is cribbed from the example in
+    # python/mozbuild/mozbuild/mach_commands.py.
+    defaults['app'] = build_obj.get_binary_path() if \
+        build_obj and build_obj.substs['MOZ_BUILD_APP'] != 'mobile/android' else None
+
     self.add_option("--extra-profile-file",
                     action = "append", dest = "extraProfileFiles",
                     default = [],
@@ -642,7 +665,8 @@ class ReftestOptions(OptionParser):
                     action = "store", type = "string", dest = "utilityPath",
                     help = "absolute path to directory containing utility "
                            "programs (xpcshell, ssltunnel, certutil)")
-    defaults["utilityPath"] = build_obj.bindir if build_obj else None
+    defaults["utilityPath"] = build_obj.bindir if \
+        build_obj and build_obj.substs['MOZ_BUILD_APP'] != 'mobile/android' else None
 
     self.add_option("--total-chunks",
                     type = "int", dest = "totalChunks",
@@ -781,7 +805,7 @@ Are you executing $objdir/_tests/reftest/runreftest.py?""" \
   if options.xrePath is None:
     options.xrePath = os.path.dirname(options.app)
 
-  if options.symbolsPath and not isURL(options.symbolsPath):
+  if options.symbolsPath and len(urlparse(options.symbolsPath).scheme) < 2:
     options.symbolsPath = reftest.getFullPath(options.symbolsPath)
   options.utilityPath = reftest.getFullPath(options.utilityPath)
 

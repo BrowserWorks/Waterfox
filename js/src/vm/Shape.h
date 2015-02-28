@@ -335,6 +335,7 @@ class BaseShape : public gc::TenuredCell
         ITERATED_SINGLETON  =  0x200,
         NEW_TYPE_UNKNOWN    =  0x400,
         UNCACHEABLE_PROTO   =  0x800,
+        IMMUTABLE_PROTOTYPE = 0x1000,
 
         // These two flags control which scope a new variables ends up on in the
         // scope chain. If the variable is "qualified" (i.e., if it was defined
@@ -344,10 +345,10 @@ class BaseShape : public gc::TenuredCell
         // incidentally is an error in strict mode) then it goes on the lowest
         // scope in the chain with the UNQUALIFIED_VAROBJ flag set (which is
         // typically the global).
-        QUALIFIED_VAROBJ    = 0x1000,
-        UNQUALIFIED_VAROBJ  = 0x2000,
+        QUALIFIED_VAROBJ    = 0x2000,
+        UNQUALIFIED_VAROBJ  = 0x4000,
 
-        OBJECT_FLAG_MASK    = 0x3ff8
+        OBJECT_FLAG_MASK    = 0x7ff8
     };
 
   private:
@@ -477,6 +478,7 @@ class BaseShape : public gc::TenuredCell
 
 #ifdef JSGC_COMPACTING
     void fixupAfterMovingGC();
+    bool fixupBaseShapeTableEntry();
 #endif
 
   private:
@@ -526,8 +528,6 @@ BaseShape::baseUnowned()
 /* Entries for the per-compartment baseShapes set of unowned base shapes. */
 struct StackBaseShape : public DefaultHasher<ReadBarrieredUnownedBaseShape>
 {
-    typedef const StackBaseShape *Lookup;
-
     uint32_t flags;
     const Class *clasp;
     JSObject *parent;
@@ -546,8 +546,50 @@ struct StackBaseShape : public DefaultHasher<ReadBarrieredUnownedBaseShape>
                           JSObject *parent, JSObject *metadata, uint32_t objectFlags);
     explicit inline StackBaseShape(Shape *shape);
 
-    static inline HashNumber hash(const StackBaseShape *lookup);
-    static inline bool match(UnownedBaseShape *key, const StackBaseShape *lookup);
+    struct Lookup
+    {
+        uint32_t flags;
+        const Class *clasp;
+        JSObject *hashParent;
+        JSObject *matchParent;
+        JSObject *hashMetadata;
+        JSObject *matchMetadata;
+
+        MOZ_IMPLICIT Lookup(const StackBaseShape &base)
+          : flags(base.flags),
+            clasp(base.clasp),
+            hashParent(base.parent),
+            matchParent(base.parent),
+            hashMetadata(base.metadata),
+            matchMetadata(base.metadata)
+        {}
+
+        MOZ_IMPLICIT Lookup(UnownedBaseShape *base)
+          : flags(base->getObjectFlags()),
+            clasp(base->clasp()),
+            hashParent(base->getObjectParent()),
+            matchParent(base->getObjectParent()),
+            hashMetadata(base->getObjectMetadata()),
+            matchMetadata(base->getObjectMetadata())
+        {
+            MOZ_ASSERT(!base->isOwned());
+        }
+
+        // For use by generational GC post barriers.
+        Lookup(uint32_t flags, const Class *clasp,
+               JSObject *hashParent, JSObject *matchParent,
+               JSObject *hashMetadata, JSObject *matchMetadata)
+          : flags(flags),
+            clasp(clasp),
+            hashParent(hashParent),
+            matchParent(matchParent),
+            hashMetadata(hashMetadata),
+            matchMetadata(matchMetadata)
+        {}
+    };
+
+    static inline HashNumber hash(const Lookup& lookup);
+    static inline bool match(UnownedBaseShape *key, const Lookup& lookup);
 
     // For RootedGeneric<StackBaseShape*>
     void trace(JSTracer *trc);
@@ -587,7 +629,7 @@ class Shape : public gc::TenuredCell
     HeapPtrBaseShape    base_;
     PreBarrieredId      propid_;
 
-    JS_ENUM_HEADER(SlotInfo, uint32_t)
+    enum SlotInfo : uint32_t
     {
         /* Number of fixed slots in objects with this shape. */
         // FIXED_SLOTS_MAX is the biggest count of fixed slots a Shape can store
@@ -612,7 +654,7 @@ class Shape : public gc::TenuredCell
          * other shapes.
          */
         SLOT_MASK              = JS_BIT(24) - 1
-    } JS_ENUM_FOOTER(SlotInfo);
+    };
 
     uint32_t            slotInfo;       /* mask of above info */
     uint8_t             attrs;          /* attributes, see jsapi.h JSPROP_* */
@@ -1015,6 +1057,8 @@ class Shape : public gc::TenuredCell
 
     /* For JIT usage */
     static inline size_t offsetOfBase() { return offsetof(Shape, base_); }
+    static inline size_t offsetOfSlotInfo() { return offsetof(Shape, slotInfo); }
+    static inline uint32_t fixedSlotsMask() { return FIXED_SLOTS_MASK; }
 
   private:
 #ifdef JSGC_COMPACTING
@@ -1026,8 +1070,6 @@ class Shape : public gc::TenuredCell
         JS_STATIC_ASSERT(offsetof(Shape, base_) == offsetof(js::shadow::Shape, base));
         JS_STATIC_ASSERT(offsetof(Shape, slotInfo) == offsetof(js::shadow::Shape, slotInfo));
         JS_STATIC_ASSERT(FIXED_SLOTS_SHIFT == js::shadow::Shape::FIXED_SLOTS_SHIFT);
-        static_assert(js::shadow::Object::MAX_FIXED_SLOTS <= FIXED_SLOTS_MAX,
-                      "verify numFixedSlots() bitfield is big enough");
     }
 };
 
@@ -1083,6 +1125,9 @@ class AutoRooterGetterSetter
     inline AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
                                   PropertyOp *pgetter, StrictPropertyOp *psetter
                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
+    inline AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
+                                  JSNative *pgetter, JSNative *psetter
+                                  MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
 
   private:
     mozilla::Maybe<Inner> inner;
@@ -1106,11 +1151,11 @@ struct EmptyShape : public js::Shape
      * shape if none was found.
      */
     static Shape *getInitialShape(ExclusiveContext *cx, const Class *clasp,
-                                  TaggedProto proto, JSObject *metadata,
-                                  JSObject *parent, size_t nfixed, uint32_t objectFlags = 0);
+                                  TaggedProto proto, JSObject *parent,
+                                  JSObject *metadata, size_t nfixed, uint32_t objectFlags = 0);
     static Shape *getInitialShape(ExclusiveContext *cx, const Class *clasp,
-                                  TaggedProto proto, JSObject *metadata,
-                                  JSObject *parent, gc::AllocKind kind, uint32_t objectFlags = 0);
+                                  TaggedProto proto, JSObject *parent,
+                                  JSObject *metadata, gc::AllocKind kind, uint32_t objectFlags = 0);
 
     /*
      * Reinsert an alternate initial shape, to be returned by future

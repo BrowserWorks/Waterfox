@@ -2,12 +2,13 @@
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
 /**
- * Test that we don't permanently cache source maps.
+ * Test that we don't permanently cache source maps across reloads.
  */
 
 var gDebuggee;
 var gClient;
 var gThreadClient;
+var gTabClient;
 
 Components.utils.import("resource:///modules/devtools/SourceMap.jsm");
 
@@ -19,6 +20,7 @@ function run_test()
   gClient.connect(function() {
     attachTestTabAndResume(gClient, "test-source-map", function(aResponse, aTabClient, aThreadClient) {
       gThreadClient = aThreadClient;
+      gTabClient = aTabClient;
       setup_code();
     });
   });
@@ -57,9 +59,10 @@ function setup_code() {
 function test_initial_sources() {
   gThreadClient.getSources(function ({ error, sources }) {
     do_check_true(!error);
+    sources = sources.filter(source => source.url);
     do_check_eq(sources.length, 1);
     do_check_eq(sources[0].url, getFileUrl(TEMP_FILE_1, true));
-    setup_new_code();
+    reload(gTabClient).then(setup_new_code);
   });
 }
 
@@ -74,21 +77,21 @@ function setup_new_code() {
   code += "\n//# sourceMappingURL=" + getFileUrl(MAP_FILE_NAME, true);
   writeFile(MAP_FILE_NAME, map.toString());
 
+  gClient.addOneTimeListener("newSource", test_new_sources);
   Cu.evalInSandbox(code,
                    gDebuggee,
                    "1.8",
                    getFileUrl(TEMP_GENERATED_SOURCE, true),
                    1);
-
-  gClient.addOneTimeListener("newSource", test_new_sources);
 }
 
 function test_new_sources() {
   gThreadClient.getSources(function ({ error, sources }) {
     do_check_true(!error);
+    sources = sources.filter(source => source.url);
 
     // Should now have TEMP_FILE_2 as a source.
-    do_check_eq(sources.length, 2);
+    do_check_eq(sources.length, 1);
     let s = sources.filter(s => s.url === getFileUrl(TEMP_FILE_2, true))[0];
     do_check_true(!!s);
 

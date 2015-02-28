@@ -96,6 +96,7 @@ nsHttpTransaction::nsHttpTransaction()
     , mContentLength(-1)
     , mContentRead(0)
     , mInvalidResponseBytesRead(0)
+    , mPushedStream(nullptr)
     , mChunkedDecoder(nullptr)
     , mStatus(NS_OK)
     , mPriority(0)
@@ -124,6 +125,7 @@ nsHttpTransaction::nsHttpTransaction()
     , mResponseTimeoutEnabled(true)
     , mDontRouteViaWildCard(false)
     , mForceRestart(false)
+    , mReuseOnRestart(false)
     , mReportedStart(false)
     , mReportedResponseHeader(false)
     , mForTakeResponseHead(nullptr)
@@ -142,6 +144,11 @@ nsHttpTransaction::nsHttpTransaction()
 nsHttpTransaction::~nsHttpTransaction()
 {
     LOG(("Destroying nsHttpTransaction @%p\n", this));
+
+    if (mPushedStream) {
+        mPushedStream->OnPushFailed();
+        mPushedStream = nullptr;
+    }
 
     if (mTokenBucketCancel) {
         mTokenBucketCancel->Cancel(NS_ERROR_ABORT);
@@ -225,7 +232,6 @@ nsHttpTransaction::Init(uint32_t caps,
     if (NS_SUCCEEDED(rv) && activityDistributorActive) {
         // there are some observers registered at activity distributor, gather
         // nsISupports for the channel that called Init()
-        mChannel = do_QueryInterface(eventsink);
         LOG(("nsHttpTransaction::Init() " \
              "mActivityDistributor is active " \
              "this=%p", this));
@@ -234,7 +240,7 @@ nsHttpTransaction::Init(uint32_t caps,
         activityDistributorActive = false;
         mActivityDistributor = nullptr;
     }
-
+    mChannel = do_QueryInterface(eventsink);
     nsCOMPtr<nsIChannel> channel = do_QueryInterface(eventsink);
     if (channel) {
         bool isInBrowser;
@@ -545,11 +551,18 @@ nsHttpTransaction::OnTransportStatus(nsITransport* transport,
 
     if (status == NS_NET_STATUS_SENDING_TO) {
         // suppress progress when only writing request headers
-        if (!mHasRequestBody)
+        if (!mHasRequestBody) {
+            LOG(("nsHttpTransaction::OnTransportStatus %p "
+                 "SENDING_TO without request body\n", this));
             return;
+        }
 
         nsCOMPtr<nsISeekableStream> seekable = do_QueryInterface(mRequestStream);
-        MOZ_ASSERT(seekable, "Request stream isn't seekable?!?");
+        if (!seekable) {
+            LOG(("nsHttpTransaction::OnTransportStatus %p "
+                 "SENDING_TO without seekable request stream\n", this));
+            return;
+        }
 
         int64_t prog = 0;
         seekable->Tell(&prog);
@@ -1113,10 +1126,16 @@ nsHttpTransaction::Restart()
     // clear old connection state...
     mSecurityInfo = 0;
     if (mConnection) {
-        mConnection->DontReuse();
+        if (!mReuseOnRestart) {
+            mConnection->DontReuse();
+        }
         MutexAutoLock lock(mLock);
         mConnection = nullptr;
     }
+
+    // Reset this to our default state, since this may change from one restart
+    // to the next
+    mReuseOnRestart = false;
 
     // disable pipelining for the next attempt in case pipelining caused the
     // reset.  this is being overly cautious since we don't know if pipelining
@@ -1459,8 +1478,10 @@ nsHttpTransaction::HandleContentStart()
                 LOG(("Not Authoritative.\n"));
                 gHttpHandler->ConnMgr()->
                     ClearHostMapping(mConnInfo->GetHost(), mConnInfo->Port());
-                mForceRestart = true;
             }
+            // retry on a new connection - just in case
+            mCaps &= ~NS_HTTP_ALLOW_KEEPALIVE;
+            mForceRestart = true; // force restart has built in loop protection
             break;
         }
 
@@ -1783,6 +1804,17 @@ nsHttpTransaction::ReleaseBlockingTransaction()
 {
     RemoveDispatchedAsBlocking();
     mLoadGroupCI = nullptr;
+}
+
+void
+nsHttpTransaction::DisableSpdy()
+{
+    mCaps |= NS_HTTP_DISALLOW_SPDY;
+    if (mConnInfo) {
+        // This is our clone of the connection info, not the persistent one that
+        // is owned by the connection manager, so we're safe to change this here
+        mConnInfo->SetNoSpdy(true);
+    }
 }
 
 //-----------------------------------------------------------------------------

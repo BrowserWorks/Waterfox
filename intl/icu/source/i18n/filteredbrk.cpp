@@ -147,7 +147,7 @@ public:
   }
   virtual BreakIterator* clone(void) const { return new SimpleFilteredSentenceBreakIterator(*this); }
   virtual UClassID getDynamicClassID(void) const { return NULL; }
-  virtual UBool operator==(const BreakIterator& o) const { if(*this==o) return true; return false; }
+  virtual UBool operator==(const BreakIterator& o) const { if(this==&o) return true; return false; }
 
   /* -- text modifying -- */
   virtual void setText(UText *text, UErrorCode &status) { fDelegate->setText(text,status); }
@@ -374,12 +374,11 @@ BreakIterator *
 SimpleFilteredBreakIteratorBuilder::build(BreakIterator* adoptBreakIterator, UErrorCode& status) {
   LocalPointer<BreakIterator> adopt(adoptBreakIterator);
 
+  LocalPointer<UCharsTrieBuilder> builder(new UCharsTrieBuilder(status), status);
+  LocalPointer<UCharsTrieBuilder> builder2(new UCharsTrieBuilder(status), status);
   if(U_FAILURE(status)) {
     return NULL;
   }
-
-  LocalPointer<UCharsTrieBuilder> builder(new UCharsTrieBuilder(status));
-  LocalPointer<UCharsTrieBuilder> builder2(new UCharsTrieBuilder(status));
 
   int32_t revCount = 0;
   int32_t fwdCount = 0;
@@ -503,16 +502,14 @@ FilteredBreakIteratorBuilder::~FilteredBreakIteratorBuilder() {
 FilteredBreakIteratorBuilder *
 FilteredBreakIteratorBuilder::createInstance(const Locale& where, UErrorCode& status) {
   if(U_FAILURE(status)) return NULL;
-  LocalPointer<FilteredBreakIteratorBuilder> ret(new SimpleFilteredBreakIteratorBuilder(where, status));
-  if(U_SUCCESS(status) && !ret.isValid()) status = U_MEMORY_ALLOCATION_ERROR;
+  LocalPointer<FilteredBreakIteratorBuilder> ret(new SimpleFilteredBreakIteratorBuilder(where, status), status);
   return ret.orphan();
 }
 
 FilteredBreakIteratorBuilder *
 FilteredBreakIteratorBuilder::createInstance(UErrorCode& status) {
   if(U_FAILURE(status)) return NULL;
-  LocalPointer<FilteredBreakIteratorBuilder> ret(new SimpleFilteredBreakIteratorBuilder(status));
-  if(U_SUCCESS(status) && !ret.isValid()) status = U_MEMORY_ALLOCATION_ERROR;
+  LocalPointer<FilteredBreakIteratorBuilder> ret(new SimpleFilteredBreakIteratorBuilder(status), status);
   return ret.orphan();
 }
 

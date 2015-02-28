@@ -6,7 +6,6 @@
 #ifndef mozilla_a11y_DocAccessible_h__
 #define mozilla_a11y_DocAccessible_h__
 
-#include "xpcAccessibleDocument.h"
 #include "nsIAccessiblePivot.h"
 
 #include "AccEvent.h"
@@ -33,12 +32,12 @@ namespace a11y {
 
 class DocManager;
 class NotificationController;
+class DocAccessibleChild;
 class RelatedAccIterator;
 template<class Class, class Arg>
 class TNotification;
 
 class DocAccessible : public HyperTextAccessibleWrap,
-                      public xpcAccessibleDocument,
                       public nsIDocumentObserver,
                       public nsIObserver,
                       public nsIScrollPositionListener,
@@ -49,7 +48,6 @@ class DocAccessible : public HyperTextAccessibleWrap,
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(DocAccessible, Accessible)
 
   NS_DECL_NSIOBSERVER
-
   NS_DECL_NSIACCESSIBLEPIVOTOBSERVER
 
 public:
@@ -520,6 +518,20 @@ protected:
   bool IsLoadEventTarget() const;
 
   /**
+   * If this document is in a content process return the object responsible for
+   * communicating with the main process for it.
+   */
+  DocAccessibleChild* IPCDoc() const { return mIPCDoc; }
+
+  /*
+   * Set the object responsible for communicating with the main process on
+   * behalf of this document.
+   */
+  void SetIPCDoc(DocAccessibleChild* aIPCDoc) { mIPCDoc = aIPCDoc; }
+
+  friend class DocAccessibleChild;
+
+  /**
    * Used to fire scrolling end event after page scroll.
    *
    * @param aTimer    [in] the timer object
@@ -642,6 +654,9 @@ protected:
 private:
 
   nsIPresShell* mPresShell;
+
+  // Exclusively owned by IPDL so don't manually delete it!
+  DocAccessibleChild* mIPCDoc;
 };
 
 inline DocAccessible*

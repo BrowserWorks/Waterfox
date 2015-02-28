@@ -4,7 +4,7 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-Program('jsapi-tests')
+GeckoProgram('jsapi-tests', linkage=None)
 
 UNIFIED_SOURCES += [
     'selfTest.cpp',
@@ -19,7 +19,6 @@ UNIFIED_SOURCES += [
     'testClassGetter.cpp',
     'testCloneScript.cpp',
     'testContexts.cpp',
-    'testCustomIterator.cpp',
     'testDebugger.cpp',
     'testDeepFreeze.cpp',
     'testDefineGetterSetterNonEnumerable.cpp',
@@ -35,9 +34,11 @@ UNIFIED_SOURCES += [
     'testFuncCallback.cpp',
     'testFunctionProperties.cpp',
     'testGCAllocator.cpp',
+    'testGCChunkPool.cpp',
     'testGCExactRooting.cpp',
     'testGCFinalizeCallback.cpp',
     'testGCHeapPostBarriers.cpp',
+    'testGCMarking.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
     'testHashTable.cpp',
@@ -91,6 +92,7 @@ if CONFIG['ENABLE_ION']:
         'testJitGVN.cpp',
         'testJitMoveEmitterCycles-mips.cpp',
         'testJitMoveEmitterCycles.cpp',
+        'testJitRangeAnalysis.cpp',
         'testJitRValueAlloc.cpp',
     ]
 

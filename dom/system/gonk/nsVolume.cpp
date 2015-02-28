@@ -36,6 +36,7 @@ NS_VolumeStateStr(int32_t aState)
     case nsIVolume::STATE_FORMATTING: return "Formatting";
     case nsIVolume::STATE_SHARED:     return "Shared";
     case nsIVolume::STATE_SHAREDMNT:  return "Shared-Mounted";
+    case nsIVolume::STATE_CHECKMNT:   return "Check-Mounted";
   }
   return "???";
 }
@@ -53,7 +54,7 @@ nsVolume::nsVolume(const Volume* aVolume)
     mState(aVolume->State()),
     mMountGeneration(aVolume->MountGeneration()),
     mMountLocked(aVolume->IsMountLocked()),
-    mIsFake(false),
+    mIsFake(!aVolume->CanBeShared()),
     mIsMediaPresent(aVolume->MediaPresent()),
     mIsSharing(aVolume->IsSharing()),
     mIsFormatting(aVolume->IsFormatting()),

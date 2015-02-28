@@ -25,13 +25,22 @@ loop.panel = (function(_, mozL10n) {
     propTypes: {
       buttonsHidden: React.PropTypes.array,
       // The selectedTab prop is used by the UI showcase.
-      selectedTab: React.PropTypes.string
+      selectedTab: React.PropTypes.string,
+      mozLoop: React.PropTypes.object
     },
 
     getDefaultProps: function() {
       return {
         buttonsHidden: []
       };
+    },
+
+    shouldComponentUpdate: function(nextProps, nextState) {
+      var tabChange = this.state.selectedTab !== nextState.selectedTab;
+      if (tabChange) {
+        this.props.mozLoop.notifyUITour("Loop:PanelTabChanged", nextState.selectedTab);
+      }
+      return tabChange;
     },
 
     getInitialState: function() {
@@ -532,6 +541,78 @@ loop.panel = (function(_, mozL10n) {
     }
   });
 
+  var EditInPlace = React.createClass({
+    mixins: [React.addons.LinkedStateMixin],
+
+    propTypes: {
+      onChange: React.PropTypes.func.isRequired,
+      text: React.PropTypes.string,
+    },
+
+    getDefaultProps: function() {
+      return {text: ""};
+    },
+
+    getInitialState: function() {
+      return {edit: false, text: this.props.text};
+    },
+
+    componentWillReceiveProps: function(nextProps) {
+      if (nextProps.text !== this.props.text) {
+        this.setState({text: nextProps.text});
+      }
+    },
+
+    handleTextClick: function(event) {
+      event.stopPropagation();
+      event.preventDefault();
+      this.setState({edit: true}, function() {
+        this.getDOMNode().querySelector("input").select();
+      }.bind(this));
+    },
+
+    handleInputClick: function(event) {
+      event.stopPropagation();
+    },
+
+    handleFormSubmit: function(event) {
+      event.preventDefault();
+      // While we already validate for a non-empty string in the store, we need
+      // to check it at the component level to avoid desynchronized rendering
+      // issues.
+      if (this.state.text.trim()) {
+        this.props.onChange(this.state.text);
+      } else {
+        this.setState({text: this.props.text});
+      }
+      this.setState({edit: false});
+    },
+
+    cancelEdit: function(event) {
+      event.stopPropagation();
+      event.preventDefault();
+      this.setState({edit: false, text: this.props.text});
+    },
+
+    render: function() {
+      if (!this.state.edit) {
+        return (
+          <span className="edit-in-place" onClick={this.handleTextClick}
+                title={mozL10n.get("rooms_name_this_room_tooltip2")}>
+            {this.state.text}
+          </span>
+        );
+      }
+      return (
+        <form onSubmit={this.handleFormSubmit}>
+          <input type="text" valueLink={this.linkState("text")}
+                 onClick={this.handleInputClick}
+                 onBlur={this.cancelEdit} />
+        </form>
+      );
+    }
+  });
+
   /**
    * Room list entry.
    */
@@ -552,7 +633,7 @@ loop.panel = (function(_, mozL10n) {
         (nextState.urlCopied !== this.state.urlCopied);
     },
 
-    handleClickRoomUrl: function(event) {
+    handleClickEntry: function(event) {
       event.preventDefault();
       this.props.dispatcher.dispatch(new sharedActions.OpenRoom({
         roomToken: this.props.room.roomToken
@@ -561,6 +642,7 @@ loop.panel = (function(_, mozL10n) {
     },
 
     handleCopyButtonClick: function(event) {
+      event.stopPropagation();
       event.preventDefault();
       this.props.dispatcher.dispatch(new sharedActions.CopyRoomUrl({
         roomUrl: this.props.room.roomUrl
@@ -569,6 +651,7 @@ loop.panel = (function(_, mozL10n) {
     },
 
     handleDeleteButtonClick: function(event) {
+      event.stopPropagation();
       event.preventDefault();
       navigator.mozLoop.confirm({
         message: mozL10n.get("rooms_list_deleteConfirmation_label"),
@@ -587,6 +670,13 @@ loop.panel = (function(_, mozL10n) {
           roomToken: this.props.room.roomToken
         }));
       }.bind(this));
+    },
+
+    renameRoom: function(newRoomName) {
+      this.props.dispatcher.dispatch(new sharedActions.RenameRoom({
+        roomToken: this.props.room.roomToken,
+        newRoomName: newRoomName
+      }));
     },
 
     handleMouseLeave: function(event) {
@@ -609,10 +699,11 @@ loop.panel = (function(_, mozL10n) {
       });
 
       return (
-        <div className={roomClasses} onMouseLeave={this.handleMouseLeave}>
+        <div className={roomClasses} onMouseLeave={this.handleMouseLeave}
+             onClick={this.handleClickEntry}>
           <h2>
             <span className="room-notification" />
-            {room.roomName}
+            <EditInPlace text={room.roomName} onChange={this.renameRoom} />
             <button className={copyButtonClasses}
               title={mozL10n.get("rooms_list_copy_url_tooltip")}
               onClick={this.handleCopyButtonClick} />
@@ -620,11 +711,7 @@ loop.panel = (function(_, mozL10n) {
               title={mozL10n.get("rooms_list_delete_tooltip")}
               onClick={this.handleDeleteButtonClick} />
           </h2>
-          <p>
-            <a href="#" onClick={this.handleClickRoomUrl}>
-              {room.roomUrl}
-            </a>
-          </p>
+          <p><a className="room-url-link" href="#">{room.roomUrl}</a></p>
         </div>
       );
     }
@@ -892,7 +979,7 @@ loop.panel = (function(_, mozL10n) {
           <NotificationListView notifications={this.props.notifications}
                                 clearOnDocumentHidden={true} />
           <TabView ref="tabView" selectedTab={this.props.selectedTab}
-            buttonsHidden={hideButtons}>
+            buttonsHidden={hideButtons} mozLoop={this.props.mozLoop}>
             {this._renderRoomsOrCallTab()}
             <Tab name="contacts">
               <ContactsList selectTab={this.selectTab}

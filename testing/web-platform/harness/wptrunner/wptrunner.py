@@ -12,15 +12,17 @@ import socket
 import sys
 import threading
 import time
+import urlparse
+from Queue import Empty
 from StringIO import StringIO
-from collections import defaultdict, OrderedDict
+
 from multiprocessing import Queue
 
-from mozlog.structured import commandline, stdadapter
+from mozlog.structured import (commandline, stdadapter, get_default_logger,
+                               structuredlog, handlers, formatters)
 
-import manifestexpected
-import manifestinclude
 import products
+import testloader
 import wptcommandline
 import wpttest
 from testrunner import ManagerGroup
@@ -65,11 +67,11 @@ def setup_stdlib_logger():
     logging.root = stdadapter.std_logging_adapter(logging.root)
 
 
-def do_test_relative_imports(test_root):
+def do_delayed_imports(serve_root):
     global serve, manifest
 
-    sys.path.insert(0, os.path.join(test_root))
-    sys.path.insert(0, os.path.join(test_root, "tools", "scripts"))
+    sys.path.insert(0, os.path.join(serve_root))
+    sys.path.insert(0, os.path.join(serve_root, "tools", "scripts"))
     failed = None
     try:
         import serve
@@ -83,20 +85,46 @@ def do_test_relative_imports(test_root):
     if failed:
         logger.critical(
             "Failed to import %s. Ensure that tests path %s contains web-platform-tests" %
-            (failed, test_root))
+            (failed, serve_root))
         sys.exit(1)
+
 
 class TestEnvironmentError(Exception):
     pass
 
 
+class LogLevelRewriter(object):
+    """Filter that replaces log messages at specified levels with messages
+    at a different level.
+
+    This can be used to e.g. downgrade log messages from ERROR to WARNING
+    in some component where ERRORs are not critical.
+
+    :param inner: Handler to use for messages that pass this filter
+    :param from_levels: List of levels which should be affected
+    :param to_level: Log level to set for the affected messages
+    """
+    def __init__(self, inner, from_levels, to_level):
+        self.inner = inner
+        self.from_levels = [item.upper() for item in from_levels]
+        self.to_level = to_level.upper()
+
+    def __call__(self, data):
+        if data["action"] == "log" and data["level"].upper() in self.from_levels:
+            data = data.copy()
+            data["level"] = self.to_level
+        return self.inner(data)
+
+
 class TestEnvironment(object):
-    def __init__(self, test_path, options):
+    def __init__(self, serve_path, test_paths, options):
         """Context manager that owns the test environment i.e. the http and
         websockets servers"""
-        self.test_path = test_path
+        self.serve_path = serve_path
+        self.test_paths = test_paths
         self.server = None
         self.config = None
+        self.external_config = None
         self.test_server_port = options.pop("test_server_port", True)
         self.options = options if options is not None else {}
         self.required_files = options.pop("required_files", [])
@@ -104,12 +132,11 @@ class TestEnvironment(object):
 
     def __enter__(self):
         self.copy_required_files()
-
-        config = self.load_config()
-        serve.set_computed_defaults(config)
-
-        serve.logger = serve.default_logger("info")
-        self.config, self.servers = serve.start(config)
+        self.setup_server_logging()
+        self.setup_routes()
+        self.config = self.load_config()
+        serve.set_computed_defaults(self.config)
+        self.external_config, self.servers = serve.start(self.config)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -119,7 +146,7 @@ class TestEnvironment(object):
                 server.kill()
 
     def load_config(self):
-        default_config_path = os.path.join(self.test_path, "config.default.json")
+        default_config_path = os.path.join(self.serve_path, "config.default.json")
         local_config_path = os.path.join(here, "config.json")
 
         with open(default_config_path) as f:
@@ -129,13 +156,55 @@ class TestEnvironment(object):
             data = f.read()
             local_config = json.loads(data % self.options)
 
-        return serve.merge_json(default_config, local_config)
+        local_config["external_host"] = self.options.get("external_host", None)
+
+        config = serve.merge_json(default_config, local_config)
+        config["doc_root"] = self.serve_path
+
+        return config
+
+    def setup_server_logging(self):
+        server_logger = get_default_logger(component="wptserve")
+        assert server_logger is not None
+        log_filter = handlers.LogLevelFilter(lambda x:x, "info")
+        # Downgrade errors to warnings for the server
+        log_filter = LogLevelRewriter(log_filter, ["error"], "warning")
+        server_logger.component_filter = log_filter
+
+        serve.logger = server_logger
+        #Set as the default logger for wptserve
+        serve.set_logger(server_logger)
+
+    def setup_routes(self):
+        for url, paths in self.test_paths.iteritems():
+            if url == "/":
+                continue
+
+            path = paths["tests_path"]
+            url = "/%s/" % url.strip("/")
+
+            for (method,
+                 suffix,
+                 handler_cls) in [(serve.any_method,
+                                   b"*.py",
+                                   serve.handlers.PythonScriptHandler),
+                                  (b"GET",
+                                   "*.asis",
+                                   serve.handlers.AsIsHandler),
+                                  (b"GET",
+                                   "*",
+                                   serve.handlers.FileHandler)]:
+                route = (method, b"%s%s" % (str(url), str(suffix)), handler_cls(path, url_base=url))
+                serve.routes.insert(-3, route)
+
+        if "/" not in self.test_paths:
+            serve.routes = serve.routes[:-3]
 
     def copy_required_files(self):
         logger.info("Placing required files in server environment.")
         for source, destination, copy_if_exists in self.required_files:
             source_path = os.path.join(here, source)
-            dest_path = os.path.join(self.test_path, destination, os.path.split(source)[1])
+            dest_path = os.path.join(self.serve_path, destination, os.path.split(source)[1])
             dest_exists = os.path.exists(dest_path)
             if not dest_exists or copy_if_exists:
                 if dest_exists:
@@ -169,298 +238,6 @@ class TestEnvironment(object):
             os.unlink(path)
             if os.path.exists(path + ".orig"):
                 os.rename(path + ".orig", path)
-
-
-class TestChunker(object):
-    def __init__(self, total_chunks, chunk_number):
-        self.total_chunks = total_chunks
-        self.chunk_number = chunk_number
-        assert self.chunk_number <= self.total_chunks
-
-    def __call__(self, manifest):
-        raise NotImplementedError
-
-
-class Unchunked(TestChunker):
-    def __init__(self, *args, **kwargs):
-        TestChunker.__init__(self, *args, **kwargs)
-        assert self.total_chunks == 1
-
-    def __call__(self, manifest):
-        for item in manifest:
-            yield item
-
-
-class HashChunker(TestChunker):
-    def __call__(self):
-        chunk_index = self.chunk_number - 1
-        for test_path, tests in manifest:
-            if hash(test_path) % self.total_chunks == chunk_index:
-                yield test_path, tests
-
-
-class EqualTimeChunker(TestChunker):
-    """Chunker that uses the test timeout as a proxy for the running time of the test"""
-
-    def _get_chunk(self, manifest_items):
-        # For each directory containing tests, calculate the maximum execution time after running all
-        # the tests in that directory. Then work out the index into the manifest corresponding to the
-        # directories at fractions of m/N of the running time where m=1..N-1 and N is the total number
-        # of chunks. Return an array of these indicies
-
-        total_time = 0
-        by_dir = OrderedDict()
-
-        class PathData(object):
-            def __init__(self, path):
-                self.path = path
-                self.time = 0
-                self.tests = []
-
-        class Chunk(object):
-            def __init__(self):
-                self.paths = []
-                self.tests = []
-                self.time = 0
-
-            def append(self, path_data):
-                self.paths.append(path_data.path)
-                self.tests.extend(path_data.tests)
-                self.time += path_data.time
-
-        class ChunkList(object):
-            def __init__(self, total_time, n_chunks):
-                self.total_time = total_time
-                self.n_chunks = n_chunks
-
-                self.remaining_chunks = n_chunks
-
-                self.chunks = []
-
-                self.update_time_per_chunk()
-
-            def __iter__(self):
-                for item in self.chunks:
-                    yield item
-
-            def __getitem__(self, i):
-                return self.chunks[i]
-
-            def sort_chunks(self):
-                self.chunks = sorted(self.chunks, key=lambda x:x.paths[0])
-
-            def get_tests(self, chunk_number):
-                return self[chunk_number - 1].tests
-
-            def append(self, chunk):
-                if len(self.chunks) == self.n_chunks:
-                    raise ValueError("Tried to create more than %n chunks" % self.n_chunks)
-                self.chunks.append(chunk)
-                self.remaining_chunks -= 1
-
-            @property
-            def current_chunk(self):
-                if self.chunks:
-                    return self.chunks[-1]
-
-            def update_time_per_chunk(self):
-                self.time_per_chunk = (self.total_time - sum(item.time for item in self)) / self.remaining_chunks
-
-            def create(self):
-                rv = Chunk()
-                self.append(rv)
-                return rv
-
-            def add_path(self, path_data):
-                sum_time = self.current_chunk.time + path_data.time
-                if sum_time > self.time_per_chunk and self.remaining_chunks > 0:
-                    overshoot = sum_time - self.time_per_chunk
-                    undershoot = self.time_per_chunk - self.current_chunk.time
-                    if overshoot < undershoot:
-                        self.create()
-                        self.current_chunk.append(path_data)
-                    else:
-                        self.current_chunk.append(path_data)
-                        self.create()
-                else:
-                    self.current_chunk.append(path_data)
-
-        for i, (test_path, tests) in enumerate(manifest_items):
-            test_dir = tuple(os.path.split(test_path)[0].split(os.path.sep)[:3])
-
-            if not test_dir in by_dir:
-                by_dir[test_dir] = PathData(test_dir)
-
-            data = by_dir[test_dir]
-            time = sum(wpttest.DEFAULT_TIMEOUT if test.timeout !=
-                       "long" else wpttest.LONG_TIMEOUT for test in tests)
-            data.time += time
-            data.tests.append((test_path, tests))
-
-            total_time += time
-
-        chunk_list = ChunkList(total_time, self.total_chunks)
-
-        if len(by_dir) < self.total_chunks:
-            raise ValueError("Tried to split into %i chunks, but only %i subdirectories included" % (
-                self.total_chunks, len(by_dir)))
-
-        # Put any individual dirs with a time greater than the time per chunk into their own
-        # chunk
-        while True:
-            to_remove = []
-            for path_data in by_dir.itervalues():
-                if path_data.time > chunk_list.time_per_chunk:
-                    to_remove.append(path_data)
-            if to_remove:
-                for path_data in to_remove:
-                    chunk = chunk_list.create()
-                    chunk.append(path_data)
-                    del by_dir[path_data.path]
-                chunk_list.update_time_per_chunk()
-            else:
-                break
-
-        chunk = chunk_list.create()
-        for path_data in by_dir.itervalues():
-            chunk_list.add_path(path_data)
-
-        assert len(chunk_list.chunks) == self.total_chunks, len(chunk_list.chunks)
-        assert sum(item.time for item in chunk_list) == chunk_list.total_time
-
-        chunk_list.sort_chunks()
-
-        return chunk_list.get_tests(self.chunk_number)
-
-    def __call__(self, manifest_iter):
-        manifest = list(manifest_iter)
-        tests = self._get_chunk(manifest)
-        for item in tests:
-            yield item
-
-
-class TestFilter(object):
-    def __init__(self, include=None, exclude=None, manifest_path=None):
-        if manifest_path is not None and include is None:
-            self.manifest = manifestinclude.get_manifest(manifest_path)
-        else:
-            self.manifest = manifestinclude.IncludeManifest.create()
-
-        if include is not None:
-            self.manifest.set("skip", "true")
-            for item in include:
-                self.manifest.add_include(item)
-
-        if exclude is not None:
-            for item in exclude:
-                self.manifest.add_exclude(item)
-
-    def __call__(self, manifest_iter):
-        for test_path, tests in manifest_iter:
-            include_tests = set()
-            for test in tests:
-                if self.manifest.include(test):
-                    include_tests.add(test)
-
-            if include_tests:
-                yield test_path, include_tests
-
-
-class TestLoader(object):
-    def __init__(self, tests_root, metadata_root, test_filter, run_info):
-        self.tests_root = tests_root
-        self.metadata_root = metadata_root
-        self.test_filter = test_filter
-        self.run_info = run_info
-        self.manifest_path = os.path.join(self.metadata_root, "MANIFEST.json")
-        self.manifest = self.load_manifest()
-        self.tests = None
-
-    def create_manifest(self):
-        logger.info("Creating test manifest")
-        manifest.setup_git(self.tests_root)
-        manifest_file = manifest.Manifest(None)
-        manifest.update(manifest_file)
-        manifest.write(manifest_file, self.manifest_path)
-
-    def load_manifest(self):
-        if not os.path.exists(self.manifest_path):
-            self.create_manifest()
-        return manifest.load(self.manifest_path)
-
-    def get_test(self, manifest_test, expected_file):
-        if expected_file is not None:
-            expected = expected_file.get_test(manifest_test.id)
-        else:
-            expected = None
-        return wpttest.from_manifest(manifest_test, expected)
-
-    def load_expected_manifest(self, test_path):
-        return manifestexpected.get_manifest(self.metadata_root, test_path, self.run_info)
-
-    def iter_tests(self, test_types, chunker=None):
-        manifest_items = self.test_filter(self.manifest.itertypes(*test_types))
-
-        if chunker is not None:
-            manifest_items = chunker(manifest_items)
-
-        for test_path, tests in manifest_items:
-            expected_file = self.load_expected_manifest(test_path)
-            for manifest_test in tests:
-                test = self.get_test(manifest_test, expected_file)
-                test_type = manifest_test.item_type
-                yield test_path, test_type, test
-
-    def get_disabled(self, test_types):
-        rv = defaultdict(list)
-
-        for test_path, test_type, test in self.iter_tests(test_types):
-            if test.disabled():
-                rv[test_type].append(test)
-
-        return rv
-
-    def load_tests(self, test_types, chunk_type, total_chunks, chunk_number):
-        """Read in the tests from the manifest file and add them to a queue"""
-        rv = defaultdict(list)
-
-        chunker = {"none": Unchunked,
-                   "hash": HashChunker,
-                   "equal_time": EqualTimeChunker}[chunk_type](total_chunks,
-                                                               chunk_number)
-
-        for test_path, test_type, test in self.iter_tests(test_types, chunker):
-            if not test.disabled():
-                rv[test_type].append(test)
-
-        return rv
-
-    def get_groups(self, test_types, chunk_type="none", total_chunks=1, chunk_number=1):
-        if self.tests is None:
-            self.tests = self.load_tests(test_types, chunk_type, total_chunks, chunk_number)
-
-        groups = set()
-
-        for test_type in test_types:
-            for test in self.tests[test_type]:
-                group = test.url.split("/")[1]
-                groups.add(group)
-
-        return groups
-
-    def queue_tests(self, test_types, chunk_type, total_chunks, chunk_number):
-        if self.tests is None:
-            self.tests = self.load_tests(test_types, chunk_type, total_chunks, chunk_number)
-
-        tests_queue = defaultdict(Queue)
-        test_ids = []
-
-        for test_type in test_types:
-            for test in self.tests[test_type]:
-                tests_queue[test_type].put(test)
-                test_ids.append(test.id)
-
-        return test_ids, tests_queue
 
 
 class LogThread(threading.Thread):
@@ -507,31 +284,38 @@ class LoggingWrapper(StringIO):
     def flush(self):
         pass
 
+def list_test_groups(serve_root, test_paths, test_types, product, **kwargs):
 
-def list_test_groups(tests_root, metadata_root, test_types, product, **kwargs):
-    do_test_relative_imports(tests_root)
+    do_delayed_imports(serve_root)
 
-    run_info = wpttest.get_run_info(metadata_root, product, debug=False)
-    test_filter = TestFilter(include=kwargs["include"], exclude=kwargs["exclude"],
-                             manifest_path=kwargs["include_manifest"])
-    test_loader = TestLoader(tests_root, metadata_root, test_filter, run_info)
+    run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=False)
+    test_filter = testloader.TestFilter(include=kwargs["include"],
+                                        exclude=kwargs["exclude"],
+                                        manifest_path=kwargs["include_manifest"])
+    test_loader = testloader.TestLoader(test_paths,
+                                        test_types,
+                                        test_filter,
+                                        run_info)
 
-    for item in sorted(test_loader.get_groups(test_types)):
+    for item in sorted(test_loader.groups(test_types)):
         print item
 
-
-def list_disabled(tests_root, metadata_root, test_types, product, **kwargs):
+def list_disabled(serve_root, test_paths, test_types, product, **kwargs):
+    do_delayed_imports(serve_root)
     rv = []
-    run_info = wpttest.get_run_info(metadata_root, product, debug=False)
-    test_loader = TestLoader(tests_root, metadata_root, TestFilter(), run_info)
+    run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=False)
+    test_loader = testloader.TestLoader(test_paths,
+                                        test_types,
+                                        testloader.TestFilter(),
+                                        run_info)
 
-    for test_type, tests in test_loader.get_disabled(test_types).iteritems():
+    for test_type, tests in test_loader.disabled_tests.iteritems():
         for test in tests:
             rv.append({"test": test.id, "reason": test.disabled()})
     print json.dumps(rv, indent=2)
 
 
-def run_tests(config, tests_root, metadata_root, product, **kwargs):
+def run_tests(config, serve_root, test_paths, product, **kwargs):
     logging_queue = None
     logging_thread = None
     original_stdio = (sys.stdout, sys.stderr)
@@ -545,9 +329,9 @@ def run_tests(config, tests_root, metadata_root, product, **kwargs):
             sys.stderr = LoggingWrapper(logging_queue, prefix="STDERR")
             logging_thread.start()
 
-        do_test_relative_imports(tests_root)
+        do_delayed_imports(serve_root)
 
-        run_info = wpttest.get_run_info(metadata_root, product, debug=False)
+        run_info = wpttest.get_run_info(kwargs["run_info"], product, debug=False)
 
         (check_args,
          browser_cls, get_browser_kwargs,
@@ -563,35 +347,53 @@ def run_tests(config, tests_root, metadata_root, product, **kwargs):
         if "test_loader" in kwargs:
             test_loader = kwargs["test_loader"]
         else:
-            test_filter = TestFilter(include=kwargs["include"], exclude=kwargs["exclude"],
-                                     manifest_path=kwargs["include_manifest"])
-            test_loader = TestLoader(tests_root, metadata_root, test_filter, run_info)
+            test_filter = testloader.TestFilter(include=kwargs["include"],
+                                                exclude=kwargs["exclude"],
+                                                manifest_path=kwargs["include_manifest"])
+            test_loader = testloader.TestLoader(test_paths,
+                                                kwargs["test_types"],
+                                                test_filter,
+                                                run_info,
+                                                kwargs["chunk_type"],
+                                                kwargs["total_chunks"],
+                                                kwargs["this_chunk"],
+                                                kwargs["manifest_update"])
+
+        if kwargs["run_by_dir"] is False:
+            test_source_cls = testloader.SingleTestSource
+            test_source_kwargs = {}
+        else:
+            # A value of None indicates infinite depth
+            test_source_cls = testloader.PathGroupedSource
+            test_source_kwargs = {"depth": kwargs["run_by_dir"]}
 
         logger.info("Using %i client processes" % kwargs["processes"])
 
-        with TestEnvironment(tests_root, env_options) as test_environment:
+        with TestEnvironment(serve_root,
+                             test_paths,
+                             env_options) as test_environment:
             try:
                 test_environment.ensure_started()
             except TestEnvironmentError as e:
                 logger.critical("Error starting test environment: %s" % e.message)
                 raise
 
-            base_server = "http://%s:%i" % (test_environment.config["host"],
-                                            test_environment.config["ports"]["http"][0])
+            base_server = "http://%s:%i" % (test_environment.external_config["host"],
+                                            test_environment.external_config["ports"]["http"][0])
             repeat = kwargs["repeat"]
             for repeat_count in xrange(repeat):
                 if repeat > 1:
                     logger.info("Repetition %i / %i" % (repeat_count + 1, repeat))
 
-                test_ids, test_queues = test_loader.queue_tests(kwargs["test_types"],
-                                                                kwargs["chunk_type"],
-                                                                kwargs["total_chunks"],
-                                                                kwargs["this_chunk"])
+
                 unexpected_count = 0
-                logger.suite_start(test_ids, run_info)
+                logger.suite_start(test_loader.test_ids, run_info)
                 for test_type in kwargs["test_types"]:
                     logger.info("Running %s tests" % test_type)
-                    tests_queue = test_queues[test_type]
+
+                    for test in test_loader.disabled_tests[test_type]:
+                        logger.test_start(test.id)
+                        logger.test_end(test.id, status="SKIP")
 
                     executor_cls = executor_classes.get(test_type)
                     executor_kwargs = get_executor_kwargs(base_server,
@@ -602,20 +404,22 @@ def run_tests(config, tests_root, metadata_root, product, **kwargs):
                                      (test_type, product))
                         continue
 
+
                     with ManagerGroup("web-platform-tests",
                                       kwargs["processes"],
+                                      test_source_cls,
+                                      test_source_kwargs,
                                       browser_cls,
                                       browser_kwargs,
                                       executor_cls,
                                       executor_kwargs,
                                       kwargs["pause_on_unexpected"]) as manager_group:
                         try:
-                            manager_group.start(tests_queue)
+                            manager_group.run(test_type, test_loader.tests)
                         except KeyboardInterrupt:
                             logger.critical("Main thread got signal")
                             manager_group.stop()
                             raise
-                        manager_group.wait()
                     unexpected_count += manager_group.unexpected_count()
 
                 unexpected_total += unexpected_count

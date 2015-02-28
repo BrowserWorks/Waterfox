@@ -1,0 +1,107 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1998, 1999, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+## if doesn't work properly for Automake variables yet.
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%SCRIPT_INSTALL = $(INSTALL_SCRIPT)
+?!BASE?%DIR%SCRIPT_INSTALL = $(install_sh_SCRIPT)
+?EXEC?.PHONY install-exec-am: install-%DIR%SCRIPTS
+?!EXEC?.PHONY install-data-am: install-%DIR%SCRIPTS
+install-%DIR%SCRIPTS: $(%DIR%_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_SCRIPTS)'; for p in $$list; do \
+## A file can be in the source directory or the build directory.
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f $$d$$p; then \
+## If the _SCRIPTS variable has an entry like foo/bar, install it as
+## $(destdir)/bar, not $(destdir)/foo/bar.  The user can make a
+## new dir variable or use a nobase_ target for the latter case.
+## However in all cases $(transform) applies only to the basename,
+## so we have to strip the directory part.
+	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+## Prepend the directory part if nobase_ is used.
+?!BASE?	    f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	    echo " $(%DIR%SCRIPT_INSTALL) $$d$$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	    $(%DIR%SCRIPT_INSTALL) $$d$$p $(DESTDIR)$(%NDIR%dir)/$$f; \
+	  else :; fi; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%SCRIPTS
+uninstall-%DIR%SCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_SCRIPTS)'; for p in $$list; do \
+## Remove any leading directory before applying $(transform).
+	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+## Prepend the directory part if nobase_ is used.
+?!BASE?	  f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$f; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += $(%DIR%_SCRIPTS)
+endif %?DIST%
+
+
+## ---------- ##
+## Checking.  ##
+## ---------- ##
+
+if %?CK-OPTS%
+.PHONY installcheck-am: installcheck-%DIR%SCRIPTS
+installcheck-%DIR%SCRIPTS: $(%DIR%_SCRIPTS)
+	bad=0; pid=$$$$; list="$(%DIR%_SCRIPTS)"; for p in $$list; do \
+	  case ' $(AM_INSTALLCHECK_STD_OPTIONS_EXEMPT) ' in \
+## Match $(srcdir)/$$p in addition to $$p because Sun make might rewrite
+## filenames in AM_INSTALLCHECK_STD_OPTIONS_EXEMPT during VPATH builds.
+	   *" $$p "* | *" $(srcdir)/$$p "*) continue;; \
+	  esac; \
+## Strip any leading directory before applying $(transform).
+	  f=`echo "$$p" | sed 's,^.*/,,;$(transform)'`; \
+## Insert the directory back if nobase_ is used.
+?!BASE?	  f=`echo "$$p" | sed 's|[^/]*$$||'`"$$f"; \
+	  for opt in --help --version; do \
+	    if $(DESTDIR)$(%NDIR%dir)/$$f $$opt > c$${pid}_.out 2> c$${pid}_.err \
+	         && test -n "`cat c$${pid}_.out`" \
+	         && test -z "`cat c$${pid}_.err`"; then :; \
+	    else echo "$$f does not support $$opt" 1>&2; bad=1; fi; \
+	  done; \
+	done; rm -f c$${pid}_.???; exit $$bad
+endif %?CK-OPTS%

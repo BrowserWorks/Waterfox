@@ -1,0 +1,231 @@
+If you read this file _as_is_, just ignore the funny characters you
+see. It is written in the POD format (see pod/perlpod.pod) which is
+specially designed to be readable as is.
+
+=head1 NAME
+
+README.epoc - Perl for EPOC
+
+=head1 SYNOPSIS
+
+Perl 5 README file for the EPOC operating system.
+
+=head1 INTRODUCTION
+
+EPOC is a OS for palmtops and mobile phones. For more informations look at:
+http://www.symbian.com/
+
+This is a port of perl to EPOC. It runs on ER5 machines: Psion 5mx,
+5mx Pro, Psion Revo and on the Ericson M128. I have no report about
+the Psion Netbook or the S7. It runs on ER3 Hardware (Series 5
+classic), too. For more information about this hardware please refer
+to http://www.psion.com.
+
+Vendors which like to have support for their devices are free to send
+me a sample. 
+
+=head1 INSTALLING PERL ON EPOC
+
+You can download a ready-to-install version from
+http://www.science-computing.de/o.flebbe/perl. You may find other
+versions with some CPAN modules included at this location.
+
+You will need at least 4MB free space in order to install and run
+perl.
+
+Install perl.sis on the EPOC machine. If you do not know how to do
+that, consult your PsiWin documentation.
+
+Perl itself and its standard library is using 2.9 MB disk space.
+Unicode support and some other modules are left out. (For details,
+please look into epoc/createpkg.pl). If you like to use these modules,
+you are free to copy them from a current perl release.
+
+=head1 STARTING PERL ON EPOC
+
+For ER5 machines, you can get the software Perlstart
+http://www.science-computing.de/o.flebbe/perl. It contains file
+recognizers for files with the extension .pl and .pm. With it you can
+start perl with a double click on the camel icon. Be sure to configure
+the perl installation drive first. You can even provide a script with
+a special commandline, if needed.
+
+Alternativly you can get ESHELL from symbian: 
+http://developer.epocworld.com/downloads/progs/Eshell.zip
+
+Running ESHELL you can enter: perl -de 0 in order to run the perl
+debugger. If you are leaving perl, you get into the system screen. You
+have to switch back manually to ESHELL. When perl is running, you will
+see a task with the name STDOUT in the task list. 
+
+If you have a ER3 machine (i.e. a PSION 5), you may have to supply the
+full path to the perl executable C:\system\programs\perl.exe.
+
+If you need to set the current directory of perl, please use the
+command line switch '-x'. See L<perlrun> for details.
+
+=head1 STOPPING PERL ON EPOC
+
+You can stop a running perl process in the task list by closing the
+application `STDOUT'. You cannot stop a running perl process if it has
+not written anyting to stdout or stderr! Be very cautious with I/O
+redirection. You will have to reboot the PDA!
+
+=head1 USING PERL ON EPOC
+
+=head2 I/O Redirection
+
+You can redirect the output with the UNIX bourne shell syntax (this is
+built into perl rather then eshell) For instance the following command
+line will run the script test.pl with the output redirected to
+stdout_file, the errors to stderr_file and input from stdin_file.
+
+perl test.pl >stdout_file <stdin_file 2>stderr_file
+
+Alternatively you can use 2>&1 in order to add the standard error
+output to stdout.
+
+=head2 PATH Names
+
+ESHELL looks for executables in ?:/System/Programs. The SIS file
+installs perl in this special folder directory. The default drive and
+path are the same as folder the executable resides. The EPOC
+filesystem is case-preserving, not case-sensitive.
+
+The EPOC estdlib uses the ?: syntax for establishing a search order:
+First in C: (RAM), then on D: (CF Card, if present) and last in Z:
+(ROM). For instance ?:\a.txt searches for C:\a.txt, D:\a.txt (and
+Z:\a.txt)
+
+The perl @INC search path is implemented with '?:'. Your perl
+executable can live on a different drive than the perl library or even
+your scripts.
+
+ESHELL paths have to be written with backslashes '\', file arguments
+to perl with slashes '/'. Remember that I/O redirection is done
+internally in perl, so please use slashes for redirects.
+
+perl.exe C:/test.pl >C:/output.txt
+
+=head2 Editors
+
+A suitable text editor can be downloaded from symbian
+ http://developer.epocworld.com/downloads/progs/Editor.zip
+
+=head2 Features
+
+The built-in function EPOC::getcwd returns the current directory.
+
+=head2 Restrictions
+
+Features are left out, because of restrictions of the POSIX support in
+EPOC:
+
+=over 4
+
+=item *
+
+backquoting, pipes etc.
+
+=item *
+
+system() does not inherit ressources like: file descriptors,
+environment etc.
+
+=item *
+
+signal, kill, alarm. Do not try to use them. This may be
+impossible to implement on EPOC.
+
+=item *
+
+select is missing.
+
+=item *
+
+binmode does not exist. (No CR LF to LF translation for text files)
+
+=item *
+
+EPOC does not handle the notion of current drive and current
+directory very well (i.e. not at all, but it tries hard to emulate
+one) See PATH.
+
+=item *
+
+Heap is limited to 4MB.
+
+=item *
+
+Dynamic loading is not implemented.
+
+=back
+
+=head2 Compiling Perl 5 on the EPOC cross compiling environment
+
+Sorry, this is far too short.
+
+=over 4
+
+=item *
+
+You will need the C++ SDK from http://developer.epocworld.com/. 
+
+=item *
+
+You will need to set up the cross SDK from 
+http://www.science-computing.de/o.flebbe/sdk
+
+=item *
+
+You may have to adjust config.sh (cc, cppflags) to reflect your epoc 
+and SDK location.
+
+=item *
+
+Get the Perl sources from your nearest CPAN site.
+
+=item *
+
+Unpack the sources. 
+
+=item *
+
+Build a native perl from this sources... Make sure to save the
+miniperl executable as miniperl.native.
+
+Start again from scratch
+
+      cp epoc/* .
+      ./Configure -S
+      make 
+      cp miniperl.native miniperl
+      make
+      make ext/Errno/pm_to_blib 
+      perl link.pl perlmain.o lib/auto/DynaLoader/DynaLoader.a \
+         lib/auto/Data/Dumper/Dumper.a \
+         lib/auto/File/Glob/Glob.a lib/auto/IO/IO.a \
+         lib/auto/Socket/Socket.a \
+         lib/auto/Fcntl/Fcntl.a lib/auto/Sys/Hostname/Hostname.a \
+	perl.a `cat ext.libs`
+      perl createpkg.pl 
+
+      wine G:/bin/makesis perl.pkg perl.sis
+
+=back
+
+=head1 SUPPORT STATUS
+
+I'm offering this port "as is". You can ask me questions, but I can't
+guarantee I'll be able to answer them.
+
+=head1 AUTHOR
+
+Olaf Flebbe <o.flebbe@science-computing.de>
+http://www.science-computing.de/o.flebbe/perl/
+
+=head1 LAST UPDATE
+
+2001-02-26
+
+=cut

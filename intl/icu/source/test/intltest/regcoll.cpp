@@ -101,12 +101,16 @@ void CollationRegressionTest::Test4051866(/* char* par */)
     rules += "< p ,P";
 
     // Build a collator containing expanding characters
-    LocalPointer<RuleBasedCollator> c1(new RuleBasedCollator(rules, status));
-
-    // Build another using the rules from  the first
-    LocalPointer<RuleBasedCollator> c2(new RuleBasedCollator(c1->getRules(), status));
+    LocalPointer<RuleBasedCollator> c1(new RuleBasedCollator(rules, status), status);
     if (U_FAILURE(status)) {
         errln("RuleBasedCollator(rule string) failed - %s", u_errorName(status));
+        return;
+    }
+
+    // Build another using the rules from  the first
+    LocalPointer<RuleBasedCollator> c2(new RuleBasedCollator(c1->getRules(), status), status);
+    if (U_FAILURE(status)) {
+        errln("RuleBasedCollator(rule string from other RBC) failed - %s", u_errorName(status));
         return;
     }
 

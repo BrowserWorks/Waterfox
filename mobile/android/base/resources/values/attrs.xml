@@ -97,7 +97,7 @@
         <attr name="entryKeys" format="string"/>
     </declare-styleable>
 
-    <declare-styleable name="TabsTray">
+    <declare-styleable name="TabsLayout">
         <attr name="tabs">
             <flag name="tabs_normal" value="0x00" />
             <flag name="tabs_private" value ="0x01" />
@@ -146,6 +146,12 @@
         <attr name="fadeWidth" format="dimension"/>
     </declare-styleable>
 
+    <declare-styleable name="FadedMultiColorTextView">
+        <!-- The background color we should be fading over. Useful because the
+             background is full alpha and we need to copy the background underneath. -->
+        <attr name="fadeBackgroundColor" format="dimension"/>
+    </declare-styleable>
+
     <declare-styleable name="BookmarkFolderView">
         <attr name="state_open" format="boolean"/>
     </declare-styleable>
@@ -174,12 +180,22 @@
         <attr name="strip" format="reference"/>
     </declare-styleable>
 
+    <declare-styleable name="TabPanelBackButton">
+        <attr name="rightDivider" format="reference"/>
+        <attr name="dividerVerticalPadding" format="dimension"/>
+    </declare-styleable>
+
     <declare-styleable name="EllipsisTextView">
         <attr name="ellipsizeAtLine" format="integer"/>
     </declare-styleable>
 
     <declare-styleable name="FloatingHintEditText">
         <attr name="floatingHintEditTextStyle" format="reference" />
+    </declare-styleable>
+
+    <declare-styleable name="FaviconView">
+        <attr name="dominantBorderEnabled" format="boolean" />
+        <attr name="overrideScaleType" format="boolean" />
     </declare-styleable>
 
 </resources>

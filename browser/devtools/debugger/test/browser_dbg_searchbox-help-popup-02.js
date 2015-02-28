@@ -8,13 +8,12 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSearchBox, gSearchBoxPanel;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -34,7 +33,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.firstCall();
+    callInTab(gTab, "firstCall");
   });
 }
 
@@ -64,9 +63,9 @@ function focusEditor() {
 }
 
 function testFocusLost() {
-  ok(isCaretPos(gPanel, 1, 1),
+  ok(isCaretPos(gPanel, 6, 1),
     "The editor caret position appears to be correct after gaining focus.");
-  ok(isEditorSel(gPanel, [1, 1]),
+  ok(isEditorSel(gPanel, [165, 165]),
     "The editor selection appears to be correct after gaining focus.");
   is(gEditor.getSelection(), "",
     "The editor selected text appears to be correct after gaining focus.");
@@ -77,7 +76,6 @@ function testFocusLost() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

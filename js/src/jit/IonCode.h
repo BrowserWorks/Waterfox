@@ -102,6 +102,7 @@ class JitCode : public gc::TenuredCell
     }
     void trace(JSTracer *trc);
     void finalize(FreeOp *fop);
+    void fixupAfterMovingGC() {}
     void setInvalidated() {
         invalidated_ = true;
     }
@@ -158,19 +159,6 @@ class OsiIndex;
 class IonCache;
 struct PatchableBackedgeInfo;
 struct CacheLocation;
-
-// Describes a single AsmJSModule which jumps (via an FFI exit with the given
-// index) directly into an IonScript.
-struct DependentAsmJSModuleExit
-{
-    const AsmJSModule *module;
-    size_t exitIndex;
-
-    DependentAsmJSModuleExit(const AsmJSModule *module, size_t exitIndex)
-      : module(module),
-        exitIndex(exitIndex)
-    { }
-};
 
 // An IonScript attaches Ion-generated information to a JSScript.
 struct IonScript
@@ -278,7 +266,7 @@ struct IonScript
     uint32_t backedgeEntries_;
 
     // Number of references from invalidation records.
-    uint32_t refcount_;
+    uint32_t invalidationCount_;
 
     // If this is a parallel script, the number of major GC collections it has
     // been idle, otherwise 0.
@@ -296,10 +284,6 @@ struct IonScript
     // Number of times we tried to enter this script via OSR but failed due to
     // a LOOPENTRY pc other than osrPc_.
     uint32_t osrPcMismatchCounter_;
-
-    // If non-null, the list of AsmJSModules
-    // that contain an optimized call directly into this IonScript.
-    Vector<DependentAsmJSModuleExit> *dependentAsmJSModules;
 
     IonBuilder *pendingBuilder_;
 
@@ -351,19 +335,6 @@ struct IonScript
     PatchableBackedge *backedgeList() {
         return (PatchableBackedge *) &bottomBuffer()[backedgeList_];
     }
-    bool addDependentAsmJSModule(JSContext *cx, DependentAsmJSModuleExit exit);
-    void removeDependentAsmJSModule(DependentAsmJSModuleExit exit) {
-        if (!dependentAsmJSModules)
-            return;
-        for (size_t i = 0; i < dependentAsmJSModules->length(); i++) {
-            if (dependentAsmJSModules->begin()[i].module == exit.module &&
-                dependentAsmJSModules->begin()[i].exitIndex == exit.exitIndex)
-            {
-                dependentAsmJSModules->erase(dependentAsmJSModules->begin() + i);
-                break;
-            }
-        }
-    }
 
   private:
     void trace(JSTracer *trc);
@@ -393,8 +364,8 @@ struct IonScript
     static inline size_t offsetOfSkipArgCheckEntryOffset() {
         return offsetof(IonScript, skipArgCheckEntryOffset_);
     }
-    static inline size_t offsetOfRefcount() {
-        return offsetof(IonScript, refcount_);
+    static inline size_t offsetOfInvalidationCount() {
+        return offsetof(IonScript, invalidationCount_);
     }
     static inline size_t offsetOfRecompiling() {
         return offsetof(IonScript, recompiling_);
@@ -580,22 +551,22 @@ struct IonScript
                                 MacroAssembler &masm);
 
     bool invalidated() const {
-        return refcount_ != 0;
+        return invalidationCount_ != 0;
     }
 
     // Invalidate the current compilation.
     bool invalidate(JSContext *cx, bool resetUses, const char *reason);
 
-    size_t refcount() const {
-        return refcount_;
+    size_t invalidationCount() const {
+        return invalidationCount_;
     }
-    void incref() {
-        refcount_++;
+    void incrementInvalidationCount() {
+        invalidationCount_++;
     }
-    void decref(FreeOp *fop) {
-        MOZ_ASSERT(refcount_);
-        refcount_--;
-        if (!refcount_)
+    void decrementInvalidationCount(FreeOp *fop) {
+        MOZ_ASSERT(invalidationCount_);
+        invalidationCount_--;
+        if (!invalidationCount_)
             Destroy(fop, this);
     }
     const types::RecompileInfo& recompileInfo() const {

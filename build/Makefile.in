@@ -66,6 +66,21 @@ LLDBINIT_FINAL_TARGET_FILES := $(DEPTH)/.lldbinit
 LLDBINIT_FINAL_TARGET_DEST = $(FINAL_TARGET)
 INSTALL_TARGETS += LLDBINIT_FINAL_TARGET
 
+ifeq (1_1,$(MOZ_ASAN)_$(CLANG_CL))
+# Install the clang-cl runtime library for ASAN next to the binaries we produce.
+CLANG_RT_ASAN_FILES := $(MOZ_CLANG_RT_ASAN_LIB_PATH)
+CLANG_RT_ASAN_DEST = $(FINAL_TARGET)
+INSTALL_TARGETS += CLANG_RT_ASAN
+endif
+
+ifdef MOZTTDIR
+# Install the Firefox OS fonts.
+include $(MOZTTDIR)/fonts.mk
+MOZTT_DEST = $(FINAL_TARGET)/fonts
+MOZTT_FILES = $(patsubst external/moztt/%,$(MOZTTDIR)/%,$(filter external/moztt/%,$(subst :, ,$(PRODUCT_COPY_FILES))))
+INSTALL_TARGETS += MOZTT
+endif
+
 include $(topsrcdir)/config/rules.mk
 
 TARGET_DEPTH = ..

@@ -601,14 +601,14 @@ void IntlTestDecimalFormatAPI::TestScale()
 void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     UErrorCode status = U_ZERO_ERROR;
 
-    LocalPointer<DecimalFormat> df(new DecimalFormat("###", status));
+    LocalPointer<DecimalFormat> df(new DecimalFormat("###", status), status);
     TEST_ASSERT_STATUS(status);
     FixedDecimal fd = df->getFixedDecimal(44, status);
     TEST_ASSERT_STATUS(status);
     ASSERT_EQUAL(44, fd.source);
     ASSERT_EQUAL(0, fd.visibleDecimalDigitCount);
 
-    df.adoptInstead(new DecimalFormat("###.00##", status));
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("###.00##", status), status);
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(123.456, status);
     TEST_ASSERT_STATUS(status);
@@ -619,7 +619,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     ASSERT_EQUAL(FALSE, fd.hasIntegerValue);
     ASSERT_EQUAL(FALSE, fd.isNegative);
 
-    df.adoptInstead(new DecimalFormat("###", status));
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("###", status), status);
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(123.456, status);
     TEST_ASSERT_STATUS(status);
@@ -630,7 +630,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     ASSERT_EQUAL(TRUE, fd.hasIntegerValue);
     ASSERT_EQUAL(FALSE, fd.isNegative);
 
-    df.adoptInstead(new DecimalFormat("###.0", status));
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("###.0", status), status);
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(123.01, status);
     TEST_ASSERT_STATUS(status);
@@ -641,7 +641,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     ASSERT_EQUAL(TRUE, fd.hasIntegerValue);
     ASSERT_EQUAL(FALSE, fd.isNegative);
 
-    df.adoptInstead(new DecimalFormat("###.0", status));
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("###.0", status), status);
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(123.06, status);
     TEST_ASSERT_STATUS(status);
@@ -652,7 +652,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     ASSERT_EQUAL(FALSE, fd.hasIntegerValue);
     ASSERT_EQUAL(FALSE, fd.isNegative);
 
-    df.adoptInstead(new DecimalFormat("@@@@@", status));  // Significant Digits
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("@@@@@", status), status);  // Significant Digits
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(123, status);
     TEST_ASSERT_STATUS(status);
@@ -663,7 +663,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     ASSERT_EQUAL(TRUE, fd.hasIntegerValue);
     ASSERT_EQUAL(FALSE, fd.isNegative);
 
-    df.adoptInstead(new DecimalFormat("@@@@@", status));  // Significant Digits
+    df.adoptInsteadAndCheckErrorCode(new DecimalFormat("@@@@@", status), status);  // Significant Digits
     TEST_ASSERT_STATUS(status);
     fd = df->getFixedDecimal(1.23, status);
     TEST_ASSERT_STATUS(status);
@@ -686,7 +686,8 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
     // Test Big Decimal input.
     // 22 digits before and after decimal, will exceed the precision of a double
     //    and force DecimalFormat::getFixedDecimal() to work with a digit list.
-    df.adoptInstead(new DecimalFormat("#####################0.00####################", status));
+    df.adoptInsteadAndCheckErrorCode(
+        new DecimalFormat("#####################0.00####################", status), status);
     TEST_ASSERT_STATUS(status);
     Formattable fable("12.34", status);
     TEST_ASSERT_STATUS(status);
@@ -814,7 +815,7 @@ void IntlTestDecimalFormatAPI::TestFixedDecimal() {
 void IntlTestDecimalFormatAPI::TestBadFastpath() {
     UErrorCode status = U_ZERO_ERROR;
 
-    LocalPointer<DecimalFormat> df(new DecimalFormat("###", status));
+    LocalPointer<DecimalFormat> df(new DecimalFormat("###", status), status);
     if (U_FAILURE(status)) {
         dataerrln("Error creating new DecimalFormat - %s", u_errorName(status));
         return;
@@ -838,7 +839,7 @@ void IntlTestDecimalFormatAPI::TestRequiredDecimalPoint() {
     UnicodeString pat1("##.0000");
     UnicodeString pat2("00.0");
 
-    LocalPointer<DecimalFormat> df(new DecimalFormat(pat1, status));
+    LocalPointer<DecimalFormat> df(new DecimalFormat(pat1, status), status);
     if (U_FAILURE(status)) {
         dataerrln("Error creating new DecimalFormat - %s", u_errorName(status));
         return;

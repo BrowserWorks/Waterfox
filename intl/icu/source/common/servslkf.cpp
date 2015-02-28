@@ -97,9 +97,9 @@ UnicodeString&
 SimpleLocaleKeyFactory::debug(UnicodeString& result) const
 {
     LocaleKeyFactory::debug(result);
-    result.append(", id: ");
+    result.append((UnicodeString)", id: ");
     result.append(_id);
-    result.append(", kind: ");
+    result.append((UnicodeString)", kind: ");
     result.append(_kind);
     return result;
 }
@@ -107,7 +107,7 @@ SimpleLocaleKeyFactory::debug(UnicodeString& result) const
 UnicodeString&
 SimpleLocaleKeyFactory::debugClass(UnicodeString& result) const
 {
-    return result.append("SimpleLocaleKeyFactory");
+    return result.append((UnicodeString)"SimpleLocaleKeyFactory");
 }
 #endif
 

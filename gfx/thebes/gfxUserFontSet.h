@@ -14,6 +14,7 @@
 #include "nsIPrincipal.h"
 #include "nsIScriptError.h"
 #include "nsURIHashKey.h"
+#include "mozilla/net/ReferrerPolicy.h"
 
 class nsFontFaceLoader;
 
@@ -52,6 +53,7 @@ struct gfxFontFaceSrc {
     nsString               mLocalName;     // full font name if local
     nsCOMPtr<nsIURI>       mURI;           // uri if url
     nsCOMPtr<nsIURI>       mReferrer;      // referrer url if url
+    mozilla::net::ReferrerPolicy mReferrerPolicy;
     nsCOMPtr<nsIPrincipal> mOriginPrincipal; // principal if url
 
     nsRefPtr<gfxFontFaceBufferSource> mBuffer;
@@ -73,6 +75,7 @@ operator==(const gfxFontFaceSrc& a, const gfxFontFaceSrc& b)
                    NS_SUCCEEDED(a.mURI->Equals(b.mURI, &equals)) && equals &&
                    NS_SUCCEEDED(a.mReferrer->Equals(b.mReferrer, &equals)) &&
                      equals &&
+                   a.mReferrerPolicy == b.mReferrerPolicy &&
                    a.mOriginPrincipal->Equals(b.mOriginPrincipal);
         }
         case gfxFontFaceSrc::eSourceType_Buffer:
@@ -234,13 +237,6 @@ public:
     // Look up and return the gfxUserFontFamily in mFontFamilies with
     // the given name
     gfxUserFontFamily* LookupFamily(const nsAString& aName) const;
-
-    // Lookup a userfont entry for a given style, loaded or not.
-    // aFamily must be a family returned by our LookupFamily method.
-    // If only invalid fonts in family, returns null.
-    gfxUserFontEntry* FindUserFontEntry(gfxFontFamily* aFamily,
-                                        const gfxFontStyle& aFontStyle,
-                                        bool& aNeedsBold);
 
     // Lookup a font entry for a given style, returns null if not loaded.
     // aFamily must be a family returned by our LookupFamily method.
@@ -467,6 +463,10 @@ public:
         mLocalRulesUsed = true;
     }
 
+#ifdef PR_LOGGING
+    static PRLogModuleInfo* GetUserFontsLog();
+#endif
+
 protected:
     // Protected destructor, to discourage deletion outside of Release():
     virtual ~gfxUserFontSet();
@@ -512,8 +512,6 @@ protected:
 
     // true when local names have been looked up, false otherwise
     bool mLocalRulesUsed;
-
-    static PRLogModuleInfo* GetUserFontsLog();
 };
 
 // acts a placeholder until the real font is downloaded
@@ -564,6 +562,19 @@ public:
     bool WaitForUserFont() const {
         return mUserFontLoadState == STATUS_LOADING &&
                mFontDataLoadingState < LOADING_SLOWLY;
+    }
+
+    // for userfonts, cmap is used to store the unicode range data
+    // no cmap ==> all codepoints permitted
+    bool CharacterInUnicodeRange(uint32_t ch) const {
+        if (mCharacterMap) {
+            return mCharacterMap->test(ch);
+        }
+        return true;
+    }
+
+    gfxCharacterMap* GetUnicodeRangeMap() const {
+        return mCharacterMap.get();
     }
 
     // load the font - starts the loading of sources which continues until

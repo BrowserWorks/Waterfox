@@ -267,9 +267,13 @@ public:
     /**
      * Computes just the advance width for a substring.
      * Uses GetSpacing from aBreakProvider.
+     * If aSpacing is not null, the spacing attached before and after
+     * the substring would be returned in it. NOTE: the spacing is
+     * included in the advance width.
      */
     gfxFloat GetAdvanceWidth(uint32_t aStart, uint32_t aLength,
-                             PropertyProvider *aProvider);
+                             PropertyProvider *aProvider,
+                             PropertyProvider::Spacing* aSpacing = nullptr);
 
     /**
      * Clear all stored line breaks for the given range (both before and after),
@@ -684,6 +688,7 @@ private:
                                           gfxFont::BoundingBoxType aBoundingBoxType,
                                           gfxContext *aRefContext,
                                           PropertyProvider *aProvider,
+                                          uint16_t aOrientation,
                                           Metrics *aMetrics);
 
     // **** measurement helper ****
@@ -692,6 +697,7 @@ private:
                                  gfxContext *aRefContext,
                                  PropertyProvider *aProvider,
                                  uint32_t aSpacingStart, uint32_t aSpacingEnd,
+                                 uint16_t aOrientation,
                                  Metrics *aMetrics);
 
     // **** drawing helper ****
@@ -733,7 +739,7 @@ public:
 
     // Returns first valid font in the fontlist or default font.
     // Initiates userfont loads if userfont not loaded
-    virtual gfxFont* GetFirstValidFont();
+    virtual gfxFont* GetFirstValidFont(uint32_t aCh = 0x20);
 
     // Returns the first font in the font-group that has an OpenType MATH table,
     // or null if no such font is available. The GetMathConstant methods may be
@@ -971,11 +977,12 @@ protected:
         }
 
         bool NeedsBold() const { return mNeedsBold; }
-        bool IsUserFont() const {
+        bool IsUserFontContainer() const {
             return FontEntry()->mIsUserFontContainer;
         }
         bool IsLoading() const { return mLoading; }
         bool IsInvalid() const { return mInvalid; }
+        void CheckState(bool& aSkipDrawing);
         void SetLoading(bool aIsLoading) { mLoading = aIsLoading; }
         void SetInvalid() { mInvalid = true; }
 
@@ -990,6 +997,7 @@ protected:
             }
             mFont = aFont;
             mFontCreated = true;
+            mLoading = false;
         }
 
     private:
@@ -1055,7 +1063,11 @@ protected:
     // Get the font at index i within the fontlist.
     // Will initiate userfont load if not already loaded.
     // May return null if userfont not loaded or if font invalid
-    virtual gfxFont* GetFontAt(int32_t i);
+    virtual gfxFont* GetFontAt(int32_t i, uint32_t aCh = 0x20);
+
+    // Whether there's a font loading for a given family in the fontlist
+    // for a given character
+    bool FontLoadingForFamily(gfxFontFamily* aFamily, uint32_t aCh) const;
 
     // will always return a font or force a shutdown
     gfxFont* GetDefaultFont();

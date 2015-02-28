@@ -5,7 +5,6 @@
 
 #include "APZCCallbackHelper.h"
 #include "gfxPlatform.h" // For gfxPlatform::UseTiling
-#include "gfxPrefs.h"    // For gfxPrefs::LayersTileWidth/Height
 #include "nsIScrollableFrame.h"
 #include "nsLayoutUtils.h"
 #include "nsIDOMElement.h"
@@ -35,10 +34,10 @@ AdjustDisplayPortForScrollDelta(mozilla::layers::FrameMetrics& aFrameMetrics,
 {
     // Correct the display-port by the difference between the requested scroll
     // offset and the resulting scroll offset after setting the requested value.
-    LayerPoint shift =
+    ScreenPoint shift =
         (aFrameMetrics.GetScrollOffset() - aActualScrollOffset) *
-        aFrameMetrics.LayersPixelsPerCSSPixel();
-    LayerMargin margins = aFrameMetrics.GetDisplayPortMargins();
+        aFrameMetrics.DisplayportPixelsPerCSSPixel();
+    ScreenMargin margins = aFrameMetrics.GetDisplayPortMargins();
     margins.left -= shift.x;
     margins.right += shift.x;
     margins.top -= shift.y;
@@ -49,7 +48,7 @@ AdjustDisplayPortForScrollDelta(mozilla::layers::FrameMetrics& aFrameMetrics,
 static void
 RecenterDisplayPort(mozilla::layers::FrameMetrics& aFrameMetrics)
 {
-    LayerMargin margins = aFrameMetrics.GetDisplayPortMargins();
+    ScreenMargin margins = aFrameMetrics.GetDisplayPortMargins();
     margins.right = margins.left = margins.LeftRight() / 2;
     margins.top = margins.bottom = margins.TopBottom() / 2;
     aFrameMetrics.SetDisplayPortMargins(margins);
@@ -142,20 +141,11 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
 
     aMetrics.SetScrollOffset(actualScrollOffset);
 
-    // The mZoom variable on the frame metrics stores the CSS-to-screen scale for this
-    // frame. This scale includes all of the (cumulative) resolutions set on the presShells
-    // from the root down to this frame. However, when setting the resolution, we only
-    // want the piece of the resolution that corresponds to this presShell, rather than
-    // all of the cumulative stuff, so we need to divide out the parent resolutions.
-    // Finally, we multiply by a ScreenToLayerScale of 1.0f because the goal here is to
-    // take the async zoom calculated by the APZC and tell gecko about it (turning it into
-    // a "sync" zoom) which will update the resolution at which the layer is painted.
-    ParentLayerToLayerScale presShellResolution =
-        aMetrics.GetZoom()
-        / aMetrics.mDevPixelsPerCSSPixel
-        / aMetrics.GetParentResolution()
-        * ScreenToLayerScale(1.0f);
-    aUtils->SetResolution(presShellResolution.scale, presShellResolution.scale);
+    // The pres shell resolution is updated by the the async zoom since the
+    // last paint.
+    float presShellResolution = aMetrics.mPresShellResolution
+                              * aMetrics.GetAsyncZoom().scale;
+    aUtils->SetResolution(presShellResolution, presShellResolution);
 
     // Finally, we set the displayport.
     nsCOMPtr<nsIContent> content = nsLayoutUtils::FindContentFor(aMetrics.GetScrollId());
@@ -167,16 +157,11 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
         return;
     }
 
-    gfx::IntSize alignment = gfxPlatform::GetPlatform()->UseTiling()
-        ? gfx::IntSize(gfxPrefs::LayersTileWidth(), gfxPrefs::LayersTileHeight()) :
-          gfx::IntSize(0, 0);
-    LayerMargin margins = aMetrics.GetDisplayPortMargins();
+    ScreenMargin margins = aMetrics.GetDisplayPortMargins();
     aUtils->SetDisplayPortMarginsForElement(margins.left,
                                             margins.top,
                                             margins.right,
                                             margins.bottom,
-                                            alignment.width,
-                                            alignment.height,
                                             element, 0);
     CSSRect baseCSS = aMetrics.CalculateCompositedRectInCssPixels();
     nsRect base(baseCSS.x * nsPresContext::AppUnitsPerCSSPixel(),
@@ -216,16 +201,11 @@ APZCCallbackHelper::UpdateSubFrame(nsIContent* aContent,
         } else {
             RecenterDisplayPort(aMetrics);
         }
-        gfx::IntSize alignment = gfxPlatform::GetPlatform()->UseTiling()
-            ? gfx::IntSize(gfxPrefs::LayersTileWidth(), gfxPrefs::LayersTileHeight()) :
-              gfx::IntSize(0, 0);
-        LayerMargin margins = aMetrics.GetDisplayPortMargins();
+        ScreenMargin margins = aMetrics.GetDisplayPortMargins();
         utils->SetDisplayPortMarginsForElement(margins.left,
                                                margins.top,
                                                margins.right,
                                                margins.bottom,
-                                               alignment.width,
-                                               alignment.height,
                                                element, 0);
         CSSRect baseCSS = aMetrics.CalculateCompositedRectInCssPixels();
         nsRect base(baseCSS.x * nsPresContext::AppUnitsPerCSSPixel(),

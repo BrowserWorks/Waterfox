@@ -15,22 +15,6 @@ using namespace js;
 using namespace js::gc;
 
 bool
-DeadObjectProxy::isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) const
-{
-    // This is kind of meaningless, but dead-object semantics aside,
-    // [[Extensible]] always being true is consistent with other proxy types.
-    *extensible = true;
-    return true;
-}
-
-bool
-DeadObjectProxy::preventExtensions(JSContext *cx, HandleObject proxy) const
-{
-    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEAD_OBJECT);
-    return false;
-}
-
-bool
 DeadObjectProxy::getPropertyDescriptor(JSContext *cx, HandleObject wrapper, HandleId id,
                                        MutableHandle<PropertyDescriptor> desc) const
 {
@@ -70,10 +54,34 @@ DeadObjectProxy::delete_(JSContext *cx, HandleObject wrapper, HandleId id, bool 
 }
 
 bool
-DeadObjectProxy::enumerate(JSContext *cx, HandleObject wrapper, AutoIdVector &props) const
+DeadObjectProxy::getEnumerablePropertyKeys(JSContext *cx, HandleObject wrapper,
+                                           AutoIdVector &props) const
 {
     JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEAD_OBJECT);
     return false;
+}
+
+bool
+DeadObjectProxy::getPrototypeOf(JSContext *cx, HandleObject proxy, MutableHandleObject protop) const
+{
+    protop.set(nullptr);
+    return true;
+}
+
+bool
+DeadObjectProxy::preventExtensions(JSContext *cx, HandleObject proxy, bool *succeeded) const
+{
+    JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEAD_OBJECT);
+    return false;
+}
+
+bool
+DeadObjectProxy::isExtensible(JSContext *cx, HandleObject proxy, bool *extensible) const
+{
+    // This is kind of meaningless, but dead-object semantics aside,
+    // [[Extensible]] always being true is consistent with other proxy types.
+    *extensible = true;
+    return true;
 }
 
 bool
@@ -138,13 +146,6 @@ DeadObjectProxy::defaultValue(JSContext *cx, HandleObject obj, JSType hint,
 {
     JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr, JSMSG_DEAD_OBJECT);
     return false;
-}
-
-bool
-DeadObjectProxy::getPrototypeOf(JSContext *cx, HandleObject proxy, MutableHandleObject protop) const
-{
-    protop.set(nullptr);
-    return true;
 }
 
 const char DeadObjectProxy::family = 0;

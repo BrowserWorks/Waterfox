@@ -53,6 +53,8 @@
 #include "mozilla/Preferences.h"
 #include "mozilla/LookAndFeel.h"
 #include "mozilla/Likely.h"
+#include "mozilla/TypedEnum.h"
+#include "mozilla/TypedEnumBits.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -1085,9 +1087,14 @@ RuleCascadeData::AttributeListFor(nsIAtom* aAttribute)
 
 nsCSSRuleProcessor::nsCSSRuleProcessor(const sheet_array_type& aSheets,
                                        uint8_t aSheetType,
-                                       Element* aScopeElement)
+                                       Element* aScopeElement,
+                                       nsCSSRuleProcessor*
+                                         aPreviousCSSRuleProcessor)
   : mSheets(aSheets)
   , mRuleCascades(nullptr)
+  , mPreviousCacheKey(aPreviousCSSRuleProcessor
+                       ? aPreviousCSSRuleProcessor->CloneMQCacheKey()
+                       : UniquePtr<nsMediaQueryResultCacheKey>())
   , mLastPresContext(nullptr)
   , mScopeElement(aScopeElement)
   , mSheetType(aSheetType)
@@ -1429,6 +1436,30 @@ struct NodeMatchContext {
   }
 };
 
+/**
+ * Additional information about a selector (without combinators) that is
+ * being matched.
+ */
+MOZ_BEGIN_ENUM_CLASS(SelectorMatchesFlags, uint8_t)
+  NONE = 0,
+
+  // The selector's flags are unknown.  This happens when you don't know
+  // if you're starting from the top of a selector.  Only used in cases
+  // where it's acceptable for matching to return a false positive.
+  // (It's not OK to return a false negative.)
+  UNKNOWN = 1 << 0,
+
+  // The selector is part of a compound selector which has been split in
+  // half, where the other half is a pseudo-element.  The current
+  // selector is not a pseudo-element itself.
+  HAS_PSEUDO_ELEMENT = 1 << 1,
+
+  // The selector is part of an argument to a functional pseudo-class or
+  // pseudo-element.
+  IS_PSEUDO_CLASS_ARGUMENT = 1 << 2
+MOZ_END_ENUM_CLASS(SelectorMatchesFlags)
+MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(SelectorMatchesFlags)
+
 static bool ValueIncludes(const nsSubstring& aValueList,
                             const nsSubstring& aValue,
                             const nsStringComparator& aComparator)
@@ -1458,18 +1489,33 @@ static bool ValueIncludes(const nsSubstring& aValueList,
   return false;
 }
 
-// Return whether we should apply a "global" (i.e., universal-tag)
-// selector for event states in quirks mode.  Note that
-// |IsLink()| is checked separately by the caller, so we return
-// false for |nsGkAtoms::a|, which here means a named anchor.
-inline bool IsQuirkEventSensitive(nsIAtom *aContentTag)
+// Return whether the selector matches conditions for the :active and
+// :hover quirk.
+static inline bool ActiveHoverQuirkMatches(nsCSSSelector* aSelector,
+                                           SelectorMatchesFlags aSelectorFlags)
 {
-  return bool ((nsGkAtoms::button == aContentTag) ||
-                 (nsGkAtoms::img == aContentTag)    ||
-                 (nsGkAtoms::input == aContentTag)  ||
-                 (nsGkAtoms::label == aContentTag)  ||
-                 (nsGkAtoms::select == aContentTag) ||
-                 (nsGkAtoms::textarea == aContentTag));
+  if (aSelector->HasTagSelector() || aSelector->mAttrList ||
+      aSelector->mIDList || aSelector->mClassList ||
+      aSelector->IsPseudoElement() ||
+      // Having this quirk means that some selectors will no longer match,
+      // so it's better to return false when we aren't sure (i.e., the
+      // flags are unknown).
+      aSelectorFlags & (SelectorMatchesFlags::UNKNOWN |
+                        SelectorMatchesFlags::HAS_PSEUDO_ELEMENT |
+                        SelectorMatchesFlags::IS_PSEUDO_CLASS_ARGUMENT)) {
+    return false;
+  }
+
+  // No pseudo-class other than :active and :hover.
+  for (nsPseudoClassList* pseudoClass = aSelector->mPseudoClassList;
+       pseudoClass; pseudoClass = pseudoClass->mNext) {
+    if (pseudoClass->mType != nsCSSPseudoClasses::ePseudoClass_hover &&
+        pseudoClass->mType != nsCSSPseudoClasses::ePseudoClass_active) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 
@@ -1630,9 +1676,9 @@ checkGenericEmptyMatches(Element* aElement,
 
 // Arrays of the states that are relevant for various pseudoclasses.
 static const EventStates sPseudoClassStateDependences[] = {
-#define CSS_PSEUDO_CLASS(_name, _value, _pref)  \
+#define CSS_PSEUDO_CLASS(_name, _value, _flags, _pref) \
   EventStates(),
-#define CSS_STATE_DEPENDENT_PSEUDO_CLASS(_name, _value, _pref, _states)  \
+#define CSS_STATE_DEPENDENT_PSEUDO_CLASS(_name, _value, _flags, _pref, _states) \
   _states,
 #include "nsCSSPseudoClassList.h"
 #undef CSS_STATE_DEPENDENT_PSEUDO_CLASS
@@ -1644,9 +1690,9 @@ static const EventStates sPseudoClassStateDependences[] = {
 };
 
 static const EventStates sPseudoClassStates[] = {
-#define CSS_PSEUDO_CLASS(_name, _value, _pref)  \
+#define CSS_PSEUDO_CLASS(_name, _value, _flags, _pref) \
   EventStates(),
-#define CSS_STATE_PSEUDO_CLASS(_name, _value, _pref, _states) \
+#define CSS_STATE_PSEUDO_CLASS(_name, _value, _flags, _pref, _states) \
   _states,
 #include "nsCSSPseudoClassList.h"
 #undef CSS_STATE_PSEUDO_CLASS
@@ -1666,6 +1712,7 @@ StateSelectorMatches(Element* aElement,
                      nsCSSSelector* aSelector,
                      NodeMatchContext& aNodeMatchContext,
                      TreeMatchContext& aTreeMatchContext,
+                     SelectorMatchesFlags aSelectorFlags,
                      bool* const aDependence,
                      EventStates aStatesToCheck)
 {
@@ -1673,24 +1720,14 @@ StateSelectorMatches(Element* aElement,
                   "should only need to call StateSelectorMatches if "
                   "aStatesToCheck is not empty");
 
-  const bool isNegated = aDependence != nullptr;
-
   // Bit-based pseudo-classes
-  if (aStatesToCheck.HasAtLeastOneOfStates(NS_EVENT_STATE_HOVER | NS_EVENT_STATE_ACTIVE) &&
+  if (aStatesToCheck.HasAtLeastOneOfStates(NS_EVENT_STATE_ACTIVE |
+                                           NS_EVENT_STATE_HOVER) &&
       aTreeMatchContext.mCompatMode == eCompatibility_NavQuirks &&
-      // global selector:
-      !aSelector->HasTagSelector() && !aSelector->mIDList &&
-      !aSelector->mClassList && !aSelector->mAttrList &&
-      // This (or the other way around) both make :not() asymmetric
-      // in quirks mode (and it's hard to work around since we're
-      // testing the current mNegations, not the first
-      // (unnegated)). This at least makes it closer to the spec.
-      !isNegated &&
-      // important for |IsQuirkEventSensitive|:
-      aElement->IsHTML() && !nsCSSRuleProcessor::IsLink(aElement) &&
-      !IsQuirkEventSensitive(aElement->Tag())) {
-    // In quirks mode, only make certain elements sensitive to
-    // selectors ":hover" and ":active".
+      ActiveHoverQuirkMatches(aSelector, aSelectorFlags) &&
+      aElement->IsHTML() && !nsCSSRuleProcessor::IsLink(aElement)) {
+    // In quirks mode, only make links sensitive to selectors ":active"
+    // and ":hover".
     return false;
   }
 
@@ -1723,14 +1760,16 @@ static bool
 StateSelectorMatches(Element* aElement,
                      nsCSSSelector* aSelector,
                      NodeMatchContext& aNodeMatchContext,
-                     TreeMatchContext& aTreeMatchContext)
+                     TreeMatchContext& aTreeMatchContext,
+                     SelectorMatchesFlags aSelectorFlags)
 {
   for (nsPseudoClassList* pseudoClass = aSelector->mPseudoClassList;
        pseudoClass; pseudoClass = pseudoClass->mNext) {
     EventStates statesToCheck = sPseudoClassStates[pseudoClass->mType];
     if (!statesToCheck.IsEmpty() &&
         !StateSelectorMatches(aElement, aSelector, aNodeMatchContext,
-                              aTreeMatchContext, nullptr, statesToCheck)) {
+                              aTreeMatchContext, aSelectorFlags, nullptr,
+                              statesToCheck)) {
       return false;
     }
   }
@@ -1743,11 +1782,11 @@ StateSelectorMatches(Element* aElement,
 //  * what it points to should be set to true whenever a test is skipped
 //    because of aNodeMatchContent.mStateMask
 static bool SelectorMatches(Element* aElement,
-                              nsCSSSelector* aSelector,
-                              NodeMatchContext& aNodeMatchContext,
-                              TreeMatchContext& aTreeMatchContext,
-                              bool* const aDependence = nullptr)
-
+                            nsCSSSelector* aSelector,
+                            NodeMatchContext& aNodeMatchContext,
+                            TreeMatchContext& aTreeMatchContext,
+                            SelectorMatchesFlags aSelectorFlags,
+                            bool* const aDependence = nullptr)
 {
   NS_PRECONDITION(!aSelector->IsPseudoElement(),
                   "Pseudo-element snuck into SelectorMatches?");
@@ -1962,8 +2001,9 @@ static bool SelectorMatches(Element* aElement,
             nsCSSSelector *s = l->mSelectors;
             NS_ABORT_IF_FALSE(!s->mNext && !s->IsPseudoElement(),
                               "parser failed");
-            if (SelectorMatches(aElement, s, aNodeMatchContext,
-                                aTreeMatchContext)) {
+            if (SelectorMatches(
+                  aElement, s, aNodeMatchContext, aTreeMatchContext,
+                  SelectorMatchesFlags::IS_PSEUDO_CLASS_ARGUMENT)) {
               break;
             }
           }
@@ -2085,6 +2125,12 @@ static bool SelectorMatches(Element* aElement,
         }
         break;
 
+      case nsCSSPseudoClasses::ePseudoClass_mozNativeAnonymous:
+        if (!aElement->IsInNativeAnonymousSubtree()) {
+          return false;
+        }
+        break;
+
       case nsCSSPseudoClasses::ePseudoClass_mozSystemMetric:
         {
           nsCOMPtr<nsIAtom> metric = do_GetAtom(pseudoClass->u.mString);
@@ -2101,11 +2147,17 @@ static bool SelectorMatches(Element* aElement,
               HasState(NS_DOCUMENT_STATE_RTL_LOCALE);
 
           nsDependentString dirString(pseudoClass->u.mString);
-          NS_ASSERTION(dirString.EqualsLiteral("ltr") ||
-                       dirString.EqualsLiteral("rtl"),
-                       "invalid value for -moz-locale-dir");
 
-          if (dirString.EqualsLiteral("rtl") != docIsRTL) {
+          if (dirString.EqualsLiteral("rtl")) {
+            if (!docIsRTL) {
+              return false;
+            }
+          } else if (dirString.EqualsLiteral("ltr")) {
+            if (docIsRTL) {
+              return false;
+            }
+          } else {
+            // Selectors specifying other directions never match.
             return false;
           }
         }
@@ -2170,22 +2222,25 @@ static bool SelectorMatches(Element* aElement,
             }
           }
 
-          // if we only had to consider HTML, directionality would be exclusively
-          // LTR or RTL, and this could be just
-          //
-          //  if (dirString.EqualsLiteral("rtl") !=
-          //    aElement->StyleState().HasState(NS_EVENT_STATE_RTL)
+          // If we only had to consider HTML, directionality would be
+          // exclusively LTR or RTL.
           //
           // However, in markup languages where there is no direction attribute
           // we have to consider the possibility that neither -moz-dir(rtl) nor
           // -moz-dir(ltr) matches.
           EventStates state = aElement->StyleState();
-          bool elementIsRTL = state.HasState(NS_EVENT_STATE_RTL);
-          bool elementIsLTR = state.HasState(NS_EVENT_STATE_LTR);
           nsDependentString dirString(pseudoClass->u.mString);
 
-          if ((dirString.EqualsLiteral("rtl") && !elementIsRTL) ||
-              (dirString.EqualsLiteral("ltr") && !elementIsLTR)) {
+          if (dirString.EqualsLiteral("rtl")) {
+            if (!state.HasState(NS_EVENT_STATE_RTL)) {
+              return false;
+            }
+          } else if (dirString.EqualsLiteral("ltr")) {
+            if (!state.HasState(NS_EVENT_STATE_LTR)) {
+              return false;
+            }
+          } else {
+            // Selectors specifying other directions never match.
             return false;
           }
         }
@@ -2219,7 +2274,7 @@ static bool SelectorMatches(Element* aElement,
       }
     } else {
       if (!StateSelectorMatches(aElement, aSelector, aNodeMatchContext,
-                                aTreeMatchContext, aDependence,
+                                aTreeMatchContext, aSelectorFlags, aDependence,
                                 statesToCheck)) {
         return false;
       }
@@ -2309,7 +2364,9 @@ static bool SelectorMatches(Element* aElement,
          result && negation; negation = negation->mNegations) {
       bool dependence = false;
       result = !SelectorMatches(aElement, negation, aNodeMatchContext,
-                                aTreeMatchContext, &dependence);
+                                aTreeMatchContext,
+                                SelectorMatchesFlags::IS_PSEUDO_CLASS_ARGUMENT,
+                                &dependence);
       // If the selector does match due to the dependence on
       // aNodeMatchContext.mStateMask, then we want to keep result true
       // so that the final result of SelectorMatches is true.  Doing so
@@ -2417,7 +2474,8 @@ static bool SelectorMatchesTree(Element* aPrevElement,
       aLookForRelevantLink = false;
       aTreeMatchContext.SetHaveRelevantLink();
     }
-    if (SelectorMatches(element, selector, nodeContext, aTreeMatchContext)) {
+    if (SelectorMatches(element, selector, nodeContext, aTreeMatchContext,
+                        SelectorMatchesFlags::NONE)) {
       // to avoid greedy matching, we need to recur if this is a
       // descendant or general sibling combinator and the next
       // combinator is different, but we can make an exception for
@@ -2499,13 +2557,19 @@ void ContentEnumFunc(const RuleValue& value, nsCSSSelector* aSelector,
       return;
     }
     if (!StateSelectorMatches(pdata->mPseudoElement, aSelector, nodeContext,
-                              data->mTreeMatchContext)) {
+                              data->mTreeMatchContext,
+                              SelectorMatchesFlags::NONE)) {
       return;
     }
     selector = selector->mNext;
   }
+
+  SelectorMatchesFlags selectorFlags = SelectorMatchesFlags::NONE;
+  if (aSelector->IsPseudoElement()) {
+    selectorFlags |= SelectorMatchesFlags::HAS_PSEUDO_ELEMENT;
+  }
   if (SelectorMatches(data->mElement, selector, nodeContext,
-                      data->mTreeMatchContext)) {
+                      data->mTreeMatchContext, selectorFlags)) {
     nsCSSSelector *next = selector->mNext;
     if (!next || SelectorMatchesTree(data->mElement, next,
                                      data->mTreeMatchContext,
@@ -2650,6 +2714,7 @@ nsCSSRuleProcessor::HasStateDependentStyle(ElementDependentRuleProcessorData* aD
       }
 
       nsRestyleHint possibleChange = RestyleHintForOp(selector->mOperator);
+      SelectorMatchesFlags selectorFlags = SelectorMatchesFlags::UNKNOWN;
 
       // If hint already includes all the bits of possibleChange,
       // don't bother calling SelectorMatches, since even if it returns false
@@ -2679,9 +2744,9 @@ nsCSSRuleProcessor::HasStateDependentStyle(ElementDependentRuleProcessorData* aD
           (!isPseudoElement ||
            StateSelectorMatches(aStatefulElement, selectorForPseudo,
                                 nodeContext, aData->mTreeMatchContext,
-                                nullptr, aStateMask)) &&
+                                selectorFlags, nullptr, aStateMask)) &&
           SelectorMatches(aData->mElement, selector, nodeContext,
-                          aData->mTreeMatchContext) &&
+                          aData->mTreeMatchContext, selectorFlags) &&
           SelectorMatchesTree(aData->mElement, selector->mNext,
                               aData->mTreeMatchContext,
                               false))
@@ -2748,7 +2813,7 @@ AttributeEnumFunc(nsCSSSelector* aSelector, AttributeEnumData* aData)
   NodeMatchContext nodeContext(EventStates(), false);
   if ((possibleChange & ~(aData->change)) &&
       SelectorMatches(data->mElement, aSelector, nodeContext,
-                      data->mTreeMatchContext) &&
+                      data->mTreeMatchContext, SelectorMatchesFlags::UNKNOWN) &&
       SelectorMatchesTree(data->mElement, aSelector->mNext,
                           data->mTreeMatchContext, false)) {
     aData->change = nsRestyleHint(aData->change | possibleChange);
@@ -2852,17 +2917,50 @@ nsCSSRuleProcessor::HasAttributeDependentStyle(AttributeRuleProcessorData* aData
 /* virtual */ bool
 nsCSSRuleProcessor::MediumFeaturesChanged(nsPresContext* aPresContext)
 {
-  RuleCascadeData *old = mRuleCascades;
   // We don't want to do anything if there aren't any sets of rules
-  // cached yet (or somebody cleared them and is thus responsible for
-  // rebuilding things), since we should not build the rule cascade too
-  // early (e.g., before we know whether the quirk style sheet should be
+  // cached yet, since we should not build the rule cascade too early
+  // (e.g., before we know whether the quirk style sheet should be
   // enabled).  And if there's nothing cached, it doesn't matter if
-  // anything changed.  See bug 448281.
+  // anything changed.  But in the cases where it does matter, we've
+  // cached a previous cache key to test against, instead of our current
+  // rule cascades.  See bug 448281 and bug 1089417.
+  MOZ_ASSERT(!(mRuleCascades && mPreviousCacheKey));
+  RuleCascadeData *old = mRuleCascades;
   if (old) {
     RefreshRuleCascade(aPresContext);
+    return (old != mRuleCascades);
   }
-  return (old != mRuleCascades);
+
+  if (mPreviousCacheKey) {
+    // RefreshRuleCascade will get rid of mPreviousCacheKey anyway to
+    // maintain the invariant that we can't have both an mRuleCascades
+    // and an mPreviousCacheKey.  But we need to hold it a little
+    // longer.
+    UniquePtr<nsMediaQueryResultCacheKey> previousCacheKey(
+      Move(mPreviousCacheKey));
+    RefreshRuleCascade(aPresContext);
+
+    // This test is a bit pessimistic since the cache key's operator==
+    // just does list comparison rather than set comparison, but it
+    // should catch all the cases we care about (i.e., where the cascade
+    // order hasn't changed).  Other cases will do a restyle anyway, so
+    // we shouldn't need to worry about posting a second.
+    return !mRuleCascades || // all sheets gone, but we had sheets before
+           mRuleCascades->mCacheKey != *previousCacheKey;
+  }
+
+  return false;
+}
+
+UniquePtr<nsMediaQueryResultCacheKey>
+nsCSSRuleProcessor::CloneMQCacheKey()
+{
+  RuleCascadeData* c = mRuleCascades;
+  if (!c || !c->mCacheKey.HasFeatureConditions()) {
+    return UniquePtr<nsMediaQueryResultCacheKey>();
+  }
+
+  return MakeUnique<nsMediaQueryResultCacheKey>(c->mCacheKey);
 }
 
 /* virtual */ size_t
@@ -2963,6 +3061,10 @@ nsCSSRuleProcessor::AppendFontFeatureValuesRules(
 nsresult
 nsCSSRuleProcessor::ClearRuleCascades()
 {
+  if (!mPreviousCacheKey) {
+    mPreviousCacheKey = CloneMQCacheKey();
+  }
+
   // We rely on our caller (perhaps indirectly) to do something that
   // will rebuild style data and the user font set (either
   // nsIPresShell::ReconstructStyleData or
@@ -3488,6 +3590,11 @@ nsCSSRuleProcessor::RefreshRuleCascade(nsPresContext* aPresContext)
     }
   }
 
+  // We're going to make a new rule cascade; this means that we should
+  // now stop using the previous cache key that we're holding on to from
+  // the last time we had rule cascades.
+  mPreviousCacheKey = nullptr;
+
   if (mSheets.Length() != 0) {
     nsAutoPtr<RuleCascadeData> newCascade(
       new RuleCascadeData(aPresContext->Medium(),
@@ -3565,7 +3672,8 @@ nsCSSRuleProcessor::SelectorListMatches(Element* aElement,
     NS_ASSERTION(sel, "Should have *some* selectors");
     NS_ASSERTION(!sel->IsPseudoElement(), "Shouldn't have been called");
     NodeMatchContext nodeContext(EventStates(), false);
-    if (SelectorMatches(aElement, sel, nodeContext, aTreeMatchContext)) {
+    if (SelectorMatches(aElement, sel, nodeContext, aTreeMatchContext,
+                        SelectorMatchesFlags::NONE)) {
       nsCSSSelector* next = sel->mNext;
       if (!next ||
           SelectorMatchesTree(aElement, next, aTreeMatchContext, false)) {

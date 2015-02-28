@@ -133,14 +133,6 @@
             if (!aURI)
               aURI = "about:blank";
 
-            if (aCharset) {
-              try {
-                this.docShell.parentCharset = aCharset;
-              }
-              catch (e) {
-              }
-            }
-
             if (!(aFlags & this.webNavigation.LOAD_FLAGS_FROM_EXTERNAL))
               this.userTypedClear++;
 
@@ -1123,8 +1115,12 @@
           }
 
           // Re-attach the docShells to the form fill controller.
-          this.attachFormFill();
-          aOtherBrowser.attachFormFill();
+          if (!this.isRemoteBrowser) {
+            this.attachFormFill();
+          }
+          if (!aOtherBrowser.isRemoteBrowser) {
+            aOtherBrowser.attachFormFill();
+          }
 
           // Null the current nsITypeAheadFind instances so that they're
           // lazily re-created on access. We need to do this because they

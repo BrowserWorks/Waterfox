@@ -65,8 +65,8 @@ extern IntlTest *createGenderInfoTest();
 extern IntlTest *createRelativeDateTimeFormatterTest();
 #endif
 extern IntlTest *createMeasureFormatTest();
-extern IntlTest *createScientificFormatHelperTest();
 extern IntlTest *createNumberFormatSpecificationTest();
+extern IntlTest *createScientificNumberFormatterTest();
 
 #define TESTCLASS(id, TestClass)          \
     case id:                              \
@@ -184,20 +184,20 @@ void IntlTestFormat::runIndexedTest( int32_t index, UBool exec, const char* &nam
           }
           break;
         case 48:
-          name = "ScientificFormatHelperTest";
-          if (exec) {
-            logln("ScientificFormatHelperTest test---");
-            logln((UnicodeString)"");
-            LocalPointer<IntlTest> test(createScientificFormatHelperTest());
-            callTest(*test, par);
-          }
-          break;
-        case 49:
           name = "NumberFormatSpecificationTest";
           if (exec) {
             logln("NumberFormatSpecificationTest test---");
             logln((UnicodeString)"");
             LocalPointer<IntlTest> test(createNumberFormatSpecificationTest());
+            callTest(*test, par);
+          }
+          break;
+       case 49:
+          name = "ScientificNumberFormatterTest";
+          if (exec) {
+            logln("ScientificNumberFormatterTest test---");
+            logln((UnicodeString)"");
+            LocalPointer<IntlTest> test(createScientificNumberFormatterTest());
             callTest(*test, par);
           }
           break;

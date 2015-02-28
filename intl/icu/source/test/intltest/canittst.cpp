@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2002-2012, International Business Machines Corporation and
+ * Copyright (c) 2002-2014, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************
  *
@@ -263,7 +263,7 @@ UnicodeString CanonicalIteratorTest::collectionToString(Hashtable *col) {
     int32_t i = 0;
 
     const UHashElement *ne = NULL;
-    int32_t el = -1;
+    int32_t el = UHASH_FIRST;
     //Iterator it = basic.iterator();
     ne = col->nextElement(el);
     //while (it.hasNext()) 

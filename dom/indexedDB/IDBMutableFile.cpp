@@ -157,22 +157,20 @@ IDBMutableFile::Create(IDBDatabase* aDatabase,
     return nullptr;
   }
 
-  const DatabaseSpec* spec = aDatabase->Spec();
-  MOZ_ASSERT(spec);
-
-  PersistenceType persistenceType = spec->metadata().persistenceType();
-
   nsCString group;
   nsCString origin;
   if (NS_WARN_IF(NS_FAILED(QuotaManager::GetInfoFromPrincipal(principal,
-                                                              persistenceType,
                                                               &group,
                                                               &origin,
-                                                              nullptr,
                                                               nullptr,
                                                               nullptr)))) {
     return nullptr;
   }
+
+  const DatabaseSpec* spec = aDatabase->Spec();
+  MOZ_ASSERT(spec);
+
+  PersistenceType persistenceType = spec->metadata().persistenceType();
 
   nsCString storageId;
   QuotaManager::GetStorageId(persistenceType,
@@ -319,6 +317,11 @@ IDBMutableFile::Open(FileMode aMode, ErrorResult& aError)
 
   if (QuotaManager::IsShuttingDown() || FileService::IsShuttingDown()) {
     aError.Throw(NS_ERROR_DOM_FILEHANDLE_UNKNOWN_ERR);
+    return nullptr;
+  }
+
+  if (mInvalidated) {
+    aError.Throw(NS_ERROR_DOM_FILEHANDLE_NOT_ALLOWED_ERR);
     return nullptr;
   }
 

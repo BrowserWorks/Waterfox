@@ -50,6 +50,7 @@ public:
     virtual void Bug10459();
     virtual void TestCaseInsensitiveStarters();
     virtual void TestBug11049();
+    virtual void TestBug11371();
     
     // The following functions are internal to the regexp tests.
     virtual void assertUText(const char *expected, UText *actual, const char *file, int line);

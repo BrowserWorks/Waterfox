@@ -44,20 +44,18 @@ function handleTechnologyDiscoveredRE0ForP2PRegFailure(msg) {
 
   nfc.onpeerready = peerReadyCb;
 
-  let request = nfc.checkP2PRegistration(INCORRECT_MANIFEST_URL);
-  request.onsuccess = function (evt) {
+  let promise = nfc.checkP2PRegistration(INCORRECT_MANIFEST_URL);
+  promise.then(evt => {
     is(request.result, false, "check for P2P registration result");
 
     nfc.onpeerready = null;
     NCI.deactivate().then(() => toggleNFC(false)).then(runNextTest);
-  }
-
-  request.onerror = function () {
+  }).catch(() => {
     ok(false, "checkP2PRegistration failed.");
 
     nfc.onpeerready = null;
     NCI.deactivate().then(() => toggleNFC(false)).then(runNextTest);
-  }
+  });
 }
 
 function testPeerReady() {
@@ -191,18 +189,6 @@ function testPeerInvalidToken() {
   runNextTest();
 }
 
-/**
- * Added for completeness in Bug 1042651,
- * TODO: remove once Bug 963531 lands
- */
-function testTagInvalidToken() {
-  log("testTagInvalidToken");
-  let tag = nfc.getNFCTag("fakeSessionToken");
-  is(tag, null, "NFCTag should be null on wrong session token");
-
-  runNextTest();
-}
-
 let tests = [
   testPeerReady,
   testGetNFCPeer,
@@ -210,8 +196,7 @@ let tests = [
   testPeerLostShouldBeCalled,
   testPeerLostShouldNotBeCalled,
   testPeerShouldThrow,
-  testPeerInvalidToken,
-  testTagInvalidToken
+  testPeerInvalidToken
 ];
 
 SpecialPowers.pushPermissions(

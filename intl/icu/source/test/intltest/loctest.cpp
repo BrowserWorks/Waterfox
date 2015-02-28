@@ -16,6 +16,7 @@
 #include <string.h>
 #include "putilimp.h"
 #include "unicode/ustring.h"
+#include "hash.h"
 
 static const char* const rawData[33][8] = {
 
@@ -1826,130 +1827,164 @@ void LocaleTest::_checklocs(const char* label,
 
 void LocaleTest::TestGetLocale(void) {
 #if !UCONFIG_NO_SERVICE
-    UErrorCode ec = U_ZERO_ERROR;
     const char *req;
     Locale valid, actual, reqLoc;
     
     // Calendar
 #if !UCONFIG_NO_FORMATTING
-    req = "en_US_BROOKLYN";
-    Calendar* cal = Calendar::createInstance(Locale::createFromName(req), ec);
-    if (U_FAILURE(ec)) {
-        dataerrln("FAIL: Calendar::createInstance failed - %s", u_errorName(ec));
-    } else {
-        valid = cal->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = cal->getLocale(ULOC_ACTUAL_LOCALE, ec);
+    {
+        UErrorCode ec = U_ZERO_ERROR;  // give each resource type its own error code
+        req = "en_US_BROOKLYN";
+        Calendar* cal = Calendar::createInstance(Locale::createFromName(req), ec);
         if (U_FAILURE(ec)) {
-            errln("FAIL: Calendar::getLocale() failed");
+            dataerrln("FAIL: Calendar::createInstance failed - %s", u_errorName(ec));
         } else {
-            _checklocs("Calendar", req, valid, actual);
+            valid = cal->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = cal->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: Calendar::getLocale() failed");
+            } else {
+                _checklocs("Calendar", req, valid, actual);
+            }
+            /* Make sure that it fails correctly */
+            ec = U_FILE_ACCESS_ERROR;
+            if (cal->getLocale(ULOC_VALID_LOCALE, ec).getName()[0] != 0) {
+                errln("FAIL: Calendar::getLocale() failed to fail correctly. It should have returned \"\"");
+            }
+            ec = U_ZERO_ERROR;
         }
-        /* Make sure that it fails correctly */
-        ec = U_FILE_ACCESS_ERROR;
-        if (cal->getLocale(ULOC_VALID_LOCALE, ec).getName()[0] != 0) {
-            errln("FAIL: Calendar::getLocale() failed to fail correctly. It should have returned \"\"");
-        }
-        ec = U_ZERO_ERROR;
+        delete cal;
     }
-    delete cal;
 #endif
 
     // DecimalFormat, DecimalFormatSymbols
 #if !UCONFIG_NO_FORMATTING
-    req = "fr_FR_NICE";
-    NumberFormat* nf = NumberFormat::createInstance(Locale::createFromName(req), ec);
-    if (U_FAILURE(ec)) {
-        dataerrln("FAIL: NumberFormat::createInstance failed - %s", u_errorName(ec));
-    } else {
-        DecimalFormat* dec = dynamic_cast<DecimalFormat*>(nf);
-        if (dec == NULL) {
-            errln("FAIL: NumberFormat::createInstance does not return a DecimalFormat");
-            return;
-        }
-        valid = dec->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = dec->getLocale(ULOC_ACTUAL_LOCALE, ec);
+    {
+        UErrorCode ec = U_ZERO_ERROR;  // give each resource type its own error code
+        req = "fr_FR_NICE";
+        NumberFormat* nf = NumberFormat::createInstance(Locale::createFromName(req), ec);
         if (U_FAILURE(ec)) {
-            errln("FAIL: DecimalFormat::getLocale() failed");
+            dataerrln("FAIL: NumberFormat::createInstance failed - %s", u_errorName(ec));
         } else {
-            _checklocs("DecimalFormat", req, valid, actual);
-        }
+            DecimalFormat* dec = dynamic_cast<DecimalFormat*>(nf);
+            if (dec == NULL) {
+                errln("FAIL: NumberFormat::createInstance does not return a DecimalFormat");
+                return;
+            }
+            valid = dec->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = dec->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: DecimalFormat::getLocale() failed");
+            } else {
+                _checklocs("DecimalFormat", req, valid, actual);
+            }
 
-        const DecimalFormatSymbols* sym = dec->getDecimalFormatSymbols();
-        if (sym == NULL) {
-            errln("FAIL: getDecimalFormatSymbols returned NULL");
-            return;
+            const DecimalFormatSymbols* sym = dec->getDecimalFormatSymbols();
+            if (sym == NULL) {
+                errln("FAIL: getDecimalFormatSymbols returned NULL");
+                return;
+            }
+            valid = sym->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = sym->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: DecimalFormatSymbols::getLocale() failed");
+            } else {
+                _checklocs("DecimalFormatSymbols", req, valid, actual);
+            }        
         }
-        valid = sym->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = sym->getLocale(ULOC_ACTUAL_LOCALE, ec);
-        if (U_FAILURE(ec)) {
-            errln("FAIL: DecimalFormatSymbols::getLocale() failed");
-        } else {
-            _checklocs("DecimalFormatSymbols", req, valid, actual);
-        }        
+        delete nf;
     }
-    delete nf;
 #endif
 
     // DateFormat, DateFormatSymbols
 #if !UCONFIG_NO_FORMATTING
-    req = "de_CH_LUCERNE";
-    DateFormat* df =
-        DateFormat::createDateInstance(DateFormat::kDefault,
-                                       Locale::createFromName(req));
-    if (df == 0){
-        dataerrln("Error calling DateFormat::createDateInstance()");
-    } else {
-        SimpleDateFormat* dat = dynamic_cast<SimpleDateFormat*>(df);
-        if (dat == NULL) {
-            errln("FAIL: DateFormat::createInstance does not return a SimpleDateFormat");
-            return;
-        }
-        valid = dat->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = dat->getLocale(ULOC_ACTUAL_LOCALE, ec);
-        if (U_FAILURE(ec)) {
-            errln("FAIL: SimpleDateFormat::getLocale() failed");
+    {
+        UErrorCode ec = U_ZERO_ERROR;  // give each resource type its own error code
+        req = "de_CH_LUCERNE";
+        DateFormat* df =
+            DateFormat::createDateInstance(DateFormat::kDefault,
+                                           Locale::createFromName(req));
+        if (df == 0){
+            dataerrln("Error calling DateFormat::createDateInstance()");
         } else {
-            _checklocs("SimpleDateFormat", req, valid, actual);
-        }
+            SimpleDateFormat* dat = dynamic_cast<SimpleDateFormat*>(df);
+            if (dat == NULL) {
+                errln("FAIL: DateFormat::createInstance does not return a SimpleDateFormat");
+                return;
+            }
+            valid = dat->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = dat->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: SimpleDateFormat::getLocale() failed");
+            } else {
+                _checklocs("SimpleDateFormat", req, valid, actual);
+            }
     
-        const DateFormatSymbols* sym = dat->getDateFormatSymbols();
-        if (sym == NULL) {
-            errln("FAIL: getDateFormatSymbols returned NULL");
-            return;
+            const DateFormatSymbols* sym = dat->getDateFormatSymbols();
+            if (sym == NULL) {
+                errln("FAIL: getDateFormatSymbols returned NULL");
+                return;
+            }
+            valid = sym->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = sym->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: DateFormatSymbols::getLocale() failed");
+            } else {
+                _checklocs("DateFormatSymbols", req, valid, actual);
+            }        
         }
-        valid = sym->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = sym->getLocale(ULOC_ACTUAL_LOCALE, ec);
-        if (U_FAILURE(ec)) {
-            errln("FAIL: DateFormatSymbols::getLocale() failed");
-        } else {
-            _checklocs("DateFormatSymbols", req, valid, actual);
-        }        
+        delete df;
     }
-    delete df;
 #endif
 
     // BreakIterator
 #if !UCONFIG_NO_BREAK_ITERATION
-    req = "es_ES_BARCELONA";
-    reqLoc = Locale::createFromName(req);
-    BreakIterator* brk = BreakIterator::createWordInstance(reqLoc, ec);
-    if (U_FAILURE(ec)) {
-        dataerrln("FAIL: BreakIterator::createWordInstance failed - %s", u_errorName(ec));
-    } else {
-        valid = brk->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = brk->getLocale(ULOC_ACTUAL_LOCALE, ec);
+    {
+        UErrorCode ec = U_ZERO_ERROR;  // give each resource type its own error code
+        req = "es_ES_BARCELONA";
+        reqLoc = Locale::createFromName(req);
+        BreakIterator* brk = BreakIterator::createWordInstance(reqLoc, ec);
         if (U_FAILURE(ec)) {
-            errln("FAIL: BreakIterator::getLocale() failed");
+            dataerrln("FAIL: BreakIterator::createWordInstance failed - %s", u_errorName(ec));
         } else {
-            _checklocs("BreakIterator", req, valid, actual);
-        }
+            valid = brk->getLocale(ULOC_VALID_LOCALE, ec);
+            actual = brk->getLocale(ULOC_ACTUAL_LOCALE, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: BreakIterator::getLocale() failed");
+            } else {
+                _checklocs("BreakIterator", req, valid, actual);
+            }
         
-        // After registering something, the behavior should be different
-        URegistryKey key = BreakIterator::registerInstance(brk, reqLoc, UBRK_WORD, ec);
-        brk = 0; // registerInstance adopts
-        if (U_FAILURE(ec)) {
-            errln("FAIL: BreakIterator::registerInstance() failed");
-        } else {
+            // After registering something, the behavior should be different
+            URegistryKey key = BreakIterator::registerInstance(brk, reqLoc, UBRK_WORD, ec);
+            brk = 0; // registerInstance adopts
+            if (U_FAILURE(ec)) {
+                errln("FAIL: BreakIterator::registerInstance() failed");
+            } else {
+                brk = BreakIterator::createWordInstance(reqLoc, ec);
+                if (U_FAILURE(ec)) {
+                    errln("FAIL: BreakIterator::createWordInstance failed");
+                } else {
+                    valid = brk->getLocale(ULOC_VALID_LOCALE, ec);
+                    actual = brk->getLocale(ULOC_ACTUAL_LOCALE, ec);
+                    if (U_FAILURE(ec)) {
+                        errln("FAIL: BreakIterator::getLocale() failed");
+                    } else {
+                        // N.B.: now expect valid==actual==req
+                        _checklocs("BreakIterator(registered)",
+                                   req, valid, actual, "eq", "eq");
+                    }
+                }
+                // No matter what, unregister
+                BreakIterator::unregister(key, ec);
+                if (U_FAILURE(ec)) {
+                    errln("FAIL: BreakIterator::unregister() failed");
+                }
+                delete brk;
+                brk = 0;
+            }
+
+            // After unregistering, should behave normally again
             brk = BreakIterator::createWordInstance(reqLoc, ec);
             if (U_FAILURE(ec)) {
                 errln("FAIL: BreakIterator::createWordInstance failed");
@@ -1959,100 +1994,180 @@ void LocaleTest::TestGetLocale(void) {
                 if (U_FAILURE(ec)) {
                     errln("FAIL: BreakIterator::getLocale() failed");
                 } else {
-                    // N.B.: now expect valid==actual==req
-                    _checklocs("BreakIterator(registered)",
-                               req, valid, actual, "eq", "eq");
+                    _checklocs("BreakIterator(unregistered)", req, valid, actual);
                 }
             }
-            // No matter what, unregister
-            BreakIterator::unregister(key, ec);
-            if (U_FAILURE(ec)) {
-                errln("FAIL: BreakIterator::unregister() failed");
-            }
-            delete brk;
-            brk = 0;
         }
-
-        // After unregistering, should behave normally again
-        brk = BreakIterator::createWordInstance(reqLoc, ec);
-        if (U_FAILURE(ec)) {
-            errln("FAIL: BreakIterator::createWordInstance failed");
-        } else {
-            valid = brk->getLocale(ULOC_VALID_LOCALE, ec);
-            actual = brk->getLocale(ULOC_ACTUAL_LOCALE, ec);
-            if (U_FAILURE(ec)) {
-                errln("FAIL: BreakIterator::getLocale() failed");
-            } else {
-                _checklocs("BreakIterator(unregistered)", req, valid, actual);
-            }
-        }
+        delete brk;
     }
-    delete brk;
 #endif
 
     // Collator
 #if !UCONFIG_NO_COLLATION
-    req = "hi_IN_BHOPAL";
-    reqLoc = Locale::createFromName(req);
-    Collator* coll = Collator::createInstance(reqLoc, ec);
-    if (U_FAILURE(ec)) {
-        dataerrln("FAIL: Collator::createInstance failed - %s", u_errorName(ec));
-    } else {
-        valid = coll->getLocale(ULOC_VALID_LOCALE, ec);
-        actual = coll->getLocale(ULOC_ACTUAL_LOCALE, ec);
-        if (U_FAILURE(ec)) {
-            errln("FAIL: Collator::getLocale() failed");
-        } else {
-            _checklocs("Collator", req, valid, actual);
-        }
+    {
+        UErrorCode ec = U_ZERO_ERROR;  // give each resource type its own error code
 
-        // After registering something, the behavior should be different
-        URegistryKey key = Collator::registerInstance(coll, reqLoc, ec);
-        coll = 0; // registerInstance adopts
-        if (U_FAILURE(ec)) {
-            errln("FAIL: Collator::registerInstance() failed");
-        } else {
-            coll = Collator::createInstance(reqLoc, ec);
-            if (U_FAILURE(ec)) {
-                errln("FAIL: Collator::createWordInstance failed");
-            } else {
-                valid = coll->getLocale(ULOC_VALID_LOCALE, ec);
-                actual = coll->getLocale(ULOC_ACTUAL_LOCALE, ec);
-                if (U_FAILURE(ec)) {
-                    errln("FAIL: Collator::getLocale() failed");
-                } else {
-                    // N.B.: now expect valid==actual==req
-                    _checklocs("Collator(registered)",
-                               req, valid, actual, "eq", "eq");
-                }
-            }
-            // No matter what, unregister
-            Collator::unregister(key, ec);
-            if (U_FAILURE(ec)) {
-                errln("FAIL: Collator::unregister() failed");
-            }
-            delete coll;
-            coll = 0;
-        }
+        checkRegisteredCollators(NULL); // Don't expect any extras
 
-        // After unregistering, should behave normally again
-        coll = Collator::createInstance(reqLoc, ec);
+        req = "hi_IN_BHOPAL";
+        reqLoc = Locale::createFromName(req);
+        Collator* coll = Collator::createInstance(reqLoc, ec);
         if (U_FAILURE(ec)) {
-            errln("FAIL: Collator::createInstance failed");
+            dataerrln("FAIL: Collator::createInstance failed - %s", u_errorName(ec));
         } else {
             valid = coll->getLocale(ULOC_VALID_LOCALE, ec);
             actual = coll->getLocale(ULOC_ACTUAL_LOCALE, ec);
             if (U_FAILURE(ec)) {
                 errln("FAIL: Collator::getLocale() failed");
             } else {
-                _checklocs("Collator(unregistered)", req, valid, actual);
+                _checklocs("Collator", req, valid, actual);
+            }
+
+            // After registering something, the behavior should be different
+            URegistryKey key = Collator::registerInstance(coll, reqLoc, ec);
+            coll = 0; // registerInstance adopts
+            if (U_FAILURE(ec)) {
+                errln("FAIL: Collator::registerInstance() failed");
+            } else {
+                coll = Collator::createInstance(reqLoc, ec);
+                if (U_FAILURE(ec)) {
+                    errln("FAIL: Collator::createWordInstance failed");
+                } else {
+                    valid = coll->getLocale(ULOC_VALID_LOCALE, ec);
+                    actual = coll->getLocale(ULOC_ACTUAL_LOCALE, ec);
+                    if (U_FAILURE(ec)) {
+                        errln("FAIL: Collator::getLocale() failed");
+                    } else {
+                        // N.B.: now expect valid==actual==req
+                        _checklocs("Collator(registered)",
+                                   req, valid, actual, "eq", "eq");
+                    }
+                }
+                checkRegisteredCollators(req); // include hi_IN_BHOPAL
+
+                // No matter what, unregister
+                Collator::unregister(key, ec);
+                if (U_FAILURE(ec)) {
+                    errln("FAIL: Collator::unregister() failed");
+                }
+                delete coll;
+                coll = 0;
+            }
+
+            // After unregistering, should behave normally again
+            coll = Collator::createInstance(reqLoc, ec);
+            if (U_FAILURE(ec)) {
+                errln("FAIL: Collator::createInstance failed");
+            } else {
+                valid = coll->getLocale(ULOC_VALID_LOCALE, ec);
+                actual = coll->getLocale(ULOC_ACTUAL_LOCALE, ec);
+                if (U_FAILURE(ec)) {
+                    errln("FAIL: Collator::getLocale() failed");
+                } else {
+                    _checklocs("Collator(unregistered)", req, valid, actual);
+                }
             }
         }
+        delete coll;
+
+        checkRegisteredCollators(NULL); // extra should be gone again
     }
-    delete coll;
 #endif
 #endif
 }
+
+#if !UCONFIG_NO_COLLATION
+/**
+ * Compare Collator::getAvailableLocales(int) [ "old", returning an array ]
+ *   with  Collator::getAvailableLocales()    [ "new", returning a StringEnumeration ]
+ * These should be identical (check their API docs) EXCEPT that
+ * if expectExtra is non-NULL, it will be in the "new" array but not "old".
+ * Does not return any status but calls errln on error.
+ * @param expectExtra an extra locale, will be in "new" but not "old". Or NULL.
+ */
+void LocaleTest::checkRegisteredCollators(const char *expectExtra) {
+    UErrorCode status = U_ZERO_ERROR;
+    int32_t count1=0,count2=0;
+    Hashtable oldHash(status);
+    Hashtable newHash(status);
+    TEST_ASSERT_STATUS(status);
+
+    UnicodeString expectStr(expectExtra?expectExtra:"n/a", "");
+
+    // the 'old' list (non enumeration)
+    const Locale*  oldList = Collator::getAvailableLocales(count1);
+    if(oldList == NULL) {
+        dataerrln("Error: Collator::getAvailableLocales(count) returned NULL");
+        return;
+    }
+
+    // the 'new' list (enumeration)
+    LocalPointer<StringEnumeration> newEnum(Collator::getAvailableLocales());
+    if(newEnum.isNull()) {
+       errln("Error: collator::getAvailableLocales() returned NULL");
+       return;
+    }
+
+    // OK. Let's add all of the OLD
+    // then check for any in the NEW not in OLD
+    // then check for any in OLD not in NEW.
+
+    // 1. add all of OLD
+    for(int32_t i=0;i<count1;i++) {
+        const UnicodeString key(oldList[i].getName(), "");
+        int32_t oldI = oldHash.puti(key, 1, status);
+        if( oldI == 1 ){
+            errln("Error: duplicate key %s in Collator::getAvailableLocales(count) list.\n",
+                oldList[i].getName());
+            return;
+        }
+        if(expectExtra != NULL && !strcmp(expectExtra, oldList[i].getName())) {
+            errln("Inexplicably, Collator::getAvailableCollators(count) had registered collator %s. This shouldn't happen, so I am going to consider it an error.\n", expectExtra);
+        }
+    }
+
+    // 2. add all of NEW
+    const UnicodeString *locStr;
+    UBool foundExpected = FALSE;
+    while((locStr = newEnum->snext(status)) && U_SUCCESS(status)) {
+        count2++;
+
+        if(expectExtra != NULL && expectStr == *locStr) {
+            foundExpected = TRUE;
+            logln(UnicodeString("Found expected registered collator: ","") + expectStr);
+        }
+
+        if( oldHash.geti(*locStr) == 0 ) {
+            if(expectExtra != NULL && expectStr==*locStr) {
+                logln(UnicodeString("As expected, Collator::getAvailableLocales(count) is missing registered collator ") + expectStr);
+            } else {
+                errln(UnicodeString("Error: Collator::getAvailableLocales(count) is missing: ","")
+                    + *locStr);
+            }
+        }
+        newHash.puti(*locStr, 1, status);
+    }
+
+    // 3. check all of OLD again
+    for(int32_t i=0;i<count1;i++) {
+        const UnicodeString key(oldList[i].getName(), "");
+        int32_t newI = newHash.geti(key);
+        if(newI == 0) {
+            errln(UnicodeString("Error: Collator::getAvailableLocales() is missing: ","")
+                + key);
+        }
+    }
+
+    int32_t expectCount2 = count1;
+    if(expectExtra != NULL) {
+        expectCount2 ++; // if an extra item registered, bump the expect count
+    }
+
+    assertEquals("Collator::getAvail() count", expectCount2, count2);
+}
+#endif
+
+
 
 void LocaleTest::TestVariantWithOutCountry(void) {
     Locale loc("en","","POSIX");

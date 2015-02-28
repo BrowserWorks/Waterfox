@@ -1,0 +1,342 @@
+*gui_x11.txt*   For Vim version 5.8.  Last change: 2000 Jan 01
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Vim's Graphical User Interface				*gui-x11* *GUI-X11*
+							*Athena* *Motif*
+1. Starting the X11 GUI		|gui-x11-start|
+2. GUI Resources		|gui-resources|
+3. Shell Commands		|gui-pty|
+4. Various			|gui-x11-various|
+5. GTK version			|gui-gtk|
+6. Compiling			|gui-x11-compiling|
+
+Other relevant documentation:
+|gui.txt|	For generic items of the GUI.
+
+{Vi does not have any of these commands}
+
+==============================================================================
+1. Starting the X11 GUI					*gui-x11-start*
+
+Then you can run the GUI version of Vim in either of these ways:
+    gvim [options] [files...]
+    vim -g [options] [files...]
+
+So if you call the executable "gvim", or make "gvim" a link to the executable,
+then the GUI version will automatically be used.  Additional characters may be
+added after "gvim", for example "gvim-5".
+
+You may also start up the GUI from within the terminal version by using one of
+these commands:
+	:gui [+cmd] [-f|-b] [files...]			*:gu* *:gui*
+	:gvim [+cmd] [-f|-b] [files...]			*:gv* *:gvim*
+The "-f" option runs Vim in the foreground.
+The "-b" option runs Vim in the background (this is the default).
+
+							*gui-fork*
+When the GUI is started, it does a fork() and exits the current process.
+When gvim was started from a shell this makes the shell accept further
+commands.  If you don't want this (e.g. when using gvim for a mail program
+that waits for gvim to exit), start gvim with "gvim -f", "vim -gf" or use
+":gui -f".  Don't use "vim -fg", because "-fg" specifies the foreground
+color.
+
+When using "gvim -f" and then ":gui", Vim will run in the foreground.  The
+"-f" argument will be remembered.  To force running Vim in the background use
+":gui -b".
+
+If you want the GUI to run in the foreground always, include the 'f'
+flag in 'guioptions'.  |-f|.
+
+==============================================================================
+2. GUI Resources			*gui-resources* *.Xdefaults*
+
+If using the Motif or Athena version of the GUI (not for the GTK+ or Win32
+version), a number of X resources are available.  You should use Vim's class
+"Vim" when setting these.  They are as follows:
+
+    Resource name	Meaning		~
+
+    reverseVideo	Boolean: should reverse video be used?
+    background		Color of background.
+    foreground		Color of normal text.
+    scrollBackground	Color of trough portion of scrollbars.
+    scrollForeground	Color of slider and arrow portions of scrollbars.
+    menuBackground	Color of menu backgrounds.
+    menuForeground	Color of menu foregrounds.
+    font		Name of font used for normal text.
+    boldFont		Name of font used for bold text.
+    italicFont		Name of font used for italic text.
+    boldItalicFont	Name of font used for bold, italic text.
+    geometry		Initial geometry to use for gvim's window (default
+			is same size as terminal that started it).
+    scrollbarWidth	Thickness of scrollbars.
+    menuHeight		Height of the menu bar.
+    borderWidth		Thickness of border around text area.
+
+A special font for italic, bold, and italic-bold text will only be used if
+the user has specified one via a resource.  No attempt is made to guess what
+fonts should be used for these based on the normal text font at the moment.
+
+Note that the colors can also be set with the ":highlight" command, using the
+"Normal", "Menu" and "Scrollbar" groups.
+
+							*font-sizes*
+Note: All fonts must be of the same size!!!  If you don't do this, text will
+disappear or mess up the display.  Vim does not check the font sizes.  It's
+the size in screen pixels that must be the same.  Note that some fonts that
+have the same point size don't have the same pixel size!  Additionally, the
+positioning of the fonts must be the same (ascent and descent).  You can check
+this with "xlsfonts -l {fontname}".
+
+If any of these things are also set with Vim commands, eg with
+":set guifont=Screen15", then this will override the X resources (currently
+'guifont' is the only option that is supported).
+
+Here is an example of what you might put in your ~/.Xdefaults file:
+
+>	Vim*useSchemes:			all
+>	Vim*sgiMode:			true
+>	Vim*useEnhancedFSB:		true
+>	Vim.foreground:			Black
+>	Vim.background:			Wheat
+>	Vim*fontList:			7x13
+
+The first three of these are standard resources on Silicon Graphics machines
+which make Motif applications look even better, highly recommended!
+
+The "Vim*fontList" is to set the menu font for Motif.  Example:
+>	Vim*menuBar*fontList:        -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+With Athena:
+>	Vim*menuBar*SmeBSB*font:     -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+>	Vim*menuBar*MenuButton*font: -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+
+Don't use "Vim*geometry" in the defaults.  This will break the menus.  Use
+"Vim.geometry" instead.
+
+If you get an error message "Cannot allocate colormap entry for "gray60",
+try adding this to your Vim resources (change the colors to your liking):
+
+>	Vim*scrollBackground:		Black
+>	Vim*scrollForeground:		Blue
+
+The resources can also be set with arguments to vim:
+
+    argument		meaning	~
+							*-gui*
+   -display {display}	Run vim on {display}		*-display*
+   -iconic		Start vim iconified		*-iconic*
+   -background {color}	Use {color} for the background	*-background*
+   -bg {color}		idem				*-bg*
+   -foreground {color}	Use {color} for normal text	*-foreground*
+   -fg {color}		idem				*-fg*
+   -ul {color}		idem				*-ul*
+   -font {font}		Use {font} for normal text	*-font*
+   -fn {font}		idem				*-fn*
+   -boldfont {font}	Use {font} for bold text	*-boldfont*
+   -italicfont {font}	Use {font} for italic text	*-italicfont*
+   -geometry {geom}	Use {geom} for initial geometry	*-geometry*
+   -geom {geom}		idem				*-geom*
+   -borderwidth {width}	Use a border width of {width}	*-borderwidth*
+   -bw {width}		idem				*-bw*
+							*-scrollbarwidth*
+   -scrollbarwidth {width}	Use a scrollbar width of {width}
+   -sw {width}		idem				*-sw*
+   -menuheight {height}	Use a menu bar height of {height} *-menuheight*
+   -mh {height}		idem				*-mh*
+   -reverse		Use reverse video		*-reverse*
+   -rv			idem				*-rv*
+   +reverse		Don't use reverse video		*-+reverse*
+   +rv			idem				*-+rv*
+   -xrm {resource}	Set the specified resource	*-xrm*
+
+Note about reverse video: Vim checks that the result is actually a light text
+on a dark background.  The reason is that some X11 versions swap the colors,
+and some don't.  These two examples will both give yellow text on a blue
+background:
+    gvim -fg Yellow -bg Blue -reverse
+    gvim -bg Yellow -fg Blue -reverse
+
+==============================================================================
+3. Shell Commands					*gui-pty*
+
+WARNING: Executing an external command from the GUI will not always work.
+"normal" commands like "ls", "grep" and "make" mostly work fine.  Commands
+that require an intelligent terminal like "less" and "ispell" won't work.
+Some may even hang and need to be killed from another terminal.  So be
+careful!
+
+There are two ways to do the I/O with a shell command: Pipes and a pseudo-tty.
+The default is to use a pseudo-tty.  This should work best on most systems.
+
+Unfortunately, the implementation of the pseudo-tty is different on every Unix
+system.  And some systems require root permission.  To avoid running into
+problems with a pseudo-tty when you least expect it, test it when not editing
+a file.  Be prepared to "kill" the started command or Vim.  Commands like
+":r !cat" may hang!
+
+If using a pseudo-tty does not work for you, reset the 'guipty' option:
+
+>	:set noguipty
+
+Using a pipe should work on any Unix system, but there are disadvantages:
+- Some shell commands will notice that a pipe is being used and behave
+  differently.  E.g., ":!ls" will list the files in one column.
+- The ":sh" command won't show a prompt, although it will sort of work.
+- When using ":make" it's not possible to interrupt with a CTRL-C.
+
+Typeahead while the external command is running is often lost.  This happens
+both with a pipe and a pseudo-tty.  This is a known problem, but it seems it
+can't be fixed (or at least, it's very difficult).
+
+							*gui-pty-erase*
+When your erase character is wrong for an external command, you should fix
+this in your "~/.cshrc" file, or whatever file your shell uses for
+initializations.  For example, when you want to use backspace to delete
+characters, but hitting backspaces produces "^H" instead, try adding this to
+your "~/.cshrc":
+>	stty erase ^H
+The ^H is a real CTRL-H, type it as CTRL-V CTRL-H.
+
+==============================================================================
+4. Various						*gui-x11-various*
+
+							*gui-x11-printing*
+The "File/Print" menu simply sends the current buffer to "lpr".  No options or
+whatever.  If you want something else, you can define your own print command.
+For example:
+
+>  :10amenu File.Print :w !lpr -Php3
+>  :10vmenu File.Print :w !lpr -Php3
+
+							*X11-icon*
+Vim uses a black&white icon by default when compiled with Motif or Athena.  A
+colored Vim icon is included as $VIMRUNTIME/vim32x32.xpm.  For GTK+, this is
+the builtin icon used.  Unfortunately, how you should install it depends on
+your window manager.  When you use this, remove the 'i' flag from
+'guioptions', to remove the black&white icon:
+>  :set guioptions-=i
+
+If you use one of the fvwm* family of window managers simply add this line to
+your .fvwm2rc configuration file:
+
+> Style "vim"		Icon vim32x32.xpm
+
+Make sure the icon file's location is consistent with the window manager's
+IconPath statement.  Either modify the IconPath from within your .fvwm2rc or
+drop the icon into one the pre-defined directories:
+
+> IconPath /usr/X11R6/include/X11/pixmaps:/usr/X11R6/include/X11/bitmaps
+
+For CDE "dtwm" (a derivative of Motif) add this line in the .Xdefaults:
+>  Dtwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
+
+For "mwm" (Motif window manager) the line would be:
+>  Mwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
+
+==============================================================================
+5. GTK version						*gui-gtk* *GTK+* *GTK*
+
+The GTK version of the GUI works a little bit different.
+
+GTK does _not_ obey many of the traditional X resource settings (e.g., stuff
+like -bg, -fg, etc).  The ones that are supported are:
+
+    command line argument   resource name	meaning ~
+    -fn  or  -font	    .font		font name for the text
+    -geom  or  -geometry    .geometry		size of the gvim window
+    -rv  or  -reverse	    *reverseVideo	white text on black background
+    -display					display to be used
+
+To set the font, see |'guifont'|.  For GTK, there's also a menu option that
+does this.
+
+Additionally, there are these command line arguments, which are handled by GTK
+internally.  Look in the GTK documentation for how they are used:
+	--sync
+	--gdk-debug
+	--gdk-no-debug
+	--no-xshm
+	--xim-preedit
+	--xim-status
+	--gtk-debug
+	--gtk-no-debug
+	--g-fatal-warnings
+	--gtk-module
+	--display	(GTK+ counterpart of -display; works the same way.)
+
+As for colors, vim's color settings (for syntax highlighting) is still
+done the traditional vim way.  See |:highlight| for more help.
+
+If you want to set the colors of remaining gui components (e.g., the
+menubar, scrollbar, whatever), those are GTK specific settings and you
+need to set those up in some sort of gtkrc file.  you'll have to refer
+to the GTK documentation, however little there is, on how to do this.
+
+						*gtk-tooltip-colors*
+Example, which sets the tooltip colors to black on light-yellow:
+
+>	style "tooltips"
+>	{
+>		bg[NORMAL] = "#ffffcc"
+>		fg[NORMAL] = "#000000"
+>	}
+
+>	widget "gtk-tooltips*"          style "tooltips"
+
+Write this in the file ~/.gtkrc and it will be used by GTK.  Don't forget to
+remove the ">" characters from the first column.
+
+==============================================================================
+6. Compiling						*gui-x11-compiling*
+
+If using X11, Vim's Makefile will by default first try to find the necessary
+GTK+ files on your system.  If the GTK+ files cannot be found, then the Motif
+files will be searched for.  Finally, if this fails, the Athena files will be
+searched for.  If all three fail, the GUI will be disabled.
+
+For GTK+, Vim's configuration process requires that GTK+ be properly
+installed.  That is, the shell script 'gtk-config' must be in your PATH, and
+you can already successful compile, build, and execute a GTK+ program.  The
+reason for this is because the compiler flags (CFLAGS) and link flags
+(LDFLAGS) are obtained through the 'gtk-config' shell script.
+
+Otherwise, if you are using Motif or Athena, when you have the Motif or Athena
+files in a directory where configure doesn't look, edit the Makefile to enter
+the names of the directories.  Search for "GUI_INC_LOC" for an example to set
+the Motif directories, "CONF_OPT_X" for Athena.
+
+							*gui-x11-gtk*
+At the time of this writing, you may use either GTK+ version 1.0.6 or 1.2.  It
+is suggested that you use v1.2 since not all of Vim's GUI features are present
+if using v1.0.6.  For instance, there are no tearoff menus present in v1.0.6.
+Using a version from GTK+'s CVS tree may or may not work, and is therefore not
+supported and not recommended.
+
+Lastly, although GTK+ has supposedly been ported to the Win32 platform, this
+has not been tested with Vim and is also unsupported.
+
+							*gui-x11-motif*
+For Motif, you need at least Motif version 1.2 and/or X11R5.  Motif 2.0 and
+X11R6 are OK.  Motif 1.1 and X11R4 might work, no guarantee (there may be a
+few problems, but you might make it compile and run with a bit of work, please
+send me the patches if you do).  The newest releases of LessTif have been
+reported to work fine too.
+
+							*gui-x11-athena*
+The Athena version uses the Xaw widget set by default.  If you have the 3D
+version, you might want to link with Xaw3d instead.  This will make the
+menus look a bit better.  Edit the Makefile and look for "XAW_LIB".  The
+scrollbars will remain the same, because Vim has its own, which are already
+3D (in fact, they look more like Motif).
+
+							*gui-x11-misc*
+In general, do not try to mix files from different GTK+, Motif, Athena and X11
+versions.  This will cause problems.  For example, using header files for
+X11R5 with a library for X11R6 probably doesn't work (although the linking
+won't give an error message, Vim will crash later).
+
+ vim:tw=78:ts=8:sw=4

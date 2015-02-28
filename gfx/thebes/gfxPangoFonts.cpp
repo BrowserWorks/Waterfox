@@ -665,7 +665,8 @@ public:
                   const gfxFontStyle *aFontStyle);
 
 #ifdef USE_SKIA
-    virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions> GetGlyphRenderingOptions();
+    virtual mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
+        GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams = nullptr) MOZ_OVERRIDE;
 #endif
 
     // return a cloned font resized and offset to simulate sub/superscript glyphs
@@ -1226,12 +1227,6 @@ PrepareSortPattern(FcPattern *aPattern, double aFallbackSize,
        cairo_font_options_destroy(options);
        FcPatternAddBool(aPattern, PRINTING_FC_PROPERTY, FcTrue);
     } else {
-#ifdef MOZ_GFX_OPTIMIZE_MOBILE
-       cairo_font_options_t *options = cairo_font_options_create();
-       cairo_font_options_set_hint_style(options, CAIRO_HINT_STYLE_NONE);
-       cairo_ft_font_options_substitute(options, aPattern);
-       cairo_font_options_destroy(options);
-#endif
 #ifdef MOZ_WIDGET_GTK
        ApplyGdkScreenFontOptions(aPattern);
 #endif
@@ -1310,13 +1305,13 @@ gfxPangoFontGroup::GetBaseFont()
 }
 
 gfxFont*
-gfxPangoFontGroup::GetFirstValidFont()
+gfxPangoFontGroup::GetFirstValidFont(uint32_t aCh)
 {
     return GetFontAt(0);
 }
 
 gfxFont *
-gfxPangoFontGroup::GetFontAt(int32_t i)
+gfxPangoFontGroup::GetFontAt(int32_t i, uint32_t aCh)
 {
     // If it turns out to be hard for all clients that cache font
     // groups to call UpdateUserFonts at appropriate times, we could
@@ -1964,15 +1959,11 @@ CreateScaledFont(FcPattern *aPattern, cairo_font_face_t *aFace)
     // font will be used, but currently we don't have different gfxFonts for
     // different surface font_options, so we'll create a font suitable for the
     // Screen. Image and xlib surfaces default to CAIRO_HINT_METRICS_ON.
-#ifdef MOZ_GFX_OPTIMIZE_MOBILE
-    cairo_font_options_set_hint_metrics(fontOptions, CAIRO_HINT_METRICS_OFF);
-#else
     if (printing) {
         cairo_font_options_set_hint_metrics(fontOptions, CAIRO_HINT_METRICS_OFF);
     } else {
         cairo_font_options_set_hint_metrics(fontOptions, CAIRO_HINT_METRICS_ON);
     }
-#endif
 
     // The remaining options have been recorded on the pattern and the face.
     // _cairo_ft_options_merge has some logic to decide which options from the
@@ -1997,11 +1988,10 @@ CreateScaledFont(FcPattern *aPattern, cairo_font_face_t *aFace)
     //
     // Fallback values here mirror treatment of defaults in cairo-ft-font.c.
     FcBool hinting = FcFalse;
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
     if (FcPatternGetBool(aPattern, FC_HINTING, 0, &hinting) != FcResultMatch) {
         hinting = FcTrue;
     }
-#endif
+
     cairo_hint_style_t hint_style;
     if (printing || !hinting) {
         hint_style = CAIRO_HINT_STYLE_NONE;
@@ -2142,7 +2132,7 @@ ApplyGdkScreenFontOptions(FcPattern *aPattern)
 
 #ifdef USE_SKIA
 mozilla::TemporaryRef<mozilla::gfx::GlyphRenderingOptions>
-gfxFcFont::GetGlyphRenderingOptions()
+gfxFcFont::GetGlyphRenderingOptions(const TextRunDrawParams* aRunParams)
 {
   cairo_scaled_font_t *scaled_font = CairoScaledFont();
   cairo_font_options_t *options = cairo_font_options_create();

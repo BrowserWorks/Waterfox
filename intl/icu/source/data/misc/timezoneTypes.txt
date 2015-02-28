@@ -560,6 +560,7 @@ timezoneTypes:table(nofallback){
             "Indian:Reunion"{"rereu"}
             "Pacific:Apia"{"wsapw"}
             "Pacific:Auckland"{"nzakl"}
+            "Pacific:Bougainville"{"pgraw"}
             "Pacific:Chatham"{"nzcht"}
             "Pacific:Easter"{"clipc"}
             "Pacific:Efate"{"vuvli"}

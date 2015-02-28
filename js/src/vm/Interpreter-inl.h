@@ -305,10 +305,14 @@ inline bool
 SetNameOperation(JSContext *cx, JSScript *script, jsbytecode *pc, HandleObject scope,
                  HandleValue val)
 {
-    MOZ_ASSERT(*pc == JSOP_SETNAME || *pc == JSOP_SETGNAME);
+    MOZ_ASSERT(*pc == JSOP_SETNAME ||
+               *pc == JSOP_STRICTSETNAME ||
+               *pc == JSOP_SETGNAME ||
+               *pc == JSOP_STRICTSETGNAME);
     MOZ_ASSERT_IF(*pc == JSOP_SETGNAME, scope == cx->global());
+    MOZ_ASSERT_IF(*pc == JSOP_STRICTSETGNAME, scope == cx->global());
 
-    bool strict = script->strict();
+    bool strict = *pc == JSOP_STRICTSETNAME || *pc == JSOP_STRICTSETGNAME;
     RootedPropertyName name(cx, script->getName(pc));
     RootedValue valCopy(cx, val);
 
@@ -434,9 +438,9 @@ GetObjectElementOperation(JSContext *cx, JSOp op, JSObject *objArg, bool wasObje
             break;
         }
 
-        if (rref.isSymbol()) {
+        if (IsSymbolOrSymbolWrapper(rref)) {
             RootedObject obj(cx, objArg);
-            RootedId id(cx, SYMBOL_TO_JSID(rref.toSymbol()));
+            RootedId id(cx, SYMBOL_TO_JSID(ToSymbolPrimitive(rref)));
             if (!JSObject::getGeneric(cx, obj, obj, id, res))
                 return false;
 
@@ -570,19 +574,19 @@ InitArrayElemOperation(JSContext *cx, jsbytecode *pc, HandleObject obj, uint32_t
     MOZ_ASSERT(obj->is<ArrayObject>());
 
     /*
-     * If val is a hole, do not call JSObject::defineElement. In this case,
-     * if the current op is the last element initialiser, set the array length
-     * to one greater than id.
+     * If val is a hole, do not call JSObject::defineElement.
      *
-     * If val is a hole and current op is JSOP_INITELEM_INC, always call
+     * Furthermore, if the current op is JSOP_INITELEM_INC, always call
      * SetLengthProperty even if it is not the last element initialiser,
      * because it may be followed by JSOP_SPREAD, which will not set the array
-     * length if nothing is spreaded.
+     * length if nothing is spread.
+     *
+     * Alternatively, if the current op is JSOP_INITELEM_ARRAY, the length will
+     * have already been set by the earlier JSOP_NEWARRAY; JSOP_INITELEM_ARRAY
+     * cannot follow JSOP_SPREAD.
      */
     if (val.isMagic(JS_ELEMENTS_HOLE)) {
-        JSOp next = JSOp(*GetNextPc(pc));
-
-        if ((op == JSOP_INITELEM_ARRAY && next == JSOP_ENDINIT) || op == JSOP_INITELEM_INC) {
+        if (op == JSOP_INITELEM_INC) {
             if (!SetLengthProperty(cx, obj, index + 1))
                 return false;
         }

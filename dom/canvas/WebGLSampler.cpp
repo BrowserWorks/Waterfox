@@ -3,41 +3,44 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#include "WebGLContext.h"
 #include "WebGLSampler.h"
 
 #include "GLContext.h"
-
 #include "mozilla/dom/WebGL2RenderingContextBinding.h"
+#include "WebGLContext.h"
 
-using namespace mozilla;
+namespace mozilla {
 
-WebGLSampler::WebGLSampler(WebGLContext* context)
-    : WebGLContextBoundObject(context)
+WebGLSampler::WebGLSampler(WebGLContext* webgl, GLuint sampler)
+    : WebGLBindableName<GLenum>(sampler),
+      WebGLContextBoundObject(webgl)
 {
-    MOZ_CRASH("Not Implemented.");
+    mContext->mSamplers.insertBack(this);
 }
 
 WebGLSampler::~WebGLSampler()
-{}
+{
+    DeleteOnce();
+}
 
 void
 WebGLSampler::Delete()
 {
-    MOZ_CRASH("Not Implemented.");
+    mContext->MakeContextCurrent();
+    mContext->gl->fDeleteSamplers(1, &mGLName);
+
+    removeFrom(mContext->mSamplers);
 }
 
 WebGLContext*
 WebGLSampler::GetParentObject() const
 {
-    MOZ_CRASH("Not Implemented.");
-    return nullptr;
+    return Context();
 }
 
 JSObject*
 WebGLSampler::WrapObject(JSContext* cx)
 {
-    MOZ_CRASH("Not Implemented.");
     return dom::WebGLSamplerBinding::Wrap(cx, this);
 }
 
@@ -45,3 +48,5 @@ WebGLSampler::WrapObject(JSContext* cx)
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE_0(WebGLSampler)
 NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(WebGLSampler, AddRef)
 NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(WebGLSampler, Release)
+
+} // namespace mozilla

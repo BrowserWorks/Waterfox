@@ -1,7 +1,5 @@
 . $topsrcdir/browser/config/mozconfig
 
-export MOZ_PSEUDO_DERECURSE=no-pymake
-
 ac_add_options --enable-application=browser
 mk_add_options MOZ_MAKE_FLAGS=-j4
 
@@ -16,15 +14,15 @@ ac_add_options --host=x86_64-pc-mingw32
 export MOZ_OPTIMIZE_LDFLAGS="-MACHINE:X64 -OPT:REF,ICF -FORCE"
 mk_add_options MOZ_OPTIMIZE_LDFLAGS="-MACHINE:X64 -OPT:REF,ICF -FORCE"
 
-ac_add_options --with-app-name=waterfox
-ac_add_options --with-branding=browser/branding/waterfox
-
 ac_add_options --disable-tests
 ac_add_options --disable-ipdl-tests
-#ac_add_options --disable-gamepad
+ac_add_options --enable-gamepad
 
 # Use to use profiling
 ac_add_options --enable-optimize="-O3 -Qip- -Qparallel -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
+
+ac_add_options --with-app-name=waterfox
+ac_add_options --with-branding=browser/branding/waterfox
 
 # enable updater
 ac_add_options --enable-update-channel=release
@@ -35,9 +33,10 @@ ac_add_options --enable-release
 # diasble crashreporter
 ac_add_options --enable-crashreporter
 
-#ac_add_options --disable-jemalloc
+ac_add_options --disable-unified-compilation 
+ac_add_options --disable-jemalloc
+ac_add_options --disable-verify-mar
 ac_add_options --disable-accessibility
-#ac_add_options --disable-replace-malloc
 ac_add_options --disable-maintenance-service
 ac_add_options --disable-services-healthreport
 ac_add_options --disable-telemetry-reporting 
@@ -45,4 +44,4 @@ ac_add_options --disable-mochitest
 ac_add_options --disable-mochitests
 
 # for X64
-WIN32_REDIST_DIR=$VCINSTALLDIR/redist/x64/Microsoft.VC110.CRT
+WIN32_REDIST_DIR=$VCINSTALLDIR/redist/x64/Microsoft.VC100.CRT

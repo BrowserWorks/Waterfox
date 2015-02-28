@@ -1,0 +1,78 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1998, 1999, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%%PRIMARY%_INSTALL = $(INSTALL_%ONE_PRIMARY%)
+?!BASE?%DIR%%PRIMARY%_INSTALL = $(install_sh_DATA)
+?EXEC?.PHONY install-exec-am: install-%DIR%%PRIMARY%
+?!EXEC?.PHONY install-data-am: install-%DIR%%PRIMARY%
+install-%DIR%%PRIMARY%: $(%DIR%_%PRIMARY%)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_%PRIMARY%)'; for p in $$list; do \
+## A file can be in the source directory or the build directory.
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+## If the _%PRIMARY% variable has an entry like foo/bar, install it as
+## $(destdir)/bar, not $(destdir)/foo/bar.  The user can make a
+## new dir variable or use a nobase_ target for the latter case.
+?BASE?	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+?!BASE?	  f="$$p"; \
+	  echo " $(%DIR%%PRIMARY%_INSTALL) $$d$$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	  $(%DIR%%PRIMARY%_INSTALL) $$d$$p $(DESTDIR)$(%NDIR%dir)/$$f; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%%PRIMARY%
+uninstall-%DIR%%PRIMARY%:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_%PRIMARY%)'; for p in $$list; do \
+?BASE?	  f="`echo $$p | sed -e 's|^.*/||'`"; \
+?!BASE?	  f="$$p"; \
+	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$f; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+## Nothing.
+
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += $(%DIR%_%PRIMARY%)
+endif %?DIST%

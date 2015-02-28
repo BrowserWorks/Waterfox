@@ -398,7 +398,7 @@ ca{
         }
         GBP{
             "£",
-            "lliura esterlina britànica",
+            "lliura britànica",
         }
         GEK{
             "GEK",
@@ -1585,8 +1585,8 @@ ca{
             other{"francs francesos"}
         }
         GBP{
-            one{"lliura esterlina britànica"}
-            other{"lliures esterlines britàniques"}
+            one{"lliura britànica"}
+            other{"lliures britàniques"}
         }
         GEK{
             one{"cupó de lari georgià"}
@@ -2381,5 +2381,5 @@ ca{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

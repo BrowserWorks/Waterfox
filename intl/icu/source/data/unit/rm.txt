@@ -11,6 +11,11 @@
  */
 rm{
     Version{"2.1.8.9"}
+    durationUnits{
+        hm{"h:mm"}
+        hms{"h:mm:ss"}
+        ms{"m:ss"}
+    }
     units{
         duration{
             day{

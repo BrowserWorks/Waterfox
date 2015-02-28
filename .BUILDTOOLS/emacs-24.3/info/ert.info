@@ -1,0 +1,1356 @@
+This is /misc/emacs/bzr/emacs24-merge/doc/misc/../../info/ert.info,
+produced by makeinfo version 4.13 from
+/misc/emacs/bzr/emacs24-merge/doc/misc/ert.texi.
+
+INFO-DIR-SECTION Emacs misc features
+START-INFO-DIR-ENTRY
+* ERT: (ert).        Emacs Lisp regression testing tool.
+END-INFO-DIR-ENTRY
+
+   Copyright (C) 2008, 2010-2013 Free Software Foundation, Inc.
+
+     Permission is granted to copy, distribute and/or modify this
+     document under the terms of the GNU Free Documentation License,
+     Version 1.3 or any later version published by the Free Software
+     Foundation; with no Invariant Sections, with the Front-Cover texts
+     being "A GNU Manual," and with the Back-Cover Texts as in (a)
+     below.  A copy of the license is included in the section entitled
+     "GNU Free Documentation License".
+
+     (a) The FSF's Back-Cover Text is: "You have the freedom to copy and
+     modify this GNU manual."
+
+
+File: ert.info,  Node: Top,  Next: Introduction,  Prev: (dir),  Up: (dir)
+
+ERT: Emacs Lisp Regression Testing
+**********************************
+
+ERT is a tool for automated testing in Emacs Lisp.  Its main features
+are facilities for defining tests, running them and reporting the
+results, and for debugging test failures interactively.
+
+   ERT is similar to tools for other environments such as JUnit, but has
+unique features that take advantage of the dynamic and interactive
+nature of Emacs.  Despite its name, it works well both for test-driven
+development (see
+`http://en.wikipedia.org/wiki/Test-driven_development') and for
+traditional software development methods.
+
+* Menu:
+
+* Introduction::                A simple example of an ERT test.
+* How to Run Tests::            Run tests in Emacs or from the command line.
+* How to Write Tests::          How to add tests to your Emacs Lisp code.
+* How to Debug Tests::          What to do if a test fails.
+* Extending ERT::               ERT is extensible in several ways.
+* Other Testing Concepts::      Features not in ERT.
+* GNU Free Documentation License::  The license for this documentation.
+
+ --- The Detailed Node Listing ---
+
+How to Run Tests
+
+* Running Tests Interactively::  Run tests in your current Emacs.
+* Running Tests in Batch Mode::  Run tests in emacs -Q.
+* Test Selectors::               Choose which tests to run.
+
+How to Write Tests
+
+* The `should' Macro::          A powerful way to express assertions.
+* Expected Failures::           Tests for known bugs.
+* Tests and Their Environment:: Don't depend on customizations; no side effects.
+* Useful Techniques::           Some examples.
+
+How to Debug Tests
+
+* Understanding Explanations::  How ERT gives details on why an assertion failed.
+* Interactive Debugging::       Tools available in the ERT results buffer.
+
+Extending ERT
+
+* Defining Explanation Functions::  Teach ERT about more predicates.
+* Low-Level Functions for Working with Tests::  Use ERT's data for your purposes.
+
+Other Testing Concepts
+
+* Mocks and Stubs::           Stubbing out code that is irrelevant to the test.
+* Fixtures and Test Suites::  How ERT differs from tools for other languages.
+
+Appendix
+
+* GNU Free Documentation License:: The license for this documentation.
+
+
+File: ert.info,  Node: Introduction,  Next: How to Run Tests,  Prev: Top,  Up: Top
+
+1 Introduction
+**************
+
+ERT allows you to define _tests_ in addition to functions, macros,
+variables, and the other usual Lisp constructs.  Tests are simply Lisp
+code: code that invokes other code and checks whether it behaves as
+expected.
+
+   ERT keeps track of the tests that are defined and provides convenient
+commands to run them to verify whether the definitions that are
+currently loaded in Emacs pass the tests.
+
+   Some Lisp files have comments like the following (adapted from the
+package `pp.el'):
+
+     ;; (pp-to-string '(quote quote))          ; expected: "'quote"
+     ;; (pp-to-string '((quote a) (quote b)))  ; expected: "('a 'b)\n"
+     ;; (pp-to-string '('a 'b))                ; same as above
+
+   The code contained in these comments can be evaluated from time to
+time to compare the output with the expected output.  ERT formalizes
+this and introduces a common convention, which simplifies Emacs
+development, since programmers no longer have to manually find and
+evaluate such comments.
+
+   An ERT test definition equivalent to the above comments is this:
+
+     (ert-deftest pp-test-quote ()
+       "Tests the rendering of `quote' symbols in `pp-to-string'."
+       (should (equal (pp-to-string '(quote quote)) "'quote"))
+       (should (equal (pp-to-string '((quote a) (quote b))) "('a 'b)\n"))
+       (should (equal (pp-to-string '('a 'b)) "('a 'b)\n")))
+
+   If you know `defun', the syntax of `ert-deftest' should look
+familiar: This example defines a test named `pp-test-quote' that will
+pass if the three calls to `equal' all return true (non-nil).
+
+   `should' is a macro with the same meaning as `cl-assert' but better
+error reporting.  *Note The `should' Macro::.
+
+   Each test should have a name that describes what functionality it
+tests.  Test names can be chosen arbitrarily--they are in a namespace
+separate from functions and variables--but should follow the usual
+Emacs Lisp convention of having a prefix that indicates which package
+they belong to.  Test names are displayed by ERT when reporting
+failures and can be used when selecting which tests to run.
+
+   The empty parentheses `()' in the first line don't currently have
+any meaning and are reserved for future extension.  They also make the
+syntax of `ert-deftest' more similar to that of `defun'.
+
+   The docstring describes what feature this test tests.  When running
+tests interactively, the first line of the docstring is displayed for
+tests that fail, so it is good if the first line makes sense on its own.
+
+   The body of a test can be arbitrary Lisp code.  It should have as few
+side effects as possible; each test should be written to clean up after
+itself, leaving Emacs in the same state as it was before the test.
+Tests should clean up even if they fail.  *Note Tests and Their
+Environment::.
+
+
+File: ert.info,  Node: How to Run Tests,  Next: How to Write Tests,  Prev: Introduction,  Up: Top
+
+2 How to Run Tests
+******************
+
+You can run tests either in the Emacs you are working in, or on the
+command line in a separate Emacs process in batch mode (i.e., with no
+user interface).  The former mode is convenient during interactive
+development, the latter is useful to make sure that tests pass
+independently of your customizations; and it allows you to invoke tests
+from makefiles, and to write scripts that run tests in several
+different Emacs versions.
+
+* Menu:
+
+* Running Tests Interactively::  Run tests in your current Emacs.
+* Running Tests in Batch Mode::  Run tests in emacs -Q.
+* Test Selectors::               Choose which tests to run.
+
+
+File: ert.info,  Node: Running Tests Interactively,  Next: Running Tests in Batch Mode,  Prev: How to Run Tests,  Up: How to Run Tests
+
+2.1 Running Tests Interactively
+===============================
+
+You can run the tests that are currently defined in your Emacs with the
+command `M-x ert RET t RET'.  (For an explanation of the `t' argument,
+*note Test Selectors::.) ERT will pop up a new buffer, the ERT results
+buffer, showing the results of the tests run.  It looks like this:
+
+     Selector: t
+     Passed: 31
+     Failed: 2 (2 unexpected)
+     Total:  33/33
+
+     Started at:   2008-09-11 08:39:25-0700
+     Finished.
+     Finished at:  2008-09-11 08:39:27-0700
+
+     FF...............................
+
+     F addition-test
+         (ert-test-failed
+          ((should
+            (=
+             (+ 1 2)
+             4))
+           :form
+           (= 3 4)
+           :value nil))
+
+     F list-test
+         (ert-test-failed
+          ((should
+            (equal
+             (list 'a 'b 'c)
+             '(a b d)))
+           :form
+           (equal
+            (a b c)
+            (a b d))
+           :value nil :explanation
+           (list-elt 2
+                     (different-atoms c d))))
+
+   At the top, there is a summary of the results: we ran all tests
+defined in the current Emacs (`Selector: t'), 31 of them passed, and 2
+failed unexpectedly.  *Note Expected Failures::, for an explanation of
+the term _unexpected_ in this context.
+
+   The line of dots and `F's is a progress bar where each character
+represents one test; it fills while the tests are running.  A dot means
+that the test passed, an `F' means that it failed.  Below the progress
+bar, ERT shows details about each test that had an unexpected result.
+In the example above, there are two failures, both due to failed
+`should' forms.  *Note Understanding Explanations::, for more details.
+
+   In the ERT results buffer, `TAB' and `S-TAB' cycle between buttons.
+Each name of a function or macro in this buffer is a button; moving
+point to it and typing `RET' jumps to its definition.
+
+   Pressing `r' re-runs the test near point on its own.  Pressing `d'
+re-runs it with the debugger enabled.  `.' jumps to the definition of
+the test near point (`RET' has the same effect if point is on the name
+of the test).  On a failed test, `b' shows the backtrace of the failure.
+
+   `l' shows the list of `should' forms executed in the test.  If any
+messages were generated (with the Lisp function `message') in a test or
+any of the code that it invoked, `m' will show them.
+
+   By default, long expressions in the failure details are abbreviated
+using `print-length' and `print-level'.  Pressing `L' while point is on
+a test failure will increase the limits to show more of the expression.
+
+
+File: ert.info,  Node: Running Tests in Batch Mode,  Next: Test Selectors,  Prev: Running Tests Interactively,  Up: How to Run Tests
+
+2.2 Running Tests in Batch Mode
+===============================
+
+ERT supports automated invocations from the command line or from
+scripts or makefiles.  There are two functions for this purpose,
+`ert-run-tests-batch' and `ert-run-tests-batch-and-exit'.  They can be
+used like this:
+
+     emacs -batch -l ert -l my-tests.el -f ert-run-tests-batch-and-exit
+
+   This command will start up Emacs in batch mode, load ERT, load
+`my-tests.el', and run all tests defined in it.  It will exit with a
+zero exit status if all tests passed, or nonzero if any tests failed or
+if anything else went wrong.  It will also print progress messages and
+error diagnostics to standard output.
+
+   If ERT is not part of your Emacs distribution, you may need to use
+`-L /path/to/ert/' so that Emacs can find it.  You may need additional
+`-L' flags to ensure that `my-tests.el' and all the files that it
+requires are on your `load-path'.
+
+
+File: ert.info,  Node: Test Selectors,  Prev: Running Tests in Batch Mode,  Up: How to Run Tests
+
+2.3 Test Selectors
+==================
+
+Functions like `ert' accept a _test selector_, a Lisp expression
+specifying a set of tests.  Test selector syntax is similar to Common
+Lisp's type specifier syntax:
+
+   * `nil' selects no tests.
+
+   * `t' selects all tests.
+
+   * `:new' selects all tests that have not been run yet.
+
+   * `:failed' and `:passed' select tests according to their most
+     recent result.
+
+   * `:expected', `:unexpected' select tests according to their most
+     recent result.
+
+   * A string is a regular expression that selects all tests with
+     matching names.
+
+   * A test (i.e., an object of `ert-test' data type) selects that test.
+
+   * A symbol selects the test that the symbol names.
+
+   * `(member TESTS...)' selects the elements of TESTS, a list of tests
+     or symbols naming tests.
+
+   * `(eql TEST)' selects TEST, a test or a symbol naming a test.
+
+   * `(and SELECTORS...)' selects the tests that match all SELECTORS.
+
+   * `(or SELECTORS...)' selects the tests that match any SELECTOR.
+
+   * `(not SELECTOR)' selects all tests that do not match SELECTOR.
+
+   * `(tag TAG)' selects all tests that have TAG on their tags list.
+     (Tags are optional labels you can apply to tests when you define
+     them.)
+
+   * `(satisfies PREDICATE)' selects all tests that satisfy PREDICATE,
+     a function that takes a test as argument and returns non-nil if it
+     is selected.
+
+   Selectors that are frequently useful when selecting tests to run
+include `t' to run all tests that are currently defined in Emacs,
+`"^foo-"' to run all tests in package `foo' (this assumes that package
+`foo' uses the prefix `foo-' for its test names), result-based
+selectors such as `(or :new :unexpected)' to run all tests that have
+either not run yet or that had an unexpected result in the last run,
+and tag-based selectors such as `(not (tag :causes-redisplay))' to run
+all tests that are not tagged `:causes-redisplay'.
+
+
+File: ert.info,  Node: How to Write Tests,  Next: How to Debug Tests,  Prev: How to Run Tests,  Up: Top
+
+3 How to Write Tests
+********************
+
+ERT lets you define tests in the same way you define functions.  You
+can type `ert-deftest' forms in a buffer and evaluate them there with
+`eval-defun' or `compile-defun', or you can save the file and load it,
+optionally byte-compiling it first.
+
+   Just like `find-function' is only able to find where a function was
+defined if the function was loaded from a file, ERT is only able to
+find where a test was defined if the test was loaded from a file.
+
+* Menu:
+
+* The `should' Macro::          A powerful way to express assertions.
+* Expected Failures::           Tests for known bugs.
+* Tests and Their Environment:: Don't depend on customizations; no side effects.
+* Useful Techniques::           Some examples.
+
+
+File: ert.info,  Node: The `should' Macro,  Next: Expected Failures,  Prev: How to Write Tests,  Up: How to Write Tests
+
+3.1 The `should' Macro
+======================
+
+Test bodies can include arbitrary code; but to be useful, they need to
+check whether the code being tested (or _code under test_) does what it
+is supposed to do.  The macro `should' is similar to `cl-assert' from
+the cl package (*note Assertions: (cl)Assertions.), but analyzes its
+argument form and records information that ERT can display to help
+debugging.
+
+   This test definition
+
+     (ert-deftest addition-test ()
+       (should (= (+ 1 2) 4)))
+
+   will produce this output when run via `M-x ert':
+
+     F addition-test
+         (ert-test-failed
+          ((should
+            (=
+             (+ 1 2)
+             4))
+           :form
+           (= 3 4)
+           :value nil))
+
+   In this example, `should' recorded the fact that (= (+ 1 2) 4)
+reduced to (= 3 4) before it reduced to nil.  When debugging why the
+test failed, it helps to know that the function `+' returned 3 here.
+ERT records the return value for any predicate called directly within
+`should'.
+
+   In addition to `should', ERT provides `should-not', which checks
+that the predicate returns nil, and `should-error', which checks that
+the form called within it signals an error.  An example use of
+`should-error':
+
+     (ert-deftest test-divide-by-zero ()
+       (should-error (/ 1 0)
+                     :type 'arith-error))
+
+   This checks that dividing one by zero signals an error of type
+`arith-error'.  The `:type' argument to `should-error' is optional; if
+absent, any type of error is accepted.  `should-error' returns an error
+description of the error that was signaled, to allow additional checks
+to be made.  The error description has the format `(ERROR-SYMBOL .
+DATA)'.
+
+   There is no `should-not-error' macro since tests that signal an
+error fail anyway, so `should-not-error' is effectively the default.
+
+   *Note Understanding Explanations::, for more details on what
+`should' reports.
+
+
+File: ert.info,  Node: Expected Failures,  Next: Tests and Their Environment,  Prev: The `should' Macro,  Up: How to Write Tests
+
+3.2 Expected Failures
+=====================
+
+Some bugs are complicated to fix, or not very important, and are left as
+_known bugs_.  If there is a test case that triggers the bug and fails,
+ERT will alert you of this failure every time you run all tests.  For
+known bugs, this alert is a distraction.  The way to suppress it is to
+add `:expected-result :failed' to the test definition:
+
+     (ert-deftest future-bug ()
+       "Test `time-forward' with negative arguments.
+     Since this functionality isn't implemented, the test is known to fail."
+       :expected-result :failed
+       (time-forward -1))
+
+   ERT will still display a small `f' in the progress bar as a reminder
+that there is a known bug, and will count the test as failed, but it
+will be quiet about it otherwise.
+
+   An alternative to marking the test as a known failure this way is to
+delete the test.  This is a good idea if there is no intent to fix it,
+i.e., if the behavior that was formerly considered a bug has become an
+accepted feature.
+
+   In general, however, it can be useful to keep tests that are known to
+fail.  If someone wants to fix the bug, they will have a very good
+starting point: an automated test case that reproduces the bug.  This
+makes it much easier to fix the bug, demonstrate that it is fixed, and
+prevent future regressions.
+
+   ERT displays the same kind of alerts for tests that pass unexpectedly
+as it displays for unexpected failures.  This way, if you make code
+changes that happen to fix a bug that you weren't aware of, you will
+know to remove the `:expected-result' clause of that test and close the
+corresponding bug report, if any.
+
+   Since `:expected-result' evaluates its argument when the test is
+loaded, tests can be marked as known failures only on certain Emacs
+versions, specific architectures, etc.:
+
+     (ert-deftest foo ()
+       "A test that is expected to fail on Emacs 23 but succeed elsewhere."
+       :expected-result (if (string-match "GNU Emacs 23[.]" (emacs-version))
+                            :failed
+                          :passed)
+       ...)
+
+
+File: ert.info,  Node: Tests and Their Environment,  Next: Useful Techniques,  Prev: Expected Failures,  Up: How to Write Tests
+
+3.3 Tests and Their Environment
+===============================
+
+The outcome of running a test should not depend on the current state of
+the environment, and each test should leave its environment in the same
+state it found it in.  In particular, a test should not depend on any
+Emacs customization variables or hooks, and if it has to make any
+changes to Emacs's state or state external to Emacs (such as the file
+system), it should undo these changes before it returns, regardless of
+whether it passed or failed.
+
+   Tests should not depend on the environment because any such
+dependencies can make the test brittle or lead to failures that occur
+only under certain circumstances and are hard to reproduce.  Of course,
+the code under test may have settings that affect its behavior.  In
+that case, it is best to make the test `let'-bind all such setting
+variables to set up a specific configuration for the duration of the
+test.  The test can also set up a number of different configurations
+and run the code under test with each.
+
+   Tests that have side effects on their environment should restore it
+to its original state because any side effects that persist after the
+test can disrupt the workflow of the programmer running the tests.  If
+the code under test has side effects on Emacs's current state, such as
+on the current buffer or window configuration, the test should create a
+temporary buffer for the code to manipulate (using `with-temp-buffer'),
+or save and restore the window configuration (using
+`save-window-excursion'), respectively.  For aspects of the state that
+can not be preserved with such macros, cleanup should be performed with
+`unwind-protect', to ensure that the cleanup occurs even if the test
+fails.
+
+   An exception to this are messages that the code under test prints
+with `message' and similar logging; tests should not bother restoring
+the `*Message*' buffer to its original state.
+
+   The above guidelines imply that tests should avoid calling highly
+customizable commands such as `find-file', except, of course, if such
+commands are what they want to test.  The exact behavior of `find-file'
+depends on many settings such as `find-file-wildcards',
+`enable-local-variables', and `auto-mode-alist'.  It is difficult to
+write a meaningful test if its behavior can be affected by so many
+external factors.  Also, `find-file' has side effects that are hard to
+predict and thus hard to undo: It may create a new buffer or reuse an
+existing buffer if one is already visiting the requested file; and it
+runs `find-file-hook', which can have arbitrary side effects.
+
+   Instead, it is better to use lower-level mechanisms with simple and
+predictable semantics like `with-temp-buffer', `insert' or
+`insert-file-contents-literally', and to activate any desired mode by
+calling the corresponding function directly, after binding the hook
+variables to nil.  This avoids the above problems.
+
+
+File: ert.info,  Node: Useful Techniques,  Prev: Tests and Their Environment,  Up: How to Write Tests
+
+3.4 Useful Techniques when Writing Tests
+========================================
+
+Testing simple functions that have no side effects and no dependencies
+on their environment is easy.  Such tests often look like this:
+
+     (ert-deftest ert-test-mismatch ()
+       (should (eql (ert--mismatch "" "") nil))
+       (should (eql (ert--mismatch "" "a") 0))
+       (should (eql (ert--mismatch "a" "a") nil))
+       (should (eql (ert--mismatch "ab" "a") 1))
+       (should (eql (ert--mismatch "Aa" "aA") 0))
+       (should (eql (ert--mismatch '(a b c) '(a b d)) 2)))
+
+   This test calls the function `ert--mismatch' several times with
+various combinations of arguments and compares the return value to the
+expected return value.  (Some programmers prefer `(should (eql EXPECTED
+ACTUAL))' over the `(should (eql ACTUAL EXPECTED))' shown here.  ERT
+works either way.)
+
+   Here's a more complicated test:
+
+     (ert-deftest ert-test-record-backtrace ()
+       (let ((test (make-ert-test :body (lambda () (ert-fail "foo")))))
+         (let ((result (ert-run-test test)))
+           (should (ert-test-failed-p result))
+           (with-temp-buffer
+             (ert--print-backtrace (ert-test-failed-backtrace result))
+             (goto-char (point-min))
+             (end-of-line)
+             (let ((first-line (buffer-substring-no-properties
+                                (point-min) (point))))
+               (should (equal first-line
+                              "  signal(ert-test-failed (\"foo\"))")))))))
+
+   This test creates a test object using `make-ert-test' whose body
+will immediately signal failure.  It then runs that test and asserts
+that it fails.  Then, it creates a temporary buffer and invokes
+`ert--print-backtrace' to print the backtrace of the failed test to the
+current buffer.  Finally, it extracts the first line from the buffer
+and asserts that it matches what we expect.  It uses
+`buffer-substring-no-properties' and `equal' to ignore text properties;
+for a test that takes properties into account, `buffer-substring' and
+`ert-equal-including-properties' could be used instead.
+
+   The reason why this test only checks the first line of the backtrace
+is that the remainder of the backtrace is dependent on ERT's internals
+as well as whether the code is running interpreted or compiled.  By
+looking only at the first line, the test checks a useful property--that
+the backtrace correctly captures the call to `signal' that results from
+the call to `ert-fail'--without being brittle.
+
+   This example also shows that writing tests is much easier if the code
+under test was structured with testing in mind.
+
+   For example, if `ert-run-test' accepted only symbols that name tests
+rather than test objects, the test would need a name for the failing
+test, which would have to be a temporary symbol generated with
+`make-symbol', to avoid side effects on Emacs's state.  Choosing the
+right interface for `ert-run-tests' allows the test to be simpler.
+
+   Similarly, if `ert--print-backtrace' printed the backtrace to a
+buffer with a fixed name rather than the current buffer, it would be
+much harder for the test to undo the side effect.  Of course, some code
+somewhere needs to pick the buffer name.  But that logic is independent
+of the logic that prints backtraces, and keeping them in separate
+functions allows us to test them independently.
+
+   A lot of code that you will encounter in Emacs was not written with
+testing in mind.  Sometimes, the easiest way to write tests for such
+code is to restructure the code slightly to provide better interfaces
+for testing.  Usually, this makes the interfaces easier to use as well.
+
+
+File: ert.info,  Node: How to Debug Tests,  Next: Extending ERT,  Prev: How to Write Tests,  Up: Top
+
+4 How to Debug Tests
+********************
+
+This section describes how to use ERT's features to understand why a
+test failed.
+
+* Menu:
+
+* Understanding Explanations::  How ERT gives details on why an assertion failed.
+* Interactive Debugging::       Tools available in the ERT results buffer.
+
+
+File: ert.info,  Node: Understanding Explanations,  Next: Interactive Debugging,  Prev: How to Debug Tests,  Up: How to Debug Tests
+
+4.1 Understanding Explanations
+==============================
+
+Failed `should' forms are reported like this:
+
+     F addition-test
+         (ert-test-failed
+          ((should
+            (=
+             (+ 1 2)
+             4))
+           :form
+           (= 3 4)
+           :value nil))
+
+   ERT shows what the `should' expression looked like and what values
+its subexpressions had: The source code of the assertion was `(should
+(= (+ 1 2) 4))', which applied the function `=' to the arguments `3'
+and `4', resulting in the value `nil'.  In this case, the test is
+wrong; it should expect 3 rather than 4.
+
+   If a predicate like `equal' is used with `should', ERT provides a
+so-called _explanation_:
+
+     F list-test
+         (ert-test-failed
+          ((should
+            (equal
+             (list 'a 'b 'c)
+             '(a b d)))
+           :form
+           (equal
+            (a b c)
+            (a b d))
+           :value nil :explanation
+           (list-elt 2
+                     (different-atoms c d))))
+
+   In this case, the function `equal' was applied to the arguments `(a
+b c)' and `(a b d)'.  ERT's explanation shows that the item at index 2
+differs between the two lists; in one list, it is the atom c, in the
+other, it is the atom d.
+
+   In simple examples like the above, the explanation is unnecessary.
+But in cases where the difference is not immediately apparent, it can
+save time:
+
+     F test1
+         (ert-test-failed
+          ((should
+            (equal x y))
+           :form
+           (equal a a)
+           :value nil :explanation
+           (different-symbols-with-the-same-name a a)))
+
+   ERT only provides explanations for predicates that have an
+explanation function registered.  *Note Defining Explanation
+Functions::.
+
+
+File: ert.info,  Node: Interactive Debugging,  Prev: Understanding Explanations,  Up: How to Debug Tests
+
+4.2 Interactive Debugging
+=========================
+
+Debugging failed tests essentially works the same way as debugging any
+other problems with Lisp code.  Here are a few tricks specific to tests:
+
+   * Re-run the failed test a few times to see if it fails in the same
+     way each time.  It's good to find out whether the behavior is
+     deterministic before spending any time looking for a cause.  In the
+     ERT results buffer, `r' re-runs the selected test.
+
+   * Use `.' to jump to the source code of the test to find out exactly
+     what it does.  Perhaps the test is broken rather than the code
+     under test.
+
+   * If the test contains a series of `should' forms and you can't tell
+     which one failed, use `l', which shows you the list of all
+     `should' forms executed during the test before it failed.
+
+   * Use `b' to view the backtrace.  You can also use `d' to re-run the
+     test with debugging enabled, this will enter the debugger and show
+     the backtrace as well; but the top few frames shown there will not
+     be relevant to you since they are ERT's own debugger hook.  `b'
+     strips them out, so it is more convenient.
+
+   * If the test or the code under testing prints messages using
+     `message', use `m' to see what messages it printed before it
+     failed.  This can be useful to figure out how far it got.
+
+   * You can instrument tests for debugging the same way you instrument
+     `defun's for debugging: go to the source code of the test and type
+     `C-u C-M-x'.  Then, go back to the ERT buffer and re-run the test
+     with `r' or `d'.
+
+   * If you have been editing and rearranging tests, it is possible that
+     ERT remembers an old test that you have since renamed or removed:
+     renamings or removals of definitions in the source code leave
+     around a stray definition under the old name in the running
+     process (this is a common problem in Lisp).  In such a situation,
+     hit `D' to let ERT forget about the obsolete test.
+
+
+File: ert.info,  Node: Extending ERT,  Next: Other Testing Concepts,  Prev: How to Debug Tests,  Up: Top
+
+5 Extending ERT
+***************
+
+There are several ways to add functionality to ERT.
+
+* Menu:
+
+* Defining Explanation Functions::  Teach ERT about more predicates.
+* Low-Level Functions for Working with Tests::  Use ERT's data for your purposes.
+
+
+File: ert.info,  Node: Defining Explanation Functions,  Next: Low-Level Functions for Working with Tests,  Prev: Extending ERT,  Up: Extending ERT
+
+5.1 Defining Explanation Functions
+==================================
+
+The explanation function for a predicate is a function that takes the
+same arguments as the predicate and returns an _explanation_.  The
+explanation should explain why the predicate, when invoked with the
+arguments given to the explanation function, returns the value that it
+returns.  The explanation can be any object but should have a
+comprehensible printed representation.  If the return value of the
+predicate needs no explanation for a given list of arguments, the
+explanation function should return nil.
+
+   To associate an explanation function with a predicate, add the
+property `ert-explainer' to the symbol that names the predicate.  The
+value of the property should be the symbol that names the explanation
+function.
+
+
+File: ert.info,  Node: Low-Level Functions for Working with Tests,  Prev: Defining Explanation Functions,  Up: Extending ERT
+
+5.2 Low-Level Functions for Working with Tests
+==============================================
+
+Both `ert-run-tests-interactively' and `ert-run-tests-batch' are
+implemented on top of the lower-level test handling code in the
+sections of `ert.el' labeled "Facilities for running a single test",
+"Test selectors", and "Facilities for running a whole set of tests".
+
+   If you want to write code that works with ERT tests, you should take
+a look at this lower-level code.  Symbols that start with `ert--' are
+internal to ERT, whereas those that start with `ert-' are meant to be
+usable by other code.  But there is no mature API yet.
+
+   Contributions to ERT are welcome.
+
+
+File: ert.info,  Node: Other Testing Concepts,  Next: GNU Free Documentation License,  Prev: Extending ERT,  Up: Top
+
+6 Other Testing Concepts
+************************
+
+For information on mocks, stubs, fixtures, or test suites, see below.
+
+* Menu:
+
+* Mocks and Stubs::           Stubbing out code that is irrelevant to the test.
+* Fixtures and Test Suites::  How ERT differs from tools for other languages.
+
+
+File: ert.info,  Node: Mocks and Stubs,  Next: Fixtures and Test Suites,  Prev: Other Testing Concepts,  Up: Other Testing Concepts
+
+6.1 Other Tools for Emacs Lisp
+==============================
+
+Stubbing out functions or using so-called _mocks_ can make it easier to
+write tests.  See `http://en.wikipedia.org/wiki/Mock_object' for an
+explanation of the corresponding concepts in object-oriented languages.
+
+   ERT does not have built-in support for mocks or stubs.  The package
+`el-mock' (see `http://www.emacswiki.org/emacs/el-mock.el') offers
+mocks for Emacs Lisp and can be used in conjunction with ERT.
+
+
+File: ert.info,  Node: Fixtures and Test Suites,  Prev: Mocks and Stubs,  Up: Other Testing Concepts
+
+6.2 Fixtures and Test Suites
+============================
+
+In many ways, ERT is similar to frameworks for other languages like
+SUnit or JUnit.  However, two features commonly found in such
+frameworks are notably absent from ERT: fixtures and test suites.
+
+   Fixtures are mainly used (e.g., in SUnit or JUnit) to provide an
+environment for a set of tests, and consist of set-up and tear-down
+functions.
+
+   While fixtures are a useful syntactic simplification in other
+languages, this does not apply to Lisp, where higher-order functions
+and `unwind-protect' are available.  One way to implement and use a
+fixture in ERT is
+
+     (defun my-fixture (body)
+       (unwind-protect
+           (progn [set up]
+                  (funcall body))
+         [tear down]))
+
+     (ert-deftest my-test ()
+       (my-fixture
+        (lambda ()
+          [test code])))
+
+   (Another way would be a `with-my-fixture' macro.)  This solves the
+set-up and tear-down part, and additionally allows any test to use any
+combination of fixtures, so it is more flexible than what other tools
+typically allow.
+
+   If the test needs access to the environment the fixture sets up, the
+fixture can be modified to pass arguments to the body.
+
+   These are well-known Lisp techniques.  Special syntax for them could
+be added but would provide only a minor simplification.
+
+   (If you are interested in such syntax, note that splitting set-up and
+tear-down into separate functions, like *Unit tools usually do, makes
+it impossible to establish dynamic `let' bindings as part of the
+fixture.  So, blindly imitating the way fixtures are implemented in
+other languages would be counter-productive in Lisp.)
+
+   The purpose of test suites is to group related tests together.
+
+   The most common use of this is to run just the tests for one
+particular module.  Since symbol prefixes are the usual way of
+separating module namespaces in Emacs Lisp, test selectors already
+solve this by allowing regexp matching on test names; e.g., the
+selector "^ert-" selects ERT's self-tests.
+
+   Other uses include grouping tests by their expected execution time,
+e.g., to run quick tests during interactive development and slow tests
+less often.  This can be achieved with the `:tag' argument to
+`ert-deftest' and `tag' test selectors.
+
+
+File: ert.info,  Node: GNU Free Documentation License,  Prev: Other Testing Concepts,  Up: Top
+
+Appendix A GNU Free Documentation License
+*****************************************
+
+                     Version 1.3, 3 November 2008
+
+     Copyright (C) 2000, 2001, 2002, 2007, 2008, 2009 Free Software Foundation, Inc.
+     `http://fsf.org/'
+
+     Everyone is permitted to copy and distribute verbatim copies
+     of this license document, but changing it is not allowed.
+
+  0. PREAMBLE
+
+     The purpose of this License is to make a manual, textbook, or other
+     functional and useful document "free" in the sense of freedom: to
+     assure everyone the effective freedom to copy and redistribute it,
+     with or without modifying it, either commercially or
+     noncommercially.  Secondarily, this License preserves for the
+     author and publisher a way to get credit for their work, while not
+     being considered responsible for modifications made by others.
+
+     This License is a kind of "copyleft", which means that derivative
+     works of the document must themselves be free in the same sense.
+     It complements the GNU General Public License, which is a copyleft
+     license designed for free software.
+
+     We have designed this License in order to use it for manuals for
+     free software, because free software needs free documentation: a
+     free program should come with manuals providing the same freedoms
+     that the software does.  But this License is not limited to
+     software manuals; it can be used for any textual work, regardless
+     of subject matter or whether it is published as a printed book.
+     We recommend this License principally for works whose purpose is
+     instruction or reference.
+
+  1. APPLICABILITY AND DEFINITIONS
+
+     This License applies to any manual or other work, in any medium,
+     that contains a notice placed by the copyright holder saying it
+     can be distributed under the terms of this License.  Such a notice
+     grants a world-wide, royalty-free license, unlimited in duration,
+     to use that work under the conditions stated herein.  The
+     "Document", below, refers to any such manual or work.  Any member
+     of the public is a licensee, and is addressed as "you".  You
+     accept the license if you copy, modify or distribute the work in a
+     way requiring permission under copyright law.
+
+     A "Modified Version" of the Document means any work containing the
+     Document or a portion of it, either copied verbatim, or with
+     modifications and/or translated into another language.
+
+     A "Secondary Section" is a named appendix or a front-matter section
+     of the Document that deals exclusively with the relationship of the
+     publishers or authors of the Document to the Document's overall
+     subject (or to related matters) and contains nothing that could
+     fall directly within that overall subject.  (Thus, if the Document
+     is in part a textbook of mathematics, a Secondary Section may not
+     explain any mathematics.)  The relationship could be a matter of
+     historical connection with the subject or with related matters, or
+     of legal, commercial, philosophical, ethical or political position
+     regarding them.
+
+     The "Invariant Sections" are certain Secondary Sections whose
+     titles are designated, as being those of Invariant Sections, in
+     the notice that says that the Document is released under this
+     License.  If a section does not fit the above definition of
+     Secondary then it is not allowed to be designated as Invariant.
+     The Document may contain zero Invariant Sections.  If the Document
+     does not identify any Invariant Sections then there are none.
+
+     The "Cover Texts" are certain short passages of text that are
+     listed, as Front-Cover Texts or Back-Cover Texts, in the notice
+     that says that the Document is released under this License.  A
+     Front-Cover Text may be at most 5 words, and a Back-Cover Text may
+     be at most 25 words.
+
+     A "Transparent" copy of the Document means a machine-readable copy,
+     represented in a format whose specification is available to the
+     general public, that is suitable for revising the document
+     straightforwardly with generic text editors or (for images
+     composed of pixels) generic paint programs or (for drawings) some
+     widely available drawing editor, and that is suitable for input to
+     text formatters or for automatic translation to a variety of
+     formats suitable for input to text formatters.  A copy made in an
+     otherwise Transparent file format whose markup, or absence of
+     markup, has been arranged to thwart or discourage subsequent
+     modification by readers is not Transparent.  An image format is
+     not Transparent if used for any substantial amount of text.  A
+     copy that is not "Transparent" is called "Opaque".
+
+     Examples of suitable formats for Transparent copies include plain
+     ASCII without markup, Texinfo input format, LaTeX input format,
+     SGML or XML using a publicly available DTD, and
+     standard-conforming simple HTML, PostScript or PDF designed for
+     human modification.  Examples of transparent image formats include
+     PNG, XCF and JPG.  Opaque formats include proprietary formats that
+     can be read and edited only by proprietary word processors, SGML or
+     XML for which the DTD and/or processing tools are not generally
+     available, and the machine-generated HTML, PostScript or PDF
+     produced by some word processors for output purposes only.
+
+     The "Title Page" means, for a printed book, the title page itself,
+     plus such following pages as are needed to hold, legibly, the
+     material this License requires to appear in the title page.  For
+     works in formats which do not have any title page as such, "Title
+     Page" means the text near the most prominent appearance of the
+     work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
+
+     A section "Entitled XYZ" means a named subunit of the Document
+     whose title either is precisely XYZ or contains XYZ in parentheses
+     following text that translates XYZ in another language.  (Here XYZ
+     stands for a specific section name mentioned below, such as
+     "Acknowledgements", "Dedications", "Endorsements", or "History".)
+     To "Preserve the Title" of such a section when you modify the
+     Document means that it remains a section "Entitled XYZ" according
+     to this definition.
+
+     The Document may include Warranty Disclaimers next to the notice
+     which states that this License applies to the Document.  These
+     Warranty Disclaimers are considered to be included by reference in
+     this License, but only as regards disclaiming warranties: any other
+     implication that these Warranty Disclaimers may have is void and
+     has no effect on the meaning of this License.
+
+  2. VERBATIM COPYING
+
+     You may copy and distribute the Document in any medium, either
+     commercially or noncommercially, provided that this License, the
+     copyright notices, and the license notice saying this License
+     applies to the Document are reproduced in all copies, and that you
+     add no other conditions whatsoever to those of this License.  You
+     may not use technical measures to obstruct or control the reading
+     or further copying of the copies you make or distribute.  However,
+     you may accept compensation in exchange for copies.  If you
+     distribute a large enough number of copies you must also follow
+     the conditions in section 3.
+
+     You may also lend copies, under the same conditions stated above,
+     and you may publicly display copies.
+
+  3. COPYING IN QUANTITY
+
+     If you publish printed copies (or copies in media that commonly
+     have printed covers) of the Document, numbering more than 100, and
+     the Document's license notice requires Cover Texts, you must
+     enclose the copies in covers that carry, clearly and legibly, all
+     these Cover Texts: Front-Cover Texts on the front cover, and
+     Back-Cover Texts on the back cover.  Both covers must also clearly
+     and legibly identify you as the publisher of these copies.  The
+     front cover must present the full title with all words of the
+     title equally prominent and visible.  You may add other material
+     on the covers in addition.  Copying with changes limited to the
+     covers, as long as they preserve the title of the Document and
+     satisfy these conditions, can be treated as verbatim copying in
+     other respects.
+
+     If the required texts for either cover are too voluminous to fit
+     legibly, you should put the first ones listed (as many as fit
+     reasonably) on the actual cover, and continue the rest onto
+     adjacent pages.
+
+     If you publish or distribute Opaque copies of the Document
+     numbering more than 100, you must either include a
+     machine-readable Transparent copy along with each Opaque copy, or
+     state in or with each Opaque copy a computer-network location from
+     which the general network-using public has access to download
+     using public-standard network protocols a complete Transparent
+     copy of the Document, free of added material.  If you use the
+     latter option, you must take reasonably prudent steps, when you
+     begin distribution of Opaque copies in quantity, to ensure that
+     this Transparent copy will remain thus accessible at the stated
+     location until at least one year after the last time you
+     distribute an Opaque copy (directly or through your agents or
+     retailers) of that edition to the public.
+
+     It is requested, but not required, that you contact the authors of
+     the Document well before redistributing any large number of
+     copies, to give them a chance to provide you with an updated
+     version of the Document.
+
+  4. MODIFICATIONS
+
+     You may copy and distribute a Modified Version of the Document
+     under the conditions of sections 2 and 3 above, provided that you
+     release the Modified Version under precisely this License, with
+     the Modified Version filling the role of the Document, thus
+     licensing distribution and modification of the Modified Version to
+     whoever possesses a copy of it.  In addition, you must do these
+     things in the Modified Version:
+
+       A. Use in the Title Page (and on the covers, if any) a title
+          distinct from that of the Document, and from those of
+          previous versions (which should, if there were any, be listed
+          in the History section of the Document).  You may use the
+          same title as a previous version if the original publisher of
+          that version gives permission.
+
+       B. List on the Title Page, as authors, one or more persons or
+          entities responsible for authorship of the modifications in
+          the Modified Version, together with at least five of the
+          principal authors of the Document (all of its principal
+          authors, if it has fewer than five), unless they release you
+          from this requirement.
+
+       C. State on the Title page the name of the publisher of the
+          Modified Version, as the publisher.
+
+       D. Preserve all the copyright notices of the Document.
+
+       E. Add an appropriate copyright notice for your modifications
+          adjacent to the other copyright notices.
+
+       F. Include, immediately after the copyright notices, a license
+          notice giving the public permission to use the Modified
+          Version under the terms of this License, in the form shown in
+          the Addendum below.
+
+       G. Preserve in that license notice the full lists of Invariant
+          Sections and required Cover Texts given in the Document's
+          license notice.
+
+       H. Include an unaltered copy of this License.
+
+       I. Preserve the section Entitled "History", Preserve its Title,
+          and add to it an item stating at least the title, year, new
+          authors, and publisher of the Modified Version as given on
+          the Title Page.  If there is no section Entitled "History" in
+          the Document, create one stating the title, year, authors,
+          and publisher of the Document as given on its Title Page,
+          then add an item describing the Modified Version as stated in
+          the previous sentence.
+
+       J. Preserve the network location, if any, given in the Document
+          for public access to a Transparent copy of the Document, and
+          likewise the network locations given in the Document for
+          previous versions it was based on.  These may be placed in
+          the "History" section.  You may omit a network location for a
+          work that was published at least four years before the
+          Document itself, or if the original publisher of the version
+          it refers to gives permission.
+
+       K. For any section Entitled "Acknowledgements" or "Dedications",
+          Preserve the Title of the section, and preserve in the
+          section all the substance and tone of each of the contributor
+          acknowledgements and/or dedications given therein.
+
+       L. Preserve all the Invariant Sections of the Document,
+          unaltered in their text and in their titles.  Section numbers
+          or the equivalent are not considered part of the section
+          titles.
+
+       M. Delete any section Entitled "Endorsements".  Such a section
+          may not be included in the Modified Version.
+
+       N. Do not retitle any existing section to be Entitled
+          "Endorsements" or to conflict in title with any Invariant
+          Section.
+
+       O. Preserve any Warranty Disclaimers.
+
+     If the Modified Version includes new front-matter sections or
+     appendices that qualify as Secondary Sections and contain no
+     material copied from the Document, you may at your option
+     designate some or all of these sections as invariant.  To do this,
+     add their titles to the list of Invariant Sections in the Modified
+     Version's license notice.  These titles must be distinct from any
+     other section titles.
+
+     You may add a section Entitled "Endorsements", provided it contains
+     nothing but endorsements of your Modified Version by various
+     parties--for example, statements of peer review or that the text
+     has been approved by an organization as the authoritative
+     definition of a standard.
+
+     You may add a passage of up to five words as a Front-Cover Text,
+     and a passage of up to 25 words as a Back-Cover Text, to the end
+     of the list of Cover Texts in the Modified Version.  Only one
+     passage of Front-Cover Text and one of Back-Cover Text may be
+     added by (or through arrangements made by) any one entity.  If the
+     Document already includes a cover text for the same cover,
+     previously added by you or by arrangement made by the same entity
+     you are acting on behalf of, you may not add another; but you may
+     replace the old one, on explicit permission from the previous
+     publisher that added the old one.
+
+     The author(s) and publisher(s) of the Document do not by this
+     License give permission to use their names for publicity for or to
+     assert or imply endorsement of any Modified Version.
+
+  5. COMBINING DOCUMENTS
+
+     You may combine the Document with other documents released under
+     this License, under the terms defined in section 4 above for
+     modified versions, provided that you include in the combination
+     all of the Invariant Sections of all of the original documents,
+     unmodified, and list them all as Invariant Sections of your
+     combined work in its license notice, and that you preserve all
+     their Warranty Disclaimers.
+
+     The combined work need only contain one copy of this License, and
+     multiple identical Invariant Sections may be replaced with a single
+     copy.  If there are multiple Invariant Sections with the same name
+     but different contents, make the title of each such section unique
+     by adding at the end of it, in parentheses, the name of the
+     original author or publisher of that section if known, or else a
+     unique number.  Make the same adjustment to the section titles in
+     the list of Invariant Sections in the license notice of the
+     combined work.
+
+     In the combination, you must combine any sections Entitled
+     "History" in the various original documents, forming one section
+     Entitled "History"; likewise combine any sections Entitled
+     "Acknowledgements", and any sections Entitled "Dedications".  You
+     must delete all sections Entitled "Endorsements."
+
+  6. COLLECTIONS OF DOCUMENTS
+
+     You may make a collection consisting of the Document and other
+     documents released under this License, and replace the individual
+     copies of this License in the various documents with a single copy
+     that is included in the collection, provided that you follow the
+     rules of this License for verbatim copying of each of the
+     documents in all other respects.
+
+     You may extract a single document from such a collection, and
+     distribute it individually under this License, provided you insert
+     a copy of this License into the extracted document, and follow
+     this License in all other respects regarding verbatim copying of
+     that document.
+
+  7. AGGREGATION WITH INDEPENDENT WORKS
+
+     A compilation of the Document or its derivatives with other
+     separate and independent documents or works, in or on a volume of
+     a storage or distribution medium, is called an "aggregate" if the
+     copyright resulting from the compilation is not used to limit the
+     legal rights of the compilation's users beyond what the individual
+     works permit.  When the Document is included in an aggregate, this
+     License does not apply to the other works in the aggregate which
+     are not themselves derivative works of the Document.
+
+     If the Cover Text requirement of section 3 is applicable to these
+     copies of the Document, then if the Document is less than one half
+     of the entire aggregate, the Document's Cover Texts may be placed
+     on covers that bracket the Document within the aggregate, or the
+     electronic equivalent of covers if the Document is in electronic
+     form.  Otherwise they must appear on printed covers that bracket
+     the whole aggregate.
+
+  8. TRANSLATION
+
+     Translation is considered a kind of modification, so you may
+     distribute translations of the Document under the terms of section
+     4.  Replacing Invariant Sections with translations requires special
+     permission from their copyright holders, but you may include
+     translations of some or all Invariant Sections in addition to the
+     original versions of these Invariant Sections.  You may include a
+     translation of this License, and all the license notices in the
+     Document, and any Warranty Disclaimers, provided that you also
+     include the original English version of this License and the
+     original versions of those notices and disclaimers.  In case of a
+     disagreement between the translation and the original version of
+     this License or a notice or disclaimer, the original version will
+     prevail.
+
+     If a section in the Document is Entitled "Acknowledgements",
+     "Dedications", or "History", the requirement (section 4) to
+     Preserve its Title (section 1) will typically require changing the
+     actual title.
+
+  9. TERMINATION
+
+     You may not copy, modify, sublicense, or distribute the Document
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
+
+ 10. FUTURE REVISIONS OF THIS LICENSE
+
+     The Free Software Foundation may publish new, revised versions of
+     the GNU Free Documentation License from time to time.  Such new
+     versions will be similar in spirit to the present version, but may
+     differ in detail to address new problems or concerns.  See
+     `http://www.gnu.org/copyleft/'.
+
+     Each version of the License is given a distinguishing version
+     number.  If the Document specifies that a particular numbered
+     version of this License "or any later version" applies to it, you
+     have the option of following the terms and conditions either of
+     that specified version or of any later version that has been
+     published (not as a draft) by the Free Software Foundation.  If
+     the Document does not specify a version number of this License,
+     you may choose any version ever published (not as a draft) by the
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
+
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
+
+ADDENDUM: How to use this License for your documents
+====================================================
+
+To use this License in a document you have written, include a copy of
+the License in the document and put the following copyright and license
+notices just after the title page:
+
+       Copyright (C)  YEAR  YOUR NAME.
+       Permission is granted to copy, distribute and/or modify this document
+       under the terms of the GNU Free Documentation License, Version 1.3
+       or any later version published by the Free Software Foundation;
+       with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
+       Texts.  A copy of the license is included in the section entitled ``GNU
+       Free Documentation License''.
+
+   If you have Invariant Sections, Front-Cover Texts and Back-Cover
+Texts, replace the "with...Texts." line with this:
+
+         with the Invariant Sections being LIST THEIR TITLES, with
+         the Front-Cover Texts being LIST, and with the Back-Cover Texts
+         being LIST.
+
+   If you have Invariant Sections without Cover Texts, or some other
+combination of the three, merge those two alternatives to suit the
+situation.
+
+   If your document contains nontrivial examples of program code, we
+recommend releasing these examples in parallel under your choice of
+free software license, such as the GNU General Public License, to
+permit their use in free software.
+
+
+
+Tag Table:
+Node: Top915
+Node: Introduction3189
+Node: How to Run Tests6081
+Node: Running Tests Interactively6843
+Node: Running Tests in Batch Mode9608
+Node: Test Selectors10659
+Node: How to Write Tests12698
+Node: The `should' Macro13563
+Node: Expected Failures15611
+Node: Tests and Their Environment17826
+Node: Useful Techniques20873
+Node: How to Debug Tests24623
+Node: Understanding Explanations25020
+Node: Interactive Debugging26913
+Node: Extending ERT29016
+Node: Defining Explanation Functions29371
+Node: Low-Level Functions for Working with Tests30321
+Node: Other Testing Concepts31118
+Node: Mocks and Stubs31528
+Node: Fixtures and Test Suites32140
+Node: GNU Free Documentation License34531
+
+End Tag Table

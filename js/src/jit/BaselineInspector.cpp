@@ -457,6 +457,21 @@ BaselineInspector::getTemplateObjectForNative(jsbytecode *pc, Native native)
     return nullptr;
 }
 
+JSObject *
+BaselineInspector::getTemplateObjectForClassHook(jsbytecode *pc, const Class *clasp)
+{
+    if (!hasBaselineScript())
+        return nullptr;
+
+    const ICEntry &entry = icEntryFromPC(pc);
+    for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
+        if (stub->isCall_ClassHook() && stub->toCall_ClassHook()->clasp() == clasp)
+            return stub->toCall_ClassHook()->templateObject();
+    }
+
+    return nullptr;
+}
+
 DeclEnvObject *
 BaselineInspector::templateDeclEnvObject()
 {
@@ -481,25 +496,58 @@ BaselineInspector::templateCallObject()
     return &res->as<CallObject>();
 }
 
+static Shape *GlobalShapeForGetPropFunction(ICStub *stub)
+{
+    if (stub->isGetProp_CallNativePrototype()) {
+        ICGetProp_CallNativePrototype *nstub =
+            stub->toGetProp_CallNativePrototype();
+        if (nstub->receiverShape()->getObjectClass()->flags & JSCLASS_IS_GLOBAL)
+            return nstub->receiverShape();
+    }
+    return nullptr;
+}
+
 JSObject *
-BaselineInspector::commonGetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonGetter)
+BaselineInspector::commonGetPropFunction(jsbytecode *pc, Shape **lastProperty, JSFunction **commonGetter,
+                                         Shape **globalShape)
 {
     if (!hasBaselineScript())
         return nullptr;
 
     const ICEntry &entry = icEntryFromPC(pc);
+    JSObject* holder = nullptr;
+    Shape *holderShape = nullptr;
+    JSFunction *getter = nullptr;
+    Shape *global = nullptr;
     for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
         if (stub->isGetProp_CallScripted()  ||
             stub->isGetProp_CallNative()    ||
             stub->isGetProp_CallNativePrototype())
         {
             ICGetPropCallGetter *nstub = static_cast<ICGetPropCallGetter *>(stub);
-            *lastProperty = nstub->holderShape();
-            *commonGetter = nstub->getter();
-            return nstub->holder();
+            if (!holder) {
+                holder = nstub->holder();
+                holderShape = nstub->holderShape();
+                getter = nstub->getter();
+                global = GlobalShapeForGetPropFunction(nstub);
+            } else if (nstub->holderShape() != holderShape ||
+                       GlobalShapeForGetPropFunction(nstub) != global)
+            {
+                return nullptr;
+            } else {
+                MOZ_ASSERT(getter == nstub->getter());
+            }
+        } else if (stub->isGetProp_Fallback() &&
+                   stub->toGetProp_Fallback()->hadUnoptimizableAccess())
+        {
+            // We have an unoptimizable access, so don't try to optimize.
+            return nullptr;
         }
     }
-    return nullptr;
+    *lastProperty = holderShape;
+    *commonGetter = getter;
+    *globalShape = global;
+    return holder;
 }
 
 JSObject *
@@ -509,13 +557,29 @@ BaselineInspector::commonSetPropFunction(jsbytecode *pc, Shape **lastProperty, J
         return nullptr;
 
     const ICEntry &entry = icEntryFromPC(pc);
+    JSObject *holder = nullptr;
+    Shape *holderShape = nullptr;
+    JSFunction *setter = nullptr;
     for (ICStub *stub = entry.firstStub(); stub; stub = stub->next()) {
         if (stub->isSetProp_CallScripted() || stub->isSetProp_CallNative()) {
             ICSetPropCallSetter *nstub = static_cast<ICSetPropCallSetter *>(stub);
-            *lastProperty = nstub->holderShape();
-            *commonSetter = nstub->setter();
-            return nstub->holder();
+            if (!holder) {
+                holder = nstub->holder();
+                holderShape = nstub->holderShape();
+                setter = nstub->setter();
+            } else if (nstub->holderShape() != holderShape) {
+                return nullptr;
+            } else {
+                MOZ_ASSERT(setter == nstub->setter());
+            }
+        } else if (stub->isSetProp_Fallback() &&
+                   stub->toSetProp_Fallback()->hadUnoptimizableAccess())
+        {
+            // We have an unoptimizable access, so don't try to optimize.
+            return nullptr;
         }
     }
-    return nullptr;
+    *lastProperty = holderShape;
+    *commonSetter = setter;
+    return holder;
 }

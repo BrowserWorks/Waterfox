@@ -36,6 +36,7 @@ from ..frontend.data import (
     DirectoryTraversal,
     Exports,
     ExternalLibrary,
+    FinalTargetFiles,
     GeneratedInclude,
     HostLibrary,
     HostProgram,
@@ -307,6 +308,7 @@ class RecursiveMakeBackend(CommonBackend):
                 'dist_public',
                 'dist_private',
                 'dist_sdk',
+                'dist_xpi-stage',
                 'tests',
                 'xpidl',
             ]}
@@ -319,6 +321,7 @@ class RecursiveMakeBackend(CommonBackend):
             'libs': set(),
         }
         self._no_skip = {
+            'misc': set(),
             'tools': set(),
         }
 
@@ -478,6 +481,8 @@ class RecursiveMakeBackend(CommonBackend):
             self._process_host_library(obj, backend_file)
             self._process_linked_libraries(obj, backend_file)
 
+        elif isinstance(obj, FinalTargetFiles):
+            self._process_final_target_files(obj, obj.files, obj.target)
         else:
             return
         obj.ack()
@@ -497,11 +502,17 @@ class RecursiveMakeBackend(CommonBackend):
                 'number': len(no_skip), 'tier': tier
                 }, 'Using {number} directories during {tier}')
 
+        def should_skip(tier, dir):
+            if tier in self._may_skip:
+                return dir in self._may_skip[tier]
+            if tier in self._no_skip:
+                return dir not in self._no_skip[tier]
+            return False
+
         # Traverse directories in parallel, and skip static dirs
         def parallel_filter(current, subdirs):
             all_subdirs = subdirs.dirs + subdirs.tests
-            if current in self._may_skip[tier] \
-                    or current.startswith('subtiers/'):
+            if should_skip(tier, current) or current.startswith('subtiers/'):
                 current = None
             return current, all_subdirs, []
 
@@ -509,8 +520,7 @@ class RecursiveMakeBackend(CommonBackend):
         # Because of bug 925236 and possible other unknown race conditions,
         # don't parallelize the libs tier.
         def libs_filter(current, subdirs):
-            if current in self._may_skip['libs'] \
-                    or current.startswith('subtiers/'):
+            if should_skip('libs', current) or current.startswith('subtiers/'):
                 current = None
             return current, [], subdirs.dirs + subdirs.tests
 
@@ -518,14 +528,14 @@ class RecursiveMakeBackend(CommonBackend):
         # don't parallelize the tools tier. There aren't many directories for
         # this tier anyways.
         def tools_filter(current, subdirs):
-            if current not in self._no_skip['tools'] \
-                    or current.startswith('subtiers/'):
+            if should_skip('tools', current) or current.startswith('subtiers/'):
                 current = None
             return current, [], subdirs.dirs + subdirs.tests
 
         filters = [
             ('export', parallel_filter),
             ('libs', libs_filter),
+            ('misc', parallel_filter),
             ('tools', tools_filter),
         ]
 
@@ -807,6 +817,9 @@ class RecursiveMakeBackend(CommonBackend):
         for tier in set(self._may_skip.keys()) - affected_tiers:
             self._may_skip[tier].add(backend_file.relobjdir)
 
+        for tier in set(self._no_skip.keys()) & affected_tiers:
+            self._no_skip[tier].add(backend_file.relobjdir)
+
     def _walk_hierarchy(self, obj, element, namespace=''):
         """Walks the ``HierarchicalStringList`` ``element`` in the context of
         the mozbuild object ``obj`` as though by ``element.walk()``, but yield
@@ -913,6 +926,7 @@ INSTALL_TARGETS += %(prefix)s
                                    % (prefix, ' '.join(strings)))
                 backend_file.write('%s_DEST = %s\n' %
                                    (prefix, mozpath.join('$(FINAL_TARGET)', 'modules', path)))
+                backend_file.write('%s_TARGET := misc\n' % prefix)
                 backend_file.write('INSTALL_TARGETS += %s\n\n' % prefix)
             return
 
@@ -926,6 +940,7 @@ INSTALL_TARGETS += %(prefix)s
                                    % (prefix, ' '.join(strings)))
                 backend_file.write('%s_PATH = %s\n' %
                                    (prefix, mozpath.join('$(FINAL_TARGET)', 'modules', path)))
+                backend_file.write('%s_TARGET := misc\n' % prefix)
                 backend_file.write('PP_TARGETS += %s\n\n' % prefix)
             return
 
@@ -1154,25 +1169,6 @@ INSTALL_TARGETS += %(prefix)s
         build_target = self._build_target_for_obj(obj)
         self._compile_graph[build_target]
 
-        # Until MOZ_GLUE_LDFLAGS/MOZ_GLUE_PROGRAM_LDFLAGS are properly
-        # handled in moz.build world, assume any program or shared library
-        # we build depends on it.
-        if obj.KIND == 'target' and not isinstance(obj, StaticLibrary) and \
-                build_target != 'mozglue/build/target' and \
-                not obj.config.substs.get('JS_STANDALONE') and \
-                (not isinstance(obj, SharedLibrary) or
-                 obj.basename != 'clang-plugin'):
-            self._compile_graph[build_target].add('mozglue/build/target')
-            if obj.config.substs.get('MOZ_MEMORY'):
-                self._compile_graph[build_target].add('memory/build/target')
-
-        # Until STLPORT_LIBS are properly handled in moz.build world, assume
-        # any program or shared library we build depends on it.
-        if obj.KIND == 'target' and not isinstance(obj, StaticLibrary) and \
-                build_target != 'build/stlport/target' and \
-                'stlport' in obj.config.substs.get('STLPORT_LIBS'):
-            self._compile_graph[build_target].add('build/stlport/target')
-
         for lib in obj.linked_libraries:
             if not isinstance(lib, ExternalLibrary):
                 self._compile_graph[build_target].add(
@@ -1210,6 +1206,22 @@ INSTALL_TARGETS += %(prefix)s
 
         # Process library-based defines
         self._process_defines(obj.defines, backend_file)
+
+    def _process_final_target_files(self, obj, files, target):
+        if target.startswith('dist/bin'):
+            install_manifest = self._install_manifests['dist_bin']
+            reltarget = mozpath.relpath(target, 'dist/bin')
+        elif target.startswith('dist/xpi-stage'):
+            install_manifest = self._install_manifests['dist_xpi-stage']
+            reltarget = mozpath.relpath(target, 'dist/xpi-stage')
+        else:
+            raise Exception("Cannot install to " + target)
+
+        for path, strings in files.walk():
+            for f in strings:
+                source = mozpath.normpath(os.path.join(obj.srcdir, f))
+                dest = mozpath.join(reltarget, path, mozpath.basename(f))
+                install_manifest.add_symlink(source, dest)
 
     def _write_manifests(self, dest, manifests):
         man_dir = mozpath.join(self.environment.topobjdir, '_build_manifests',

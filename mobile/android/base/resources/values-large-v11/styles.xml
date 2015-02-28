@@ -25,8 +25,9 @@
         <item name="android:layout_marginLeft">@dimen/forward_default_offset</item>
     </style>
 
+    <!-- Note: this style is for the visible and expanded forward button.  We translate/hide
+         the forward button in code - see BrowserToolbarNewTablet.animateForwardButton. -->
     <style name="UrlBar.ImageButton.Forward.NewTablet">
-        <item name="android:layout_marginLeft">@dimen/new_tablet_forward_default_offset</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:paddingTop">0dp</item>
         <item name="android:paddingBottom">0dp</item>
@@ -34,6 +35,20 @@
         <item name="android:layout_marginBottom">11.5dp</item>
         <item name="android:src">@drawable/new_tablet_ic_menu_forward</item>
         <item name="android:background">@drawable/new_tablet_url_bar_nav_button</item>
+
+        <!-- The visible area of the forward button is a nav_button_width and the
+             non-visible area slides halfway under the back button. This non-visible
+             area is used to ensure the forward button background fully
+             covers the space to the right of the back button. -->
+        <item name="android:layout_width">@dimen/new_tablet_nav_button_width_plus_half</item>
+
+        <!-- (See note above) We left align with back,
+             but only need to hide halfway underneath. -->
+        <item name="android:layout_marginLeft">@dimen/new_tablet_nav_button_width_half</item>
+
+        <!-- We use left padding to center the arrow in the
+             visible area as opposed to the true width. -->
+        <item name="android:paddingLeft">18dp</item>
     </style>
 
     <style name="UrlBar.ImageButton.TabCount.NewTablet">
@@ -50,7 +65,7 @@
         <item name="android:orientation">horizontal</item>
     </style>
 
-    <style name="TabsList" parent="TabsListBase">
+    <style name="TabsLayout" parent="TabsLayoutBase">
          <item name="android:orientation">horizontal</item>
          <item name="android:scrollbars">horizontal</item>
     </style>
@@ -89,9 +104,14 @@
         <item name="android:scaleType">center</item>
         <item name="android:background">@drawable/new_tablet_action_bar_button</item>
 
-        <!-- layout_* doesn't work here, likely because it's an ImageButton, so we use padding instead. -->
-        <item name="android:paddingTop">@dimen/new_tablet_browser_toolbar_menu_item_padding_vertical</item>
-        <item name="android:paddingBottom">@dimen/new_tablet_browser_toolbar_menu_item_padding_vertical</item>
+        <!-- layout_width/height doesn't work here, likely because it's
+             an ImageButton, so we use padding instead.
+
+             Notes:
+                 * The bookmarks star is larger than the reload button
+                 * The reload button contains whitespace at the top of the image to lower it -->
+        <item name="android:paddingTop">19dp</item>
+        <item name="android:paddingBottom">21dp</item>
         <item name="android:paddingLeft">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
         <item name="android:paddingRight">@dimen/new_tablet_browser_toolbar_menu_item_padding_horizontal</item>
     </style>
@@ -112,10 +132,18 @@
         <item name="android:paddingTop">30dp</item>
         <item name="android:paddingLeft">32dp</item>
         <item name="android:paddingRight">32dp</item>
+        <item name="android:clipToPadding">false</item>
         <item name="topDivider">false</item>
     </style>
 
     <style name="Widget.ReadingListView" parent="Widget.BookmarksListView"/>
+
+    <style name="Widget.ReadingListRow.Description">
+        <item name="android:textAppearance">@style/TextAppearance.Widget.Home.ItemDescription</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:lineSpacingMultiplier">1.3</item>
+    </style>
 
     <style name="Widget.HomeBanner">
         <item name="android:paddingLeft">32dp</item>

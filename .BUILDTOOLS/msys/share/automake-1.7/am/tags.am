@@ -1,0 +1,122 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+.PHONY: tags
+tags: TAGS
+
+
+## ---- ##
+## ID.  ##
+## ---- ##
+
+ID: $(HEADERS) $(SOURCES) $(LISP) $(TAGS_FILES)
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+	mkid -fID $$unique
+
+
+## ------ ##
+## TAGS.  ##
+## ------ ##
+
+ETAGS = etags
+ETAGSFLAGS =
+
+TAGS: %TAGSDIRS% $(HEADERS) $(SOURCES) %CONFIG% $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+## It is tempting to use if/endif here, but don't: the previous
+## backslash will cause bad results (automake doesn't `see' the `if').
+?SUBDIRS?	list='$(SUBDIRS)'; for subdir in $$list; do \
+## Do nothing if we're trying to look in `.'.
+?SUBDIRS?	  if test "$$subdir" = .; then :; else \
+?SUBDIRS?	    test -f $$subdir/TAGS && tags="$$tags -i $$here/$$subdir/TAGS"; \
+?SUBDIRS?	  fi; \
+?SUBDIRS?	done; \
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) %CONFIG% $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+## Make sure we have something to run etags on.
+	test -z "$(ETAGS_ARGS)$$tags$$unique" \
+	  || $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	     $$tags $$unique
+
+
+## ------------- ##
+## vi-style tags ##
+## ------------- ##
+
+CTAGS = ctags
+CTAGSFLAGS =
+
+.PHONY: CTAGS ctags
+ctags: CTAGS
+
+## We have a dummy name here because `tags' has already been in use
+## for a long time to mean Emacs-style tags.  Oops.  This means the
+## dependencies here are useless.
+CTAGS: %CTAGSDIRS% $(HEADERS) $(SOURCES) %CONFIG% $(TAGS_DEPENDENCIES) \
+		$(TAGS_FILES) $(LISP)
+	tags=; \
+	here=`pwd`; \
+## Make sure the list of sources is unique.
+	list='$(SOURCES) $(HEADERS) %CONFIG% $(LISP) $(TAGS_FILES)'; \
+	unique=`for i in $$list; do \
+## Handle VPATH correctly.
+	    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+	  done | \
+	  $(AWK) '    { files[$$0] = 1; } \
+	       END { for (i in files) print i; }'`; \
+## Make sure we have something to run ctags on.
+	test -z "$(CTAGS_ARGS)$$tags$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$tags $$unique
+
+
+## --------------- ##
+## `Global' tags.  ##
+## --------------- ##
+
+.PHONY: GTAGS
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && cd $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) $$here
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY distclean-am: distclean-tags
+
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags

@@ -53,8 +53,8 @@ bool
 PaintedLayerComposite::SetCompositableHost(CompositableHost* aHost)
 {
   switch (aHost->GetType()) {
-    case CompositableType::BUFFER_CONTENT_INC:
-    case CompositableType::BUFFER_TILED:
+    case CompositableType::CONTENT_INC:
+    case CompositableType::CONTENT_TILED:
     case CompositableType::CONTENT_SINGLE:
     case CompositableType::CONTENT_DOUBLE:
       mBuffer = static_cast<ContentHost*>(aHost);
@@ -83,6 +83,16 @@ Layer*
 PaintedLayerComposite::GetLayer()
 {
   return this;
+}
+
+void
+PaintedLayerComposite::SetLayerManager(LayerManagerComposite* aManager)
+{
+  LayerComposite::SetLayerManager(aManager);
+  mManager = aManager;
+  if (mBuffer) {
+    mBuffer->SetCompositor(mCompositor);
+  }
 }
 
 TiledLayerComposer*

@@ -48,7 +48,7 @@ class ContainerLayerComposite : public ContainerLayer,
                                              const RenderTargetIntRect& aClipRect);
   template<class ContainerT>
   friend RefPtr<CompositingRenderTarget>
-  CreateTemporaryTarget(ContainerT* aContainer,
+  CreateOrRecycleTarget(ContainerT* aContainer,
                         LayerManagerComposite* aManager,
                         const RenderTargetIntRect& aClipRect);
 
@@ -61,6 +61,17 @@ protected:
 public:
   // LayerComposite Implementation
   virtual Layer* GetLayer() MOZ_OVERRIDE { return this; }
+
+  virtual void SetLayerManager(LayerManagerComposite* aManager) MOZ_OVERRIDE
+  {
+    LayerComposite::SetLayerManager(aManager);
+    mManager = aManager;
+
+    for (Layer* l = GetFirstChild(); l; l = l->GetNextSibling()) {
+      LayerComposite* child = l->AsLayerComposite();
+      child->SetLayerManager(aManager);
+    }
+  }
 
   virtual void Destroy() MOZ_OVERRIDE;
 
@@ -83,6 +94,8 @@ public:
 
   virtual const char* Name() const MOZ_OVERRIDE { return "ContainerLayerComposite"; }
   UniquePtr<PreparedData> mPrepared;
+
+  RefPtr<CompositingRenderTarget> mLastIntermediateSurface;
 };
 
 class RefLayerComposite : public RefLayer,
@@ -147,6 +160,7 @@ public:
 
   virtual const char* Name() const MOZ_OVERRIDE { return "RefLayerComposite"; }
   UniquePtr<PreparedData> mPrepared;
+  RefPtr<CompositingRenderTarget> mLastIntermediateSurface;
 };
 
 } /* layers */

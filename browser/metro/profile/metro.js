@@ -305,13 +305,20 @@ pref("browser.search.official", true);
 // enable xul error pages
 pref("browser.xul.error_pages.enabled", true);
 
-// Specify emptyRestriction = 0 so that bookmarks appear in the list by default
-pref("browser.urlbar.default.behavior", 0);
-pref("browser.urlbar.default.behavior.emptyRestriction", 0);
-
 // Let the faviconservice know that we display favicons as 25x25px so that it
 // uses the right size when optimizing favicons
 pref("places.favicons.optimizeToDimension", 25);
+
+// The default behavior for the urlbar can be configured to use any combination
+// of the match filters with each additional filter adding more results (union).
+pref("browser.urlbar.suggest.history",              true);
+pref("browser.urlbar.suggest.bookmark",             true);
+pref("browser.urlbar.suggest.openpage",             true);
+pref("browser.urlbar.suggest.search",               true);
+
+// Restrictions to current suggestions can also be applied (intersection).
+// Typed suggestion works only if history is set to true.
+pref("browser.urlbar.suggest.history.onlyTyped",    false);
 
 // various and sundry awesomebar prefs (should remove/re-evaluate
 // these once bug 447900 is fixed)
@@ -472,11 +479,7 @@ pref("app.update.silent", true);
 pref("app.update.staging.enabled", true);
 
 // Update service URL:
-#ifndef RELEASE_BUILD
 pref("app.update.url", "https://aus4.mozilla.org/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
-#else
-pref("app.update.url", "https://aus3.mozilla.org/update/3/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
-#endif
 
 // Show the Update Checking/Ready UI when the user was idle for x seconds
 pref("app.update.idletime", 60);
@@ -671,7 +674,6 @@ pref("full-screen-api.ignore-widgets", true);
 // image visibility prefs.
 // image visibility tries to only keep images near the viewport decoded instead
 // of keeping all images decoded.
-pref("layout.imagevisibility.enabled", true);
 pref("layout.imagevisibility.numscrollportwidths", 1);
 pref("layout.imagevisibility.numscrollportheights", 1);
 

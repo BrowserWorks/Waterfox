@@ -160,14 +160,14 @@ this.Utils = { // jshint ignore:line
   },
 
   get AllMessageManagers() {
-    let messageManagers = [];
+    let messageManagers = new Set();
 
     function collectLeafMessageManagers(mm) {
       for (let i = 0; i < mm.childCount; i++) {
         let childMM = mm.getChildAt(i);
 
         if ('sendAsyncMessage' in childMM) {
-          messageManagers.push(childMM);
+          messageManagers.add(childMM);
         } else {
           collectLeafMessageManagers(childMM);
         }
@@ -179,12 +179,19 @@ this.Utils = { // jshint ignore:line
     let document = this.CurrentContentDoc;
 
     if (document) {
+      if (document.location.host === 'b2g') {
+        // The document is a b2g app chrome (ie. Mulet).
+        let contentBrowser = this.win.content.shell.contentBrowser;
+        messageManagers.add(this.getMessageManager(contentBrowser));
+        document = contentBrowser.contentDocument;
+      }
+
       let remoteframes = document.querySelectorAll('iframe');
 
       for (let i = 0; i < remoteframes.length; ++i) {
         let mm = this.getMessageManager(remoteframes[i]);
         if (mm) {
-          messageManagers.push(mm);
+          messageManagers.add(mm);
         }
       }
 
@@ -470,6 +477,14 @@ this.Utils = { // jshint ignore:line
       }));
     }
 
+  },
+
+  isActivatableOnFingerUp: function isActivatableOnFingerUp(aAccessible) {
+    if (aAccessible.role === Roles.KEY) {
+      return true;
+    }
+    let quick_activate = this.getAttributes(aAccessible)['moz-quick-activate'];
+    return quick_activate && JSON.parse(quick_activate);
   }
 };
 
@@ -820,6 +835,25 @@ PivotContext.prototype = {
     }
   },
 
+  /**
+   * Get interaction hints for the context ancestry.
+   * @return {Array} Array of interaction hints.
+   */
+  get interactionHints() {
+    let hints = [];
+    this.newAncestry.concat(this.accessible).reverse().forEach(aAccessible => {
+      let hint = Utils.getAttributes(aAccessible)['moz-hint'];
+      if (hint) {
+        hints.push(hint);
+      } else if (aAccessible.actionCount > 0) {
+        hints.push({
+          string: Utils.AccRetrieval.getStringRole(aAccessible.role) + '-hint'
+        });
+      }
+    });
+    return hints;
+  },
+
   /*
    * A subtree generator function, used to generate a flattened
    * list of the accessible's subtree in pre or post order.
@@ -949,7 +983,7 @@ this.PrefCache = function PrefCache(aName, aCallback, aRunCallbackNow) { // jshi
 
   if (this.callback && aRunCallbackNow) {
     try {
-      this.callback(this.name, this.value);
+      this.callback(this.name, this.value, true);
     } catch (x) {
       Logger.logException(x);
     }
@@ -982,9 +1016,10 @@ PrefCache.prototype = {
 
   observe: function observe(aSubject) {
     this.value = this._getValue(aSubject.QueryInterface(Ci.nsIPrefBranch));
+    Logger.info('pref changed', this.name, this.value);
     if (this.callback) {
       try {
-        this.callback(this.name, this.value);
+        this.callback(this.name, this.value, false);
       } catch (x) {
         Logger.logException(x);
       }

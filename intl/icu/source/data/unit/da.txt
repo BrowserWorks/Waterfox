@@ -11,6 +11,11 @@
  */
 da{
     Version{"2.1.9.62"}
+    durationUnits{
+        hm{"h.mm"}
+        hms{"h.mm.ss"}
+        ms{"m.ss"}
+    }
     units{
         acceleration{
             g-force{

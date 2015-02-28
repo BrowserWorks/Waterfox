@@ -76,6 +76,9 @@ class OptimizationInfo
     // Toggles whether Truncation based on Range Analysis is used.
     bool autoTruncate_;
 
+    // Toggles whether sink is used.
+    bool sink_;
+
     // Describes which register allocator to use.
     IonRegisterAllocator registerAllocator_;
 
@@ -107,6 +110,11 @@ class OptimizationInfo
     // How many invocations or loop iterations are needed before calls
     // are inlined, as a fraction of compilerWarmUpThreshold.
     double inliningWarmUpThresholdFactor_;
+
+    // How many invocations or loop iterations are needed before a function
+    // is hot enough to recompile the outerScript to inline that function,
+    // as a multiplication of inliningWarmUpThreshold.
+    uint32_t inliningRecompileThresholdFactor_;
 
     OptimizationInfo()
     { }
@@ -146,6 +154,10 @@ class OptimizationInfo
 
     bool autoTruncateEnabled() const {
         return autoTruncate_ && rangeAnalysisEnabled();
+    }
+
+    bool sinkEnabled() const {
+        return sink_ && !js_JitOptions.disableSink;
     }
 
     bool eaaEnabled() const {
@@ -193,6 +205,10 @@ class OptimizationInfo
         if (js_JitOptions.forceDefaultIonWarmUpThreshold)
             compilerWarmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold;
         return compilerWarmUpThreshold * inliningWarmUpThresholdFactor_;
+    }
+
+    uint32_t inliningRecompileThreshold() const {
+        return inliningWarmUpThreshold() * inliningRecompileThresholdFactor_;
     }
 };
 

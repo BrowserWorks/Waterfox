@@ -184,18 +184,10 @@ void IntlTestSpoof::testSkeleton() {
     const uint32_t SA = USPOOF_SINGLE_SCRIPT_CONFUSABLE | USPOOF_ANY_CASE;
 
     TEST_SETUP
-        // A long "identifier" that will overflow implementation stack buffers, forcing heap allocations.
-        CHECK_SKELETON(SL, " A 1ong \\u02b9identifier' that will overflow implementation stack buffers, forcing heap allocations."
-                           " A 1ong 'identifier' that will overflow implementation stack buffers, forcing heap allocations."
-                           " A 1ong 'identifier' that will overflow implementation stack buffers, forcing heap allocations."
-                           " A 1ong 'identifier' that will overflow implementation stack buffers, forcing heap allocations.",
-
-               " A long 'identifier' that vvill overflovv irnplernentation stack buffers, forcing heap allocations."
-               " A long 'identifier' that vvill overflovv irnplernentation stack buffers, forcing heap allocations."
-               " A long 'identifier' that vvill overflovv irnplernentation stack buffers, forcing heap allocations."
-               " A long 'identifier' that vvill overflovv irnplernentation stack buffers, forcing heap allocations.")
-
-        CHECK_SKELETON(SL, "nochange", "nochange");
+        CHECK_SKELETON(SL, "nochange", "\\u213C\\u2134\\U0001D41C\\u210E\\u237A\\u213C\\u210A\\u212E");
+        CHECK_SKELETON(SA, "nochange", "\\u213C\\u2134\\U0001D41C\\u210E\\u237A\\u213C\\u210A\\u212E");
+        CHECK_SKELETON(ML, "nochange", "\\u213C\\u2134\\U0001D41C\\u210E\\u237A\\u213C\\u210A\\u212E");
+        CHECK_SKELETON(MA, "nochange", "nochange");
         CHECK_SKELETON(MA, "love", "love"); 
         CHECK_SKELETON(MA, "1ove", "love");   // Digit 1 to letter l
         CHECK_SKELETON(ML, "OOPS", "OOPS");
@@ -204,29 +196,29 @@ void IntlTestSpoof::testSkeleton() {
         CHECK_SKELETON(MA, "00PS", "OOPS");   // Digit 0 to letter O in any case mode only
         CHECK_SKELETON(SL, "\\u059c", "\\u0301");
         CHECK_SKELETON(SL, "\\u2A74", "\\u003A\\u003A\\u003D");
-        CHECK_SKELETON(SL, "\\u247E", "\\u0028\\u006C\\u006C\\u0029");  // "(ll)"
-        CHECK_SKELETON(SL, "\\uFDFB", "\\u062C\\u0644\\u0020\\u062C\\u0644\\u0627\\u0644\\u0647");
+        CHECK_SKELETON(SL, "\\u247E", "\\u0028\\u0031\\u0031\\u0029");  // "(11)"
+        CHECK_SKELETON(SL, "\\uFDFB", "\\u062C\\u0644\\u0020\\u062C\\u0644\\u0031\\u0644\\u2134");
 
         // This mapping exists in the ML and MA tables, does not exist in SL, SA
-        //0C83 ;	0C03 ;	
+        // 0C83 ;	0983 ;	ML
+        // 0C83 ;	0983 ;	MA
+        // 
         CHECK_SKELETON(SL, "\\u0C83", "\\u0C83");
         CHECK_SKELETON(SA, "\\u0C83", "\\u0C83");
         CHECK_SKELETON(ML, "\\u0C83", "\\u0983");
         CHECK_SKELETON(MA, "\\u0C83", "\\u0983");
         
-        // 0391 ; 0041 ;
-        // This mapping exists only in the MA table.
+        // 0391 mappings exist only in MA and SA tables.
         CHECK_SKELETON(MA, "\\u0391", "A");
-        CHECK_SKELETON(SA, "\\u0391", "\\u0391");
+        CHECK_SKELETON(SA, "\\u0391", "\\U0001D400");
         CHECK_SKELETON(ML, "\\u0391", "\\u0391");
         CHECK_SKELETON(SL, "\\u0391", "\\u0391");
 
-        // 13CF ;  0062 ; 
-        // This mapping exists in the ML and MA tables
-        CHECK_SKELETON(ML, "\\u13CF", "b");
+        // 13CF Mappings in all four tables, different in MA.
+        CHECK_SKELETON(ML, "\\u13CF", "\\U0001D41B");
         CHECK_SKELETON(MA, "\\u13CF", "b");
-        CHECK_SKELETON(SL, "\\u13CF", "\\u13CF");
-        CHECK_SKELETON(SA, "\\u13CF", "\\u13CF");
+        CHECK_SKELETON(SL, "\\u13CF", "\\U0001D41B");
+        CHECK_SKELETON(SA, "\\u13CF", "\\U0001D41B");
 
         // 0022 ;  0027 0027 ; 
         // all tables.
@@ -235,10 +227,11 @@ void IntlTestSpoof::testSkeleton() {
         CHECK_SKELETON(ML, "\\u0022", "\\u0027\\u0027");
         CHECK_SKELETON(MA, "\\u0022", "\\u0027\\u0027");
 
-        // 017F ;  0066 ;
-        // This mapping exists in the SA and MA tables
+        // 017F mappings exist only in MA and SA tables.
         CHECK_SKELETON(MA, "\\u017F", "f");
-        CHECK_SKELETON(SA, "\\u017F", "f");
+        CHECK_SKELETON(SA, "\\u017F", "\\U0001D41F");
+        CHECK_SKELETON(ML, "\\u017F", "\\u017F");
+        CHECK_SKELETON(SL, "\\u017F", "\\u017F");
 
     TEST_TEARDOWN;
 }

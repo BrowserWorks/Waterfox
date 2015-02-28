@@ -495,27 +495,18 @@ nsListBoxBodyFrame::ReflowCallbackCanceled()
   mReflowCallbackPosted = false;
 }
 
-///////// nsIListBoxObject ///////////////
+///////// ListBoxObject ///////////////
 
-nsresult
-nsListBoxBodyFrame::GetRowCount(int32_t* aResult)
+int32_t
+nsListBoxBodyFrame::GetNumberOfVisibleRows()
 {
-  *aResult = GetRowCount();
-  return NS_OK;
+  return mRowHeight ? GetAvailableHeight() / mRowHeight : 0;
 }
 
-nsresult
-nsListBoxBodyFrame::GetNumberOfVisibleRows(int32_t *aResult)
+int32_t
+nsListBoxBodyFrame::GetIndexOfFirstVisibleRow()
 {
-  *aResult= mRowHeight ? GetAvailableHeight() / mRowHeight : 0;
-  return NS_OK;
-}
-
-nsresult
-nsListBoxBodyFrame::GetIndexOfFirstVisibleRow(int32_t *aResult)
-{
-  *aResult = mCurrentIndex;
-  return NS_OK;
+  return mCurrentIndex;
 }
 
 nsresult
@@ -561,9 +552,8 @@ nsListBoxBodyFrame::EnsureIndexIsVisible(int32_t aRowIndex)
 nsresult
 nsListBoxBodyFrame::ScrollByLines(int32_t aNumLines)
 {
-  int32_t scrollIndex, visibleRows;
-  GetIndexOfFirstVisibleRow(&scrollIndex);
-  GetNumberOfVisibleRows(&visibleRows);
+  int32_t scrollIndex = GetIndexOfFirstVisibleRow(),
+    visibleRows = GetNumberOfVisibleRows();
 
   scrollIndex += aNumLines;
   
@@ -735,10 +725,10 @@ nsListBoxBodyFrame::ComputeIntrinsicISize(nsBoxLayoutState& aBoxLayoutState)
           nsRefPtr<nsFontMetrics> fm;
           nsLayoutUtils::GetFontMetricsForStyleContext(styleContext,
                                                        getter_AddRefs(fm));
-          rendContext->SetFont(fm);
 
           nscoord textWidth =
-            nsLayoutUtils::GetStringWidth(this, rendContext, value.get(), value.Length());
+            nsLayoutUtils::AppUnitWidthOfStringBidi(value, this, *fm,
+                                                    *rendContext);
           textWidth += width;
 
           if (textWidth > largestWidth) 

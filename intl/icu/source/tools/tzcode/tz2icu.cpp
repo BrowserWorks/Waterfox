@@ -1720,10 +1720,10 @@ int main(int argc, char *argv[]) {
         file << ", International Business Machines" << endl
              << "// Corporation and others.  All Rights Reserved." << endl
              << "//---------------------------------------------------------" << endl
-             << "// Build tool: tz2icu" << endl
-             << "// Build date: " << asctime(now) /* << endl -- asctime emits CR */
-             << "// Olson source: ftp://elsie.nci.nih.gov/pub/" << endl
-             << "// Olson version: " << version << endl
+             << "// Build tool:  tz2icu" << endl
+             << "// Build date:  " << asctime(now) /* << endl -- asctime emits CR */
+             << "// tz database: ftp://ftp.iana.org/tz/" << endl
+             << "// tz version:  " << version << endl
              << "// ICU version: " << U_ICU_VERSION << endl
              << "//---------------------------------------------------------" << endl
              << "// >> !!! >>   THIS IS A MACHINE-GENERATED FILE   << !!! <<" << endl

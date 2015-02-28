@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2013, International Business Machines Corporation
+ * Copyright (c) 1997-2014, International Business Machines Corporation
  * and others. All Rights Reserved.
  ********************************************************************/
  
@@ -202,16 +202,16 @@ void
 CalendarRegressionTest::Test9019()
 {
     UErrorCode status = U_ZERO_ERROR;
-    LocalPointer<GregorianCalendar> cal1(new GregorianCalendar(status));
-    LocalPointer<GregorianCalendar> cal2(new GregorianCalendar(status));
-    cal1->set(UCAL_HOUR, 1);
-    cal2->set(UCAL_HOUR,2);
-    cal1->clear();
-    cal2->clear();
+    LocalPointer<GregorianCalendar> cal1(new GregorianCalendar(status), status);
+    LocalPointer<GregorianCalendar> cal2(new GregorianCalendar(status), status);
     if(U_FAILURE(status)) {
       dataerrln("Error creating Calendar: %s", u_errorName(status));
       return;
     }
+    cal1->set(UCAL_HOUR, 1);
+    cal2->set(UCAL_HOUR,2);
+    cal1->clear();
+    cal2->clear();
     failure(status, "new GregorianCalendar");
     cal1->set(2011,UCAL_MAY,06);
     cal2->set(2012,UCAL_JANUARY,06);

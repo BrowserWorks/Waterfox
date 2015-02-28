@@ -388,6 +388,23 @@ public:
   // Default copy-constructor and assignment are OK
 
   /**
+   * The system timestamps are the same as the TimeStamp
+   * retrieved by mozilla::TimeStamp. Since we need this for
+   * vsync timestamps, we enable the creation of mozilla::TimeStamps
+   * on platforms that support vsync aligned refresh drivers / compositors
+   * Verified true as of Nov 7, 2014: B2G and OS X
+   * UNTESTED ON OTHER PLATFORMS
+   */
+#if defined(MOZ_WIDGET_GONK) || defined(MOZ_WIDGET_COCOA)
+  static TimeStamp FromSystemTime(int64_t aSystemTime)
+  {
+    static_assert(sizeof(aSystemTime) == sizeof(TimeStampValue),
+                  "System timestamp should be same units as TimeStampValue");
+    return TimeStamp(aSystemTime);
+  }
+#endif
+
+  /**
    * Return true if this is the "null" moment
    */
   bool IsNull() const { return mValue == 0; }
@@ -500,17 +517,13 @@ public:
   }
   bool operator==(const TimeStamp& aOther) const
   {
-    // Maybe it's ok to check == with null timestamps?
-    MOZ_ASSERT(!IsNull() && "Cannot compute with a null value");
-    MOZ_ASSERT(!aOther.IsNull(), "Cannot compute with aOther null value");
-    return mValue == aOther.mValue;
+    return IsNull()
+           ? aOther.IsNull()
+           : !aOther.IsNull() && mValue == aOther.mValue;
   }
   bool operator!=(const TimeStamp& aOther) const
   {
-    // Maybe it's ok to check != with null timestamps?
-    MOZ_ASSERT(!IsNull(), "Cannot compute with a null value");
-    MOZ_ASSERT(!aOther.IsNull(), "Cannot compute with aOther null value");
-    return mValue != aOther.mValue;
+    return !(*this == aOther);
   }
 
   // Comparing TimeStamps for equality should be discouraged. Adding

@@ -26,12 +26,6 @@ namespace dom {
 
 class TabContext;
 
-namespace quota {
-
-class OriginOrPatternString;
-
-} // namespace quota
-
 namespace indexedDB {
 
 class FileManager;
@@ -39,7 +33,6 @@ class FileManagerInfo;
 
 class IndexedDatabaseManager MOZ_FINAL : public nsIObserver
 {
-  typedef mozilla::dom::quota::OriginOrPatternString OriginOrPatternString;
   typedef mozilla::dom::quota::PersistenceType PersistenceType;
 
 public:
@@ -80,6 +73,9 @@ public:
   static bool
   InTestingMode();
 
+  static bool
+  FullSynchronous();
+
   already_AddRefed<FileManager>
   GetFileManager(PersistenceType aPersistenceType,
                  const nsACString& aOrigin,
@@ -93,7 +89,7 @@ public:
 
   void
   InvalidateFileManagers(PersistenceType aPersistenceType,
-                         const OriginOrPatternString& aOriginOrPattern);
+                         const nsACString& aOrigin);
 
   void
   InvalidateFileManager(PersistenceType aPersistenceType,
@@ -147,11 +143,6 @@ private:
   void
   Destroy();
 
-  static PLDHashOperator
-  InvalidateAndRemoveFileManagers(const nsACString& aKey,
-                                  nsAutoPtr<FileManagerInfo>& aValue,
-                                  void* aUserArg);
-
   // Maintains a list of all file managers per origin. This list isn't
   // protected by any mutex but it is only ever touched on the IO thread.
   nsClassHashtable<nsCStringHashKey, FileManagerInfo> mFileManagerInfos;
@@ -162,6 +153,7 @@ private:
   mozilla::Mutex mFileMutex;
 
   static bool sIsMainProcess;
+  static bool sFullSynchronousMode;
   static mozilla::Atomic<bool> sLowDiskSpaceMode;
 };
 

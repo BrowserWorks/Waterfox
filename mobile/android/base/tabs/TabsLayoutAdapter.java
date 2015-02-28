@@ -21,12 +21,14 @@ public class TabsLayoutAdapter extends BaseAdapter {
     public static final String LOGTAG = "Gecko" + TabsLayoutAdapter.class.getSimpleName();
 
     private final Context mContext;
+    private final int mTabLayoutId;
     private ArrayList<Tab> mTabs;
     private final LayoutInflater mInflater;
 
-    public TabsLayoutAdapter (Context context) {
+    public TabsLayoutAdapter (Context context, int tabLayoutId) {
         mContext = context;
         mInflater = LayoutInflater.from(mContext);
+        mTabLayoutId = tabLayoutId;
     }
 
     final void setTabs (ArrayList<Tab> tabs) {
@@ -44,6 +46,7 @@ public class TabsLayoutAdapter extends BaseAdapter {
 
     final void clear() {
         mTabs = null;
+
         notifyDataSetChanged(); // Be sure to call this whenever mTabs changes.
     }
 
@@ -70,6 +73,11 @@ public class TabsLayoutAdapter extends BaseAdapter {
     }
 
     @Override
+    public boolean isEnabled(int position) {
+        return true;
+    }
+
+    @Override
     final public TabsLayoutItemView getView(int position, View convertView, ViewGroup parent) {
         final TabsLayoutItemView view;
         if (convertView == null) {
@@ -83,7 +91,7 @@ public class TabsLayoutAdapter extends BaseAdapter {
     }
 
     TabsLayoutItemView newView(int position, ViewGroup parent) {
-        return (TabsLayoutItemView) mInflater.inflate(R.layout.tabs_layout_item_view, parent, false);
+        return (TabsLayoutItemView) mInflater.inflate(mTabLayoutId, parent, false);
     }
 
     void bindView(TabsLayoutItemView view, Tab tab) {

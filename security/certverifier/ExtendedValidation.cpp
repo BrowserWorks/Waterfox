@@ -90,6 +90,10 @@ struct nsMyTrustedEVInfo
 // OCSP signing certificate, or OCSP for the intermediate certificates
 // isn't working, or OCSP isn't working at all.
 
+#ifdef DEBUG
+static const size_t NUM_TEST_EV_ROOTS = 2;
+#endif
+
 static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
   // IMPORTANT! When extending this list,
   // pairs of dotted_oid and oid_name should always be unique pairs.
@@ -98,10 +102,9 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
 #ifdef DEBUG
   // Debug EV certificates should all use the OID (repeating EV OID is OK):
   // 1.3.6.1.4.1.13769.666.666.666.1.500.9.1.
-  // If you add or remove debug EV certs you must also modify IdentityInfoInit
-  // (there is another #ifdef DEBUG section there) so that the correct number of
-  // certs are skipped as these debug EV certs are NOT part of the default trust
-  // store.
+  // If you add or remove debug EV certs you must also modify NUM_TEST_EV_ROOTS
+  // so that the correct number of certs are skipped as these debug EV certs are
+  // NOT part of the default trust store.
   {
     // This is the testing EV signature (xpcshell) (RSA)
     // CN=XPCShell EV Testing (untrustworthy) CA,OU=Security Engineering,O=Mozilla - EV debug test CA,L=Mountain View,ST=CA,C=US"
@@ -116,6 +119,20 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "VQQLDBRTZWN1cml0eSBFbmdpbmVlcmluZzEvMC0GA1UEAwwmWFBDU2hlbGwgRVYg"
     "VGVzdGluZyAodW50cnVzdHdvcnRoeSkgQ0E=",
     "At+3zdo=",
+    nullptr
+  },
+  {
+    // The RSA root with an inadequate key size used for EV key size checking
+    // O=ev-rsa-caBad,CN=XPCShell Key Size Testing rsa 2040-bit (EV)
+    "1.3.6.1.4.1.13769.666.666.666.1.500.9.1",
+    "DEBUGtesting EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x0E, 0xE2, 0x7A, 0x44, 0xD3, 0xAB, 0x66, 0x1A, 0x31, 0xBF, 0x0C,
+      0x1C, 0xFC, 0xAA, 0xD9, 0xD6, 0x27, 0x75, 0xC2, 0xDB, 0xC5, 0x69,
+      0xD7, 0x1C, 0xDE, 0x9C, 0x7E, 0xD5, 0x86, 0x88, 0x6C, 0xB7 },
+    "ME0xNDAyBgNVBAMMK1hQQ1NoZWxsIEtleSBTaXplIFRlc3RpbmcgcnNhIDIwNDAt"
+    "Yml0IChFVikxFTATBgNVBAoMDGV2LXJzYS1jYUJhZA==",
+    "PCQ3",
     nullptr
   },
 #endif
@@ -990,6 +1007,89 @@ static struct nsMyTrustedEVInfo myTrustedEVInfos[] = {
     "VQQDExVRdW9WYWRpcyBSb290IENBIDIgRzM=",
     "RFc0JFuBiZs18s64KztbpybwdSg=",
     nullptr
+  },
+  {
+    // CN=COMODO RSA Certification Authority,O=COMODO CA Limited,L=Salford,ST=Greater Manchester,C=GB
+    "1.3.6.1.4.1.6449.1.2.1.5.1",
+    "Comodo EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x52, 0xF0, 0xE1, 0xC4, 0xE5, 0x8E, 0xC6, 0x29, 0x29, 0x1B, 0x60,
+      0x31, 0x7F, 0x07, 0x46, 0x71, 0xB8, 0x5D, 0x7E, 0xA8, 0x0D, 0x5B,
+      0x07, 0x27, 0x34, 0x63, 0x53, 0x4B, 0x32, 0xB4, 0x02, 0x34 },
+    "MIGFMQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAw"
+    "DgYDVQQHEwdTYWxmb3JkMRowGAYDVQQKExFDT01PRE8gQ0EgTGltaXRlZDErMCkG"
+    "A1UEAxMiQ09NT0RPIFJTQSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ==",
+    "TKr5yttjb+Af907YWwOGnQ==",
+    nullptr
+  },
+  {
+    // CN=USERTrust RSA Certification Authority,O=The USERTRUST Network,L=Jersey City,ST=New Jersey,C=US
+    "1.3.6.1.4.1.6449.1.2.1.5.1",
+    "Comodo EV OID",
+    SEC_OID_UNKNOWN,
+    { 0xE7, 0x93, 0xC9, 0xB0, 0x2F, 0xD8, 0xAA, 0x13, 0xE2, 0x1C, 0x31,
+      0x22, 0x8A, 0xCC, 0xB0, 0x81, 0x19, 0x64, 0x3B, 0x74, 0x9C, 0x89,
+      0x89, 0x64, 0xB1, 0x74, 0x6D, 0x46, 0xC3, 0xD4, 0xCB, 0xD2 },
+    "MIGIMQswCQYDVQQGEwJVUzETMBEGA1UECBMKTmV3IEplcnNleTEUMBIGA1UEBxML"
+    "SmVyc2V5IENpdHkxHjAcBgNVBAoTFVRoZSBVU0VSVFJVU1QgTmV0d29yazEuMCwG"
+    "A1UEAxMlVVNFUlRydXN0IFJTQSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ==",
+    "Af1tMPyjylGoG7xkDjUDLQ==",
+    nullptr
+  },
+  {
+    // CN=USERTrust ECC Certification Authority,O=The USERTRUST Network,L=Jersey City,ST=New Jersey,C=US
+    "1.3.6.1.4.1.6449.1.2.1.5.1",
+    "Comodo EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x4F, 0xF4, 0x60, 0xD5, 0x4B, 0x9C, 0x86, 0xDA, 0xBF, 0xBC, 0xFC,
+      0x57, 0x12, 0xE0, 0x40, 0x0D, 0x2B, 0xED, 0x3F, 0xBC, 0x4D, 0x4F,
+      0xBD, 0xAA, 0x86, 0xE0, 0x6A, 0xDC, 0xD2, 0xA9, 0xAD, 0x7A },
+    "MIGIMQswCQYDVQQGEwJVUzETMBEGA1UECBMKTmV3IEplcnNleTEUMBIGA1UEBxML"
+    "SmVyc2V5IENpdHkxHjAcBgNVBAoTFVRoZSBVU0VSVFJVU1QgTmV0d29yazEuMCwG"
+    "A1UEAxMlVVNFUlRydXN0IEVDQyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eQ==",
+    "XIuZxVqUxdJxVt7NiYDMJg==",
+    nullptr
+  },
+  {
+    // CN=GlobalSign,O=GlobalSign,OU=GlobalSign ECC Root CA - R4
+    "1.3.6.1.4.1.4146.1.1",
+    "GlobalSign EV OID",
+    SEC_OID_UNKNOWN,
+    { 0xBE, 0xC9, 0x49, 0x11, 0xC2, 0x95, 0x56, 0x76, 0xDB, 0x6C, 0x0A,
+      0x55, 0x09, 0x86, 0xD7, 0x6E, 0x3B, 0xA0, 0x05, 0x66, 0x7C, 0x44,
+      0x2C, 0x97, 0x62, 0xB4, 0xFB, 0xB7, 0x73, 0xDE, 0x22, 0x8C },
+    "MFAxJDAiBgNVBAsTG0dsb2JhbFNpZ24gRUNDIFJvb3QgQ0EgLSBSNDETMBEGA1UE"
+    "ChMKR2xvYmFsU2lnbjETMBEGA1UEAxMKR2xvYmFsU2lnbg==",
+    "KjikHJYKBN5CsiilC+g0mAI=",
+    nullptr
+  },
+  {
+    // CN=GlobalSign,O=GlobalSign,OU=GlobalSign ECC Root CA - R5
+    "1.3.6.1.4.1.4146.1.1",
+    "GlobalSign EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x17, 0x9F, 0xBC, 0x14, 0x8A, 0x3D, 0xD0, 0x0F, 0xD2, 0x4E, 0xA1,
+      0x34, 0x58, 0xCC, 0x43, 0xBF, 0xA7, 0xF5, 0x9C, 0x81, 0x82, 0xD7,
+      0x83, 0xA5, 0x13, 0xF6, 0xEB, 0xEC, 0x10, 0x0C, 0x89, 0x24 },
+    "MFAxJDAiBgNVBAsTG0dsb2JhbFNpZ24gRUNDIFJvb3QgQ0EgLSBSNTETMBEGA1UE"
+    "ChMKR2xvYmFsU2lnbjETMBEGA1UEAxMKR2xvYmFsU2lnbg==",
+    "YFlJ4CYuu1X5CneKcflK2Gw=",
+    nullptr
+  },
+  {
+    // CN=Entrust.net Certification Authority (2048),OU=(c) 1999 Entrust.net Limited,OU=www.entrust.net/CPS_2048 incorp. by ref. (limits liab.),O=Entrust.net
+    "2.16.840.1.114028.10.1.2",
+    "Entrust EV OID",
+    SEC_OID_UNKNOWN,
+    { 0x6D, 0xC4, 0x71, 0x72, 0xE0, 0x1C, 0xBC, 0xB0, 0xBF, 0x62, 0x58,
+      0x0D, 0x89, 0x5F, 0xE2, 0xB8, 0xAC, 0x9A, 0xD4, 0xF8, 0x73, 0x80,
+      0x1E, 0x0C, 0x10, 0xB9, 0xC8, 0x37, 0xD2, 0x1E, 0xB1, 0x77 },
+    "MIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3d3d3LmVudHJ1c3Qu"
+    "bmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxpYWIuKTElMCMG"
+    "A1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEGA1UEAxMqRW50"
+    "cnVzdC5uZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgp",
+    "OGPe+A==",
+    nullptr
   }
 };
 
@@ -1082,8 +1182,9 @@ IdentityInfoInit()
     // treating that root cert as EV.
     if (!entry.cert) {
 #ifdef DEBUG
-      // The debug CA info is at position 0, and is NOT on the NSS root db
-      if (iEV == 0) {
+      // The debug CA structs are at positions 0 to NUM_TEST_EV_ROOTS - 1, and
+      // are NOT in the NSS root DB.
+      if (iEV < NUM_TEST_EV_ROOTS) {
         continue;
       }
 #endif

@@ -902,6 +902,22 @@ private:
      * Returns TRUE if c (repeated count times) is the pattern character for a numeric field.
      */
     static UBool U_EXPORT2 isNumericPatternChar(UChar c, int32_t count);
+public:
+#ifndef U_HIDE_INTERNAL_API
+    /**
+     * Gets a DateFormatSymbols by locale.
+     * Unlike the constructors which always use gregorian calendar, this
+     * method uses the calendar in the locale. If the locale contains no
+     * explicit calendar, this method uses the default calendar for that
+     * locale.
+     * @param locale the locale.
+     * @param status error returned here.
+     * @return the new DateFormatSymbols which the caller owns.
+     * @internal For ICU use only.
+     */
+    static DateFormatSymbols * U_EXPORT2 createForLocale(
+            const Locale &locale, UErrorCode &status);
+#endif  /* U_HIDE_INTERNAL_API */
 };
 
 U_NAMESPACE_END

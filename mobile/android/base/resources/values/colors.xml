@@ -5,7 +5,11 @@
 
 <resources>
   <color name="background_light">#FFF5F5F5</color>
+
+  <!-- If you update one, update the other. -->
   <color name="background_normal">#FFEBEBF0</color>
+  <color name="background_normal_lwt">#DDEBEBF0</color>
+
   <color name="background_private">#FF292C29</color>
   <color name="background_tabs">#FF363B40</color>
   <color name="highlight">#33000000</color>
@@ -13,8 +17,15 @@
   <color name="highlight_dark">#33FFFFFF</color>
   <color name="highlight_dark_focused">#1AFFFFFF</color>
 
-  <!-- (bug 1077195) Focused state values are temporary. -->
+  <!-- If you update one, update the other. -->
   <color name="new_tablet_highlight">#D7D7DC</color>
+  <color name="new_tablet_highlight_lwt">#AAD7D7DC</color>
+
+  <!-- If you update one, update the other. -->
+  <color name="new_tablet_highlight_dark">#45494E</color>
+  <color name="new_tablet_highlight_dark_lwt">#AA45494E</color>
+
+  <!-- (bug 1077195) Focused state values are temporary. -->
   <color name="new_tablet_highlight_focused">#C0C9D0</color>
   <color name="new_tablet_highlight_pb">#222222</color>
   <color name="new_tablet_highlight_focused_pb">#363B40</color>
@@ -110,6 +121,9 @@
   <color name="url_bar_blockedtext">#b14646</color>
   <color name="url_bar_shadow">#12000000</color>
 
+  <color name="nav_button_border_color">#BFBFBF</color>
+  <color name="nav_button_border_color_private">#5F6368</color>
+
   <color name="home_button_bar_bg">#FFF5F7F9</color>
 
   <!-- Colour used for share overlay button labels -->
@@ -137,4 +151,29 @@
   <color name="toast_button_background">#00000000</color>
   <color name="toast_button_pressed">#DD2C3136</color>
   <color name="toast_button_text">#FFFFFFFF</color>
+
+  <!-- Tab History colors. -->
+  <color name="tab_history_background">#EBEBF0</color>
+  <color name="tab_history_timeline_separator">#D7D9DB</color>
+  <color name="tab_history_favicon_border">#D7D9DB</color>
+  <color name="tab_history_favicon_background">#FFFFFF</color>
+  <color name="tab_history_title_color">#363B40</color>
+  <color name="tab_history_border_color">#DADADF</color>
+
+  <!-- Colour used for Find-In-Page dialog -->
+  <color name="find_status_default">#AFB1B3</color>
+  <color name="find_matchcase_on">#AFB1B3</color>
+  <color name="find_matchcase_off">#D02626</color>
+
+  <!-- Canvas delegate paint color -->
+  <color name="canvas_delegate_paint">#FFFF0000</color>
+
+  <!-- Top sites thumbnail colors -->
+  <color name="top_site_default">#FFECF0F3</color>
+  <color name="top_site_border">#FFCFD9E1</color>
+
+  <!-- Tab grid text highlight colour -->
+  <color name="new_tablet_tab_grid_text_unselected">#FFAFB1B3</color>
+
+
 </resources>

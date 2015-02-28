@@ -32,33 +32,6 @@ function waitForManagerEvent(aEventName) {
 }
 
 /**
- * Wrap DOMRequest onsuccess/onerror events to Promise resolve/reject.
- *
- * Fulfill params: A DOMEvent.
- * Reject params: A DOMEvent.
- *
- * @param aRequest
- *        A DOMRequest instance.
- *
- * @return A deferred promise.
- */
-function wrapDomRequestAsPromise(aRequest) {
-  let deferred = Promise.defer();
-
-  ok(aRequest instanceof DOMRequest,
-     "aRequest is instanceof " + aRequest.constructor);
-
-  aRequest.addEventListener("success", function(aEvent) {
-    deferred.resolve(aEvent);
-  });
-  aRequest.addEventListener("error", function(aEvent) {
-    deferred.reject(aEvent);
-  });
-
-  return deferred.promise;
-}
-
-/**
  * Configures call forward options.
  *
  * Fulfill params: (none)
@@ -73,8 +46,7 @@ function wrapDomRequestAsPromise(aRequest) {
  */
 function setCallForwardingOption(aOptions) {
   let request = connection.setCallForwardingOption(aOptions);
-  return wrapDomRequestAsPromise(request)
-    .then(null, () => { throw request.error; });
+  return request.then(null, () => { throw request.error; });
 }
 
 const TEST_DATA = [
@@ -133,7 +105,6 @@ function testSetCallForwarding(aData) {
   let promises = [];
   // Check cfstatechange event.
   promises.push(waitForManagerEvent("cfstatechange").then(function(aEvent) {
-    is(aEvent.success, true, "check success");
     is(aEvent.action, MozMobileConnection.CALL_FORWARD_ACTION_REGISTRATION,
        "check action");
     is(aEvent.reason, aData.reason, "check reason");
@@ -141,15 +112,14 @@ function testSetCallForwarding(aData) {
     is(aEvent.timeSeconds, aData.timeSeconds, "check timeSeconds");
     is(aEvent.serviceClass, aData.serviceClass, "check serviceClass");
   }));
-  // Check DOMRequest's result.
-  promises.push(sendMMI(MMI_CODE)
-    .then(function resolve(aResult) {
-      is(aResult.serviceCode, "scCallForwarding", "Check service code");
-      is(aResult.statusMessage, "smServiceRegistered", "Check status message");
-      is(aResult.additionalInformation, undefined, "Check additional information");
-    }, function reject(aError) {
-      ok(false, "got '" + aError.name + "' error");
-    }));
+
+  // Check MMI result.
+  promises.push(gSendMMI(MMI_CODE).then(aResult => {
+    ok(aResult.success, "success");
+    is(aResult.serviceCode, "scCallForwarding", "Check service code");
+    is(aResult.statusMessage, "smServiceRegistered", "Check status message");
+    is(aResult.additionalInformation, undefined, "Check additional information");
+  }));
 
   return Promise.all(promises);
 }
@@ -159,30 +129,28 @@ function testGetCallForwarding(aExpectedData) {
   let MMI_CODE = "*#" + CF_REASON_TO_MMI[aExpectedData.reason] + "#";
   log("Test " + MMI_CODE);
 
-  return sendMMI(MMI_CODE)
-    .then(function resolve(aResult) {
-      is(aResult.serviceCode, "scCallForwarding", "Check service code");
-      is(aResult.statusMessage, "smServiceInterrogated", "Check status message");
-      is(Array.isArray(aResult.additionalInformation), true,
-         "additionalInformation should be an array");
+  return gSendMMI(MMI_CODE).then(aResult => {
+    ok(aResult.success, "success");
+    is(aResult.serviceCode, "scCallForwarding", "Check service code");
+    is(aResult.statusMessage, "smServiceInterrogated", "Check status message");
+    ok(Array.isArray(aResult.additionalInformation),
+       "additionalInformation should be an array");
 
-      for (let i = 0; i < aResult.additionalInformation.length; i++) {
-        let result = aResult.additionalInformation[i];
+    for (let i = 0; i < aResult.additionalInformation.length; i++) {
+     let result = aResult.additionalInformation[i];
 
-        // Only need to check the result containing the serviceClass that we are
-        // interested in.
-        if (!(result.serviceClass & aExpectedData.serviceClass)) {
-          continue;
-        }
+     // Only need to check the result containing the serviceClass that we are
+     // interested in.
+     if (!(result.serviceClass & aExpectedData.serviceClass)) {
+       continue;
+     }
 
-        is(result.active, true, "check active");
-        is(result.reason, aExpectedData.reason, "check reason");
-        is(result.number, aExpectedData.number, "check number");
-        is(result.timeSeconds, aExpectedData.timeSeconds, "check timeSeconds");
-      }
-    }, function reject(aError) {
-      ok(false, MMI_CODE + " got error: " + aError.name);
-    });
+     is(result.active, true, "check active");
+     is(result.reason, aExpectedData.reason, "check reason");
+     is(result.number, aExpectedData.number, "check number");
+     is(result.timeSeconds, aExpectedData.timeSeconds, "check timeSeconds");
+    }
+  });
 }
 
 function clearAllCallForwardingSettings() {
@@ -214,8 +182,9 @@ startTestWithPermissions(['mobileconnection'], function() {
     promise = promise.then(() => testSetCallForwarding(data))
                      .then(() => testGetCallForwarding(data));
   }
+
   // reset call forwarding settings.
-  return promise.then(null, () => { ok(false, "promise reject during test"); })
-    .then(() => clearAllCallForwardingSettings())
+  return promise.then(() => clearAllCallForwardingSettings())
+    .catch(error => ok(false, "Promise reject: " + error))
     .then(finish);
 });

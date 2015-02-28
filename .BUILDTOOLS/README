@@ -1,0 +1,10 @@
+This is the build environment used to make Waterfox.
+To create a 64-Bit build, execute the batch file start-shell-icc14-msvc2010-x64.bat.
+Navigate to the Waterfox root directory and run ./mach build to get started!
+
+Requirements:
+The following is needed to build Waterfox successfully:
+- Intel's C++ Compiler 13 Service Pack 1 Update 4
+- Microsoft Visual Studio 2010 Service Pack 1
+- DirectX SDK (June 2010)
+- Windows 8.1 SDK

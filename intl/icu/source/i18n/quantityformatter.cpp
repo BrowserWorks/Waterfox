@@ -170,7 +170,13 @@ UnicodeString &QuantityFormatter::format(
     fmt.format(quantity, formattedNumber, fpos, status);
     const UnicodeString *params[1] = {&formattedNumber};
     int32_t offsets[1];
-    pattern->format(params, UPRV_LENGTHOF(params), appendTo, offsets, UPRV_LENGTHOF(offsets), status);
+    pattern->formatAndAppend(
+            params,
+            UPRV_LENGTHOF(params),
+            appendTo,
+            offsets,
+            UPRV_LENGTHOF(offsets),
+            status);
     if (offsets[0] != -1) {
         if (fpos.getBeginIndex() != 0 || fpos.getEndIndex() != 0) {
             pos.setBeginIndex(fpos.getBeginIndex() + offsets[0]);

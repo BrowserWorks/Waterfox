@@ -10,7 +10,7 @@
  * ICU <specials> source: <path>/common/main/fy.xml
  */
 fy{
-    Version{"2.1.7.53"}
+    Version{"2.1.10.42"}
     zoneStrings{
         "Africa:Addis_Ababa"{
             ec{"Addis Abeba"}

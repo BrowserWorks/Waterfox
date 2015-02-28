@@ -35,8 +35,10 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
 
     /*** IPC handlers ***/
 
-    bool RecvPreventExtensions(const uint64_t &objId, ReturnStatus *rs) {
-        return Answer::RecvPreventExtensions(ObjectId::deserialize(objId), rs);
+    bool RecvPreventExtensions(const uint64_t &objId, ReturnStatus *rs,
+                               bool *succeeded) {
+        return Answer::RecvPreventExtensions(ObjectId::deserialize(objId), rs,
+                                             succeeded);
     }
     bool RecvGetPropertyDescriptor(const uint64_t &objId, const JSIDVariant &id,
                                      ReturnStatus *rs,
@@ -102,8 +104,8 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     }
 
     bool RecvGetPropertyKeys(const uint64_t &objId, const uint32_t &flags,
-                             ReturnStatus *rs, nsTArray<nsString> *names) {
-        return Answer::RecvGetPropertyKeys(ObjectId::deserialize(objId), flags, rs, names);
+                             ReturnStatus *rs, nsTArray<JSIDVariant> *ids) {
+        return Answer::RecvGetPropertyKeys(ObjectId::deserialize(objId), flags, rs, ids);
     }
     bool RecvInstanceOf(const uint64_t &objId, const JSIID &iid,
                           ReturnStatus *rs, bool *instanceof) {
@@ -112,14 +114,6 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     bool RecvDOMInstanceOf(const uint64_t &objId, const int &prototypeID, const int &depth,
                              ReturnStatus *rs, bool *instanceof) {
         return Answer::RecvDOMInstanceOf(ObjectId::deserialize(objId), prototypeID, depth, rs, instanceof);
-    }
-
-    bool RecvIsCallable(const uint64_t &objId, bool *result) {
-        return Answer::RecvIsCallable(ObjectId::deserialize(objId), result);
-    }
-
-    bool RecvIsConstructor(const uint64_t &objId, bool *result) {
-        return Answer::RecvIsConstructor(ObjectId::deserialize(objId), result);
     }
 
     bool RecvDropObject(const uint64_t &objId) {
@@ -131,8 +125,9 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     bool SendDropObject(const ObjectId &objId) {
         return Base::SendDropObject(objId.serialize());
     }
-    bool SendPreventExtensions(const ObjectId &objId, ReturnStatus *rs) {
-        return Base::SendPreventExtensions(objId.serialize(), rs);
+    bool SendPreventExtensions(const ObjectId &objId, ReturnStatus *rs,
+                               bool *succeeded) {
+        return Base::SendPreventExtensions(objId.serialize(), rs, succeeded);
     }
     bool SendGetPropertyDescriptor(const ObjectId &objId, const JSIDVariant &id,
                                      ReturnStatus *rs,
@@ -200,8 +195,8 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     }
 
     bool SendGetPropertyKeys(const ObjectId &objId, const uint32_t &flags,
-                             ReturnStatus *rs, nsTArray<nsString> *names) {
-        return Base::SendGetPropertyKeys(objId.serialize(), flags, rs, names);
+                             ReturnStatus *rs, nsTArray<JSIDVariant> *ids) {
+        return Base::SendGetPropertyKeys(objId.serialize(), flags, rs, ids);
     }
     bool SendInstanceOf(const ObjectId &objId, const JSIID &iid,
                         ReturnStatus *rs, bool *instanceof) {
@@ -210,14 +205,6 @@ class JavaScriptBase : public WrapperOwner, public WrapperAnswer, public Base
     bool SendDOMInstanceOf(const ObjectId &objId, const int &prototypeID, const int &depth,
                            ReturnStatus *rs, bool *instanceof) {
         return Base::SendDOMInstanceOf(objId.serialize(), prototypeID, depth, rs, instanceof);
-    }
-
-    bool SendIsCallable(const ObjectId &objId, bool *result) {
-        return Base::SendIsCallable(objId.serialize(), result);
-    }
-
-    bool SendIsConstructor(const ObjectId &objId, bool *result) {
-        return Base::SendIsConstructor(objId.serialize(), result);
     }
 
     /* The following code is needed to suppress a bogus MSVC warning (C4250). */

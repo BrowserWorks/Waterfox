@@ -160,14 +160,18 @@ enum nsSelectionAmount {
                         // choice for movement or selection by "character"
                         // as perceived by the user
   eSelectWord      = 2,
-  eSelectLine      = 3, // previous drawn line in flow.
-  eSelectBeginLine = 4,
-  eSelectEndLine   = 5,
-  eSelectNoAmount  = 6, // just bounce back current offset.
-  eSelectParagraph = 7,  // select a "paragraph"
-  eSelectWordNoSpace = 8 // select a "word" without selecting the following
-                         // space, no matter what the default platform
-                         // behavior is
+  eSelectWordNoSpace = 3, // select a "word" without selecting the following
+                          // space, no matter what the default platform
+                          // behavior is
+  eSelectLine      = 4, // previous drawn line in flow.
+  // NOTE that selection code depends on the ordering of the above values,
+  // allowing simple <= tests to check categories of caret movement.
+  // Don't rearrange without checking the usage in nsSelection.cpp!
+
+  eSelectBeginLine = 5,
+  eSelectEndLine   = 6,
+  eSelectNoAmount  = 7, // just bounce back current offset.
+  eSelectParagraph = 8  // select a "paragraph"
 };
 
 enum nsSpread {
@@ -608,7 +612,7 @@ public:
    * The frame's writing-mode, used for logical layout computations.
    */
   mozilla::WritingMode GetWritingMode() const {
-    return mozilla::WritingMode(StyleVisibility());
+    return mozilla::WritingMode(StyleContext());
   }
 
   /**
@@ -745,6 +749,15 @@ public:
   void MovePositionBy(const nsPoint& aTranslation);
 
   /**
+   * As above, using a logical-point delta in a given writing mode.
+   */
+  void MovePositionBy(mozilla::WritingMode aWritingMode,
+                      const mozilla::LogicalPoint& aTranslation)
+  {
+    MovePositionBy(aTranslation.GetPhysicalPoint(aWritingMode, 0));
+  }
+
+  /**
    * Return frame's position without relative positioning
    */
   nsPoint GetNormalPosition() const;
@@ -752,8 +765,12 @@ public:
   GetLogicalNormalPosition(mozilla::WritingMode aWritingMode,
                            nscoord aContainerWidth) const
   {
+    // Subtract the width of this frame from the container width to get
+    // the correct position in rtl frames where the origin is on the
+    // right instead of the left
     return mozilla::LogicalPoint(aWritingMode,
-                                 GetNormalPosition(), aContainerWidth);
+                                 GetNormalPosition(),
+                                 aContainerWidth - mRect.width);
   }
 
   virtual nsPoint GetPositionOfChildIgnoringScrolling(nsIFrame* aChild)
@@ -785,6 +802,7 @@ public:
 
   static void DestroySurface(void* aPropertyValue);
   static void DestroyDT(void* aPropertyValue);
+  static void DestroyContentArray(void* aPropertyValue);
 
 #ifdef _MSC_VER
 // XXX Workaround MSVC issue by making the static FramePropertyDescriptor
@@ -843,6 +861,13 @@ public:
   NS_DECLARE_FRAME_PROPERTY(InvalidationRect, DestroyRect)
 
   NS_DECLARE_FRAME_PROPERTY(RefusedAsyncAnimation, nullptr)
+
+  NS_DECLARE_FRAME_PROPERTY(GenConProperty, DestroyContentArray)
+
+  nsTArray<nsIContent*>* GetGenConPseudos() {
+    const FramePropertyDescriptor* prop = GenConProperty();
+    return static_cast<nsTArray<nsIContent*>*>(Properties().Get(prop));
+  }
 
   /**
    * Return the distance between the border edge of the frame and the
@@ -1634,7 +1659,8 @@ public:
   /**
    * Bit-flags to pass to ComputeSize in |aFlags| parameter.
    */
-  enum {
+  enum ComputeSizeFlags {
+    eDefault =           0,
     /* Set if the frame is in a context where non-replaced blocks should
      * shrink-wrap (e.g., it's floating, absolutely positioned, or
      * inline-block). */
@@ -1693,7 +1719,7 @@ public:
               const mozilla::LogicalSize& aMargin,
               const mozilla::LogicalSize& aBorder,
               const mozilla::LogicalSize& aPadding,
-              uint32_t aFlags) = 0;
+              ComputeSizeFlags aFlags) = 0;
 
   /**
    * Compute a tight bounding rectangle for the frame. This is a rectangle
@@ -2201,6 +2227,9 @@ public:
    * If no layer is found, calls InvalidateFrame() instead.
    *
    * @param aDamageRect Area of the layer to invalidate.
+   * @param aFrameDamageRect If no layer is found, the area of the frame to
+   *                         invalidate. If null, the entire frame will be
+   *                         invalidated.
    * @param aDisplayItemKey Display item type.
    * @param aFlags UPDATE_IS_ASYNC : Will skip the invalidation
    * if the found layer is being composited by a remote
@@ -2210,7 +2239,10 @@ public:
   enum {
     UPDATE_IS_ASYNC = 1 << 0
   };
-  Layer* InvalidateLayer(uint32_t aDisplayItemKey, const nsIntRect* aDamageRect = nullptr, uint32_t aFlags = 0);
+  Layer* InvalidateLayer(uint32_t aDisplayItemKey,
+                         const nsIntRect* aDamageRect = nullptr,
+                         const nsRect* aFrameDamageRect = nullptr,
+                         uint32_t aFlags = 0);
 
   /**
    * Returns a rect that encompasses everything that might be painted by
@@ -2410,7 +2442,7 @@ public:
   virtual nsresult PeekOffset(nsPeekOffsetStruct *aPos);
 
   /**
-   *  called to find the previous/next selectable leaf frame.
+   *  called to find the previous/next non-anonymous selectable leaf frame.
    *  @param aDirection [in] the direction to move in (eDirPrevious or eDirNext)
    *  @param aVisual [in] whether bidi caret behavior is visual (true) or logical (false)
    *  @param aJumpLines [in] whether to allow jumping across line boundaries
@@ -2464,11 +2496,13 @@ public:
    * return a grandparent or higher!  Furthermore, if a child frame is
    * returned it must have the same GetContent() as this frame.
    *
-   * @return The frame whose style context should be the parent of this frame's
+   * @param aProviderFrame (out) the frame associated with the returned value
+   *     or nullptr if the style context is for display:contents content.
+   * @return The style context that should be the parent of this frame's
    *         style context.  Null is permitted, and means that this frame's
    *         style context should be the root of the style context tree.
    */
-  virtual nsIFrame* GetParentStyleContextFrame() const = 0;
+  virtual nsStyleContext* GetParentStyleContext(nsIFrame** aProviderFrame) const = 0;
 
   /**
    * Determines whether a frame is visible for painting;

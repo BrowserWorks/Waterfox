@@ -7,16 +7,15 @@
 
 const TAB_URL = EXAMPLE_URL + "doc_script-switching-01.html";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gSources, gSearchView, gSearchBox;
 
 function test() {
   // Debug test slaves are a bit slow at this test.
   requestLongerTimeout(3);
 
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gSources = gDebugger.DebuggerView.Sources;
@@ -109,11 +108,11 @@ function thirdSearch() {
     let finished = promise.all([
       once(gDebugger, "popupshown"),
       waitForDebuggerEvents(gPanel, gDebugger.EVENTS.FILE_SEARCH_MATCH_FOUND),
-      waitForCaretUpdated(gPanel, 6, 12)
+      waitForCaretUpdated(gPanel, 6, 6)
     ])
     .then(() => promise.all([
       ensureSourceIs(gPanel, "-02.js"),
-      ensureCaretAt(gPanel, 6, 12),
+      ensureCaretAt(gPanel, 6, 6),
       verifyContents({ itemCount: 1, hidden: false })
     ]));
 
@@ -226,7 +225,6 @@ function verifyContents(aArgs) {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gSources = null;

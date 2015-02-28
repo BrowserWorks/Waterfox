@@ -29,7 +29,7 @@
 #include "ActorsChild.h"
 
 #ifdef DEBUG
-#include "nsContentUtils.h" // For IsCallerChrome assertions.
+#include "nsContentUtils.h" // For assertions.
 #endif
 
 namespace mozilla {
@@ -110,7 +110,7 @@ struct IDBFactory::PendingRequestInfo
 IDBFactory::IDBFactory()
   : mOwningObject(nullptr)
   , mBackgroundActor(nullptr)
-  , mRootedOwningObject(false)
+  , mInnerWindowID(0)
   , mBackgroundActorFailed(false)
   , mPrivateBrowsingMode(false)
 {
@@ -124,10 +124,8 @@ IDBFactory::~IDBFactory()
 {
   MOZ_ASSERT_IF(mBackgroundActorFailed, !mBackgroundActor);
 
-  if (mRootedOwningObject) {
-    mOwningObject = nullptr;
-    mozilla::DropJSObjects(this);
-  }
+  mOwningObject = nullptr;
+  mozilla::DropJSObjects(this);
 
   if (mBackgroundActor) {
     mBackgroundActor->SendDeleteMeInternal();
@@ -145,18 +143,24 @@ IDBFactory::CreateForWindow(nsPIDOMWindow* aWindow,
   MOZ_ASSERT(aWindow->IsInnerWindow());
   MOZ_ASSERT(aFactory);
 
-  if (NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
+  bool isChrome = false;
+  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aWindow);
+  nsCOMPtr<nsIPrincipal> principal;
+  if (sop) {
+    principal = sop->GetPrincipal();
+    isChrome = principal && nsContentUtils::IsSystemPrincipal(principal);
+  }
+
+  if (!isChrome && NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
     *aFactory = nullptr;
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
   }
 
-  nsCOMPtr<nsIScriptObjectPrincipal> sop = do_QueryInterface(aWindow);
   if (NS_WARN_IF(!sop)) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
   }
 
-  nsCOMPtr<nsIPrincipal> principal = sop->GetPrincipal();
   if (NS_WARN_IF(!principal)) {
     IDB_REPORT_INTERNAL_ERR();
     return NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -186,6 +190,7 @@ IDBFactory::CreateForWindow(nsPIDOMWindow* aWindow,
   factory->mPrincipalInfo = Move(principalInfo);
   factory->mWindow = aWindow;
   factory->mTabChild = TabChild::GetFrom(aWindow);
+  factory->mInnerWindowID = aWindow->WindowID();
   factory->mPrivateBrowsingMode = privateBrowsingMode;
 
   factory.forget(aFactory);
@@ -257,7 +262,8 @@ IDBFactory::CreateForJSInternal(JSContext* aCx,
     MOZ_CRASH("Not yet supported off the main thread!");
   }
 
-  if (NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
+  if (aPrincipalInfo->type() != PrincipalInfo::TSystemPrincipalInfo &&
+      NS_WARN_IF(!Preferences::GetBool(kPrefIndexedDBEnabled, false))) {
     *aFactory = nullptr;
     return NS_ERROR_DOM_INDEXEDDB_NOT_ALLOWED_ERR;
   }
@@ -271,9 +277,7 @@ IDBFactory::CreateForJSInternal(JSContext* aCx,
   nsRefPtr<IDBFactory> factory = new IDBFactory();
   factory->mPrincipalInfo = aPrincipalInfo.forget();
   factory->mOwningObject = aOwningObject;
-
   mozilla::HoldJSObjects(factory.get());
-  factory->mRootedOwningObject = true;
 
   factory.forget(aFactory);
   return NS_OK;
@@ -289,6 +293,15 @@ IDBFactory::AssertIsOnOwningThread() const
 }
 
 #endif // DEBUG
+
+bool
+IDBFactory::IsChrome() const
+{
+  AssertIsOnOwningThread();
+  MOZ_ASSERT(mPrincipalInfo);
+
+  return mPrincipalInfo->type() == PrincipalInfo::TSystemPrincipalInfo;
+}
 
 void
 IDBFactory::SetBackgroundActor(BackgroundFactoryChild* aBackgroundActor)
@@ -473,24 +486,18 @@ IDBFactory::OpenInternal(nsIPrincipal* aPrincipal,
     return nullptr;
   }
 
-  // XXX We need a bug to switch to temporary storage by default.
-
   PersistenceType persistenceType;
-  bool persistenceTypeIsExplicit;
 
   if (principalInfo.type() == PrincipalInfo::TSystemPrincipalInfo) {
     // Chrome privilege always gets persistent storage.
     persistenceType = PERSISTENCE_TYPE_PERSISTENT;
-    persistenceTypeIsExplicit = false;
   } else {
     persistenceType = PersistenceTypeFromStorage(aStorageType);
-    persistenceTypeIsExplicit = aStorageType.WasPassed();
   }
 
   DatabaseMetadata& metadata = commonParams.metadata();
   metadata.name() = aName;
   metadata.persistenceType() = persistenceType;
-  metadata.persistenceTypeIsExplicit() = persistenceTypeIsExplicit;
 
   FactoryRequestParams params;
   if (aDeleting) {
@@ -529,19 +536,20 @@ IDBFactory::OpenInternal(nsIPrincipal* aPrincipal,
   nsRefPtr<IDBOpenDBRequest> request;
 
   if (mWindow) {
-    if (NS_WARN_IF(!autoJS.Init(mWindow))) {
+    AutoJSContext cx;
+    if (NS_WARN_IF(!autoJS.Init(mWindow, cx))) {
       IDB_REPORT_INTERNAL_ERR();
       aRv.Throw(NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
       return nullptr;
     }
 
-    JS::Rooted<JSObject*> scriptOwner(autoJS.cx(),
+    JS::Rooted<JSObject*> scriptOwner(cx,
       static_cast<nsGlobalWindow*>(mWindow.get())->FastGetGlobalJSObject());
     MOZ_ASSERT(scriptOwner);
 
     request = IDBOpenDBRequest::CreateForWindow(this, mWindow, scriptOwner);
   } else {
-    autoJS.Init();
+    autoJS.Init(mOwningObject.get());
     JS::Rooted<JSObject*> scriptOwner(autoJS.cx(), mOwningObject);
 
     request = IDBOpenDBRequest::CreateForJS(this, scriptOwner);
@@ -716,13 +724,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_END
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBFactory)
   NS_IMPL_CYCLE_COLLECTION_UNLINK_PRESERVED_WRAPPER
-  if (tmp->mOwningObject) {
-    tmp->mOwningObject = nullptr;
-  }
-  if (tmp->mRootedOwningObject) {
-    mozilla::DropJSObjects(tmp);
-    tmp->mRootedOwningObject = false;
-  }
+  tmp->mOwningObject = nullptr;
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mWindow)
 NS_IMPL_CYCLE_COLLECTION_UNLINK_END
 

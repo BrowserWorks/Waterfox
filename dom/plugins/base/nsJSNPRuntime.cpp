@@ -158,14 +158,17 @@ NPObjWrapper_newEnumerate(JSContext *cx, JS::Handle<JSObject*> obj, JSIterateOp 
                           JS::Value *statep, jsid *idp);
 
 static bool
-NPObjWrapper_NewResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                        JS::MutableHandle<JSObject*> objp);
+NPObjWrapper_Resolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
+                     bool *resolvedp);
 
 static bool
 NPObjWrapper_Convert(JSContext *cx, JS::Handle<JSObject*> obj, JSType type, JS::MutableHandle<JS::Value> vp);
 
 static void
-NPObjWrapper_Finalize(JSFreeOp *fop, JSObject *obj);
+NPObjWrapper_Finalize(js::FreeOp *fop, JSObject *obj);
+
+static void
+NPObjWrapper_ObjectMoved(JSObject *obj, const JSObject *old);
 
 static bool
 NPObjWrapper_Call(JSContext *cx, unsigned argc, JS::Value *vp);
@@ -178,21 +181,30 @@ CreateNPObjectMember(NPP npp, JSContext *cx, JSObject *obj, NPObject* npobj,
                      JS::Handle<jsid> id,  NPVariant* getPropertyResult,
                      JS::MutableHandle<JS::Value> vp);
 
-const JSClass sNPObjectJSWrapperClass =
+const static js::Class sNPObjectJSWrapperClass =
   {
     NPRUNTIME_JSCLASS_NAME,
-    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_NEW_RESOLVE | JSCLASS_NEW_ENUMERATE,
+    JSCLASS_HAS_PRIVATE | JSCLASS_IMPLEMENTS_BARRIERS | JSCLASS_NEW_ENUMERATE,
     NPObjWrapper_AddProperty,
     NPObjWrapper_DelProperty,
     NPObjWrapper_GetProperty,
     NPObjWrapper_SetProperty,
     (JSEnumerateOp)NPObjWrapper_newEnumerate,
-    (JSResolveOp)NPObjWrapper_NewResolve,
+    NPObjWrapper_Resolve,
     NPObjWrapper_Convert,
     NPObjWrapper_Finalize,
     NPObjWrapper_Call,
     nullptr,                                                /* hasInstance */
-    NPObjWrapper_Construct
+    NPObjWrapper_Construct,
+    nullptr,                                                /* trace */
+    JS_NULL_CLASS_SPEC,
+    {
+      nullptr,                                              /* outerObject */
+      nullptr,                                              /* innerObject */
+      false,                                                /* isWrappedNative */
+      nullptr,                                              /* weakmapKeyDelegateOp */
+      NPObjWrapper_ObjectMoved
+    }
   };
 
 typedef struct NPObjectMemberPrivate {
@@ -1262,8 +1274,7 @@ NPObjWrapper_DelProperty(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<js
     }
   }
 
-  if (!npobj->_class->removeProperty(npobj, identifier))
-    *succeeded = false;
+  *succeeded = npobj->_class->removeProperty(npobj, identifier);
 
   return ReportExceptionIfPending(cx);
 }
@@ -1641,8 +1652,8 @@ NPObjWrapper_newEnumerate(JSContext *cx, JS::Handle<JSObject*> obj, JSIterateOp 
 }
 
 static bool
-NPObjWrapper_NewResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
-                        JS::MutableHandle<JSObject*> objp)
+NPObjWrapper_Resolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsid> id,
+                     bool *resolvedp)
 {
   if (JSID_IS_SYMBOL(id))
     return true;
@@ -1672,7 +1683,7 @@ NPObjWrapper_NewResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsi
         return false;
     }
 
-    objp.set(obj);
+    *resolvedp = true;
 
     return true;
   }
@@ -1688,7 +1699,7 @@ NPObjWrapper_NewResolve(JSContext *cx, JS::Handle<JSObject*> obj, JS::Handle<jsi
     JSFunction *fnc = ::JS_DefineFunctionById(cx, obj, id, CallNPMethod, 0,
                                               JSPROP_ENUMERATE);
 
-    objp.set(obj);
+    *resolvedp = true;
 
     return fnc != nullptr;
   }
@@ -1734,7 +1745,7 @@ NPObjWrapper_Convert(JSContext *cx, JS::Handle<JSObject*> obj, JSType hint, JS::
 }
 
 static void
-NPObjWrapper_Finalize(JSFreeOp *fop, JSObject *obj)
+NPObjWrapper_Finalize(js::FreeOp *fop, JSObject *obj)
 {
   NPObject *npobj = (NPObject *)::JS_GetPrivate(obj);
   if (npobj) {
@@ -1746,6 +1757,32 @@ NPObjWrapper_Finalize(JSFreeOp *fop, JSObject *obj)
   if (!sDelayedReleases)
     sDelayedReleases = new nsTArray<NPObject*>;
   sDelayedReleases->AppendElement(npobj);
+}
+
+static void
+NPObjWrapper_ObjectMoved(JSObject *obj, const JSObject *old)
+{
+  // The wrapper JSObject has been moved, so we need to update the entry in the
+  // sNPObjWrappers hash table, if present.
+
+  if (!sNPObjWrappers.ops) {
+    return;
+  }
+
+  NPObject *npobj = (NPObject *)::JS_GetPrivate(obj);
+  if (!npobj) {
+    return;
+  }
+
+  // The hazard analysis thinks that PL_DHashTableOperate() can GC but this is
+  // not possible if we pass PL_DHASH_LOOKUP.
+  JS::AutoSuppressGCAnalysis nogc;
+
+  NPObjWrapperHashEntry *entry = static_cast<NPObjWrapperHashEntry *>
+    (PL_DHashTableOperate(&sNPObjWrappers, npobj, PL_DHASH_LOOKUP));
+  MOZ_ASSERT(PL_DHASH_ENTRY_IS_BUSY(entry) && entry->mJSObj);
+  MOZ_ASSERT(entry->mJSObj == old);
+  entry->mJSObj = obj;
 }
 
 static bool
@@ -1767,7 +1804,7 @@ NPObjWrapper_Construct(JSContext *cx, unsigned argc, JS::Value *vp)
 bool
 nsNPObjWrapper::IsWrapper(JSObject *obj)
 {
-  return js::GetObjectJSClass(obj) == &sNPObjectJSWrapperClass;
+  return js::GetObjectClass(obj) == &sNPObjectJSWrapperClass;
 }
 
 // An NPObject is going away, make sure we null out the JS object's
@@ -1872,8 +1909,8 @@ nsNPObjWrapper::GetNewOrUsed(NPP npp, JSContext *cx, NPObject *npobj)
 
   // No existing JSObject, create one.
 
-  JS::Rooted<JSObject*> obj(cx, ::JS_NewObject(cx, &sNPObjectJSWrapperClass, JS::NullPtr(),
-                                               JS::NullPtr()));
+  JS::Rooted<JSObject*> obj(cx, ::JS_NewObject(cx, js::Jsvalify(&sNPObjectJSWrapperClass),
+                                               JS::NullPtr(), JS::NullPtr()));
 
   if (generation != sNPObjWrappers.Generation()) {
       // Reload entry if the JS_NewObject call caused a GC and reallocated

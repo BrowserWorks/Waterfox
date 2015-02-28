@@ -215,9 +215,6 @@ private:
 
     static int32_t ceStrength(int64_t ce);
 
-    /** The secondary/tertiary lower limit for tailoring before the common weight. */
-    static const uint32_t BEFORE_WEIGHT16 = Collation::MERGE_SEPARATOR_WEIGHT16;
-
     /** At most 1M nodes, limited by the 20 bits in node bit fields. */
     static const int32_t MAX_INDEX = 0xfffff;
     /**

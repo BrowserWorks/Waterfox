@@ -397,7 +397,7 @@ nl{
         }
         GBP{
             "£",
-            "Brits pond sterling",
+            "Brits pond",
         }
         GEK{
             "GEK",
@@ -1641,8 +1641,8 @@ nl{
             other{"Franse franc"}
         }
         GBP{
-            one{"Brits pond sterling"}
-            other{"Brits pond sterling"}
+            one{"Brits pond"}
+            other{"Brits pond"}
         }
         GEK{
             one{"Georgische kupon larit"}
@@ -2449,5 +2449,5 @@ nl{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

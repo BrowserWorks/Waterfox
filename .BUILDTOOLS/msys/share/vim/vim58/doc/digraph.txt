@@ -1,0 +1,157 @@
+*digraph.txt*   For Vim version 5.8.  Last change: 1999 Sep 17
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Digraphs						*digraphs* *Digraphs*
+
+Digraphs are used to enter characters that normally cannot be entered by
+an ordinary keyboard.  These are mostly accented characters which have the
+eighth bit set.  The digraphs are easier to remember than the decimal number
+that can be entered with CTRL-V (see |i_CTRL-V|).
+
+1. Defining digraphs	|digraphs-define|
+2. Using digraphs	|digraphs-use|
+3. Default digraphs	|digraphs-default|
+
+{Vi does not have any of these commands}
+
+==============================================================================
+1. Defining digraphs					*digraphs-define*
+
+						*:dig* *:digraphs*
+:dig[raphs]		show currently defined digraphs.
+
+:dig[raphs] {char1}{char2} {number} ...
+			Add digraph {char1}{char2} to the list.  {number} is
+			the decimal representation of the character.
+
+Vim is normally compiled with the |+digraphs| feature.  If the feature is
+disabled, the ":digraph" command will display an error message.
+
+==============================================================================
+2. Using digraphs					*digraphs-use*
+
+There are two methods to enter digraphs:			*i_digraph*
+	CTRL-K {char1} {char2}		or
+	{char1} <BS> {char2}
+The first is always available; the second only when the 'digraph' option is
+set.
+
+If a digraph with {char1}{char2} does not exist, Vim searches for a digraph
+{char2}{char1}.  This helps when you don't remember which character comes
+first.
+
+Note that when you enter CTRL-K {char1}, where {char1} is a special key, Vim
+enters the code for that special key.  This is not a digraph.
+
+Once you have entered the digraph, Vim treats the character like a normal
+character that occupies only one character in the file and on the screen.
+Example:
+>	'|' <BS> '|'	will enter the double '|' character (166)
+>	'a' <BS> '^'	will enter an 'a' with a hat (226)
+>	CTRL-K '-' '-'	will enter a minus sign (173)
+
+The default digraphs are listed below |digraph-table| along with those for
+several specific systems.  With the wrong character set, they will look
+illogical.
+
+For CTRL-K, there is one general digraph: CTRL-K <Space> {char} will enter
+{char} with the highest bit set.  You can use this to enter meta-characters.
+
+The <Esc> character cannot be part of a digraph.  When hitting <Esc>, Vim
+stops digraph entry and ends Insert mode or Command-line mode, just like
+hitting an <Esc> out of digraph context.
+
+If you accidentally typed an 'a' that should be an 'e', you will type 'a' <BS>
+'e'.  But that is a digraph, so you will not get what you want.  To correct
+this, you will have to type <BS> e again.  To avoid this don't set the
+'digraph' option and use CTRL-K to enter digraphs.
+
+You may have problems using Vim with characters which have an ASCII value
+above 128.  For example: You insert ue (u-umlaut) and the editor echoes \334
+in Insert mode.  After leaving the Insert mode everything is fine.  Note that
+fmt removes all characters with ASCII codes above 128 from the text being
+formated.  On some Unix systems this means you have to define the
+environment-variable LC_CTYPE.  If you are using csh, then put the following
+line in your .cshrc:
+>	setenv LC_CTYPE iso_8859_1
+
+==============================================================================
+3. Default digraphs					*digraphs-default*
+
+These are the default digraph characters for Vim.
+
+Besides the digraphs listed below, you can enter meta characters with CTRL-K
+<Space> {char}.  You cannot use <Esc> for {char}, so use CTRL-V 155 to
+enter meta-ESC (CSI).
+
+The first two characters in each column are the characters you have to type to
+enter the digraph.
+
+In the middle of each column is the resulting character.  This table may be
+mangled if you look at it on a system that does not support digraphs or if you
+print this file.
+
+The decimal number is the ASCII code for the character.
+
+							*digraph-table*
+Default digraphs for machines that are not mentioned below:
+~! ¡ 161   c| ¢ 162   $$ £ 163   ox ¤ 164   Y- ¥ 165   || ¦ 166   pa § 167
+"" ¨ 168   cO © 169   a- ª 170   << « 171   -, ¬ 172   -- ­ 173   rO ® 174
+-= ¯ 175   ~o ° 176   +- ± 177   22 ² 178   33 ³ 179   '' ´ 180   ju µ 181
+pp ¶ 182   ~. · 183   ,, ¸ 184   11 ¹ 185   o- º 186   >> » 187   14 ¼ 188
+12 ½ 189   34 ¾ 190   ~? ¿ 191   A` À 192   A' Á 193   A^ Â 194   A~ Ã 195
+A" Ä 196   A@ Å 197   AA Å 197   AE Æ 198   C, Ç 199   E` È 200   E' É 201
+E^ Ê 202   E" Ë 203   I` Ì 204   I' Í 205   I^ Î 206   I" Ï 207   D- Ğ 208
+N~ Ñ 209   O` Ò 210   O' Ó 211   O^ Ô 212   O~ Õ 213   O" Ö 214   /\ × 215
+O/ Ø 216   U` Ù 217   U' Ú 218   U^ Û 219   U" Ü 220   Y' İ 221   Ip Ş 222
+ss ß 223   a` à 224   a' á 225   a^ â 226   a~ ã 227   a" ä 228   a@ å 229
+aa å 229   ae æ 230   c, ç 231   e` è 232   e' é 233   e^ ê 234   e" ë 235
+i` ì 236   i' í 237   i^ î 238   i" ï 239   d- ğ 240   n~ ñ 241   o` ò 242
+o' ó 243   o^ ô 244   o~ õ 245   o" ö 246   :- ÷ 247   o/ ø 248   u` ù 249
+u' ú 250   u^ û 251   u" ü 252   y' ı 253   ip ş 254   y" ÿ 255
+
+
+Default digraphs for some HPUX machines:
+A` ¡ 161   A^ ¢ 162   E` £ 163   E^ ¤ 164   E" ¥ 165   I^ ¦ 166   I" § 167
+'' ¨ 168   `` © 169   ^^ ª 170   "" « 171   ~~ ¬ 172   U` ­ 173   U^ ® 174
+L= ¯ 175   ~_ ° 176   Y' ± 177   y' ² 178   ~o ³ 179   C, ´ 180   c, µ 181
+N~ ¶ 182   n~ · 183   ~! ¸ 184   ~? ¹ 185   ox º 186   L- » 187   Y= ¼ 188
+pp ½ 189   fl ¾ 190   c| ¿ 191   a^ À 192   e^ Á 193   o^ Â 194   u^ Ã 195
+a' Ä 196   e' Å 197   o' Æ 198   u' Ç 199   a` È 200   e` É 201   o` Ê 202
+u` Ë 203   a" Ì 204   e" Í 205   o" Î 206   u" Ï 207   Ao Ğ 208   i^ Ñ 209
+O/ Ò 210   AE Ó 211   ao Ô 212   i' Õ 213   o/ Ö 214   ae × 215   A" Ø 216
+i` Ù 217   O" Ú 218   U" Û 219   E' Ü 220   i" İ 221   ss Ş 222   O^ ß 223
+A' à 224   A~ á 225   a~ â 226   D- ã 227   d- ä 228   I' å 229   I` æ 230
+O' ç 231   O` è 232   O~ é 233   o~ ê 234   S~ ë 235   s~ ì 236   U' í 237
+Y" î 238   y" ï 239   p- ğ 240   p~ ñ 241   ~. ò 242   ju ó 243   Pp ô 244
+34 õ 245   -- ö 246   14 ÷ 247   12 ø 248   a_ ù 249   o_ ú 250   << û 251
+xx ü 252   >> ı 253   +- ş 254   nu ÿ 255
+
+
+Default digraphs on MS-DOS, OS/2 and Win32-console:
+C, € 128   u"  129   e' ‚ 130   a^ ƒ 131   a" „ 132   a` … 133   a@ † 134
+c, ‡ 135   e^ ˆ 136   e" ‰ 137   e` Š 138   i" ‹ 139   i^ Œ 140   i`  141
+A"  142   A@  143   E'  144   ae ‘ 145   AE ’ 146   o^ “ 147   o" ” 148
+o` • 149   u^ – 150   u` — 151   y" ˜ 152   O" ™ 153   U" š 154   c| › 155
+$$ œ 156   Y-  157   Pt  158   ff Ÿ 159   a'   160   i' ¡ 161   o' ¢ 162
+u' £ 163   n~ ¤ 164   N~ ¥ 165   aa ¦ 166   oo § 167   ~? ¨ 168   -a © 169
+a- ª 170   12 « 171   14 ¬ 172   ~! ­ 173   << ® 174   >> ¯ 175   ss á 225
+ju æ 230   o/ í 237   +- ñ 241   >= ò 242   <= ó 243   :- ö 246   ~~ ÷ 247
+~o ø 248   22 ı 253
+
+
+Default digraphs for MiNT:
+C, € 128  u"  129  e' ‚ 130  a^ ƒ 131  a" „ 132  a` … 133  a@ † 134
+c, ‡ 135  e^ ˆ 136  e" ‰ 137  e` Š 138  i" ‹ 139  i^ Œ 140  i`  141
+A"  142  A@  143  E'  144  ae ‘ 145  AE ’ 146  o^ “ 147  o" ” 148
+o` • 149  u^ – 150  u` — 151  y" ˜ 152  O" ™ 153  U" š 154  c| › 155
+$$ œ 156  Y-  157  ss  158  ff Ÿ 159  a'   160  i' ¡  161  o' ¢  162
+u' £  163  n~ ¤  164  N~ ¥  165  aa ¦  166  oo §  167  ~? ¨  168  -a ©  169
+a- ª  170  12 «  171  14 ¬  172  ~! ­  173  << ®  174  >> ¯  175  ju æ  230
+o/ í  237  +- ñ  241  >= ò  242  <= ó  243  :- ö  246  ~~ ÷  247  ~o ø  248
+22 ı  253
+
+ vim:ts=8:sw=8:tw=78:

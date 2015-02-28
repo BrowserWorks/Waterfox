@@ -17,6 +17,7 @@
 #include "GetUserMediaRequest.h"
 #include "mozilla/dom/PBrowserChild.h"
 #include "mozilla/dom/MediaStreamTrackBinding.h"
+#include "mozilla/dom/MediaStreamError.h"
 #include "nsISupportsPrimitives.h"
 #include "nsServiceManagerUtils.h"
 #include "nsArrayUtils.h"
@@ -224,7 +225,7 @@ MediaPermissionRequest::Cancel()
 {
   nsString callID;
   mRequest->GetCallID(callID);
-  NotifyPermissionDeny(callID, NS_LITERAL_STRING("Permission Denied"));
+  NotifyPermissionDeny(callID, NS_LITERAL_STRING("PermissionDeniedError"));
   return NS_OK;
 }
 
@@ -393,9 +394,16 @@ NS_IMPL_ISUPPORTS(MediaDeviceErrorCallback, nsIDOMGetUserMediaErrorCallback)
 
 // nsIDOMGetUserMediaErrorCallback method
 NS_IMETHODIMP
-MediaDeviceErrorCallback::OnError(const nsAString &aError)
+MediaDeviceErrorCallback::OnError(nsISupports* aError)
 {
-  return NotifyPermissionDeny(mCallID, aError);
+  nsRefPtr<MediaStreamError> error = do_QueryObject(aError);
+  if (!error) {
+    return NS_ERROR_NO_INTERFACE;
+  }
+
+  nsString name;
+  error->GetName(name);
+  return NotifyPermissionDeny(mCallID, name);
 }
 
 } // namespace anonymous

@@ -1847,7 +1847,7 @@ supplementalData:table(nofallback){
             "islamic-tbla",
         }
     }
-    cldrVersion{"26"}
+    cldrVersion{"27"}
     codeMappings{
         {
             "AA",
@@ -9369,6 +9369,9 @@ supplementalData:table(nofallback){
                 279,
                 216,
             }
+        }
+        GB{
+            MeasurementSystem:int{2}
         }
         GT{
             PaperSize:intvector{

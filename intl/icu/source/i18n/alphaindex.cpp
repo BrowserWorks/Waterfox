@@ -442,9 +442,8 @@ BucketList *AlphabeticIndex::createBucketList(UErrorCode &errorCode) const {
     };
     UBool hasPinyin = FALSE;
 
-    LocalPointer<UVector> bucketList(new UVector(errorCode));
-    if (bucketList.isNull()) {
-        errorCode = U_MEMORY_ALLOCATION_ERROR;
+    LocalPointer<UVector> bucketList(new UVector(errorCode), errorCode);
+    if (U_FAILURE(errorCode)) {
         return NULL;
     }
     bucketList->setDeleter(uprv_deleteUObject);
@@ -601,9 +600,8 @@ BucketList *AlphabeticIndex::createBucketList(UErrorCode &errorCode) const {
         nextBucket = bucket;
     }
 
-    LocalPointer<UVector> publicBucketList(new UVector(errorCode));
-    if (bucketList.isNull()) {
-        errorCode = U_MEMORY_ALLOCATION_ERROR;
+    LocalPointer<UVector> publicBucketList(new UVector(errorCode), errorCode);
+    if (U_FAILURE(errorCode)) {
         return NULL;
     }
     // Do not call publicBucketList->setDeleter():
@@ -990,9 +988,8 @@ UVector *AlphabeticIndex::firstStringsInScript(UErrorCode &status) {
     if (U_FAILURE(status)) {
         return NULL;
     }
-    LocalPointer<UVector> dest(new UVector(status));
-    if (dest.isNull()) {
-        status = U_MEMORY_ALLOCATION_ERROR;
+    LocalPointer<UVector> dest(new UVector(status), status);
+    if (U_FAILURE(status)) {
         return NULL;
     }
     dest->setDeleter(uprv_deleteUObject);

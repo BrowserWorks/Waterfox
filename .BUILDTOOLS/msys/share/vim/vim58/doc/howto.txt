@@ -1,0 +1,100 @@
+*howto.txt*	For Vim version 5.8.  Last change: 2000 Feb 07
+
+
+		  VIM REFERENCE MANUAL	  by Bram Moolenaar
+
+
+How to ...				*howdoi* *how-do-i* *howto* *how-to*
+
+|tutor|			get started
+|:quit|			exit?  I'm trapped, help me!
+|initialization|	initialize Vim
+|vimrc-intro|		write a Vim script file (vimrc)
+|suspend|		suspend Vim
+|crash-recovery|	recover after a crash
+|backup|		keep a backup of my file when writing over it
+
+|edit-files|		edit files
+|edit-binary|		edit binary files
+|inserting|		insert text
+|deleting|		delete text
+|changing|		change text
+|copy-move|		copy and move text
+|formatting|		format text
+|format-comments|	format comments
+|C-indenting|		indent C programs
+|'autoindent'|		automatically set indent
+
+|repeating|		repeat commands
+|undo-redo|		undo and redo
+
+|cursor-motions|	move around
+|word-motions|		word motions
+|left-right-motions|	left-right motions
+|up-down-motions|	up-down motions
+|object-motions|	text-object motions
+|various-motions|	various motions
+|object-select|		text-object selection
+|'whichwrap'|		move freely beyond beginning/end of line
+|pattern-searches|	specify pattern for searches
+|tags-and-searches|	do tags and special searches
+|include-search|	search in include'd files used to find
+			variables, functions, or macros
+|K|			look up manual for the keyword under cursor
+
+|scrolling|		scroll
+|'sidescroll'|		scroll horizontally/sideways
+|'scrolloff'|		set scroll boundary
+
+|mode-switching|	change modes
+|Visual-mode|		use Visual mode
+|'insertmode'|		start Vim in Insert mode
+
+|key-mapping|		map keys
+|abbreviations|		create abbreviations
+
+|ins-expandtab|		expand a tab to spaces in Insert mode
+|i_CTRL-R|		insert contents of a register in Insert mode
+|ins-completion|	complete words in Insert mode
+|ins-textwidth|		break a line before it gets too long
+
+|cmdline-editing|	do command-line editing
+|cmdline-completion|	do command-line completion
+|'cmdheight'|		increase the height of command-line
+|cmdline-ranges|	specify command-line ranges
+|autocommand|		specify commands to be executed automatically
+			before/after reading/writing entering/leaving a
+			buffer/window
+
+|'autowrite'|		write automatically
+|quickfix|		speedup edit-compile-edit cycle or compile and fix
+			errors within Vim
+
+|options|		set options
+|auto-setting|		set options automatically
+|term-dependent-settings| set options depending on terminal name
+|save-settings|		save settings
+|:quote|		comment my exrc/vimrc/gvimrc files
+|'helpheight'|		change the default help height
+|'highlight'|		set various highlighting modes
+|'title'|		set the window title
+|'icon'|		set window icon title
+|'report'|		avoid seeing the change messages on every line
+|'shortmess'|		avoid |hit-return| prompts
+
+|mouse-using|		use mouse with Vim
+|windows.txt|		manage multiple windows and buffers
+|gui.txt|		use the gui
+|:sleep|		catch 40 (or more!) winks, or take a catnap!
+|You can't! (yet)|	do dishes using Vim
+
+|:syn-on|		switch on syntax highlighting
+|2html.vim|		convert a colored file to HTML
+
+							*tutor*
+To get started with Vim:  There is a 30 minute tutorial that teaches the most
+basic Vim functionality.  The name of the file is "$VIMRUNTIME/tutor/tutor".
+Make a copy of the file (so you can mess with it), and take a little time to
+learn your first Vim commands.
+
+ vim:ts=8:sw=8:tw=78:

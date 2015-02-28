@@ -30,7 +30,6 @@ UNIFIED_SOURCES += [
     'XPCLog.cpp',
     'XPCMaps.cpp',
     'XPCModule.cpp',
-    'XPCQuickStubs.cpp',
     'XPCRuntimeService.cpp',
     'XPCShellImpl.cpp',
     'XPCString.cpp',
@@ -51,10 +50,6 @@ SOURCES += [
     'XPCComponents.cpp',
 ]
 
-GENERATED_SOURCES += [
-    'dom_quickstubs.cpp',
-]
-
 FAIL_ON_WARNINGS = True
 
 MSVC_ENABLE_PGO = True
@@ -63,20 +58,13 @@ include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'
 
-GENERATED_FILES = [
-    'dom_quickstubs.h',
-]
-
 LOCAL_INCLUDES += [
     '../loader',
     '../wrappers',
     '/caps',
-    '/content/base/public',
-    '/content/base/src',
-    '/content/html/content/src',
-    '/content/html/document/src',
-    '/content/svg/content/src',
     '/dom/base',
+    '/dom/html',
+    '/dom/svg',
     '/dom/workers',
     '/js/ipc',
     '/layout/base',

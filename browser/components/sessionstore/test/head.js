@@ -193,6 +193,10 @@ function waitForTabState(aTab, aState, aCallback) {
   ss.setTabState(aTab, JSON.stringify(aState));
 }
 
+function promiseTabState(tab, state) {
+  return new Promise(resolve => waitForTabState(tab, state, resolve));
+}
+
 /**
  * Wait for a content -> chrome message.
  */
@@ -316,6 +320,29 @@ function whenBrowserUnloaded(aBrowser, aContainer, aCallback = next) {
     executeSoon(aCallback);
   }, true);
 }
+
+/**
+ * Loads a page in a browser, and returns a Promise that
+ * resolves once a "load" event has been fired within that
+ * browser.
+ *
+ * @param browser
+ *        The browser to load the page in.
+ * @param uri
+ *        The URI to load.
+ *
+ * @return Promise
+ */
+function loadPage(browser, uri) {
+  return new Promise((resolve, reject) => {
+    browser.addEventListener("load", function onLoad(event) {
+      browser.removeEventListener("load", onLoad, true);
+      resolve();
+    }, true);
+    browser.loadURI(uri);
+  });
+}
+
 function promiseBrowserUnloaded(aBrowser, aContainer) {
   return new Promise(resolve => {
     whenBrowserUnloaded(aBrowser, aContainer, resolve);

@@ -28,7 +28,6 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/prctl.h>
-#include "Zip.h"
 #include "sqlite3.h"
 #include "SQLiteBridge.h"
 #include "NSSBridge.h"
@@ -210,17 +209,13 @@ report_mapping(char *name, void *base, uint32_t len, uint32_t offset)
 static mozglueresult
 loadGeckoLibs(const char *apkName)
 {
-  chdir(getenv("GRE_HOME"));
-
   uint64_t t0 = TimeStamp_Now();
   struct rusage usage1_thread, usage1;
   getrusage(RUSAGE_THREAD, &usage1_thread);
   getrusage(RUSAGE_SELF, &usage1);
   
-  RefPtr<Zip> zip = ZipCollection::GetZip(apkName);
-
-  char *file = new char[strlen(apkName) + sizeof("!/assets/libxul.so")];
-  sprintf(file, "%s!/assets/libxul.so", apkName);
+  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libxul.so")];
+  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libxul.so", apkName);
   xul_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
   delete[] file;
 
@@ -271,15 +266,12 @@ loadSQLiteLibs(const char *apkName)
   if (loadNSSLibs(apkName) != SUCCESS)
     return FAILURE;
 #else
-  chdir(getenv("GRE_HOME"));
-
-  RefPtr<Zip> zip = ZipCollection::GetZip(apkName);
   if (!lib_mapping) {
     lib_mapping = (struct mapping_info *)calloc(MAX_MAPPING_INFO, sizeof(*lib_mapping));
   }
 
-  char *file = new char[strlen(apkName) + sizeof("!/assets/libmozsqlite3.so")];
-  sprintf(file, "%s!/assets/libmozsqlite3.so", apkName);
+  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libmozsqlite3.so")];
+  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libmozsqlite3.so", apkName);
   sqlite_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
   delete [] file;
 
@@ -299,26 +291,23 @@ loadNSSLibs(const char *apkName)
   if (nss_handle && nspr_handle && plc_handle)
     return SUCCESS;
 
-  chdir(getenv("GRE_HOME"));
-
-  RefPtr<Zip> zip = ZipCollection::GetZip(apkName);
   if (!lib_mapping) {
     lib_mapping = (struct mapping_info *)calloc(MAX_MAPPING_INFO, sizeof(*lib_mapping));
   }
 
-  char *file = new char[strlen(apkName) + sizeof("!/assets/libnss3.so")];
-  sprintf(file, "%s!/assets/libnss3.so", apkName);
+  char *file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libnss3.so")];
+  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libnss3.so", apkName);
   nss_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
   delete [] file;
 
 #ifndef MOZ_FOLD_LIBS
-  file = new char[strlen(apkName) + sizeof("!/assets/libnspr4.so")];
-  sprintf(file, "%s!/assets/libnspr4.so", apkName);
+  file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libnspr4.so")];
+  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libnspr4.so", apkName);
   nspr_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
   delete [] file;
 
-  file = new char[strlen(apkName) + sizeof("!/assets/libplc4.so")];
-  sprintf(file, "%s!/assets/libplc4.so", apkName);
+  file = new char[strlen(apkName) + sizeof("!/assets/" ANDROID_CPU_ARCH "/libplc4.so")];
+  sprintf(file, "%s!/assets/" ANDROID_CPU_ARCH "/libplc4.so", apkName);
   plc_handle = __wrap_dlopen(file, RTLD_GLOBAL | RTLD_LAZY);
   delete [] file;
 #endif
@@ -445,11 +434,11 @@ ChildProcessInit(int argc, char* argv[])
   void (*fXRE_SetProcessType)(char*);
   xul_dlsym("XRE_SetProcessType", &fXRE_SetProcessType);
 
-  mozglueresult (*fXRE_InitChildProcess)(int, char**);
+  mozglueresult (*fXRE_InitChildProcess)(int, char**, void*);
   xul_dlsym("XRE_InitChildProcess", &fXRE_InitChildProcess);
 
   fXRE_SetProcessType(argv[--argc]);
 
-  return fXRE_InitChildProcess(argc, argv);
+  return fXRE_InitChildProcess(argc, argv, nullptr);
 }
 

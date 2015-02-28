@@ -52,6 +52,8 @@ const BadCertHost sBadCertHosts[] =
   { "include-subdomains.pinning.example.com", "localhostAndExampleCom" },
   { "good.include-subdomains.pinning.example.com", "localhostAndExampleCom" },
   { "bad.include-subdomains.pinning.example.com", "otherIssuerEE" },
+  { "bad.include-subdomains.pinning.example.com.", "otherIssuerEE" },
+  { "bad.include-subdomains.pinning.example.com..", "otherIssuerEE" },
   { "exclude-subdomains.pinning.example.com", "localhostAndExampleCom" },
   { "sub.exclude-subdomains.pinning.example.com", "otherIssuerEE" },
   { "test-mode.pinning.example.com", "otherIssuerEE" },
@@ -59,6 +61,7 @@ const BadCertHost sBadCertHosts[] =
   { "nsCertTypeNotCritical.example.com", "nsCertTypeNotCritical" },
   { "nsCertTypeCriticalWithExtKeyUsage.example.com", "nsCertTypeCriticalWithExtKeyUsage" },
   { "nsCertTypeCritical.example.com", "nsCertTypeCritical" },
+  { "end-entity-issued-by-v1-cert.example.com", "eeIssuedByV1Cert" },
   { "inadequate-key-size-ee.example.com", "inadequateKeySizeEE" },
   { nullptr, nullptr }
 };

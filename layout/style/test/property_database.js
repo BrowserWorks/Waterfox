@@ -86,6 +86,18 @@ var validGradientAndElementValues = [
   "linear-gradient(1turn, red, blue)",
   "linear-gradient(.414rad, red, blue)",
 
+  "linear-gradient(.414rad, red, 50%, blue)",
+  "linear-gradient(.414rad, red, 0%, blue)",
+  "linear-gradient(.414rad, red, 100%, blue)",
+
+  "linear-gradient(.414rad, red 50%, 50%, blue 50%)",
+  "linear-gradient(.414rad, red 50%, 20%, blue 50%)",
+  "linear-gradient(.414rad, red 50%, 30%, blue 10%)",
+  "linear-gradient(to right bottom, red, 20%, green 50%, 65%, blue)",
+  "linear-gradient(to right bottom, red, 20%, green 10%, blue)",
+  "linear-gradient(to right bottom, red, 50%, green 50%, 50%, blue)",
+  "linear-gradient(to right bottom, red, 0%, green 50%, 100%, blue)",
+
   "-moz-linear-gradient(red, blue)",
   "-moz-linear-gradient(red, yellow, blue)",
   "-moz-linear-gradient(red 1px, yellow 20%, blue 24em, green)",
@@ -503,6 +515,13 @@ var invalidGradientAndElementValues = [
   "linear-gradient(10deg 20px, red, blue)",
   "linear-gradient(1turn 20px, red, blue)",
   "linear-gradient(.414rad bottom, red, blue)",
+
+  "linear-gradient(to top, 0%, blue)",
+  "linear-gradient(to top, red, 100%)",
+  "linear-gradient(to top, red, 45%, 56%, blue)",
+  "linear-gradient(to top, red,, blue)",
+  "linear-gradient(to top, red, green 35%, 15%, 54%, blue)",
+
 
   "radial-gradient(top left 45deg, red, blue)",
   "radial-gradient(20% bottom -300deg, red, blue)",
@@ -1782,6 +1801,14 @@ var gCSSProperties = {
     initial_values: [ "auto" ],
     other_values: [ "none", "text", "element", "elements", "all", "toggle", "tri-state", "-moz-all", "-moz-none" ],
     invalid_values: []
+  },
+  "-moz-window-dragging": {
+    domProp: "MozWindowDragging",
+    inherited: true,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "no-drag" ],
+    other_values: [ "drag" ],
+    invalid_values: [ "none" ]
   },
   "-moz-window-shadow": {
     domProp: "MozWindowShadow",
@@ -3257,14 +3284,14 @@ var gCSSProperties = {
     domProp: "textDecoration",
     inherited: false,
     type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
-    subproperties: [ "-moz-text-decoration-color", "-moz-text-decoration-line", "-moz-text-decoration-style" ],
+    subproperties: [ "text-decoration-color", "text-decoration-line", "text-decoration-style" ],
     initial_values: [ "none" ],
-    other_values: [ "underline", "overline", "line-through", "blink", "blink line-through underline", "underline overline line-through blink", "-moz-anchor-decoration", "blink -moz-anchor-decoration" ],
-    invalid_values: [ "none none", "underline none", "none underline", "blink none", "none blink", "line-through blink line-through", "underline overline line-through blink none", "underline overline line-throuh blink blink",
-                      "underline red solid", "underline #ff0000", "solid underline", "red underline", "#ff0000 underline" ]
+    other_values: [ "underline", "overline", "line-through", "blink", "blink line-through underline", "underline overline line-through blink", "-moz-anchor-decoration", "blink -moz-anchor-decoration",
+                    "underline red solid", "underline #ff0000", "solid underline", "red underline", "#ff0000 underline", "dotted underline" ],
+    invalid_values: [ "none none", "underline none", "none underline", "blink none", "none blink", "line-through blink line-through", "underline overline line-through blink none", "underline overline line-throuh blink blink" ]
   },
-  "-moz-text-decoration-color": {
-    domProp: "MozTextDecorationColor",
+  "text-decoration-color": {
+    domProp: "textDecorationColor",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     prerequisites: { "color": "black" },
@@ -3272,18 +3299,46 @@ var gCSSProperties = {
     other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
     invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff" ]
   },
-  "-moz-text-decoration-line": {
-    domProp: "MozTextDecorationLine",
+  "-moz-text-decoration-color": {
+    domProp: "MozTextDecorationColor",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "text-decoration-color",
+    prerequisites: { "color": "black" },
+    initial_values: [ "currentColor", "-moz-use-text-color" ],
+    other_values: [ "green", "rgba(255,128,0,0.5)", "transparent" ],
+    invalid_values: [ "#0", "#00", "#0000", "#00000", "#0000000", "#00000000", "#000000000", "000000", "ff00ff" ]
+  },
+  "text-decoration-line": {
+    domProp: "textDecorationLine",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "none" ],
     other_values: [ "underline", "overline", "line-through", "blink", "blink line-through underline", "underline overline line-through blink", "-moz-anchor-decoration", "blink -moz-anchor-decoration" ],
     invalid_values: [ "none none", "underline none", "none underline", "line-through blink line-through", "underline overline line-through blink none", "underline overline line-throuh blink blink" ]
   },
+  "-moz-text-decoration-line": {
+    domProp: "MozTextDecorationLine",
+    inherited: false,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "text-decoration-line",
+    initial_values: [ "none" ],
+    other_values: [ "underline", "overline", "line-through", "blink", "blink line-through underline", "underline overline line-through blink", "-moz-anchor-decoration", "blink -moz-anchor-decoration" ],
+    invalid_values: [ "none none", "underline none", "none underline", "line-through blink line-through", "underline overline line-through blink none", "underline overline line-throuh blink blink" ]
+  },
+  "text-decoration-style": {
+    domProp: "textDecorationStyle",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "solid" ],
+    other_values: [ "double", "dotted", "dashed", "wavy", "-moz-none" ],
+    invalid_values: [ "none", "groove", "ridge", "inset", "outset", "solid dashed", "wave" ]
+  },
   "-moz-text-decoration-style": {
     domProp: "MozTextDecorationStyle",
     inherited: false,
-    type: CSS_TYPE_LONGHAND,
+    type: CSS_TYPE_SHORTHAND_AND_LONGHAND,
+    alias_for: "text-decoration-style",
     initial_values: [ "solid" ],
     other_values: [ "double", "dotted", "dashed", "wavy", "-moz-none" ],
     invalid_values: [ "none", "groove", "ridge", "inset", "outset", "solid dashed", "wave" ]
@@ -4571,7 +4626,7 @@ if (SpecialPowers.getBoolPref("svg.paint-order.enabled")) {
 
 if (SpecialPowers.getBoolPref("layout.css.clip-path-shapes.enabled")) {
   gCSSProperties["clip-path"] = {
-    domProp: "clip-path",
+    domProp: "clipPath",
     inherited: false,
     type: CSS_TYPE_LONGHAND,
     initial_values: [ "none" ],
@@ -4607,6 +4662,48 @@ if (SpecialPowers.getBoolPref("layout.css.clip-path-shapes.enabled")) {
       "polygon(evenodd, 20pt 20cm) fill-box",
       "polygon(evenodd, 20ex 20pc) stroke-box",
       "polygon(evenodd, 20rem 20in) view-box",
+
+      "circle()",
+      "circle(at center)",
+      "circle(at top left 20px)",
+      "circle(at bottom right)",
+      "circle(20%)",
+      "circle(300px)",
+      "circle(calc(20px + 30px))",
+      "circle(farthest-side)",
+      "circle(closest-side)",
+      "circle(closest-side at center)",
+      "circle(farthest-side at top)",
+      "circle(20px at top right)",
+      "circle(40% at 50% 100%)",
+      "circle(calc(20% + 20%) at right bottom)",
+      "circle() padding-box",
+
+      "ellipse()",
+      "ellipse(at center)",
+      "ellipse(at top left 20px)",
+      "ellipse(at bottom right)",
+      "ellipse(20% 20%)",
+      "ellipse(300px 50%)",
+      "ellipse(calc(20px + 30px) 10%)",
+      "ellipse(farthest-side closest-side)",
+      "ellipse(closest-side farthest-side)",
+      "ellipse(farthest-side farthest-side)",
+      "ellipse(closest-side closest-side)",
+      "ellipse(closest-side closest-side at center)",
+      "ellipse(20% farthest-side at top)",
+      "ellipse(20px 50% at top right)",
+      "ellipse(closest-side 40% at 50% 100%)",
+      "ellipse(calc(20% + 20%) calc(20px + 20cm) at right bottom)",
+
+      "inset(1px)",
+      "inset(20% -20px)",
+      "inset(20em 4rem calc(20% + 20px))",
+      "inset(20vh 20vw 20pt 3%)",
+      "inset(5px round 3px)",
+      "inset(1px 2px round 3px / 3px)",
+      "inset(1px 2px 3px round 3px 2em / 20%)",
+      "inset(1px 2px 3px 4px round 3px 2vw 20% / 20px 3em 2vh 20%)",
     ],
     invalid_values: [
       "url(#test) url(#tes2)",
@@ -4641,11 +4738,66 @@ if (SpecialPowers.getBoolPref("layout.css.clip-path-shapes.enabled")) {
       "margin-box farthest-side",
       "nonsense() border-box",
       "border-box nonsense()",
+
+      "circle(at)",
+      "circle(at 20% 20% 30%)",
+      "circle(20px 2px at center)",
+      "circle(2at center)",
+      "circle(closest-corner)",
+      "circle(at center top closest-side)",
+      "circle(-20px)",
+      "circle(farthest-side closest-side)",
+      "circle(20% 20%)",
+      "circle(at farthest-side)",
+
+      "ellipse(at)",
+      "ellipse(at 20% 20% 30%)",
+      "ellipse(20px at center)",
+      "ellipse(-20px 20px)",
+      "ellipse(closest-corner farthest-corner)",
+      "ellipse(20px -20px)",
+      "ellipse(-20px -20px)",
+      "ellipse(farthest-side)",
+      "ellipse(20%)",
+      "ellipse(at farthest-side farthest-side)",
+
+      "polygon(at)",
+      "polygon(at 20% 20% 30%)",
+      "polygon(20px at center)",
+      "polygon(2px 2at center)",
+      "polygon(closest-corner farthest-corner)",
+      "polygon(at center top closest-side closest-side)",
+      "polygon(40% at 50% 100%)",
+      "polygon(40% farthest-side 20px at 50% 100%)",
+
+      "inset()",
+      "inset(round)",
+      "inset(round 3px)",
+      "inset(1px round 1px 2px 3px 4px 5px)",
+      "inset(1px 2px 3px 4px 5px)",
+      "inset(1px, round 3px)",
+      "inset(1px, 2px)",
+      "inset(1px 2px, 3px)",
+      "inset(1px at 3px)",
+      "inset(1px round 1px // 2px)",
+      "inset(1px round)",
     ],
     unbalanced_values: [
       "polygon(30% 30%",
       "polygon(nonzero, 20% 20px",
       "polygon(evenodd, 20px 20px",
+
+      "circle(",
+      "circle(40% at 50% 100%",
+      "ellipse(",
+      "ellipse(40% at 50% 100%",
+
+      "inset(1px",
+      "inset(1px 2px",
+      "inset(1px 2px 3px",
+      "inset(1px 2px 3px 4px",
+      "inset(1px 2px 3px 4px round 5px",
+      "inset(1px 2px 3px 4px round 5px / 6px",
     ]
   };
 }
@@ -5328,6 +5480,10 @@ if (SpecialPowers.getBoolPref("layout.css.grid.enabled")) {
   };
 }
 
+if (SpecialPowers.getBoolPref("layout.css.display-contents.enabled")) {
+  gCSSProperties["display"].other_values.push("contents");
+}
+
 if (SpecialPowers.getBoolPref("layout.css.image-orientation.enabled")) {
   gCSSProperties["image-orientation"] = {
     domProp: "imageOrientation",
@@ -5430,6 +5586,17 @@ if (SpecialPowers.getBoolPref("layout.css.mix-blend-mode.enabled")) {
   };
 }
 
+if (SpecialPowers.getBoolPref("layout.css.isolation.enabled")) {
+  gCSSProperties["isolation"] = {
+    domProp: "isolation",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "auto" ],
+    other_values: ["isolate"],
+    invalid_values: []
+  };
+}
+
 if (SpecialPowers.getBoolPref("layout.css.background-blend-mode.enabled")) {
   gCSSProperties["background-blend-mode"] = {
     domProp: "backgroundBlendMode",
@@ -5524,6 +5691,17 @@ if (SpecialPowers.getBoolPref("layout.css.box-decoration-break.enabled")) {
     initial_values: [ "slice" ],
     other_values: [ "clone" ],
     invalid_values: [ "auto",  "none",  "1px" ]
+  };
+}
+
+if (SpecialPowers.getBoolPref("layout.css.scroll-behavior.property-enabled")) {
+  gCSSProperties["scroll-behavior"] = {
+    domProp: "scrollBehavior",
+    inherited: false,
+    type: CSS_TYPE_LONGHAND,
+    initial_values: [ "auto" ],
+    other_values: [ "smooth" ],
+    invalid_values: [ "none",  "1px" ]
   };
 }
 

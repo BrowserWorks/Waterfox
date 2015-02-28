@@ -5,6 +5,7 @@
 
 let Ci = Components.interfaces;
 let Cu = Components.utils;
+let Cc = Components.classes;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/NotificationDB.jsm");
@@ -47,6 +48,9 @@ var gMultiProcessBrowser =
         .getInterface(Ci.nsIWebNavigation)
         .QueryInterface(Ci.nsILoadContext)
         .useRemoteTabs;
+var gAppInfo = Cc["@mozilla.org/xre/app-info;1"]
+                  .getService(Ci.nsIXULAppInfo)
+                  .QueryInterface(Ci.nsIXULRuntime);
 
 #ifndef XP_MACOSX
 var gEditUIVisible = true;
@@ -187,6 +191,12 @@ XPCOMUtils.defineLazyModuleGetter(this, "FormValidationHandler",
 
 XPCOMUtils.defineLazyModuleGetter(this, "UITour",
   "resource:///modules/UITour.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "CastingApps",
+  "resource:///modules/CastingApps.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "SimpleServiceDiscovery",
+  "resource://gre/modules/SimpleServiceDiscovery.jsm");
 
 let gInitialPages = [
   "about:blank",
@@ -394,33 +404,6 @@ const gSessionHistoryObserver = {
       gURLBar.editor.transactionManager.clear()
     }
   }
-};
-
-const gGatherTelemetryObserver = {
-  observe: function(subject, topic, data) {
-    if (topic != "gather-telemetry") {
-      return;
-    }
-
-    let engine;
-    try {
-      engine = Services.search.defaultEngine;
-    } catch (e) {}
-    let name;
-
-    if (!engine) {
-      name = "NONE";
-    } else if (engine.identifier) {
-      name = engine.identifier;
-    } else if (engine.name) {
-      name = "other-" + engine.name;
-    } else {
-      name = "UNDEFINED";
-    }
-
-    let engines = Services.telemetry.getKeyedHistogramById("SEARCH_DEFAULT_ENGINE");
-    engines.add(name, true)
-  },
 };
 
 /**
@@ -820,34 +803,69 @@ function gKeywordURIFixup({ target: browser, data: fixupInfo }) {
   }
 }
 
-// Called when a docshell has attempted to load a page in an incorrect process.
-// This function is responsible for loading the page in the correct process.
-function RedirectLoad({ target: browser, data }) {
+// A shared function used by both remote and non-remote browser XBL bindings to
+// load a URI or redirect it to the correct process.
+function _loadURIWithFlags(browser, uri, flags, referrer, charset, postdata) {
+  if (!uri) {
+    uri = "about:blank";
+  }
+
+  if (!(flags & browser.webNavigation.LOAD_FLAGS_FROM_EXTERNAL)) {
+    browser.userTypedClear++;
+  }
+
+  let shouldBeRemote = gMultiProcessBrowser &&
+                       E10SUtils.shouldBrowserBeRemote(uri);
+  try {
+    if (browser.isRemoteBrowser == shouldBeRemote) {
+      browser.webNavigation.loadURI(uri, flags, referrer, postdata, null);
+    } else {
+      LoadInOtherProcess(browser, {
+        uri: uri,
+        flags: flags,
+        referrer: referrer ? referrer.spec : null,
+      });
+    }
+  } catch (e) {
+    // If anything goes wrong just switch remoteness manually and load the URI.
+    // We might lose history that way but at least the browser loaded a page.
+    // This might be necessary if SessionStore wasn't initialized yet i.e.
+    // when the homepage is a non-remote page.
+    gBrowser.updateBrowserRemoteness(browser, shouldBeRemote);
+    browser.webNavigation.loadURI(uri, flags, referrer, postdata, null);
+  } finally {
+    if (browser.userTypedClear) {
+      browser.userTypedClear--;
+    }
+  }
+}
+
+// Starts a new load in the browser first switching the browser to the correct
+// process
+function LoadInOtherProcess(browser, loadOptions, historyIndex = -1) {
   let tab = gBrowser.getTabForBrowser(browser);
   // Flush the tab state before getting it
   TabState.flush(browser);
   let tabState = JSON.parse(SessionStore.getTabState(tab));
 
-  if (data.historyIndex < 0) {
-    // Add a pseudo-history state for the new url to load
-    let newEntry = {
-      url: data.uri,
-      referrer: data.referrer,
-    };
-
-    tabState.entries = tabState.entries.slice(0, tabState.index);
-    tabState.entries.push(newEntry);
-    tabState.index++;
+  if (historyIndex < 0) {
     tabState.userTypedValue = null;
+    // Tell session history the new page to load
+    SessionStore._restoreTabAndLoad(tab, JSON.stringify(tabState), loadOptions);
   }
   else {
     // Update the history state to point to the requested index
-    tabState.index = data.historyIndex + 1;
+    tabState.index = historyIndex + 1;
+    // SessionStore takes care of setting the browser remoteness before restoring
+    // history into it.
+    SessionStore.setTabState(tab, JSON.stringify(tabState));
   }
+}
 
-  // SessionStore takes care of setting the browser remoteness before restoring
-  // history into it.
-  SessionStore.setTabState(tab, JSON.stringify(tabState));
+// Called when a docshell has attempted to load a page in an incorrect process.
+// This function is responsible for loading the page in the correct process.
+function RedirectLoad({ target: browser, data }) {
+  LoadInOtherProcess(browser, data.loadOptions, data.historyIndex);
 }
 
 var gBrowserInit = {
@@ -874,6 +892,7 @@ var gBrowserInit = {
 
     let mm = window.getGroupMessageManager("browsers");
     mm.loadFrameScript("chrome://browser/content/content.js", true);
+    mm.loadFrameScript("chrome://browser/content/content-UITour.js", true);
 
     // initialize observers and listeners
     // and give C++ access to gBrowser
@@ -1097,6 +1116,28 @@ var gBrowserInit = {
 #endif
     }, false, true);
 
+    gBrowser.addEventListener("AboutTabCrashedTryAgain", function(event) {
+      let ownerDoc = event.originalTarget;
+
+      if (!ownerDoc.documentURI.startsWith("about:tabcrashed")) {
+        return;
+      }
+
+      let isTopFrame = (ownerDoc.defaultView.parent === ownerDoc.defaultView);
+      if (!isTopFrame) {
+        return;
+      }
+
+      let browser = gBrowser.getBrowserForDocument(ownerDoc);
+#ifdef MOZ_CRASHREPORTER
+      if (event.detail.sendCrashReport) {
+        TabCrashReporter.submitCrashReport(browser);
+      }
+#endif
+      let tab = gBrowser.getTabForBrowser(browser);
+      SessionStore.reviveCrashedTab(tab);
+    }, false, true);
+
     if (uriToLoad && uriToLoad != "about:blank") {
       if (uriToLoad instanceof Ci.nsISupportsArray) {
         let count = uriToLoad.Count();
@@ -1149,7 +1190,6 @@ var gBrowserInit = {
     Services.obs.addObserver(gXPInstallObserver, "addon-install-blocked", false);
     Services.obs.addObserver(gXPInstallObserver, "addon-install-failed", false);
     Services.obs.addObserver(gXPInstallObserver, "addon-install-complete", false);
-    Services.obs.addObserver(gGatherTelemetryObserver, "gather-telemetry", false);
     window.messageManager.addMessageListener("Browser:URIFixup", gKeywordURIFixup);
     window.messageManager.addMessageListener("Browser:LoadURI", RedirectLoad);
 
@@ -1282,19 +1322,6 @@ var gBrowserInit = {
 #endif
 
     LoopUI.init();
-    // Loop throttling support.
-    const kWidgetId = "loop-button-throttled";
-    // If we're throttled, check to see if it's our turn to be unthrottled
-    if (Services.prefs.getBoolPref("loop.throttled2")) {
-      MozLoopService.checkSoftStart(() => {
-        // If the check unthrottled us and the button was not customized to an
-        // area by the user, move it to the nav-bar.
-        let widget = CustomizableUI.getWidget(kWidgetId);
-        if (!Services.prefs.getBoolPref("loop.throttled2") && !widget.areaType) {
-          CustomizableUI.addWidgetToArea(kWidgetId, CustomizableUI.AREA_NAVBAR);
-        }
-      });
-    }
 
     gBrowserThumbnails.init();
 
@@ -1483,7 +1510,6 @@ var gBrowserInit = {
       Services.obs.removeObserver(gXPInstallObserver, "addon-install-blocked");
       Services.obs.removeObserver(gXPInstallObserver, "addon-install-failed");
       Services.obs.removeObserver(gXPInstallObserver, "addon-install-complete");
-      Services.obs.removeObserver(gGatherTelemetryObserver, "gather-telemetry");
       window.messageManager.removeMessageListener("Browser:URIFixup", gKeywordURIFixup);
       window.messageManager.removeMessageListener("Browser:LoadURI", RedirectLoad);
 
@@ -1592,6 +1618,10 @@ var gBrowserInit = {
 #ifdef MOZ_SERVICES_SYNC
     // initialize the sync UI
     gSyncUI.init();
+#endif
+
+#ifdef E10S_TESTING_ONLY
+    gRemoteTabsUI.init();
 #endif
   },
 
@@ -1704,10 +1734,11 @@ function HandleAppCommandEvent(evt) {
     BrowserOpenFileWindow();
     break;
   case "Print":
-    PrintUtils.print();
+    PrintUtils.print(gBrowser.selectedBrowser.contentWindowAsCPOW,
+                     gBrowser.selectedBrowser);
     break;
   case "Save":
-    saveDocument(window.content.document);
+    saveDocument(gBrowser.selectedBrowser.contentDocumentAsCPOW);
     break;
   case "SendMail":
     MailIntegration.sendLinkForWindow(window.content);
@@ -2541,6 +2572,8 @@ let BrowserOnClick = {
     mm.addMessageListener("Browser:CertExceptionError", this);
     mm.addMessageListener("Browser:SiteBlockedError", this);
     mm.addMessageListener("Browser:NetworkError", this);
+    mm.addMessageListener("Browser:SendSSLErrorReport", this);
+    mm.addMessageListener("Browser:SetSSLErrorReportAuto", this);
   },
 
   uninit: function () {
@@ -2548,6 +2581,8 @@ let BrowserOnClick = {
     mm.removeMessageListener("Browser:CertExceptionError", this);
     mm.removeMessageListener("Browser:SiteBlockedError", this);
     mm.removeMessageListener("Browser:NetworkError", this);
+    mm.removeMessageListener("Browser:SendSSLErrorReport", this);
+    mm.removeMessageListener("Browser:SetSSLErrorReportAuto", this);
   },
 
   handleEvent: function (event) {
@@ -2566,9 +2601,6 @@ let BrowserOnClick = {
         ownerDoc.documentURI.toLowerCase() == "about:newtab") {
       this.onE10sAboutNewTab(event, ownerDoc);
     }
-    else if (ownerDoc.documentURI.startsWith("about:tabcrashed")) {
-      this.onAboutTabCrashed(event, ownerDoc);
-    }
   },
 
   receiveMessage: function (msg) {
@@ -2586,7 +2618,120 @@ let BrowserOnClick = {
         // Reset network state, the error page will refresh on its own.
         Services.io.offline = false;
       break;
+      case "Browser:SendSSLErrorReport":
+        this.onSSLErrorReport(msg.target, msg.data.elementId,
+                              msg.data.documentURI,
+                              msg.data.location,
+                              msg.data.securityInfo);
+      break;
+      case "Browser:SetSSLErrorReportAuto":
+        Services.prefs.setBoolPref("security.ssl.errorReporting.automatic", msg.json.automatic);
+      break;
     }
+  },
+
+  onSSLErrorReport: function(browser, elementId, documentURI, location, securityInfo) {
+    function showReportStatus(reportStatus) {
+      gBrowser.selectedBrowser
+          .messageManager
+          .sendAsyncMessage("Browser:SSLErrorReportStatus",
+                            {
+                              reportStatus: reportStatus,
+                              documentURI: documentURI
+                            });
+    }
+
+    if (!Services.prefs.getBoolPref("security.ssl.errorReporting.enabled")) {
+      showReportStatus("error");
+      Cu.reportError("User requested certificate error report sending, but certificate error reporting is disabled");
+      return;
+    }
+
+    let serhelper = Cc["@mozilla.org/network/serialization-helper;1"]
+                           .getService(Ci.nsISerializationHelper);
+    let transportSecurityInfo = serhelper.deserializeObject(securityInfo);
+    transportSecurityInfo.QueryInterface(Ci.nsITransportSecurityInfo)
+
+    showReportStatus("activity");
+
+    /*
+     * Requested info for the report:
+     * - Domain of bad connection
+     * - Error type (e.g. Pinning, domain mismatch, etc)
+     * - Cert chain (at minimum, same data to distrust each cert in the
+     *   chain)
+     * - Request data (e.g. User Agent, IP, Timestamp)
+     *
+     * The request data should be added to the report by the receiving server.
+     */
+
+    // TODO: can we pull this in from pippki.js isntead of duplicating it
+    // here?
+    function getDERString(cert)
+    {
+      var length = {};
+      var derArray = cert.getRawDER(length);
+      var derString = '';
+      for (var i = 0; i < derArray.length; i++) {
+        derString += String.fromCharCode(derArray[i]);
+      }
+      return derString;
+    }
+
+    // Convert the nsIX509CertList into a format that can be parsed into
+    // JSON
+    let asciiCertChain = [];
+
+    if (transportSecurityInfo.failedCertChain) {
+      let certs = transportSecurityInfo.failedCertChain.getEnumerator();
+      while (certs.hasMoreElements()) {
+        let cert = certs.getNext();
+        cert.QueryInterface(Ci.nsIX509Cert);
+        asciiCertChain.push(btoa(getDERString(cert)));
+      }
+    }
+
+    let report = {
+      hostname: location.hostname,
+      port: location.port,
+      timestamp: Math.round(Date.now() / 1000),
+      errorCode: transportSecurityInfo.errorCode,
+      failedCertChain: asciiCertChain,
+      userAgent: window.navigator.userAgent,
+      version: 1,
+      build: gAppInfo.appBuildID,
+      product: gAppInfo.name,
+      channel: Services.prefs.getCharPref("app.update.channel")
+    }
+
+    let reportURL = Services.prefs.getCharPref("security.ssl.errorReporting.url");
+
+    let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"]
+        .createInstance(Ci.nsIXMLHttpRequest);
+    try {
+      xhr.open("POST", reportURL);
+    } catch (e) {
+      Cu.reportError("xhr.open exception", e);
+      showReportStatus("error");
+    }
+
+    xhr.onerror = function (e) {
+      // error making request to reportURL
+      Cu.reportError("xhr onerror", e);
+      showReportStatus("error");
+    };
+
+    xhr.onload = function (event) {
+      if (xhr.status !== 201 && xhr.status !== 0) {
+        // request returned non-success status
+        Cu.reportError("xhr returned failure code", xhr.status);
+        showReportStatus("error");
+      } else {
+        showReportStatus("complete");
+      }
+    };
+
+    xhr.send(JSON.stringify(report));
   },
 
   onAboutCertError: function (browser, elementId, isTopFrame, location, sslStatusAsString) {
@@ -2711,29 +2856,6 @@ let BrowserOnClick = {
       event.preventDefault();
       let where = whereToOpenLink(event, false, false);
       openLinkIn(anchorTarget.href, where, { charset: ownerDoc.characterSet });
-    }
-  },
-
-  /**
-   * The about:tabcrashed can't do window.reload() because that
-   * would reload the page but not use a remote browser.
-   */
-  onAboutTabCrashed: function(event, ownerDoc) {
-    let isTopFrame = (ownerDoc.defaultView.parent === ownerDoc.defaultView);
-    if (!isTopFrame) {
-      return;
-    }
-
-    let button = event.originalTarget;
-    if (button.id == "tryAgain") {
-      let browser = gBrowser.getBrowserForDocument(ownerDoc);
-#ifdef MOZ_CRASHREPORTER
-      if (ownerDoc.getElementById("checkSendReport").checked) {
-        TabCrashReporter.submitCrashReport(browser);
-      }
-#endif
-
-      TabCrashReporter.reloadCrashedTab(browser);
     }
   },
 
@@ -3170,8 +3292,32 @@ const BrowserSearch = {
 
     if (hidden)
       browser.hiddenEngines = engines;
-    else
+    else {
       browser.engines = engines;
+      if (browser == gBrowser.selectedBrowser)
+        this.updateSearchButton();
+    }
+  },
+
+  /**
+   * Update the browser UI to show whether or not additional engines are
+   * available when a page is loaded or the user switches tabs to a page that
+   * has search engines.
+   */
+  updateSearchButton: function() {
+    var searchBar = this.searchBar;
+
+    // The search bar binding might not be applied even though the element is
+    // in the document (e.g. when the navigation toolbar is hidden), so check
+    // for .searchButton specifically.
+    if (!searchBar || !searchBar.searchButton)
+      return;
+
+    var engines = gBrowser.selectedBrowser.engines;
+    if (engines && engines.length > 0)
+      searchBar.setAttribute("addengines", "true");
+    else
+      searchBar.removeAttribute("addengines");
   },
 
   /**
@@ -4188,6 +4334,7 @@ var XULBrowserWindow = {
 
   asyncUpdateUI: function () {
     FeedHandler.updateFeeds();
+    BrowserSearch.updateSearchButton();
   },
 
   // Left here for add-on compatibility, see bug 752434
@@ -4529,15 +4676,14 @@ function nsBrowserAccess() { }
 nsBrowserAccess.prototype = {
   QueryInterface: XPCOMUtils.generateQI([Ci.nsIBrowserDOMWindow, Ci.nsISupports]),
 
-  _openURIInNewTab: function(aURI, aOpener, aIsExternal) {
+  _openURIInNewTab: function(aURI, aReferrer, aIsPrivate, aIsExternal) {
     let win, needToFocusWin;
 
     // try the current window.  if we're in a popup, fall back on the most recent browser window
     if (window.toolbar.visible)
       win = window;
     else {
-      let isPrivate = PrivateBrowsingUtils.isWindowPrivate(aOpener || window);
-      win = RecentWindow.getMostRecentBrowserWindow({private: isPrivate});
+      win = RecentWindow.getMostRecentBrowserWindow({private: aIsPrivate});
       needToFocusWin = true;
     }
 
@@ -4553,10 +4699,9 @@ nsBrowserAccess.prototype = {
     }
 
     let loadInBackground = gPrefService.getBoolPref("browser.tabs.loadDivertedInBackground");
-    let referrer = aOpener ? makeURI(aOpener.location.href) : null;
 
     let tab = win.gBrowser.loadOneTab(aURI ? aURI.spec : "about:blank", {
-                                      referrerURI: referrer,
+                                      referrerURI: aReferrer,
                                       fromExternal: aIsExternal,
                                       inBackground: loadInBackground});
     let browser = win.gBrowser.getBrowserForTab(tab);
@@ -4572,7 +4717,7 @@ nsBrowserAccess.prototype = {
     var isExternal = (aContext == Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
 
     if (isExternal && aURI && aURI.schemeIs("chrome")) {
-      dump("use -chrome command-line option to load external chrome urls\n");
+      dump("use --chrome command-line option to load external chrome urls\n");
       return null;
     }
 
@@ -4593,7 +4738,9 @@ nsBrowserAccess.prototype = {
         newWindow = openDialog(getBrowserURL(), "_blank", "all,dialog=no", url, null, null, null);
         break;
       case Ci.nsIBrowserDOMWindow.OPEN_NEWTAB :
-        let browser = this._openURIInNewTab(aURI, aOpener, isExternal);
+        let referrer = aOpener ? makeURI(aOpener.location.href) : null;
+        let isPrivate = PrivateBrowsingUtils.isWindowPrivate(aOpener || window);
+        let browser = this._openURIInNewTab(aURI, referrer, isPrivate, isExternal);
         if (browser)
           newWindow = browser.contentWindow;
         break;
@@ -4612,14 +4759,14 @@ nsBrowserAccess.prototype = {
     return newWindow;
   },
 
-  openURIInFrame: function browser_openURIInFrame(aURI, aOpener, aWhere, aContext) {
+  openURIInFrame: function browser_openURIInFrame(aURI, aParams, aWhere, aContext) {
     if (aWhere != Ci.nsIBrowserDOMWindow.OPEN_NEWTAB) {
       dump("Error: openURIInFrame can only open in new tabs");
       return null;
     }
 
     var isExternal = (aContext == Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
-    let browser = this._openURIInNewTab(aURI, aOpener, isExternal);
+    let browser = this._openURIInNewTab(aURI, aParams.referrer, aParams.isPrivate, isExternal);
     if (browser)
       return browser.QueryInterface(Ci.nsIFrameLoaderOwner);
 
@@ -6660,11 +6807,11 @@ var gIdentityHandler = {
     this._encryptionLabel[this.IDENTITY_MODE_UNKNOWN] =
       gNavigatorBundle.getString("identity.unencrypted");
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_DISPLAY_LOADED] =
-      gNavigatorBundle.getString("identity.mixed_display_loaded");
+      gNavigatorBundle.getString("identity.broken_loaded");
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_ACTIVE_LOADED] =
       gNavigatorBundle.getString("identity.mixed_active_loaded2");
     this._encryptionLabel[this.IDENTITY_MODE_MIXED_DISPLAY_LOADED_ACTIVE_BLOCKED] =
-      gNavigatorBundle.getString("identity.mixed_display_loaded");
+      gNavigatorBundle.getString("identity.broken_loaded");
     return this._encryptionLabel;
   },
   get _identityPopup () {
@@ -6832,7 +6979,7 @@ var gIdentityHandler = {
 
     // Chrome URIs however get special treatment. Some chrome URIs are
     // whitelisted to provide a positive security signal to the user.
-    let whitelist = /^about:(accounts|addons|app-manager|config|crashes|customizing|healthreport|home|newaddon|permissions|preferences|privatebrowsing|sessionrestore|support|welcomeback)/i;
+    let whitelist = /^about:(accounts|addons|app-manager|config|crashes|customizing|healthreport|home|license|newaddon|permissions|preferences|privatebrowsing|rights|sessionrestore|support|welcomeback)/i;
     let isChromeUI = uri.schemeIs("about") && whitelist.test(uri.spec);
     if (isChromeUI) {
       this.setMode(this.IDENTITY_MODE_CHROMEUI);
@@ -7280,16 +7427,22 @@ let gPrivateBrowsingUI = {
 
     if (gURLBar &&
         !PrivateBrowsingUtils.permanentPrivateBrowsing) {
-      // Disable switch to tab autocompletion for private windows 
-      // (not for "Always use private browsing" mode)
-      gURLBar.setAttribute("autocompletesearchparam", "");
+      // Disable switch to tab autocompletion for private windows.
+      // We leave it enabled for permanent private browsing mode though.
+      let value = gURLBar.getAttribute("autocompletesearchparam") || "";
+      if (!value.contains("disable-private-actions")) {
+        gURLBar.setAttribute("autocompletesearchparam",
+                             value + " disable-private-actions");
+      }
     }
   }
 };
 
 let gRemoteTabsUI = {
   init: function() {
-    if (window.location.href != getBrowserURL()) {
+    if (window.location.href != getBrowserURL() &&
+        // Also check hidden window for the Mac no-window case
+        window.location.href != "chrome://browser/content/hiddenWindow.xul") {
       return;
     }
 

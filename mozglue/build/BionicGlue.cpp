@@ -66,7 +66,6 @@ static std::vector<AtForkFuncs, SpecialAllocator<AtForkFuncs> > atfork;
 
 #ifdef MOZ_WIDGET_GONK
 #include "cpuacct.h"
-#define WRAP(x) x
 
 #if ANDROID_VERSION < 17 || defined(MOZ_WIDGET_ANDROID)
 extern "C" NS_EXPORT int
@@ -80,12 +79,11 @@ timer_create(clockid_t, struct sigevent*, timer_t*)
 
 #else
 #define cpuacct_add(x)
-#define WRAP(x) __wrap_##x
 #endif
 
 #if ANDROID_VERSION < 17 || defined(MOZ_WIDGET_ANDROID)
 extern "C" NS_EXPORT int
-WRAP(pthread_atfork)(void (*prepare)(void), void (*parent)(void), void (*child)(void))
+pthread_atfork(void (*prepare)(void), void (*parent)(void), void (*child)(void))
 {
   AtForkFuncs funcs;
   funcs.prepare = prepare;
@@ -100,7 +98,7 @@ WRAP(pthread_atfork)(void (*prepare)(void), void (*parent)(void), void (*child)(
 extern "C" NS_EXPORT pid_t __fork(void);
 
 extern "C" NS_EXPORT pid_t
-WRAP(fork)(void)
+fork(void)
 {
   pid_t pid;
   for (auto it = atfork.rbegin();
@@ -127,7 +125,7 @@ WRAP(fork)(void)
 #endif
 
 extern "C" NS_EXPORT int
-WRAP(raise)(int sig)
+raise(int sig)
 {
   // Bug 741272: Bionic incorrectly uses kill(), which signals the
   // process, and thus could signal another thread (and let this one
@@ -182,83 +180,19 @@ PR_GetEnvLock(void)
   return &_pr_envLock;
 }
 
-/* Amazon Kindle Fire HD's libc provides most of the
- * functions in string.h as weak symbols, which dlsym
- * cannot resolve. Thus, we must wrap these functions.
- * See bug 791419.
- */
-
+/* Flash plugin uses symbols that are not present in Android >= 4.4 */
 #ifndef MOZ_WIDGET_GONK
-#include <string.h>
-extern "C" NS_EXPORT void* __real_memccpy(void * a0, const void * a1, int a2, size_t a3);
-extern "C" NS_EXPORT void* __real_memchr(const void * a0, int a1, size_t a2);
-extern "C" NS_EXPORT void* __real_memrchr(const void * a0, int a1, size_t a2);
-extern "C" NS_EXPORT int __real_memcmp(const void * a0, const void * a1, size_t a2);
-extern "C" NS_EXPORT void* __real_memcpy(void * a0, const void * a1, size_t a2);
-extern "C" NS_EXPORT void* __real_memmove(void * a0, const void * a1, size_t a2);
-extern "C" NS_EXPORT void* __real_memset(void * a0, int a1, size_t a2);
-extern "C" NS_EXPORT void* __real_memmem(const void * a0, size_t a1, const void * a2, size_t a3);
-extern "C" NS_EXPORT char* __real_index(const char * a0, int a1);
-extern "C" NS_EXPORT char* __real_strchr(const char * a0, int a1);
-extern "C" NS_EXPORT char* __real_strrchr(const char * a0, int a1);
-extern "C" NS_EXPORT size_t __real_strlen(const char * a0);
-extern "C" NS_EXPORT int __real_strcmp(const char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strcpy(char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strcat(char * a0, const char * a1);
-extern "C" NS_EXPORT int __real_strcasecmp(const char * a0, const char * a1);
-extern "C" NS_EXPORT int __real_strncasecmp(const char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT char* __real_strstr(const char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strcasestr(const char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strtok(char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strtok_r(char * a0, const char * a1, char** a2);
-extern "C" NS_EXPORT char* __real_strerror(int a0);
-extern "C" NS_EXPORT int __real_strerror_r(int a0, char * a1, size_t a2);
-extern "C" NS_EXPORT size_t __real_strnlen(const char * a0, size_t a1);
-extern "C" NS_EXPORT char* __real_strncat(char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT int __real_strncmp(const char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT char* __real_strncpy(char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT size_t __real_strlcat(char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT size_t __real_strlcpy(char * a0, const char * a1, size_t a2);
-extern "C" NS_EXPORT size_t __real_strcspn(const char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strpbrk(const char * a0, const char * a1);
-extern "C" NS_EXPORT char* __real_strsep(char ** a0, const char * a1);
-extern "C" NS_EXPORT size_t __real_strspn(const char * a0, const char * a1);
-extern "C" NS_EXPORT int __real_strcoll(const char * a0, const char * a1);
-extern "C" NS_EXPORT size_t __real_strxfrm(char * a0, const char * a1, size_t a2);
-
-extern "C" NS_EXPORT void* __wrap_memccpy(void * a0, const void * a1, int a2, size_t a3) { return __real_memccpy(a0, a1, a2, a3); }
-extern "C" NS_EXPORT void* __wrap_memchr(const void * a0, int a1, size_t a2) { return __real_memchr(a0, a1, a2); }
-extern "C" NS_EXPORT void* __wrap_memrchr(const void * a0, int a1, size_t a2) { return __real_memrchr(a0, a1, a2); }
-extern "C" NS_EXPORT int __wrap_memcmp(const void * a0, const void * a1, size_t a2) { return __real_memcmp(a0, a1, a2); }
-extern "C" NS_EXPORT void* __wrap_memcpy(void * a0, const void * a1, size_t a2) { return __real_memcpy(a0, a1, a2); }
-extern "C" NS_EXPORT void* __wrap_memmove(void * a0, const void * a1, size_t a2) { return __real_memmove(a0, a1, a2); }
-extern "C" NS_EXPORT void* __wrap_memset(void * a0, int a1, size_t a2) { return __real_memset(a0, a1, a2); }
-extern "C" NS_EXPORT void* __wrap_memmem(const void * a0, size_t a1, const void * a2, size_t a3) { return __real_memmem(a0, a1, a2, a3); }
-extern "C" NS_EXPORT char* __wrap_index(const char * a0, int a1) { return __real_index(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strchr(const char * a0, int a1) { return __real_strchr(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strrchr(const char * a0, int a1) { return __real_strrchr(a0, a1); }
-extern "C" NS_EXPORT size_t __wrap_strlen(const char * a0) { return __real_strlen(a0); }
-extern "C" NS_EXPORT int __wrap_strcmp(const char * a0, const char * a1) { return __real_strcmp(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strcpy(char * a0, const char * a1) { return __real_strcpy(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strcat(char * a0, const char * a1) { return __real_strcat(a0, a1); }
-extern "C" NS_EXPORT int __wrap_strcasecmp(const char * a0, const char * a1) { return __real_strcasecmp(a0, a1); }
-extern "C" NS_EXPORT int __wrap_strncasecmp(const char * a0, const char * a1, size_t a2) { return __real_strncasecmp(a0, a1, a2); }
-extern "C" NS_EXPORT char* __wrap_strstr(const char * a0, const char * a1) { return __real_strstr(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strcasestr(const char * a0, const char * a1) { return __real_strcasestr(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strtok(char * a0, const char * a1) { return __real_strtok(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strtok_r(char * a0, const char * a1, char** a2) { return __real_strtok_r(a0, a1, a2); }
-extern "C" NS_EXPORT char* __wrap_strerror(int a0) { return __real_strerror(a0); }
-extern "C" NS_EXPORT int __wrap_strerror_r(int a0, char * a1, size_t a2) { return __real_strerror_r(a0, a1, a2); }
-extern "C" NS_EXPORT size_t __wrap_strnlen(const char * a0, size_t a1) { return __real_strnlen(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strncat(char * a0, const char * a1, size_t a2) { return __real_strncat(a0, a1, a2); }
-extern "C" NS_EXPORT int __wrap_strncmp(const char * a0, const char * a1, size_t a2) { return __real_strncmp(a0, a1, a2); }
-extern "C" NS_EXPORT char* __wrap_strncpy(char * a0, const char * a1, size_t a2) { return __real_strncpy(a0, a1, a2); }
-extern "C" NS_EXPORT size_t __wrap_strlcat(char * a0, const char * a1, size_t a2) { return __real_strlcat(a0, a1, a2); }
-extern "C" NS_EXPORT size_t __wrap_strlcpy(char * a0, const char * a1, size_t a2) { return __real_strlcpy(a0, a1, a2); }
-extern "C" NS_EXPORT size_t __wrap_strcspn(const char * a0, const char * a1) { return __real_strcspn(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strpbrk(const char * a0, const char * a1) { return __real_strpbrk(a0, a1); }
-extern "C" NS_EXPORT char* __wrap_strsep(char ** a0, const char * a1) { return __real_strsep(a0, a1); }
-extern "C" NS_EXPORT size_t __wrap_strspn(const char * a0, const char * a1) { return __real_strspn(a0, a1); }
-extern "C" NS_EXPORT int __wrap_strcoll(const char * a0, const char * a1) { return __real_strcoll(a0, a1); }
-extern "C" NS_EXPORT size_t __wrap_strxfrm(char * a0, const char * a1, size_t a2) { return __real_strxfrm(a0, a1, a2); }
+namespace android {
+  namespace VectorImpl {
+    NS_EXPORT void reservedVectorImpl1(void) { }
+    NS_EXPORT void reservedVectorImpl2(void) { }
+    NS_EXPORT void reservedVectorImpl3(void) { }
+    NS_EXPORT void reservedVectorImpl4(void) { }
+    NS_EXPORT void reservedVectorImpl5(void) { }
+    NS_EXPORT void reservedVectorImpl6(void) { }
+    NS_EXPORT void reservedVectorImpl7(void) { }
+    NS_EXPORT void reservedVectorImpl8(void) { }
+  }
+}
 #endif
+

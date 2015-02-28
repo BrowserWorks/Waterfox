@@ -271,7 +271,7 @@
     <ClCompile Include="reldatefmttest.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
-    <ClCompile Include="scientificformathelpertest.cpp">
+    <ClCompile Include="scientificnumberformattertest.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
     <ClCompile Include="sdtfmtts.cpp">

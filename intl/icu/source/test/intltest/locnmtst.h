@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2010-2012, International Business Machines Corporation
+ * Copyright (c) 2010-2014, International Business Machines Corporation
  * and others. All Rights Reserved.
  ********************************************************************/
 
@@ -29,7 +29,8 @@ public:
     void TestUldnWithKeywordsAndEverything(void);
     void TestUldnComponents(void);
     void TestRootEtc(void);
-    void TestKeywords(void);
+    void TestCurrencyKeyword(void);
+    void TestUnknownCurrencyKeyword(void);
     void TestUntranslatedKeywords(void);
     void TestPrivateUse(void);
     void TestUldnDisplayContext(void);

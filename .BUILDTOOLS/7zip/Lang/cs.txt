@@ -1,0 +1,459 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 4.30
+; Translated by Milan Hrubý 
+; Updated for 4.33 version by Michal Molhanec
+;
+;
+;
+
+00000000 = "Czech"
+00000001 = "Čeština"
+00000002 = "5"
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "7-Zip konfigurace"
+
+; Info Page
+01000100 = "Informace"
+01000103 = "7-Zip je svobodný software. Nicméně můžete podpořit jeho vývoj registrací."
+01000104 = "Podpora"
+01000105 = "Registrovat"
+
+; Folders Page
+01000200 = "Složky"
+01000210 = "&Pracovní složka"
+01000211 = "&Systémová dočasná složka"
+01000212 = "&Aktuální"
+01000213 = "Sp&ecifikovaná:"
+01000214 = "Používat pouze pro vyjímatelné disky"
+
+01000281 = "Určete dočasné umístění komprimovaných souborů."
+
+; System Page
+01000300 = "Systém"
+01000301 = "Integrovat 7-Zip do kontextového menu"
+01000302 = "Stupňovité kontextové menu"
+01000310 = "Položky kontextového menu:"
+
+; Language Page
+01000400 = "Jazyk"
+01000401 = "Jazyk:"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "7-Zip příkazy"
+02000103 = "Otevřít"
+02000104 = "Otevře vybraný archiv."
+02000105 = "Rozbalit soubory..."
+02000106 = "Rozbalí soubory z vybraného archivu."
+02000107 = "Přidat do archivu..."
+02000108 = "Přidá vybrané položky do archivu."
+02000109 = "Testovat archiv"
+0200010A = "Otestuje integritu vybraného archivu."
+0200010B = "Rozbalit zde"
+0200010C = "Rozbalí soubory z vybraného archivu do aktuální složky."
+0200010D = "Rozbalit do {0}"
+0200010E = "Rozbalí soubory do podsložky."
+0200010F = "Přidat do {0}"
+02000110 = "Přidá vybrané položky do archivu."
+02000111 = "Zkomprimovat a odeslat emailem..."
+02000112 = "Zkomprimuje vybrané položky do archivu a odešle archiv emailem."
+02000113 = "Zkomprimovat do {0} a odeslat emailem"
+02000114 = "Zkomprimuje vybrané položky do archivu a odešle archiv emailem."
+
+02000140 = "<Složka>"
+02000141 = "<Archiv>"
+
+; Properties
+02000203 = "Cesta"
+02000204 = "Název"
+02000205 = "Přípona"
+02000206 = "Složka"
+02000207 = "Velikost"
+02000208 = "Zabalená velikost"
+02000209 = "Atributy"
+0200020A = "Vytvořen"
+0200020B = "Zpřístupněn"
+0200020C = "Upraven"
+0200020D = "Pevný"
+0200020E = "Poznámka"
+0200020F = "Zašifrován"
+02000210 = "Rozdělen předtím"
+02000211 = "Rozdělen potom"
+02000212 = "Slovník"
+02000213 = "CRC"
+02000214 = "Typ"
+02000215 = "Anti"
+02000216 = "Metoda"
+02000217 = "Hostitelský OS"
+02000218 = "Souborový systém"
+02000219 = "Uživatel"
+0200021A = "Skupina"
+0200021B = "Blok"
+0200021C = "Poznámka"
+0200021D = "Pozice"
+
+; Status bar 
+02000301 = "{0} objekt(ů) vybraných"
+02000302 = "{0} objekt(ů)"
+
+; List Context Menu
+02000401 = "&Sloupce..."
+
+02000411 = "&Otevřít"
+02000412 = "&Rozbalit..."
+
+; ToolBar
+02000501 = "Rozbalit"
+
+; Messages 
+02000601 = "Aktualizační operace tohoto archivu nejsou podporovány."
+02000602 = "Nemůžete aktualizovat archiv {0}"
+02000603 = "Nemohu vytvořit složku '{0}'"
+02000604 = "Soubor není podporovaným archivem."
+02000605 = "Chyba"
+02000606 = "Příliš mnoho položek"
+02000607 = "Žádná aplikace není asociována s touto příponou souboru"
+02000608 = "Nedošlo k žádným chybám"
+
+; Dialogs
+02000702 = "OK"
+02000705 = "&Ano"
+02000707 = "Ano na &všechno"
+02000709 = "&Ne"
+0200070B = "N&e na všechno"
+
+02000710 = "Storno"
+02000711 = "&Zrušit"
+02000713 = "Zavří&t"
+02000714 = "Zastavit"
+02000715 = "Restartovat"
+
+02000720 = "Nápověda"
+
+; Extract dialog
+02000800 = "Rozbalit"
+02000801 = "&Rozbalit do:"
+02000802 = "Heslo"
+
+02000810 = "Mód cesty"
+02000811 = "Plné cesty"
+02000812 = "Aktuální cesty"
+02000813 = "Žádné cesty"
+
+02000820 = "Mód přepisování"
+02000821 = "Zeptat se před přepisem"
+02000822 = "Přepsat bez výzvy"
+02000823 = "Přeskočit existující soubory"
+02000824 = "Automatické přejmenování"
+02000825 = "Automatické přejmenování existujících souborů"
+
+02000830 = "Soubory"
+02000831 = "&Vybrané soubory"
+02000832 = "Všechny &soubory"
+
+02000881 = "Specifikujte umístění pro rozbalené soubory."
+
+02000890 = "Rozbaluji"
+
+; Overwrite dialog
+02000900 = "Potvrzení nahrazení souboru"
+02000901 = "Cílová složka již obsahuje zpracovaný soubor."
+02000902 = "Chcete nahradit existující soubor"
+02000903 = "tímto?"
+
+02000911 = "A&utomaticky přejmenovat"
+
+02000982 = "{0} bajtů"
+02000983 = "upraveno"
+
+; Messages dialog
+02000A00 = "Diagnostické zprávy"
+
+02000A80 = "Zpráva"
+
+02000A91 = "Nepodporovaná komprimační metoda pro '{0}'."
+02000A92 = "Datová chyba v '{0}'. Soubor je porušený."
+02000A93 = "CRC selhal v '{0}'. Soubor je porušený."
+
+; Password dialog
+02000B00 = "Vložit heslo"
+02000B01 = "Vložte heslo:"
+02000B02 = "Ukázat he&slo"
+
+; Progress dialog
+02000C00 = "Průběh"
+02000C01 = "Uplynulý čas:"
+02000C02 = "Zbývající čas:"
+02000C03 = "Velikost:"
+02000C04 = "Rychlost:"
+
+02000C10 = "&Pozadí"
+02000C11 = "P&opředí"
+02000C12 = "Po&zastavit"
+02000C13 = "Po&kračovat"
+
+02000C20 = "Pozastaveno"
+
+02000C30 = "Jste si jistý, že to chcete zrušit?"
+
+; Compress dialog
+02000D00 = "Přidat do archivu"
+02000D01 = "&Archiv:"
+02000D02 = "&Mód aktualizace:"
+02000D03 = "&Formát archivu:"
+02000D04 = "&Komprimační metoda:"
+02000D05 = "&Vytvořit pevný archiv"
+02000D06 = "&Parametry:"
+02000D07 = "Možnosti"
+02000D08 = "Vytvořit SF&X archiv"
+02000D09 = "Více vláken"
+02000D0A = "Zakódovat &názvy souborů"
+02000D0B = "Ú&roveň komprese:"
+02000D0C = "Ve&likost slovníku:"
+02000D0D = "V&elikost slov:"
+02000D0E = "Spotřeba paměti pro zabalení:"
+02000D0F = "Spotřeba paměti pro rozbalení:"
+
+02000D40 = "Rozdělit na části, &bajtů:"
+
+02000D81 = "Skladovací"
+02000D82 = "Normální"
+02000D83 = "Maximální"
+02000D84 = "Rychlá"
+02000D85 = "Nejrychlejší"
+02000D86 = "Ultra"
+
+02000D90 = "Procházet"
+
+02000DA1 = "Přidat a nahradit soubory"
+02000DA2 = "Aktualizovat a přidat soubory"
+02000DA3 = "Aktualizovat existující soubory"
+02000DA4 = "Synchronizovat soubory"
+
+02000DB1 = "Všechny soubory"
+
+02000DC0 = "Komprimuji"
+
+; Columns dialog
+02000E00 = "Sloupce"
+02000E01 = "Zaškrtněte sloupce, které byste rádi zviditelnili v této složce. Použijte tlačítka Posunout nahoru a Posunout dolů pro uspořádání sloupců."
+02000E02 = "Vybraný sloupec by měl být"
+02000E03 = "pixelů šir&oký."
+
+02000E10 = "Posunout &nahoru"
+02000E11 = "Posunout &dolů"
+02000E12 = "&Ukázat"
+02000E13 = "&Skrýt"
+02000E14 = "Nastavit"
+
+02000E81 = "Název"
+02000E82 = "Šířka"
+
+; Testing
+02000F90 = "Test"
+
+
+; File Manager
+
+03000000 = "7-Zip správce souborů"
+
+; Menu
+03000102 = "&Soubor"
+03000103 = "Úpr&avy"
+03000104 = "&Zobrazit"
+03000105 = "&Nástroje"
+03000106 = "Nápo&věda"
+03000107 = "&Oblíbené"
+
+; File
+03000210 = "&Otevřít"
+03000211 = "Otevřít u&vnitř"
+03000212 = "Otevřít &mimo"
+03000220 = "&Zobrazit"
+03000221 = "&Upravit"
+03000230 = "&Přejmenovat"
+03000231 = "Kopírovat &do..."
+03000232 = "Př&esunout do..."
+03000233 = "Vymaza&t"
+03000240 = "Vlast&nosti"
+03000241 = "Poznámk&a"
+03000250 = "Vytvořit složku"
+03000251 = "Vytvořit soubor"
+03000260 = "&Konec"
+03000270 = "&Rozdělit soubor..."
+03000271 = "&Spojit soubory..."
+
+; Edit
+03000310 = "&Zpět"
+03000311 = "&Opakovat"
+03000320 = "Vyjmou&t"
+03000321 = "&Kopírovat"
+03000322 = "&Vložit"
+03000323 = "Vym&azat"
+03000330 = "Vybrat vš&e"
+03000331 = "Odvybrat vše"
+03000332 = "&Invertovat výběr"
+03000333 = "Vybrat..."
+03000334 = "Odvybrat..."
+03000335 = "Vybrat podle typu"
+03000336 = "Odvybrat podle typu"
+
+; View
+03000410 = "&Velké ikony"
+03000411 = "&Malé ikony"
+03000412 = "&Seznam"
+03000413 = "&Podrobnosti"
+03000420 = "Neuspořádaně"
+03000430 = "Otevřít kořenovou složku"
+03000431 = "O úroveň výš"
+03000432 = "Historii složek..."
+03000440 = "&Obnovit"
+03000450 = "&2 panely"
+03000451 = "Nástrojové &lišty"
+03000460 = "Archivační nástrojová lišta"
+03000461 = "Standardní nástrojová lišta"
+03000462 = "Velká tlačítka"
+03000463 = "Zobrazovat text tlačítek"
+
+; Tools
+03000510 = "&Možnosti..."
+03000511 = "&Test výkonu"
+
+; Help
+03000610 = "&Obsah..."
+03000620 = "O progr&amu 7-Zip..."
+
+; Favorites
+03000710 = "&Přidat složku do oblíbených jako"
+03000720 = "Záložka"
+
+; Options Dialog
+
+03010000 = "Možnosti"
+
+; Plugins
+03010100 = "Pluginy"
+03010101 = "&Pluginy:"
+03010110 = "Možnosti..."
+
+; Edit
+03010200 = "Editor"
+03010201 = "&Editor:"
+
+; System
+03010300 = "Systém"
+03010302 = "Asociovat 7-Zip s:"
+03010310 = "Plugin"
+
+; Settings
+03010400 = "Nastavení"
+03010401 = "Ukázat \"..\" položku"
+03010402 = "Ukázat skutečnou ikonu souboru"
+03010410 = "Ukázat systémové menu"
+03010420 = "&Vybírat celý řádek"
+03010421 = "Ukázat &mřížku"
+03010430 = "&Alternativní mód výběru"
+03010440 = "&Použít velké stránky paměti"
+
+; Strings
+
+03020201 = "Kopírovat"
+03020202 = "Přesunout"
+03020203 = "Kopírovat do:"
+03020204 = "Přesunout do:"
+03020205 = "Kopírování..."
+03020206 = "Přesouvání..."
+03020207 = "Nemůžete přesunout nebo kopírovat položky do této složky."
+03020208 = "Operace není podporována."
+
+03020210 = "Potvrdit vymazání souboru"
+03020211 = "Potvrdit vymazání složky"
+03020212 = "Potvrdit mnohonásobné vymazání souboru"
+03020213 = "Jste si jistý, že chcete vymazat '{0}'?"
+03020214 = "Jste si jistý, že chcete vymazat složku '{0}' a všechno co obsahuje?"
+03020215 = "Jste si jistý, že chcete vymazat tyto {0} položky?"
+03020216 = "Mazání..."
+03020217 = "Chyba mazání souboru nebo složky"
+
+03020220 = "Přejmenování..."
+03020221 = "Chyba přejmenování souboru nebo složky"
+03020222 = "Potvrzení kopírování souborů"
+03020223 = "Jste si jist, že chcete zkopírovat soubory do archivu"
+
+03020230 = "Vytvořit složku"
+03020231 = "Název složky:"
+03020232 = "Nová složka"
+03020233 = "Chyba při vytváření složky"
+
+03020240 = "Vytvořit soubor"
+03020241 = "Název souboru:"
+03020242 = "Nový soubor"
+03020243 = "Chyba při vytváření souboru"
+
+03020250 = "Vybrat"
+03020251 = "Odvybrat"
+03020252 = "Maska:"
+
+03020260 = "Historie složek"
+
+03020280 = "Soubor '{0}' byl upraven.\nChcete ho aktualizovat v archivu?"
+03020281 = "Nemohu aktualizovat soubor\n'{0}'"
+03020282 = "Nemohu otevřít editor."
+03020283 = "Otevírání..."
+
+03020290 = "Poznámka"
+03020291 = "&Poznámka:"
+
+030202A0 = "Systém"
+
+03020300 = "Počítač"
+03020301 = "Síť"
+
+03020400 = "Přidat"
+03020401 = "Rozbalit"
+03020402 = "Test"
+
+03020420 = "Kopírovat"
+03020421 = "Přesunout"
+03020422 = "Smazat"
+03020423 = "Informace"
+
+03020500 = "Rozdělit soubor"
+03020501 = "&Rozdělit do:"
+03020510 = "Rozděluji..."
+
+03020600 = "Sloučit soubory"
+03020601 = "&Sloučit do:"
+03020610 = "Slučuji..."
+
+; Computer
+03031100 = "Celková velikost"
+03031101 = "Volné místo"
+03031102 = "Velikost clusteru"
+03031103 = "Označení"
+
+; Network
+03031200 = "Místní název"
+03031201 = "Poskytovatel"
+
+; Benchmark Dialog
+
+03080000 = "Test výkonu"
+03080001 = "Spotřeba paměti:"
+03080002 = "Komprimuji"
+03080003 = "Rozbaluji"
+03080004 = "Rychlost"
+03080005 = "Výkon"
+03080006 = "Celkový výkon"
+03080007 = "Aktuální"
+03080008 = "Výsledné"
+03080009 = "Průchodů:"
+0308000A = "Chyb:"
+
+;!@LangEnd@!

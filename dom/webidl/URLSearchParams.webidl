@@ -13,15 +13,16 @@
  * http://www.openwebfoundation.org/legal/the-owf-1-0-agreements/owfa-1-0.
  */
 
-[Constructor(optional DOMString init = ""),
+[Constructor(optional USVString init = ""),
  Constructor(URLSearchParams init),
- Exposed=(Window,Worker)]
+ Exposed=(Window,Worker,System)]
 interface URLSearchParams {
-  void append(DOMString name, DOMString value);
-  void delete(DOMString name);
-  DOMString? get(DOMString name);
-  sequence<DOMString> getAll(DOMString name);
-  boolean has(DOMString name);
-  void set(DOMString name, DOMString value);
+  void append(USVString name, USVString value);
+  void delete(USVString name);
+  USVString? get(USVString name);
+  sequence<USVString> getAll(USVString name);
+  boolean has(USVString name);
+  void set(USVString name, USVString value);
+  // iterable<USVString, USVString>; - Bug 1085284
   stringifier;
 };

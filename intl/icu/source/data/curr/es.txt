@@ -357,7 +357,7 @@ es{
         }
         GBP{
             "GBP",
-            "libra esterlina",
+            "libra británica",
         }
         GEK{
             "GEK",
@@ -1486,8 +1486,8 @@ es{
             other{"francos franceses"}
         }
         GBP{
-            one{"libra esterlina"}
-            other{"libras esterlinas"}
+            one{"libra británica"}
+            other{"libras británicas"}
         }
         GEL{
             one{"lari"}
@@ -2142,5 +2142,5 @@ es{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.42"}
 }

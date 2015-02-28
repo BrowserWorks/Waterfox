@@ -9,13 +9,12 @@
 const TAB_URL = EXAMPLE_URL + "doc_binary_search.html";
 const COFFEE_URL = EXAMPLE_URL + "code_binary_search.coffee";
 
-let gTab, gDebuggee, gPanel, gDebugger;
+let gTab, gPanel, gDebugger;
 let gEditor, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gEditor = gDebugger.DebuggerView.editor;
@@ -46,7 +45,7 @@ function checkSourceMapsEnabled() {
 }
 
 function checkInitialSource() {
-  isnot(gSources.selectedValue.indexOf(".coffee"), -1,
+  isnot(gSources.selectedItem.attachment.source.url.indexOf(".coffee"), -1,
     "The debugger should show the source mapped coffee source file.");
   is(gSources.selectedValue.indexOf(".js"), -1,
     "The debugger should not show the generated js source file.");
@@ -58,9 +57,11 @@ function checkInitialSource() {
 
 function testSetBreakpoint() {
   let deferred = promise.defer();
+  let sourceForm = getSourceForm(gSources, COFFEE_URL);
 
   gDebugger.gThreadClient.interrupt(aResponse => {
-    gDebugger.gThreadClient.setBreakpoint({ url: COFFEE_URL, line: 5 }, aResponse => {
+    let source = gDebugger.gThreadClient.source(sourceForm);
+    source.setBreakpoint({ line: 5 }, aResponse => {
       ok(!aResponse.error,
         "Should be able to set a breakpoint in a coffee source file.");
       ok(!aResponse.actualLocation,
@@ -75,14 +76,16 @@ function testSetBreakpoint() {
 
 function testSetBreakpointBlankLine() {
   let deferred = promise.defer();
+  let sourceForm = getSourceForm(gSources, COFFEE_URL);
 
-  gDebugger.gThreadClient.setBreakpoint({ url: COFFEE_URL, line: 3 }, aResponse => {
+  let source = gDebugger.gThreadClient.source(sourceForm);
+  source.setBreakpoint({ line: 3 }, aResponse => {
     ok(!aResponse.error,
       "Should be able to set a breakpoint in a coffee source file on a blank line.");
     ok(aResponse.actualLocation,
       "Because 3 is empty, we should have an actualLocation.");
-    is(aResponse.actualLocation.url, COFFEE_URL,
-      "actualLocation.url should be source mapped to the coffee file.");
+    is(aResponse.actualLocation.source.url, COFFEE_URL,
+      "actualLocation.actor should be source mapped to the coffee file.");
     is(aResponse.actualLocation.line, 2,
       "actualLocation.line should be source mapped back to 2.");
 
@@ -119,7 +122,7 @@ function testHitBreakpoint() {
 
     // This will cause the breakpoint to be hit, and put us back in the
     // paused state.
-    gDebuggee.binary_search([0, 2, 3, 5, 7, 10], 5);
+    callInTab(gTab, "binary_search", [0, 2, 3, 5, 7, 10], 5);
   });
 
   return deferred.promise;
@@ -157,7 +160,6 @@ function testStepping() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gEditor = null;

@@ -9,6 +9,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+HAS_MISC_RULE = True
+
 BROWSER_CHROME_MANIFESTS += ['test/browser.ini']
 JETPACK_PACKAGE_MANIFESTS += ['source/test/jetpack-package.ini']
 JETPACK_ADDON_MANIFESTS += ['source/test/addons/jetpack-addon.ini']
@@ -171,7 +173,9 @@ EXTRA_JS_MODULES.commonjs.diffpatcher.test += [
 ]
 
 EXTRA_JS_MODULES.commonjs.framescript += [
+    'source/lib/framescript/contextmenu-events.js',
     'source/lib/framescript/FrameScriptManager.jsm',
+    'source/lib/framescript/LoaderHelper.jsm',
     'source/lib/framescript/tab-events.js',
 ]
 
@@ -234,12 +238,15 @@ EXTRA_JS_MODULES.commonjs.sdk.console += [
 EXTRA_JS_MODULES.commonjs.sdk.content += [
     'source/lib/sdk/content/content-worker.js',
     'source/lib/sdk/content/content.js',
+    'source/lib/sdk/content/context-menu.js',
     'source/lib/sdk/content/events.js',
     'source/lib/sdk/content/loader.js',
     'source/lib/sdk/content/mod.js',
     'source/lib/sdk/content/sandbox.js',
     'source/lib/sdk/content/thumbnail.js',
     'source/lib/sdk/content/utils.js',
+    'source/lib/sdk/content/worker-child.js',
+    'source/lib/sdk/content/worker-parent.js',
     'source/lib/sdk/content/worker.js',
 ]
 
@@ -429,7 +436,6 @@ EXTRA_JS_MODULES.commonjs.sdk.util += [
     'source/lib/sdk/util/contract.js',
     'source/lib/sdk/util/deprecate.js',
     'source/lib/sdk/util/dispatcher.js',
-    'source/lib/sdk/util/iteration.js',
     'source/lib/sdk/util/list.js',
     'source/lib/sdk/util/match-pattern.js',
     'source/lib/sdk/util/object.js',
@@ -453,4 +459,5 @@ EXTRA_JS_MODULES.commonjs.sdk.zip += [
 
 EXTRA_JS_MODULES.commonjs.toolkit += [
     'source/lib/toolkit/loader.js',
+    'source/lib/toolkit/require.js',
 ]

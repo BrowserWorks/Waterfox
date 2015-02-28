@@ -27,6 +27,7 @@
 #include "jsobj.h"
 #include "jsscript.h"
 #include "jswatchpoint.h"
+#include "jswin.h"
 #include "jswrapper.h"
 
 #include "asmjs/AsmJSSignalHandlers.h"
@@ -36,6 +37,7 @@
 #include "jit/PcScriptCache.h"
 #include "js/MemoryMetrics.h"
 #include "js/SliceBudget.h"
+#include "vm/Debugger.h"
 
 #include "jscntxtinlines.h"
 #include "jsgcinlines.h"
@@ -73,7 +75,7 @@ PerThreadData::PerThreadData(JSRuntime *runtime)
     runtime_(runtime),
     jitTop(nullptr),
     jitJSContext(nullptr),
-    jitStackLimit(0),
+    jitStackLimit_(0xbad),
 #ifdef JS_TRACE_LOGGING
     traceLogger(nullptr),
 #endif
@@ -135,12 +137,10 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     ),
     mainThread(this),
     parentRuntime(parentRuntime),
-    interrupt(false),
-    interruptPar(false),
+    interrupt_(false),
+    interruptPar_(false),
     handlingSignal(false),
     interruptCallback(nullptr),
-    interruptLock(nullptr),
-    interruptLockOwner(nullptr),
     exclusiveAccessLock(nullptr),
     exclusiveAccessOwner(nullptr),
     mainThreadHasExclusiveAccess(false),
@@ -149,13 +149,14 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     localeCallbacks(nullptr),
     defaultLocale(nullptr),
     defaultVersion_(JSVERSION_DEFAULT),
+    futexAPI_(nullptr),
     ownerThread_(nullptr),
+    ownerThreadNative_(0),
     tempLifoAlloc(TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
-    freeLifoAlloc(TEMP_LIFO_ALLOC_PRIMARY_CHUNK_SIZE),
     execAlloc_(nullptr),
     jitRuntime_(nullptr),
     selfHostingGlobal_(nullptr),
-    nativeStackBase(0),
+    nativeStackBase(GetNativeStackBase()),
     cxCallback(nullptr),
     destroyCompartmentCallback(nullptr),
     destroyZoneCallback(nullptr),
@@ -197,6 +198,7 @@ JSRuntime::JSRuntime(JSRuntime *parentRuntime)
     structuredCloneCallbacks(nullptr),
     telemetryCallback(nullptr),
     errorReporter(nullptr),
+    linkedAsmJSModules(nullptr),
     propertyRemovals(0),
 #if !EXPOSE_INTL_API
     thousandsSeparator(0),
@@ -254,9 +256,20 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 {
     ownerThread_ = PR_GetCurrentThread();
 
-    interruptLock = PR_NewLock();
-    if (!interruptLock)
+    // Get a platform-native handle for the owner thread, used by
+    // js::InterruptRunningJitCode to halt the runtime's main thread.
+#ifdef XP_WIN
+    size_t openFlags = THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME |
+                       THREAD_QUERY_INFORMATION;
+    HANDLE self = OpenThread(openFlags, false, GetCurrentThreadId());
+    if (!self)
         return false;
+    static_assert(sizeof(HANDLE) <= sizeof(ownerThreadNative_), "need bigger field");
+    ownerThreadNative_ = (size_t)self;
+#else
+    static_assert(sizeof(pthread_t) <= sizeof(ownerThreadNative_), "need bigger field");
+    ownerThreadNative_ = (size_t)pthread_self();
+#endif
 
     exclusiveAccessLock = PR_NewLock();
     if (!exclusiveAccessLock)
@@ -323,12 +336,10 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
         return false;
 #endif
 
-    nativeStackBase = GetNativeStackBase();
-
     jitSupportsFloatingPoint = js::jit::JitSupportsFloatingPoint();
     jitSupportsSimd = js::jit::JitSupportsSimd();
 
-    signalHandlersInstalled_ = EnsureAsmJSSignalHandlersInstalled(this);
+    signalHandlersInstalled_ = EnsureSignalHandlersInstalled(this);
     canUseSignalHandlers_ = signalHandlersInstalled_ && !SignalBasedTriggersDisabled();
 
     if (!spsProfiler.init())
@@ -340,6 +351,9 @@ JSRuntime::init(uint32_t maxbytes, uint32_t maxNurseryBytes)
 JSRuntime::~JSRuntime()
 {
     MOZ_ASSERT(!isHeapBusy());
+
+    delete futexAPI_;
+    futexAPI_ = nullptr;
 
     if (gcInitialized) {
         /* Free source hook early, as its destructor may want to delete roots. */
@@ -391,10 +405,6 @@ JSRuntime::~JSRuntime()
     MOZ_ASSERT(!numExclusiveThreads);
     mainThreadHasExclusiveAccess = true;
 
-    MOZ_ASSERT(!interruptLockOwner);
-    if (interruptLock)
-        PR_DestroyLock(interruptLock);
-
     /*
      * Even though all objects in the compartment are dead, we may have keep
      * some filenames around because of gcKeepAtoms.
@@ -444,6 +454,11 @@ JSRuntime::~JSRuntime()
     MOZ_ASSERT(oldCount > 0);
 
     js::TlsPerThreadData.set(nullptr);
+
+#ifdef XP_WIN
+    if (ownerThreadNative_)
+        CloseHandle((HANDLE)ownerThreadNative_);
+#endif
 }
 
 void
@@ -452,25 +467,14 @@ NewObjectCache::clearNurseryObjects(JSRuntime *rt)
 #ifdef JSGC_GENERATIONAL
     for (unsigned i = 0; i < mozilla::ArrayLength(entries); ++i) {
         Entry &e = entries[i];
-        JSObject *obj = reinterpret_cast<JSObject *>(&e.templateObject);
+        NativeObject *obj = reinterpret_cast<NativeObject *>(&e.templateObject);
         if (IsInsideNursery(e.key) ||
-            rt->gc.nursery.isInside(obj->fakeNativeSlots()) ||
-            rt->gc.nursery.isInside(obj->fakeNativeElements()))
+            rt->gc.nursery.isInside(obj->slots_) ||
+            rt->gc.nursery.isInside(obj->elements_))
         {
             PodZero(&e);
         }
     }
-#endif
-}
-
-void
-JSRuntime::resetJitStackLimit()
-{
-    AutoLockForInterrupt lock(this);
-    mainThread.setJitStackLimit(mainThread.nativeStackLimit[js::StackForUntrustedScript]);
-
-#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
-    mainThread.setJitStackLimit(js::jit::Simulator::StackLimit());
 #endif
 }
 
@@ -511,13 +515,9 @@ JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::Runtim
 
     if (execAlloc_)
         execAlloc_->addSizeOfCode(&rtSizes->code);
-    {
-        AutoLockForInterrupt lock(this);
-        if (jitRuntime()) {
-            if (jit::ExecutableAllocator *ionAlloc = jitRuntime()->ionAlloc(this))
-                ionAlloc->addSizeOfCode(&rtSizes->code);
-        }
-    }
+
+    if (jitRuntime() && jitRuntime()->ionAlloc(this))
+        jitRuntime()->ionAlloc(this)->addSizeOfCode(&rtSizes->code);
 
     rtSizes->gc.marker += gc.marker.sizeOfExcludingThis(mallocSizeOf);
 #ifdef JSGC_GENERATIONAL
@@ -528,31 +528,115 @@ JSRuntime::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf, JS::Runtim
 #endif
 }
 
+static bool
+InvokeInterruptCallback(JSContext *cx)
+{
+    MOZ_ASSERT(cx->runtime()->requestDepth >= 1);
+
+    cx->gcIfNeeded();
+
+    // A worker thread may have requested an interrupt after finishing an Ion
+    // compilation.
+    jit::AttachFinishedCompilations(cx);
+
+    // Important: Additional callbacks can occur inside the callback handler
+    // if it re-enters the JS engine. The embedding must ensure that the
+    // callback is disconnected before attempting such re-entry.
+    JSInterruptCallback cb = cx->runtime()->interruptCallback;
+    if (!cb)
+        return true;
+
+    if (cb(cx)) {
+        // Debugger treats invoking the interrupt callback as a "step", so
+        // invoke the onStep handler.
+        if (cx->compartment()->isDebuggee()) {
+            ScriptFrameIter iter(cx);
+            if (iter.script()->stepModeEnabled()) {
+                RootedValue rval(cx);
+                switch (Debugger::onSingleStep(cx, &rval)) {
+                  case JSTRAP_ERROR:
+                    return false;
+                  case JSTRAP_CONTINUE:
+                    return true;
+                  case JSTRAP_RETURN:
+                    // See note in Debugger::propagateForcedReturn.
+                    Debugger::propagateForcedReturn(cx, iter.abstractFramePtr(), rval);
+                    return false;
+                  case JSTRAP_THROW:
+                    cx->setPendingException(rval);
+                    return false;
+                  default:;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // No need to set aside any pending exception here: ComputeStackString
+    // already does that.
+    JSString *stack = ComputeStackString(cx);
+    JSFlatString *flat = stack ? stack->ensureFlat(cx) : nullptr;
+
+    const char16_t *chars;
+    AutoStableStringChars stableChars(cx);
+    if (flat && stableChars.initTwoByte(cx, flat))
+        chars = stableChars.twoByteRange().start().get();
+    else
+        chars = MOZ_UTF16("(stack not available)");
+    JS_ReportErrorFlagsAndNumberUC(cx, JSREPORT_WARNING, js_GetErrorMessage, nullptr,
+                                   JSMSG_TERMINATED, chars);
+
+    return false;
+}
+
+void
+PerThreadData::resetJitStackLimit()
+{
+    // Note that, for now, we use the untrusted limit for ion. This is fine,
+    // because it's the most conservative limit, and if we hit it, we'll bail
+    // out of ion into the interpeter, which will do a proper recursion check.
+#if defined(JS_ARM_SIMULATOR) || defined(JS_MIPS_SIMULATOR)
+    jitStackLimit_ = jit::Simulator::StackLimit();
+#else
+    jitStackLimit_ = nativeStackLimit[StackForUntrustedScript];
+#endif
+}
+
+void
+PerThreadData::initJitStackLimit()
+{
+    resetJitStackLimit();
+}
+
+void
+PerThreadData::initJitStackLimitPar(uintptr_t limit)
+{
+    jitStackLimit_ = limit;
+}
+
 void
 JSRuntime::requestInterrupt(InterruptMode mode)
 {
-    AutoLockForInterrupt lock(this);
+    interrupt_ = true;
+    interruptPar_ = true;
+    mainThread.jitStackLimit_ = UINTPTR_MAX;
 
-    /*
-     * Invalidate ionTop to trigger its over-recursion check. Note this must be
-     * set before interrupt, to avoid racing with js::InvokeInterruptCallback,
-     * into a weird state where interrupt is stuck at 0 but jitStackLimit is
-     * MAXADDR.
-     */
-    mainThread.setJitStackLimit(-1);
+    if (mode == JSRuntime::RequestInterruptUrgent)
+        InterruptRunningJitCode(this);
+}
 
-    interrupt = true;
-
-    RequestInterruptForForkJoin(this, mode);
-
-    /*
-     * asm.js and normal Ion code optionally use memory protection and signal
-     * handlers to halt running code.
-     */
-    if (canUseSignalHandlers()) {
-        RequestInterruptForAsmJSCode(this, mode);
-        jit::RequestInterruptForIonCode(this, mode);
+bool
+JSRuntime::handleInterrupt(JSContext *cx)
+{
+    MOZ_ASSERT(CurrentThreadCanAccessRuntime(cx->runtime()));
+    if (interrupt_ || mainThread.jitStackLimit_ == UINTPTR_MAX) {
+        interrupt_ = false;
+        interruptPar_ = false;
+        mainThread.resetJitStackLimit();
+        return InvokeInterruptCallback(cx);
     }
+    return true;
 }
 
 jit::ExecutableAllocator *
@@ -679,8 +763,7 @@ JSRuntime::onOutOfMemory(void *p, size_t nbytes, JSContext *cx)
      * Retry when we are done with the background sweeping and have stopped
      * all the allocations and released the empty GC chunks.
      */
-    JS::ShrinkGCBuffers(this);
-    gc.waitBackgroundSweepOrAllocEnd();
+    gc.onOutOfMallocMemory();
     if (!p)
         p = js_malloc(nbytes);
     else if (p == reinterpret_cast<void *>(1))
@@ -697,9 +780,8 @@ JSRuntime::onOutOfMemory(void *p, size_t nbytes, JSContext *cx)
 void *
 JSRuntime::onOutOfMemoryCanGC(void *p, size_t bytes)
 {
-    if (!largeAllocationFailureCallback || bytes < LARGE_ALLOCATION)
-        return nullptr;
-    largeAllocationFailureCallback(largeAllocationFailureCallbackData);
+    if (largeAllocationFailureCallback && bytes >= LARGE_ALLOCATION)
+        largeAllocationFailureCallback(largeAllocationFailureCallbackData);
     return onOutOfMemory(p, bytes);
 }
 
@@ -762,8 +844,6 @@ JSRuntime::assertCanLock(RuntimeLock which)
         MOZ_ASSERT(exclusiveAccessOwner != PR_GetCurrentThread());
       case HelperThreadStateLock:
         MOZ_ASSERT(!HelperThreadState().isLocked());
-      case InterruptLock:
-        MOZ_ASSERT(!currentThreadOwnsInterruptLock());
       case GCLock:
         gc.assertCanLock();
         break;

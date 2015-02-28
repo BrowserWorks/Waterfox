@@ -303,7 +303,7 @@ en_GB{
         }
         GBP{
             "£",
-            "British Pound Sterling",
+            "British Pound",
         }
         GEK{
             "GEK",

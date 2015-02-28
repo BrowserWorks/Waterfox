@@ -1,0 +1,95 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1998, 1999, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+
+## ----------- ##
+## Variables.  ##
+## ----------- ##
+
+if %?FIRST%
+AR = ar
+## For now this is detected when we see AC_PROG_RANLIB
+## RANLIB = @RANLIB@
+endif %?FIRST%
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%LIBRARIES_INSTALL = $(INSTALL_DATA)
+?!BASE?%DIR%LIBRARIES_INSTALL = $(install_sh_DATA)
+?EXEC?.PHONY install-exec-am: install-%DIR%LIBRARIES
+?!EXEC?.PHONY install-data-am: install-%DIR%LIBRARIES
+install-%DIR%LIBRARIES: $(%DIR%_LIBRARIES)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_LIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+## Compute basename of source file.  Unless this is a nobase_ target, we
+## want to install 'python/foo.py' as '$(DESTDIR)$(%NDIR%dir)/foo.yo',
+## not '$(DESTDIR)$(%NDIR%dir)/python/foo.yo'.
+?BASE?	    f="`echo $$p | sed -e 's|^.*/||'`"; \
+?!BASE?	    f="$$p"; \
+	    echo " $(%DIR%LIBRARIES_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+	    $(%DIR%LIBRARIES_INSTALL) $$p $(DESTDIR)$(%NDIR%dir)/$$f; \
+	  else :; fi; \
+	done
+## We do two loops here so that $(POST_INSTALL) can be empty.  If we
+## merge the two loops, we get a syntax error from sh.  Anyway, having
+## $(POST_INSTALL) in the middle of the loop essentially renders it
+## useless; sh never actually executes this command.  Read the GNU
+## Standards for a little enlightenment on this.
+	@$(POST_INSTALL)
+	@list='$(%DIR%_LIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+?BASE?	    p="`echo $$p | sed -e 's|^.*/||'`"; \
+## Must ranlib after installing because mod time changes.
+	    echo " $(RANLIB) $(DESTDIR)$(%NDIR%dir)/$$p"; \
+	    $(RANLIB) $(DESTDIR)$(%NDIR%dir)/$$p; \
+	  else :; fi; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%LIBRARIES
+uninstall-%DIR%LIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_LIBRARIES)'; for p in $$list; do \
+?BASE?	  p="`echo $$p | sed -e 's|^.*/||'`"; \
+	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$p"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$p; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%LIBRARIES
+clean-%DIR%LIBRARIES:
+	-test -z "$(%DIR%_LIBRARIES)" || rm -f $(%DIR%_LIBRARIES)

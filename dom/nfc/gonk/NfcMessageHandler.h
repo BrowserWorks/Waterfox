@@ -25,12 +25,13 @@ public:
 
 private:
   bool GeneralResponse(const android::Parcel& aParcel, EventOptions& aOptions);
-  bool ConfigRequest(android::Parcel& aParcel, const CommandOptions& options);
-  bool ConfigResponse(const android::Parcel& aParcel, EventOptions& aOptions);
+  bool ChangeRFStateRequest(android::Parcel& aParcel, const CommandOptions& options);
+  bool ChangeRFStateResponse(const android::Parcel& aParcel, EventOptions& aOptions);
   bool ReadNDEFRequest(android::Parcel& aParcel, const CommandOptions& options);
   bool ReadNDEFResponse(const android::Parcel& aParcel, EventOptions& aOptions);
   bool WriteNDEFRequest(android::Parcel& aParcel, const CommandOptions& options);
-  bool MakeReadOnlyNDEFRequest(android::Parcel& aParcel, const CommandOptions& options);
+  bool MakeReadOnlyRequest(android::Parcel& aParcel, const CommandOptions& options);
+  bool FormatRequest(android::Parcel& aParcel, const CommandOptions& options);
   bool ConnectRequest(android::Parcel& aParcel, const CommandOptions& options);
   bool CloseRequest(android::Parcel& aParcel, const CommandOptions& options);
 
@@ -45,7 +46,6 @@ private:
 private:
   nsTArray<int32_t> mPendingReqQueue;
   nsTArray<nsString> mRequestIdQueue;
-  nsTArray<int32_t> mPowerLevelQueue;
 };
 
 } // namespace mozilla

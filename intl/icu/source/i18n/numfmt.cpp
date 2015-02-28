@@ -731,7 +731,7 @@ CurrencyAmount* NumberFormat::parseCurrency(const UnicodeString& text,
         UErrorCode ec = U_ZERO_ERROR;
         getEffectiveCurrency(curr, ec);
         if (U_SUCCESS(ec)) {
-            LocalPointer<CurrencyAmount> currAmt(new CurrencyAmount(parseResult, curr, ec));
+            LocalPointer<CurrencyAmount> currAmt(new CurrencyAmount(parseResult, curr, ec), ec);
             if (U_FAILURE(ec)) {
                 pos.setIndex(start); // indicate failure
             } else {
@@ -1375,9 +1375,8 @@ NumberFormat::makeInstance(const Locale& desiredLocale,
     }
     else {
         // Loads the decimal symbols of the desired locale.
-        symbolsToAdopt.adoptInstead(new DecimalFormatSymbols(desiredLocale, status));
-        if (symbolsToAdopt.isNull()) {
-            status = U_MEMORY_ALLOCATION_ERROR;
+        symbolsToAdopt.adoptInsteadAndCheckErrorCode(new DecimalFormatSymbols(desiredLocale, status), status);
+        if (U_FAILURE(status)) {
             return NULL;
         }
 

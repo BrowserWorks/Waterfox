@@ -11,7 +11,7 @@
  */
 sr_Latn{
     %%Parent{"root"}
-    Version{"2.1.8.20"}
+    Version{"2.1.10.42"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidžan"}

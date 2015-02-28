@@ -47,6 +47,9 @@ function installAddon(url) {
               logLevel: "verbose",
               format: "tbpl",
             },
+            console: {
+              logLevel: "info",
+            },
           }
           setPrefs("extensions." + install.addon.id + ".sdk", options);
 
@@ -106,7 +109,7 @@ function waitForResults() {
 }
 
 // Runs tests for the add-on available at URL.
-let testAddon = Task.async(function*(url) {
+let testAddon = Task.async(function*({ url, expected }) {
   let addon = yield installAddon(url);
   let results = yield waitForResults();
   yield uninstallAddon(addon);

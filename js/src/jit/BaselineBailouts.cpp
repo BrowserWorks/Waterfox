@@ -385,26 +385,33 @@ struct BaselineStackBuilder
 // ahead of the bailout.
 class SnapshotIteratorForBailout : public SnapshotIterator
 {
-    RInstructionResults results_;
-  public:
+    JitActivation *activation_;
+    JitFrameIterator &iter_;
 
-    SnapshotIteratorForBailout(const JitFrameIterator &iter)
+  public:
+    SnapshotIteratorForBailout(JitActivation *activation, JitFrameIterator &iter)
       : SnapshotIterator(iter),
-        results_(iter.jsFrame())
+        activation_(activation),
+        iter_(iter)
     {
         MOZ_ASSERT(iter.isBailoutJS());
     }
 
+    ~SnapshotIteratorForBailout() {
+        // The bailout is complete, we no longer need the recover instruction
+        // results.
+        activation_->removeIonFrameRecovery(fp_);
+    }
+
     // Take previously computed result out of the activation, or compute the
     // results of all recover instructions contained in the snapshot.
-    bool init(JSContext *cx, JitActivation *activation) {
-        activation->maybeTakeIonFrameRecovery(fp_, &results_);
-        if (!results_.isInitialized() && !computeInstructionResults(cx, &results_))
-            return false;
+    bool init(JSContext *cx) {
 
-        MOZ_ASSERT(results_.isInitialized());
-        instructionResults_ = &results_;
-        return true;
+        // Under a bailout, there is no need to invalidate the frame after
+        // evaluating the recover instruction, as the invalidation is only
+        // needed to cause of the frame which has been introspected.
+        MaybeReadFallback recoverBailout(cx, activation_, &iter_, MaybeReadFallback::Fallback_DoNothing);
+        return initInstructionResults(recoverBailout);
     }
 };
 
@@ -436,6 +443,28 @@ GetNextNonLoopEntryPc(jsbytecode *pc)
     if (op == JSOP_LOOPENTRY || op == JSOP_NOP || op == JSOP_LOOPHEAD)
         return GetNextPc(pc);
     return pc;
+}
+
+static bool
+HasLiveIteratorAtStackDepth(JSScript *script, jsbytecode *pc, uint32_t stackDepth)
+{
+    if (!script->hasTrynotes())
+        return false;
+
+    JSTryNote *tn = script->trynotes()->vector;
+    JSTryNote *tnEnd = tn + script->trynotes()->length;
+    uint32_t pcOffset = uint32_t(pc - script->main());
+    for (; tn != tnEnd; ++tn) {
+        if (pcOffset < tn->start)
+            continue;
+        if (pcOffset >= tn->start + tn->length)
+            continue;
+
+        if (tn->kind == JSTRY_ITER && stackDepth == tn->stackDepth)
+            return true;
+    }
+
+    return false;
 }
 
 // For every inline frame, we write out the following data:
@@ -518,6 +547,10 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
                 jsbytecode **callPC, const ExceptionBailoutInfo *excInfo,
                 bool *poppedLastSPSFrameOut)
 {
+    // The Baseline frames we will reconstruct on the heap are not rooted, so GC
+    // must be suppressed here.
+    MOZ_ASSERT(cx->mainThread().suppressGC);
+
     MOZ_ASSERT(script->hasBaselineScript());
     MOZ_ASSERT(poppedLastSPSFrameOut);
     MOZ_ASSERT(!*poppedLastSPSFrameOut);
@@ -596,6 +629,12 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
         }
     }
 
+    // If we are bailing to a script whose execution is observed, mark the
+    // baseline frame as a debuggee frame. This is to cover the case where we
+    // don't rematerialize the Ion frame via the Debugger.
+    if (script->isDebuggee())
+        flags |= BaselineFrame::DEBUGGEE;
+
     // Initialize BaselineFrame's scopeChain and argsObj
     JSObject *scopeChain = nullptr;
     Value returnValue;
@@ -634,8 +673,15 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
                 // If pcOffset == 0, we may have to push a new call object, so
                 // we leave scopeChain nullptr and enter baseline code before
                 // the prologue.
-                if (iter.pcOffset() != 0 || iter.resumeAfter())
+                //
+                // If we are propagating an exception for debug mode, we will
+                // not resume into baseline code, but instead into
+                // HandleExceptionBaseline, so *do* set the scope chain here.
+                if (iter.pcOffset() != 0 || iter.resumeAfter() ||
+                    (excInfo && excInfo->propagatingIonExceptionForDebugMode()))
+                {
                     scopeChain = fun->environment();
+                }
             } else {
                 // For global, compile-and-go scripts the scope chain is the
                 // script's global (Ion does not compile non-compile-and-go
@@ -830,13 +876,16 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
             //
             // For instance, if calling |f()| pushed an Ion frame which threw,
             // the snapshot expects the return value to be pushed, but it's
-            // possible nothing was pushed before we threw. Iterators might
-            // still be on the stack, so we can't just drop the stack.
-            MOZ_ASSERT(cx->compartment()->debugMode());
-            if (iter.moreFrames())
+            // possible nothing was pushed before we threw. We can't drop
+            // iterators, however, so read them out. They will be closed by
+            // HandleExceptionBaseline.
+            MOZ_ASSERT(cx->compartment()->isDebuggee());
+            if (iter.moreFrames() || HasLiveIteratorAtStackDepth(script, pc, i + 1)) {
                 v = iter.read();
-            else
+            } else {
+                iter.skip();
                 v = MagicValue(JS_OPTIMIZED_OUT);
+            }
         } else {
             v = iter.read();
         }
@@ -979,21 +1028,46 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
         } else {
             // If needed, initialize BaselineBailoutInfo's valueR0 and/or valueR1 with the
             // top stack values.
+            //
+            // Note that we use the 'maybe' variant of nativeCodeForPC because
+            // of exception propagation for debug mode. See note below.
             PCMappingSlotInfo slotInfo;
-            uint8_t *nativeCodeForPC = baselineScript->nativeCodeForPC(script, pc, &slotInfo);
+            uint8_t *nativeCodeForPC = baselineScript->maybeNativeCodeForPC(script, pc, &slotInfo);
             unsigned numUnsynced = slotInfo.numUnsynced();
+
+            if (excInfo && excInfo->propagatingIonExceptionForDebugMode() && resumeAfter) {
+                // When propagating an exception for debug mode, set the
+                // return address as the return-from-IC for the throwing op,
+                // so that Debugger hooks report the correct pc offset of the
+                // throwing op instead of its successor.
+                //
+                // This should not be done if we are at a resume-at point, as
+                // might be the case when propagating an exception thrown from
+                // an interrupt handler. That interrupt could have happened to
+                // interrupt at a loop head, which would have no ICEntry at
+                // that point.
+                //
+                // Note that we never resume into this address, it is set for
+                // the sake of frame iterators giving the correct answer.
+                ICEntry &icEntry = baselineScript->anyKindICEntryFromPCOffset(iter.pcOffset());
+                nativeCodeForPC = baselineScript->returnAddressForIC(icEntry);
+            } else {
+                MOZ_ASSERT(nativeCodeForPC);
+            }
+
+            MOZ_ASSERT(nativeCodeForPC);
             MOZ_ASSERT(numUnsynced <= 2);
             PCMappingSlotInfo::SlotLocation loc1, loc2;
             if (numUnsynced > 0) {
                 loc1 = slotInfo.topSlotLocation();
                 JitSpew(JitSpew_BaselineBailouts, "      Popping top stack value into %d.",
-                            (int) loc1);
+                        (int) loc1);
                 builder.popValueInto(loc1);
             }
             if (numUnsynced > 1) {
                 loc2 = slotInfo.nextSlotLocation();
                 JitSpew(JitSpew_BaselineBailouts, "      Popping next stack value into %d.",
-                            (int) loc2);
+                        (int) loc2);
                 MOZ_ASSERT_IF(loc1 != PCMappingSlotInfo::SlotIgnore, loc1 != loc2);
                 builder.popValueInto(loc2);
             }
@@ -1003,7 +1077,7 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
             frameSize -= sizeof(Value) * numUnsynced;
             blFrame->setFrameSize(frameSize);
             JitSpew(JitSpew_BaselineBailouts, "      Adjusted framesize -= %d: %d",
-                            int(sizeof(Value) * numUnsynced), int(frameSize));
+                    int(sizeof(Value) * numUnsynced), int(frameSize));
 
             // If scopeChain is nullptr, then bailout is occurring during argument check.
             // In this case, resume into the prologue.
@@ -1301,10 +1375,6 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, JitFrameIter
                           bool invalidate, BaselineBailoutInfo **bailoutInfo,
                           const ExceptionBailoutInfo *excInfo, bool *poppedLastSPSFrameOut)
 {
-    // The Baseline frames we will reconstruct on the heap are not rooted, so GC
-    // must be suppressed here.
-    MOZ_ASSERT(cx->mainThread().suppressGC);
-
     MOZ_ASSERT(bailoutInfo != nullptr);
     MOZ_ASSERT(*bailoutInfo == nullptr);
 
@@ -1383,8 +1453,8 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, JitFrameIter
         return BAILOUT_RETURN_FATAL_ERROR;
     JitSpew(JitSpew_BaselineBailouts, "  Incoming frame ptr = %p", builder.startFrame());
 
-    SnapshotIteratorForBailout snapIter(iter);
-    if (!snapIter.init(cx, activation))
+    SnapshotIteratorForBailout snapIter(activation, iter);
+    if (!snapIter.init(cx))
         return BAILOUT_RETURN_FATAL_ERROR;
 
 #ifdef TRACK_SNAPSHOTS
@@ -1416,6 +1486,8 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, JitFrameIter
 
     RootedScript topCaller(cx);
     jsbytecode *topCallerPC = nullptr;
+
+    gc::AutoSuppressGC suppress(cx);
 
     while (true) {
         // Skip recover instructions as they are already recovered by |initInstructionResults|.
@@ -1585,8 +1657,14 @@ CopyFromRematerializedFrame(JSContext *cx, JitActivation *act, uint8_t *fp, size
             "  Copied from rematerialized frame at (%p,%u)",
             fp, inlineDepth);
 
-    if (cx->compartment()->debugMode())
+    // Propagate the debuggee frame flag. For the case where the Debugger did
+    // not rematerialize an Ion frame, the baseline frame has its debuggee
+    // flag set iff its script is considered a debuggee. See the debuggee case
+    // in InitFromBailout.
+    if (rematFrame->isDebuggee()) {
+        frame->setIsDebuggee();
         return Debugger::handleIonBailout(cx, rematFrame, frame);
+    }
 
     return true;
 }
@@ -1733,6 +1811,7 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
       case Bailout_NonSymbolInput:
       case Bailout_GuardThreadExclusive:
       case Bailout_InitialState:
+      case Bailout_Debugger:
         // Do nothing.
         break;
 

@@ -9,16 +9,16 @@
 const TAB_URL = EXAMPLE_URL + "doc_blackboxing.html";
 const BLACKBOXME_URL = EXAMPLE_URL + "code_blackboxing_blackboxme.js"
 
-let gTab, gDebuggee, gPanel, gDebugger;
-let gFrames;
+let gTab, gPanel, gDebugger;
+let gFrames, gSources;
 
 function test() {
-  initDebugger(TAB_URL).then(([aTab, aDebuggee, aPanel]) => {
+  initDebugger(TAB_URL).then(([aTab,, aPanel]) => {
     gTab = aTab;
-    gDebuggee = aDebuggee;
     gPanel = aPanel;
     gDebugger = gPanel.panelWin;
     gFrames = gDebugger.DebuggerView.StackFrames;
+    gSources = gDebugger.DebuggerView.Sources;
 
     waitForSourceAndCaretAndScopes(gPanel, ".html", 21)
       .then(testBlackBoxStack)
@@ -28,7 +28,7 @@ function test() {
         ok(false, "Got an error: " + aError.message + "\n" + aError.stack);
       });
 
-    gDebuggee.runTest();
+    callInTab(gTab, "runTest");
   });
 }
 
@@ -40,7 +40,7 @@ function testBlackBoxStack() {
 }
 
 function testBlackBoxSource() {
-  return toggleBlackBoxing(gPanel, BLACKBOXME_URL).then(aSource => {
+  return toggleBlackBoxing(gPanel, getSourceActor(gSources, BLACKBOXME_URL)).then(aSource => {
     ok(aSource.isBlackBoxed, "The source should be black boxed now.");
 
     is(gFrames.itemCount, 3,
@@ -52,8 +52,8 @@ function testBlackBoxSource() {
 
 registerCleanupFunction(function() {
   gTab = null;
-  gDebuggee = null;
   gPanel = null;
   gDebugger = null;
   gFrames = null;
+  gSources = null;
 });

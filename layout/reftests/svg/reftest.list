@@ -200,6 +200,7 @@ fuzzy-if(cocoaWidget,15,19679) fuzzy-if(winWidget,1,8800) fuzzy-if(!cocoaWidget&
 == marker-viewBox-01.svg marker-viewBox-01-ref.svg
 == marker-orientation-01.svg marker-orientation-01-ref.svg
 pref(svg.marker-improvements.enabled,true) == marker-orientation-02.svg marker-orientation-02-ref.svg
+== marker-orientation-03.svg pass.svg
 == mask-basic-01.svg pass.svg
 == mask-basic-02.svg mask-basic-02-ref.svg
 == mask-basic-03.svg pass.svg
@@ -208,13 +209,14 @@ pref(svg.marker-improvements.enabled,true) == marker-orientation-02.svg marker-o
 == mask-containing-masked-content-01.svg pass.svg
 == mask-transformed-01.svg mask-transformed-01-ref.svg
 == mask-transformed-02.svg pass.svg
+== mask-transformed-child-01.svg mask-transformed-child-01-ref.svg
 pref(layout.css.masking.enabled,true) fuzzy-if(d2d,1,6400) == mask-type-01.svg mask-type-01-ref.svg
 pref(layout.css.masking.enabled,true) fuzzy-if(d2d,1,6400) == mask-type-02.svg mask-type-01-ref.svg
 pref(layout.css.masking.enabled,true) fuzzy-if(d2d,1,6400) == mask-type-03.svg mask-type-01-ref.svg
 pref(layout.css.masking.enabled,true) fuzzy-if(d2d,1,6400) == mask-type-04.svg mask-type-01-ref.svg
 == nested-viewBox-01.svg pass.svg
 == nesting-invalid-01.svg nesting-invalid-01-ref.svg
-== non-scaling-stroke-01.svg non-scaling-stroke-01-ref.svg
+fuzzy-if(d2d&&/^Windows\x20NT\x206\.1/.test(http.oscpu),1,168) fuzzy-if(azureQuartz&&OSX=="10.8",1,122) == non-scaling-stroke-01.svg non-scaling-stroke-01-ref.svg # bug 1074161 for Win7 and OSX 10.8
 fuzzy-if(Android||B2G,1,99) fuzzy-if(!contentSameGfxBackendAsCanvas,9,99) == non-scaling-stroke-02.svg non-scaling-stroke-02-ref.svg
 == non-scaling-stroke-03.svg non-scaling-stroke-03-ref.svg
 == objectBoundingBox-and-clipPath.svg pass.svg
@@ -331,6 +333,7 @@ HTTP(..) == text-scale-03.svg text-scale-03-ref.svg
 == text-stroke-scaling-01.svg text-stroke-scaling-01-ref.svg
 == stroke-dasharray-01.svg stroke-dasharray-01-ref.svg
 == stroke-dasharray-02.svg pass.svg
+== stroke-dasharray-03.svg pass.svg
 == stroke-dasharray-and-pathLength-01.svg pass.svg
 == stroke-dasharray-and-text-01.svg stroke-dasharray-and-text-01-ref.svg
 == stroke-dashoffset-01.svg pass.svg

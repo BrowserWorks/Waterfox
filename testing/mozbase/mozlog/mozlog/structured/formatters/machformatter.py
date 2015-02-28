@@ -43,6 +43,8 @@ class MachFormatter(base.BaseFormatter):
         self.has_unexpected = {}
         self.last_time = None
         self.terminal = terminal
+        self.verbose = False
+        self._known_pids = set()
 
         self.summary_values = {"tests": 0,
                                "subtests": 0,
@@ -74,7 +76,8 @@ class MachFormatter(base.BaseFormatter):
                     color = self.terminal.green
                 else:
                     color = self.terminal.red
-            elif data["action"] in ("suite_start", "suite_end", "test_start"):
+            elif data["action"] in ("suite_start", "suite_end",
+                                    "test_start", "test_status"):
                 color = self.terminal.yellow
             elif data["action"] == "crash":
                 color = self.terminal.red
@@ -231,15 +234,26 @@ class MachFormatter(base.BaseFormatter):
                 message += "\n"
             message += data["stack"]
 
-        if "expected" in data:
-            self.status_buffer[test]["unexpected"].append((data["subtest"],
-                                                           data["status"],
-                                                           data["expected"],
-                                                           message))
         if data["status"] == "PASS":
             self.status_buffer[test]["pass"] += 1
 
         self._update_summary(data)
+
+        rv = None
+        status, subtest = data["status"], data["subtest"]
+        unexpected = "expected" in data
+        if self.verbose:
+            if self.terminal is not None:
+                status = (self.terminal.red if unexpected else self.terminal.green)(status)
+            rv = " ".join([subtest, status, message])
+        elif unexpected:
+            # We only append an unexpected summary if it was not logged
+            # directly by verbose mode.
+            self.status_buffer[test]["unexpected"].append((subtest,
+                                                           status,
+                                                           data["expected"],
+                                                           message))
+        return rv
 
     def _update_summary(self, data):
         if "expected" in data:
@@ -250,9 +264,14 @@ class MachFormatter(base.BaseFormatter):
             self.summary_values["expected"] += 1
 
     def process_output(self, data):
-        return '"%s" (pid:%s command:%s)' % (data["data"],
-                                             data["process"],
-                                             data.get("command", ""))
+        rv = []
+
+        if "command" in data and data["process"] not in self._known_pids:
+            self._known_pids.add(data["process"])
+            rv.append('(pid:%s) Full command: %s' % (data["process"], data["command"]))
+
+        rv.append('(pid:%s) "%s"' % (data["process"], data["data"]))
+        return "\n".join(rv)
 
     def crash(self, data):
         test = self._get_test_id(data)

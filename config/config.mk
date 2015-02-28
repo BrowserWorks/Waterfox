@@ -234,33 +234,16 @@ endif # NS_TRACE_MALLOC || MOZ_DMD
 
 endif # MOZ_DEBUG
 
-# We don't build a static CRT when building a custom CRT,
-# it appears to be broken. So don't link to jemalloc if
-# the Makefile wants static CRT linking.
-ifeq ($(MOZ_MEMORY)_$(USE_STATIC_LIBS),1_1)
-# Disable default CRT libs and add the right lib path for the linker
-MOZ_GLUE_LDFLAGS=
-endif
-
 endif # WINNT && !GNU_CC
 
-ifdef MOZ_GLUE_PROGRAM_LDFLAGS
+ifdef MOZ_GLUE_IN_PROGRAM
 DEFINES += -DMOZ_GLUE_IN_PROGRAM
-else
-MOZ_GLUE_PROGRAM_LDFLAGS=$(MOZ_GLUE_LDFLAGS)
 endif
 
 #
 # Build using PIC by default
 #
 _ENABLE_PIC=1
-
-# PGO on MSVC is opt-in
-ifdef _MSC_VER
-ifndef MSVC_ENABLE_PGO
-NO_PROFILE_GUIDED_OPTIMIZE = 1
-endif
-endif
 
 # No sense in profiling tools
 ifdef INTERNAL_TOOLS
@@ -298,10 +281,6 @@ AR_FLAGS += -LTCG
 endif
 endif # MOZ_PROFILE_USE
 endif # NO_PROFILE_GUIDED_OPTIMIZE
-
-ifdef _MSC_VER
-OS_LDFLAGS += $(DELAYLOAD_LDFLAGS)
-endif # _MSC_VER
 
 MAKE_JARS_FLAGS = \
 	-t $(topsrcdir) \
@@ -419,8 +398,12 @@ endif # FAIL_ON_WARNINGS_DEBUG
 
 # Check for normal version of flag, and add WARNINGS_AS_ERRORS if it's set to 1.
 ifdef FAIL_ON_WARNINGS
+# Never treat warnings as errors in clang-cl, because it warns about many more
+# things than MSVC does.
+ifndef CLANG_CL
 CXXFLAGS += $(WARNINGS_AS_ERRORS)
 CFLAGS   += $(WARNINGS_AS_ERRORS)
+endif # CLANG_CL
 endif # FAIL_ON_WARNINGS
 
 ifeq ($(OS_ARCH)_$(GNU_CC),WINNT_)
@@ -517,16 +500,6 @@ ifdef _MSC_VER
 ifeq ($(CPU_ARCH),x86_64)
 # set stack to 2MB on x64 build.  See bug 582910
 WIN32_EXE_LDFLAGS	+= -STACK:2097152 -FORCE
-endif
-endif
-
-# If we're building a component on MSVC, we don't want to generate an
-# import lib, because that import lib will collide with the name of a
-# static version of the same library.
-ifeq ($(GNU_LD)$(OS_ARCH),WINNT)
-ifdef IS_COMPONENT
-LDFLAGS += -IMPLIB:fake.lib
-DELETE_AFTER_LINK = fake.lib fake.exp
 endif
 endif
 
@@ -675,10 +648,19 @@ ifeq (,$(filter $(OS_TARGET),WINNT Darwin))
 CHECK_TEXTREL = @$(TOOLCHAIN_PREFIX)readelf -d $(1) | grep TEXTREL > /dev/null && echo 'TEST-UNEXPECTED-FAIL | check_textrel | We do not want text relocations in libraries and programs' || true
 endif
 
+ifeq ($(MOZ_WIDGET_TOOLKIT),android)
+# While this is very unlikely (libc being added by the compiler at the end
+# of the linker command line), if libmozglue.so ends up after libc.so, all
+# hell breaks loose, so better safe than sorry, and check it's actually the
+# case.
+CHECK_MOZGLUE_ORDER = @$(TOOLCHAIN_PREFIX)readelf -d $(1) | grep NEEDED | awk '{ libs[$$NF] = ++n } END { if (libs["[libmozglue.so]"] && libs["[libc.so]"] < libs["[libmozglue.so]"]) { print "libmozglue.so must be linked before libc.so"; exit 1 } }'
+endif
+
 define CHECK_BINARY
 $(call CHECK_STDCXX,$(1))
 $(call CHECK_TEXTREL,$(1))
 $(call LOCAL_CHECKS,$(1))
+$(call CHECK_MOZGLUE_ORDER,$(1))
 endef
 
 # autoconf.mk sets OBJ_SUFFIX to an error to avoid use before including
@@ -698,24 +680,6 @@ OBJ_SUFFIX := i_o
 endif
 endif
 endif
-
-# EXPAND_LIBNAME - $(call EXPAND_LIBNAME,foo)
-# expands to $(LIB_PREFIX)foo.$(LIB_SUFFIX) or -lfoo, depending on linker
-# arguments syntax. Should only be used for system libraries
-
-# EXPAND_LIBNAME_PATH - $(call EXPAND_LIBNAME_PATH,foo,dir)
-# expands to dir/$(LIB_PREFIX)foo.$(LIB_SUFFIX)
-
-# EXPAND_MOZLIBNAME - $(call EXPAND_MOZLIBNAME,foo)
-# expands to $(DIST)/lib/$(LIB_PREFIX)foo.$(LIB_SUFFIX)
-
-ifdef GNU_CC
-EXPAND_LIBNAME = $(addprefix -l,$(1))
-else
-EXPAND_LIBNAME = $(foreach lib,$(1),$(LIB_PREFIX)$(lib).$(LIB_SUFFIX))
-endif
-EXPAND_LIBNAME_PATH = $(foreach lib,$(1),$(2)/$(LIB_PREFIX)$(lib).$(LIB_SUFFIX))
-EXPAND_MOZLIBNAME = $(foreach lib,$(1),$(DIST)/lib/$(LIB_PREFIX)$(lib).$(LIB_SUFFIX))
 
 PLY_INCLUDE = -I$(topsrcdir)/other-licenses/ply
 

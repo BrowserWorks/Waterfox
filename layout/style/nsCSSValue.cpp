@@ -264,13 +264,14 @@ bool nsCSSValue::operator==(const nsCSSValue& aOther) const
       return *mValue.mRect == *aOther.mValue.mRect;
     }
     else if (eCSSUnit_List == mUnit) {
-      return *mValue.mList == *aOther.mValue.mList;
+      return nsCSSValueList::Equal(mValue.mList, aOther.mValue.mList);
     }
     else if (eCSSUnit_SharedList == mUnit) {
       return *mValue.mSharedList == *aOther.mValue.mSharedList;
     }
     else if (eCSSUnit_PairList == mUnit) {
-      return *mValue.mPairList == *aOther.mValue.mPairList;
+      return nsCSSValuePairList::Equal(mValue.mPairList,
+                                       aOther.mValue.mPairList);
     }
     else if (eCSSUnit_GridTemplateAreas == mUnit) {
       return *mValue.mGridTemplateAreas == *aOther.mValue.mGridTemplateAreas;
@@ -770,9 +771,10 @@ nsCSSValue::BufferFromString(const nsString& aValue)
 
   // NOTE: Alloc prouduces a new, already-addref'd (refcnt = 1) buffer.
   // NOTE: String buffer allocation is currently fallible.
-  buffer = nsStringBuffer::Alloc((length + 1) * sizeof(char16_t));
+  size_t sz = (length + 1) * sizeof(char16_t);
+  buffer = nsStringBuffer::Alloc(sz);
   if (MOZ_UNLIKELY(!buffer)) {
-    NS_RUNTIMEABORT("out of memory");
+    NS_ABORT_OOM(sz);
   }
 
   char16_t* data = static_cast<char16_t*>(buffer->Data());
@@ -850,6 +852,158 @@ nsCSSValue::AppendPolygonToString(nsCSSProperty aProperty, nsAString& aResult,
     ++index;
   }
   array->Item(index).AppendToString(aProperty, aResult, aSerialization);
+}
+
+inline void
+nsCSSValue::AppendPositionCoordinateToString(
+                const nsCSSValue& aValue, nsCSSProperty aProperty,
+                nsAString& aResult, Serialization aSerialization) const
+{
+  if (aValue.GetUnit() == eCSSUnit_Enumerated) {
+    int32_t intValue = aValue.GetIntValue();
+    AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(intValue,
+                          nsCSSProps::kShapeRadiusKTable), aResult);
+  } else {
+    aValue.AppendToString(aProperty, aResult, aSerialization);
+  }
+}
+
+void
+nsCSSValue::AppendCircleOrEllipseToString(nsCSSKeyword aFunctionId,
+                                          nsCSSProperty aProperty,
+                                          nsAString& aResult,
+                                          Serialization aSerialization) const
+{
+  const nsCSSValue::Array* array = GetArrayValue();
+  size_t count = aFunctionId == eCSSKeyword_circle ? 2 : 3;
+  NS_ABORT_IF_FALSE(array->Count() == count + 1, "wrong number of arguments");
+
+  bool hasRadii = array->Item(1).GetUnit() != eCSSUnit_Null;
+
+  AppendPositionCoordinateToString(array->Item(1), aProperty,
+                                     aResult, aSerialization);
+
+  if (hasRadii && aFunctionId == eCSSKeyword_ellipse) {
+    aResult.Append(' ');
+    AppendPositionCoordinateToString(array->Item(2), aProperty,
+                                     aResult, aSerialization);
+  }
+
+  // Any position specified?
+  if (array->Item(count).GetUnit() != eCSSUnit_Array) {
+    NS_ABORT_IF_FALSE(array->Item(count).GetUnit() == eCSSUnit_Null,
+                      "unexpected value");
+    return;
+  }
+
+  if (hasRadii) {
+    aResult.Append(' ');
+  }
+  aResult.AppendLiteral("at ");
+  array->Item(count).AppendToString(eCSSProperty_background_position,
+                                    aResult, aSerialization);
+}
+
+// Helper to append |aString| with the shorthand sides notation used in e.g.
+// 'padding'. |aProperties| and |aValues| are expected to have 4 elements.
+/*static*/ void
+nsCSSValue::AppendSidesShorthandToString(const nsCSSProperty aProperties[],
+                                         const nsCSSValue* aValues[],
+                                         nsAString& aString,
+                                         nsCSSValue::Serialization
+                                            aSerialization)
+{
+  const nsCSSValue& value1 = *aValues[0];
+  const nsCSSValue& value2 = *aValues[1];
+  const nsCSSValue& value3 = *aValues[2];
+  const nsCSSValue& value4 = *aValues[3];
+
+  NS_ABORT_IF_FALSE(value1.GetUnit() != eCSSUnit_Null, "null value 1");
+  value1.AppendToString(aProperties[0], aString, aSerialization);
+  if (value1 != value2 || value1 != value3 || value1 != value4) {
+    aString.Append(char16_t(' '));
+    NS_ABORT_IF_FALSE(value2.GetUnit() != eCSSUnit_Null, "null value 2");
+    value2.AppendToString(aProperties[1], aString, aSerialization);
+    if (value1 != value3 || value2 != value4) {
+      aString.Append(char16_t(' '));
+      NS_ABORT_IF_FALSE(value3.GetUnit() != eCSSUnit_Null, "null value 3");
+      value3.AppendToString(aProperties[2], aString, aSerialization);
+      if (value2 != value4) {
+        aString.Append(char16_t(' '));
+        NS_ABORT_IF_FALSE(value4.GetUnit() != eCSSUnit_Null, "null value 4");
+        value4.AppendToString(aProperties[3], aString, aSerialization);
+      }
+    }
+  }
+}
+
+/*static*/ void
+nsCSSValue::AppendBasicShapeRadiusToString(const nsCSSProperty aProperties[],
+                                           const nsCSSValue* aValues[],
+                                           nsAString& aResult,
+                                           Serialization aSerialization)
+{
+  bool needY = false;
+  const nsCSSValue* xVals[4];
+  const nsCSSValue* yVals[4];
+  for (int i = 0; i < 4; i++) {
+    if (aValues[i]->GetUnit() == eCSSUnit_Pair) {
+      needY = true;
+      xVals[i] = &aValues[i]->GetPairValue().mXValue;
+      yVals[i] = &aValues[i]->GetPairValue().mYValue;
+    } else {
+      xVals[i] = yVals[i] = aValues[i];
+    }
+  }
+
+  AppendSidesShorthandToString(aProperties, xVals, aResult, aSerialization);
+  if (needY) {
+    aResult.AppendLiteral(" / ");
+    AppendSidesShorthandToString(aProperties, yVals, aResult, aSerialization);
+  }
+}
+
+void
+nsCSSValue::AppendInsetToString(nsCSSProperty aProperty, nsAString& aResult,
+                                Serialization aSerialization) const
+{
+  const nsCSSValue::Array* array = GetArrayValue();
+  NS_ABORT_IF_FALSE(array->Count() == 6,
+                    "inset function has wrong number of arguments");
+  if (array->Item(1).GetUnit() != eCSSUnit_Null) {
+    array->Item(1).AppendToString(aProperty, aResult, aSerialization);
+    if (array->Item(2).GetUnit() != eCSSUnit_Null) {
+      aResult.Append(' ');
+      array->Item(2).AppendToString(aProperty, aResult, aSerialization);
+      if (array->Item(3).GetUnit() != eCSSUnit_Null) {
+        aResult.Append(' ');
+        array->Item(3).AppendToString(aProperty, aResult, aSerialization);
+        if (array->Item(4).GetUnit() != eCSSUnit_Null) {
+          aResult.Append(' ');
+          array->Item(4).AppendToString(aProperty, aResult, aSerialization);
+        }
+      }
+    }
+  }
+
+  if (array->Item(5).GetUnit() == eCSSUnit_Array) {
+    const nsCSSProperty* subprops =
+      nsCSSProps::SubpropertyEntryFor(eCSSProperty_border_radius);
+    const nsCSSValue::Array* radius = array->Item(5).GetArrayValue();
+    NS_ABORT_IF_FALSE(radius->Count() == 4, "expected 4 radii values");
+    const nsCSSValue* vals[4] = {
+      &(radius->Item(0)),
+      &(radius->Item(1)),
+      &(radius->Item(2)),
+      &(radius->Item(3))
+    };
+    aResult.AppendLiteral(" round ");
+    AppendBasicShapeRadiusToString(subprops, vals, aResult,
+                                   aSerialization);
+  } else {
+    NS_ABORT_IF_FALSE(array->Item(5).GetUnit() == eCSSUnit_Null,
+                      "unexpected value");
+  }
 }
 
 void
@@ -989,6 +1143,16 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
     switch (functionId) {
       case eCSSKeyword_polygon:
         AppendPolygonToString(aProperty, aResult, aSerialization);
+        break;
+
+      case eCSSKeyword_circle:
+      case eCSSKeyword_ellipse:
+        AppendCircleOrEllipseToString(functionId, aProperty, aResult,
+                                      aSerialization);
+        break;
+
+      case eCSSKeyword_inset:
+        AppendInsetToString(aProperty, aResult, aSerialization);
         break;
 
       default: {
@@ -1356,10 +1520,15 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
     }
 
     for (uint32_t i = 0 ;;) {
-      gradient->mStops[i].mColor.AppendToString(aProperty, aResult,
-                                                aSerialization);
+      bool isInterpolationHint = gradient->mStops[i].mIsInterpolationHint;
+      if (!isInterpolationHint) {
+        gradient->mStops[i].mColor.AppendToString(aProperty, aResult,
+                                                  aSerialization);
+      }
       if (gradient->mStops[i].mLocation.GetUnit() != eCSSUnit_None) {
-        aResult.Append(' ');
+        if (!isInterpolationHint) {
+          aResult.Append(' ');
+        }
         gradient->mStops[i].mLocation.AppendToString(aProperty, aResult,
                                                      aSerialization);
       }
@@ -1819,13 +1988,15 @@ nsCSSValueList::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
   }
 }
 
-bool
-nsCSSValueList::operator==(const nsCSSValueList& aOther) const
+/* static */ bool
+nsCSSValueList::Equal(const nsCSSValueList* aList1,
+                      const nsCSSValueList* aList2)
 {
-  if (this == &aOther)
+  if (aList1 == aList2) {
     return true;
+  }
 
-  const nsCSSValueList *p1 = this, *p2 = &aOther;
+  const nsCSSValueList *p1 = aList1, *p2 = aList2;
   for ( ; p1 && p2; p1 = p1->mNext, p2 = p2->mNext) {
     if (p1->mValue != p2->mValue)
       return false;
@@ -1878,8 +2049,7 @@ nsCSSValueSharedList::AppendToString(nsCSSProperty aProperty, nsAString& aResult
 bool
 nsCSSValueSharedList::operator==(const nsCSSValueSharedList& aOther) const
 {
-  return !mHead == !aOther.mHead &&
-         (!mHead || *mHead == *aOther.mHead);
+  return nsCSSValueList::Equal(mHead, aOther.mHead);
 }
 
 size_t
@@ -2092,13 +2262,15 @@ nsCSSValuePairList::AppendToString(nsCSSProperty aProperty,
   }
 }
 
-bool
-nsCSSValuePairList::operator==(const nsCSSValuePairList& aOther) const
+/* static */ bool
+nsCSSValuePairList::Equal(const nsCSSValuePairList* aList1,
+                          const nsCSSValuePairList* aList2)
 {
-  if (this == &aOther)
+  if (aList1 == aList2) {
     return true;
+  }
 
-  const nsCSSValuePairList *p1 = this, *p2 = &aOther;
+  const nsCSSValuePairList *p1 = aList1, *p2 = aList2;
   for ( ; p1 && p2; p1 = p1->mNext, p2 = p2->mNext) {
     if (p1->mXValue != p2->mXValue ||
         p1->mYValue != p2->mYValue)
@@ -2290,14 +2462,16 @@ css::ImageValue::~ImageValue()
 
 nsCSSValueGradientStop::nsCSSValueGradientStop()
   : mLocation(eCSSUnit_None),
-    mColor(eCSSUnit_Null)
+    mColor(eCSSUnit_Null),
+    mIsInterpolationHint(false)
 {
   MOZ_COUNT_CTOR(nsCSSValueGradientStop);
 }
 
 nsCSSValueGradientStop::nsCSSValueGradientStop(const nsCSSValueGradientStop& aOther)
   : mLocation(aOther.mLocation),
-    mColor(aOther.mColor)
+    mColor(aOther.mColor),
+    mIsInterpolationHint(aOther.mIsInterpolationHint)
 {
   MOZ_COUNT_CTOR(nsCSSValueGradientStop);
 }

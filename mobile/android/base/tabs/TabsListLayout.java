@@ -65,8 +65,8 @@ class TabsListLayout extends TwoWayView
 
         setItemsCanFocus(true);
 
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabsTray);
-        mIsPrivate = (a.getInt(R.styleable.TabsTray_tabs, 0x0) == 1);
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TabsLayout);
+        mIsPrivate = (a.getInt(R.styleable.TabsLayout_tabs, 0x0) == 1);
         a.recycle();
 
         mTabsAdapter = new TabsListLayoutAdapter(mContext);
@@ -81,7 +81,7 @@ class TabsListLayout extends TwoWayView
             public void onMovedToScrapHeap(View view) {
                 TabsLayoutItemView item = (TabsLayoutItemView) view;
                 item.setThumbnail(null);
-                item.setCloseVisibile(true);
+                item.setCloseVisible(true);
             }
         });
     }
@@ -89,7 +89,7 @@ class TabsListLayout extends TwoWayView
     private class TabsListLayoutAdapter extends TabsLayoutAdapter {
         private final Button.OnClickListener mCloseOnClickListener;
         public TabsListLayoutAdapter (Context context) {
-            super(context);
+            super(context, R.layout.tabs_layout_item_view);
 
             mCloseOnClickListener = new Button.OnClickListener() {
                 @Override
@@ -397,7 +397,7 @@ class TabsListLayout extends TwoWayView
             @Override
             public void onPropertyAnimationEnd() {
                 TabsLayoutItemView tab = (TabsLayoutItemView) view;
-                tab.setCloseVisibile(true);
+                tab.setCloseVisible(true);
             }
         });
 
@@ -582,7 +582,7 @@ class TabsListLayout extends TwoWayView
                         mSwiping = true;
                         TabsListLayout.this.requestDisallowInterceptTouchEvent(true);
 
-                        ((TabsLayoutItemView) mSwipeView).setCloseVisibile(false);
+                        ((TabsLayoutItemView) mSwipeView).setCloseVisible(false);
 
                         // Stops listview from highlighting the touched item
                         // in the list when swiping.

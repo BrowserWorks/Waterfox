@@ -1,0 +1,89 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1998, 1999, 2001 Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+
+## ---------- ##
+## Building.  ##
+## ---------- ##
+
+JAVAC = javac
+JAVACFLAGS =
+CLASSPATH_ENV = CLASSPATH=$(JAVAROOT):$(srcdir)/$(JAVAROOT):$$CLASSPATH
+JAVAROOT = $(top_builddir)
+
+class%DIR%.stamp: $(%DIR%_JAVA)
+	@if test -n "$?"; then \
+	  echo '$(CLASSPATH_ENV) $(JAVAC) -d $(JAVAROOT) $(AM_JAVACFLAGS) $(JAVACFLAGS) $?' ; \
+	  $(CLASSPATH_ENV) $(JAVAC) -d $(JAVAROOT) \
+	    $(AM_JAVACFLAGS) $(JAVACFLAGS) $?; \
+	else :; fi
+	echo timestamp > class%DIR%.stamp
+
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?EXEC?.PHONY install-exec-am: install-%DIR%JAVA
+?!EXEC?.PHONY install-data-am: install-%DIR%JAVA
+install-%DIR%JAVA: class%DIR%.stamp
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## A single .java file can be compiled into multiple .class files.  So
+## we just install all the .class files that got built into this
+## directory.  This is not optimal, but will have to do for now.
+	for p in *.class; do \
+	  echo " $(INSTALL_DATA) $$p $(DESTDIR)$(%NDIR%dir)/$$p"; \
+	  $(INSTALL_DATA) $$p $(DESTDIR)$(%NDIR%dir)/$$p; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%JAVA
+uninstall-%DIR%JAVA:
+	@$(NORMAL_UNINSTALL)
+	@for p in *.class; do \
+	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$p"; \
+	  rm -f $(DESTDIR)$(%NDIR%dir)/$$p; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%JAVA
+clean-%DIR%JAVA:
+	-rm -f *.class class%DIR%.stamp
+
+
+## -------------- ##
+## Distributing.  ##
+## -------------- ##
+
+if %?DIST%
+DIST_COMMON += $(%DIR%_JAVA)
+endif %?DIST%

@@ -636,7 +636,7 @@ DecimalFormat::setupCurrencyAffixPatterns(UErrorCode& status) {
     // save the unique currency plural patterns of this locale.
     Hashtable* pluralPtn = fCurrencyPluralInfo->fPluralCountToCurrencyUnitPattern;
     const UHashElement* element = NULL;
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     Hashtable pluralPatternSet;
     while ((element = pluralPtn->nextElement(pos)) != NULL) {
         const UHashTok valueTok = element->value;
@@ -2209,7 +2209,7 @@ CurrencyAmount* DecimalFormat::parseCurrency(const UnicodeString& text,
     parse(text, parseResult, pos, curbuf);
     if (pos.getIndex() != start) {
         UErrorCode ec = U_ZERO_ERROR;
-        LocalPointer<CurrencyAmount> currAmt(new CurrencyAmount(parseResult, curbuf, ec));
+        LocalPointer<CurrencyAmount> currAmt(new CurrencyAmount(parseResult, curbuf, ec), ec);
         if (U_FAILURE(ec)) {
             pos.setIndex(start); // indicate failure
         } else {
@@ -2391,7 +2391,7 @@ DecimalFormat::parseForCurrency(const UnicodeString& text,
     }
     // Then, parse against affix patterns.
     // Those are currency patterns and currency plural patterns.
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     while ( (element = fAffixPatternsForCurrency->nextElement(pos)) != NULL ) {
         const UHashTok valueTok = element->value;
@@ -5347,7 +5347,7 @@ DecimalFormat::deleteHashForAffix(Hashtable*& table)
     if ( table == NULL ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     while ( (element = table->nextElement(pos)) != NULL ) {
         const UHashTok valueTok = element->value;
@@ -5366,7 +5366,7 @@ DecimalFormat::deleteHashForAffixPattern()
     if ( fAffixPatternsForCurrency == NULL ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     while ( (element = fAffixPatternsForCurrency->nextElement(pos)) != NULL ) {
         const UHashTok valueTok = element->value;
@@ -5385,7 +5385,7 @@ DecimalFormat::copyHashForAffixPattern(const Hashtable* source,
     if ( U_FAILURE(status) ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     if ( source ) {
         while ( (element = source->nextElement(pos)) != NULL ) {
@@ -5645,7 +5645,7 @@ DecimalFormat::copyHashForAffix(const Hashtable* source,
     if ( U_FAILURE(status) ) {
         return;
     }
-    int32_t pos = -1;
+    int32_t pos = UHASH_FIRST;
     const UHashElement* element = NULL;
     if ( source ) {
         while ( (element = source->nextElement(pos)) != NULL ) {

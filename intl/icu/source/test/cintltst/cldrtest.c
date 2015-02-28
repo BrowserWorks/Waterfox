@@ -480,7 +480,7 @@ testLCID(UResourceBundle *currentBundle,
             log_verbose("WARNING: %-5s resolves to %s (0x%.4x)\n",
                 localeName, lcidStringC, expectedLCID);
         }
-        else if (strncmp(localeName, "hsb", 3) != 0 || !log_knownIssue("11216", "Duplicate LCID mapping for language hsb")) {
+        else {
             log_err("ERROR:   %-5s has 0x%.4x and the number resolves wrongfully to %s\n",
                 localeName, expectedLCID, lcidStringC);
         }
@@ -1083,6 +1083,10 @@ static void VerifyTranslation(void) {
                } else {
                    if ( strstr(fullLoc, "_US")!=NULL || strstr(fullLoc, "_MM")!=NULL || strstr(fullLoc, "_LR")!=NULL ) {
                        if(measurementSystem != UMS_US){
+                            log_err("ulocdata_getMeasurementSystem did not return expected data for locale %s \n", currLoc);
+                       }
+                   } else if ( strstr(fullLoc, "_GB")!=NULL ) {
+                       if(measurementSystem != UMS_UK){
                             log_err("ulocdata_getMeasurementSystem did not return expected data for locale %s \n", currLoc);
                        }
                    } else if (measurementSystem != UMS_SI) {

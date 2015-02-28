@@ -6,12 +6,21 @@
 
 NO_DIST_INSTALL = True
 SOURCES += [
-        'gmp-fake.cpp'
+        'gmp-fake.cpp',
+        'gmp-test-decryptor.cpp',
+        'gmp-test-storage.cpp',
 ]
 
 SharedLibrary("fake")
+
+if CONFIG['OS_ARCH'] == 'WINNT':
+    OS_LIBS += [
+        'ole32',
+    ]
 
 USE_STATIC_LIBS = True
 NO_VISIBILITY_FLAGS = True
 # Don't use STL wrappers; this isn't Gecko code
 DISABLE_STL_WRAPPING = True
+
+FAIL_ON_WARNINGS = True

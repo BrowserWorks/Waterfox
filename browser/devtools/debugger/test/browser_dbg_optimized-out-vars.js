@@ -8,21 +8,18 @@ function test() {
     const TAB_URL = EXAMPLE_URL + "doc_closure-optimized-out.html";
     let gDebugger, sources;
 
-    let [, debuggee, panel] = yield initDebugger(TAB_URL);
+    let [tab,, panel] = yield initDebugger(TAB_URL);
     gDebugger = panel.panelWin;
     sources = gDebugger.DebuggerView.Sources;
 
     yield waitForSourceShown(panel, ".html");
-    yield panel.addBreakpoint({ url: sources.values[0], line: 18 });
+    yield panel.addBreakpoint({ actor: sources.values[0],
+                                line: 18 });
     yield ensureThreadClientState(panel, "resumed");
 
     // Spin the event loop before causing the debuggee to pause, to allow
     // this function to return first.
-    executeSoon(() => {
-      EventUtils.sendMouseEvent({ type: "click" },
-        debuggee.document.querySelector("button"),
-        debuggee);
-    });
+    sendMouseClickToTab(tab, content.document.querySelector("button"));
 
     yield waitForDebuggerEvents(panel, gDebugger.EVENTS.FETCHED_SCOPES);
     let gVars = gDebugger.DebuggerView.Variables;

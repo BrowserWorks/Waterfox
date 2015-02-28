@@ -171,6 +171,7 @@ class ElementSpecific
           case Scalar::Int8: {
             JS_VOLATILE_ARM
             int8_t *src = static_cast<int8_t*>(data);
+
             for (uint32_t i = 0; i < count; ++i)
                 *dest++ = T(*src++);
             break;

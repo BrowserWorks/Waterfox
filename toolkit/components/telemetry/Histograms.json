@@ -322,7 +322,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach, DestructuringForIn, LegacyGenerator, ExpressionClosure"
+    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5"
   },
   "TELEMETRY_PING": {
     "expires_in_version": "default",
@@ -2145,6 +2145,14 @@
     "extended_statistics_ok": true,
     "description": "Time for a renewed DNS OS resolution (msec)"
   },
+  "DNS_RENEWAL_TIME_FOR_TTL": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 50,
+    "extended_statistics_ok": true,
+    "description": "Time for a DNS OS resolution (msec) used to get TTL"
+  },
   "DNS_FAILED_LOOKUP_TIME": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -2153,113 +2161,12 @@
     "extended_statistics_ok": true,
     "description": "Time for an unsuccessful DNS OS resolution (msec)"
   },
-  "DNS_CACHE_HIT_VAR_CONTROL_HIGH": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: high)"
-  },
-  "DNS_CACHE_HIT_VAR_CONTROL_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: medium)"
-  },
-  "DNS_CACHE_HIT_VAR_CONTROL_LOW": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_CONTROL, priority: low)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_ONLY_HIGH": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: high)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_ONLY_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: medium)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_ONLY_LOW": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_ONLY, priority: low)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_HIGH": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: high)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: medium)"
-  },
-  "DNS_CACHE_HIT_VAR_TTL_PLUS_CONST_GRACE_LOW": {
-    "expires_in_version": "never",
-    "kind": "boolean",
-    "description": "Whether a cached value was available for a lookup. 0 is a miss, 1 is a hit. (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: low)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_CONTROL_HIGH": {
+  "DNS_BLACKLIST_COUNT": {
     "expires_in_version": "never",
     "kind": "linear",
     "high": 21,
     "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: high)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_CONTROL_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: medium)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_CONTROL_LOW": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_CONTROL, priority: low)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_HIGH": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: high)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: medium)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_ONLY_LOW": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_ONLY, priority: low)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_HIGH": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: high)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_MEDIUM": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: medium)"
-  },
-  "DNS_BLACKLIST_COUNT_VAR_TTL_PLUS_CONST_GRACE_LOW": {
-    "expires_in_version": "never",
-    "kind": "linear",
-    "high": 21,
-    "n_buckets": 20,
-    "description": "The number of unusable addresses reported for each record (variant: DNS_VARIANT_TTL_PLUS_CONST_GRACE, priority: low)"
+    "description": "The number of unusable addresses reported for each record"
   },
   "PREDICTOR_PREDICT_ATTEMPTS": {
     "expires_in_version": "never",
@@ -2568,6 +2475,42 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "A plugin object was successfully invoked as a function"
+  },
+  "FLASH_PLUGIN_STATES": {
+    "expires_in_version": "50",
+    "kind": "enumerated",
+    "n_values": 20,
+    "description": "A flash object's initialization state"
+  },
+  "FLASH_PLUGIN_AREA": {
+    "expires_in_version": "50",
+    "kind": "exponential",
+    "low": "256",
+    "high": "16777216",
+    "n_buckets": 50,
+    "description": "Flash object area (width * height)"
+  },
+  "FLASH_PLUGIN_WIDTH": {
+    "expires_in_version": "50",
+    "kind": "linear",
+    "low": "1",
+    "high": "2000",
+    "n_buckets": 50,
+    "description": "Flash object width"
+  },
+  "FLASH_PLUGIN_HEIGHT": {
+    "expires_in_version": "50",
+    "kind": "linear",
+    "low": "1",
+    "high": "2000",
+    "n_buckets": 50,
+    "description": "Flash object height"
+  },
+  "FLASH_PLUGIN_INSTANCES_ON_PAGE": {
+    "expires_in_version": "50",
+    "kind": "enumerated",
+    "n_values": 30,
+    "description": "Flash object instances count on page"
   },
   "MOZ_SQLITE_OPEN_MS": {
     "expires_in_version": "default",
@@ -3569,6 +3512,13 @@
     "n_buckets": 30,
     "description": "Average paint duration during any tab open/close animation (excluding tabstrip scroll)"
   },
+  "FX_REFRESH_DRIVER_FRAME_DELAY_MS": {
+    "expires_in_version": "default",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 50,
+    "description": "Delay in ms between the target and the actual handling time of the frame at refresh driver"
+  },
   "FX_TAB_SWITCH_UPDATE_MS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
     "expires_in_version": "40",
@@ -4563,7 +4513,7 @@
     "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
-    "description": "Record the search counts for search engines that have partner agreements with Mozilla"
+    "description": "Record the search counts for search engines"
   },
   "SEARCH_DEFAULT_ENGINE": {
     "expires_in_version": "never",
@@ -4572,7 +4522,7 @@
     "description": "Record the default search engine."
   },
   "SEARCH_SERVICE_INIT_MS": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "1000",
     "n_buckets": 15,
@@ -4580,8 +4530,8 @@
     "description": "Time (ms) it takes to initialize the search service"
   },
   "SEARCH_SERVICE_INIT_SYNC": {
-    "alert_emails": ["rvitillo@mozilla.com"],
-    "expires_in_version": "35",
+    "alert_emails": ["rvitillo@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "search service has been initialized synchronously"
   },
@@ -4592,6 +4542,45 @@
     "n_buckets": 15,
     "extended_statistics_ok": true,
     "description": "Time (ms) it takes to build the cache of the search service"
+  },
+  "SEARCH_SERVICE_COUNTRY_FETCH_TIME_MS": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "n_buckets": 30,
+    "high": 100000,
+    "description": "Time (ms) it takes to fetch the country code"
+  },
+  "SEARCH_SERVICE_COUNTRY_FETCH_RESULT": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 8,
+    "description": "Result of XHR request fetching the country-code. 0=SUCCESS, 1=SUCCESS_WITHOUT_DATA, 2=XHRTIMEOUT, 3=ERROR (rest reserved for finer-grained error codes later)"
+  },
+  "SEARCH_SERVICE_COUNTRY_TIMEOUT": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "True if we stopped waiting for the XHR response before it completed"
+  },
+  "SEARCH_SERVICE_COUNTRY_FETCH_CAUSED_SYNC_INIT": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "True if the search service was synchronously initialized while we were waiting for the XHR response"
+  },
+  "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_TIMEZONE": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "Set if the fetched country-code indicates US but the time-zone heuristic doesn't"
+  },
+  "SEARCH_SERVICE_US_TIMEZONE_MISMATCHED_COUNTRY": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "Set if the time-zone heuristic indicates US but the fetched country code doesn't"
   },
   "SOCIAL_ENABLED_ON_SESSION": {
     "expires_in_version": "never",
@@ -5257,6 +5246,20 @@
     "n_buckets": "1000",
     "description": "The time (in milliseconds) that it took a 'listAddons' request to go round trip."
   },
+  "DEVTOOLS_DEBUGGER_RDP_LOCAL_LISTPROCESSES_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'listProcesses' request to go round trip."
+  },
+  "DEVTOOLS_DEBUGGER_RDP_REMOTE_LISTPROCESSES_MS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": "1000",
+    "description": "The time (in milliseconds) that it took a 'listProcesses' request to go round trip."
+  },
   "DEVTOOLS_DEBUGGER_RDP_LOCAL_DELETE_MS": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -5899,6 +5902,11 @@
     "kind": "boolean",
     "description": "How many times has the devtool's Network Monitor been opened?"
   },
+  "DEVTOOLS_STORAGE_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the Storage Inspector been opened?"
+  },
   "DEVTOOLS_PAINTFLASHING_OPENED_BOOLEAN": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -6018,6 +6026,11 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "How many users have opened the devtool's Network Monitor?"
+  },
+  "DEVTOOLS_STORAGE_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the devtool's Storage Inspector?"
   },
   "DEVTOOLS_PAINTFLASHING_OPENED_PER_USER_FLAG": {
     "expires_in_version": "never",
@@ -6172,6 +6185,13 @@
     "high": "10000000",
     "n_buckets": 100,
     "description": "How long has the network monitor been active (seconds)"
+  },
+  "DEVTOOLS_STORAGE_TIME_ACTIVE_SECONDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000000",
+    "n_buckets": 100,
+    "description": "How long has the storage inspector been active (seconds)"
   },
   "DEVTOOLS_PAINTFLASHING_TIME_ACTIVE_SECONDS": {
     "expires_in_version": "never",
@@ -6400,6 +6420,18 @@
     "n_values": "7",
     "description": "Final status of the CacheFileInputStream (0=ok, 1=other error, 2=out of memory, 3=disk full, 4=file corrupted, 5=file not found, 6=binding aborted)"
   },
+  "DATABASE_LOCKED_EXCEPTION": {
+    "expires_in_version": "42",
+    "kind": "enumerated",
+    "description": "Record database locks when opening one of Fennec's databases. The index corresponds to how many attempts, beginning with 0.",
+    "n_values": "5"
+  },
+  "DATABASE_SUCCESSFUL_UNLOCK": {
+    "expires_in_version": "42",
+    "kind": "enumerated",
+    "description": "Record on which attempt we successfully unlocked a database. See DATABASE_LOCKED_EXCEPTION.",
+    "n_values": "5"
+  },
   "SQLITEBRIDGE_PROVIDER_PASSWORDS_LOCKED": {
     "expires_in_version": "40",
     "kind": "enumerated",
@@ -6477,6 +6509,12 @@
     "kind": "enumerated",
     "n_values": 16,
     "description": "TLS/SSL version fallback reached the minimum version (1=TLS 1.0, 2=TLS 1.1, 3=TLS 1.2) or the fallback limit (4=TLS 1.0, 8=TLS 1.1, 12=TLS 1.2), stopped the fallback"
+  },
+  "SSL_WEAK_CIPHERS_FALLBACK": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 64,
+    "description": "Fallback attempted when server did not support any strong cipher suites"
   },
   "SSL_CIPHER_SUITE_FULL": {
     "expires_in_version": "never",
@@ -6582,6 +6620,12 @@
     "n_buckets": 10,
     "description": "How many permanent certificate overrides a user has stored."
   },
+  "SSL_SERVER_AUTH_EKU": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "Presence of of the Server Authenticaton EKU in accepted SSL server certificates (0=No EKU, 1=EKU present and has id_kp_serverAuth, 2=EKU present and has id_kp_serverAuth as well as some other EKU, 3=EKU present but does not contain id_kp_serverAuth)"
+  },
   "TELEMETRY_TEST_EXPIRED": {
     "expires_in_version": "4.0a1",
     "kind": "flag",
@@ -6620,6 +6664,12 @@
     "high": "5000",
     "n_buckets": 10,
     "extended_statistics_ok": true
+  },
+  "CERT_VALIDATION_SUCCESS_BY_CA": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 256,
+    "description": "Successful SSL server cert validations by CA (see RootHashes.inc for names of CAs)"
   },
   "CERT_PINNING_FAILURES_BY_CA": {
     "alert_emails": ["pinning@mozilla.org"],
@@ -6802,6 +6852,34 @@
     "n_buckets": 10,
     "description": "Sidebar showing: seconds that the sidebar has been opened"
   },
+  "SHUTDOWN_PHASE_DURATION_TICKS_QUIT_APPLICATION": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 65,
+    "n_buckets": 10,
+    "description": "Duration of shutdown phase quit-application, as measured by the shutdown terminator, in seconds of activity"
+  },
+  "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_CHANGE_TEARDOWN": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 65,
+    "n_buckets": 10,
+    "description": "Duration of shutdown phase profile-change-teardown, as measured by the shutdown terminator, in seconds of activity"
+  },
+  "SHUTDOWN_PHASE_DURATION_TICKS_XPCOM_WILL_SHUTDOWN": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 65,
+    "n_buckets": 10,
+    "description": "Duration of shutdown phase xpcom-will-shutdown, as measured by the shutdown terminator, in seconds of activity"
+  },
+  "SHUTDOWN_PHASE_DURATION_TICKS_PROFILE_BEFORE_CHANGE": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 65,
+    "n_buckets": 10,
+    "description": "Duration of shutdown phase profile-before-change, as measured by the shutdown terminator, in seconds of activity"
+  },
   "BR_9_2_1_SUBJECT_ALT_NAMES": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -6860,6 +6938,42 @@
     "expires_in_version": "40",
     "kind": "boolean",
     "description": "Whether the e10s pref was set but it was blocked from running due to blacklisted conditions"
+  },
+  "BLOCKED_ON_PLUGIN_MODULE_INIT_MS": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "keyed": true,
+    "description": "Time (ms) that the main thread has been blocked on LoadModule and NP_Initialize in PluginModuleParent"
+  },
+  "BLOCKED_ON_PLUGIN_INSTANCE_INIT_MS": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "keyed": true,
+    "description": "Time (ms) that the main thread has been blocked on NPP_New in an IPC plugin"
+  },
+  "BLOCKED_ON_PLUGIN_STREAM_INIT_MS": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "keyed": true,
+    "description": "Time (ms) that the main thread has been blocked on NPP_NewStream in an IPC plugin"
+  },
+  "BLOCKED_ON_PLUGIN_INSTANCE_DESTROY_MS": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "keyed": true,
+    "description": "Time (ms) that the main thread has been blocked on NPP_Destroy in an IPC plugin"
   },
   "ONBEFOREUNLOAD_PROMPT_ACTION" : {
     "expires_in_version": "45",

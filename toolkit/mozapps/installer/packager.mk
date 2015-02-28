@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 include $(MOZILLA_DIR)/toolkit/mozapps/installer/package-name.mk
+include $(MOZILLA_DIR)/toolkit/mozapps/installer/make-eme.mk
 
 # This is how we create the binary packages we release to the public.
 
@@ -39,7 +40,7 @@ ifndef _APPNAME
 _APPNAME = $(MOZ_MACBUNDLE_NAME)
 endif
 ifndef _BINPATH
-_BINPATH = /$(_APPNAME)/Contents/Resources
+_BINPATH = /$(_APPNAME)/Contents/MacOS
 endif # _BINPATH
 ifdef UNIVERSAL_BINARY
 STAGEPATH = universal/
@@ -380,14 +381,15 @@ DIST_FILES += libomxplugin.so libomxplugingb.so libomxplugingb235.so \
 endif
 
 SO_LIBRARIES := $(filter %.so,$(DIST_FILES))
-# These libraries are placed in the assets/ directory by packager.py.
-ASSET_SO_LIBRARIES := $(addprefix assets/,$(filter-out libmozglue.so $(MOZ_CHILD_PROCESS_NAME),$(SO_LIBRARIES)))
+# These libraries are placed in the assets/$(ANDROID_CPU_ARCH) directory by packager.py.
+ASSET_SO_LIBRARIES := $(addprefix assets/$(ANDROID_CPU_ARCH)/,$(filter-out libmozglue.so $(MOZ_CHILD_PROCESS_NAME),$(SO_LIBRARIES)))
 
 DIST_FILES := $(filter-out $(SO_LIBRARIES),$(DIST_FILES))
 NON_DIST_FILES += libmozglue.so $(MOZ_CHILD_PROCESS_NAME) $(ASSET_SO_LIBRARIES)
 
 ifdef MOZ_ENABLE_SZIP
-# These libraries are szipped in-place in the assets/ directory.
+# These libraries are szipped in-place in the
+# assets/$(ANDROID_CPU_ARCH) directory.
 SZIP_LIBRARIES := $(ASSET_SO_LIBRARIES)
 endif
 
@@ -596,8 +598,11 @@ NO_PKG_FILES += \
 # If a manifest has not been supplied, the following
 # files should be excluded from the package too
 ifndef MOZ_PKG_MANIFEST
-NO_PKG_FILES += \
-	ssltunnel*
+NO_PKG_FILES += ssltunnel*
+endif
+
+ifdef MOZ_DMD
+NO_PKG_FILES += SmokeDMD
 endif
 
 # browser/locales/Makefile uses this makefile for its variable defs, but
@@ -704,6 +709,7 @@ stage-package: $(MOZ_PKG_MANIFEST)
 		$(MOZ_PKG_MANIFEST) $(DIST) $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)$(if $(MOZ_PKG_MANIFEST),,$(_BINPATH)) \
 		$(if $(filter omni,$(MOZ_PACKAGER_FORMAT)),$(if $(NON_OMNIJAR_FILES),--non-resource $(NON_OMNIJAR_FILES)))
 	$(PYTHON) $(MOZILLA_DIR)/toolkit/mozapps/installer/find-dupes.py $(DIST)/$(STAGEPATH)$(MOZ_PKG_DIR)
+	$(MAKE_SIGN_EME_VOUCHER)
 ifndef LIBXUL_SDK
 ifdef MOZ_PACKAGE_JSSHELL
 # Package JavaScript Shell

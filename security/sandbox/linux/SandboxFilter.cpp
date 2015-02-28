@@ -29,6 +29,7 @@ class SandboxFilterImpl : public SandboxAssembler
 public:
   virtual void Build() = 0;
   virtual ~SandboxFilterImpl() { }
+  void AllowThreadClone();
 };
 
 // Some helper macros to make the code that builds the filter more
@@ -71,6 +72,26 @@ public:
 #else
 #define SYSVIPCCALL(name, NAME) SYSCALL(name)
 #endif
+
+void SandboxFilterImpl::AllowThreadClone() {
+  // WARNING: s390 and cris pass the flags in a different arg -- see
+  // CLONE_BACKWARDS2 in arch/Kconfig in the kernel source -- but we
+  // don't support seccomp-bpf on those archs yet.
+  //
+  // The glibc source hasn't changed the thread creation clone flags
+  // since 2004, so this *should* be safe to hard-code.  Bionic's
+  // value has changed a few times, and has converged on the same one
+  // as glibc; allow any of them.
+  static const int flags_common = CLONE_VM | CLONE_FS | CLONE_FILES |
+    CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM;
+  Allow(SYSCALL_WITH_ARG(clone, 0,
+#ifdef ANDROID
+                         flags_common | CLONE_DETACHED, // <= JB 4.2
+                         flags_common, // JB 4.3 or KK 4.4
+#endif
+                         flags_common | CLONE_SETTLS // Android L or glibc
+                         | CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID));
+}
 
 #ifdef MOZ_CONTENT_SANDBOX
 class SandboxFilterImplContent : public SandboxFilterImpl {
@@ -134,7 +155,7 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(munmap));
   Allow(SYSCALL(mprotect));
   Allow(SYSCALL(writev));
-  Allow(SYSCALL(clone));
+  AllowThreadClone();
   Allow(SYSCALL(brk));
 #if SYSCALL_EXISTS(set_thread_area)
   Allow(SYSCALL(set_thread_area));
@@ -354,23 +375,7 @@ void SandboxFilterImplGMP::Build() {
   Allow(SYSCALL(getpid));
   Allow(SYSCALL(gettid));
 
-  // The glibc source hasn't changed the thread creation clone flags
-  // since 2004, so this *should* be safe to hard-code.  Bionic is
-  // different, but MOZ_GMP_SANDBOX isn't supported there yet.
-  //
-  // At minimum we should require CLONE_THREAD, so that a single
-  // SIGKILL from the parent will destroy all descendant tasks.  In
-  // general, pinning down as much of the flags word as possible is a
-  // good idea, because it exposes a lot of subtle (and probably not
-  // well tested in all cases) kernel functionality.
-  //
-  // WARNING: s390 and cris pass the flags in a different arg -- see
-  // CLONE_BACKWARDS2 in arch/Kconfig in the kernel source -- but we
-  // don't support seccomp-bpf on those archs yet.
-  static const int new_thread_flags = CLONE_VM | CLONE_FS | CLONE_FILES |
-    CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS |
-    CLONE_PARENT_SETTID | CLONE_CHILD_CLEARTID;
-  Allow(SYSCALL_WITH_ARG(clone, 0, new_thread_flags));
+  AllowThreadClone();
 
   Allow(SYSCALL_WITH_ARG(prctl, 0, PR_GET_SECCOMP, PR_SET_NAME));
 
@@ -391,6 +396,14 @@ void SandboxFilterImplGMP::Build() {
 
 #ifdef MOZ_ASAN
   Allow(SYSCALL(sigaltstack));
+  // ASAN's error reporter wants to know if stderr is a tty.
+  Deny(ENOTTY, SYSCALL_WITH_ARG(ioctl, 0, STDERR_FILENO));
+  // ...and before compiler-rt r209773, it will call readlink and use
+  // the cached value only if that fails:
+  Deny(ENOENT, SYSCALL(readlink));
+  // ...and if it found an external symbolizer, it will try to run it:
+  // (See also bug 1081242 comment #7.)
+  Deny(ENOENT, SYSCALL_LARGEFILE(stat, stat64));
 #endif
 
   Allow(SYSCALL(mprotect));

@@ -407,7 +407,8 @@ TimeZoneFormat::TimeZoneFormat(const Locale& locale, UErrorCode& status)
 }
 
 TimeZoneFormat::TimeZoneFormat(const TimeZoneFormat& other)
-: Format(other), fTimeZoneNames(NULL), fTimeZoneGenericNames(NULL) {
+: Format(other), fTimeZoneNames(NULL), fTimeZoneGenericNames(NULL),
+  fTZDBTimeZoneNames(NULL) {
 
     for (int32_t i = 0; i < UTZFMT_PAT_COUNT; i++) {
         fGMTOffsetPatternItems[i] = NULL;
@@ -434,6 +435,8 @@ TimeZoneFormat::operator=(const TimeZoneFormat& other) {
     delete fTimeZoneNames;
     delete fTimeZoneGenericNames;
     fTimeZoneGenericNames = NULL;
+    delete fTZDBTimeZoneNames;
+    fTZDBTimeZoneNames = NULL;
 
     fLocale = other.fLocale;
     uprv_memcpy(fTargetRegion, other.fTargetRegion, sizeof(fTargetRegion));
@@ -452,6 +455,7 @@ TimeZoneFormat::operator=(const TimeZoneFormat& other) {
     for (int32_t i = 0; i < UTZFMT_PAT_COUNT; i++) {
         fGMTOffsetPatterns[i] = other.fGMTOffsetPatterns[i];
         delete fGMTOffsetPatternItems[i];
+        fGMTOffsetPatternItems[i] = NULL;
     }
     initGMTOffsetPatterns(status);
     U_ASSERT(U_SUCCESS(status));

@@ -61,10 +61,9 @@ BaselineFrame::trace(JSTracer *trc, JitFrameIterator &frameIterator)
 
     if (nfixed != nlivefixed) {
         jsbytecode *pc;
-        NestedScopeObject *staticScope;
-
         frameIterator.baselineScriptAndPc(nullptr, &pc);
-        staticScope = script->getStaticScope(pc);
+
+        NestedScopeObject *staticScope = script->getStaticScope(pc);
         while (staticScope && !staticScope->is<StaticBlockObject>())
             staticScope = staticScope->enclosingNestedScope();
 
@@ -93,7 +92,7 @@ BaselineFrame::trace(JSTracer *trc, JitFrameIterator &frameIterator)
 
         // Clear dead block-scoped locals.
         while (nfixed > nlivefixed)
-            unaliasedLocal(--nfixed, DONT_CHECK_ALIASING).setMagic(JS_UNINITIALIZED_LEXICAL);
+            unaliasedLocal(--nfixed).setMagic(JS_UNINITIALIZED_LEXICAL);
 
         // Mark live locals.
         MarkLocals(this, trc, 0, nlivefixed);
@@ -195,8 +194,8 @@ BaselineFrame::initForOsr(InterpreterFrame *fp, uint32_t numStackValues)
     for (uint32_t i = 0; i < numStackValues; i++)
         *valueSlot(i) = fp->slots()[i];
 
-    if (cx->compartment()->debugMode()) {
-        // In debug mode, update any Debugger.Frame objects for the
+    if (fp->isDebuggee()) {
+        // For debuggee frames, update any Debugger.Frame objects for the
         // InterpreterFrame to point to the BaselineFrame.
 
         // The caller pushed a fake return address. ScriptFrameIter, used by the
@@ -210,6 +209,8 @@ BaselineFrame::initForOsr(InterpreterFrame *fp, uint32_t numStackValues)
 
         if (!Debugger::handleBaselineOsr(cx, fp, this))
             return false;
+
+        setIsDebuggee();
     }
 
     return true;

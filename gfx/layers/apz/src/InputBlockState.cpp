@@ -6,6 +6,7 @@
 
 #include "InputBlockState.h"
 #include "mozilla/layers/APZCTreeManager.h" // for AllowedTouchBehavior
+#include "AsyncPanZoomController.h"         // for AsyncPanZoomController
 #include "gfxPrefs.h"                       // for gfxPrefs
 #include "OverscrollHandoffState.h"
 
@@ -15,11 +16,47 @@
 namespace mozilla {
 namespace layers {
 
-InputBlockState::InputBlockState(const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain)
-  : mOverscrollHandoffChain(aOverscrollHandoffChain)
+static uint64_t sBlockCounter = InputBlockState::NO_BLOCK_ID + 1;
+
+InputBlockState::InputBlockState(const nsRefPtr<AsyncPanZoomController>& aTargetApzc,
+                                 bool aTargetConfirmed)
+  : mTargetApzc(aTargetApzc)
+  , mTargetConfirmed(aTargetConfirmed)
+  , mBlockId(sBlockCounter++)
 {
-  // We should never be constructed with a nullptr handoff chain.
-  MOZ_ASSERT(mOverscrollHandoffChain);
+  // We should never be constructed with a nullptr target.
+  MOZ_ASSERT(mTargetApzc);
+  mOverscrollHandoffChain = mTargetApzc->BuildOverscrollHandoffChain();
+}
+
+bool
+InputBlockState::SetConfirmedTargetApzc(const nsRefPtr<AsyncPanZoomController>& aTargetApzc)
+{
+  if (mTargetConfirmed) {
+    return false;
+  }
+  mTargetConfirmed = true;
+
+  if (mTargetApzc == aTargetApzc) {
+    // The confirmed target is the same as the tentative one, so we're done.
+    return true;
+  }
+
+  // Log enabled by default for now, we will put it in a TBS_LOG eventually
+  // once this code is more baked
+  printf_stderr("%p replacing unconfirmed target %p with real target %p\n",
+      this, mTargetApzc.get(), aTargetApzc.get());
+
+  // note that aTargetApzc MAY be null here.
+  mTargetApzc = aTargetApzc;
+  mOverscrollHandoffChain = (mTargetApzc ? mTargetApzc->BuildOverscrollHandoffChain() : nullptr);
+  return true;
+}
+
+const nsRefPtr<AsyncPanZoomController>&
+InputBlockState::GetTargetApzc() const
+{
+  return mTargetApzc;
 }
 
 const nsRefPtr<const OverscrollHandoffChain>&
@@ -28,13 +65,26 @@ InputBlockState::GetOverscrollHandoffChain() const
   return mOverscrollHandoffChain;
 }
 
-TouchBlockState::TouchBlockState(const nsRefPtr<const OverscrollHandoffChain>& aOverscrollHandoffChain)
-  : InputBlockState(aOverscrollHandoffChain)
+uint64_t
+InputBlockState::GetBlockId() const
+{
+  return mBlockId;
+}
+
+bool
+InputBlockState::IsTargetConfirmed() const
+{
+  return mTargetConfirmed;
+}
+
+TouchBlockState::TouchBlockState(const nsRefPtr<AsyncPanZoomController>& aTargetApzc,
+                                 bool aTargetConfirmed)
+  : InputBlockState(aTargetApzc, aTargetConfirmed)
   , mAllowedTouchBehaviorSet(false)
   , mPreventDefault(false)
   , mContentResponded(false)
   , mContentResponseTimerExpired(false)
-  , mSingleTapDisallowed(false)
+  , mDuringFastMotion(false)
   , mSingleTapOccurred(false)
 {
   TBS_LOG("Creating %p\n", this);
@@ -93,6 +143,9 @@ TouchBlockState::CopyAllowedTouchBehaviorsFrom(const TouchBlockState& aOther)
 bool
 TouchBlockState::IsReadyForHandling() const
 {
+  if (!IsTargetConfirmed()) {
+    return false;
+  }
   // TODO: for long-tap blocks we probably don't need the touch behaviour?
   if (gfxPrefs::TouchActionEnabled() && !mAllowedTouchBehaviorSet) {
     return false;
@@ -111,17 +164,24 @@ TouchBlockState::IsDefaultPrevented() const
 }
 
 void
-TouchBlockState::DisallowSingleTap()
+TouchBlockState::SetDuringFastMotion()
 {
-  TBS_LOG("%p disallowing single-tap\n", this);
-  mSingleTapDisallowed = true;
+  TBS_LOG("%p setting fast-motion flag\n", this);
+  mDuringFastMotion = true;
+}
+
+bool
+TouchBlockState::IsDuringFastMotion() const
+{
+  return mDuringFastMotion;
 }
 
 bool
 TouchBlockState::SetSingleTapOccurred()
 {
-  TBS_LOG("%p attempting to set single-tap occurred; disallowed=%d\n", this, mSingleTapDisallowed);
-  if (!mSingleTapDisallowed) {
+  TBS_LOG("%p attempting to set single-tap occurred; disallowed=%d\n",
+    this, mDuringFastMotion);
+  if (!mDuringFastMotion) {
     mSingleTapOccurred = true;
     return true;
   }

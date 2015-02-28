@@ -1,0 +1,454 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 4.07 beta
+; Translated by Nicolas Sierro
+; 
+;
+; 
+;
+
+00000000 = "French"
+00000001 = "Français"
+00000002 = "12"
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "Configuration de 7-Zip"
+
+; Info Page
+01000100 = "A propos de 7-Zip"
+01000103 = "7-Zip est un logiciel libre. Si vous appréciez 7-zip et désirez soutenir son développement futur, vous pouvez faire un don au projet 7-Zip."
+01000105 = "Faire un don"
+
+; Folders Page
+01000200 = "Dossiers"
+01000210 = "Dossier de &travail"
+01000211 = "Dossier temporaire du &système"
+01000212 = "Dossier &courant"
+01000213 = "Dossier s&pécifié:"
+01000214 = "N'utiliser que pour les médias amovibles"
+
+01000281 = "Spécifiez un dossier pour les fichiers d'archive temporaires."
+
+; System Page
+01000300 = "Système"
+01000301 = "Intégrer 7-Zip au menu contextuel"
+01000302 = "Menu contextuel en cascade"
+01000310 = "Eléments du menu contextuel :"
+
+; Language Page
+01000400 = "Langue"
+01000401 = "Langue :"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "Commandes 7-Zip"
+02000103 = "Ouvrir"
+02000104 = "Ouvrir l'archive sélectionnée."
+02000105 = "Extraire les fichiers..."
+02000106 = "Extraire les fichiers de l'archive sélectionnée."
+02000107 = "Ajouter à l'archive..."
+02000108 = "Ajouter les objets sélectionnés à l'archive."
+02000109 = "Contrôler l'archive"
+0200010A = "Contrôler l'intégrité de l'archive sélectionnée."
+0200010B = "Extraire ici"
+0200010C = "Extraire les fichiers de l'archive sélectionnée dans le dossier actuel."
+0200010D = "Extraire vers {0}"
+0200010E = "Extraire dans un sous dossier."
+0200010F = "Ajouter à {0}"
+02000110 = "Ajouter les éléments sélectionnés à l'archive."
+02000111 = "Compresser et envoyer par mail..."
+02000112 = "Compresser les éléments sélectionnés à l'archive et l'envoyer par mail."
+02000113 = "Compresser vers {0} et envoyer par mail."
+02000114 = "Compresser les éléments sélectionnés à l'archive et l'envoyer par mail."
+
+02000140 = "<Dossier>"
+02000141 = "<Archive>"
+
+; Properties
+02000203 = "Chemin"
+02000204 = "Nom"
+02000205 = "Extension"
+02000206 = "Dossier"
+02000207 = "Taille"
+02000208 = "Compressé"
+02000209 = "Attributs"
+0200020A = "Créé le"
+0200020B = "Accédé le"
+0200020C = "Modifié le"
+0200020D = "Solide"
+0200020E = "Commentaire"
+0200020F = "Crypté"
+02000210 = "Diviser avant"
+02000211 = "Diviser après"
+02000212 = "Dictionnaire"
+02000213 = "CRC"
+02000214 = "Type"
+02000215 = "Anti"
+02000216 = "Méthode"
+02000217 = "OS hôte"
+02000218 = "Système de fichier"
+02000219 = "Utilisateur"
+0200021A = "Groupe"
+0200021B = "Bloc"
+0200021C = "Commentaire"
+0200021D = "Position"
+
+; Status bar 
+02000301 = "{0} objet(s) sélectionné(s)"
+02000302 = "{0} objet(s)"
+
+; List Context Menu
+02000401 = "&Colonnes..."
+
+02000411 = "&Ouvrir"
+02000412 = "&Extraire..."
+
+; ToolBar
+02000501 = "Extraire"
+
+; Messages 
+02000601 = "Les opérations de mise à jour ne sont pas disponibles pour cette archive."
+02000602 = "L'archive '{0}' ne peut pas être mise à jour"
+02000603 = "Le dossier '{0}' ne peut pas être créé"
+02000604 = "Le fichier n'est pas une archive valide."
+02000605 = "Erreur"
+02000606 = "Trop d'objets"
+02000607 = "Aucune application n'est associée avec ce type de fichier"
+02000608 = "Il n'y a pas d'erreur"
+
+; Dialogs
+02000702 = "OK"
+02000705 = "&Oui"
+02000707 = "&Toujours oui"
+02000709 = "&Non"
+0200070B = "Tou&jours non"
+
+02000710 = "Annuler"
+02000711 = "&Annuler"
+02000713 = "&Fermer"
+02000714 = "Stop"
+02000715 = "Redémarrer"
+
+02000720 = "Aide"
+
+; Extract dialog
+02000800 = "Extraire"
+02000801 = "E&xtraire vers:"
+02000802 = "Mot de passe"
+
+02000810 = "Chemins"
+02000811 = "Chemins complets"
+02000812 = "Chemins relatifs"
+02000813 = "Pas de chemin"
+
+02000820 = "Mode de remplacement"
+02000821 = "Demander pour remplacer"
+02000822 = "Remplacer sans demander"
+02000823 = "Sauter les fichiers existants"
+02000824 = "Renommer automatiquement"
+02000825 = "Renommer automatiquement les fichiers existants"
+
+02000830 = "Fichiers"
+02000831 = "&Fichiers sélectionnés"
+02000832 = "&Tous les fichiers"
+
+02000881 = "Choisissez un dossier pour l'extraction des fichiers."
+
+02000890 = "Extraction"
+
+; Overwrite dialog
+02000900 = "Confirmer le remplacement de fichier"
+02000901 = "Le dossier de destination contient déjà un fichier avec ce nom."
+02000902 = "Voulez-vous remplacer le fichier existant"
+02000903 = "par celui-ci ?"
+
+02000911 = "Renommer &automatiquement"
+
+02000982 = "{0} octets"
+02000983 = "modifié le"
+
+; Messages dialog
+02000A00 = "Messages de diagnostique"
+
+02000A80 = "Message"
+
+02000A91 = "Méthode de compression non valide pour '{0}'."
+02000A92 = "Donnée erronée dans '{0}'. Le fichier est corrompu."
+02000A93 = "Échec du contrôle CRC pour '{0}'. Le fichier est corrompu."
+
+; Password dialog
+02000B00 = "Entrez le mot de passe"
+02000B01 = "Entrez le mot de passe:"
+02000B02 = "&Afficher le mot de passe"
+
+; Progress dialog
+02000C00 = "Procède"
+02000C01 = "Temps écoulé:"
+02000C02 = "Temps restant:"
+02000C03 = "Taille:"
+02000C04 = "Vitesse:"
+
+02000C10 = "&Arrière plan"
+02000C11 = "&Avant plan"
+02000C12 = "&Pause"
+02000C13 = "&Continuer"
+
+02000C20 = "En pause"
+
+02000C30 = "Etes vous sur de vouloir annuler ?"
+
+; Compress dialog
+02000D00 = "Ajouter à l'archive"
+02000D01 = "&Archive:"
+02000D02 = "&Mode de mise à jour:"
+02000D03 = "&Format de l'archive:"
+02000D04 = "Type de &compression:"
+02000D05 = "Créer une archive &solide"
+02000D06 = "&Paramètres:"
+02000D07 = "Options"
+02000D08 = "Créer une archive SF&X"
+02000D09 = "Multi-threading"
+02000D0A = "Crypter les &noms de fichiers"
+02000D0B = "N&iveau de compression :"
+02000D0C = "&Taille du dictionnaire :"
+02000D0D = "Tai&lle des mots :"
+02000D0E = "Mémoire pour la compression :"
+02000D0F = "Mémoire pour la décompression :"
+
+02000D40 = "Découper en &volumes, bytes:"
+
+02000D81 = "Aucune"
+02000D82 = "Normale"
+02000D83 = "Maximum"
+02000D84 = "Rapide"
+02000D85 = "Le plus rapide"
+02000D86 = "Ultra"
+
+02000D90 = "Choisir"
+
+02000DA1 = "Ajouter et remplacer les fichiers"
+02000DA2 = "Mettre à jour et ajouter les fichiers"
+02000DA3 = "Rafraîchir les fichiers existants"
+02000DA4 = "Synchroniser les fichiers"
+
+02000DB1 = "Tous les fichiers"
+
+02000DC0 = "Compression"
+
+; Columns dialog
+02000E00 = "Colonnes"
+02000E01 = "Marquez les colonnes que vous désirez afficher. Utilisez les boutons Monter et Descendre pour modifier leur ordre."
+02000E02 = "La colonne sélectionnée doit faire"
+02000E03 = "pixels de &large."
+
+02000E10 = "Mon&ter"
+02000E11 = "&Descendre"
+02000E12 = "&Afficher"
+02000E13 = "&Masquer"
+02000E14 = "Sauver"
+
+02000E81 = "Titre"
+02000E82 = "Largeur"
+
+; Testing
+02000F90 = "Contrôle"
+
+
+; File Manager
+
+03000000 = "Gestionnaire de fichier de 7-Zip"
+
+; Menu
+03000102 = "&Fichier"
+03000103 = "&Edition"
+03000104 = "Affic&hage"
+03000105 = "&Outils"
+03000106 = "&Aide"
+03000107 = "Fa&voris"
+
+; File
+03000210 = "&Ouvrir"
+03000211 = "Ouvrir à l'&intérieur"
+03000212 = "Ouvrir à l'e&xtérieur"
+03000220 = "&Voir"
+03000221 = "&Edition"
+03000230 = "Reno&mmer"
+03000231 = "&Copier vers..."
+03000232 = "&Déplacer vers..."
+03000233 = "S&upprimer"
+03000240 = "P&ropriétés"
+03000241 = "Comme&ntaire"
+03000250 = "Créer un dossier"
+03000251 = "Créer un fichier"
+03000260 = "&Quitter"
+03000270 = "Diviser le &fichier ..."
+03000271 = "Combiner les fic&hiers ..."
+
+; Edit
+03000310 = "&Annuler"
+03000311 = "&Refaire"
+03000320 = "&Couper"
+03000321 = "Co&pier"
+03000322 = "C&oller"
+03000323 = "S&upprimer"
+03000330 = "Sélectionner &tout"
+03000331 = "Desélectionner tout"
+03000332 = "&Inverser la sélection"
+03000333 = "Sélectionner..."
+03000334 = "Desélectionner..."
+03000335 = "Sélectionner par type"
+03000336 = "Desélectionner par type"
+
+; View
+03000410 = "&Grandes icônes"
+03000411 = "&Petites icônes"
+03000412 = "&Liste"
+03000413 = "&Détails"
+03000420 = "Non trié"
+03000430 = "Ouvrir le dossier racine"
+03000431 = "Dossier parent"
+03000432 = "Historique des dossiers..."
+03000440 = "Actualis&er"
+03000450 = "&2 Fenêtres"
+03000451 = "&Barres d'outils"
+03000460 = "Barre d'archive"
+03000461 = "Barre standard"
+03000462 = "Grands boutons"
+03000463 = "Montrer le texte"
+
+; Tools
+03000510 = "&Options..."
+03000511 = "&Benchmark"
+
+; Help
+03000610 = "&Contenu..."
+03000620 = "À &propos de 7-Zip..."
+
+; Favorites
+03000710 = "&Ajouter le répertoire aux favoris"
+03000720 = "Signet"
+
+; Options Dialog
+
+03010000 = "Options"
+
+; Plugins
+03010100 = "Plugins"
+03010101 = "&Plugins:"
+03010110 = "Options..."
+
+; Edit
+03010200 = "Editeur"
+03010201 = "&Editeur:"
+
+; System
+03010300 = "Système"
+03010302 = "Associer 7-Zip avec:"
+03010310 = "Plugin"
+
+; Settings
+03010400 = "Paramètres"
+03010401 = "Afficher l'élément \"..\""
+03010402 = "Afficher les icônes réelles des fichiers"
+03010410 = "Afficher le menu système"
+03010420 = "Sélectionner toute la ligne"
+03010421 = "Afficher la grille"
+
+; Strings
+
+03020201 = "Copier"
+03020202 = "Déplacer"
+03020203 = "Copier dans:"
+03020204 = "Déplacer vers:"
+03020205 = "Copie..."
+03020206 = "Déplace..."
+03020207 = "Vous ne pouvez pas déplacer ou copier des objets pour ces fichiers."
+03020208 = "L'opération n'est pas possible."
+
+03020210 = "Confirmer la suppression du fichier"
+03020211 = "Confirmer la suppression du dossier"
+03020212 = "Confirmer la suppression de tous les fichiers"
+03020213 = "Êtes-vous sûr de vouloir supprimer '{0}'?"
+03020214 = "Êtes-vous sûr de vouloir supprimer le dossier '{0}' et tout ce qu'il contient ?"
+03020215 = "Êtes-vous sûr de vouloir supprimer ces {0} objets ?"
+03020216 = "Supprime..."
+03020217 = "Erreur durant la suppression du fichier ou du dossier"
+
+03020220 = "Renomme..."
+03020221 = "Erreur durant le changement de nom du fichier ou du dossier"
+
+03020230 = "Créer un dossier"
+03020231 = "Nom du dossier:"
+03020232 = "Nouveau dossier"
+03020233 = "Erreur durant la création du dossier"
+
+03020240 = "Créer un fichier"
+03020241 = "Nom du fichier:"
+03020242 = "Nouveau fichier"
+03020243 = "Erreur durant la création du fichier"
+
+03020250 = "Sélectionner"
+03020251 = "Desélectionner"
+03020252 = "Masque:"
+
+03020260 = "Historique des dossiers"
+
+03020280 = "Le fichier '{0}' a été modifié.\nVoulez-vous le mettre à jour dans l'archive ?"
+03020281 = "Impossible de mettre à jour\n'{0}'"
+03020282 = "Impossible de démarrer l'editeur."
+03020283 = "Ouverture..."
+
+03020290 = "Commentaire"
+03020291 = "&Commentaire:"
+
+030202A0 = "Système"
+
+03020300 = "Ordinateur"
+03020301 = "Réseau"
+
+03020400 = "Ajouter"
+03020401 = "Extraire"
+03020402 = "Tester"
+
+03020420 = "Copier"
+03020421 = "Déplacer"
+03020422 = "Supprimer"
+03020423 = "Informations"
+
+03020500 = "Diviser le fichier"
+03020501 = "&Diviser en :"
+03020510 = "Division..."
+
+03020600 = "Combiner les fichiers"
+03020601 = "&Combiner en :"
+03020610 = "Combinaison..."
+
+; Computer
+03031100 = "Taille totale"
+03031101 = "Espace libre"
+03031102 = "Taille des clusters"
+03031103 = "Nom de volume"
+
+; Network
+03031200 = "Nom local"
+03031201 = "Fournisseur"
+
+; Benchmark Dialog
+
+03080000 = "Benchmark"
+03080001 = "Utilisation de la mémoire :"
+03080002 = "Compression"
+03080003 = "Décompression"
+03080004 = "Vitesse"
+03080005 = "Taux"
+03080006 = "Taux total"
+03080007 = "Actuel"
+03080008 = "Resultant"
+03080009 = "Passes:"
+0308000A = "Erreurs:"
+
+;!@LangEnd@!

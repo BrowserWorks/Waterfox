@@ -1,0 +1,105 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 2001
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## --------------------- ##
+## Building Makefile.*.  ##
+## --------------------- ##
+
+## This rule remakes the Makefile.in.
+%MAKEFILE-IN%: %MAINTAINER-MODE% %MAKEFILE-AM% %MAKEFILE-IN-DEPS% $(top_srcdir)/%CONFIGURE-AC% $(ACLOCAL_M4)
+	cd $(top_srcdir) && \
+	  $(AUTOMAKE) --%STRICTNESS% %USE-DEPS% %MAKEFILE-AM-SOURCES%
+
+## This rule remakes the Makefile.
+%MAKEFILE%: %MAINTAINER-MODE% %MAKEFILE-IN% %MAKEFILE-DEPS% $(top_builddir)/config.status
+## FIXME: $(am__depfiles_maybe) lets us re-run the rule to create the
+## .P files.  Ideally we wouldn't have to do this by hand.
+	cd $(top_builddir) && $(SHELL) ./config.status %CONFIG-MAKEFILE% $(am__depfiles_maybe)
+
+
+
+## --------------------------- ##
+## config.status & configure.  ##
+## --------------------------- ##
+
+if %?TOPDIR_P%
+## Explicitly look in srcdir for benefit of non-GNU makes.
+## Use `$(top_builddir)' for the benefit of Tru64 v5.1 make and also
+## NetBSD v1.5 make.  These `make's don't know that
+## `$(top_builddir)/config.status' and `config.status' are the same
+## file when top_builddir==`.'.
+$(top_builddir)/config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+	$(SHELL) ./config.status --recheck
+
+## Always require configure.ac and configure at top level, even if they
+## don't exist.  This is especially important for configure, since it
+## won't be created until autoconf is run -- which might be after
+## automake is run.
+DIST_COMMON += configure %CONFIGURE-AC%
+
+## Explicitly look in srcdir for benefit of non-GNU makes.
+$(srcdir)/configure: %MAINTAINER-MODE% $(srcdir)/%CONFIGURE-AC% $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
+	cd $(srcdir) && $(AUTOCONF)
+endif %?TOPDIR_P%
+
+
+
+## ------------ ##
+## aclocal.m4.  ##
+## ------------ ##
+
+if %?TOPDIR_P%
+if  %?REGEN-ACLOCAL-M4%
+$(ACLOCAL_M4): %MAINTAINER-MODE% %CONFIGURE-AC% %ACLOCAL_M4_DEPS%
+	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
+endif  %?REGEN-ACLOCAL-M4%
+endif %?TOPDIR_P%
+
+
+## --------- ##
+## cleanup.  ##
+## --------- ##
+
+
+## We special-case config.status here.  If we do it as part of the
+## normal clean processing for this directory, then it might be
+## removed before some subdir is cleaned.  However, that subdir's
+## Makefile depends on config.status.
+
+if %?TOPDIR_P%
+am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
+ configure.lineno
+distclean:
+	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+
+## Note: you might think we should remove Makefile.in, configure, or
+## aclocal.m4 here in a maintainer-clean rule.  However, the GNU
+## Coding Standards explicitly prohibit this.
+
+maintainer-clean:
+	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
+## autom4te.cache is created by Autoconf; the only valid target to
+## remove it is maintainer-clean, not distclean.
+## If you have an autom4te.cache that cause distcheck to fail, then
+## it is good news: you finally discovered that autoconf and/or
+## autoheader is needed to use your tarball, which is wrong.
+	-rm -rf autom4te.cache
+
+
+endif %?TOPDIR_P%

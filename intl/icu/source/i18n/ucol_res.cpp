@@ -224,7 +224,7 @@ const CollationCacheEntry *
 CollationLoader::loadFromLocale(UErrorCode &errorCode) {
     if(U_FAILURE(errorCode)) { return NULL; }
     U_ASSERT(bundle == NULL);
-    bundle = ures_open(U_ICUDATA_COLL, locale.getBaseName(), &errorCode);
+    bundle = ures_openNoDefault(U_ICUDATA_COLL, locale.getBaseName(), &errorCode);
     if(errorCode == U_MISSING_RESOURCE_ERROR) {
         errorCode = U_USING_DEFAULT_WARNING;
 

@@ -1,0 +1,458 @@
+﻿;!@Lang@!UTF-8!
+; 7-Zip 4.25 Alpha
+; Originaly Translated by Jakob Schmidt.
+; Updated, Changed and maintained by Kian Andersen
+;
+;
+;
+
+00000000 = "Danish"
+00000001 = "Dansk"
+00000002 = "6"
+
+; 7-Zip Configuration
+
+; Title
+01000000 = "7-Zip Indstillinger"
+
+; Info Page
+01000100 = "Om 7-Zip"
+01000103 = "7-Zip er gratis software, men hvis du kan og vil hjælpe fremtidige udvikling, så vær venlig at registrer."
+01000104 = "Support"
+01000105 = "Registrer"
+
+; Folders Page
+01000200 = "Mappe"
+01000210 = "&Arbejdsmappe"
+01000211 = "&Systemets midlertidige mappe"
+01000212 = "&Nuværende"
+01000213 = "&Specificeret:"
+01000214 = "Brug kun til flytbare drev."
+
+01000281 = "Angiv adresse til midlertige filer.."
+
+; System Page
+01000300 = "System"
+01000301 = "Flet 7-Zip ind i Windows"
+01000302 = "Vis 7-zip ved højreklik"
+01000310 = "Punkter i genvejsmenuen:"
+
+; Language Page
+01000400 = "Sprog"
+01000401 = "Sprog:"
+
+
+; 7-Zip Explorer extension
+
+; Context menu
+02000101 = "7-Zip"
+02000102 = "7-Zip kommandoer"
+02000103 = "Åben"
+02000104 = "Åbner det valgte arkiv."
+02000105 = "Udpak filer..."
+02000106 = "Udpak filer fra det valgte arkiv."
+02000107 = "Føj til arkiv..."
+02000108 = "Føj de valgte filer til arkiv."
+02000109 = "Undersøg arkiv"
+0200010A = "Undersøger integriteten af valgte arkiv."
+0200010B = "Udpak Her"
+0200010C = "Udpak filer fra det valgte arkiv her."
+0200010D = "Udpak til {0}"
+0200010E = "Udpak filer til undermappe."
+0200010F = "Føj til {0}"
+02000110 = "Føj det valgte til arkiv."
+02000111 = "Pak og email..."
+02000112 = "Pak det valgte til arkiv og send via email."
+02000113 = "Pak til {0} og email"
+02000114 = "Pak det valgte til arkiv og send via email."
+
+02000140 = "<Mappe>"
+02000141 = "<Arkiv>"
+
+; Properties
+02000203 = "Sti"
+02000204 = "Navn"
+02000205 = "Filtypenavn"
+02000206 = "Mappe"
+02000207 = "Størrelse"
+02000208 = "Nedpakket størrelse"
+02000209 = "Egenskaber"
+0200020A = "Oprettet"
+0200020B = "Åbnet"
+0200020C = "Ændret"
+0200020D = "Solid"
+0200020E = "Kommentar"
+0200020F = "Krypteret"
+02000210 = "Opdeling før"
+02000211 = "Opdeling efter"
+02000212 = "Leksikon"
+02000213 = "CRC"
+02000214 = "Type"
+02000215 = "Anti"
+02000216 = "Metode"
+02000217 = "Vært OS"
+02000218 = "Filsystem"
+02000219 = "Bruger"
+0200021A = "Gruppe"
+0200021B = "Blok"
+0200021C = "Kommentar"
+0200021D = "Position"
+
+; Status bar 
+02000301 = "{0} objekt(er) valg"
+02000302 = "{0} objekt(er)"
+
+; List Context Menu
+02000401 = "&Kolonner..."
+
+02000411 = "&Åben"
+02000412 = "&Udpak..."
+
+; ToolBar
+02000501 = "Udpak"
+
+; Messages 
+02000601 = "Opdater operationer er ikke understøttet af dette arkiv."
+02000602 = "Kan ikke opdatere arkiv {0}"
+02000603 = "Kan ikke oprette folder '{0}'"
+02000604 = "Filen er ikke understøttet i arkiv."
+02000605 = "Fejl"
+02000606 = "For mange objekter"
+02000607 = "Der er ingen programmer tilknyttet dette filtypenavn"
+02000608 = "Der er ingen fejl"
+
+; Dialogs
+02000702 = "OK"
+02000705 = "&Ja"
+02000707 = "Ja til &alt"
+02000709 = "&Nej"
+0200070B = "Nej til a&lt"
+
+02000710 = "Annuller"
+02000711 = "&Annuller"
+02000713 = "&Luk"
+02000714 = "Stop"
+02000715 = "Genstart"
+
+02000720 = "Hjælp"
+
+; Extract dialog
+02000800 = "Udpak"
+02000801 = "U&dpak til:"
+02000802 = "Kodeord"
+
+02000810 = "Sti type"
+02000811 = "Komplet stinavne"
+02000812 = "Nuværende stinavne"
+02000813 = "Ingen stinavne"
+
+02000820 = "Erstat tilstand"
+02000821 = "Spørg før erstatning"
+02000822 = "Erstat uden advarsel"
+02000823 = "Spring nuværende filer over"
+02000824 = "Automatisk omdøbning"
+02000825 = "Omdøb automatisk eksisterende filer"
+
+02000830 = "Filer"
+02000831 = "&Valgte filer"
+02000832 = "&Alle filer"
+
+02000881 = "Vælg en sti for de udpakkede filer."
+
+02000890 = "Udpakker"
+
+; Overwrite dialog
+02000900 = "Bekræft filudskiftning"
+02000901 = "Destinationsmappen indeholder allerede behandlede filer."
+02000902 = "Ønsker du at udskifte den eksiterende fil"
+02000903 = "med denne?"
+
+02000911 = "A&utomatisk omdøbning"
+
+02000982 = "{0} bytes"
+02000983 = "Ændret den"
+
+; Messages dialog
+02000A00 = "Diagnostisk besked"
+
+02000A80 = "Besked"
+
+02000A91 = "Ikke understøttet pakkemetode for '{0}'."
+02000A92 = "Data fejl i '{0}'. Filen er ødelagt."
+02000A93 = "CRC fejl i '{0}'. Filen er ødelagt."
+
+; Password dialog
+02000B00 = "Indtast kodeord"
+02000B01 = "Indtast kodeord:"
+02000B02 = "&Vis kodeord"
+
+; Progress dialog
+02000C00 = "Proces"
+02000C01 = "Brugt tid:"
+02000C02 = "Tid tilbage:"
+02000C03 = "Størrelse:"
+02000C04 = "Hastighed:"
+
+02000C10 = "&Baggrund"
+02000C11 = "&Forgrund"
+02000C12 = "&Pause"
+02000C13 = "&Fortsæt"
+
+02000C20 = "Pauset"
+
+02000C30 = "Er du sikker på du vil annuller?"
+
+; Compress dialog
+02000D00 = "Føj til arkiv"
+02000D01 = "&Arkiv:"
+02000D02 = "&Opdater tilstand:"
+02000D03 = "Arkiv &format:"
+02000D04 = "Pakke&metode:"
+02000D05 = "Opret &solid arkiv"
+02000D06 = "&Parameter:"
+02000D07 = "Funktioner"
+02000D08 = "Opret SF&X arkiv"
+02000D09 = "Multi-threading"
+02000D0A = "Indkrypter fil&navne"
+02000D0B = "Nedpaknings &niveau:"
+02000D0C = "&Ordbogs størrelse:"
+02000D0D = "&Ord størrelse:"
+02000D0E = "Hukommelsesbrug for nedpakning:"
+02000D0F = "Hukommelsesbrug for udpakning:"
+
+02000D40 = "Opdel i Bind, bytes:"
+
+02000D81 = "Gem kun"
+02000D82 = "Normal"
+02000D83 = "Bedste"
+02000D84 = "Hurtig"
+02000D85 = "Hurtigste"
+02000D86 = "Ultra"
+
+02000D90 = "Udforsk"
+
+02000DA1 = "Føj til og erstat filer"
+02000DA2 = "Opdater og føj filer til"
+02000DA3 = "Opdater eksisterende filer"
+02000DA4 = "Synkroniser filer"
+
+02000DB1 = "Alle filer"
+
+02000DC0 = "Nedpakker"
+
+; Columns dialog
+02000E00 = "Kolonnerne"
+02000E01 = "Tjek kolonnerne som du vil have synlige i denne mappe. Brug pil-op og pil-ned knapperne til at ændre kolonnerne."
+02000E02 = "Den valgte kolonne burde være"
+02000E03 = "pixeler &bred."
+
+02000E10 = "Pil-&op"
+02000E11 = "Pil-&ned"
+02000E12 = "&Vis"
+02000E13 = "&Skjul"
+02000E14 = "Sæt"
+
+02000E81 = "Titel"
+02000E82 = "Bredde"
+
+; Testing
+02000F90 = "Undersøger"
+
+
+; File Manager
+
+03000000 = "7-Zip File Manager"
+
+; Menu
+03000102 = "&Fil"
+03000103 = "&Rediger"
+03000104 = "&Vis"
+03000105 = "&Værktøjer"
+03000106 = "&Hjælp"
+03000107 = "F&avoriter"
+
+; File
+03000210 = "&Åben"
+03000211 = "Åben &indeni"
+03000212 = "Åben &udenfor"
+03000220 = "&Vis"
+03000221 = "&Rediger"
+03000230 = "O&mdøb"
+03000231 = "&Kopier til..."
+03000232 = "&Flyt til..."
+03000233 = "&Slet"
+03000240 = "Egenskabe&r"
+03000241 = "Komme&ntar"
+03000250 = "Opret mappe"
+03000251 = "Opret fil"
+03000260 = "&Afslut"
+03000270 = "&Opdel fil..."
+03000271 = "Kom&biner filer..."
+
+; Edit
+03000310 = "&Fortryd"
+03000311 = "&Gendan"
+03000320 = "K&lip"
+03000321 = "&Kopier"
+03000322 = "&Indsæt"
+03000323 = "&Slet"
+03000330 = "Vælg &alt"
+03000331 = "Fravælg alt"
+03000332 = "&Omvendt valg"
+03000333 = "Vælg..."
+03000334 = "Fravælg..."
+03000335 = "Vælg efter type"
+03000336 = "Fravælg efter type"
+
+; View
+03000410 = "Sto&re ikoner"
+03000411 = "S&må ikoner"
+03000412 = "&Liste"
+03000413 = "&Detaljer"
+03000420 = "Usorteret"
+03000430 = "Åben rodmappe"
+03000431 = "Et niveau op"
+03000432 = "Mappe historik..."
+03000440 = "&Opdater"
+03000450 = "&2 paneler"
+03000451 = "&Værktøjslinjer"
+03000460 = "Arkiv værktøjslinje"
+03000461 = "Standard værktøjslinje"
+03000462 = "Store knapper"
+03000463 = "Vis knap tekst"
+
+; Tools
+03000510 = "&Indstillinger..."
+03000511 = "&Benchmark"
+
+; Help
+03000610 = "&Indhold..."
+03000620 = "&Om 7-Zip..."
+
+; Favorites
+03000710 = "&Føj mappe til Favoriter som"
+03000720 = "Bogmærke"
+
+; Options Dialog
+
+03010000 = "Indstillinger"
+
+; Plugins
+03010100 = "Tilføjelser"
+03010101 = "&Tilføjelser:"
+03010110 = "Indstil..."
+
+; Edit
+03010200 = "Tekstbehandler"
+03010201 = "&Tekstbehandler:"
+
+; System
+03010300 = "System"
+03010302 = "Knyt 7-Zip med:"
+03010310 = "Tilføjelse"
+
+; Settings
+03010400 = "Indstillinger"
+03010401 = "Vis \"..\" post"
+03010402 = "Vis rigtige filikoner"
+03010410 = "Vis system menu"
+03010420 = "&Fuld række valg"
+03010421 = "Vis &gitter liner"
+03010430 = "&Alternativ markeringsmetode"
+
+; Strings
+
+03020201 = "Kopier"
+03020202 = "Flyt"
+03020203 = "Kopier til:"
+03020204 = "Flyt til:"
+03020205 = "Kopierer..."
+03020206 = "Flytter..."
+03020207 = "Du kan ikke flytte eller kopierer elementer for sådan en mappe."
+03020208 = "Opgave er ikke understøttet."
+
+03020210 = "Godkend fils sletning"
+03020211 = "Godkend mappes sletning"
+03020212 = "Godkend flere filers sletning"
+03020213 = "Er du sikker på du vil slette '{0}'?"
+03020214 = "Er du sikker på du vil slette mappen '{0}' og alt indhold?"
+03020215 = "Er du sikker på du vil slette disse {0} elementer?"
+03020216 = "Sletter..."
+03020217 = "Fejl da en fil eller mappe skulle slettes"
+
+03020220 = "Omdøber..."
+03020221 = "Fejl da en fil eller mappe skulle omdøbes"
+03020222 = "Bekræft filkopiering"
+03020223 = "Er du sikker du vil kopiere filer til arkiv?"
+
+03020230 = "Opret mappe"
+03020231 = "Mappenavn:"
+03020232 = "Ny mappe"
+03020233 = "Fejl kunne ikke oprette mappe"
+
+03020240 = "Opret fil"
+03020241 = "Filnavn:"
+03020242 = "Ny fil"
+03020243 = "Fejl kunne ikke oprette fil"
+
+03020250 = "Vælg"
+03020251 = "Fravælg"
+03020252 = "Masker:"
+
+03020260 = "Mappe historik"
+
+03020280 = "Filen '{0}' er blevet ændret.\nVil du opdater den i arkivet?"
+03020281 = "Kan ikke opdaterere filen\n'{0}'"
+03020282 = "Kan ikke starte tekstbehandler."
+03020283 = "Åbner..."
+
+03020290 = "Kommentar"
+03020291 = "&Kommentar:"
+
+030202A0 = "System"
+
+03020300 = "Computer"
+03020301 = "Netværk"
+
+03020400 = "Tilføj"
+03020401 = "Udpak"
+03020402 = "Test"
+
+03020420 = "Kopier"
+03020421 = "Flyt"
+03020422 = "Slet"
+03020423 = "Info"
+
+03020500 = "Opdel fil"
+03020501 = "&Opdel til:"
+03020510 = "Opdeler..."
+
+03020600 = "Kombiner filer"
+03020601 = "&Kombiner til:"
+03020610 = "Kombinerer..."
+
+; Computer
+03031100 = "Total størrelse"
+03031101 = "Fri plads"
+03031102 = "Cluster størrelse"
+03031103 = "Label"
+
+; Network
+03031200 = "Lokalt navn"
+03031201 = "Udbyder"
+
+; Benchmark Dialog
+
+03080000 = "Benchmark"
+03080001 = "Hukommelsesbrug:"
+03080002 = "Nedpakning"
+03080003 = "Udpakning"
+03080004 = "Hastighed"
+03080005 = "Bedømmelse"
+03080006 = "Total Bedømmelse"
+03080007 = "Nuværende"
+03080008 = "Resultat"
+03080009 = "Forsøg:"
+0308000A = "Fejl:"
+
+;!@LangEnd@!

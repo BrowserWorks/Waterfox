@@ -1,0 +1,88 @@
+## automake - create Makefile.in from Makefile.am
+## Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2001
+## Free Software Foundation, Inc.
+
+## This program is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2, or (at your option)
+## any later version.
+
+## This program is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+
+## You should have received a copy of the GNU General Public License
+## along with this program; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+## 02111-1307, USA.
+
+## ------------ ##
+## Installing.  ##
+## ------------ ##
+
+if %?INSTALL%
+am__installdirs += $(DESTDIR)$(%NDIR%dir)
+?BASE?%DIR%LTLIBRARIES_INSTALL = $(INSTALL)
+?!BASE?%DIR%LTLIBRARIES_INSTALL = $(install_sh) -c
+?EXEC?.PHONY install-exec-am: install-%DIR%LTLIBRARIES
+?!EXEC?.PHONY install-data-am: install-%DIR%LTLIBRARIES
+install-%DIR%LTLIBRARIES: $(%DIR%_LTLIBRARIES)
+	@$(NORMAL_INSTALL)
+	$(mkinstalldirs) $(DESTDIR)$(%NDIR%dir)
+## Funny invocation because Makefile variable can be empty, leading to
+## a syntax error in sh.
+	@list='$(%DIR%_LTLIBRARIES)'; for p in $$list; do \
+	  if test -f $$p; then \
+## Compute basename of source file.  Unless this is a nobase_ target, we
+## want to install 'python/foo.py' as '$(DESTDIR)$(%NDIR%dir)/foo.yo',
+## not '$(DESTDIR)$(%NDIR%dir)/python/foo.yo'.
+?BASE?	    f="`echo $$p | sed -e 's|^.*/||'`"; \
+?!BASE?	    f="$$p"; \
+## Note that we explicitly set the libtool mode.  This avoids any lossage
+## if the program doesn't have a name that libtool expects.
+## Use INSTALL and not INSTALL_DATA because libtool knows the right
+## permissions to use.
+?LIBTOOL?	    echo " $(LIBTOOL) --mode=install $(%DIR%LTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+?LIBTOOL?	    $(LIBTOOL) --mode=install $(%DIR%LTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(%NDIR%dir)/$$f; \
+?!LIBTOOL?	    echo " $(%DIR%LTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(%NDIR%dir)/$$f"; \
+?!LIBTOOL?	    $(%DIR%LTLIBRARIES_INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(%NDIR%dir)/$$f; \
+	  else :; fi; \
+	done
+endif %?INSTALL%
+
+
+## -------------- ##
+## Uninstalling.  ##
+## -------------- ##
+
+if %?INSTALL%
+.PHONY uninstall-am: uninstall-%DIR%LTLIBRARIES
+uninstall-%DIR%LTLIBRARIES:
+	@$(NORMAL_UNINSTALL)
+	@list='$(%DIR%_LTLIBRARIES)'; for p in $$list; do \
+?BASE?	    p="`echo $$p | sed -e 's|^.*/||'`"; \
+?LIBTOOL?	  echo " $(LIBTOOL) --mode=uninstall rm -f $(DESTDIR)$(%NDIR%dir)/$$p"; \
+?LIBTOOL?	  $(LIBTOOL) --mode=uninstall rm -f $(DESTDIR)$(%NDIR%dir)/$$p; \
+?!LIBTOOL?	  echo " rm -f $(DESTDIR)$(%NDIR%dir)/$$p"; \
+?!LIBTOOL?	  rm -f $(DESTDIR)$(%NDIR%dir)/$$p; \
+	done
+endif %?INSTALL%
+
+
+## ---------- ##
+## Cleaning.  ##
+## ---------- ##
+
+.PHONY clean-am: clean-%DIR%LTLIBRARIES
+clean-%DIR%LTLIBRARIES:
+	-test -z "$(%DIR%_LTLIBRARIES)" || rm -f $(%DIR%_LTLIBRARIES)
+## `so_locations' files are created by some linkers (IRIX, OSF) when
+## building a shared object.  Libtool places these files in the
+## directory where the shared object is created.
+	@list='$(%DIR%_LTLIBRARIES)'; for p in $$list; do \
+	  dir="`echo $$p | sed -e 's|/[^/]*$$||'`"; \
+	  test "$$dir" = "$$p" && dir=.; \
+	  echo "rm -f \"$${dir}/so_locations\""; \
+	  rm -f "$${dir}/so_locations"; \
+	done

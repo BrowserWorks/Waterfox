@@ -608,18 +608,28 @@ function P2pStateMachine(aP2pCommand, aNetUtil) {
 
       _sm.pause();
 
-      // Step 1: Connect to p2p0.
-      aP2pCommand.connectToSupplicant(function (status) {
-        let detail;
-
-        if (0 !== status) {
-          debug('Failed to connect to p2p0');
-          onFailure();
+      // This function will only call back on success.
+      function connectToSupplicantIfNeeded(callback) {
+        if (aP2pCommand.getSdkVersion() >= 19) {
+          // No need to connect to supplicant on KK. Call back directly.
+          callback();
           return;
         }
+        aP2pCommand.connectToSupplicant(function (status) {
+          if (0 !== status) {
+            debug('Failed to connect to p2p0');
+            onFailure();
+            return;
+          }
+          debug('wpa_supplicant p2p0 connected!');
+          _onSupplicantConnected();
+          callback();
+        });
+      }
 
-        debug('wpa_supplicant p2p0 connected!');
-        _onSupplicantConnected();
+      // Step 1: Connect to p2p0 if needed.
+      connectToSupplicantIfNeeded(function callback () {
+        let detail;
 
         // Step 2: Get MAC address.
         if (!_localDevice.address) {
@@ -1320,7 +1330,7 @@ function P2pStateMachine(aP2pCommand, aNetUtil) {
         debug('Stop DHCP server result: ' + success);
         aP2pCommand.p2pDisable(function(success) {
           debug('P2P function disabled');
-          aP2pCommand.closeSupplicantConnection(function (status) {
+          closeSupplicantConnectionIfNeeded(function() {
             debug('Supplicant connection closed');
             gNetworkService.disableInterface(P2P_INTERFACE_NAME, function (success){
               debug('Disabled interface: ' + P2P_INTERFACE_NAME);
@@ -1330,6 +1340,15 @@ function P2pStateMachine(aP2pCommand, aNetUtil) {
           });
         });
       });
+
+      function closeSupplicantConnectionIfNeeded(callback) {
+        // No need to connect to supplicant on KK. Call back directly.
+        if (aP2pCommand.getSdkVersion() >= 19) {
+          callback();
+          return;
+        }
+        aP2pCommand.closeSupplicantConnection(callback);
+      }
     },
 
     handleEvent: function(aEvent) {

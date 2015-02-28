@@ -27,6 +27,7 @@
 #include <hardware/hwcomposer.h>
 #if ANDROID_VERSION >= 17
 #include <ui/Fence.h>
+#include <utils/Timers.h>
 #endif
 
 namespace mozilla {
@@ -129,6 +130,7 @@ private:
 #if ANDROID_VERSION >= 17
     android::sp<android::Fence> mPrevRetireFence;
     android::sp<android::Fence> mPrevDisplayFence;
+    nsecs_t                 mLastVsyncTime;
 #endif
     nsTArray<layers::LayerComposite*> mHwcLayerMap;
     bool                    mPrepared;

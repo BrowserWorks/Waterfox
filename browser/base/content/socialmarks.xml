@@ -148,10 +148,24 @@
           panel.appendChild(this.content);
 
         let URLTemplate = provider.markURL;
-        pageData = pageData || OpenGraphBuilder.getData(gBrowser);
+        let _dataFn;
+        if (!pageData) {
+          messageManager.addMessageListener("Social:PageDataResult", _dataFn = (msg) => {
+            messageManager.removeMessageListener("Social:PageDataResult", _dataFn);
+            this.loadPanel(msg.json, target);
+          });
+          gBrowser.selectedBrowser.messageManager.sendAsyncMessage("Social:GetPageData");
+          return;
+        }
         // if this is a share of a selected item, get any microdata
         if (!pageData.microdata && target) {
-          pageData.microdata = OpenGraphBuilder.getMicrodata(gBrowser, target);
+          messageManager.addMessageListener("Social:PageDataResult", _dataFn = (msg) => {
+            messageManager.removeMessageListener("Social:PageDataResult", _dataFn);
+            pageData.microdata = msg.data;
+            this.loadPanel(pageData, target);
+          });
+          gBrowser.selectedBrowser.messageManager.sendAsyncMessage("Social:GetMicrodata", null, target);
+          return;
         }
         this.pageData = pageData;
 
@@ -190,15 +204,37 @@
               });
             }
           }.bind(this);
-          contentWindow.addEventListener("socialMarkUpdate", markUpdate);
-          contentWindow.addEventListener("unload", function unload() {
+          let unload = () => {
             contentWindow.removeEventListener("unload", unload);
             contentWindow.removeEventListener("socialMarkUpdate", markUpdate);
-          });
+            if (this.content.socialErrorListener)
+              this.content.socialErrorListener.remove();
+          }
+          contentWindow.addEventListener("socialMarkUpdate", markUpdate);
+          contentWindow.addEventListener("unload", unload);
         }
         this.content.addEventListener("DOMContentLoaded", DOMContentLoaded, true);
+        Social.setErrorListener(this.content, this.setErrorMessage.bind(this));
         this._loading = true;
         this.content.setAttribute("src", endpoint);
+        ]]></body>
+      </method>
+
+      <method name="setErrorMessage">
+        <parameter name="aNotificationFrame"/>
+        <body><![CDATA[
+        if (!aNotificationFrame)
+          return;
+
+        let src = aNotificationFrame.getAttribute("src");
+        aNotificationFrame.removeAttribute("src");
+        let origin = aNotificationFrame.getAttribute("origin");
+        aNotificationFrame.webNavigation.loadURI("about:socialerror?mode=tryAgainOnly&url=" +
+                                                encodeURIComponent(src) + "&origin=" +
+                                                encodeURIComponent(origin),
+                                                null, null, null, null);
+        // ensure the panel is open if error occurs on first click
+        this.openPanel();
         ]]></body>
       </method>
 

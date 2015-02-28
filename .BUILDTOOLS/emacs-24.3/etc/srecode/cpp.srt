@@ -1,0 +1,137 @@
+;;; cpp.srt --- SRecode templates for c++-mode
+
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
+
+;; Author: Eric M. Ludlam <eric@siege-engine.com>
+
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software: you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs.  If not, see <http://www.gnu.org/licenses/>.
+
+set mode "c++-mode"
+
+set comment_start  "/**"
+set comment_end    " */"
+set comment_prefix " *"
+
+context declaration
+
+template class :indent :blank
+"Insert a C++ class.  For use by user insertion.
+Override this template to change contents of a class.
+Override `class-tag' to override the outer structure of the class."
+----
+{{<A:class-tag}}
+   public:
+     {{>CONSTRUCTOR:classdecl:constructor-tag}}
+     {{>DESTRUCTOR:classdecl:destructor-tag}}
+   private:
+   {{^}}
+
+{{/A}}
+----
+
+template subclass :indent :blank
+"Insert a C++ subclass of some other class."
+sectiondictionary "PARENTS"
+set NAME "?PARENTNAME"
+----
+{{>A:class}}
+----
+
+template class-tag :indent :blank
+"Insert a C++ class with the expectation of it being used by a tag inserter.
+Override this to affect applications, or the outer class structure for
+the user-facing template."
+----
+class {{?NAME}} {{#PARENTS}}{{#FIRST}}: {{/FIRST}}public {{NAME}}{{/PARENTS}}
+{     
+   {{^}}
+};
+----
+bind "c"
+
+template method :indent :blank
+"Method belonging to some class, declared externally."
+----
+{{?TYPE}} {{?PARENT}}::{{?NAME}}{{>:misc:arglist}}
+{{#INITIALIZERS}}{{>B:initializers}}{{/INITIALIZERS}}
+{
+{{^}}
+}
+----
+
+context classdecl
+
+template constructor-tag :indent :blank
+----
+{{?NAME}}{{>:misc:arglist}}
+{ {{^}} }
+----
+
+;; This one really sucks.  How can I finish it?
+template initializers :indent
+----
+{{#FIRST}}:
+{{/FIRST}}{{INITNAME}}(){{#NOTLAST}},{{/NOTLAST}}
+----
+
+template destructor-tag :indent :blank
+----
+~{{?NAME}}{{>:misc:arglist}}
+{ {{^}} }
+----
+
+;;; Base Comment functions for overriding.
+context classdecl
+
+template comment-function-group-start :indent :blank
+"Used for putting comments in front of a functional group of declarations.
+Override this with your own preference to avoid using doxygen."
+----
+{{>A:classdecl:doxygen-function-group-start}}
+----
+
+template comment-function-group-end :indent :blank
+"Used for putting comments in front of a functional group of declarations.
+Override this with your own preference to avoid using doxygen."
+----
+{{>A:classdecl:doxygen-function-group-end}}
+----
+
+;;; DOXYGEN FEATURES
+;; 
+;;
+context classdecl
+
+prompt GROUPNAME "Name of declaration group: "
+
+template doxygen-function-group-start :indent :blank
+----
+/**
+ * {{?GROUPNAME}}
+ * @{
+ */
+
+----
+
+template doxygen-function-group-end :indent :blank
+----
+/**
+ * @}
+ */
+
+----
+
+;; end

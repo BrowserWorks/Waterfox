@@ -10,7 +10,10 @@
 
 #include <algorithm>
 
+#include "gfxUtils.h"
+#include "mozilla/gfx/2D.h"
 #include "nsCOMPtr.h"
+#include "nsFontMetrics.h"
 #include "nsITimer.h"
 #include "nsFrameSelection.h"
 #include "nsIFrame.h"
@@ -20,7 +23,7 @@
 #include "nsISelectionPrivate.h"
 #include "nsIContent.h"
 #include "nsIPresShell.h"
-#include "nsRenderingContext.h"
+#include "nsLayoutUtils.h"
 #include "nsPresContext.h"
 #include "nsBlockFrame.h"
 #include "nsISelectionController.h"
@@ -36,6 +39,7 @@
 
 using namespace mozilla;
 using namespace mozilla::dom;
+using namespace mozilla::gfx;
 
 // The bidi indicator hangs off the caret to one side, to show which
 // direction the typing is in. It needs to be at least 2x2 to avoid looking like 
@@ -305,9 +309,14 @@ nsCaret::GetGeometryForFrame(nsIFrame* aFrame,
     descent = fm->MaxDescent();
   }
   nscoord height = ascent + descent;
-  bool vertical = aFrame->GetWritingMode().IsVertical();
+  WritingMode wm = aFrame->GetWritingMode();
+  bool vertical = wm.IsVertical();
   if (vertical) {
-    framePos.x = baseline - ascent;
+    if (wm.IsLineInverted()) {
+      framePos.x = baseline - descent;
+    } else {
+      framePos.x = baseline - ascent;
+    }
   } else {
     framePos.y = baseline - ascent;
   }
@@ -372,7 +381,7 @@ GetFrameAndOffset(Selection* aSelection,
 
   nsIContent* contentNode = focusNode->AsContent();
   nsFrameSelection* frameSelection = aSelection->GetFrameSelection();
-  uint8_t bidiLevel = frameSelection->GetCaretBidiLevel();
+  nsBidiLevel bidiLevel = frameSelection->GetCaretBidiLevel();
   nsIFrame* frame;
   nsresult rv = nsCaret::GetCaretFrameForNodeOffset(
       frameSelection, contentNode, focusOffset,
@@ -508,7 +517,7 @@ nsCaret::GetPaintGeometry(nsRect* aRect)
 }
 
 void nsCaret::PaintCaret(nsDisplayListBuilder *aBuilder,
-                         nsRenderingContext *aCtx,
+                         DrawTarget& aDrawTarget,
                          nsIFrame* aForFrame,
                          const nsPoint &aOffset)
 {
@@ -520,15 +529,21 @@ void nsCaret::PaintCaret(nsDisplayListBuilder *aBuilder,
   }
   NS_ASSERTION(frame == aForFrame, "We're referring different frame");
 
-  nscolor foregroundColor = aForFrame->GetCaretColorAt(contentOffset);
-  aCtx->SetColor(foregroundColor);
+  int32_t appUnitsPerDevPixel = frame->PresContext()->AppUnitsPerDevPixel();
 
   nsRect caretRect;
   nsRect hookRect;
   ComputeCaretRects(frame, contentOffset, &caretRect, &hookRect);
-  aCtx->FillRect(caretRect + aOffset);
+
+  Rect devPxCaretRect =
+    NSRectToSnappedRect(caretRect + aOffset, appUnitsPerDevPixel, aDrawTarget);
+  Rect devPxHookRect =
+    NSRectToSnappedRect(hookRect + aOffset, appUnitsPerDevPixel, aDrawTarget);
+  ColorPattern color(ToDeviceColor(frame->GetCaretColorAt(contentOffset)));
+
+  aDrawTarget.FillRect(devPxCaretRect, color);
   if (!hookRect.IsEmpty()) {
-    aCtx->FillRect(hookRect + aOffset);
+    aDrawTarget.FillRect(devPxHookRect, color);
   }
 }
 
@@ -592,12 +607,12 @@ void nsCaret::StopBlinking()
   }
 }
 
-nsresult 
+nsresult
 nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
                                     nsIContent*          aContentNode,
                                     int32_t              aOffset,
                                     CaretAssociationHint aFrameHint,
-                                    uint8_t              aBidiLevel,
+                                    nsBidiLevel          aBidiLevel,
                                     nsIFrame**           aReturnFrame,
                                     int32_t*             aReturnOffset)
 {
@@ -631,7 +646,6 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
   // ------------------
   // NS_STYLE_DIRECTION_LTR : LTR or Default
   // NS_STYLE_DIRECTION_RTL
-  // NS_STYLE_DIRECTION_INHERIT
   if (IsBidiUI())
   {
     // If there has been a reflow, take the caret Bidi level to be the level of the current frame
@@ -642,8 +656,8 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
     int32_t end;
     nsIFrame* frameBefore;
     nsIFrame* frameAfter;
-    uint8_t levelBefore;     // Bidi level of the character before the caret
-    uint8_t levelAfter;      // Bidi level of the character after the caret
+    nsBidiLevel levelBefore; // Bidi level of the character before the caret
+    nsBidiLevel levelAfter;  // Bidi level of the character after the caret
 
     theFrame->GetOffsets(start, end);
     if (start == 0 || end == 0 || start == theFrameOffset || end == theFrameOffset)
@@ -664,8 +678,10 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
           aBidiLevel = std::max(aBidiLevel, std::min(levelBefore, levelAfter));                                  // rule c3
           aBidiLevel = std::min(aBidiLevel, std::max(levelBefore, levelAfter));                                  // rule c4
           if (aBidiLevel == levelBefore                                                                      // rule c1
-              || (aBidiLevel > levelBefore && aBidiLevel < levelAfter && !((aBidiLevel ^ levelBefore) & 1))    // rule c5
-              || (aBidiLevel < levelBefore && aBidiLevel > levelAfter && !((aBidiLevel ^ levelBefore) & 1)))  // rule c9
+              || (aBidiLevel > levelBefore && aBidiLevel < levelAfter &&
+                  IS_SAME_DIRECTION(aBidiLevel, levelBefore))   // rule c5
+              || (aBidiLevel < levelBefore && aBidiLevel > levelAfter &&
+                  IS_SAME_DIRECTION(aBidiLevel, levelBefore)))  // rule c9
           {
             if (theFrame != frameBefore)
             {
@@ -681,10 +697,12 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
                 // so we stay with the current frame.
                 // Exception: when the first frame on the line has a different Bidi level from the paragraph level, there is no
                 // real frame for the caret to be in. We have to find the visually first frame on the line.
-                uint8_t baseLevel = NS_GET_BASE_LEVEL(frameAfter);
+                nsBidiLevel baseLevel = NS_GET_BASE_LEVEL(frameAfter);
                 if (baseLevel != levelAfter)
                 {
-                  nsPeekOffsetStruct pos(eSelectBeginLine, eDirPrevious, 0, 0, false, true, false, true);
+                  nsPeekOffsetStruct pos(eSelectBeginLine, eDirPrevious, 0,
+                                         nsPoint(0, 0), false, true, false,
+                                         true);
                   if (NS_SUCCEEDED(frameAfter->PeekOffset(&pos))) {
                     theFrame = pos.mResultFrame;
                     theFrameOffset = pos.mContentOffset;
@@ -694,8 +712,10 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
             }
           }
           else if (aBidiLevel == levelAfter                                                                     // rule c2
-                   || (aBidiLevel > levelBefore && aBidiLevel < levelAfter && !((aBidiLevel ^ levelAfter) & 1))   // rule c6
-                   || (aBidiLevel < levelBefore && aBidiLevel > levelAfter && !((aBidiLevel ^ levelAfter) & 1)))  // rule c10
+                   || (aBidiLevel > levelBefore && aBidiLevel < levelAfter &&
+                       IS_SAME_DIRECTION(aBidiLevel, levelAfter))   // rule c6
+                   || (aBidiLevel < levelBefore && aBidiLevel > levelAfter &&
+                       IS_SAME_DIRECTION(aBidiLevel, levelAfter)))  // rule c10
           {
             if (theFrame != frameAfter)
             {
@@ -712,10 +732,12 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
                 // so we stay with the current frame.
                 // Exception: when the last frame on the line has a different Bidi level from the paragraph level, there is no
                 // real frame for the caret to be in. We have to find the visually last frame on the line.
-                uint8_t baseLevel = NS_GET_BASE_LEVEL(frameBefore);
+                nsBidiLevel baseLevel = NS_GET_BASE_LEVEL(frameBefore);
                 if (baseLevel != levelBefore)
                 {
-                  nsPeekOffsetStruct pos(eSelectEndLine, eDirNext, 0, 0, false, true, false, true);
+                  nsPeekOffsetStruct pos(eSelectEndLine, eDirNext, 0,
+                                         nsPoint(0, 0), false, true, false,
+                                         true);
                   if (NS_SUCCEEDED(frameBefore->PeekOffset(&pos))) {
                     theFrame = pos.mResultFrame;
                     theFrameOffset = pos.mContentOffset;
@@ -725,33 +747,33 @@ nsCaret::GetCaretFrameForNodeOffset(nsFrameSelection*    aFrameSelection,
             }
           }
           else if (aBidiLevel > levelBefore && aBidiLevel < levelAfter  // rule c7/8
-                   && !((levelBefore ^ levelAfter) & 1)                 // before and after have the same parity
-                   && ((aBidiLevel ^ levelAfter) & 1))                  // caret has different parity
+                   && IS_SAME_DIRECTION(levelBefore, levelAfter)        // before and after have the same parity
+                   && !IS_SAME_DIRECTION(aBidiLevel, levelAfter))       // caret has different parity
           {
             if (NS_SUCCEEDED(aFrameSelection->GetFrameFromLevel(frameAfter, eDirNext, aBidiLevel, &theFrame)))
             {
               theFrame->GetOffsets(start, end);
               levelAfter = NS_GET_EMBEDDING_LEVEL(theFrame);
-              if (aBidiLevel & 1) // c8: caret to the right of the rightmost character
-                theFrameOffset = (levelAfter & 1) ? start : end;
+              if (IS_LEVEL_RTL(aBidiLevel)) // c8: caret to the right of the rightmost character
+                theFrameOffset = IS_LEVEL_RTL(levelAfter) ? start : end;
               else               // c7: caret to the left of the leftmost character
-                theFrameOffset = (levelAfter & 1) ? end : start;
+                theFrameOffset = IS_LEVEL_RTL(levelAfter) ? end : start;
             }
           }
           else if (aBidiLevel < levelBefore && aBidiLevel > levelAfter  // rule c11/12
-                   && !((levelBefore ^ levelAfter) & 1)                 // before and after have the same parity
-                   && ((aBidiLevel ^ levelAfter) & 1))                  // caret has different parity
+                   && IS_SAME_DIRECTION(levelBefore, levelAfter)        // before and after have the same parity
+                   && !IS_SAME_DIRECTION(aBidiLevel, levelAfter))       // caret has different parity
           {
             if (NS_SUCCEEDED(aFrameSelection->GetFrameFromLevel(frameBefore, eDirPrevious, aBidiLevel, &theFrame)))
             {
               theFrame->GetOffsets(start, end);
               levelBefore = NS_GET_EMBEDDING_LEVEL(theFrame);
-              if (aBidiLevel & 1) // c12: caret to the left of the leftmost character
-                theFrameOffset = (levelBefore & 1) ? end : start;
+              if (IS_LEVEL_RTL(aBidiLevel)) // c12: caret to the left of the leftmost character
+                theFrameOffset = IS_LEVEL_RTL(levelBefore) ? end : start;
               else               // c11: caret to the right of the rightmost character
-                theFrameOffset = (levelBefore & 1) ? start : end;
+                theFrameOffset = IS_LEVEL_RTL(levelBefore) ? start : end;
             }
-          }   
+          }
         }
       }
     }

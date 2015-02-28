@@ -46,7 +46,7 @@ function getScriptForSetFocus() {
 
 function runTest() {
   iframe = document.createElement('iframe');
-  SpecialPowers.wrap(iframe).mozbrowser = true;
+  iframe.setAttribute('mozbrowser', 'true');
   document.body.appendChild(iframe);
 
   gTextarea = document.createElement('textarea');
@@ -190,6 +190,7 @@ function testPaste1(e) {
   // Then paste it to child side.
   copyToClipboard(pasteData);
 
+  doCommand('selectall');
   doCommand("paste");
   SimpleTest.executeSoon(function() { testPaste2(e); });
 }

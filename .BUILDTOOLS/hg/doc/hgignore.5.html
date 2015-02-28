@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.11: http://docutils.sourceforge.net/" />
+<title>hgignore</title>
+<meta name="author" content="Vadim Gelfer &lt;vadim.gelfer&#64;gmail.com&gt;" />
+<meta name="organization" content="Mercurial" />
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+<body>
+<div class="document" id="hgignore">
+<span id="hgignore-5"></span>
+<h1 class="title">hgignore</h1>
+<h2 class="subtitle" id="syntax-for-mercurial-ignore-files">syntax for Mercurial ignore files</h2>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Author:</th>
+<td>Vadim Gelfer &lt;<a class="reference external" href="mailto:vadim.gelfer&#64;gmail.com">vadim.gelfer&#64;gmail.com</a>&gt;</td></tr>
+<tr><th class="docinfo-name">Organization:</th>
+<td>Mercurial</td></tr>
+<tr class="field"><th class="docinfo-name">Manual section:</th><td class="field-body">5</td>
+</tr>
+<tr class="field"><th class="docinfo-name">Manual group:</th><td class="field-body">Mercurial Manual</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="synopsis">
+<span id="hgignore-5-gendoc"></span><h1>Synopsis</h1>
+<p>The Mercurial system uses a file called <tt class="docutils literal">.hgignore</tt> in the root
+directory of a repository to control its behavior when it searches
+for files that it is not currently tracking.</p>
+</div>
+<div class="section" id="description">
+<h1>Description</h1>
+<p>The working directory of a Mercurial repository will often contain
+files that should not be tracked by Mercurial. These include backup
+files created by editors and build products created by compilers.
+These files can be ignored by listing them in a <tt class="docutils literal">.hgignore</tt> file in
+the root of the working directory. The <tt class="docutils literal">.hgignore</tt> file must be
+created manually. It is typically put under version control, so that
+the settings will propagate to other repositories with push and pull.</p>
+<p>An untracked file is ignored if its path relative to the repository
+root directory, or any prefix path of that path, is matched against
+any pattern in <tt class="docutils literal">.hgignore</tt>.</p>
+<p>For example, say we have an untracked file, <tt class="docutils literal">file.c</tt>, at
+<tt class="docutils literal">a/b/file.c</tt> inside our repository. Mercurial will ignore <tt class="docutils literal">file.c</tt>
+if any pattern in <tt class="docutils literal">.hgignore</tt> matches <tt class="docutils literal">a/b/file.c</tt>, <tt class="docutils literal">a/b</tt> or <tt class="docutils literal">a</tt>.</p>
+<p>In addition, a Mercurial configuration file can reference a set of
+per-user or global ignore files. See the <tt class="docutils literal">ignore</tt> configuration
+key on the <tt class="docutils literal">[ui]</tt> section of <a class="reference external" href="hg.1.html#config"><tt class="docutils literal">hg help config</tt></a> for details of how to
+configure these files.</p>
+<p>To control Mercurial's handling of files that it manages, many
+commands support the <tt class="docutils literal"><span class="pre">-I</span></tt> and <tt class="docutils literal"><span class="pre">-X</span></tt> options; see
+<a class="reference external" href="hg.1.html#&lt;command&gt;"><tt class="docutils literal">hg help &lt;command&gt;</tt></a> and <a class="reference external" href="hg.1.html#patterns"><tt class="docutils literal">hg help patterns</tt></a> for details.</p>
+<p>Files that are already tracked are not affected by .hgignore, even
+if they appear in .hgignore. An untracked file X can be explicitly
+added with <a class="reference external" href="hg.1.html#add"><tt class="docutils literal">hg add X</tt></a>, even if X would be excluded by a pattern
+in .hgignore.</p>
+</div>
+<div class="section" id="syntax">
+<h1>Syntax</h1>
+<p>An ignore file is a plain text file consisting of a list of patterns,
+with one pattern per line. Empty lines are skipped. The <tt class="docutils literal">#</tt>
+character is treated as a comment character, and the <tt class="docutils literal">\</tt> character
+is treated as an escape character.</p>
+<p>Mercurial supports several pattern syntaxes. The default syntax used
+is Python/Perl-style regular expressions.</p>
+<p>To change the syntax used, use a line of the following form:</p>
+<pre class="literal-block">
+syntax: NAME
+</pre>
+<p>where <tt class="docutils literal">NAME</tt> is one of the following:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal">regexp</tt></dt>
+<dd>Regular expression, Python/Perl syntax.</dd>
+<dt><tt class="docutils literal">glob</tt></dt>
+<dd>Shell-style glob.</dd>
+</dl>
+<p>The chosen syntax stays in effect when parsing all patterns that
+follow, until another syntax is selected.</p>
+<p>Neither glob nor regexp patterns are rooted. A glob-syntax pattern of
+the form <tt class="docutils literal">*.c</tt> will match a file ending in <tt class="docutils literal">.c</tt> in any directory,
+and a regexp pattern of the form <tt class="docutils literal">\.c$</tt> will do the same. To root a
+regexp pattern, start it with <tt class="docutils literal">^</tt>.</p>
+<div class="note">
+<p class="first admonition-title">Note</p>
+<p class="last">Patterns specified in other than <tt class="docutils literal">.hgignore</tt> are always rooted.
+Please see <a class="reference external" href="hg.1.html#patterns"><tt class="docutils literal">hg help patterns</tt></a> for details.</p>
+</div>
+</div>
+<div class="section" id="example">
+<h1>Example</h1>
+<p>Here is an example ignore file.</p>
+<pre class="literal-block">
+# use glob syntax.
+syntax: glob
+
+*.elc
+*.pyc
+*~
+
+# switch to regexp syntax.
+syntax: regexp
+^\.pc/
+</pre>
+</div>
+<div class="section" id="author">
+<h1>Author</h1>
+<p>Vadim Gelfer &lt;<a class="reference external" href="mailto:vadim.gelfer&#64;gmail.com">vadim.gelfer&#64;gmail.com</a>&gt;</p>
+<p>Mercurial was written by Matt Mackall &lt;<a class="reference external" href="mailto:mpm&#64;selenic.com">mpm&#64;selenic.com</a>&gt;.</p>
+</div>
+<div class="section" id="see-also">
+<h1>See Also</h1>
+<p><a class="reference external" href="hg.1.html"><strong>hg</strong>(1)</a>, <a class="reference external" href="hgrc.5.html"><strong>hgrc</strong>(5)</a></p>
+</div>
+<div class="section" id="copying">
+<h1>Copying</h1>
+<p>This manual page is copyright 2006 Vadim Gelfer.
+Mercurial is copyright 2005-2014 Matt Mackall.
+Free use of this software is granted under the terms of the GNU General
+Public License version 2 or any later version.</p>
+<span class="target" id="common"></span><!-- Common link and substitution definitions. -->
+</div>
+</div>
+</body>
+</html>

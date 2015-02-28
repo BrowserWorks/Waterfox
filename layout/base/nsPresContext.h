@@ -72,7 +72,6 @@ class RestyleManager;
 class CounterStyleManager;
 namespace dom {
 class FontFaceSet;
-class MediaQueryList;
 }
 namespace layers {
 class ContainerLayer;
@@ -138,6 +137,7 @@ class nsRootPresContext;
 class nsPresContext : public nsIObserver {
 public:
   typedef mozilla::FramePropertyTable FramePropertyTable;
+  typedef mozilla::ScrollbarStyles ScrollbarStyles;
 
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_NSIOBSERVER
@@ -287,12 +287,6 @@ public:
     if (mPendingMediaFeatureValuesChanged)
       MediaFeatureValuesChanged(nsRestyleHint(0));
   }
-
-  /**
-   * Support for window.matchMedia()
-   */
-  already_AddRefed<mozilla::dom::MediaQueryList>
-    MatchMedia(const nsAString& aMediaQueryList);
 
   /**
    * Access compatibility mode for this context.  This is the same as
@@ -679,14 +673,13 @@ public:
   nscoord RoundAppUnitsToNearestDevPixels(nscoord aAppUnits) const
   { return DevPixelsToAppUnits(AppUnitsToDevPixels(aAppUnits)); }
 
-  void SetViewportOverflowOverride(uint8_t aX, uint8_t aY)
+  void SetViewportScrollbarStylesOverride(const ScrollbarStyles& aScrollbarStyle)
   {
-    mViewportStyleOverflow.mHorizontal = aX;
-    mViewportStyleOverflow.mVertical = aY;
+    mViewportStyleScrollbar = aScrollbarStyle;
   }
-  mozilla::ScrollbarStyles GetViewportOverflowOverride()
+  ScrollbarStyles GetViewportScrollbarStylesOverride()
   {
-    return mViewportStyleOverflow;
+    return mViewportStyleScrollbar;
   }
 
   /**
@@ -705,10 +698,11 @@ public:
   }
 
   /**
-   * Getter and setter for OMTA time counters
+   * Getter and setters for OMTA time counters
    */
-  bool StyleUpdateForAllAnimationsIsUpToDate();
+  bool StyleUpdateForAllAnimationsIsUpToDate() const;
   void TickLastStyleUpdateForAllAnimations();
+  void ClearLastStyleUpdateForAllAnimations();
 
   /**
    *  Check if bidi enabled (set depending on the presence of RTL
@@ -804,12 +798,6 @@ public:
    * displays, so that the ratio of points to device pixels changes.
    */
   void UIResolutionChanged();
-
-  /**
-   * Recursively notify all remote leaf descendants of a given message manager
-   * that the resolution of the user interface has changed.
-   */
-  void NotifyUIResolutionChanged(nsIMessageBroadcaster* aManager);
 
   /*
    * Notify the pres context that a system color has changed
@@ -1238,8 +1226,6 @@ protected:
 
   mozilla::WeakPtr<nsDocShell>             mContainer;
 
-  PRCList               mDOMMediaQueryLists;
-
   // Base minimum font size, independent of the language-specific global preference. Defaults to 0
   int32_t               mBaseMinFontSize;
   float                 mTextZoom;      // Text zoom, defaults to 1.0
@@ -1283,7 +1269,7 @@ protected:
 
   nscolor               mBodyTextColor;
 
-  mozilla::ScrollbarStyles mViewportStyleOverflow;
+  ScrollbarStyles       mViewportStyleScrollbar;
   uint8_t               mFocusRingWidth;
 
   bool mExistThrottledUpdates;

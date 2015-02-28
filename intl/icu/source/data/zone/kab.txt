@@ -10,5 +10,5 @@
  * ICU <specials> source: <path>/common/main/kab.xml
  */
 kab{
-    Version{"2.1.6.69"}
+    Version{"2.1.10.42"}
 }

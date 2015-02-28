@@ -32,6 +32,7 @@ UNIFIED_SOURCES += [
     'nsCrypto.cpp',
     'nsDataSignatureVerifier.cpp',
     'nsKeygenHandler.cpp',
+    'nsKeygenHandlerContent.cpp',
     'nsKeygenThread.cpp',
     'nsKeyModule.cpp',
     'nsNSSASN1Object.cpp',
@@ -77,6 +78,10 @@ SOURCES += [
     'PSMContentListener.cpp',
 ]
 
+LOCAL_INCLUDES += [
+    '/security/manager/boot/src',
+]
+
 if not CONFIG['MOZ_NO_SMART_CARDS']:
     UNIFIED_SOURCES += [
         'nsSmartCardMonitor.cpp',
@@ -98,6 +103,7 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../../../certverifier',
     '../../../pkix/include',
+    '/dom/base',
 ]
 
 if CONFIG['NSS_DISABLE_DBM']:
@@ -111,3 +117,5 @@ for var in ('DLL_PREFIX', 'DLL_SUFFIX'):
 USE_LIBS += [
     'crmf',
 ]
+
+include('/ipc/chromium/chromium-config.mozbuild')

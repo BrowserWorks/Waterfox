@@ -160,14 +160,14 @@ add_test(function test_reading_optional_efs() {
 /**
  * Verify fetchSimRecords.
  */
-add_test(function test_fetch_sim_recodes() {
+add_test(function test_fetch_sim_records() {
   let worker = newWorker();
   let context = worker.ContextPool._contexts[0];
   let RIL = context.RIL;
   let iccRecord = context.ICCRecordHelper;
   let simRecord = context.SimRecordHelper;
 
-  function testFetchSimRecordes(expectCalled) {
+  function testFetchSimRecordes(expectCalled, expectCphsSuccess) {
     let ifCalled = [];
 
     RIL.getIMSI = function() {
@@ -176,6 +176,15 @@ add_test(function test_fetch_sim_recodes() {
 
     simRecord.readAD = function() {
       ifCalled.push("readAD");
+    };
+
+    simRecord.readCphsInfo = function(onsuccess, onerror) {
+      ifCalled.push("readCphsInfo");
+      if (expectCphsSuccess) {
+        onsuccess();
+      } else {
+        onerror();
+      }
     };
 
     simRecord.readSST = function() {
@@ -192,8 +201,9 @@ add_test(function test_fetch_sim_recodes() {
     }
   }
 
-  let expectCalled = ["getIMSI", "readAD", "readSST"];
-  testFetchSimRecordes(expectCalled);
+  let expectCalled = ["getIMSI", "readAD", "readCphsInfo", "readSST"];
+  testFetchSimRecordes(expectCalled, true);
+  testFetchSimRecordes(expectCalled, false);
 
   run_next_test();
 });
@@ -782,7 +792,7 @@ add_test(function test_reading_img_length_error() {
   let ril    = context.RIL;
   let buf    = context.Buf;
   let io     = context.ICCIOHelper;
- 
+
   let test_data = [
     {/* Offset length not enough, should be 4. */
      img: [0x01, 0x05, 0x05, 0x11, 0x4f, 0x00, 0x00, 0x04, 0x00, 0x06],
@@ -1290,5 +1300,351 @@ add_test(function test_reading_img_color() {
   for (let i = 0; i< test_data.length; i++) {
     do_test(test_data[i].img, test_data[i].iidf, test_data[i].expected);
   }
+  run_next_test();
+});
+
+/**
+ * Verify SimRecordHelper.readCphsInfo
+ */
+add_test(function test_read_cphs_info() {
+  let worker = newUint8Worker();
+  let context = worker.ContextPool._contexts[0];
+  let RIL = context.RIL;
+  let pduHelper = context.GsmPDUHelper;
+  let recordHelper = context.SimRecordHelper;
+  let buf  = context.Buf;
+  let io  = context.ICCIOHelper;
+  let cphsPDU = Uint8Array(3);
+
+  io.loadTransparentEF = function(options) {
+    if (cphsPDU) {
+      // Write data size
+      buf.writeInt32(cphsPDU.length * 2);
+
+      // Write CPHS INFO
+      for (let i = 0; i < cphsPDU.length; i++) {
+        pduHelper.writeHexOctet(cphsPDU[i]);
+      }
+
+      // Write string delimiter
+      buf.writeStringDelimiter(cphsPDU.length * 2);
+
+      if (options.callback) {
+        options.callback(options);
+      }
+    } else {
+      do_print("cphsPDU[] is not set.");
+    }
+  };
+
+  function do_test(cphsInfo, cphsSt) {
+    let onsuccess = false;
+    let onerror = false;
+
+    delete RIL.iccInfoPrivate.cphsSt;
+    cphsPDU.set(cphsInfo);
+    recordHelper.readCphsInfo(() => { onsuccess = true; },
+                              () => { onerror = true; });
+
+    do_check_true((cphsSt) ? onsuccess : onerror);
+    do_check_false((cphsSt) ? onerror : onsuccess);
+    if (cphsSt) {
+      do_check_eq(RIL.iccInfoPrivate.cphsSt.length, cphsSt.length);
+      for (let i = 0; i < cphsSt.length; i++) {
+        do_check_eq(RIL.iccInfoPrivate.cphsSt[i], cphsSt[i]);
+      }
+    } else {
+      do_check_eq(RIL.iccInfoPrivate.cphsSt, cphsSt);
+    }
+  }
+
+  do_test([
+    0x01, // Phase 1
+    0xFF, // All available & activated
+    0x03  // All available & activated
+  ],
+  [
+    0x3F, // All services except ONSF(bit 8-7) are available and activated.
+    0x00  // INFO_NUM shall not be available & activated.
+  ]);
+
+  do_test([
+    0x02, // Phase 2
+    0xFF, // All available & activated
+    0x03  // All available & activated
+  ],
+  [
+    0xF3, // All services except ONSF are available and activated.
+    0x03  // INFO_NUM shall not be available & activated.
+  ]);
+
+  do_test([
+    0x03, // Phase 3
+    0xFF, // All available & activated
+    0x03  // All available & activated
+  ],
+  undefined); // RIL.iccInfoPrivate.cphsSt shall be remained as 'undefined'.
+
+  run_next_test();
+});
+
+/**
+ * Verify SimRecordHelper.readMBDN/SimRecordHelper.readCphsMBN
+ */
+add_test(function test_read_voicemail_number() {
+  let worker = newUint8Worker();
+  let context = worker.ContextPool._contexts[0];
+  let RIL = context.RIL;
+  let pduHelper = context.GsmPDUHelper;
+  let recordHelper = context.SimRecordHelper;
+  let buf    = context.Buf;
+  let io     = context.ICCIOHelper;
+  let postedMessage;
+
+  worker.postMessage = function(message) {
+    postedMessage = message;
+  };
+
+  io.loadLinearFixedEF = function(options) {
+    let mbnData = [
+      0x56, 0x6F, 0x69, 0x63, 0x65, 0x6D, 0x61, 0x69,
+      0x6C, 0xFF, // Alpha Identifier: Voicemail
+      0x03,       // Length of BCD number: 3
+      0x80,       // TOA: Unknown
+      0x11, 0xF1, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, // Dialing Number: 111
+      0xFF,       // Capability/Configuration Record Identifier
+      0xFF        // Extension Record Identifier
+    ];
+
+    // Write data size
+    buf.writeInt32(mbnData.length * 2);
+
+    // Write MBN
+    for (let i = 0; i < mbnData.length; i++) {
+      pduHelper.writeHexOctet(mbnData[i]);
+    }
+
+    // Write string delimiter
+    buf.writeStringDelimiter(mbnData.length * 2);
+
+    options.recordSize = mbnData.length;
+    if (options.callback) {
+      options.callback(options);
+    }
+  };
+
+  function do_test(funcName, msgCount) {
+    postedMessage = null;
+    delete RIL.iccInfoPrivate.mbdn;
+    recordHelper[funcName]();
+
+    do_check_eq("iccmbdn", postedMessage.rilMessageType);
+    do_check_eq("Voicemail", postedMessage.alphaId);
+    do_check_eq("111", postedMessage.number);
+  }
+
+  do_test("readMBDN");
+  do_test("readCphsMBN");
+
+  run_next_test();
+});
+
+/**
+ * Verify the recovery from SimRecordHelper.readCphsMBN() if MBDN is not valid
+ * or is empty after SimRecordHelper.readMBDN().
+ */
+add_test(function test_read_mbdn_recovered_from_cphs_mbn() {
+  let worker = newUint8Worker();
+  let context = worker.ContextPool._contexts[0];
+  let RIL = context.RIL;
+  let pduHelper = context.GsmPDUHelper;
+  let recordHelper = context.SimRecordHelper;
+  let iccUtilsHelper = context.ICCUtilsHelper;
+  let buf    = context.Buf;
+  let io     = context.ICCIOHelper;
+
+  io.loadLinearFixedEF = function(options) {
+    let mbnData = [
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+      0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+    ];
+
+    // Write data size
+    buf.writeInt32(mbnData.length * 2);
+
+    // Write MBN
+    for (let i = 0; i < mbnData.length; i++) {
+      pduHelper.writeHexOctet(mbnData[i]);
+    }
+
+    // Write string delimiter
+    buf.writeStringDelimiter(mbnData.length * 2);
+
+    options.recordSize = mbnData.length;
+    if (options.callback) {
+      options.callback(options);
+    }
+  };
+
+  iccUtilsHelper.isCphsServiceAvailable = function(geckoService) {
+    return geckoService == "MBN";
+  };
+
+  let isRecovered = false;
+  recordHelper.readCphsMBN = function(onComplete) {
+    isRecovered = true;
+  };
+
+  recordHelper.readMBDN();
+
+  do_check_eq(RIL.iccInfoPrivate.mbdn, undefined);
+  do_check_true(isRecovered);
+
+  run_next_test();
+});
+
+/**
+ * Verify reading EF_PNN with different coding scheme.
+ */
+add_test(function test_pnn_with_different_coding_scheme() {
+  let worker = newUint8Worker();
+  let context = worker.ContextPool._contexts[0];
+  let record = context.SimRecordHelper;
+  let pduHelper = context.GsmPDUHelper;
+  let ril = context.RIL;
+  let buf = context.Buf;
+  let io = context.ICCIOHelper;
+
+  let test_data = [{
+    // Cell Broadcast data coding scheme - "Test1"
+    pnn: [0x43, 0x06, 0x85, 0xD4, 0xF2, 0x9C, 0x1E, 0x03],
+    expectedResult: "Test1"
+  },{
+    // UCS2 with 0x80 - "Test1"
+    pnn: [0x43, 0x0C, 0x90, 0x80, 0x00, 0x54, 0x00, 0x65, 0x00, 0x73, 0x00, 0x74, 0x00, 0x31],
+    expectedResult: "Test1"
+  },{
+    // UCS2 with 0x81 - "Mozilla\u694a"
+    pnn: [0x43, 0x0E, 0x90, 0x81, 0x08, 0xd2, 0x4d, 0x6f, 0x7a, 0x69, 0x6c, 0x6c, 0x61, 0xca, 0xff, 0xff],
+    expectedResult: "Mozilla\u694a"
+  },{
+    // UCS2 with 0x82 - "Mozilla\u694a"
+    pnn: [0x43, 0x0F, 0x90, 0x82, 0x08, 0x69, 0x00, 0x4d, 0x6f, 0x7a, 0x69, 0x6c, 0x6c, 0x61, 0xca, 0xff, 0xff],
+    expectedResult: "Mozilla\u694a"
+  }];
+
+  function do_test_pnn(pnn, expectedResult) {
+    io.loadLinearFixedEF = function fakeLoadLinearFixedEF(options) {
+      // Write data size.
+      buf.writeInt32(pnn.length * 2);
+
+      // Write data.
+      for (let i = 0; i < pnn.length; i++) {
+        pduHelper.writeHexOctet(pnn[i]);
+      }
+
+      // Write string delimiter.
+      buf.writeStringDelimiter(pnn.length * 2);
+
+      if (options.callback) {
+        options.callback(options);
+      }
+    };
+
+    record.readPNN();
+
+    do_check_eq(ril.iccInfoPrivate.PNN[0].fullName, expectedResult);
+    // Reset PNN info for next test
+    ril.iccInfoPrivate.PNN = null;
+  }
+
+  ril.appType = CARD_APPTYPE_SIM;
+  for (let i = 0; i < test_data.length; i++) {
+    do_test_pnn(test_data[i].pnn, test_data[i].expectedResult);
+  }
+
+  run_next_test();
+});
+
+/**
+ * Verify reading EF_PNN with different content.
+ */
+add_test(function test_pnn_with_different_content() {
+  let worker = newUint8Worker();
+  let context = worker.ContextPool._contexts[0];
+  let record = context.SimRecordHelper;
+  let pduHelper = context.GsmPDUHelper;
+  let ril = context.RIL;
+  let buf = context.Buf;
+  let io = context.ICCIOHelper;
+
+  let test_data = [{
+    // [0]: {"fullName":"Test1","shortName":"Test1"}
+    pnn: [0x43, 0x06, 0x85, 0xD4, 0xF2, 0x9C, 0x1E, 0x03,
+          0x45, 0x06, 0x85, 0xD4, 0xF2, 0x9C, 0x1E, 0x03],
+    expectedResult: {"fullName": "Test1","shortName": "Test1"}
+  },{
+    // [1]: {"fullName":"Test2"}
+    pnn: [0x43, 0x06, 0x85, 0xD4, 0xF2, 0x9C, 0x2E, 0x03],
+    expectedResult: {"fullName": "Test2"}
+  },{
+    // [2]: undefined
+    pnn: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+  },{
+    // [3]: {"fullName": "Test4"}
+    pnn: [0x43, 0x06, 0x85, 0xD4, 0xF2, 0x9C, 0x4E, 0x03],
+    expectedResult: {"fullName": "Test4"}
+  },{
+    // [4]: undefined
+    pnn: [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF],
+  }];
+
+  function do_test_pnn() {
+    ril.iccIO = function fakeIccIO(options) {
+      let index = options.p1 - 1;
+      let pnn = test_data[index].pnn;
+
+      // Write data size.
+      buf.writeInt32(pnn.length * 2);
+
+      // Write data.
+      for (let i = 0; i < pnn.length; i++) {
+        pduHelper.writeHexOctet(pnn[i]);
+      }
+
+      // Write string delimiter.
+      buf.writeStringDelimiter(pnn.length * 2);
+
+      if (options.callback) {
+        options.callback(options);
+      }
+    };
+
+    io.loadLinearFixedEF = function fakeLoadLinearFixedEF(options) {
+      options.p1 = 1;
+      options.totalRecords = test_data.length;
+
+      ril.iccIO(options);
+    };
+
+    record.readPNN();
+
+    do_check_eq(test_data.length, ril.iccInfoPrivate.PNN.length);
+    for (let i = 0; i < test_data.length; i++) {
+      if (test_data[i].expectedResult) {
+        do_check_eq(test_data[i].expectedResult.fullName,
+                    ril.iccInfoPrivate.PNN[i].fullName);
+        do_check_eq(test_data[i].expectedResult.shortName,
+                    ril.iccInfoPrivate.PNN[i].shortName);
+      } else {
+        do_check_eq(test_data[i].expectedResult, ril.iccInfoPrivate.PNN[i]);
+      }
+    }
+  }
+
+  ril.appType = CARD_APPTYPE_SIM;
+  do_test_pnn();
+
   run_next_test();
 });

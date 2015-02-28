@@ -26,6 +26,7 @@
 
 #if defined(HAVE_SYS_QUOTA_H) && defined(HAVE_LINUX_QUOTA_H)
 #define USE_LINUX_QUOTACTL
+#include <sys/mount.h>
 #include <sys/quota.h>
 #endif
 
@@ -1407,10 +1408,9 @@ nsLocalFile::GetDiskSpaceAvailable(int64_t* aDiskSpaceAvailable)
 #endif
       && dq.dqb_bhardlimit) {
     int64_t QuotaSpaceAvailable = 0;
-    if (dq.dqb_bhardlimit > dq.dqb_curspace) {
-      QuotaSpaceAvailable =
-        int64_t(fs_buf.F_BSIZE * (dq.dqb_bhardlimit - dq.dqb_curspace));
-    }
+    // dqb_bhardlimit is count of BLOCK_SIZE blocks, dqb_curspace is bytes
+    if ((BLOCK_SIZE * dq.dqb_bhardlimit) > dq.dqb_curspace)
+      QuotaSpaceAvailable = int64_t(BLOCK_SIZE * dq.dqb_bhardlimit - dq.dqb_curspace);
     if (QuotaSpaceAvailable < *aDiskSpaceAvailable) {
       *aDiskSpaceAvailable = QuotaSpaceAvailable;
     }
@@ -2339,7 +2339,7 @@ NS_IMETHODIMP
 nsLocalFile::InitWithCFURL(CFURLRef aCFURL)
 {
   UInt8 path[PATH_MAX];
-  if (::CFURLGetFileSystemRepresentation(aCFURL, false, path, PATH_MAX)) {
+  if (::CFURLGetFileSystemRepresentation(aCFURL, true, path, PATH_MAX)) {
     nsDependentCString nativePath((char*)path);
     return InitWithNativePath(nativePath);
   }

@@ -237,6 +237,38 @@ udat_format(    const    UDateFormat*    format,
     return res.extract(result, resultLength, *status);
 }
 
+U_CAPI int32_t U_EXPORT2
+udat_formatCalendar(const UDateFormat*  format,
+        UCalendar*      calendar,
+        UChar*          result,
+        int32_t         resultLength,
+        UFieldPosition* position,
+        UErrorCode*     status)
+{
+    if(U_FAILURE(*status)) return -1;
+
+    UnicodeString res;
+    if(!(result==NULL && resultLength==0)) {
+        // NULL destination for pure preflighting: empty dummy string
+        // otherwise, alias the destination buffer
+        res.setTo(result, 0, resultLength);
+    }
+
+    FieldPosition fp;
+
+    if(position != 0)
+        fp.setField(position->field);
+
+    ((DateFormat*)format)->format(*(Calendar*)calendar, res, fp);
+
+    if(position != 0) {
+        position->beginIndex = fp.getBeginIndex();
+        position->endIndex = fp.getEndIndex();
+    }
+
+    return res.extract(result, resultLength, *status);
+}
+
 U_CAPI UDate U_EXPORT2
 udat_parse(    const    UDateFormat*        format,
         const    UChar*          text,

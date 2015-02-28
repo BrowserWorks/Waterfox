@@ -29,7 +29,6 @@ XPIDL_SOURCES += [
     'nsICancelable.idl',
     'nsIChannel.idl',
     'nsIChannelEventSink.idl',
-    'nsIChannelPolicy.idl',
     'nsIChildChannel.idl',
     'nsIContentSniffer.idl',
     'nsICryptoFIPSInfo.idl',
@@ -44,6 +43,7 @@ XPIDL_SOURCES += [
     'nsIFileStreams.idl',
     'nsIFileURL.idl',
     'nsIForcePendingChannel.idl',
+    'nsIHttpPushListener.idl',
     'nsIIncrementalDownload.idl',
     'nsIInputStreamChannel.idl',
     'nsIInputStreamPump.idl',
@@ -57,6 +57,7 @@ XPIDL_SOURCES += [
     'nsINestedURI.idl',
     'nsINetAddr.idl',
     'nsINetUtil.idl',
+    'nsINetworkInterceptController.idl',
     'nsINetworkLinkService.idl',
     'nsINetworkPredictor.idl',
     'nsINetworkPredictorVerifier.idl',
@@ -137,12 +138,14 @@ EXPORTS += [
     'netCore.h',
     'nsASocketHandler.h',
     'nsAsyncRedirectVerifyHelper.h',
-    'nsChannelProperties.h',
-    'nsNetStrings.h',
     'nsNetUtil.h',
     'nsReadLine.h',
     'nsStreamListenerWrapper.h',
     'nsURIHashKey.h',
+]
+
+EXPORTS.mozilla.net += [
+    'ReferrerPolicy.h',
 ]
 
 if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':

@@ -57,7 +57,8 @@ uobjtest.o idnaref.o idnaconf.o nptrans.o punyref.o testidn.o testidna.o uts46te
 incaltst.o calcasts.o v32test.o uvectest.o textfile.o tokiter.o utxttest.o \
 windttst.o winnmtst.o winutil.o csdetest.o tzrulets.o tzoffloc.o tzfmttst.o ssearch.o dtifmtts.o \
 tufmtts.o itspoof.o simplethread.o bidiconf.o locnmtst.o dcfmtest.o alphaindextst.o listformattertest.o genderinfotest.o compactdecimalformattest.o regiontst.o \
-reldatefmttest.o simplepatternformattertest.o measfmttest.o scientificformathelpertest.o numfmtspectest.o unifiedcachetest.o quantityformattertest.o
+reldatefmttest.o simplepatternformattertest.o measfmttest.o numfmtspectest.o unifiedcachetest.o quantityformattertest.o \
+scientificnumberformattertest.o
 
 DEPS = $(OBJECTS:.o=.d)
 

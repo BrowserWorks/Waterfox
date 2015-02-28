@@ -12,7 +12,6 @@
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
 #include "nsIXPConnect.h"
-#include "nsIJSNativeInitializer.h"
 #include "nsIServiceManager.h"
 #include "nsIFile.h"
 #include "nsString.h"
@@ -110,8 +109,13 @@ static JSPrincipals *gJSPrincipals = nullptr;
 static nsAutoString *gWorkingDirectory = nullptr;
 
 static bool
-GetLocationProperty(JSContext *cx, HandleObject obj, HandleId id, MutableHandleValue vp)
+GetLocationProperty(JSContext *cx, unsigned argc, Value *vp)
 {
+    CallArgs args = CallArgsFromVp(argc, vp);
+    if (!args.thisv().isObject()) {
+        JS_ReportError(cx, "Unexpected this value for GetLocationProperty");
+        return false;
+    }
 #if !defined(XP_WIN) && !defined(XP_UNIX)
     //XXX: your platform should really implement this
     return false;
@@ -172,13 +176,13 @@ GetLocationProperty(JSContext *cx, HandleObject obj, HandleId id, MutableHandleV
             if (NS_SUCCEEDED(location->IsSymlink(&symlink)) &&
                 !symlink)
                 location->Normalize();
-            rv = xpc->WrapNative(cx, obj, location,
+            rv = xpc->WrapNative(cx, &args.thisv().toObject(), location,
                                  NS_GET_IID(nsIFile),
                                  getter_AddRefs(locationHolder));
 
             if (NS_SUCCEEDED(rv) &&
                 locationHolder->GetJSObject()) {
-                vp.set(OBJECT_TO_JSVAL(locationHolder->GetJSObject()));
+                args.rval().setObject(*locationHolder->GetJSObject());
             }
         }
     }
@@ -739,8 +743,7 @@ env_enumerate(JSContext *cx, HandleObject obj)
 }
 
 static bool
-env_resolve(JSContext *cx, HandleObject obj, HandleId id,
-            JS::MutableHandleObject objp)
+env_resolve(JSContext *cx, HandleObject obj, HandleId id, bool *resolvedp)
 {
     JSString *idstr;
 
@@ -762,16 +765,16 @@ env_resolve(JSContext *cx, HandleObject obj, HandleId id,
         if (!JS_DefinePropertyById(cx, obj, id, valstr, JSPROP_ENUMERATE)) {
             return false;
         }
-        objp.set(obj);
+        *resolvedp = true;
     }
     return true;
 }
 
 static const JSClass env_class = {
-    "environment", JSCLASS_HAS_PRIVATE | JSCLASS_NEW_RESOLVE,
+    "environment", JSCLASS_HAS_PRIVATE,
     JS_PropertyStub,  JS_DeletePropertyStub,
     JS_PropertyStub,  env_setProperty,
-    env_enumerate, (JSResolveOp) env_resolve,
+    env_enumerate, env_resolve,
     JS_ConvertStub,   nullptr
 };
 
@@ -1063,7 +1066,9 @@ ProcessArgs(JSContext *cx, JS::Handle<JSObject*> obj, char **argv, int argc, XPC
                 return usage();
             }
 
-            JS_EvaluateScript(cx, obj, argv[i], strlen(argv[i]), "-e", 1, &rval);
+            JS::CompileOptions opts(cx);
+            opts.setFileAndLine("-e", 1);
+            JS::Evaluate(cx, obj, opts, argv[i], strlen(argv[i]), &rval);
 
             isInteractive = false;
             break;
@@ -1277,14 +1282,14 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
         // bundle. Libraries will be loaded at a relative path to GreD, i.e.
         // ../MacOS.
         nsCOMPtr<nsIFile> tmpDir;
-        XRE_GetFileFromPath(argv[0], getter_AddRefs(tmpDir));
-        tmpDir->GetParent(getter_AddRefs(greDir));
-        greDir->SetNativeLeafName(NS_LITERAL_CSTRING("Resources"));
+        XRE_GetFileFromPath(argv[0], getter_AddRefs(greDir));
+        greDir->GetParent(getter_AddRefs(tmpDir));
+        tmpDir->Clone(getter_AddRefs(greDir));
+        tmpDir->SetNativeLeafName(NS_LITERAL_CSTRING("Resources"));
         bool dirExists = false;
-        greDir->Exists(&dirExists);
-        if (!dirExists) {
-            printf("Setting GreD failed.\n");
-            return 1;
+        tmpDir->Exists(&dirExists);
+        if (dirExists) {
+            greDir = tmpDir.forget();
         }
         dirprovider.SetGREDirs(greDir);
 #else
@@ -1498,8 +1503,10 @@ XRE_XPCShellMain(int argc, char **argv, char **envp)
             if (GetCurrentWorkingDirectory(workingDirectory))
                 gWorkingDirectory = &workingDirectory;
 
-            JS_DefineProperty(cx, glob, "__LOCATION__", JS::UndefinedHandleValue, 0,
-                              GetLocationProperty, nullptr);
+            JS_DefineProperty(cx, glob, "__LOCATION__", JS::UndefinedHandleValue,
+                              JSPROP_SHARED,
+                              GetLocationProperty,
+                              nullptr);
 
             // We are almost certainly going to run script here, so we need an
             // AutoEntryScript. This is Gecko-specific and not in any spec.
@@ -1553,7 +1560,11 @@ XPCShellDirProvider::SetGREDirs(nsIFile* greDir)
     mGREDir = greDir;
     mGREDir->Clone(getter_AddRefs(mGREBinDir));
 #ifdef XP_MACOSX
-    mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
+    nsAutoCString leafName;
+    mGREDir->GetNativeLeafName(leafName);
+    if (leafName.Equals("Resources")) {
+        mGREBinDir->SetNativeLeafName(NS_LITERAL_CSTRING("MacOS"));
+    }
 #endif
 }
 

@@ -10,6 +10,7 @@
 #include "nsIAudioManager.h"
 #include "AudioManager.h"
 #include "nsDOMClassInfo.h"
+#include "mozilla/LazyIdleThread.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/dom/FMRadioChild.h"
 #include "mozilla/dom/ScriptSettings.h"
@@ -18,6 +19,8 @@
 #include "nsJSUtils.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/SettingChangeNotificationBinding.h"
+
+#define TUNE_THREAD_TIMEOUT_MS  5000
 
 #define BAND_87500_108000_kHz 1
 #define BAND_76000_108000_kHz 2
@@ -161,9 +164,10 @@ public:
 
     FMRadioService* fmRadioService = FMRadioService::Singleton();
     if (!fmRadioService->mTuneThread) {
-      // SeekRunnable and SetFrequencyRunnable run on this thread.
-      // These call ioctls that can stall the main thread, so we run them here.
-      NS_NewNamedThread("FM Tuning", getter_AddRefs(fmRadioService->mTuneThread));
+      // SeekRunnable and SetFrequencyRunnable run on this thread. These
+      // call ioctls that can stall the main thread, so we run them here.
+      fmRadioService->mTuneThread = new LazyIdleThread(
+        TUNE_THREAD_TIMEOUT_MS, NS_LITERAL_CSTRING("FM Tuning"));
     }
 
     return NS_OK;
@@ -774,8 +778,9 @@ void
 FMRadioService::SetRDSGroupMask(uint32_t aRDSGroupMask)
 {
   mRDSGroupMask = aRDSGroupMask;
-  if (IsFMRadioOn()) {
-    hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS);
+  if (IsFMRadioOn() && mRDSEnabled) {
+    bool enabled = hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS);
+    MOZ_ASSERT(enabled);
   }
 }
 
@@ -785,10 +790,16 @@ FMRadioService::EnableRDS(FMRadioReplyRunnable* aReplyRunnable)
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
   MOZ_ASSERT(aReplyRunnable);
 
-  mRDSEnabled = true;
   if (IsFMRadioOn()) {
-    hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS);
+    if (!hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS)) {
+      aReplyRunnable->SetReply(
+        ErrorResponse(NS_LITERAL_STRING("Could not enable RDS")));
+      NS_DispatchToMainThread(aReplyRunnable);
+      return;
+    }
   }
+
+  mRDSEnabled = true;
 
   aReplyRunnable->SetReply(SuccessResponse());
   NS_DispatchToMainThread(aReplyRunnable);
@@ -801,14 +812,17 @@ FMRadioService::DisableRDS(FMRadioReplyRunnable* aReplyRunnable)
   MOZ_ASSERT(NS_IsMainThread(), "Wrong thread!");
   MOZ_ASSERT(aReplyRunnable);
 
-  mRDSEnabled = false;
   if (IsFMRadioOn()) {
     hal::DisableRDS();
   }
 
   aReplyRunnable->SetReply(SuccessResponse());
   NS_DispatchToMainThread(aReplyRunnable);
-  NS_DispatchToMainThread(new NotifyRunnable(RDSEnabledChanged));
+
+  if (mRDSEnabled) {
+    mRDSEnabled = false;
+    NS_DispatchToMainThread(new NotifyRunnable(RDSEnabledChanged));
+  }
 }
 
 NS_IMETHODIMP
@@ -894,7 +908,10 @@ FMRadioService::Notify(const FMRadioOperationInformation& aInfo)
       NotifyFMRadioEvent(FrequencyChanged);
 
       if (mRDSEnabled) {
-        hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS);
+        mRDSEnabled = hal::EnableRDS(mRDSGroupMask | DOM_PARSED_RDS_GROUPS);
+        if (!mRDSEnabled) {
+          NotifyFMRadioEvent(RDSEnabledChanged);
+        }
       }
       break;
     case FM_RADIO_OPERATION_DISABLE:

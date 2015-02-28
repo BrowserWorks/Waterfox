@@ -29,9 +29,11 @@ no_sccache=
 #B2G options
 ac_add_options --enable-application=b2g
 ENABLE_MARIONETTE=1
-ac_add_options --disable-elf-hack
 export CXXFLAGS=-DMOZ_ENABLE_JS_DUMP
 
 GAIADIR=$topsrcdir/gaia
+
+# Include Firefox OS fonts.
+MOZTTDIR=$topsrcdir/moztt
 
 . "$topsrcdir/b2g/config/mozconfigs/common.override"

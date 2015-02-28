@@ -1,0 +1,52 @@
+;; ede/templates/autoconf.srt --- Templates for autoconf used by EDE.
+;;
+;; Copyright (C) 2010 Eric M. Ludlam
+;;
+;; Author: Eric M. Ludlam <eric@siege-engine.com>
+;;
+;; This program is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License as
+;; published by the Free Software Foundation; either version 2, or (at
+;; your option) any later version.
+
+;; This program is distributed in the hope that it will be useful, but
+;; WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+;; General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set mode "autoconf-mode"
+set escape_start "{{"
+set escape_end "}}"
+set comment_start "#"
+set comment_prefix "#"
+set application "ede"
+
+context file
+
+template ede-empty
+"Start a new EDE generated configure.in/ac file."
+----
+{{comment_prefix}} Automatically Generated/Maintained {{FILE}} by EDE.
+{{comment_prefix}}
+{{comment_prefix}} YOU MAY MODIFY THIS FILE
+{{comment_prefix}} Hand made changes in some sections will be preserved
+{{comment_prefix}} by EDE when this file is updated.
+{{comment_prefix}}
+{{comment_prefix}} EDE is the Emacs Development Environment.
+{{comment_prefix}} http://cedet.sourceforge.net/ede.shtml
+{{comment_prefix}}
+{{comment_prefix}} Process this file with autoconf to produce a configure script
+
+AC_INIT({{TEST_FILE}})
+AM_INIT_AUTOMAKE([{{PROGRAM}}], 0)
+AM_CONFIG_HEADER(config.h)
+
+{{comment_prefix}} End the configure script.
+AC_OUTPUT(Makefile, [date > stamp-h] )
+----
+
+
+;; end

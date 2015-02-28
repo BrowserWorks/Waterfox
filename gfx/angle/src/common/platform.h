@@ -49,7 +49,7 @@
 
 #   if defined(ANGLE_ENABLE_D3D9) || defined(ANGLE_ENABLE_PERF)
 #       include <d3d9.h>
-#       include <d3dcompiler.h>
+#       include "C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)\Include\D3Dcompiler.h"
 #   endif
 
 #   if defined(ANGLE_ENABLE_D3D11)

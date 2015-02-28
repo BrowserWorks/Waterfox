@@ -5,17 +5,18 @@
 
 #include "WebGLContext.h"
 
-#include <stdarg.h>
-
 #include "GLContext.h"
 #include "jsapi.h"
+#include "mozilla/dom/ScriptSettings.h"
 #include "mozilla/Preferences.h"
 #include "nsIDOMDataContainerEvent.h"
 #include "nsIDOMEvent.h"
 #include "nsIScriptSecurityManager.h"
 #include "nsIVariant.h"
+#include "nsPrintfCString.h"
 #include "nsServiceManagerUtils.h"
 #include "prprf.h"
+#include <stdarg.h>
 #include "WebGLBuffer.h"
 #include "WebGLExtensions.h"
 #include "WebGLFramebuffer.h"
@@ -23,8 +24,6 @@
 #include "WebGLTexture.h"
 #include "WebGLVertexArray.h"
 #include "WebGLContextUtils.h"
-
-#include "mozilla/dom/ScriptSettings.h"
 
 namespace mozilla {
 
@@ -60,7 +59,8 @@ TexImageTargetToTexTarget(TexImageTarget texImageTarget)
 {
     switch (texImageTarget.get()) {
     case LOCAL_GL_TEXTURE_2D:
-        return LOCAL_GL_TEXTURE_2D;
+    case LOCAL_GL_TEXTURE_3D:
+        return texImageTarget.get();
     case LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_X:
     case LOCAL_GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
     case LOCAL_GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
@@ -69,7 +69,7 @@ TexImageTargetToTexTarget(TexImageTarget texImageTarget)
     case LOCAL_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
         return LOCAL_GL_TEXTURE_CUBE_MAP;
     default:
-        MOZ_ASSERT(false, "Bad texture conversion");
+        MOZ_ASSERT(false, "Bad texture target");
         // Should be caught by the constructor for TexTarget
         return LOCAL_GL_NONE;
     }
@@ -81,33 +81,33 @@ GLComponents::GLComponents(TexInternalFormat internalformat)
     mComponents = 0;
 
     switch (unsizedformat.get()) {
-        case LOCAL_GL_RGBA:
-        case LOCAL_GL_RGBA4:
-        case LOCAL_GL_RGBA8:
-        case LOCAL_GL_RGB5_A1:
-        // Luminance + Alpha can be converted
-        // to and from RGBA
-        case LOCAL_GL_LUMINANCE_ALPHA:
-            mComponents |= Components::Alpha;
-        // Drops through
-        case LOCAL_GL_RGB:
-        case LOCAL_GL_RGB565:
-        // Luminance can be converted to and from RGB
-        case LOCAL_GL_LUMINANCE:
-            mComponents |= Components::Red | Components::Green | Components::Blue;
-            break;
-        case LOCAL_GL_ALPHA:
-            mComponents |= Components::Alpha;
-            break;
-        case LOCAL_GL_DEPTH_COMPONENT:
-            mComponents |= Components::Depth;
-            break;
-        case LOCAL_GL_DEPTH_STENCIL:
-            mComponents |= Components::Stencil;
-            break;
-        default:
-            MOZ_ASSERT(false, "Unhandled case - GLComponents");
-            break;
+    case LOCAL_GL_RGBA:
+    case LOCAL_GL_RGBA4:
+    case LOCAL_GL_RGBA8:
+    case LOCAL_GL_RGB5_A1:
+    // Luminance + Alpha can be converted
+    // to and from RGBA
+    case LOCAL_GL_LUMINANCE_ALPHA:
+        mComponents |= Components::Alpha;
+    // Drops through
+    case LOCAL_GL_RGB:
+    case LOCAL_GL_RGB565:
+    // Luminance can be converted to and from RGB
+    case LOCAL_GL_LUMINANCE:
+        mComponents |= Components::Red | Components::Green | Components::Blue;
+        break;
+    case LOCAL_GL_ALPHA:
+        mComponents |= Components::Alpha;
+        break;
+    case LOCAL_GL_DEPTH_COMPONENT:
+        mComponents |= Components::Depth;
+        break;
+    case LOCAL_GL_DEPTH_STENCIL:
+        mComponents |= Components::Stencil;
+        break;
+    default:
+        MOZ_ASSERT(false, "Unhandled case - GLComponents");
+        break;
     }
 }
 
@@ -171,8 +171,8 @@ EffectiveInternalFormatFromUnsizedInternalFormatAndType(TexInternalFormat intern
 
 void
 UnsizedInternalFormatAndTypeFromEffectiveInternalFormat(TexInternalFormat effectiveinternalformat,
-                                                        TexInternalFormat* out_internalformat,
-                                                        TexType* out_type)
+                                                        TexInternalFormat* const out_internalformat,
+                                                        TexType* const out_type)
 {
     MOZ_ASSERT(TypeFromInternalFormat(effectiveinternalformat) != LOCAL_GL_NONE);
 
@@ -205,13 +205,13 @@ EffectiveInternalFormatFromInternalFormatAndType(TexInternalFormat internalforma
                                                  TexType type)
 {
     TexType typeOfInternalFormat = TypeFromInternalFormat(internalformat);
-    if (typeOfInternalFormat == LOCAL_GL_NONE) {
+    if (typeOfInternalFormat == LOCAL_GL_NONE)
         return EffectiveInternalFormatFromUnsizedInternalFormatAndType(internalformat, type);
-    } else if (typeOfInternalFormat == type) {
+
+    if (typeOfInternalFormat == type)
         return internalformat;
-    } else {
-        return LOCAL_GL_NONE;
-    }
+
+    return LOCAL_GL_NONE;
 }
 
 /**
@@ -221,9 +221,9 @@ EffectiveInternalFormatFromInternalFormatAndType(TexInternalFormat internalforma
 void
 DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
                                          TexInternalFormat effectiveinternalformat,
-                                         GLenum* out_driverInternalFormat,
-                                         GLenum* out_driverFormat,
-                                         GLenum* out_driverType)
+                                         GLenum* const out_driverInternalFormat,
+                                         GLenum* const out_driverFormat,
+                                         GLenum* const out_driverType)
 {
     MOZ_ASSERT(out_driverInternalFormat);
     MOZ_ASSERT(out_driverFormat);
@@ -233,14 +233,14 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
     TexType type = LOCAL_GL_NONE;
 
     UnsizedInternalFormatAndTypeFromEffectiveInternalFormat(effectiveinternalformat,
-                                                            &unsizedinternalformat, &type);
+                                                            &unsizedinternalformat,
+                                                            &type);
 
     // driverType: almost always the generic type that we just got, except on ES
     // we must replace HALF_FLOAT by HALF_FLOAT_OES
     GLenum driverType = type.get();
-    if (gl->IsGLES() && type == LOCAL_GL_HALF_FLOAT) {
+    if (gl->IsGLES() && type == LOCAL_GL_HALF_FLOAT)
         driverType = LOCAL_GL_HALF_FLOAT_OES;
-    }
 
     // driverFormat: always just the unsized internalformat that we just got
     GLenum driverFormat = unsizedinternalformat.get();
@@ -251,11 +251,10 @@ DriverFormatsFromEffectiveInternalFormat(gl::GLContext* gl,
     GLenum driverInternalFormat = driverFormat;
     if (!gl->IsGLES()) {
         // Cases where desktop OpenGL requires a tweak to 'format'
-        if (driverFormat == LOCAL_GL_SRGB) {
+        if (driverFormat == LOCAL_GL_SRGB)
             driverFormat = LOCAL_GL_RGB;
-        } else if (driverFormat == LOCAL_GL_SRGB_ALPHA) {
+        else if (driverFormat == LOCAL_GL_SRGB_ALPHA)
             driverFormat = LOCAL_GL_RGBA;
-        }
 
         // WebGL2's new formats are not legal values for internalformat,
         // as using unsized internalformat is deprecated.
@@ -403,7 +402,7 @@ GetBitsPerTexel(TexInternalFormat effectiveinternalformat)
 }
 
 void
-WebGLContext::GenerateWarning(const char *fmt, ...)
+WebGLContext::GenerateWarning(const char* fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -414,7 +413,7 @@ WebGLContext::GenerateWarning(const char *fmt, ...)
 }
 
 void
-WebGLContext::GenerateWarning(const char *fmt, va_list ap)
+WebGLContext::GenerateWarning(const char* fmt, va_list ap)
 {
     if (!ShouldGenerateWarnings())
         return;
@@ -430,26 +429,24 @@ WebGLContext::GenerateWarning(const char *fmt, va_list ap)
     JS_ReportWarning(cx, "WebGL: %s", buf);
     if (!ShouldGenerateWarnings()) {
         JS_ReportWarning(cx,
-            "WebGL: No further warnings will be reported for this WebGL context "
-            "(already reported %d warnings)", mAlreadyGeneratedWarnings);
+                         "WebGL: No further warnings will be reported for this"
+                         " WebGL context. (already reported %d warnings)",
+                         mAlreadyGeneratedWarnings);
     }
 }
 
 bool
 WebGLContext::ShouldGenerateWarnings() const
 {
-    if (mMaxWarnings == -1) {
+    if (mMaxWarnings == -1)
         return true;
-    }
 
     return mAlreadyGeneratedWarnings < mMaxWarnings;
 }
 
 CheckedUint32
-WebGLContext::GetImageSize(GLsizei height,
-                           GLsizei width,
-                           uint32_t pixelSize,
-                           uint32_t packOrUnpackAlignment)
+WebGLContext::GetImageSize(GLsizei height, GLsizei width, GLsizei depth,
+                           uint32_t pixelSize, uint32_t packOrUnpackAlignment)
 {
     CheckedUint32 checked_plainRowSize = CheckedUint32(width) * pixelSize;
 
@@ -457,10 +454,15 @@ WebGLContext::GetImageSize(GLsizei height,
     CheckedUint32 checked_alignedRowSize = RoundedToNextMultipleOf(checked_plainRowSize, packOrUnpackAlignment);
 
     // if height is 0, we don't need any memory to store this; without this check, we'll get an overflow
-    CheckedUint32 checked_neededByteLength
-        = height <= 0 ? 0 : (height-1) * checked_alignedRowSize + checked_plainRowSize;
+    CheckedUint32 checked_2dImageSize = 0;
+    if (height >= 1) {
+        checked_2dImageSize = (height-1) * checked_alignedRowSize +
+                              checked_plainRowSize;
+    }
 
-    return checked_neededByteLength;
+    // FIXME - we should honor UNPACK_IMAGE_HEIGHT
+    CheckedUint32 checked_imageSize = checked_2dImageSize * depth;
+    return checked_imageSize;
 }
 
 void
@@ -477,7 +479,7 @@ WebGLContext::SynthesizeGLError(GLenum err)
 }
 
 void
-WebGLContext::SynthesizeGLError(GLenum err, const char *fmt, ...)
+WebGLContext::SynthesizeGLError(GLenum err, const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -488,7 +490,7 @@ WebGLContext::SynthesizeGLError(GLenum err, const char *fmt, ...)
 }
 
 void
-WebGLContext::ErrorInvalidEnum(const char *fmt, ...)
+WebGLContext::ErrorInvalidEnum(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -499,13 +501,16 @@ WebGLContext::ErrorInvalidEnum(const char *fmt, ...)
 }
 
 void
-WebGLContext::ErrorInvalidEnumInfo(const char *info, GLenum enumvalue)
+WebGLContext::ErrorInvalidEnumInfo(const char* info, GLenum enumvalue)
 {
-    return ErrorInvalidEnum("%s: invalid enum value 0x%x", info, enumvalue);
+    nsCString name;
+    EnumName(enumvalue, &name);
+
+    return ErrorInvalidEnum("%s: invalid enum value %s", info, name.get());
 }
 
 void
-WebGLContext::ErrorInvalidOperation(const char *fmt, ...)
+WebGLContext::ErrorInvalidOperation(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -516,7 +521,7 @@ WebGLContext::ErrorInvalidOperation(const char *fmt, ...)
 }
 
 void
-WebGLContext::ErrorInvalidValue(const char *fmt, ...)
+WebGLContext::ErrorInvalidValue(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -527,7 +532,7 @@ WebGLContext::ErrorInvalidValue(const char *fmt, ...)
 }
 
 void
-WebGLContext::ErrorInvalidFramebufferOperation(const char *fmt, ...)
+WebGLContext::ErrorInvalidFramebufferOperation(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -538,7 +543,7 @@ WebGLContext::ErrorInvalidFramebufferOperation(const char *fmt, ...)
 }
 
 void
-WebGLContext::ErrorOutOfMemory(const char *fmt, ...)
+WebGLContext::ErrorOutOfMemory(const char* fmt, ...)
 {
     va_list va;
     va_start(va, fmt);
@@ -548,28 +553,29 @@ WebGLContext::ErrorOutOfMemory(const char *fmt, ...)
     return SynthesizeGLError(LOCAL_GL_OUT_OF_MEMORY);
 }
 
-const char *
+const char*
 WebGLContext::ErrorName(GLenum error)
 {
     switch(error) {
-        case LOCAL_GL_INVALID_ENUM:
-            return "INVALID_ENUM";
-        case LOCAL_GL_INVALID_OPERATION:
-            return "INVALID_OPERATION";
-        case LOCAL_GL_INVALID_VALUE:
-            return "INVALID_VALUE";
-        case LOCAL_GL_OUT_OF_MEMORY:
-            return "OUT_OF_MEMORY";
-        case LOCAL_GL_INVALID_FRAMEBUFFER_OPERATION:
-            return "INVALID_FRAMEBUFFER_OPERATION";
-        case LOCAL_GL_NO_ERROR:
-            return "NO_ERROR";
-        default:
-            MOZ_ASSERT(false);
-            return "[unknown WebGL error!]";
+    case LOCAL_GL_INVALID_ENUM:
+        return "INVALID_ENUM";
+    case LOCAL_GL_INVALID_OPERATION:
+        return "INVALID_OPERATION";
+    case LOCAL_GL_INVALID_VALUE:
+        return "INVALID_VALUE";
+    case LOCAL_GL_OUT_OF_MEMORY:
+        return "OUT_OF_MEMORY";
+    case LOCAL_GL_INVALID_FRAMEBUFFER_OPERATION:
+        return "INVALID_FRAMEBUFFER_OPERATION";
+    case LOCAL_GL_NO_ERROR:
+        return "NO_ERROR";
+    default:
+        MOZ_ASSERT(false);
+        return "[unknown WebGL error]";
     }
 }
 
+// This version is 'fallible' and will return NULL if glenum is not recognized.
 const char*
 WebGLContext::EnumName(GLenum glenum)
 {
@@ -621,41 +627,320 @@ WebGLContext::EnumName(GLenum glenum)
         XX(UNSIGNED_SHORT_4_4_4_4);
         XX(UNSIGNED_SHORT_5_5_5_1);
         XX(UNSIGNED_SHORT_5_6_5);
+        XX(READ_BUFFER);
+        XX(UNPACK_ROW_LENGTH);
+        XX(UNPACK_SKIP_ROWS);
+        XX(UNPACK_SKIP_PIXELS);
+        XX(PACK_ROW_LENGTH);
+        XX(PACK_SKIP_ROWS);
+        XX(PACK_SKIP_PIXELS);
+        XX(COLOR);
+        XX(DEPTH);
+        XX(STENCIL);
+        XX(RED);
+        XX(RGB8);
+        XX(RGBA8);
+        XX(RGB10_A2);
+        XX(TEXTURE_BINDING_3D);
+        XX(UNPACK_SKIP_IMAGES);
+        XX(UNPACK_IMAGE_HEIGHT);
+        XX(TEXTURE_WRAP_R);
+        XX(MAX_3D_TEXTURE_SIZE);
+        XX(UNSIGNED_INT_2_10_10_10_REV);
+        XX(MAX_ELEMENTS_VERTICES);
+        XX(MAX_ELEMENTS_INDICES);
+        XX(TEXTURE_MIN_LOD);
+        XX(TEXTURE_MAX_LOD);
+        XX(TEXTURE_BASE_LEVEL);
+        XX(TEXTURE_MAX_LEVEL);
+        XX(MIN);
+        XX(MAX);
+        XX(DEPTH_COMPONENT24);
+        XX(MAX_TEXTURE_LOD_BIAS);
+        XX(TEXTURE_COMPARE_MODE);
+        XX(TEXTURE_COMPARE_FUNC);
+        XX(CURRENT_QUERY);
+        XX(QUERY_RESULT);
+        XX(QUERY_RESULT_AVAILABLE);
+        XX(STREAM_READ);
+        XX(STREAM_COPY);
+        XX(STATIC_READ);
+        XX(STATIC_COPY);
+        XX(DYNAMIC_READ);
+        XX(DYNAMIC_COPY);
+        XX(MAX_DRAW_BUFFERS);
+        XX(DRAW_BUFFER0);
+        XX(DRAW_BUFFER1);
+        XX(DRAW_BUFFER2);
+        XX(DRAW_BUFFER3);
+        XX(DRAW_BUFFER4);
+        XX(DRAW_BUFFER5);
+        XX(DRAW_BUFFER6);
+        XX(DRAW_BUFFER7);
+        XX(DRAW_BUFFER8);
+        XX(DRAW_BUFFER9);
+        XX(DRAW_BUFFER10);
+        XX(DRAW_BUFFER11);
+        XX(DRAW_BUFFER12);
+        XX(DRAW_BUFFER13);
+        XX(DRAW_BUFFER14);
+        XX(DRAW_BUFFER15);
+        XX(MAX_FRAGMENT_UNIFORM_COMPONENTS);
+        XX(MAX_VERTEX_UNIFORM_COMPONENTS);
+        XX(SAMPLER_3D);
+        XX(SAMPLER_2D_SHADOW);
+        XX(FRAGMENT_SHADER_DERIVATIVE_HINT);
+        XX(PIXEL_PACK_BUFFER);
+        XX(PIXEL_UNPACK_BUFFER);
+        XX(PIXEL_PACK_BUFFER_BINDING);
+        XX(PIXEL_UNPACK_BUFFER_BINDING);
+        XX(FLOAT_MAT2x3);
+        XX(FLOAT_MAT2x4);
+        XX(FLOAT_MAT3x2);
+        XX(FLOAT_MAT3x4);
+        XX(FLOAT_MAT4x2);
+        XX(FLOAT_MAT4x3);
+        XX(SRGB8);
+        XX(SRGB8_ALPHA8);
+        XX(COMPARE_REF_TO_TEXTURE);
+        XX(VERTEX_ATTRIB_ARRAY_INTEGER);
+        XX(MAX_ARRAY_TEXTURE_LAYERS);
+        XX(MIN_PROGRAM_TEXEL_OFFSET);
+        XX(MAX_PROGRAM_TEXEL_OFFSET);
+        XX(MAX_VARYING_COMPONENTS);
+        XX(TEXTURE_2D_ARRAY);
+        XX(TEXTURE_BINDING_2D_ARRAY);
+        XX(R11F_G11F_B10F);
+        XX(UNSIGNED_INT_10F_11F_11F_REV);
+        XX(RGB9_E5);
+        XX(UNSIGNED_INT_5_9_9_9_REV);
+        XX(TRANSFORM_FEEDBACK_BUFFER_MODE);
+        XX(MAX_TRANSFORM_FEEDBACK_SEPARATE_COMPONENTS);
+        XX(TRANSFORM_FEEDBACK_VARYINGS);
+        XX(TRANSFORM_FEEDBACK_BUFFER_START);
+        XX(TRANSFORM_FEEDBACK_BUFFER_SIZE);
+        XX(TRANSFORM_FEEDBACK_PRIMITIVES_WRITTEN);
+        XX(RASTERIZER_DISCARD);
+        XX(MAX_TRANSFORM_FEEDBACK_INTERLEAVED_COMPONENTS);
+        XX(MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS);
+        XX(INTERLEAVED_ATTRIBS);
+        XX(SEPARATE_ATTRIBS);
+        XX(TRANSFORM_FEEDBACK_BUFFER);
+        XX(TRANSFORM_FEEDBACK_BUFFER_BINDING);
+        XX(RGBA32UI);
+        XX(RGB32UI);
+        XX(RGBA16UI);
+        XX(RGB16UI);
+        XX(RGBA8UI);
+        XX(RGB8UI);
+        XX(RGBA32I);
+        XX(RGB32I);
+        XX(RGBA16I);
+        XX(RGB16I);
+        XX(RGBA8I);
+        XX(RGB8I);
+        XX(RED_INTEGER);
+        XX(RGB_INTEGER);
+        XX(RGBA_INTEGER);
+        XX(SAMPLER_2D_ARRAY);
+        XX(SAMPLER_2D_ARRAY_SHADOW);
+        XX(SAMPLER_CUBE_SHADOW);
+        XX(UNSIGNED_INT_VEC2);
+        XX(UNSIGNED_INT_VEC3);
+        XX(UNSIGNED_INT_VEC4);
+        XX(INT_SAMPLER_2D);
+        XX(INT_SAMPLER_3D);
+        XX(INT_SAMPLER_CUBE);
+        XX(INT_SAMPLER_2D_ARRAY);
+        XX(UNSIGNED_INT_SAMPLER_2D);
+        XX(UNSIGNED_INT_SAMPLER_3D);
+        XX(UNSIGNED_INT_SAMPLER_CUBE);
+        XX(UNSIGNED_INT_SAMPLER_2D_ARRAY);
+        XX(DEPTH_COMPONENT32F);
+        XX(DEPTH32F_STENCIL8);
+        XX(FLOAT_32_UNSIGNED_INT_24_8_REV);
+        XX(FRAMEBUFFER_ATTACHMENT_COLOR_ENCODING);
+        XX(FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE);
+        XX(FRAMEBUFFER_ATTACHMENT_RED_SIZE);
+        XX(FRAMEBUFFER_ATTACHMENT_GREEN_SIZE);
+        XX(FRAMEBUFFER_ATTACHMENT_BLUE_SIZE);
+        XX(FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE);
+        XX(FRAMEBUFFER_ATTACHMENT_DEPTH_SIZE);
+        XX(FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE);
+        XX(FRAMEBUFFER_DEFAULT);
+        XX(DEPTH_STENCIL_ATTACHMENT);
+        XX(UNSIGNED_NORMALIZED);
+        XX(DRAW_FRAMEBUFFER_BINDING);
+        XX(READ_FRAMEBUFFER);
+        XX(DRAW_FRAMEBUFFER);
+        XX(READ_FRAMEBUFFER_BINDING);
+        XX(RENDERBUFFER_SAMPLES);
+        XX(FRAMEBUFFER_ATTACHMENT_TEXTURE_LAYER);
+        XX(MAX_COLOR_ATTACHMENTS);
+        XX(COLOR_ATTACHMENT1);
+        XX(COLOR_ATTACHMENT2);
+        XX(COLOR_ATTACHMENT3);
+        XX(COLOR_ATTACHMENT4);
+        XX(COLOR_ATTACHMENT5);
+        XX(COLOR_ATTACHMENT6);
+        XX(COLOR_ATTACHMENT7);
+        XX(COLOR_ATTACHMENT8);
+        XX(COLOR_ATTACHMENT9);
+        XX(COLOR_ATTACHMENT10);
+        XX(COLOR_ATTACHMENT11);
+        XX(COLOR_ATTACHMENT12);
+        XX(COLOR_ATTACHMENT13);
+        XX(COLOR_ATTACHMENT14);
+        XX(COLOR_ATTACHMENT15);
+        XX(FRAMEBUFFER_INCOMPLETE_MULTISAMPLE);
+        XX(MAX_SAMPLES);
+        XX(RG);
+        XX(RG_INTEGER);
+        XX(R8);
+        XX(RG8);
+        XX(R16F);
+        XX(R32F);
+        XX(RG16F);
+        XX(RG32F);
+        XX(R8I);
+        XX(R8UI);
+        XX(R16I);
+        XX(R16UI);
+        XX(R32I);
+        XX(R32UI);
+        XX(RG8I);
+        XX(RG8UI);
+        XX(RG16I);
+        XX(RG16UI);
+        XX(RG32I);
+        XX(RG32UI);
+        XX(VERTEX_ARRAY_BINDING);
+        XX(R8_SNORM);
+        XX(RG8_SNORM);
+        XX(RGB8_SNORM);
+        XX(RGBA8_SNORM);
+        XX(SIGNED_NORMALIZED);
+        XX(PRIMITIVE_RESTART_FIXED_INDEX);
+        XX(COPY_READ_BUFFER);
+        XX(COPY_WRITE_BUFFER);
+        XX(UNIFORM_BUFFER);
+        XX(UNIFORM_BUFFER_BINDING);
+        XX(UNIFORM_BUFFER_START);
+        XX(UNIFORM_BUFFER_SIZE);
+        XX(MAX_VERTEX_UNIFORM_BLOCKS);
+        XX(MAX_FRAGMENT_UNIFORM_BLOCKS);
+        XX(MAX_COMBINED_UNIFORM_BLOCKS);
+        XX(MAX_UNIFORM_BUFFER_BINDINGS);
+        XX(MAX_UNIFORM_BLOCK_SIZE);
+        XX(MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS);
+        XX(MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS);
+        XX(UNIFORM_BUFFER_OFFSET_ALIGNMENT);
+        XX(ACTIVE_UNIFORM_BLOCKS);
+        XX(UNIFORM_TYPE);
+        XX(UNIFORM_SIZE);
+        XX(UNIFORM_BLOCK_INDEX);
+        XX(UNIFORM_OFFSET);
+        XX(UNIFORM_ARRAY_STRIDE);
+        XX(UNIFORM_MATRIX_STRIDE);
+        XX(UNIFORM_IS_ROW_MAJOR);
+        XX(UNIFORM_BLOCK_BINDING);
+        XX(UNIFORM_BLOCK_DATA_SIZE);
+        XX(UNIFORM_BLOCK_ACTIVE_UNIFORMS);
+        XX(UNIFORM_BLOCK_ACTIVE_UNIFORM_INDICES);
+        XX(UNIFORM_BLOCK_REFERENCED_BY_VERTEX_SHADER);
+        XX(UNIFORM_BLOCK_REFERENCED_BY_FRAGMENT_SHADER);
+        XX(MAX_VERTEX_OUTPUT_COMPONENTS);
+        XX(MAX_FRAGMENT_INPUT_COMPONENTS);
+        XX(MAX_SERVER_WAIT_TIMEOUT);
+        XX(OBJECT_TYPE);
+        XX(SYNC_CONDITION);
+        XX(SYNC_STATUS);
+        XX(SYNC_FLAGS);
+        XX(SYNC_FENCE);
+        XX(SYNC_GPU_COMMANDS_COMPLETE);
+        XX(UNSIGNALED);
+        XX(SIGNALED);
+        XX(ALREADY_SIGNALED);
+        XX(TIMEOUT_EXPIRED);
+        XX(CONDITION_SATISFIED);
+        XX(WAIT_FAILED);
+        XX(VERTEX_ATTRIB_ARRAY_DIVISOR);
+        XX(ANY_SAMPLES_PASSED);
+        XX(ANY_SAMPLES_PASSED_CONSERVATIVE);
+        XX(SAMPLER_BINDING);
+        XX(RGB10_A2UI);
+        XX(TEXTURE_SWIZZLE_R);
+        XX(TEXTURE_SWIZZLE_G);
+        XX(TEXTURE_SWIZZLE_B);
+        XX(TEXTURE_SWIZZLE_A);
+        XX(GREEN);
+        XX(BLUE);
+        XX(INT_2_10_10_10_REV);
+        XX(TRANSFORM_FEEDBACK);
+        XX(TRANSFORM_FEEDBACK_PAUSED);
+        XX(TRANSFORM_FEEDBACK_ACTIVE);
+        XX(TRANSFORM_FEEDBACK_BINDING);
+        XX(COMPRESSED_R11_EAC);
+        XX(COMPRESSED_SIGNED_R11_EAC);
+        XX(COMPRESSED_RG11_EAC);
+        XX(COMPRESSED_SIGNED_RG11_EAC);
+        XX(COMPRESSED_RGB8_ETC2);
+        XX(COMPRESSED_SRGB8_ETC2);
+        XX(COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2);
+        XX(COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2);
+        XX(COMPRESSED_RGBA8_ETC2_EAC);
+        XX(COMPRESSED_SRGB8_ALPHA8_ETC2_EAC);
+        XX(TEXTURE_IMMUTABLE_FORMAT);
+        XX(MAX_ELEMENT_INDEX);
+        XX(NUM_SAMPLE_COUNTS);
+        XX(TEXTURE_IMMUTABLE_LEVELS);
 #undef XX
     }
 
-    return "[Unknown enum name]";
+    return nullptr;
+}
+
+void
+WebGLContext::EnumName(GLenum glenum, nsACString* out_name)
+{
+    const char* name = EnumName(glenum);
+    if (name) {
+        *out_name = nsDependentCString(name);
+    } else {
+        nsPrintfCString enumAsHex("<enum 0x%04x>", glenum);
+        *out_name = enumAsHex;
+    }
 }
 
 bool
 WebGLContext::IsCompressedTextureFormat(GLenum format)
 {
     switch (format) {
-        case LOCAL_GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
-        case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
-        case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
-        case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
-        case LOCAL_GL_ATC_RGB:
-        case LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA:
-        case LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA:
-        case LOCAL_GL_COMPRESSED_RGB_PVRTC_4BPPV1:
-        case LOCAL_GL_COMPRESSED_RGB_PVRTC_2BPPV1:
-        case LOCAL_GL_COMPRESSED_RGBA_PVRTC_4BPPV1:
-        case LOCAL_GL_COMPRESSED_RGBA_PVRTC_2BPPV1:
-        case LOCAL_GL_ETC1_RGB8_OES:
-        case LOCAL_GL_COMPRESSED_R11_EAC:
-        case LOCAL_GL_COMPRESSED_SIGNED_R11_EAC:
-        case LOCAL_GL_COMPRESSED_RG11_EAC:
-        case LOCAL_GL_COMPRESSED_SIGNED_RG11_EAC:
-        case LOCAL_GL_COMPRESSED_RGB8_ETC2:
-        case LOCAL_GL_COMPRESSED_SRGB8_ETC2:
-        case LOCAL_GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-        case LOCAL_GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
-        case LOCAL_GL_COMPRESSED_RGBA8_ETC2_EAC:
-        case LOCAL_GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
-            return true;
-        default:
-            return false;
+    case LOCAL_GL_COMPRESSED_RGB_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:
+    case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:
+    case LOCAL_GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:
+    case LOCAL_GL_ATC_RGB:
+    case LOCAL_GL_ATC_RGBA_EXPLICIT_ALPHA:
+    case LOCAL_GL_ATC_RGBA_INTERPOLATED_ALPHA:
+    case LOCAL_GL_COMPRESSED_RGB_PVRTC_4BPPV1:
+    case LOCAL_GL_COMPRESSED_RGB_PVRTC_2BPPV1:
+    case LOCAL_GL_COMPRESSED_RGBA_PVRTC_4BPPV1:
+    case LOCAL_GL_COMPRESSED_RGBA_PVRTC_2BPPV1:
+    case LOCAL_GL_ETC1_RGB8_OES:
+    case LOCAL_GL_COMPRESSED_R11_EAC:
+    case LOCAL_GL_COMPRESSED_SIGNED_R11_EAC:
+    case LOCAL_GL_COMPRESSED_RG11_EAC:
+    case LOCAL_GL_COMPRESSED_SIGNED_RG11_EAC:
+    case LOCAL_GL_COMPRESSED_RGB8_ETC2:
+    case LOCAL_GL_COMPRESSED_SRGB8_ETC2:
+    case LOCAL_GL_COMPRESSED_RGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+    case LOCAL_GL_COMPRESSED_SRGB8_PUNCHTHROUGH_ALPHA1_ETC2:
+    case LOCAL_GL_COMPRESSED_RGBA8_ETC2_EAC:
+    case LOCAL_GL_COMPRESSED_SRGB8_ALPHA8_ETC2_EAC:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -670,7 +955,7 @@ GLenum
 WebGLContext::GetAndFlushUnderlyingGLErrors()
 {
     // Get and clear GL error in ALL cases.
-    GLenum error = gl->GetAndClearError();
+    GLenum error = gl->fGetError();
 
     // Only store in mUnderlyingGLError if is hasn't already recorded an
     // error.
@@ -705,6 +990,23 @@ AssertUintParamCorrect(gl::GLContext* gl, GLenum pname, GLuint shadow)
       MOZ_ASSERT(false, "Bad cached value.");
     }
 }
+
+void
+AssertMaskedUintParamCorrect(gl::GLContext* gl, GLenum pname, GLuint mask,
+                             GLuint shadow)
+{
+    GLuint val = 0;
+    gl->GetUIntegerv(pname, &val);
+
+    const GLuint valMasked = val & mask;
+    const GLuint shadowMasked = shadow & mask;
+
+    if (valMasked != shadowMasked) {
+      printf_stderr("Failed 0x%04x shadow: Cached 0x%x/%u, should be 0x%x/%u.\n",
+                    pname, shadowMasked, shadowMasked, valMasked, valMasked);
+      MOZ_ASSERT(false, "Bad cached value.");
+    }
+}
 #else
 void
 AssertUintParamCorrect(gl::GLContext*, GLenum, GLuint)
@@ -736,11 +1038,11 @@ WebGLContext::AssertCachedBindings()
     GLenum activeTexture = mActiveTexture + LOCAL_GL_TEXTURE0;
     AssertUintParamCorrect(gl, LOCAL_GL_ACTIVE_TEXTURE, activeTexture);
 
-    WebGLTexture* curTex = activeBoundTextureForTarget(LOCAL_GL_TEXTURE_2D);
+    WebGLTexture* curTex = ActiveBoundTextureForTarget(LOCAL_GL_TEXTURE_2D);
     bound = curTex ? curTex->GLName() : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_TEXTURE_BINDING_2D, bound);
 
-    curTex = activeBoundTextureForTarget(LOCAL_GL_TEXTURE_CUBE_MAP);
+    curTex = ActiveBoundTextureForTarget(LOCAL_GL_TEXTURE_CUBE_MAP);
     bound = curTex ? curTex->GLName() : 0;
     AssertUintParamCorrect(gl, LOCAL_GL_TEXTURE_BINDING_CUBE_MAP, bound);
 
@@ -802,8 +1104,12 @@ WebGLContext::AssertCachedState()
 
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_CLEAR_VALUE, mStencilClearValue);
 
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_REF,      mStencilRefFront);
-    AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_REF, mStencilRefBack);
+    GLint stencilBits = 0;
+    gl->fGetIntegerv(LOCAL_GL_STENCIL_BITS, &stencilBits);
+    const GLuint stencilRefMask = (1 << stencilBits) - 1;
+
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_REF,      stencilRefMask, mStencilRefFront);
+    AssertMaskedUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_REF, stencilRefMask, mStencilRefBack);
 
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_VALUE_MASK,      mStencilValueMaskFront);
     AssertUintParamCorrect(gl, LOCAL_GL_STENCIL_BACK_VALUE_MASK, mStencilValueMaskBack);
@@ -824,6 +1130,35 @@ WebGLContext::AssertCachedState()
 
     MOZ_ASSERT(!GetAndFlushUnderlyingGLErrors());
 #endif
+}
+
+const char*
+InfoFrom(WebGLTexImageFunc func, WebGLTexDimensions dims)
+{
+    switch (dims) {
+    case WebGLTexDimensions::Tex2D:
+        switch (func) {
+        case WebGLTexImageFunc::TexImage:        return "texImage2D";
+        case WebGLTexImageFunc::TexSubImage:     return "texSubImage2D";
+        case WebGLTexImageFunc::CopyTexImage:    return "copyTexImage2D";
+        case WebGLTexImageFunc::CopyTexSubImage: return "copyTexSubImage2D";
+        case WebGLTexImageFunc::CompTexImage:    return "compressedTexImage2D";
+        case WebGLTexImageFunc::CompTexSubImage: return "compressedTexSubImage2D";
+        default:
+            MOZ_CRASH();
+        }
+    case WebGLTexDimensions::Tex3D:
+        switch (func) {
+        case WebGLTexImageFunc::TexImage:        return "texImage3D";
+        case WebGLTexImageFunc::TexSubImage:     return "texSubImage3D";
+        case WebGLTexImageFunc::CopyTexSubImage: return "copyTexSubImage3D";
+        case WebGLTexImageFunc::CompTexSubImage: return "compressedTexSubImage3D";
+        default:
+            MOZ_CRASH();
+        }
+    default:
+        MOZ_CRASH();
+    }
 }
 
 } // namespace mozilla

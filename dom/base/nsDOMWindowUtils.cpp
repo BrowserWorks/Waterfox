@@ -92,6 +92,7 @@
 #include "nsIDOMStyleSheet.h"
 #include "nsIStyleSheet.h"
 #include "nsContentPermissionHelper.h"
+#include "nsNetUtil.h"
 
 #ifdef XP_WIN
 #undef GetClassName
@@ -271,6 +272,21 @@ nsDOMWindowUtils::Redraw(uint32_t aCount, uint32_t *aDurationOut)
 }
 
 NS_IMETHODIMP
+nsDOMWindowUtils::UpdateLayerTree()
+{
+  if (nsIPresShell* presShell = GetPresShell()) {
+    presShell->FlushPendingNotifications(Flush_Display);
+    nsRefPtr<nsViewManager> vm = presShell->GetViewManager();
+    nsView* view = vm->GetRootView();
+    if (view) {
+      presShell->Paint(view, view->GetBounds(),
+          nsIPresShell::PAINT_LAYERS | nsIPresShell::PAINT_SYNC_DECODE_IMAGES);
+    }
+  }
+  return NS_OK;
+}
+
+NS_IMETHODIMP
 nsDOMWindowUtils::SetCSSViewport(float aWidthPx, float aHeightPx)
 {
   if (!nsContentUtils::IsCallerChrome()) {
@@ -399,8 +415,6 @@ nsDOMWindowUtils::SetDisplayPortMarginsForElement(float aLeftMargin,
                                                   float aTopMargin,
                                                   float aRightMargin,
                                                   float aBottomMargin,
-                                                  uint32_t aAlignmentX,
-                                                  uint32_t aAlignmentY,
                                                   nsIDOMElement* aElement,
                                                   uint32_t aPriority)
 {
@@ -428,14 +442,14 @@ nsDOMWindowUtils::SetDisplayPortMarginsForElement(float aLeftMargin,
   }
 
   // Note order change of arguments between our function signature and
-  // LayerMargin constructor.
-  LayerMargin displayportMargins(aTopMargin,
-                                 aRightMargin,
-                                 aBottomMargin,
-                                 aLeftMargin);
+  // ScreenMargin constructor.
+  ScreenMargin displayportMargins(aTopMargin,
+                                  aRightMargin,
+                                  aBottomMargin,
+                                  aLeftMargin);
 
   nsLayoutUtils::SetDisplayPortMargins(content, presShell, displayportMargins,
-                                       aAlignmentX, aAlignmentY, aPriority);
+                                       aPriority);
 
   return NS_OK;
 }
@@ -852,7 +866,7 @@ nsDOMWindowUtils::SendPointerEventCommon(const nsAString& aType,
   event.height = aHeight;
   event.tiltX = aTiltX;
   event.tiltY = aTiltY;
-  event.isPrimary = aIsPrimary;
+  event.isPrimary = (nsIDOMMouseEvent::MOZ_SOURCE_MOUSE == aInputSourceArg) ? true : aIsPrimary;
   event.clickCount = aClickCount;
   event.time = PR_IntervalNow();
   event.mFlags.mIsSynthesizedForTests = aOptionalArgCount >= 10 ? aIsSynthesized : true;
@@ -2052,7 +2066,7 @@ nsDOMWindowUtils::GetFullZoom(float* aFullZoom)
     return NS_OK;
   }
 
-  *aFullZoom = presContext->DeviceContext()->GetPixelScale();
+  *aFullZoom = presContext->DeviceContext()->GetFullZoom();
 
   return NS_OK;
 }
@@ -2114,7 +2128,15 @@ nsDOMWindowUtils::SendCompositionEvent(const nsAString& aType,
   if (aType.EqualsLiteral("compositionstart")) {
     msg = NS_COMPOSITION_START;
   } else if (aType.EqualsLiteral("compositionend")) {
-    msg = NS_COMPOSITION_END;
+    // Now we don't support manually dispatching composition end with this
+    // API.  A compositionend is dispatched when this is called with
+    // compositioncommitasis or compositioncommit automatically.  For backward
+    // compatibility, this shouldn't return error in this case.
+    NS_WARNING("Don't call nsIDOMWindowUtils.sendCompositionEvent() for "
+               "compositionend.  Instead, use it with compositioncommitasis or "
+               "compositioncommit.  Then, compositionend will be automatically "
+               "dispatched.");
+    return NS_OK;
   } else if (aType.EqualsLiteral("compositionupdate")) {
     // Now we don't support manually dispatching composition update with this
     // API.  A compositionupdate is dispatched when a DOM text event modifies
@@ -2124,13 +2146,17 @@ nsDOMWindowUtils::SendCompositionEvent(const nsAString& aType,
                "compositionupdate since it's ignored and the event is "
                "fired automatically when it's necessary");
     return NS_OK;
+  } else if (aType.EqualsLiteral("compositioncommitasis")) {
+    msg = NS_COMPOSITION_COMMIT_AS_IS;
+  } else if (aType.EqualsLiteral("compositioncommit")) {
+    msg = NS_COMPOSITION_COMMIT;
   } else {
     return NS_ERROR_FAILURE;
   }
 
   WidgetCompositionEvent compositionEvent(true, msg, widget);
   InitEvent(compositionEvent);
-  if (msg != NS_COMPOSITION_START) {
+  if (msg != NS_COMPOSITION_START && msg != NS_COMPOSITION_COMMIT_AS_IS) {
     compositionEvent.mData = aData;
   }
 
@@ -3093,6 +3119,12 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
   nsCOMPtr<nsPIDOMWindow> window = do_QueryReferent(mWindow);
   NS_ENSURE_TRUE(window, NS_ERROR_FAILURE);
 
+  nsCString origin;
+  nsresult rv =
+    quota::QuotaManager::GetInfoFromWindow(window, nullptr, &origin, nullptr,
+                                           nullptr);
+  NS_ENSURE_SUCCESS(rv, rv);
+
   IDBOpenDBOptions options;
   JS::Rooted<JS::Value> optionsVal(aCx, aOptions);
   if (!options.Init(aCx, optionsVal)) {
@@ -3101,12 +3133,6 @@ nsDOMWindowUtils::GetFileReferences(const nsAString& aDatabaseName, int64_t aId,
 
   quota::PersistenceType persistenceType =
     quota::PersistenceTypeFromStorage(options.mStorage);
-
-  nsCString origin;
-  nsresult rv =
-    quota::QuotaManager::GetInfoFromWindow(window, persistenceType, nullptr,
-                                           &origin, nullptr, nullptr, nullptr);
-  NS_ENSURE_SUCCESS(rv, rv);
 
   nsRefPtr<indexedDB::IndexedDatabaseManager> mgr =
     indexedDB::IndexedDatabaseManager::Get();
@@ -3478,6 +3504,18 @@ nsDOMWindowUtils::LoadSheet(nsIURI *aSheetURI, uint32_t aSheetType)
 }
 
 NS_IMETHODIMP
+nsDOMWindowUtils::LoadSheetUsingURIString(const nsACString& aSheetURI, uint32_t aSheetType)
+{
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
+
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), aSheetURI);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return LoadSheet(uri, aSheetType);
+}
+
+NS_IMETHODIMP
 nsDOMWindowUtils::AddSheet(nsIDOMStyleSheet *aSheet, uint32_t aSheetType)
 {
   MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
@@ -3516,6 +3554,18 @@ nsDOMWindowUtils::RemoveSheet(nsIURI *aSheetURI, uint32_t aSheetType)
 
   doc->RemoveAdditionalStyleSheet(type, aSheetURI);
   return NS_OK;
+}
+
+NS_IMETHODIMP
+nsDOMWindowUtils::RemoveSheetUsingURIString(const nsACString& aSheetURI, uint32_t aSheetType)
+{
+  MOZ_RELEASE_ASSERT(nsContentUtils::IsCallerChrome());
+
+  nsCOMPtr<nsIURI> uri;
+  nsresult rv = NS_NewURI(getter_AddRefs(uri), aSheetURI);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  return RemoveSheet(uri, aSheetType);
 }
 
 NS_IMETHODIMP

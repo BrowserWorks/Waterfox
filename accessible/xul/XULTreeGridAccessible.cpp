@@ -27,14 +27,7 @@ XULTreeGridAccessible::~XULTreeGridAccessible()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// XULTreeGridAccessible: nsISupports implementation
-
-NS_IMPL_ISUPPORTS_INHERITED(XULTreeGridAccessible,
-                            XULTreeAccessible,
-                            nsIAccessibleTable)
-
-////////////////////////////////////////////////////////////////////////////////
-// XULTreeGridAccessible: nsIAccessibleTable implementation
+// XULTreeGridAccessible: Table
 
 uint32_t
 XULTreeGridAccessible::ColCount()
@@ -124,7 +117,7 @@ XULTreeGridAccessible::SelectedRowIndices(nsTArray<uint32_t>* aRows)
 
 Accessible*
 XULTreeGridAccessible::CellAt(uint32_t aRowIndex, uint32_t aColumnIndex)
-{ 
+{
   Accessible* row = GetTreeItemAccessible(aRowIndex);
   if (!row)
     return nullptr;
@@ -211,13 +204,6 @@ XULTreeGridAccessible::UnselectRow(uint32_t aRowIdx)
 
 ////////////////////////////////////////////////////////////////////////////////
 // XULTreeGridAccessible: Accessible implementation
-
-void
-XULTreeGridAccessible::Shutdown()
-{
-  mTable = nullptr;
-  XULTreeAccessible::Shutdown();
-}
 
 role
 XULTreeGridAccessible::NativeRole()
@@ -341,7 +327,7 @@ XULTreeGridRowAccessible::ChildAtPoint(int32_t aX, int32_t aY,
 
   int32_t row = -1;
   nsCOMPtr<nsITreeColumn> column;
-  nsAutoCString childEltUnused;
+  nsAutoString childEltUnused;
   mTree->GetCellAt(clientX, clientY, &row, getter_AddRefs(column),
                    childEltUnused);
 
@@ -375,17 +361,17 @@ XULTreeGridRowAccessible::ChildCount() const
 ////////////////////////////////////////////////////////////////////////////////
 // XULTreeGridRowAccessible: XULTreeItemAccessibleBase implementation
 
-Accessible*
+XULTreeGridCellAccessible*
 XULTreeGridRowAccessible::GetCellAccessible(nsITreeColumn* aColumn) const
 {
   NS_PRECONDITION(aColumn, "No tree column!");
 
   void* key = static_cast<void*>(aColumn);
-  Accessible* cachedCell = mAccessibleCache.GetWeak(key);
+  XULTreeGridCellAccessible* cachedCell = mAccessibleCache.GetWeak(key);
   if (cachedCell)
     return cachedCell;
 
-  nsRefPtr<Accessible> cell =
+  nsRefPtr<XULTreeGridCellAccessible> cell =
     new XULTreeGridCellAccessibleWrap(mContent, mDoc,
                                       const_cast<XULTreeGridRowAccessible*>(this),
                                       mTree, mTreeView, mRow, aColumn);
@@ -408,12 +394,9 @@ XULTreeGridRowAccessible::RowInvalidated(int32_t aStartColIdx,
     nsCOMPtr<nsITreeColumn> column;
     treeColumns->GetColumnAt(colIdx, getter_AddRefs(column));
     if (column && !nsCoreUtils::IsColumnHidden(column)) {
-      Accessible* cellAccessible = GetCellAccessible(column);
-      if (cellAccessible) {
-        nsRefPtr<XULTreeGridCellAccessible> cellAcc = do_QueryObject(cellAccessible);
-
-        nameChanged |= cellAcc->CellInvalidated();
-      }
+      XULTreeGridCellAccessible* cell = GetCellAccessible(column);
+      if (cell)
+        nameChanged |= cell->CellInvalidated();
     }
   }
 
@@ -439,7 +422,7 @@ XULTreeGridCellAccessible::
                             XULTreeGridRowAccessible* aRowAcc,
                             nsITreeBoxObject* aTree, nsITreeView* aTreeView,
                             int32_t aRow, nsITreeColumn* aColumn) :
-  LeafAccessible(aContent, aDoc), xpcAccessibleTableCell(this), mTree(aTree),
+  LeafAccessible(aContent, aDoc), mTree(aTree),
   mTreeView(aTreeView), mRow(aRow), mColumn(aColumn)
 {
   mParent = aRowAcc;
@@ -466,23 +449,13 @@ XULTreeGridCellAccessible::~XULTreeGridCellAccessible()
 NS_IMPL_CYCLE_COLLECTION_INHERITED(XULTreeGridCellAccessible, LeafAccessible,
                                    mTree, mColumn)
 
-NS_INTERFACE_TABLE_HEAD_CYCLE_COLLECTION_INHERITED(XULTreeGridCellAccessible)
-  NS_INTERFACE_TABLE_INHERITED(XULTreeGridCellAccessible,
-                               nsIAccessibleTableCell,
-                               XULTreeGridCellAccessible)
-NS_INTERFACE_TABLE_TAIL_INHERITING(LeafAccessible)
+NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(XULTreeGridCellAccessible)
+NS_INTERFACE_MAP_END_INHERITING(LeafAccessible)
 NS_IMPL_ADDREF_INHERITED(XULTreeGridCellAccessible, LeafAccessible)
 NS_IMPL_RELEASE_INHERITED(XULTreeGridCellAccessible, LeafAccessible)
 
 ////////////////////////////////////////////////////////////////////////////////
-// XULTreeGridCellAccessible: nsIAccessible implementation
-
-void
-XULTreeGridCellAccessible::Shutdown()
-{
-  mTableCell = nullptr;
-  LeafAccessible::Shutdown();
-}
+// XULTreeGridCellAccessible: Accessible
 
 Accessible*
 XULTreeGridCellAccessible::FocusedChild()
@@ -522,7 +495,7 @@ XULTreeGridCellAccessible::Bounds() const
 
   int32_t x = 0, y = 0, width = 0, height = 0;
   nsresult rv = mTree->GetCoordsForCellItem(mRow, mColumn,
-                                            NS_LITERAL_CSTRING("cell"),
+                                            NS_LITERAL_STRING("cell"),
                                             &x, &y, &width, &height);
   if (NS_FAILED(rv))
     return nsIntRect();
@@ -607,7 +580,7 @@ XULTreeGridCellAccessible::DoAction(uint8_t aIndex)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// XULTreeGridCellAccessible: nsIAccessibleTableCell implementation
+// XULTreeGridCellAccessible: TableCell
 
 TableAccessible*
 XULTreeGridCellAccessible::Table() const

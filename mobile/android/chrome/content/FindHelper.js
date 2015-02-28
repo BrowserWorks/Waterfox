@@ -8,54 +8,64 @@ var FindHelper = {
   _targetTab: null,
   _initialViewport: null,
   _viewportChanged: false,
+  _matchesCountResult: null,
 
   observe: function(aMessage, aTopic, aData) {
     switch(aTopic) {
-      case "FindInPage:Find":
-        this.doFind(aData);
+      case "FindInPage:Opened": {
+        this._findOpened();
+        this._init();
         break;
+      }
 
-      case "FindInPage:Prev":
-        this.findAgain(aData, true);
+      case "Tab:Selected": {
+        // Allow for page switching.
+        this._uninit();
         break;
+      }
 
-      case "FindInPage:Next":
-        this.findAgain(aData, false);
-        break;
-
-      case "Tab:Selected":
       case "FindInPage:Closed":
-        this.findClosed();
+        this._uninit();
+        this._findClosed();
         break;
     }
   },
 
-  doFind: function(aSearchString) {
-    if (!this._finder) {
-      this._targetTab = BrowserApp.selectedTab;
-      this._finder = this._targetTab.browser.finder;
-      this._finder.addResultListener(this);
-      this._initialViewport = JSON.stringify(this._targetTab.getViewport());
-      this._viewportChanged = false;
-    }
+  _findOpened: function() {
+    Messaging.addListener((data) => {
+      this.doFind(data.searchString, data.matchCase);
+      return this._getMatchesCountResult(data.searchString);
+    }, "FindInPage:Find");
 
-    this._finder.fastFind(aSearchString, false);
+    Messaging.addListener((data) => {
+      this.findAgain(data.searchString, false, data.matchCase);
+      return this._getMatchesCountResult(data.searchString);
+    }, "FindInPage:Next");
+
+    Messaging.addListener((data) => {
+      this.findAgain(data.searchString, true, data.matchCase);
+      return this._getMatchesCountResult(data.searchString);
+    }, "FindInPage:Prev");
   },
 
-  findAgain: function(aString, aFindBackwards) {
-    // This can happen if the user taps next/previous after re-opening the search bar
-    if (!this._finder) {
-      this.doFind(aString);
+  _init: function() {
+    // If there's no find in progress, start one.
+    if (this._finder) {
       return;
     }
 
-    this._finder.findAgain(aFindBackwards, false, false);
+    this._targetTab = BrowserApp.selectedTab;
+    this._finder = this._targetTab.browser.finder;
+    this._finder.addResultListener(this);
+    this._initialViewport = JSON.stringify(this._targetTab.getViewport());
+    this._viewportChanged = false;
   },
 
-  findClosed: function() {
-    // If there's no find in progress, there's nothing to clean up
-    if (!this._finder)
+  _uninit: function() {
+    // If there's no find in progress, there's nothing to clean up.
+    if (!this._finder) {
       return;
+    }
 
     this._finder.removeSelection();
     this._finder.removeResultListener(this);
@@ -63,6 +73,50 @@ var FindHelper = {
     this._targetTab = null;
     this._initialViewport = null;
     this._viewportChanged = false;
+  },
+
+  _findClosed: function() {
+    Messaging.removeListener("FindInPage:Find");
+    Messaging.removeListener("FindInPage:Next");
+    Messaging.removeListener("FindInPage:Prev");
+  },
+
+  /**
+   * Request, wait for, and return the current matchesCount results for a string.
+   */
+  _getMatchesCountResult: function(findString) {
+      // Sync call to Finder, results available immediately.
+      this._matchesCountResult = null;
+      this._finder.requestMatchesCount(findString);
+
+      return this._matchesCountResult;
+  },
+
+  /**
+   * Pass along the count results to FindInPageBar for display.
+   */
+  onMatchesCountResult: function(result) {
+    this._matchesCountResult = result;
+  },
+
+  doFind: function(searchString, matchCase) {
+    if (!this._finder) {
+      this._init();
+    }
+
+    this._finder.caseSensitive = matchCase;
+    this._finder.fastFind(searchString, false);
+  },
+
+  findAgain: function(searchString, findBackwards, matchCase) {
+    // This can happen if the user taps next/previous after re-opening the search bar
+    if (!this._finder) {
+      this.doFind(searchString, matchCase);
+      return;
+    }
+
+    this._finder.caseSensitive = matchCase;
+    this._finder.findAgain(findBackwards, false, false);
   },
 
   onFindResult: function(aData) {
@@ -78,7 +132,7 @@ var FindHelper = {
       }
     } else {
       // Disabled until bug 1014113 is fixed
-      //ZoomHelper.zoomToRect(aData.rect, -1, false, true);
+      // ZoomHelper.zoomToRect(aData.rect);
       this._viewportChanged = true;
     }
   }

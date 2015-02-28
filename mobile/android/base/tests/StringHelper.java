@@ -167,7 +167,6 @@ public class StringHelper {
     public static final String TEXT_SIZE_LABEL = "Text size";
     public static final String TITLE_BAR_LABEL = "Title bar";
     public static final String SCROLL_TITLE_BAR_LABEL = "Full-screen browsing";
-    public static final String NEW_TABLET_UI = "Enable new tablet UI";
     public static final String TEXT_REFLOW_LABEL = "Text reflow";
     public static final String CHARACTER_ENCODING_LABEL = "Character encoding";
     public static final String PLUGINS_LABEL = "Plugins";
@@ -177,7 +176,7 @@ public class StringHelper {
     public static final String SHOW_PAGE_ADDRESS_LABEL = "Show page address";
 
     // Privacy
-    public static final String TRACKING_LABEL = "Tracking";
+    public static final String TRACKING_LABEL = "Do not track";
     public static final String COOKIES_LABEL = "Cookies";
     public static final String REMEMBER_PASSWORDS_LABEL = "Remember passwords";
     public static final String MASTER_PASSWORD_LABEL = "Use master password";
@@ -244,4 +243,21 @@ public class StringHelper {
 
     // Edit Bookmark screen
     public static final String EDIT_BOOKMARK = "Edit Bookmark";
+
+    // Strings used in doorhanger messages and buttons
+    public static final String GEO_MESSAGE = "Share your location with";
+    public static final String GEO_ALLOW = "Share";
+    public static final String GEO_DENY = "Don't share";
+
+    public static final String OFFLINE_MESSAGE = "to store data on your device for offline use";
+    public static final String OFFLINE_ALLOW = "Allow";
+    public static final String OFFLINE_DENY = "Don't allow";
+
+    public static final String LOGIN_MESSAGE = "Save password";
+    public static final String LOGIN_ALLOW = "Save";
+    public static final String LOGIN_DENY = "Don't save";
+
+    public static final String POPUP_MESSAGE = "prevented this site from opening";
+    public static final String POPUP_ALLOW = "Show";
+    public static final String POPUP_DENY = "Don't show";
 }

@@ -1,0 +1,229 @@
+#!/bin/sh
+#
+# gvimdiff: display highlighted differences between two files side-by-side in
+#           gvim
+#
+# Note: This program uses the Unix trick of using its name to alter behavior.
+#       If this file is called gvimdiff, it brings up the differences in gvim.
+#       If it is called vimdiff, it brings up the differences in vim.  If it is
+#       called anything else, it fails with an error.  If you need vimdiff,
+#       create a symbolic or hard link from gvimdiff to vimdiff.
+#
+# Author: Gautam H. Mudunuri (gmudunuri@informatica.com)
+#
+# $Revision: 1.1.1.1 $
+#
+
+
+# Get my name and verify it and determine whether to use vim/gvim
+progname=`basename $0`
+case "$progname" in
+    vimdiff)
+        vim_exe="vim"
+        ;;
+    gvimdiff)
+        vim_exe="gvim"
+        ;;
+    *)
+        echo >&2 "This program has an invalid name \"$progname\""
+        exit 1
+        ;;
+esac
+
+# Display usage and exit
+Usage()
+{
+    # Options common to vimdiff and gvimdiff
+    options="[ -s ]"
+    options_desc="\
+   -s          do not display identical lines
+   -w width    width of diff output
+               (default is set for diffs of 80 column wide files)"
+
+    # Add gvimdiff specific options
+    [ $vim_exe = "gvim" ] && {
+        options="$options [ -f font ] [ -n ] [ -w width ]"
+        options_desc="\
+   -f font     font to use for display
+   -n          do not create a wide window
+               (useful if your display is not too wide)
+$options_desc"
+    }
+
+    # Display usage and exit
+    echo >&2 "\
+$progname: \
+display highlighted differences between two files side-by-side in $vim_exe
+
+Usage: $progname $options arg1 arg2
+
+Both the arguments must be file names OR one must be a file name and the
+other a directory name.  If one of the arguments is a directory name, it
+refers to the file in that directory with the same name as the other
+argument.
+
+Options:
+$options_desc"
+    exit 1
+}
+
+# Parse commandline
+n_flag="n"
+s_flag="n"
+width=
+font=
+while getopts f:nsw: option
+do
+    case "$option" in
+        f)
+            [ $vim_exe != "gvim" ] && Usage
+            [ "$font" != "" ] && Usage
+            font="$OPTARG"
+            ;;
+        n)
+            [ $vim_exe != "gvim" ] && Usage
+            n_flag="y"
+            ;;
+        s)
+            s_flag="y"
+            ;;
+        w)
+            [ "$width" != "" ] && Usage
+            width="$OPTARG"
+            ;;
+        *)
+            Usage
+            ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+[ $# -eq 2 ] || Usage
+
+# Arguments must be files or directories
+arg1="$1"
+[ -f $arg1 -o -d $arg1 ] || {
+    echo >&2 "$progname: $arg1 is not a valid file or directory"
+    exit 1
+}
+arg2="$2"
+[ -f $arg2 -o -d $arg2 ] || {
+    echo >&2 "$progname: $arg2 is not a valid file or directory"
+    exit 1
+}
+
+# Both arguments cannot be directories
+[ -d "$arg1" -a -d "$arg2" ] && {
+    echo >&2 "$progname: $arg1 and $arg2 are both directories"
+    echo >&2 "Atleast one file must be specified"
+    exit 1
+}
+
+# If one argument is a directory, convert it to a filename using the other,
+# otherwise use it directly
+[ -d "$arg1" ] && file1="$arg1/`basename $arg2`" || file1="$arg1"
+[ -d "$arg2" ] && file2="$arg2/`basename $arg1`" || file2="$arg2"
+
+# Both files must be readable
+[ -r "$file1" ] || {
+    echo >&2 "$progname: cannot open $file1 for reading"
+    exit 1
+}
+[ -r "$file2" ] || {
+    echo >&2 "$progname: cannot open $file2 for reading"
+    exit 1
+}
+
+# Width not specified, use default for 80-column wide files and 9 character
+# sdiff "gutter".  (169 = 2 * 80 +  9)
+[ "$width" = "" ] && width=169
+
+# Validate width
+expr "$width" + 0 > /dev/null 2>&1
+status="$?"
+[ $status -eq 0 -o $status -eq 1 ] || {
+    echo >&2 "$progname: invalid width \"$width\""
+    exit 1
+}
+[ $width -gt 0 ] || {
+    echo >&2 "$progname: width $width cannot be zero or negative"
+    exit 1
+}
+[ $width -ge 49 ] || {
+    echo >&2 "$progname: width $width is too small, should be atleast 29"
+    exit 1
+}
+[ $width -le 209 ] || {
+    echo >&2 "$progname: width $width is too large, should be atmost 209"
+    exit 1
+}
+
+# Compute width per file, allowing 9 characters for the sdiff "gutter"
+file_width=`expr '(' $width - 9 ')' / 2`
+
+# Compute the range of the number of characters we can expect before the sdiff
+# separators |, < and >.  This is range rather than a specific number because
+# the presence of tabs can shorten the length
+min_chars=`expr $file_width - 5`
+max_chars=`expr $file_width + 2`
+
+# Define Vim commands for manipulating the sdiff buffer
+buffercmds="
+    set ts=8 et noro
+    retab
+    set nomod ro nows
+"
+
+# Define Vim commands for sdiff syntax highlighting.  We are going to define
+# our custom syntax that is not loaded through the standard syntax mechanism.
+# But we still need the standard colors to be defined.  So turn syntax on to
+# get them and immediately turn it off
+syncmds="
+    syn on
+    syn off
+    syn match sdiffRemoved \"^.\{$min_chars,$max_chars}  <\"
+    syn match sdiffChanged \"^.\{$min_chars,$max_chars}  |  .*$\"
+    syn match sdiffAdded \"^.\{$min_chars,$max_chars}  >  .*$\"
+    hi link sdiffRemoved  Comment
+    hi link sdiffChanged  PreProc
+    hi link sdiffAdded    Identifier
+    let b:current_syntax = \"vimdiff\"
+"
+
+# Help commands (doesn't always work)
+helpcmd_next="\
+    echo 'Ctrl-N: Next Difference Line   Ctrl-P: Previous Difference Line'\
+"
+helpcmd_prev="\
+    echo 'Ctrl-P: Previous Difference Line   Ctrl-N: Next Difference Line'\
+"
+
+# Define Vim mappings to jump to next/previous difference
+mapcmds="
+    nmap <c-n> /^.\{$min_chars,$max_chars}  [<>\|]/e<nl>:$helpcmd_next<nl>
+    nmap <c-p> ?^.\{$min_chars,$max_chars}  [<>\|]?e<nl>:$helpcmd_prev<nl>
+"
+
+# Collect vim commands to be run
+vimcmds="
+    set titlestring=\\$progname\\ \\$arg1\\ \\$arg2
+    set noml nows nowrap go=agrb ch=2
+    $buffercmds
+    $syncmds
+    $mapcmds
+    execute \"normal gg0$max_chars|3l\"
+    $helpcmd_next
+"
+
+# Set sdiff_flags flags
+sdiff_flags=
+[ "$s_flag" = "y" ] && sdiff_flags="$flags -s"
+
+# Set vim flags
+vim_flags="-R -N"
+[ "$font" != "" ] && vim_flags="$vim_flags -fn $font"
+[ $n_flag != "y" -a $vim_exe = "gvim" ] && {
+    vim_flags="$vim_flags -geometry $width"
+}
+
+# Run the diff and display the output in gvim
+sdiff -w$width $sdiff_flags $file1 $file2 | $vim_exe $vim_flags -c "$vimcmds" -

@@ -137,22 +137,6 @@ ValueNumberer::VisibleValues::has(const MDefinition *def) const
 }
 #endif
 
-// Test whether |def| would be needed if it had no uses.
-static bool
-DeadIfUnused(const MDefinition *def)
-{
-    return !def->isEffectful() && !def->isGuard() && !def->isControlInstruction() &&
-           (!def->isInstruction() || !def->toInstruction()->resumePoint());
-}
-
-// Test whether |def| may be safely discarded, due to being dead or due to being
-// located in a basic block which has itself been marked for discarding.
-static bool
-IsDiscardable(const MDefinition *def)
-{
-    return !def->hasUses() && (DeadIfUnused(def) || def->block()->isMarked());
-}
-
 // Call MDefinition::justReplaceAllUsesWith, and add some GVN-specific asserts.
 static void
 ReplaceAllUsesWith(MDefinition *from, MDefinition *to)
@@ -304,10 +288,6 @@ ValueNumberer::releaseResumePointOperands(MResumePoint *resume)
         if (!resume->hasOperand(i))
             continue;
         MDefinition *op = resume->getOperand(i);
-        // TODO: We shouldn't leave discarded operands sitting around
-        // (bug 1055690).
-        if (op->isDiscarded())
-            continue;
         resume->releaseOperand(i);
 
         // We set the UseRemoved flag when removing resume point operands,
@@ -705,6 +685,38 @@ ValueNumberer::loopHasOptimizablePhi(MBasicBlock *header) const
 bool
 ValueNumberer::visitDefinition(MDefinition *def)
 {
+    // Nop does not fit in any of the previous optimization, as its only purpose
+    // is to reduce the register pressure by keeping additional resume
+    // point. Still, there is no need consecutive list of MNop instructions, and
+    // this will slow down every other iteration on the Graph.
+    if (def->isNop()) {
+        MNop *nop = def->toNop();
+        MBasicBlock *block = nop->block();
+
+        // We look backward to know if we can remove the previous Nop, we do not
+        // look forward as we would not benefit from the folding made by GVN.
+        MInstructionReverseIterator iter = ++block->rbegin(nop);
+
+        // This nop is at the beginning of the basic block, just replace the
+        // resume point of the basic block by the one from the resume point.
+        if (iter == block->rend()) {
+            JitSpew(JitSpew_GVN, "      Removing Nop%u", nop->id());
+            nop->moveResumePointAsEntry();
+            block->discard(nop);
+            return true;
+        }
+
+        // The previous instruction is also a Nop, no need to keep it anymore.
+        MInstruction *prev = *iter;
+        if (prev->isNop()) {
+            JitSpew(JitSpew_GVN, "      Removing Nop%u", prev->id());
+            block->discard(prev);
+            return true;
+        }
+
+        return true;
+    }
+
     // If this instruction has a dependency() into an unreachable block, we'll
     // need to update AliasAnalysis.
     MInstruction *dep = def->dependency();
@@ -737,6 +749,7 @@ ValueNumberer::visitDefinition(MDefinition *def)
         JitSpew(JitSpew_GVN, "      Folded %s%u to %s%u",
                 def->opName(), def->id(), sim->opName(), sim->id());
 #endif
+        MOZ_ASSERT(!sim->isDiscarded());
         ReplaceAllUsesWith(def, sim);
 
         // The node's foldsTo said |def| can be replaced by |rep|. If |def| is a
@@ -747,7 +760,13 @@ ValueNumberer::visitDefinition(MDefinition *def)
         if (DeadIfUnused(def)) {
             if (!discardDefsRecursively(def))
                 return false;
+
+            // If that ended up discarding |sim|, then we're done here.
+            if (sim->isDiscarded())
+                return true;
         }
+
+        // Otherwise, procede to optimize with |sim| in place of |def|.
         def = sim;
     }
 

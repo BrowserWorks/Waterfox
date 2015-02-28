@@ -123,8 +123,15 @@ StyleEditorUI.prototype = {
 
       let hUtils = toolbox.highlighterUtils;
       if (hUtils.hasCustomHighlighter(SELECTOR_HIGHLIGHTER_TYPE)) {
-        this._highlighter =
-          yield hUtils.getHighlighterByType(SELECTOR_HIGHLIGHTER_TYPE);
+        try {
+          this._highlighter =
+            yield hUtils.getHighlighterByType(SELECTOR_HIGHLIGHTER_TYPE);
+        } catch (e) {
+          // The selectorHighlighter can't always be instantiated, for example
+          // it doesn't work with XUL windows (until bug 1094959 gets fixed).
+          console.warn("The selectorHighlighter couldn't be instantiated, " +
+            "elements matching hovered selectors will not be highlighted");
+        }
       }
     }.bind(this)).then(() => {
       this.createUI();
@@ -539,12 +546,12 @@ StyleEditorUI.prototype = {
               editor.removeAllUnusedRegions();
 
               if (data.reports.length > 0) {
-                // So there is some coverage markup, but can we apply it?
-                let text = editor.sourceEditor.getText() + "\r";
-                // If the CSS text contains a '}' with some non-whitespace
-                // after then we assume this is compressed CSS and stop
-                // marking-up.
-                if (!/}\s*\S+\s*\r/.test(text)) {
+                // Only apply if this file isn't compressed. We detect a
+                // compressed file if there are more rules than lines.
+                let text = editor.sourceEditor.getText();
+                let lineCount = text.split("\n").length;
+                let ruleCount = editor.styleSheet.ruleCount;
+                if (lineCount >= ruleCount) {
                   editor.addUnusedRegions(data.reports);
                 }
                 else {

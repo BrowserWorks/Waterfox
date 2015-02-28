@@ -1,10 +1,8 @@
 import itertools
-import logging
 import re
 import types
 
-logger = logging.getLogger("wptserve")
-logger.setLevel(logging.DEBUG)
+from logger import get_logger
 
 any_method = object()
 
@@ -51,6 +49,8 @@ class RouteCompiler(object):
         for token in tokens:
             re_parts.append(func_map[token[0]](token))
 
+        if self.star_seen:
+            re_parts.append(")")
         re_parts.append("$")
 
         return re.compile("".join(re_parts))
@@ -70,7 +70,7 @@ class RouteCompiler(object):
         if self.star_seen:
             raise ValueError("Star seen after star in regexp")
         self.star_seen = True
-        return "(.*)"
+        return "(.*"
 
 def compile_path_match(route_pattern):
     """tokens: / or literal or match or *"""
@@ -97,6 +97,7 @@ class Router(object):
     def __init__(self, doc_root, routes):
         self.doc_root = doc_root
         self.routes = []
+        self.logger = get_logger()
         for route in reversed(routes):
             self.register(*route)
 
@@ -111,7 +112,8 @@ class Router(object):
                              a request path matches this route. Match patterns
                              consist of either literal text, match groups,
                              denoted {name}, which match any character except /,
-                             and, at most one \*, which matches any character.
+                             and, at most one \*, which matches and character and
+                             creates a match group to the end of the string.
                              If there is no leading "/" on the pattern, this is
                              automatically implied. For example::
 
@@ -120,23 +122,24 @@ class Router(object):
                             Would match `/api/test/data.json` or
                             `/api/test/test2/data.json`, but not `/api/test/data.py`.
 
-                            The match groups, and anything matching the * are made
-                            available in the request object as a dictionary through
-                            the route_match property. For example, given the route
-                            pattern above and the path `/api/test/data.json`, the
-                            route_match property would contain::
+                            The match groups are made available in the request object
+                            as a dictionary through the route_match property. For
+                            example, given the route pattern above and the path
+                            `/api/test/data.json`, the route_match property would
+                            contain::
 
-                                {"resource": "test", "*": "data"}
+                                {"resource": "test", "*": "data.json"}
 
         :param handler: Function that will be called to process matching
                         requests. This must take two parameters, the request
                         object and the response object.
+
         """
         if type(methods) in types.StringTypes or methods is any_method:
             methods = [methods]
         for method in methods:
             self.routes.append((method, compile_path_match(path), handler))
-            logger.debug("Route pattern: %s" % self.routes[-1][1].pattern)
+            self.logger.debug("Route pattern: %s" % self.routes[-1][1].pattern)
 
     def get_handler(self, request):
         """Get a handler for a request or None if there is no handler.
@@ -154,7 +157,7 @@ class Router(object):
                         name = handler.__name__
                     else:
                         name = handler.__class__.__name__
-                    logger.debug("Found handler %s" % name)
+                    self.logger.debug("Found handler %s" % name)
 
                     match_parts = m.groupdict().copy()
                     if len(match_parts) < len(m.groups()):

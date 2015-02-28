@@ -37,6 +37,7 @@ Shader::Shader(ResourceManager *manager, rx::ShaderImpl *impl, GLenum type, GLui
 
 Shader::~Shader()
 {
+	SafeDelete(mShader);
 }
 
 GLuint Shader::getHandle() const

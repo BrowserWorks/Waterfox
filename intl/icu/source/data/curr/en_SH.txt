@@ -11,7 +11,7 @@ en_SH{
     Currencies{
         GBP{
             "GB£",
-            "British Pound Sterling",
+            "British Pound",
         }
         SHP{
             "£",

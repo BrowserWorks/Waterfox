@@ -18,6 +18,9 @@
 #include "nsInterfaceHashtable.h"
 #include "nsString.h"
 #include "nsTArray.h"
+#ifdef MOZ_EME
+#include "mozilla/dom/MediaKeySystemAccess.h"
+#endif
 
 class nsPluginArray;
 class nsMimeTypeArray;
@@ -32,6 +35,7 @@ namespace mozilla {
 namespace dom {
 class Geolocation;
 class systemMessageCallback;
+class MediaDevices;
 struct MediaStreamConstraints;
 class WakeLock;
 class ArrayBufferViewOrBlobOrStringOrFormData;
@@ -92,6 +96,7 @@ class PowerManager;
 class CellBroadcast;
 class Telephony;
 class Voicemail;
+class TVManager;
 
 namespace time {
 class TimeManager;
@@ -222,8 +227,10 @@ public:
   MobileMessageManager* GetMozMobileMessage();
   Telephony* GetMozTelephony(ErrorResult& aRv);
   Voicemail* GetMozVoicemail(ErrorResult& aRv);
+  TVManager* GetTv();
   network::Connection* GetConnection(ErrorResult& aRv);
   nsDOMCameraManager* GetMozCameras(ErrorResult& aRv);
+  MediaDevices* GetMediaDevices(ErrorResult& aRv);
   void MozSetMessageHandler(const nsAString& aType,
                             systemMessageCallback* aCallback,
                             ErrorResult& aRv);
@@ -239,6 +246,7 @@ public:
 #ifdef MOZ_GAMEPAD
   void GetGamepads(nsTArray<nsRefPtr<Gamepad> >& aGamepads, ErrorResult& aRv);
 #endif // MOZ_GAMEPAD
+  already_AddRefed<Promise> GetVRDevices(ErrorResult& aRv);
 #ifdef MOZ_B2G_FM
   FMRadio* GetMozFMRadio(ErrorResult& aRv);
 #endif
@@ -270,9 +278,9 @@ public:
 
   already_AddRefed<ServiceWorkerContainer> ServiceWorker();
 
-  bool DoNewResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
-                    JS::Handle<jsid> aId,
-                    JS::MutableHandle<JSPropertyDescriptor> aDesc);
+  bool DoResolve(JSContext* aCx, JS::Handle<JSObject*> aObject,
+                 JS::Handle<jsid> aId,
+                 JS::MutableHandle<JSPropertyDescriptor> aDesc);
   void GetOwnPropertyNames(JSContext* aCx, nsTArray<nsString>& aNames,
                            ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
@@ -303,12 +311,21 @@ public:
   static bool HasMobileIdSupport(JSContext* aCx, JSObject* aGlobal);
 #endif
 
+  static bool HasTVSupport(JSContext* aCx, JSObject* aGlobal);
+
   nsPIDOMWindow* GetParentObject() const
   {
     return GetWindow();
   }
 
   virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+
+#ifdef MOZ_EME
+  already_AddRefed<Promise>
+  RequestMediaKeySystemAccess(const nsAString& aKeySystem,
+                              const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
+                              ErrorResult& aRv);
+#endif
 
 private:
   virtual ~Navigator();
@@ -332,6 +349,7 @@ private:
   nsRefPtr<MobileMessageManager> mMobileMessageManager;
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<Voicemail> mVoicemail;
+  nsRefPtr<TVManager> mTVManager;
   nsRefPtr<network::Connection> mConnection;
 #ifdef MOZ_B2G_RIL
   nsRefPtr<MobileConnectionArray> mMobileConnections;
@@ -344,13 +362,14 @@ private:
   nsRefPtr<system::AudioChannelManager> mAudioChannelManager;
 #endif
   nsRefPtr<nsDOMCameraManager> mCameraManager;
+  nsRefPtr<MediaDevices> mMediaDevices;
   nsCOMPtr<nsIDOMNavigatorSystemMessages> mMessagesManager;
   nsTArray<nsRefPtr<nsDOMDeviceStorage> > mDeviceStorageStores;
   nsRefPtr<time::TimeManager> mTimeManager;
   nsRefPtr<ServiceWorkerContainer> mServiceWorkerContainer;
   nsCOMPtr<nsPIDOMWindow> mWindow;
 
-  // Hashtable for saving cached objects newresolve created, so we don't create
+  // Hashtable for saving cached objects DoResolve created, so we don't create
   // the object twice if asked for it twice, whether due to use of "delete" or
   // due to Xrays.  We could probably use a nsJSThingHashtable here, but then
   // we'd need to figure out exactly how to trace that, and that seems to be

@@ -342,7 +342,7 @@ ky{
             tibt{"тибет сандары"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.10.49"}
     codePatterns{
         language{"тили: {0}"}
         script{"жазуусу: {0}"}

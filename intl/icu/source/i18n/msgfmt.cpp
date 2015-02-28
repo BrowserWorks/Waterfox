@@ -413,7 +413,7 @@ MessageFormat::operator==(const Format& rhs) const
     if (count != rhs_count) {
         return FALSE;
     }
-    int32_t idx = 0, rhs_idx = 0, pos = -1, rhs_pos = -1;
+    int32_t idx = 0, rhs_idx = 0, pos = UHASH_FIRST, rhs_pos = UHASH_FIRST;
     for (; idx < count && rhs_idx < rhs_count && U_SUCCESS(ec); ++idx, ++rhs_idx) {
         const UHashElement* cur = uhash_nextElement(customFormatArgStarts, &pos);
         const UHashElement* rhs_cur = uhash_nextElement(that.customFormatArgStarts, &rhs_pos);
@@ -1332,7 +1332,7 @@ void MessageFormat::copyObjects(const MessageFormat& that, UErrorCode& ec) {
 
         const int32_t count = uhash_count(that.cachedFormatters);
         int32_t pos, idx;
-        for (idx = 0, pos = -1; idx < count && U_SUCCESS(ec); ++idx) {
+        for (idx = 0, pos = UHASH_FIRST; idx < count && U_SUCCESS(ec); ++idx) {
             const UHashElement* cur = uhash_nextElement(that.cachedFormatters, &pos);
             Format* newFormat = ((Format*)(cur->value.pointer))->clone();
             if (newFormat) {
@@ -1350,7 +1350,7 @@ void MessageFormat::copyObjects(const MessageFormat& that, UErrorCode& ec) {
         }
         const int32_t count = uhash_count(that.customFormatArgStarts);
         int32_t pos, idx;
-        for (idx = 0, pos = -1; idx < count && U_SUCCESS(ec); ++idx) {
+        for (idx = 0, pos = UHASH_FIRST; idx < count && U_SUCCESS(ec); ++idx) {
             const UHashElement* cur = uhash_nextElement(that.customFormatArgStarts, &pos);
             uhash_iputi(customFormatArgStarts, cur->key.integer, cur->value.integer, &ec);
         }

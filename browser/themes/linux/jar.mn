@@ -71,8 +71,9 @@ browser.jar:
   skin/classic/browser/search-indicator.png                 (../shared/search/search-indicator.png)
   skin/classic/browser/search-indicator-add-engine.png      (../shared/search/search-indicator-add-engine.png)
   skin/classic/browser/search-engine-placeholder.png        (../shared/search/search-engine-placeholder.png)
-  skin/classic/browser/search-history-icon.svg              (../shared/search/history-icon.svg)
   skin/classic/browser/badge-add-engine.png                 (../shared/search/badge-add-engine.png)
+  skin/classic/browser/search-indicator-badge-add.png       (../shared/search/search-indicator-badge-add.png)
+  skin/classic/browser/search-history-icon.svg              (../shared/search/history-icon.svg)
   skin/classic/browser/Secure.png
   skin/classic/browser/Security-broken.png
   skin/classic/browser/setDesktopBackground.css
@@ -164,6 +165,7 @@ browser.jar:
 #endif
 * skin/classic/browser/preferences/preferences.css    (preferences/preferences.css)
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
+* skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
   skin/classic/browser/preferences/in-content/favicon.ico     (../shared/incontentprefs/favicon.ico)
   skin/classic/browser/preferences/in-content/icons.png       (../shared/incontentprefs/icons.png)
   skin/classic/browser/preferences/in-content/icons@2x.png    (../shared/incontentprefs/icons@2x.png)
@@ -201,6 +203,9 @@ browser.jar:
   skin/classic/browser/tabbrowser/tab-stroke-start.png      (tabbrowser/tab-stroke-start.png)
   skin/classic/browser/tabbrowser/tabDragIndicator.png      (tabbrowser/tabDragIndicator.png)
   skin/classic/browser/tabbrowser/tab-separator.png         (tabbrowser/tab-separator.png)
+
+  skin/classic/browser/tabbrowser/pendingpaint.png          (../shared/tabbrowser/pendingpaint.png)
+
   skin/classic/browser/tabview/edit-light.png         (tabview/edit-light.png)
   skin/classic/browser/tabview/search.png             (tabview/search.png)
   skin/classic/browser/tabview/stack-expander.png     (tabview/stack-expander.png)
@@ -268,6 +273,7 @@ browser.jar:
   skin/classic/browser/devtools/eyedropper.css        (../shared/devtools/eyedropper.css)
 * skin/classic/browser/devtools/netmonitor.css        (devtools/netmonitor.css)
 * skin/classic/browser/devtools/profiler.css          (devtools/profiler.css)
+* skin/classic/browser/devtools/performance.css       (devtools/performance.css)
 * skin/classic/browser/devtools/timeline.css          (devtools/timeline.css)
 * skin/classic/browser/devtools/scratchpad.css        (devtools/scratchpad.css)
 * skin/classic/browser/devtools/shadereditor.css      (devtools/shadereditor.css)
@@ -304,6 +310,8 @@ browser.jar:
   skin/classic/browser/devtools/debugger-step-over@2x.png (../shared/devtools/images/debugger-step-over@2x.png)
   skin/classic/browser/devtools/debugger-blackbox.png  (../shared/devtools/images/debugger-blackbox.png)
   skin/classic/browser/devtools/debugger-blackbox@2x.png  (../shared/devtools/images/debugger-blackbox@2x.png)
+  skin/classic/browser/devtools/debugger-prettyprint.png  (../shared/devtools/images/debugger-prettyprint.png)
+  skin/classic/browser/devtools/debugger-prettyprint@2x.png (../shared/devtools/images/debugger-prettyprint@2x.png)
   skin/classic/browser/devtools/debugger-toggleBreakpoints.png (../shared/devtools/images/debugger-toggleBreakpoints.png)
   skin/classic/browser/devtools/debugger-toggleBreakpoints@2x.png (../shared/devtools/images/debugger-toggleBreakpoints@2x.png)
   skin/classic/browser/devtools/tracer-icon.png        (../shared/devtools/images/tracer-icon.png)

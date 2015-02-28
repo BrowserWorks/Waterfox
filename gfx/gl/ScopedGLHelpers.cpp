@@ -11,6 +11,14 @@
 namespace mozilla {
 namespace gl {
 
+#ifdef DEBUG
+bool
+IsContextCurrent(GLContext* gl)
+{
+    return gl->IsCurrent();
+}
+#endif
+
 /* ScopedGLState - Wraps glEnable/glDisable. **********************************/
 
 // Use |newState = true| to enable, |false| to disable.
@@ -172,6 +180,7 @@ ScopedBindTexture::Init(GLenum aTarget)
     mTarget = aTarget;
     mOldTex = 0;
     GLenum bindingTarget = (aTarget == LOCAL_GL_TEXTURE_2D) ? LOCAL_GL_TEXTURE_BINDING_2D
+                         : (aTarget == LOCAL_GL_TEXTURE_3D) ? LOCAL_GL_TEXTURE_BINDING_3D
                          : (aTarget == LOCAL_GL_TEXTURE_RECTANGLE_ARB) ? LOCAL_GL_TEXTURE_BINDING_RECTANGLE_ARB
                          : (aTarget == LOCAL_GL_TEXTURE_CUBE_MAP) ? LOCAL_GL_TEXTURE_BINDING_CUBE_MAP
                          : (aTarget == LOCAL_GL_TEXTURE_EXTERNAL) ? LOCAL_GL_TEXTURE_BINDING_EXTERNAL
@@ -483,5 +492,37 @@ ScopedGLDrawState::~ScopedGLDrawState()
 
     mGL->fUseProgram(boundProgram);
 }
+
+////////////////////////////////////////////////////////////////////////
+// ScopedPackAlignment
+
+ScopedPackAlignment::ScopedPackAlignment(GLContext* gl, GLint scopedVal)
+    : ScopedGLWrapper<ScopedPackAlignment>(gl)
+{
+    MOZ_ASSERT(scopedVal == 1 ||
+               scopedVal == 2 ||
+               scopedVal == 4 ||
+               scopedVal == 8);
+
+    gl->fGetIntegerv(LOCAL_GL_PACK_ALIGNMENT, &mOldVal);
+
+    if (scopedVal != mOldVal) {
+        gl->fPixelStorei(LOCAL_GL_PACK_ALIGNMENT, scopedVal);
+    } else {
+      // Don't try to re-set it during unwrap.
+        mOldVal = 0;
+    }
+}
+
+void
+ScopedPackAlignment::UnwrapImpl() {
+    // Check that we're not falling out of scope after the current context changed.
+    MOZ_ASSERT(mGL->IsCurrent());
+
+    if (mOldVal) {
+        mGL->fPixelStorei(LOCAL_GL_PACK_ALIGNMENT, mOldVal);
+    }
+}
+
 } /* namespace gl */
 } /* namespace mozilla */

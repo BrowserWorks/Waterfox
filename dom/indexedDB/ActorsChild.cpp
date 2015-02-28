@@ -1245,8 +1245,14 @@ BackgroundDatabaseChild::RecvPBackgroundIDBVersionChangeTransactionConstructor(
 
   auto actor = static_cast<BackgroundVersionChangeTransactionChild*>(aActor);
 
+  nsRefPtr<IDBOpenDBRequest> request = mOpenRequestActor->GetOpenDBRequest();
+  MOZ_ASSERT(request);
+
   nsRefPtr<IDBTransaction> transaction =
-    IDBTransaction::CreateVersionChange(mDatabase, actor, aNextObjectStoreId,
+    IDBTransaction::CreateVersionChange(mDatabase,
+                                        actor,
+                                        request,
+                                        aNextObjectStoreId,
                                         aNextIndexId);
   if (NS_WARN_IF(!transaction)) {
     return false;
@@ -1257,9 +1263,6 @@ BackgroundDatabaseChild::RecvPBackgroundIDBVersionChangeTransactionConstructor(
   actor->SetDOMTransaction(transaction);
 
   mDatabase->EnterSetVersionTransaction(aRequestedVersion);
-
-  nsRefPtr<IDBOpenDBRequest> request = mOpenRequestActor->GetOpenDBRequest();
-  MOZ_ASSERT(request);
 
   request->SetTransaction(transaction);
 
@@ -1321,7 +1324,7 @@ BackgroundDatabaseChild::RecvVersionChange(const uint64_t& aOldVersion,
     if (shouldAbortAndClose) {
       // Invalidate() doesn't close the database in the parent, so we have
       // to call Close() and AbortTransactions() manually.
-      mDatabase->AbortTransactions();
+      mDatabase->AbortTransactions(/* aShouldWarn */ false);
       mDatabase->Close();
       return true;
     }
