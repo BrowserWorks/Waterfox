@@ -136,7 +136,7 @@ pref("dom.workers.websocket.enabled", true);
 #endif
 
 // Service workers
-pref("dom.serviceWorkers.enabled", false);
+pref("dom.serviceWorkers.enabled", true);
 
 // Whether nonzero values can be returned from performance.timing.*
 pref("dom.enable_performance", true);
@@ -423,24 +423,16 @@ pref("media.webvtt.enabled", true);
 pref("media.webvtt.regions.enabled", false);
 
 // AudioTrack and VideoTrack support
-pref("media.track.enabled", false);
+pref("media.track.enabled", true);
 
 // Whether to enable MediaSource support.
 // We want to enable on non-release builds only until it's more stable.
-#if !defined(RELEASE_BUILD)
 pref("media.mediasource.enabled", true);
-#else
-pref("media.mediasource.enabled", false);
-#endif
 
 // If MediaSource is enabled for release builds, restrict it to
 // specific domains. We prefer not to expose a parial implementation
 // of the specification to the world wide web.
-#ifdef RELEASE_BUILD
-pref("media.mediasource.youtubeonly", true);
-#else
 pref("media.mediasource.youtubeonly", false);
-#endif // RELEASE_BUILD
 
 #ifdef MOZ_WIDGET_GONK
 pref("media.mediasource.mp4.enabled", false);
@@ -448,7 +440,7 @@ pref("media.mediasource.webm.enabled", false);
 #else
 #if defined(XP_WIN) || defined(XP_MACOSX)
 pref("media.mediasource.mp4.enabled", true);
-pref("media.mediasource.webm.enabled", false);
+pref("media.mediasource.webm.enabled", true);
 #else
 pref("media.mediasource.mp4.enabled", false);
 pref("media.mediasource.webm.enabled", true);
@@ -456,8 +448,8 @@ pref("media.mediasource.webm.enabled", true);
 #endif
 
 #ifdef MOZ_WEBSPEECH
-pref("media.webspeech.recognition.enable", false);
-pref("media.webspeech.synth.enabled", false);
+pref("media.webspeech.recognition.enable", true);
+pref("media.webspeech.synth.enabled", true);
 #endif
 #ifdef MOZ_WEBM_ENCODER
 pref("media.encoder.webm.enabled", true);
@@ -686,7 +678,7 @@ pref("ui.scrollToClick", 0);
 // provide ability to turn on support for canvas focus rings
 pref("canvas.focusring.enabled", true);
 pref("canvas.customfocusring.enabled", false);
-pref("canvas.hitregions.enabled", false);
+pref("canvas.hitregions.enabled", true);
 pref("canvas.filters.enabled", false);
 // Add support for canvas path objects
 pref("canvas.path.enabled", true);
@@ -970,7 +962,7 @@ pref("dom.min_timeout_value", 4);
 pref("dom.min_background_timeout_value", 1000);
 
 // Don't use new input types
-pref("dom.experimental_forms", false);
+pref("dom.experimental_forms", true);
 
 // Enable <input type=number>:
 pref("dom.forms.number", true);
@@ -1017,7 +1009,7 @@ pref("dom.event.highrestimestamp.enabled",  true);
 pref("dom.event.highrestimestamp.enabled",  false);
 #endif
 
-pref("dom.webcomponents.enabled",           false);
+pref("dom.webcomponents.enabled",           true);
 
 pref("javascript.enabled",                  true);
 pref("javascript.options.strict",           false);
@@ -1554,7 +1546,7 @@ pref("network.dnsCacheEntries", 400);
 pref("network.dnsCacheExpiration", 60);
 
 // Get TTL; not supported on all platforms; nop on the unsupported ones.
-pref("network.dns.get-ttl", true);
+pref("network.dns.get-ttl", false);
 
 // The grace period allows the DNS cache to use expired entries, while kicking off
 // a revalidation in the background.
@@ -4078,10 +4070,10 @@ pref("dom.vibrator.max_vibrate_list_len", 128);
 pref("dom.battery.enabled", true);
 
 // Image srcset
-pref("dom.image.srcset.enabled", false);
+pref("dom.image.srcset.enabled", true);
 
 // <picture> element and sizes
-pref("dom.image.picture.enabled", false);
+pref("dom.image.picture.enabled", true);
 
 // WebSMS
 pref("dom.sms.enabled", false);
@@ -4122,13 +4114,13 @@ pref("dom.w3c_touch_events.enabled", 2);
 #endif
 
 // W3C draft pointer events
-pref("dom.w3c_pointer_events.enabled", false);
+pref("dom.w3c_pointer_events.enabled", true);
 
 // W3C draft ImageCapture API
-pref("dom.imagecapture.enabled", false);
+pref("dom.imagecapture.enabled", true);
 
 // W3C touch-action css property (related to touch and pointer events)
-pref("layout.css.touch_action.enabled", false);
+pref("layout.css.touch_action.enabled", true);
 
 // enable JS dump() function.
 pref("browser.dom.window.dump.enabled", false);

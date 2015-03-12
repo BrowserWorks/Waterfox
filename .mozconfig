@@ -19,7 +19,7 @@ ac_add_options --disable-ipdl-tests
 ac_add_options --enable-gamepad
 
 # Use to use profiling
-ac_add_options --enable-optimize="-O3 -Qip- -Qparallel -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
+ac_add_options --enable-optimize="-D_ATL_XP_TARGETING -O3 -Qip- -Qparallel -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-branding=browser/branding/waterfox
@@ -29,6 +29,7 @@ ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 ac_add_options --enable-update-packaging
 ac_add_options --enable-release
+ac_add_options --enable-signmar
 
 # diasble crashreporter
 ac_add_options --enable-crashreporter

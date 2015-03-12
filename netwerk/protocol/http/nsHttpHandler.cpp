@@ -283,7 +283,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZILLA_UAVERSION);
+    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
