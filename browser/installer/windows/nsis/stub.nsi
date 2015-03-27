@@ -311,8 +311,9 @@ Function .onInit
   ${SetBrandNameVars} "$PLUGINSDIR\ignored.ini"
 
 !ifdef HAVE_64BIT_BUILD
-  ; Restrict x64 builds from being installed on x86 and pre Win7
+  ; Restrict x64 builds from being installed on x86 and pre Vista
   ${Unless} ${RunningX64}
+  ${OrUnless} ${AtLeastWinVista}
     MessageBox MB_OK|MB_ICONSTOP "$(WARN_MIN_SUPPORTED_OS_MSG)"
     Quit
   ${EndUnless}

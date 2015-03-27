@@ -33,3 +33,9 @@ exit
 cd /c/mozilla/mozilla-beta/
 ./mach build
 exit
+ls
+cd ../
+ls
+cd /c/Waterfox/
+ls
+./mach build
