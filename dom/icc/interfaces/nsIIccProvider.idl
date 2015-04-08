@@ -17,10 +17,48 @@ interface nsIIccListener : nsISupports
   void notifyIccInfoChanged();
 };
 
+[scriptable, uuid(6136acab-b50e-494a-a86d-df392a032897)]
+interface nsIIccChannelCallback : nsISupports
+{
+  /**
+   * Callback function to notify on successfully opening a logical channel.
+   *
+   * @param channel
+   *        The Channel Number/Handle that is successfully opened.
+   */
+  void notifyOpenChannelSuccess(in long channel);
+
+  /**
+   * Callback function to notify on successfully closing the logical channel.
+   *
+   */
+  void notifyCloseChannelSuccess();
+
+  /**
+   * Callback function to notify the status of 'iccExchangeAPDU' command.
+   *
+   * @param sw1
+   *        Response's First Status Byte
+   * @param sw2
+   *        Response's Second Status Byte
+   * @param data
+   *        Response's data
+   */
+  void notifyExchangeAPDUResponse(in octet sw1,
+                                  in octet sw2,
+                                  in DOMString data);
+
+  /**
+   * Callback function to notify error
+   *
+   */
+  void notifyError(in DOMString error);
+};
+
 /**
  * XPCOM component (in the content process) that provides the ICC information.
  */
-[scriptable, uuid(bf802bf0-4df2-11e4-916c-0800200c9a66)]
+[scriptable, uuid(a203cd2e-2280-4d8e-a687-42b745d322c1)]
 interface nsIIccProvider : nsISupports
 {
   // MUST match enum IccCardState in MozIcc.webidl!
@@ -56,6 +94,46 @@ interface nsIIccProvider : nsISupports
   const unsigned long CARD_STATE_ILLEGAL = 29;
 
   const unsigned long CARD_STATE_UNDETECTED = 4294967295; // UINT32_MAX
+
+  // MUST match with enum IccLockType in MozIcc.webidl
+  const unsigned long CARD_LOCK_TYPE_PIN = 0;
+  const unsigned long CARD_LOCK_TYPE_PIN2 = 1;
+  const unsigned long CARD_LOCK_TYPE_PUK = 2;
+  const unsigned long CARD_LOCK_TYPE_PUK2 = 3;
+  const unsigned long CARD_LOCK_TYPE_NCK = 4;
+  const unsigned long CARD_LOCK_TYPE_NSCK = 5;
+  const unsigned long CARD_LOCK_TYPE_NCK1 = 6;
+  const unsigned long CARD_LOCK_TYPE_NCK2 = 7;
+  const unsigned long CARD_LOCK_TYPE_HNCK = 8;
+  const unsigned long CARD_LOCK_TYPE_CCK = 9;
+  const unsigned long CARD_LOCK_TYPE_SPCK = 10;
+  const unsigned long CARD_LOCK_TYPE_PCK = 11;
+  const unsigned long CARD_LOCK_TYPE_RCCK = 12;
+  const unsigned long CARD_LOCK_TYPE_RSPCK = 13;
+  const unsigned long CARD_LOCK_TYPE_NCK_PUK = 14;
+  const unsigned long CARD_LOCK_TYPE_NSCK_PUK = 15;
+  const unsigned long CARD_LOCK_TYPE_NCK1_PUK = 16;
+  const unsigned long CARD_LOCK_TYPE_NCK2_PUK = 17;
+  const unsigned long CARD_LOCK_TYPE_HNCK_PUK = 18;
+  const unsigned long CARD_LOCK_TYPE_CCK_PUK = 19;
+  const unsigned long CARD_LOCK_TYPE_SPCK_PUK = 20;
+  const unsigned long CARD_LOCK_TYPE_PCK_PUK = 21;
+  const unsigned long CARD_LOCK_TYPE_RCCK_PUK = 22;
+  const unsigned long CARD_LOCK_TYPE_RSPCK_PUK = 23;
+  const unsigned long CARD_LOCK_TYPE_FDN = 24;
+
+  // MUST match with enum IccContactType in MozIcc.webidl
+  const unsigned long CARD_CONTACT_TYPE_ADN = 0;
+  const unsigned long CARD_CONTACT_TYPE_FDN = 1;
+  const unsigned long CARD_CONTACT_TYPE_SDN = 2;
+
+  // MUST match with enum IccMvnoType in MozIcc.webidl
+  const unsigned long CARD_MVNO_TYPE_IMSI = 0;
+  const unsigned long CARD_MVNO_TYPE_SPN = 1;
+  const unsigned long CARD_MVNO_TYPE_GID = 2;
+
+  // MUST match with enum IccService in MozIcc.webidl
+  const unsigned long CARD_SERVICE_FDN = 0;
 
   /**
    * Called when a content process registers receiving unsolicited messages from
@@ -98,53 +176,78 @@ interface nsIIccProvider : nsISupports
   /**
    * Card lock interfaces.
    */
-  nsIDOMDOMRequest getCardLockState(in unsigned long clientId,
-                                    in nsIDOMWindow window,
-                                    in DOMString lockType);
+  nsIDOMDOMRequest getCardLockEnabled(in unsigned long clientId,
+                                      in nsIDOMWindow window,
+                                      in unsigned long lockType);
   nsIDOMDOMRequest unlockCardLock(in unsigned long clientId,
                                   in nsIDOMWindow window,
-                                  in jsval info);
-  nsIDOMDOMRequest setCardLock(in unsigned long clientId,
-                               in nsIDOMWindow window,
-                               in jsval info);
+                                  in unsigned long lockType,
+                                  in DOMString password,
+                                  [optional] in DOMString newPin);
+  nsIDOMDOMRequest setCardLockEnabled(in unsigned long clientId,
+                                      in nsIDOMWindow window,
+                                      in unsigned long lockType,
+                                      in DOMString password,
+                                      in boolean enabled);
+  nsIDOMDOMRequest changeCardLockPassword(in unsigned long clientId,
+                                          in nsIDOMWindow window,
+                                          in unsigned long lockType,
+                                          in DOMString password,
+                                          in DOMString newPassword);
   nsIDOMDOMRequest getCardLockRetryCount(in unsigned long clientId,
                                          in nsIDOMWindow window,
-                                         in DOMString lockType);
+                                         in unsigned long lockType);
 
   /**
    * Phonebook interfaces.
    */
   nsIDOMDOMRequest readContacts(in unsigned long clientId,
                                 in nsIDOMWindow window,
-                                in DOMString contactType);
+                                in unsigned long contactType);
 
   nsIDOMDOMRequest updateContact(in unsigned long clientId,
                                  in nsIDOMWindow window,
-                                 in DOMString contactType,
+                                 in unsigned long contactType,
                                  in jsval contact,
                                  in DOMString pin2);
 
-  /**
+/**
    * Secure Card Icc communication channel
    */
-  nsIDOMDOMRequest iccOpenChannel(in unsigned long clientId,
-                                  in nsIDOMWindow window,
-                                  in DOMString aid);
+  void iccOpenChannel(in unsigned long clientId,
+                      in DOMString aid,
+                      in nsIIccChannelCallback callback);
 
-  nsIDOMDOMRequest iccExchangeAPDU(in unsigned long clientId,
-                                   in nsIDOMWindow window,
-                                   in long channel,
-                                   in jsval apdu);
+  /**
+   * Exchange Command APDU (C-APDU) with SIM on the given logical channel.
+   * Note that 'P3' parameter could be Le/Lc depending on command APDU case.
+   * For Case 1 scenario (when only command header is present), the value
+   * of 'P3' should be set to '-1' explicitly.
+   * Refer to 3G TS 31.101 , 10.2 'Command APDU Structure' for all the cases.
+   */
+  void iccExchangeAPDU(in unsigned long clientId,
+                       in long channel,
+                       in octet cla,
+                       in octet ins,
+                       in octet p1,
+                       in octet p2,
+                       in short p3,
+                       in DOMString data,
+                       in nsIIccChannelCallback callback);
 
-  nsIDOMDOMRequest iccCloseChannel(in unsigned long clientId,
-                                   in nsIDOMWindow window,
-                                   in long channel);
+  void iccCloseChannel(in unsigned long clientId,
+                       in long channel,
+                       in nsIIccChannelCallback callback);
 
   /**
    * Helpers
    */
   nsIDOMDOMRequest matchMvno(in unsigned long clientId,
                              in nsIDOMWindow window,
-                             in DOMString mvnoType,
+                             in unsigned long mvnoType,
                              in DOMString mvnoData);
+
+  nsISupports getServiceState(in unsigned long clientId,
+                              in nsIDOMWindow window,
+                              in unsigned long service);
 };

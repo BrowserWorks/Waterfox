@@ -112,7 +112,7 @@ private:
       mOffset += length;
     }
 
-    if (mOffset < mFullLength) {
+    if (static_cast<uint64_t>(mOffset) < mFullLength) {
       // We cannot read data in the main thread because it
       // might block for too long. Instead we post an IO task
       // to the IO thread if there is more data available.
@@ -138,15 +138,15 @@ void MediaOmxReader::CancelProcessCachedData()
 MediaOmxReader::MediaOmxReader(AbstractMediaDecoder *aDecoder)
   : MediaOmxCommonReader(aDecoder)
   , mMutex("MediaOmxReader.Data")
-  , mMP3FrameParser(-1)
   , mHasVideo(false)
   , mHasAudio(false)
   , mVideoSeekTimeUs(-1)
   , mAudioSeekTimeUs(-1)
+  , mLastParserDuration(-1)
   , mSkipCount(0)
   , mUseParserDuration(false)
-  , mLastParserDuration(-1)
   , mIsShutdown(false)
+  , mMP3FrameParser(-1)
   , mIsWaitingResources(false)
 {
 #ifdef PR_LOGGING
@@ -184,9 +184,11 @@ MediaOmxReader::Shutdown()
 
   nsRefPtr<ShutdownPromise> p = MediaDecoderReader::Shutdown();
 
-  nsCOMPtr<nsIRunnable> event =
-    NS_NewRunnableMethod(this, &MediaOmxReader::ReleaseDecoder);
-  NS_DispatchToMainThread(event);
+  // Wait for the superclass to finish tearing things down before releasing
+  // the decoder on the main thread.
+  nsCOMPtr<nsIThread> mt;
+  NS_GetMainThread(getter_AddRefs(mt));
+  p->Then(mt.get(), __func__, this, &MediaOmxReader::ReleaseDecoder, &MediaOmxReader::ReleaseDecoder);
 
   return p;
 }
@@ -372,8 +374,7 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
 
   // Record number of frames decoded and parsed. Automatically update the
   // stats counters using the AutoNotifyDecoded stack-based class.
-  uint32_t parsed = 0, decoded = 0;
-  AbstractMediaDecoder::AutoNotifyDecoded autoNotify(mDecoder, parsed, decoded);
+  AbstractMediaDecoder::AutoNotifyDecoded a(mDecoder);
 
   bool doSeek = mVideoSeekTimeUs != -1;
   if (doSeek) {
@@ -398,7 +399,7 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
       continue;
     }
 
-    parsed++;
+    a.mParsed++;
     if (frame.mShouldSkip && mSkipCount < MAX_DROPPED_FRAMES) {
       mSkipCount++;
       continue;
@@ -475,8 +476,8 @@ bool MediaOmxReader::DecodeVideoFrame(bool &aKeyframeSkip,
       return false;
     }
 
-    decoded++;
-    NS_ASSERTION(decoded <= parsed, "Expect to decode fewer frames than parsed in OMX decoder...");
+    a.mDecoded++;
+    NS_ASSERTION(a.mDecoded <= a.mParsed, "Expect to decode fewer frames than parsed in OMX decoder...");
 
     mVideoQueue.Push(v);
 

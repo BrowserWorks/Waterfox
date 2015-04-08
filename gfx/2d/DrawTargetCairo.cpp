@@ -12,6 +12,7 @@
 #include "BorrowedContext.h"
 #include "FilterNodeSoftware.h"
 #include "mozilla/Scoped.h"
+#include "mozilla/Vector.h"
 
 #include "cairo.h"
 #include "cairo-tee.h"
@@ -393,7 +394,7 @@ GetCairoSurfaceForSourceSurface(SourceSurface *aSurface,
 
   cairo_surface_set_user_data(surf,
                               &surfaceDataKey,
-                              data.forget().drop(),
+                              data.forget().take(),
                               ReleaseData);
   return surf;
 }
@@ -1048,7 +1049,7 @@ DrawTargetCairo::ClearRect(const Rect& aRect)
   if (!mContext || aRect.Width() <= 0 || aRect.Height() <= 0 ||
       !IsFinite(aRect.X()) || !IsFinite(aRect.Width()) ||
       !IsFinite(aRect.Y()) || !IsFinite(aRect.Height())) {
-    gfxCriticalError() << "ClearRect with invalid argument " << gfx::hexa(mContext) << " with " << aRect.Width() << "x" << aRect.Height() << " [" << aRect.X() << ", " << aRect.Y() << "]";
+    gfxCriticalError(CriticalLog::DefaultOptions(false)) << "ClearRect with invalid argument " << gfx::hexa(mContext) << " with " << aRect.Width() << "x" << aRect.Height() << " [" << aRect.X() << ", " << aRect.Y() << "]";
   }
 
   cairo_set_antialias(mContext, CAIRO_ANTIALIAS_NONE);
@@ -1154,8 +1155,16 @@ DrawTargetCairo::FillGlyphs(ScaledFont *aFont,
 
   cairo_set_antialias(mContext, GfxAntialiasToCairoAntialias(aOptions.mAntialiasMode));
 
-  // Convert our GlyphBuffer into an array of Cairo glyphs.
-  std::vector<cairo_glyph_t> glyphs(aBuffer.mNumGlyphs);
+  // Convert our GlyphBuffer into a vector of Cairo glyphs. This code can
+  // execute millions of times in short periods, so we want to avoid heap
+  // allocation whenever possible. So we use an inline vector capacity of 1024
+  // bytes (the maximum allowed by mozilla::Vector), which gives an inline
+  // length of 1024 / 24 = 42 elements, which is enough to typically avoid heap
+  // allocation in ~99% of cases.
+  Vector<cairo_glyph_t, 1024 / sizeof(cairo_glyph_t)> glyphs;
+  if (!glyphs.resizeUninitialized(aBuffer.mNumGlyphs)) {
+    MOZ_CRASH("glyphs allocation failed");
+  }
   for (uint32_t i = 0; i < aBuffer.mNumGlyphs; ++i) {
     glyphs[i].index = aBuffer.mGlyphs[i].mIndex;
     glyphs[i].x = aBuffer.mGlyphs[i].mPosition.x;
@@ -1490,7 +1499,7 @@ DrawTargetCairo::CreateSimilarDrawTarget(const IntSize &aSize, SurfaceFormat aFo
     }
   }
 
-  gfxCriticalError() << "Failed to create similar cairo surface! Size: " << aSize << " Status: " << cairo_surface_status(similar);
+  gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize))) << "Failed to create similar cairo surface! Size: " << aSize << " Status: " << cairo_surface_status(similar);
 
   return nullptr;
 }
@@ -1499,8 +1508,9 @@ bool
 DrawTargetCairo::InitAlreadyReferenced(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat)
 {
   if (cairo_surface_status(aSurface)) {
-    gfxCriticalError() << "Attempt to create DrawTarget for invalid surface. "
-                       << aSize << " Cairo Status: " << cairo_surface_status(aSurface);
+    gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize)))
+      << "Attempt to create DrawTarget for invalid surface. "
+      << aSize << " Cairo Status: " << cairo_surface_status(aSurface);
     cairo_surface_destroy(aSurface);
     return false;
   }

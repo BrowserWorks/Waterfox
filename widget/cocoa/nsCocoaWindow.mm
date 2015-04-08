@@ -92,7 +92,7 @@ static void RollUpPopups()
   nsCOMPtr<nsIWidget> rollupWidget = rollupListener->GetRollupWidget();
   if (!rollupWidget)
     return;
-  rollupListener->Rollup(0, nullptr, nullptr);
+  rollupListener->Rollup(0, true, nullptr, nullptr);
 }
 
 nsCocoaWindow::nsCocoaWindow()
@@ -141,12 +141,12 @@ nsCocoaWindow::~nsCocoaWindow()
 
   // Notify the children that we're gone.  Popup windows (e.g. tooltips) can
   // have nsChildView children.  'kid' is an nsChildView object if and only if
-  // its 'type' is 'eWindowType_child' or 'eWindowType_plugin'.
+  // its 'type' is 'eWindowType_child'.
   // childView->ResetParent() can change our list of children while it's
   // being iterated, so the way we iterate the list must allow for this.
   for (nsIWidget* kid = mLastChild; kid;) {
     nsWindowType kidType = kid->WindowType();
-    if (kidType == eWindowType_child || kidType == eWindowType_plugin) {
+    if (kidType == eWindowType_child) {
       nsChildView* childView = static_cast<nsChildView*>(kid);
       kid = kid->GetPrevSibling();
       childView->ResetParent();
@@ -2503,8 +2503,9 @@ nsCocoaWindow::ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
 {
   if (!mToplevelActiveState && mGeckoWindow) {
     nsIWidgetListener* listener = mGeckoWindow->GetWidgetListener();
-    if (listener)
+    if (listener) {
       listener->WindowActivated();
+    }
     mToplevelActiveState = true;
   }
 }
@@ -2513,8 +2514,9 @@ nsCocoaWindow::ExecuteNativeKeyBinding(NativeKeyBindingsType aType,
 {
   if (mToplevelActiveState && mGeckoWindow) {
     nsIWidgetListener* listener = mGeckoWindow->GetWidgetListener();
-    if (listener)
+    if (listener) {
       listener->WindowDeactivated();
+    }
     mToplevelActiveState = false;
   }
 }
@@ -3264,7 +3266,8 @@ static const NSString* kStateShowsToolbarButton = @"showsToolbarButton";
 
 - (NSPoint)windowButtonsPositionWithDefaultPosition:(NSPoint)aDefaultPosition
 {
-  if ([self drawsContentsIntoWindowFrame] && !NSIsEmptyRect(mWindowButtonsRect)) {
+  if ([self drawsContentsIntoWindowFrame] && !NSIsEmptyRect(mWindowButtonsRect) &&
+      !([self styleMask] & NSFullScreenWindowMask)) {
     return NSMakePoint(std::max(mWindowButtonsRect.origin.x, aDefaultPosition.x),
                        std::min(mWindowButtonsRect.origin.y, aDefaultPosition.y));
   }

@@ -99,7 +99,7 @@ NewDenseFullyAllocatedArrayWithTemplate(JSContext *cx, uint32_t length, JSObject
 
 /* Create a dense array with the same copy-on-write elements as another object. */
 extern JSObject *
-NewDenseCopyOnWriteArray(JSContext *cx, HandleNativeObject templateObject, gc::InitialHeap heap);
+NewDenseCopyOnWriteArray(JSContext *cx, HandleArrayObject templateObject, gc::InitialHeap heap);
 
 /*
  * Determines whether a write to the given element on |obj| should fail because
@@ -107,20 +107,16 @@ NewDenseCopyOnWriteArray(JSContext *cx, HandleNativeObject templateObject, gc::I
  * increase the length of the array.
  */
 extern bool
-WouldDefinePastNonwritableLength(ThreadSafeContext *cx,
+WouldDefinePastNonwritableLength(ExclusiveContext *cx,
                                  HandleObject obj, uint32_t index, bool strict,
                                  bool *definesPast);
 
 /*
  * Canonicalize |vp| to a uint32_t value potentially suitable for use as an
  * array length.
- *
- * For parallel execution we can only canonicalize non-object values.
  */
-template <ExecutionMode mode>
 extern bool
-CanonicalizeArrayLengthValue(typename ExecutionModeTraits<mode>::ContextType cx,
-                             HandleValue v, uint32_t *canonicalized);
+CanonicalizeArrayLengthValue(JSContext *cx, HandleValue v, uint32_t *canonicalized);
 
 extern bool
 GetLengthProperty(JSContext *cx, HandleObject obj, uint32_t *lengthp);

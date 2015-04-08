@@ -1531,7 +1531,7 @@ void DateFormatRegressionTest::TestParsing(void) {
 
 void DateFormatRegressionTest::TestT10334(void) {
     UErrorCode status = U_ZERO_ERROR;
-    UnicodeString pattern("--: EEE-WW-MMMM-yyyy");
+    UnicodeString pattern("'--: 'EEE-WW-MMMM-yyyy");
     UnicodeString text("--mon-02-march-2011");
     SimpleDateFormat format(pattern, status);
 

@@ -105,9 +105,9 @@ GeneratorObject::finalSuspend(JSContext *cx, HandleObject obj)
 }
 
 bool
-js::GeneratorThrowOrClose(JSContext *cx, HandleObject obj, HandleValue arg, uint32_t resumeKind)
+js::GeneratorThrowOrClose(JSContext *cx, Handle<GeneratorObject*> genObj, HandleValue arg,
+                          uint32_t resumeKind)
 {
-    GeneratorObject *genObj = &obj->as<GeneratorObject>();
     if (resumeKind == GeneratorObject::THROW) {
         cx->setPendingException(arg);
         genObj->setRunning();
@@ -202,36 +202,12 @@ LegacyGeneratorObject::close(JSContext *cx, HandleObject obj)
 
 const Class LegacyGeneratorObject::class_ = {
     "Generator",
-    JSCLASS_HAS_RESERVED_SLOTS(GeneratorObject::RESERVED_SLOTS),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
-    nullptr,                 /* finalize    */
-    nullptr,                 /* call        */
-    nullptr,                 /* hasInstance */
-    nullptr,                 /* construct   */
-    nullptr,                 /* trace       */
+    JSCLASS_HAS_RESERVED_SLOTS(GeneratorObject::RESERVED_SLOTS)
 };
 
 const Class StarGeneratorObject::class_ = {
     "Generator",
-    JSCLASS_HAS_RESERVED_SLOTS(GeneratorObject::RESERVED_SLOTS),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
-    nullptr,                 /* finalize    */
-    nullptr,                 /* call        */
-    nullptr,                 /* hasInstance */
-    nullptr,                 /* construct   */
-    nullptr,                 /* trace       */
+    JSCLASS_HAS_RESERVED_SLOTS(GeneratorObject::RESERVED_SLOTS)
 };
 
 static const JSFunctionSpec star_generator_methods[] = {
@@ -261,7 +237,7 @@ NewSingletonObjectWithObjectPrototype(JSContext *cx, Handle<GlobalObject *> glob
     JSObject *proto = global->getOrCreateObjectPrototype(cx);
     if (!proto)
         return nullptr;
-    return NewObjectWithGivenProto(cx, &JSObject::class_, proto, global, SingletonObject);
+    return NewObjectWithGivenProto<PlainObject>(cx, proto, global, SingletonObject);
 }
 
 static JSObject*
@@ -270,7 +246,7 @@ NewSingletonObjectWithFunctionPrototype(JSContext *cx, Handle<GlobalObject *> gl
     JSObject *proto = global->getOrCreateFunctionPrototype(cx);
     if (!proto)
         return nullptr;
-    return NewObjectWithGivenProto(cx, &JSObject::class_, proto, global, SingletonObject);
+    return NewObjectWithGivenProto<PlainObject>(cx, proto, global, SingletonObject);
 }
 
 /* static */ bool

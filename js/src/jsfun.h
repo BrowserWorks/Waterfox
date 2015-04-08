@@ -49,13 +49,16 @@ class JSFunction : public js::NativeObject
         ASMJS            = 0x0800,  /* function is an asm.js module or exported function */
         INTERPRETED_LAZY = 0x1000,  /* function is interpreted but doesn't have a script yet */
         ARROW            = 0x2000,  /* ES6 '(args) => body' syntax */
+        RESOLVED_LENGTH  = 0x4000,  /* f.length has been resolved (see js::fun_resolve). */
 
         /* Derived Flags values for convenience: */
         NATIVE_FUN = 0,
         ASMJS_CTOR = ASMJS | NATIVE_CTOR,
         ASMJS_LAMBDA_CTOR = ASMJS | NATIVE_CTOR | LAMBDA,
         INTERPRETED_LAMBDA = INTERPRETED | LAMBDA,
-        INTERPRETED_LAMBDA_ARROW = INTERPRETED | LAMBDA | ARROW
+        INTERPRETED_LAMBDA_ARROW = INTERPRETED | LAMBDA | ARROW,
+        STABLE_ACROSS_CLONES = NATIVE_CTOR | IS_FUN_PROTO | EXPR_CLOSURE | HAS_GUESSED_ATOM |
+                               LAMBDA | SELF_HOSTED | SELF_HOSTED_CTOR | HAS_REST | ASMJS | ARROW
     };
 
     static_assert(INTERPRETED == JS_FUNCTION_INTERPRETED_BIT,
@@ -126,13 +129,13 @@ class JSFunction : public js::NativeObject
     bool isSelfHostedBuiltin()      const { return flags() & SELF_HOSTED; }
     bool isSelfHostedConstructor()  const { return flags() & SELF_HOSTED_CTOR; }
     bool hasRest()                  const { return flags() & HAS_REST; }
+    bool isInterpretedLazy()        const { return flags() & INTERPRETED_LAZY; }
+    bool hasScript()                const { return flags() & INTERPRETED; }
 
-    bool isInterpretedLazy()        const {
-        return flags() & INTERPRETED_LAZY;
-    }
-    bool hasScript()                const {
-        return flags() & INTERPRETED;
-    }
+    // Arrow functions store their lexical |this| in the first extended slot.
+    bool isArrow()                  const { return flags() & ARROW; }
+
+    bool hasResolvedLength()        const { return flags() & RESOLVED_LENGTH; }
 
     bool hasJITCode() const {
         if (!hasScript())
@@ -140,9 +143,6 @@ class JSFunction : public js::NativeObject
 
         return nonLazyScript()->hasBaselineScript() || nonLazyScript()->hasIonScript();
     }
-
-    // Arrow functions store their lexical |this| in the first extended slot.
-    bool isArrow()                  const { return flags() & ARROW; }
 
     /* Compound attributes: */
     bool isBuiltin() const {
@@ -207,8 +207,16 @@ class JSFunction : public js::NativeObject
         flags_ |= ARROW;
     }
 
+    void setResolvedLength() {
+        flags_ |= RESOLVED_LENGTH;
+    }
+
     JSAtom *atom() const { return hasGuessedAtom() ? nullptr : atom_.get(); }
-    js::PropertyName *name() const { return hasGuessedAtom() || !atom_ ? nullptr : atom_->asPropertyName(); }
+
+    js::PropertyName *name() const {
+        return hasGuessedAtom() || !atom_ ? nullptr : atom_->asPropertyName();
+    }
+
     void initAtom(JSAtom *atom) { atom_.init(atom); }
 
     JSAtom *displayAtom() const {
@@ -577,6 +585,9 @@ class FunctionExtended : public JSFunction
     /* Reserved slots available for storage by particular native functions. */
     HeapValue extendedSlots[NUM_EXTENDED_SLOTS];
 };
+
+extern bool
+CloneFunctionObjectUseSameScript(JSCompartment *compartment, HandleFunction fun);
 
 extern JSFunction *
 CloneFunctionObject(JSContext *cx, HandleFunction fun, HandleObject parent,

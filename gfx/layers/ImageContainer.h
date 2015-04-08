@@ -105,6 +105,7 @@ class TextureClient;
 class CompositableClient;
 class CompositableForwarder;
 class SurfaceDescriptor;
+class GrallocImage;
 
 struct ImageBackendData
 {
@@ -112,18 +113,6 @@ struct ImageBackendData
 
 protected:
   ImageBackendData() {}
-};
-
-// sadly we'll need this until we get rid of Deprected image classes
-class ISharedImage {
-public:
-    virtual uint8_t* GetBuffer() = 0;
-
-    /**
-     * For use with the CompositableClient only (so that the later can
-     * synchronize the TextureClient with the TextureHost).
-     */
-    virtual TextureClient* GetTextureClient(CompositableClient* aClient) = 0;
 };
 
 /**
@@ -144,8 +133,6 @@ class Image {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Image)
 
 public:
-  virtual ISharedImage* AsSharedImage() { return nullptr; }
-
   ImageFormat GetFormat() { return mFormat; }
   void* GetImplData() { return mImplData; }
 
@@ -166,6 +153,21 @@ public:
   bool IsSentToCompositor() { return mSent; }
 
   virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() = 0;
+
+  virtual GrallocImage* AsGrallocImage()
+  {
+    return nullptr;
+  }
+
+  virtual bool IsValid() { return true; }
+
+  virtual uint8_t* GetBuffer() { return nullptr; }
+
+  /**
+  * For use with the CompositableClient only (so that the later can
+  * synchronize the TextureClient with the TextureHost).
+  */
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) { return nullptr; }
 
 protected:
   Image(void* aImplData, ImageFormat aFormat) :
@@ -785,8 +787,7 @@ protected:
  * device output color space. This class is very simple as all backends
  * have to know about how to deal with drawing a cairo image.
  */
-class CairoImage MOZ_FINAL : public Image,
-                             public ISharedImage {
+class CairoImage MOZ_FINAL : public Image {
 public:
   struct Data {
     gfx::IntSize mSize;
@@ -804,16 +805,14 @@ public:
     mSourceSurface = aData.mSourceSurface;
   }
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface()
+  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE
   {
     return mSourceSurface.get();
   }
 
-  virtual ISharedImage* AsSharedImage() { return this; }
-  virtual uint8_t* GetBuffer() { return nullptr; }
   virtual TextureClient* GetTextureClient(CompositableClient* aClient) MOZ_OVERRIDE;
 
-  gfx::IntSize GetSize() { return mSize; }
+  virtual gfx::IntSize GetSize() MOZ_OVERRIDE { return mSize; }
 
   CairoImage();
   ~CairoImage();

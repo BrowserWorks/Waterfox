@@ -30,7 +30,6 @@
 
 #include <arpa/inet.h>
 
-#include "mozilla/NullPtr.h"
 #include "mozilla/mozalloc.h"
 #include "nsTArray.h"
 #include "prnetdb.h"
@@ -718,11 +717,10 @@ void ARTPConnection::onInjectPacket(const sp<AMessage> &msg) {
 
     StreamInfo *s = &*it;
 
-    status_t err;
     if (it->mInterleavedRTPIdx == index) {
-        err = parseRTP(s, buffer);
+        parseRTP(s, buffer);
     } else {
-        err = parseRTCP(s, buffer);
+        parseRTCP(s, buffer);
     }
 }
 

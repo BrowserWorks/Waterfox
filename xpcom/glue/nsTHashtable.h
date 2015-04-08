@@ -128,8 +128,8 @@ public:
     NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
 
     EntryType* entry = reinterpret_cast<EntryType*>(
-      PL_DHashTableOperate(const_cast<PLDHashTable*>(&mTable),
-                           EntryType::KeyToPointer(aKey), PL_DHASH_LOOKUP));
+      PL_DHashTableLookup(const_cast<PLDHashTable*>(&mTable),
+                          EntryType::KeyToPointer(aKey)));
     return PL_DHASH_ENTRY_IS_BUSY(entry) ? entry : nullptr;
   }
 
@@ -158,8 +158,8 @@ public:
   EntryType* PutEntry(KeyType aKey, const fallible_t&) NS_WARN_UNUSED_RESULT {
     NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
 
-    return static_cast<EntryType*>(PL_DHashTableOperate(
-      &mTable, EntryType::KeyToPointer(aKey), PL_DHASH_ADD));
+    return static_cast<EntryType*>(PL_DHashTableAdd(
+      &mTable, EntryType::KeyToPointer(aKey)));
   }
 
   /**
@@ -170,9 +170,8 @@ public:
   {
     NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
 
-    PL_DHashTableOperate(&mTable,
-                         EntryType::KeyToPointer(aKey),
-                         PL_DHASH_REMOVE);
+    PL_DHashTableRemove(&mTable,
+                        EntryType::KeyToPointer(aKey));
   }
 
   /**
@@ -358,7 +357,7 @@ protected:
 
 private:
   // copy constructor, not implemented
-  nsTHashtable(nsTHashtable<EntryType>& aToCopy) MOZ_DELETE;
+  nsTHashtable(nsTHashtable<EntryType>& aToCopy) = delete;
 
   /**
    * Initialize the table.
@@ -375,7 +374,7 @@ private:
                                                  void*);
 
   // assignment operator, not implemented
-  nsTHashtable<EntryType>& operator=(nsTHashtable<EntryType>& aToEqual) MOZ_DELETE;
+  nsTHashtable<EntryType>& operator=(nsTHashtable<EntryType>& aToEqual) = delete;
 };
 
 //

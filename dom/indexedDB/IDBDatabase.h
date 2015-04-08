@@ -52,6 +52,9 @@ class IDBDatabase MOZ_FINAL
   typedef mozilla::dom::StorageType StorageType;
   typedef mozilla::dom::quota::PersistenceType PersistenceType;
 
+  class LogWarningRunnable;
+  friend class LogWarningRunnable;
+
   class Observer;
   friend class Observer;
 
@@ -203,8 +206,7 @@ public:
   ObjectStoreNames() const;
 
   already_AddRefed<IDBObjectStore>
-  CreateObjectStore(JSContext* aCx,
-                    const nsAString& aName,
+  CreateObjectStore(const nsAString& aName,
                     const IDBObjectStoreParameters& aOptionalParameters,
                     ErrorResult& aRv);
 

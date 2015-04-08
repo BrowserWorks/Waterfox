@@ -1,4 +1,4 @@
-# Copyright (c) 2001-2014 International Business Machines
+# Copyright (c) 2001-2015 International Business Machines
 # Corporation and others. All Rights Reserved.
 # Begin temporary addition.
 # These are very bad "C" APIs that do not work with a C compiler and
@@ -74,6 +74,7 @@ region.h
 rep.h
 resbund.h
 schriter.h
+scientificformathelper.h
 scientificnumberformatter.h
 search.h
 selfmt.h

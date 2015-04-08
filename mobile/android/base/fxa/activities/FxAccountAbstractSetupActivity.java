@@ -5,7 +5,9 @@
 package org.mozilla.gecko.fxa.activities;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -23,8 +25,10 @@ import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.login.Engaged;
 import org.mozilla.gecko.fxa.login.State;
 import org.mozilla.gecko.fxa.tasks.FxAccountSetupTask.ProgressDisplay;
+import org.mozilla.gecko.fxa.tasks.FxAccountUnlockCodeResender;
 import org.mozilla.gecko.sync.ExtendedJSONObject;
 import org.mozilla.gecko.sync.SyncConfiguration;
+import org.mozilla.gecko.sync.Utils;
 import org.mozilla.gecko.sync.setup.Constants;
 import org.mozilla.gecko.sync.setup.activities.ActivityUtils;
 
@@ -35,9 +39,12 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Spannable;
 import android.text.TextWatcher;
+import android.text.method.LinkMovementMethod;
 import android.text.method.PasswordTransformationMethod;
 import android.text.method.SingleLineTransformationMethod;
+import android.text.style.ClickableSpan;
 import android.util.Patterns;
 import android.view.KeyEvent;
 import android.view.View;
@@ -154,7 +161,35 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   }
 
   protected void showClientRemoteException(final FxAccountClientRemoteException e) {
-    remoteErrorTextView.setText(e.getErrorMessageStringResource());
+    if (!e.isAccountLocked()) {
+      remoteErrorTextView.setText(e.getErrorMessageStringResource());
+      return;
+    }
+
+    // This horrible bit of special-casing is because we want this error message
+    // to contain a clickable, extra chunk of text, but we don't want to pollute
+    // the exception class with Android specifics.
+    final int messageId = e.getErrorMessageStringResource();
+    final int clickableId = R.string.fxaccount_resend_unlock_code_button_label;
+    final Spannable span = Utils.interpolateClickableSpan(this, messageId, clickableId, new ClickableSpan() {
+      @Override
+      public void onClick(View widget) {
+        // It would be best to capture the email address sent to the server
+        // and use it here, but this will do for now. If the user modifies
+        // the email address entered, the error text is hidden, so sending a
+        // changed email address would be the result of an unusual race.
+        final String email = emailEdit.getText().toString();
+        byte[] emailUTF8 = null;
+        try {
+          emailUTF8 = email.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+          // It's okay, we'll fail in the code resender.
+        }
+        FxAccountUnlockCodeResender.resendUnlockCode(FxAccountAbstractSetupActivity.this, getAuthServerEndpoint(), emailUTF8);
+      }
+    });
+    remoteErrorTextView.setMovementMethod(LinkMovementMethod.getInstance());
+    remoteErrorTextView.setText(span);
   }
 
   protected void addListeners() {
@@ -530,5 +565,11 @@ abstract public class FxAccountAbstractSetupActivity extends FxAccountAbstractAc
   protected void setCustomServerViewVisibility(int visibility) {
     ensureFindViewById(null, R.id.account_server_layout, "account server layout").setVisibility(visibility);
     ensureFindViewById(null, R.id.sync_server_layout, "sync server layout").setVisibility(visibility);
+  }
+
+  protected Map<String, String> getQueryParameters() {
+    final Map<String, String> queryParameters = new HashMap<>();
+    queryParameters.put("service", "sync");
+    return queryParameters;
   }
 }

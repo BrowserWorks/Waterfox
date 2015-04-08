@@ -67,6 +67,7 @@ EXPORTS.js += [
     '../public/CallNonGenericMethod.h',
     '../public/CharacterEncoding.h',
     '../public/Class.h',
+    '../public/Conversions.h',
     '../public/Date.h',
     '../public/Debug.h',
     '../public/GCAPI.h',
@@ -119,7 +120,6 @@ UNIFIED_SOURCES += [
     'frontend/ParseNode.cpp',
     'frontend/TokenStream.cpp',
     'gc/Barrier.cpp',
-    'gc/ForkJoinNursery.cpp',
     'gc/GCTrace.cpp',
     'gc/Iteration.cpp',
     'gc/Marking.cpp',
@@ -178,8 +178,6 @@ UNIFIED_SOURCES += [
     'jit/MIR.cpp',
     'jit/MIRGraph.cpp',
     'jit/MoveResolver.cpp',
-    'jit/ParallelFunctions.cpp',
-    'jit/ParallelSafetyAnalysis.cpp',
     'jit/PerfSpewer.cpp',
     'jit/RangeAnalysis.cpp',
     'jit/Recover.cpp',
@@ -313,6 +311,8 @@ if CONFIG['MOZ_INSTRUMENTS']:
 if CONFIG['ENABLE_TRACE_LOGGING']:
     SOURCES += [
         'vm/TraceLogging.cpp',
+        'vm/TraceLoggingGraph.cpp',
+        'vm/TraceLoggingTypes.cpp',
     ]
 
 if not CONFIG['ENABLE_ION']:
@@ -422,10 +422,7 @@ else:
         'perf/pm_stub.cpp'
     ]
 
-# Disable PGO for MSVC 2010 due to unpredictable performance, see
-# bug 1030706.
-if CONFIG['_MSC_VER'] != '1600':
-    MSVC_ENABLE_PGO = True
+MSVC_ENABLE_PGO = True
 
 HostSimplePrograms([
     'host_jskwgen',
@@ -472,11 +469,8 @@ if CONFIG['MOZ_ETW']:
     RESFILE = 'ETWProvider.res'
 
 if CONFIG['NIGHTLY_BUILD']:
-    DEFINES['ENABLE_PARALLEL_JS'] = True
     DEFINES['ENABLE_BINARYDATA'] = True
     DEFINES['ENABLE_SHARED_ARRAY_BUFFER'] = True
-    if CONFIG['ENABLE_ION'] and CONFIG['JSGC_GENERATIONAL_CONFIGURED']:
-        DEFINES['JSGC_FJGENERATIONAL'] = True
 
 DEFINES['EXPORT_JS_API'] = True
 
@@ -519,3 +513,6 @@ if CONFIG['OS_ARCH'] == 'SunOS':
         'nsl',
         'socket',
     ]
+
+if CONFIG['GNU_CXX']:
+    FAIL_ON_WARNINGS = True

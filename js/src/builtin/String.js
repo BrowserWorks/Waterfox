@@ -189,7 +189,7 @@ function String_repeat(count) {
     return T;
 }
 
-#define STRING_ITERATOR_SLOT_ITERATED_OBJECT 0
+#define STRING_ITERATOR_SLOT_ITERATED_STRING 0
 #define STRING_ITERATOR_SLOT_NEXT_INDEX 1
 
 // ES6 draft specification, section 21.1.3.27, version 2013-09-27.
@@ -197,7 +197,7 @@ function String_iterator() {
     CheckObjectCoercible(this);
     var S = ToString(this);
     var iterator = NewStringIterator();
-    UnsafeSetReservedSlot(iterator, STRING_ITERATOR_SLOT_ITERATED_OBJECT, S);
+    UnsafeSetReservedSlot(iterator, STRING_ITERATOR_SLOT_ITERATED_STRING, S);
     UnsafeSetReservedSlot(iterator, STRING_ITERATOR_SLOT_NEXT_INDEX, 0);
     return iterator;
 }
@@ -207,12 +207,16 @@ function StringIteratorIdentity() {
 }
 
 function StringIteratorNext() {
-    // FIXME: Cross-compartment wrapper StringIterator objects should pass this test.  Bug 924059.
-    if (!IsObject(this) || !IsStringIterator(this))
-        ThrowError(JSMSG_INCOMPATIBLE_METHOD, "StringIterator", "next", ToString(this));
+    if (!IsObject(this) || !IsStringIterator(this)) {
+        return callFunction(CallStringIteratorMethodIfWrapped, this,
+                            "StringIteratorNext");
+    }
 
-    var S = UnsafeGetReservedSlot(this, STRING_ITERATOR_SLOT_ITERATED_OBJECT);
-    var index = UnsafeGetReservedSlot(this, STRING_ITERATOR_SLOT_NEXT_INDEX);
+    var S = UnsafeGetStringFromReservedSlot(this, STRING_ITERATOR_SLOT_ITERATED_STRING);
+    // We know that JSString::MAX_LENGTH <= INT32_MAX (and assert this in
+    // SelfHostring.cpp) so our current index can never be anything other than
+    // an Int32Value.
+    var index = UnsafeGetInt32FromReservedSlot(this, STRING_ITERATOR_SLOT_NEXT_INDEX);
     var size = S.length;
     var result = { value: undefined, done: false };
 

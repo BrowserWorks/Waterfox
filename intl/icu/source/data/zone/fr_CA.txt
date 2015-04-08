@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fr_CA.xml
 // *
 // ***************************************************************************
 fr_CA{
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
     zoneStrings{
         "Africa:Ndjamena"{
             ec{"Ndjamena"}
@@ -27,15 +27,6 @@ fr_CA{
         "America:St_Thomas"{
             ec{"Saint Thomas"}
         }
-        "Asia:Baghdad"{
-            ec{"Baghdad"}
-        }
-        "Asia:Dhaka"{
-            ec{"Dacca"}
-        }
-        "Asia:Thimphu"{
-            ec{"Thimphou"}
-        }
         "Atlantic:Faeroe"{
             ec{"Îles Féroé"}
         }
@@ -47,27 +38,6 @@ fr_CA{
         }
         "Europe:Vatican"{
             ec{"Vatican"}
-        }
-        "Indian:Chagos"{
-            ec{"Archipel des Chagos"}
-        }
-        "Indian:Christmas"{
-            ec{"Île Christmas"}
-        }
-        "Indian:Cocos"{
-            ec{"Îles Cocos"}
-        }
-        "Indian:Comoro"{
-            ec{"Union des Comores"}
-        }
-        "Indian:Kerguelen"{
-            ec{"Îles Kerguelen"}
-        }
-        "Pacific:Pitcairn"{
-            ec{"Île Pitcairn"}
-        }
-        "Pacific:Wallis"{
-            ec{"Uvéa"}
         }
         "meta:Acre"{
             ld{"heure avancée de l’Acre"}
@@ -511,8 +481,7 @@ fr_CA{
             lg{"heure d’Ekaterinbourg"}
             ls{"heure normale d’Ekaterinbourg"}
         }
-        regionFormat{"Heure de {0}"}
         regionFormatDaylight{"{0} (heure avancée)"}
-        regionFormatStandard{"{0} (heure légale)"}
+        regionFormatStandard{"{0} (heure normale)"}
     }
 }

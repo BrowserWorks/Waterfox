@@ -30,7 +30,6 @@
 #endif
 #include "vm/Monitor.h"
 
-#include "gc/ForkJoinNursery-inl.h"
 #include "vm/Interpreter-inl.h"
 
 using namespace js;
@@ -207,18 +206,12 @@ class ForkJoinOperation
     bool invalidateBailedOutScripts();
     ExecutionStatus sequentialExecution(bool disqualified);
 
-    TrafficLight appendCallTargetsToWorklist(uint32_t index, ExecutionStatus *status);
-    TrafficLight appendCallTargetToWorklist(HandleScript script, ExecutionStatus *status);
     bool addToWorklist(HandleScript script);
     inline bool hasScript(const types::RecompileInfoVector &scripts, JSScript *script);
 }; // class ForkJoinOperation
 
 class ForkJoinShared : public ParallelJob, public Monitor
 {
-#ifdef JSGC_FJGENERATIONAL
-    friend class gc::ForkJoinGCShared;
-#endif
-
     /////////////////////////////////////////////////////////////////////////
     // Constant fields
 
@@ -682,7 +675,7 @@ ForkJoinOperation::compileForParallelExecution(ExecutionStatus *status)
             if (!script->hasParallelIonScript()) {
                 // Script has not yet been compiled. Attempt to compile it.
                 SpewBeginCompile(script);
-                MethodStatus mstatus = CanEnterInParallel(cx_, script);
+                MethodStatus mstatus = Method_Error;
                 SpewEndCompile(mstatus);
 
                 switch (mstatus) {
@@ -732,8 +725,6 @@ ForkJoinOperation::compileForParallelExecution(ExecutionStatus *status)
             // worklist if so. Clear the flag after that, since we
             // will be compiling the call targets.
             MOZ_ASSERT(script->hasParallelIonScript());
-            if (appendCallTargetsToWorklist(i, status) == RedLight)
-                return RedLight;
         }
 
         // If there is compilation occurring in a helper thread, then
@@ -796,65 +787,6 @@ ForkJoinOperation::compileForParallelExecution(ExecutionStatus *status)
     }
     worklist_.clear();
     worklistData_.clear();
-    return GreenLight;
-}
-
-ForkJoinOperation::TrafficLight
-ForkJoinOperation::appendCallTargetsToWorklist(uint32_t index, ExecutionStatus *status)
-{
-    // GreenLight: call targets appended
-    // RedLight: fatal error or completed work via warmups or fallback
-
-    MOZ_ASSERT(worklist_[index]->hasParallelIonScript());
-
-    // Check whether we have already enqueued the targets for
-    // this entry and avoid doing it again if so.
-    if (worklistData_[index].calleesEnqueued)
-        return GreenLight;
-    worklistData_[index].calleesEnqueued = true;
-
-    // Iterate through the callees and enqueue them.
-    RootedScript target(cx_);
-    IonScript *ion = worklist_[index]->parallelIonScript();
-    for (uint32_t i = 0; i < ion->callTargetEntries(); i++) {
-        target = ion->callTargetList()[i];
-        parallel::Spew(parallel::SpewCompile,
-                       "Adding call target %s:%u",
-                       target->filename(), target->lineno());
-        if (appendCallTargetToWorklist(target, status) == RedLight)
-            return RedLight;
-    }
-
-    return GreenLight;
-}
-
-ForkJoinOperation::TrafficLight
-ForkJoinOperation::appendCallTargetToWorklist(HandleScript script, ExecutionStatus *status)
-{
-    // GreenLight: call target appended if necessary
-    // RedLight: fatal error or completed work via warmups or fallback
-
-    MOZ_ASSERT(script);
-
-    // Fallback to sequential if disabled.
-    if (!script->canParallelIonCompile()) {
-        Spew(SpewCompile, "Skipping %p:%s:%u, canParallelIonCompile() is false",
-             script.get(), script->filename(), script->lineno());
-        return sequentialExecution(true, status);
-    }
-
-    if (script->hasParallelIonScript()) {
-        // Skip if the code is expected to result in a bailout.
-        if (script->parallelIonScript()->bailoutExpected()) {
-            Spew(SpewCompile, "Skipping %p:%s:%u, bailout expected",
-                 script.get(), script->filename(), script->lineno());
-            return sequentialExecution(false, status);
-        }
-    }
-
-    if (!addToWorklist(script))
-        return fatalError(status);
-
     return GreenLight;
 }
 
@@ -1351,7 +1283,6 @@ class ParallelIonInvoke
     }
 
     bool invoke(ForkJoinContext *cx) {
-        JitActivation activation(cx);
         Value result = Int32Value(argc_);
         CALL_GENERATED_CODE(enter_, jitcode_, argc_ + 1, argv_ + 1, nullptr, calleeToken_,
                             nullptr, 0, &result);
@@ -1605,36 +1536,8 @@ ForkJoinShared::executePortion(PerThreadData *perThread, ThreadPoolWorker *worke
 
         bool ok = fii.invoke(&cx);
         MOZ_ASSERT(ok == !cx.bailoutRecord->bailedOut());
-        if (!ok) {
+        if (!ok)
             setAbortFlagAndRequestInterrupt(false);
-#ifdef JSGC_FJGENERATIONAL
-            // TODO: See bugs 1010169, 993347.
-            //
-            // It is not desirable to promote here, but if we don't do
-            // this then we can't unconditionally transfer arenas to
-            // the compartment, since the arenas can contain objects
-            // that point into the nurseries.  If those objects are
-            // touched at all by the GC, eg as part of a prebarrier,
-            // then chaos ensues.
-            //
-            // The proper fix might appear to be to note the abort and
-            // not transfer, but instead clear, the arenas.  However,
-            // the result array will remain live and unless it is
-            // cleared immediately and without running barriers then
-            // it will have pointers into the now-cleared areas, which
-            // is also wrong.
-            //
-            // For the moment, until we figure out how to clear the
-            // result array properly and implement that, it may be
-            // that the best thing we can do here is to evacuate and
-            // then let the GC run its course.
-            cx.evacuateLiveData();
-#endif
-        } else {
-#ifdef JSGC_FJGENERATIONAL
-            cx.evacuateLiveData();
-#endif
-        }
     }
 
     Spew(SpewOps, "Down");
@@ -1695,49 +1598,6 @@ ForkJoinShared::requestZoneGC(JS::Zone *zone, JS::gcreason::Reason reason)
     }
 }
 
-#ifdef JSGC_FJGENERATIONAL
-
-JSRuntime*
-js::gc::ForkJoinGCShared::runtime()
-{
-    return shared_->runtime();
-}
-
-JS::Zone*
-js::gc::ForkJoinGCShared::zone()
-{
-    return shared_->zone();
-}
-
-JSObject*
-js::gc::ForkJoinGCShared::updatable()
-{
-    return shared_->updatable();
-}
-
-js::gc::ForkJoinNurseryChunk *
-js::gc::ForkJoinGCShared::allocateNurseryChunk()
-{
-    return shared_->threadPool_->getChunk();
-}
-
-void
-js::gc::ForkJoinGCShared::freeNurseryChunk(js::gc::ForkJoinNurseryChunk *p)
-{
-    shared_->threadPool_->putFreeChunk(p);
-}
-
-void
-js::gc::ForkJoinGCShared::spewGC(const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    SpewVA(SpewGC, fmt, ap);
-    va_end(ap);
-}
-
-#endif // JSGC_FJGENERATIONAL
-
 /////////////////////////////////////////////////////////////////////////////
 // ForkJoinContext
 //
@@ -1750,10 +1610,6 @@ ForkJoinContext::ForkJoinContext(PerThreadData *perThreadData, ThreadPoolWorker 
     targetRegionStart(nullptr),
     targetRegionEnd(nullptr),
     shared_(shared),
-#ifdef JSGC_FJGENERATIONAL
-    gcShared_(shared),
-    nursery_(const_cast<ForkJoinContext*>(this), &this->gcShared_, allocator),
-#endif
     worker_(worker),
     acquiredJSContext_(false),
     nogc_()
@@ -1775,10 +1631,6 @@ ForkJoinContext::ForkJoinContext(PerThreadData *perThreadData, ThreadPoolWorker 
 
 bool ForkJoinContext::initialize()
 {
-#ifdef JSGC_FJGENERATIONAL
-    if (!nursery_.initialize())
-        return false;
-#endif
     return true;
 }
 

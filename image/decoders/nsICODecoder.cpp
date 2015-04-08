@@ -58,7 +58,7 @@ nsICODecoder::GetNumColors()
 }
 
 
-nsICODecoder::nsICODecoder(RasterImage& aImage)
+nsICODecoder::nsICODecoder(RasterImage* aImage)
  : Decoder(aImage)
 {
   mPos = mImageOffset = mCurrIcon = mNumIcons = mBPP = mRowBytes = 0;
@@ -214,14 +214,13 @@ nsICODecoder::SetHotSpotIfCursor()
 }
 
 void
-nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
-                            DecodeStrategy aStrategy)
+nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
   NS_ABORT_IF_FALSE(!HasError(), "Shouldn't call WriteInternal after error!");
 
   if (!aCount) {
     if (mContainedDecoder) {
-      WriteToContainedDecoder(aBuffer, aCount, aStrategy);
+      WriteToContainedDecoder(aBuffer, aCount);
     }
     return;
   }
@@ -250,7 +249,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
   }
 
   uint16_t colorDepth = 0;
-  nsIntSize prefSize = mImage.GetRequestedResolution();
+  nsIntSize prefSize = mImage->GetRequestedResolution();
   if (prefSize.width == 0 && prefSize.height == 0) {
     prefSize.SizeTo(PREFICONSIZE, PREFICONSIZE);
   }
@@ -343,10 +342,11 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
     if (mIsPNG) {
       mContainedDecoder = new nsPNGDecoder(mImage);
       mContainedDecoder->SetSizeDecode(IsSizeDecode());
+      mContainedDecoder->SetSendPartialInvalidations(mSendPartialInvalidations);
       mContainedDecoder->InitSharedDecoder(mImageData, mImageDataLength,
                                            mColormap, mColormapSize,
                                            Move(mRefForContainedDecoder));
-      if (!WriteToContainedDecoder(mSignature, PNGSIGNATURESIZE, aStrategy)) {
+      if (!WriteToContainedDecoder(mSignature, PNGSIGNATURESIZE)) {
         return;
       }
     }
@@ -354,7 +354,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
 
   // If we have a PNG, let the PNG decoder do all of the rest of the work
   if (mIsPNG && mContainedDecoder && mPos >= mImageOffset + PNGSIGNATURESIZE) {
-    if (!WriteToContainedDecoder(aBuffer, aCount, aStrategy)) {
+    if (!WriteToContainedDecoder(aBuffer, aCount)) {
       return;
     }
 
@@ -421,6 +421,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
     mContainedDecoder = bmpDecoder;
     bmpDecoder->SetUseAlphaData(true);
     mContainedDecoder->SetSizeDecode(IsSizeDecode());
+    mContainedDecoder->SetSendPartialInvalidations(mSendPartialInvalidations);
     mContainedDecoder->InitSharedDecoder(mImageData, mImageDataLength,
                                          mColormap, mColormapSize,
                                          Move(mRefForContainedDecoder));
@@ -433,8 +434,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
       PostDataError();
       return;
     }
-    if (!WriteToContainedDecoder((const char*)bfhBuffer, sizeof(bfhBuffer),
-                                  aStrategy)) {
+    if (!WriteToContainedDecoder((const char*)bfhBuffer, sizeof(bfhBuffer))) {
       return;
     }
 
@@ -455,7 +455,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
     }
 
     // Write out the BMP's bitmap info header
-    if (!WriteToContainedDecoder(mBIHraw, sizeof(mBIHraw), aStrategy)) {
+    if (!WriteToContainedDecoder(mBIHraw, sizeof(mBIHraw))) {
       return;
     }
 
@@ -505,7 +505,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
         toFeed = aCount;
       }
 
-      if (!WriteToContainedDecoder(aBuffer, toFeed, aStrategy)) {
+      if (!WriteToContainedDecoder(aBuffer, toFeed)) {
         return;
       }
 
@@ -594,10 +594,9 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
 }
 
 bool
-nsICODecoder::WriteToContainedDecoder(const char* aBuffer, uint32_t aCount,
-                                      DecodeStrategy aStrategy)
+nsICODecoder::WriteToContainedDecoder(const char* aBuffer, uint32_t aCount)
 {
-  mContainedDecoder->Write(aBuffer, aCount, aStrategy);
+  mContainedDecoder->Write(aBuffer, aCount);
   mProgress |= mContainedDecoder->TakeProgress();
   mInvalidRect.Union(mContainedDecoder->TakeInvalidRect());
   if (mContainedDecoder->HasDataError()) {
@@ -639,12 +638,12 @@ nsICODecoder::NeedsNewFrame() const
 }
 
 nsresult
-nsICODecoder::AllocateFrame()
+nsICODecoder::AllocateFrame(const nsIntSize& aTargetSize /* = nsIntSize() */)
 {
   nsresult rv;
 
   if (mContainedDecoder) {
-    rv = mContainedDecoder->AllocateFrame();
+    rv = mContainedDecoder->AllocateFrame(aTargetSize);
     mCurrentFrame = mContainedDecoder->GetCurrentFrameRef();
     mProgress |= mContainedDecoder->TakeProgress();
     mInvalidRect.Union(mContainedDecoder->TakeInvalidRect());
@@ -653,7 +652,7 @@ nsICODecoder::AllocateFrame()
 
   // Grab a strong ref that we'll later hand over to the contained decoder. This
   // lets us avoid creating a RawAccessFrameRef off-main-thread.
-  rv = Decoder::AllocateFrame();
+  rv = Decoder::AllocateFrame(aTargetSize);
   mRefForContainedDecoder = GetCurrentFrameRef();
   return rv;
 }

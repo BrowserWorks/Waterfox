@@ -1,19 +1,16 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sw.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sw.xml
- */
 sw{
     Currencies{
         AED{
             "AED",
-            "dirham ya Falme za Kiarabu",
+            "Dirham ya Falme za Kiarabu",
         }
         AFN{
             "AFN",
@@ -33,7 +30,7 @@ sw{
         }
         AOA{
             "AOA",
-            "kwanza ya Angola",
+            "Kwanza ya Angola",
         }
         ARS{
             "ARS",
@@ -41,7 +38,7 @@ sw{
         }
         AUD{
             "A$",
-            "dola ya Australia",
+            "Dola ya Australia",
         }
         AWG{
             "AWG",
@@ -69,11 +66,11 @@ sw{
         }
         BHD{
             "BHD",
-            "dinari ya Bahareni",
+            "Dinari ya Bahareni",
         }
         BIF{
             "BIF",
-            "faranga ya Burundi",
+            "Faranga ya Burundi",
         }
         BMD{
             "BMD",
@@ -101,7 +98,7 @@ sw{
         }
         BWP{
             "BWP",
-            "pula ya Botswana",
+            "Pula ya Botswana",
         }
         BYR{
             "BYR",
@@ -113,15 +110,15 @@ sw{
         }
         CAD{
             "CA$",
-            "dola ya Kanada",
+            "Dola ya Kanada",
         }
         CDF{
             "CDF",
-            "faranga ya Kongo",
+            "Faranga ya Kongo",
         }
         CHF{
             "CHF",
-            "faranga ya Uswisi",
+            "Faranga ya Uswisi",
         }
         CLP{
             "CLP",
@@ -129,7 +126,7 @@ sw{
         }
         CNY{
             "CN¥",
-            "yuan ya Uchina",
+            "Yuan ya Uchina",
         }
         COP{
             "COP",
@@ -149,7 +146,7 @@ sw{
         }
         CVE{
             "CVE",
-            "eskudo ya Kepuvede",
+            "Eskudo ya Kepuvede",
         }
         CZK{
             "CZK",
@@ -157,7 +154,7 @@ sw{
         }
         DJF{
             "DJF",
-            "faranga ya Jibuti",
+            "Faranga ya Jibuti",
         }
         DKK{
             "DKK",
@@ -169,23 +166,23 @@ sw{
         }
         DZD{
             "DZD",
-            "dinari ya Aljeria",
+            "Dinari ya Aljeria",
         }
         EGP{
             "EGP",
-            "pauni ya Misri",
+            "Pauni ya Misri",
         }
         ERN{
             "ERN",
-            "nakfa ya Eritrea",
+            "Nakfa ya Eritrea",
         }
         ETB{
             "ETB",
-            "birr ya Uhabeshi",
+            "Nirr ya Uhabeshi",
         }
         EUR{
             "€",
-            "yuro",
+            "Yuro",
         }
         FJD{
             "FJD",
@@ -197,7 +194,7 @@ sw{
         }
         GBP{
             "£",
-            "pauni ya Uingereza",
+            "Pauni ya Uingereza",
         }
         GEL{
             "GEL",
@@ -205,7 +202,7 @@ sw{
         }
         GHC{
             "GHC",
-            "sedi ya Ghana",
+            "Sedi ya Ghana",
         }
         GHS{
             "GHS",
@@ -217,15 +214,15 @@ sw{
         }
         GMD{
             "GMD",
-            "dalasi ya Gambia",
+            "Dalasi ya Gambia",
         }
         GNF{
             "GNF",
-            "faranga ya Guinea",
+            "Faranga ya Guinea",
         }
         GNS{
             "GNS",
-            "faranga ya Gine",
+            "Faranga ya Gine",
         }
         GTQ{
             "GTQ",
@@ -265,7 +262,7 @@ sw{
         }
         INR{
             "₹",
-            "rupia ya India",
+            "Rupia ya India",
         }
         IQD{
             "IQD",
@@ -293,7 +290,7 @@ sw{
         }
         KES{
             "Ksh",
-            "shilingi ya Kenya",
+            "Shilingi ya Kenya",
         }
         KGS{
             "KGS",
@@ -305,7 +302,7 @@ sw{
         }
         KMF{
             "KMF",
-            "faranga ya Komoro",
+            "Faranga ya Komoro",
         }
         KPW{
             "KPW",
@@ -341,11 +338,11 @@ sw{
         }
         LRD{
             "LRD",
-            "dola ya Liberia",
+            "Dola ya Liberia",
         }
         LSL{
             "LSL",
-            "loti ya Lesoto",
+            "Loti ya Lesoto",
         }
         LTL{
             "LTL",
@@ -357,11 +354,11 @@ sw{
         }
         LYD{
             "LYD",
-            "dinari ya Libya",
+            "Dinari ya Libya",
         }
         MAD{
             "MAD",
-            "dirham ya Moroko",
+            "Dirham ya Moroko",
         }
         MDL{
             "MDL",
@@ -393,7 +390,7 @@ sw{
         }
         MUR{
             "MUR",
-            "rupia ya Morisi",
+            "Rupia ya Morisi",
         }
         MVR{
             "MVR",
@@ -401,7 +398,7 @@ sw{
         }
         MWK{
             "MWK",
-            "kwacha ya Malawi",
+            "Kwacha ya Malawi",
         }
         MXN{
             "MX$",
@@ -413,7 +410,7 @@ sw{
         }
         MZM{
             "MZM",
-            "metikali ya Msumbiji (1980–2006)",
+            "Metikali ya Msumbiji (1980–2006)",
         }
         MZN{
             "MZN",
@@ -421,11 +418,11 @@ sw{
         }
         NAD{
             "NAD",
-            "dola ya Namibia",
+            "Dola ya Namibia",
         }
         NGN{
             "NGN",
-            "naira ya Nijeria",
+            "Naira ya Nijeria",
         }
         NIO{
             "NIO",
@@ -493,11 +490,11 @@ sw{
         }
         RWF{
             "RWF",
-            "faranga ya Rwanda",
+            "Faranga ya Rwanda",
         }
         SAR{
             "SAR",
-            "riyal ya Saudia",
+            "Riyal ya Saudia",
         }
         SBD{
             "SBD",
@@ -505,15 +502,15 @@ sw{
         }
         SCR{
             "SCR",
-            "rupia ya Ushelisheli",
+            "Rupia ya Ushelisheli",
         }
         SDG{
             "SDG",
-            "pauni ya Sudani",
+            "Pauni ya Sudani",
         }
         SDP{
             "SDP",
-            "pauni ya Sudani (1957–1998)",
+            "Pauni ya Sudani (1957–1998)",
         }
         SEK{
             "SEK",
@@ -525,15 +522,15 @@ sw{
         }
         SHP{
             "SHP",
-            "pauni ya Santahelena",
+            "Pauni ya Santahelena",
         }
         SLL{
             "SLL",
-            "leoni",
+            "Leoni",
         }
         SOS{
             "SOS",
-            "shilingi ya Somalia",
+            "Shilingi ya Somalia",
         }
         SRD{
             "SRD",
@@ -541,11 +538,11 @@ sw{
         }
         SSP{
             "SSP",
-            "pauni ya Sudani Kusini",
+            "Pauni ya Sudani Kusini",
         }
         STD{
             "STD",
-            "dobra ya Sao Tome na Principe",
+            "Dobra ya Sao Tome na Principe",
         }
         SYP{
             "SYP",
@@ -553,7 +550,7 @@ sw{
         }
         SZL{
             "SZL",
-            "lilangeni",
+            "Lilangeni",
         }
         THB{
             "฿",
@@ -569,7 +566,7 @@ sw{
         }
         TND{
             "TND",
-            "dinari ya Tunisia",
+            "Dinari ya Tunisia",
         }
         TOP{
             "TOP",
@@ -589,7 +586,7 @@ sw{
         }
         TZS{
             "TSh",
-            "shilingi ya Tanzania",
+            "Shilingi ya Tanzania",
         }
         UAH{
             "UAH",
@@ -597,11 +594,11 @@ sw{
         }
         UGX{
             "UGX",
-            "shilingi ya Uganda",
+            "Shilingi ya Uganda",
         }
         USD{
             "US$",
-            "dola ya Marekani",
+            "Dola ya Marekani",
         }
         UYU{
             "UYU",
@@ -653,19 +650,19 @@ sw{
         }
         ZAR{
             "ZAR",
-            "randi ya Afrika Kusini",
+            "Randi ya Afrika Kusini",
         }
         ZMK{
             "ZMK",
-            "kwacha ya Zambia (1968–2012)",
+            "Kwacha ya Zambia (1968–2012)",
         }
         ZMW{
             "ZMW",
-            "kwacha ya Zambia",
+            "Kwacha ya Zambia",
         }
         ZWD{
             "ZWD",
-            "dola ya Zimbabwe",
+            "Dola ya Zimbabwe",
         }
     }
     Currencies%narrow{
@@ -1363,5 +1360,5 @@ sw{
         one{"{1} {0}"}
         other{"{1} {0}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pl.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/pl.xml
- */
 pl{
     Countries{
         001{"świat"}
@@ -127,7 +124,7 @@ pl{
         GD{"Grenada"}
         GE{"Gruzja"}
         GF{"Gujana Francuska"}
-        GG{"Wyspa Guernsey"}
+        GG{"Guernsey"}
         GH{"Ghana"}
         GI{"Gibraltar"}
         GL{"Grenlandia"}
@@ -158,7 +155,7 @@ pl{
         IR{"Iran"}
         IS{"Islandia"}
         IT{"Włochy"}
-        JE{"Wyspa Jersey"}
+        JE{"Jersey"}
         JM{"Jamajka"}
         JO{"Jordania"}
         JP{"Japonia"}
@@ -265,7 +262,7 @@ pl{
         TA{"Tristan da Cunha"}
         TC{"Turks i Caicos"}
         TD{"Czad"}
-        TF{"Francuskie Terytoria Południowe"}
+        TF{"Francuskie Terytoria Południowe i Antarktyczne"}
         TG{"Togo"}
         TH{"Tajlandia"}
         TJ{"Tadżykistan"}
@@ -302,18 +299,18 @@ pl{
         ZW{"Zimbabwe"}
         ZZ{"Nieznany region"}
     }
-    Countries%variant{
-        CG{"Republika Konga"}
-        CI{"Wybrzeże Kości Słoniowej"}
-        FK{"Falklandy (Malwiny)"}
-        TL{"Timor-Leste"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"GB"}
         HK{"Hongkong"}
         MO{"Makau"}
         PS{"Palestyna"}
         US{"USA"}
     }
-    Version{"2.1.8.95"}
+    Countries%variant{
+        CG{"Republika Konga"}
+        CI{"Wybrzeże Kości Słoniowej"}
+        FK{"Falklandy (Malwiny)"}
+        TL{"Timor-Leste"}
+    }
+    Version{"2.1.12.94"}
 }

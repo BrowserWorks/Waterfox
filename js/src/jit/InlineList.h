@@ -23,7 +23,7 @@ class InlineForwardListNode
     explicit InlineForwardListNode(InlineForwardListNode<T> *n) : next(n)
     { }
 
-    InlineForwardListNode(const InlineForwardListNode<T> &) MOZ_DELETE;
+    InlineForwardListNode(const InlineForwardListNode<T> &) = delete;
 
   protected:
     friend class InlineForwardList<T>;
@@ -229,8 +229,8 @@ class InlineListNode : public InlineForwardListNode<T>
         newPrev->next = this;
     }
 
-    InlineListNode(const InlineListNode<T> &) MOZ_DELETE;
-    void operator=(const InlineListNode<T> &) MOZ_DELETE;
+    InlineListNode(const InlineListNode<T> &) = delete;
+    void operator=(const InlineListNode<T> &) = delete;
 
   protected:
     friend class InlineList<T>;
@@ -246,7 +246,7 @@ class InlineList : protected InlineListNode<T>
     typedef InlineListNode<T> Node;
 
   public:
-    InlineList() : InlineListNode<T>(MOZ_THIS_IN_INITIALIZER_LIST(), MOZ_THIS_IN_INITIALIZER_LIST())
+    InlineList() : InlineListNode<T>(this, this)
     { }
 
   public:
@@ -537,6 +537,106 @@ class InlineConcatListIterator
         return iter != where.iter;
     }
     bool operator ==(const InlineConcatListIterator<T> &where) const {
+        return iter == where.iter;
+    }
+
+  private:
+    Node *iter;
+};
+
+template <typename T> class InlineSpaghettiStack;
+template <typename T> class InlineSpaghettiStackNode;
+template <typename T> class InlineSpaghettiStackIterator;
+
+template <typename T>
+class InlineSpaghettiStackNode : public InlineForwardListNode<T>
+{
+    typedef InlineForwardListNode<T> Parent;
+
+  public:
+    InlineSpaghettiStackNode() : Parent()
+    { }
+
+    explicit InlineSpaghettiStackNode(InlineSpaghettiStackNode<T> *n)
+      : Parent(n)
+    { }
+
+    InlineSpaghettiStackNode(const InlineSpaghettiStackNode<T> &) = delete;
+
+  protected:
+    friend class InlineSpaghettiStack<T>;
+    friend class InlineSpaghettiStackIterator<T>;
+};
+
+template <typename T>
+class InlineSpaghettiStack : protected InlineSpaghettiStackNode<T>
+{
+    friend class InlineSpaghettiStackIterator<T>;
+
+    typedef InlineSpaghettiStackNode<T> Node;
+
+  public:
+    InlineSpaghettiStack()
+    { }
+
+  public:
+    typedef InlineSpaghettiStackIterator<T> iterator;
+
+  public:
+    iterator begin() const {
+        return iterator(this);
+    }
+    iterator end() const {
+        return iterator(nullptr);
+    }
+
+    void push(Node *t) {
+        MOZ_ASSERT(t->next == nullptr);
+        t->next = this->next;
+        this->next = t;
+    }
+
+    void copy(const InlineSpaghettiStack<T> &stack) {
+        this->next = stack.next;
+    }
+
+    bool empty() const {
+        return this->next == nullptr;
+    }
+};
+
+template <typename T>
+class InlineSpaghettiStackIterator
+{
+  private:
+    friend class InlineSpaghettiStack<T>;
+
+    typedef InlineSpaghettiStackNode<T> Node;
+
+    explicit InlineSpaghettiStackIterator<T>(const InlineSpaghettiStack<T> *owner)
+      : iter(owner ? static_cast<Node *>(owner->next) : nullptr)
+    { }
+
+  public:
+    InlineSpaghettiStackIterator<T> & operator ++() {
+        iter = static_cast<Node *>(iter->next);
+        return *this;
+    }
+    InlineSpaghettiStackIterator<T> operator ++(int) {
+        InlineSpaghettiStackIterator<T> old(*this);
+        operator++();
+        return old;
+    }
+    T *operator *() const {
+        return static_cast<T *>(iter);
+    }
+    T *operator ->() const {
+        return static_cast<T *>(iter);
+    }
+    bool operator !=(const InlineSpaghettiStackIterator<T> &where) const {
+        return iter != where.iter;
+    }
+    bool operator ==(const InlineSpaghettiStackIterator<T> &where) const {
         return iter == where.iter;
     }
 

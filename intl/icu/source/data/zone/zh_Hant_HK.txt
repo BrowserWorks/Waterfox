@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant_HK.xml
 // *
 // ***************************************************************************
 zh_Hant_HK{
-    Version{"2.1.8.28"}
+    Version{"2.1.13.23"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"阿比贊"}
@@ -42,29 +42,14 @@ zh_Hant_HK{
         "America:Aruba"{
             ec{"阿魯巴"}
         }
-        "America:Cayenne"{
-            ec{"法屬蓋亞那"}
-        }
         "America:Costa_Rica"{
             ec{"哥斯達黎加"}
         }
         "America:Guyana"{
             ec{"圭亞那"}
         }
-        "America:Managua"{
-            ec{"馬那瓜"}
-        }
         "America:North_Dakota:Beulah"{
-            ec{"比尤拉，北達科他州"}
-        }
-        "America:North_Dakota:Center"{
-            ec{"北達科他州申特城"}
-        }
-        "America:St_Barthelemy"{
-            ec{"聖巴夫林米"}
-        }
-        "America:St_Vincent"{
-            ec{"聖文森特"}
+            ec{"北達科他州比尤拉"}
         }
         "Asia:Bishkek"{
             ec{"比斯凱克"}
@@ -86,9 +71,6 @@ zh_Hant_HK{
         }
         "Asia:Yerevan"{
             ec{"耶烈萬"}
-        }
-        "Atlantic:Stanley"{
-            ec{"史坦雷"}
         }
         "Australia:Brisbane"{
             ec{"布里斯本"}
@@ -123,14 +105,11 @@ zh_Hant_HK{
         "Indian:Comoro"{
             ec{"科摩羅"}
         }
-        "Indian:Kerguelen"{
-            ec{"凱爾蓋朗"}
-        }
         "Pacific:Guadalcanal"{
-            ec{"瓜達爾卡納爾"}
+            ec{"瓜達爾卡納爾島"}
         }
         "Pacific:Tongatapu"{
-            ec{"湯加塔布"}
+            ec{"湯加塔布島"}
         }
         "meta:Azerbaijan"{
             ld{"亞塞拜疆夏令時間"}
@@ -139,9 +118,6 @@ zh_Hant_HK{
         }
         "meta:Cocos"{
             ls{"可可斯群島時間"}
-        }
-        "meta:Galapagos"{
-            ls{"加拉帕戈群島時間"}
         }
         "meta:Georgia"{
             ld{"格魯吉亞夏令時間"}
@@ -152,9 +128,9 @@ zh_Hant_HK{
             ls{"馬爾代夫時間"}
         }
         "meta:Mauritius"{
-            ld{"毛里求斯夏令時間"}
-            lg{"毛里求斯時間"}
-            ls{"毛里求斯標準時間"}
+            ld{"毛里裘斯夏令時間"}
+            lg{"毛里裘斯時間"}
+            ls{"毛里裘斯標準時間"}
         }
         "meta:New_Caledonia"{
             ld{"新喀里多尼亞夏令時間"}

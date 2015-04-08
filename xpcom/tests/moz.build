@@ -9,6 +9,7 @@ TEST_DIRS += [
     'component',
     'bug656331_component',
     'component_no_aslr',
+    'gtest',
 ]
 
 if CONFIG['OS_ARCH'] == 'WINNT':
@@ -79,14 +80,9 @@ if CONFIG['MOZ_MEMORY']:
 
 # XXX Make these tests work in libxul builds.
 #CPP_UNIT_TESTS += [
-#    'TestArray',
-#    'TestCRT',
-#    'TestEncoding',
-#    'TestExpirationTracker',
 #    'TestPipes',
 #    'TestPriorityQueue',
 #    'TestStorageStream',
-#    'TestStrings',
 #    'TestSynchronization',
 #    'TestTArray',
 #    'TestThreadPool',

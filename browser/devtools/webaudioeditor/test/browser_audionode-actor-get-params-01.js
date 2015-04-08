@@ -5,11 +5,11 @@
  * Test AudioNode#getParams()
  */
 
-function spawnTest () {
+add_task(function*() {
   let { target, front } = yield initBackend(SIMPLE_NODES_URL);
   let [_, nodes] = yield Promise.all([
     front.setup({ reload: true }),
-    getN(front, "create-node", 14)
+    getN(front, "create-node", 15)
   ]);
 
   let allNodeParams = yield Promise.all(nodes.map(node => node.getParams()));
@@ -17,7 +17,8 @@ function spawnTest () {
     "AudioDestinationNode",
     "AudioBufferSourceNode", "ScriptProcessorNode", "AnalyserNode", "GainNode",
     "DelayNode", "BiquadFilterNode", "WaveShaperNode", "PannerNode", "ConvolverNode",
-    "ChannelSplitterNode", "ChannelMergerNode", "DynamicsCompressorNode", "OscillatorNode"
+    "ChannelSplitterNode", "ChannelMergerNode", "DynamicsCompressorNode", "OscillatorNode",
+    "StereoPannerNode"
   ];
 
   nodeTypes.forEach((type, i) => {
@@ -42,5 +43,4 @@ function spawnTest () {
   });
 
   yield removeTab(target.tab);
-  finish();
-}
+});

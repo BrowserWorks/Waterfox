@@ -6,6 +6,8 @@
 
 #include "jspropertytree.h"
 
+#include "mozilla/DebugOnly.h"
+
 #include "jscntxt.h"
 #include "jsgc.h"
 #include "jstypes.h"
@@ -18,6 +20,8 @@
 
 using namespace js;
 using namespace js::gc;
+
+using mozilla::DebugOnly;
 
 inline HashNumber
 ShapeHasher::hash(const Lookup &l)
@@ -151,7 +155,6 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
         /* If kidp->isNull(), we always insert. */
     }
 
-#ifdef JSGC_INCREMENTAL
     if (existingShape) {
         JS::Zone *zone = existingShape->zone();
         if (zone->needsIncrementalBarrier()) {
@@ -173,10 +176,9 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
             parent->removeChild(existingShape);
             existingShape = nullptr;
         } else if (existingShape->isMarked(gc::GRAY)) {
-            JS::UnmarkGrayGCThingRecursively(existingShape, JSTRACE_SHAPE);
+            UnmarkGrayShapeRecursively(existingShape);
         }
     }
-#endif
 
     if (existingShape)
         return existingShape;
@@ -187,38 +189,6 @@ PropertyTree::getChild(ExclusiveContext *cx, Shape *parentArg, StackShape &unroo
 
     if (!insertChild(cx, parent, shape))
         return nullptr;
-
-    return shape;
-}
-
-Shape *
-PropertyTree::lookupChild(ThreadSafeContext *cx, Shape *parent, const StackShape &child)
-{
-    /* Keep this in sync with the logic of getChild above. */
-    Shape *shape = nullptr;
-
-    MOZ_ASSERT(parent);
-
-    KidsPointer *kidp = &parent->kids;
-    if (kidp->isShape()) {
-        Shape *kid = kidp->toShape();
-        if (kid->matches(child))
-            shape = kid;
-    } else if (kidp->isHash()) {
-        if (KidsHash::Ptr p = kidp->toHash()->readonlyThreadsafeLookup(child))
-            shape = *p;
-    } else {
-        return nullptr;
-    }
-
-#if defined(JSGC_INCREMENTAL) && defined(DEBUG)
-    if (shape) {
-        JS::Zone *zone = shape->arenaHeader()->zone;
-        MOZ_ASSERT(!zone->needsIncrementalBarrier());
-        MOZ_ASSERT(!(zone->isGCSweeping() && !shape->isMarked() &&
-                     !shape->arenaHeader()->allocatedDuringIncremental));
-    }
-#endif
 
     return shape;
 }
@@ -351,7 +321,6 @@ Shape::fixupAfterMovingGC()
 
 #endif // JSGC_COMPACTING
 
-#ifdef JSGC_GENERATIONAL
 void
 ShapeGetterSetterRef::mark(JSTracer *trc)
 {
@@ -380,7 +349,6 @@ ShapeGetterSetterRef::mark(JSTracer *trc)
     *objp = obj;
     MOZ_ALWAYS_TRUE(kh->putNew(StackShape(shape), shape));
 }
-#endif
 
 #ifdef DEBUG
 

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 1997-2011,2014 International Business Machines
+*   Copyright (C) 1997-2011,2014-2015 International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *   Date        Name        Description
@@ -509,7 +509,6 @@ utrans_transIncrementalUChars(const UTransliterator* trans,
                               UTransPosition* pos,
                               UErrorCode* status);
 
-#ifndef U_HIDE_DRAFT_API
 /**
  * Create a rule string that can be passed to utrans_openU to recreate this
  * transliterator.
@@ -525,9 +524,9 @@ utrans_transIncrementalUChars(const UTransliterator* trans,
  *                  contents of result are undefined.
  * @return int32_t   The length of the rule string (may be greater than resultLength,
  *                  in which case an error is returned).
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT int32_t U_EXPORT2
+U_STABLE int32_t U_EXPORT2
 utrans_toRules(     const UTransliterator* trans,
                     UBool escapeUnprintable,
                     UChar* result, int32_t resultLength,
@@ -550,14 +549,13 @@ utrans_toRules(     const UTransliterator* trans,
  * @return USet*    Either fillIn, or if fillIn is NULL, a pointer to a
  *                  newly-allocated USet that the user must close. In case of
  *                  error, NULL is returned.
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT USet* U_EXPORT2
+U_STABLE USet* U_EXPORT2
 utrans_getSourceSet(const UTransliterator* trans,
                     UBool ignoreFilter,
                     USet* fillIn,
                     UErrorCode* status);
-#endif  /* U_HIDE_DRAFT_API */
 
 /* deprecated API ----------------------------------------------------------- */
 

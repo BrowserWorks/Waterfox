@@ -23,13 +23,12 @@ class nsGIFDecoder2 : public Decoder
 {
 public:
 
-  explicit nsGIFDecoder2(RasterImage& aImage);
+  explicit nsGIFDecoder2(RasterImage* aImage);
   ~nsGIFDecoder2();
 
-  virtual void WriteInternal(const char* aBuffer, uint32_t aCount,
-                             DecodeStrategy aStrategy) MOZ_OVERRIDE;
-  virtual void FinishInternal();
-  virtual Telemetry::ID SpeedHistogram();
+  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) MOZ_OVERRIDE;
+  virtual void FinishInternal() MOZ_OVERRIDE;
+  virtual Telemetry::ID SpeedHistogram() MOZ_OVERRIDE;
 
 private:
   // These functions will be called when the decoder has a decoded row,

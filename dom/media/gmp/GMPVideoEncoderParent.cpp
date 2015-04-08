@@ -15,6 +15,7 @@
 #include "nsThread.h"
 #include "nsThreadUtils.h"
 #include "runnable_utils.h"
+#include "GMPUtils.h"
 
 namespace mozilla {
 
@@ -55,7 +56,7 @@ GMPVideoEncoderParent::GMPVideoEncoderParent(GMPParent *aPlugin)
   mShuttingDown(false),
   mPlugin(aPlugin),
   mCallback(nullptr),
-  mVideoHost(MOZ_THIS_IN_INITIALIZER_LIST())
+  mVideoHost(this)
 {
   MOZ_ASSERT(mPlugin);
 
@@ -91,7 +92,7 @@ GMPVideoEncoderParent::Close()
 
   // In case this is the last reference
   nsRefPtr<GMPVideoEncoderParent> kungfudeathgrip(this);
-  NS_RELEASE(kungfudeathgrip);
+  Release();
   Shutdown();
 }
 
@@ -125,7 +126,7 @@ GMPVideoEncoderParent::InitEncode(const GMPVideoCodec& aCodecSettings,
 }
 
 GMPErr
-GMPVideoEncoderParent::Encode(UniquePtr<GMPVideoi420Frame> aInputFrame,
+GMPVideoEncoderParent::Encode(GMPUnique<GMPVideoi420Frame>::Ptr aInputFrame,
                               const nsTArray<uint8_t>& aCodecSpecificInfo,
                               const nsTArray<GMPVideoFrameType>& aFrameTypes)
 {
@@ -136,7 +137,7 @@ GMPVideoEncoderParent::Encode(UniquePtr<GMPVideoi420Frame> aInputFrame,
 
   MOZ_ASSERT(mPlugin->GMPThread() == NS_GetCurrentThread());
 
-  UniquePtr<GMPVideoi420FrameImpl> inputFrameImpl(
+  GMPUnique<GMPVideoi420FrameImpl>::Ptr inputFrameImpl(
     static_cast<GMPVideoi420FrameImpl*>(aInputFrame.release()));
 
   // Very rough kill-switch if the plugin stops processing.  If it's merely

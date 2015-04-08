@@ -107,7 +107,7 @@ We will install a modern version of Clang through %s.
 PACKAGE_MANAGER_CHOICE = '''
 Please choose a package manager you'd like:
 1. Homebrew
-2. MacPorts
+2. MacPorts (Does not yet support bootstrapping Firefox for Android.)
 Your choice:
 '''
 
@@ -160,6 +160,11 @@ Once this is done, start a new shell (likely Command+T) and run
 this bootstrap again.
 '''
 
+JAVA_LICENSE_NOTICE = '''
+We installed a recent Java toolchain for you. We agreed to the Oracle Java
+license for you by downloading the JDK. If this is unacceptable you should
+uninstall.
+'''
 
 class OSXBootstrapper(BaseBootstrapper):
     def __init__(self, version):
@@ -177,7 +182,16 @@ class OSXBootstrapper(BaseBootstrapper):
 
         choice = self.ensure_package_manager()
         self.package_manager = choice
-        getattr(self, 'ensure_%s_packages' % choice)()
+        getattr(self, 'ensure_%s_system_packages' % self.package_manager)()
+
+    def install_browser_packages(self):
+        getattr(self, 'ensure_%s_browser_packages' % self.package_manager)()
+
+    def install_mobile_android_packages(self):
+        getattr(self, 'ensure_%s_mobile_android_packages' % self.package_manager)()
+
+    def suggest_mobile_android_mozconfig(self):
+        getattr(self, 'suggest_%s_mobile_android_mozconfig' % self.package_manager)()
 
     def ensure_xcode(self):
         if self.os_version < StrictVersion('10.7'):
@@ -256,27 +270,12 @@ class OSXBootstrapper(BaseBootstrapper):
         print('Once the install has finished, please relaunch this script.')
         sys.exit(1)
 
-    def ensure_homebrew_packages(self):
+    def _ensure_homebrew_packages(self, packages, extra_brew_args=[]):
         self.brew = self.which('brew')
         assert self.brew is not None
+        cmd = [self.brew] + extra_brew_args
 
-        installed = self.check_output([self.brew, 'list']).split()
-
-        packages = [
-            # We need to install Python because Mercurial requires the Python
-            # development headers which are missing from OS X (at least on
-            # 10.8) and because the build system wants a version newer than
-            # what Apple ships.
-            ('python', 'python'),
-            ('mercurial', 'mercurial'),
-            ('git', 'git'),
-            ('yasm', 'yasm'),
-            ('autoconf213', HOMEBREW_AUTOCONF213),
-        ]
-
-        # terminal-notifier is only available in Mountain Lion or newer.
-        if self.os_version >= StrictVersion('10.8'):
-            packages.append(('terminal-notifier', 'terminal-notifier'))
+        installed = self.check_output(cmd + ['list']).split()
 
         printed = False
 
@@ -288,36 +287,115 @@ class OSXBootstrapper(BaseBootstrapper):
                 print(PACKAGE_MANAGER_PACKAGES % ('Homebrew',))
                 printed = True
 
-            subprocess.check_call([self.brew, '-v', 'install', package])
+            subprocess.check_call(cmd + ['install', package])
 
+        return printed
+
+    def _ensure_homebrew_casks(self, casks):
+        # Change |brew install cask| into |brew cask install cask|.
+        return self._ensure_homebrew_packages(casks, extra_brew_args=['cask'])
+
+    def ensure_homebrew_system_packages(self):
+        packages = [
+            # We need to install Python because Mercurial requires the Python
+            # development headers which are missing from OS X (at least on
+            # 10.8) and because the build system wants a version newer than
+            # what Apple ships.
+            ('python', 'python'),
+            ('mercurial', 'mercurial'),
+            ('git', 'git'),
+            ('autoconf213', HOMEBREW_AUTOCONF213),
+        ]
+        self._ensure_homebrew_packages(packages)
+
+    def ensure_homebrew_browser_packages(self):
+        packages = [
+            ('yasm', 'yasm'),
+        ]
+        self._ensure_homebrew_packages(packages)
+
+        installed = self.check_output([self.brew, 'list']).split()
         if self.os_version < StrictVersion('10.7') and 'llvm' not in installed:
             print(PACKAGE_MANAGER_OLD_CLANG % ('Homebrew',))
 
             subprocess.check_call([self.brew, '-v', 'install', 'llvm',
                 '--with-clang', '--all-targets'])
 
-    def ensure_macports_packages(self):
+    def ensure_homebrew_mobile_android_packages(self):
+        import android
+
+        # If we're run from a downloaded bootstrap.py, then android-ndk.rb is
+        # fetched into a temporary directory.  This finds that directory.
+        import inspect
+        path_to_android = os.path.abspath(os.path.dirname(inspect.getfile(android)))
+
+        # We don't need wget because we install the Android SDK and NDK from
+        # packages.  If we used the android.py module, we'd need wget.
+        packages = [
+            ('android-sdk', 'android-sdk'),
+            ('android-ndk', os.path.join(path_to_android, 'android-ndk.rb')), # This is a locally provided brew formula!
+            ('ant', 'ant'),
+            ('brew-cask', 'caskroom/cask/brew-cask'), # For installing Java later.
+        ]
+        self._ensure_homebrew_packages(packages)
+
+        casks = [
+            ('java', 'java'),
+        ]
+        installed = self._ensure_homebrew_casks(casks)
+        if installed:
+            print(JAVA_LICENSE_NOTICE) # We accepted a license agreement for the user.
+
+        # We could probably fish this path from |brew info android-sdk|.
+        android_tool = '/usr/local/opt/android-sdk/tools/android'
+        android.ensure_android_packages(android_tool)
+
+    def suggest_homebrew_mobile_android_mozconfig(self):
+        import android
+        # We could probably fish this path from |brew info android-sdk|.
+        sdk_path = '/usr/local/opt/android-sdk/platform/%s' % android.ANDROID_PLATFORM
+        ndk_path = '/usr/local/opt/android-ndk'
+        android.suggest_mozconfig(sdk_path=sdk_path, ndk_path=ndk_path)
+
+    def _ensure_macports_packages(self, packages):
         self.port = self.which('port')
         assert self.port is not None
 
         installed = set(self.check_output([self.port, 'installed']).split())
-
-        packages = ['python27',
-                    'mercurial',
-                    'yasm',
-                    'autoconf213']
 
         missing = [package for package in packages if package not in installed]
         if missing:
             print(PACKAGE_MANAGER_PACKAGES % ('MacPorts',))
             self.run_as_root([self.port, '-v', 'install'] + missing)
 
+    def ensure_macports_system_packages(self):
+        packages = ['python27',
+                    'mercurial',
+                    'autoconf213']
+
+        self._ensure_macports_packages(packages)
+        self.run_as_root([self.port, 'select', '--set', 'python', 'python27'])
+
+    def ensure_macports_browser_packages(self):
+        packages = ['yasm']
+
+        self._ensure_macports_packages(packages)
+
+        installed = set(self.check_output([self.port, 'installed']).split())
         if self.os_version < StrictVersion('10.7') and MACPORTS_CLANG_PACKAGE not in installed:
             print(PACKAGE_MANAGER_OLD_CLANG % ('MacPorts',))
             self.run_as_root([self.port, '-v', 'install', MACPORTS_CLANG_PACKAGE])
             self.run_as_root([self.port, 'select', '--set', 'clang', 'mp-' + MACPORTS_CLANG_PACKAGE])
 
-        self.run_as_root([self.port, 'select', '--set', 'python', 'python27'])
+    def ensure_macports_mobile_android_packages(self):
+        raise NotImplementedError("We don't yet support bootstrapping Firefox for Android with Macports. " +
+                                  "We don't know of a package that installs the Java 7 JDK. " +
+                                  "See https://bugzilla.mozilla.org/show_bug.cgi?id=1114382.")
+
+    def suggest_macports_mobile_android_mozconfig(self):
+        raise NotImplementedError("We don't yet support bootstrapping Firefox for Android with Macports. " +
+                                  "We don't know of a package that installs the Java 7 JDK." +
+                                  "See https://bugzilla.mozilla.org/show_bug.cgi?id=1114382.")
 
     def ensure_package_manager(self):
         '''

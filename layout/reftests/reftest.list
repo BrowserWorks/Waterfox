@@ -17,6 +17,7 @@ include w3c-css/received/reftest.list
 
 # relative and absolute positioning
 include abs-pos/reftest.list
+include position-relative/reftest.list
 
 include async-scrolling/reftest.list
 
@@ -94,8 +95,7 @@ include css-parsing/reftest.list
 include css-placeholder/reftest.list
 
 # css ruby
-# (Skipping on B2G because of timeouts there; see bug 1054383)
-skip-if(B2G) include css-ruby/reftest.list
+include css-ruby/reftest.list
 
 # css required
 include css-required/reftest.list

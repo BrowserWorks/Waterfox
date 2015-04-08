@@ -352,8 +352,6 @@ class B2GRemoteReftest(RefTest):
         if (os.name == "nt"):
             xpcshell += ".exe"
 
-        if (options.utilityPath):
-            paths.insert(0, options.utilityPath)
         options.utilityPath = self.findPath(paths, xpcshell)
         if options.utilityPath == None:
             print "ERROR: unable to find utility path for %s, please specify with --utility-path" % (os.name)
@@ -443,6 +441,15 @@ class B2GRemoteReftest(RefTest):
         # Set a future policy version to avoid the telemetry prompt.
         prefs["toolkit.telemetry.prompted"] = 999
         prefs["toolkit.telemetry.notifiedOptOut"] = 999
+        # Make sure we disable system updates
+        prefs["app.update.enabled"] = False
+        prefs["app.update.url"] = ""
+        prefs["app.update.url.override"] = ""
+        # Disable webapp updates
+        prefs["webapps.update.enabled"] = False
+        # Disable tiles also
+        prefs["browser.newtabpage.directory.source"] = ""
+        prefs["browser.newtabpage.directory.ping"] = ""
 
         if options.oop:
             prefs['browser.tabs.remote.autostart'] = True

@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2001-2014 International Business Machines
+﻿# Copyright (c) 2001-2015 International Business Machines
 # Corporation and others. All Rights Reserved.
 #
 #  file:
@@ -513,6 +513,15 @@
 "ab(?:(c)|(d))\1"            i "abde"
 "ab(?:(c)|(d))\1"            i "<0>ab<1>c</1>c</0>e"
 
+# Named back references
+"(?<one>abcd)\k<one>"          "<0><1>abcd</1>abcd</0>"
+"(no)?(?<one>abcd)\k<one>"     "<0><2>abcd</2>abcd</0>"
+
+"(?<a_1>...)"               E  "  "   # backref names are ascii letters & numbers only"
+"(?<1a>...)"                E  "  "   # backref names must begin with a letter"
+"(?<a>.)(?<a>.)"            E  "  "   # Repeated names are illegal.
+
+
 # Case Insensitive
 "aBc"                    i      "<0>ABC</0>"
 "a[^bc]d"                i      "ABD"
@@ -683,6 +692,78 @@
 #
 "abc\jkl"                         "<0>abcjkl</0>"    # escape of a non-special letter is just itself.
 "abc[ \j]kl"                      "<0>abcjkl</0>"
+
+#
+# \R  all newline sequences.
+#
+"abc\Rxyz"                        "<0>abc\u000axyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u000bxyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u000cxyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u000dxyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u0085xyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u2028xyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u2029xyz</0>gh"
+"abc\Rxyz"                        "<0>abc\u000d\u000axyz</0>gh"
+
+"abc\R\nxyz"                      "abc\u000d\u000axyzgh"          # \R cannot match only the CR from a CR/LF sequence.
+"abc\r\nxyz"                      "<0>abc\u000d\u000axyz</0>gh"
+
+"abc\Rxyz"                        "abc\u0009xyz"                  # Assorted non-matches.
+"abc\Rxyz"                        "abc\u000exyz"
+"abc\Rxyz"                        "abc\u202axyz"
+
+# \v \V single character new line sequences.
+
+"abc\vxyz"                        "<0>abc\u000axyz</0>gh"
+"abc\vxyz"                        "<0>abc\u000bxyz</0>gh"
+"abc\vxyz"                        "<0>abc\u000cxyz</0>gh"
+"abc\vxyz"                        "<0>abc\u000dxyz</0>gh"
+"abc\vxyz"                        "<0>abc\u0085xyz</0>gh"
+"abc\vxyz"                        "<0>abc\u2028xyz</0>gh"
+"abc\vxyz"                        "<0>abc\u2029xyz</0>gh"
+"abc\vxyz"                        "abc\u000d\u000axyzgh"
+"abc\vxyz"                        "abc?xyzgh"
+
+"abc[\v]xyz"                      "<0>abc\u000axyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u000bxyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u000cxyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u000dxyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u0085xyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u2028xyz</0>gh"
+"abc[\v]xyz"                      "<0>abc\u2029xyz</0>gh"
+"abc[\v]xyz"                      "abc\u000d\u000axyzgh"
+"abc[\v]xyz"                      "abc?xyzgh"
+
+"abc\Vxyz"                        "abc\u000axyzgh"
+"abc\Vxyz"                        "abc\u000bxyzgh"
+"abc\Vxyz"                        "abc\u000cxyzgh"
+"abc\Vxyz"                        "abc\u000dxyzgh"
+"abc\Vxyz"                        "abc\u0085xyzgh"
+"abc\Vxyz"                        "abc\u2028xyzgh"
+"abc\Vxyz"                        "abc\u2029xyzgh"
+"abc\Vxyz"                        "abc\u000d\u000axyzgh"
+"abc\Vxyz"                        "<0>abc?xyz</0>gh"
+
+# \h \H horizontal white space. Defined as gc=space_separator plus ascii tab
+
+"abc\hxyz"                        "<0>abc xyz</0>gh"
+"abc\Hxyz"                        "abc xyzgh"
+"abc\hxyz"                        "<0>abc\u2003xyz</0>gh"
+"abc\Hxyz"                        "abc\u2003xyzgh"
+"abc\hxyz"                        "<0>abc\u0009xyz</0>gh"
+"abc\Hxyz"                        "abc\u0009xyzgh"
+"abc\hxyz"                        "abc?xyzgh"
+"abc\Hxyz"                        "<0>abc?xyz</0>gh"
+
+"abc[\h]xyz"                      "<0>abc xyz</0>gh"
+"abc[\H]xyz"                      "abc xyzgh"
+"abc[\h]xyz"                      "<0>abc\u2003xyz</0>gh"
+"abc[\H]xyz"                      "abc\u2003xyzgh"
+"abc[\h]xyz"                      "<0>abc\u0009xyz</0>gh"
+"abc[\H]xyz"                      "abc\u0009xyzgh"
+"abc[\h]xyz"                      "abc?xyzgh"
+"abc[\H]xyz"                      "<0>abc?xyz</0>gh"
+
 
 #
 # Bug xxxx

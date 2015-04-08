@@ -2739,7 +2739,7 @@ MediaStreamGraphImpl::MediaStreamGraphImpl(bool aRealtime,
   , mFarendObserverRef(nullptr)
 #endif
   , mMemoryReportMonitor("MSGIMemory")
-  , mSelfRef(MOZ_THIS_IN_INITIALIZER_LIST())
+  , mSelfRef(this)
   , mAudioStreamSizes()
   , mNeedsMemoryReport(false)
 #ifdef DEBUG

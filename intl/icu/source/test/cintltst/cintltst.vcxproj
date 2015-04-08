@@ -314,6 +314,7 @@
     <ClCompile Include="sprpdata.c" />
     <ClCompile Include="spooftest.c" />
     <ClCompile Include="uregiontest.c" />
+    <ClCompile Include="ulistfmttest.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cbiditst.h" />

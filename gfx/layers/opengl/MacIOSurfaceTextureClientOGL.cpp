@@ -9,8 +9,9 @@
 namespace mozilla {
 namespace layers {
 
-MacIOSurfaceTextureClientOGL::MacIOSurfaceTextureClientOGL(TextureFlags aFlags)
-  : TextureClient(aFlags)
+MacIOSurfaceTextureClientOGL::MacIOSurfaceTextureClientOGL(ISurfaceAllocator* aAllcator,
+                                                           TextureFlags aFlags)
+  : TextureClient(aAllcator, aFlags)
   , mIsLocked(false)
 {}
 
@@ -65,5 +66,11 @@ MacIOSurfaceTextureClientOGL::GetSize() const
   return gfx::IntSize(mSurface->GetDevicePixelWidth(), mSurface->GetDevicePixelHeight());
 }
 
+TemporaryRef<gfx::DataSourceSurface>
+MacIOSurfaceTextureClientOGL::GetAsSurface()
+{
+  RefPtr<gfx::SourceSurface> surf = mSurface->GetAsSurface();
+  return surf->GetDataSurface();
+}
 }
 }

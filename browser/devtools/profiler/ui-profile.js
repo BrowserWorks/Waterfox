@@ -392,9 +392,10 @@ let ProfileView = {
       return null;
     }
 
-    let graph = new LineGraphWidget($(".framerate", panel), L10N.getStr("graphs.fps"));
+    let graph = new LineGraphWidget($(".framerate", panel), {
+      metric: L10N.getStr("graphs.fps")
+    });
     graph.fixedHeight = FRAMERATE_GRAPH_HEIGHT;
-    graph.minDistanceBetweenPoints = 1;
     graph.dataOffsetX = beginAt;
 
     yield graph.setDataWhenReady(framerateData);

@@ -880,8 +880,11 @@ MetroWidget::WindowProcedure(HWND aWnd, UINT aMsg, WPARAM aWParam, LPARAM aLPara
     }
 
     case WM_APPCOMMAND:
-      processDefault = HandleAppCommandMsg(aWParam, aLParam, &processResult);
+    {
+      MSG msg = WinUtils::InitMSG(aMsg, aWParam, aLParam, aWnd);
+      processDefault = HandleAppCommandMsg(msg, &processResult);
       break;
+    }
 
     case WM_GETOBJECT:
     {
@@ -1032,30 +1035,27 @@ MetroWidget::SetWidgetListener(nsIWidgetListener* aWidgetListener)
   mWidgetListener = aWidgetListener;
 }
 
-CompositorParent* MetroWidget::NewCompositorParent(int aSurfaceWidth, int aSurfaceHeight)
+void
+MetroWidget::ConfigureAPZCTreeManager()
 {
-  CompositorParent *compositor = nsBaseWidget::NewCompositorParent(aSurfaceWidth, aSurfaceHeight);
+  nsBaseWidget::ConfigureAPZCTreeManager();
 
-  if (ShouldUseAPZC()) {
-    mRootLayerTreeId = compositor->RootLayerTreeId();
-
-    mController = new APZController();
-
-    CompositorParent::SetControllerForLayerTree(mRootLayerTreeId, mController);
-
-    APZController::sAPZC = CompositorParent::GetAPZCTreeManager(compositor->RootLayerTreeId());
-    APZController::sAPZC->SetDPI(GetDPI());
-
-    nsresult rv;
-    nsCOMPtr<nsIObserverService> observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
-    if (NS_SUCCEEDED(rv)) {
-      observerService->AddObserver(this, "apzc-scroll-offset-changed", false);
-      observerService->AddObserver(this, "apzc-zoom-to-rect", false);
-      observerService->AddObserver(this, "apzc-disable-zoom", false);
-    }
+  nsresult rv;
+  nsCOMPtr<nsIObserverService> observerService = do_GetService("@mozilla.org/observer-service;1", &rv);
+  if (NS_SUCCEEDED(rv)) {
+    observerService->AddObserver(this, "apzc-scroll-offset-changed", false);
+    observerService->AddObserver(this, "apzc-zoom-to-rect", false);
+    observerService->AddObserver(this, "apzc-disable-zoom", false);
   }
+}
 
-  return compositor;
+already_AddRefed<GeckoContentController>
+MetroWidget::CreateRootContentController()
+{
+  MOZ_ASSERT(!mController);
+
+  mController = new APZController();
+  return mController;
 }
 
 MetroWidget::TouchBehaviorFlags
@@ -1090,7 +1090,7 @@ MetroWidget::ApzContentConsumingTouch(uint64_t aInputBlockId)
   if (!mController) {
     return;
   }
-  mController->ContentReceivedTouch(aInputBlockId, true);
+  mController->ContentReceivedInputBlock(aInputBlockId, true);
 }
 
 void
@@ -1100,7 +1100,7 @@ MetroWidget::ApzContentIgnoringTouch(uint64_t aInputBlockId)
   if (!mController) {
     return;
   }
-  mController->ContentReceivedTouch(aInputBlockId, false);
+  mController->ContentReceivedInputBlock(aInputBlockId, false);
 }
 
 bool

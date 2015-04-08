@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (C) 1996-2014, International Business Machines Corporation and    *
+ * Copyright (C) 1996-2015, International Business Machines Corporation and    *
  * others. All Rights Reserved.                                                *
  *******************************************************************************
  */
@@ -66,6 +66,7 @@ void IntlTestRBNF::runIndexedTest(int32_t index, UBool exec, const char* &name, 
         TESTCASE(18, TestMultiplierSubstitution);
         TESTCASE(19, TestSetDecimalFormatSymbols);
         TESTCASE(20, TestPluralRules);
+        TESTCASE(21, TestMultiplePluralRules);
 #else
         TESTCASE(0, TestRBNFDisabled);
 #endif
@@ -339,6 +340,51 @@ IntlTestRBNF::TestAPI() {
   // clean up
   logln("Cleaning up");
   delete formatter;
+}
+
+/**
+ * Perform a simple spot check on the parsing going into an infinite loop for alternate rules.
+ */
+void IntlTestRBNF::TestMultiplePluralRules() {
+    // This is trying to model the feminine form, but don't worry about the details too much.
+    // We're trying to test the plural rules where there are different prefixes.
+    UnicodeString rules("%spellout-cardinal-feminine-genitive:"
+                "0: zero;"
+                "1: ono;"
+                "1000: << $(cardinal,one{thousand}few{thousanF}other{thousanO})$[ >>];"
+                "%spellout-cardinal-feminine:"
+                "0: zero;"
+                "1: one;"
+                "1000: << $(cardinal,one{thousand}few{thousanF}other{thousanO})$[ >>];");
+    UErrorCode status = U_ZERO_ERROR;
+    UParseError pError;
+    RuleBasedNumberFormat formatter(rules, Locale("ru"), pError, status);
+    Formattable result;
+    UnicodeString resultStr;
+    FieldPosition pos;
+
+    if (U_FAILURE(status)) {
+        dataerrln("Unable to create formatter - %s", u_errorName(status));
+        return;
+    }
+
+    formatter.parse(formatter.format(1000.0, resultStr, pos, status), result, status);
+    if (1000 != result.getLong() || resultStr != UNICODE_STRING_SIMPLE("one thousand")) {
+        errln("RuleBasedNumberFormat did not return the correct value. Got: %d", result.getLong());
+        errln(resultStr);
+    }
+    resultStr.remove();
+    formatter.parse(formatter.format(1000.0, UnicodeString("%spellout-cardinal-feminine-genitive"), resultStr, pos, status), result, status);
+    if (1000 != result.getLong() || resultStr != UNICODE_STRING_SIMPLE("ono thousand")) {
+        errln("RuleBasedNumberFormat(cardinal-feminine-genitive) did not return the correct value. Got: %d", result.getLong());
+        errln(resultStr);
+    }
+    resultStr.remove();
+    formatter.parse(formatter.format(1000.0, UnicodeString("%spellout-cardinal-feminine"), resultStr, pos, status), result, status);
+    if (1000 != result.getLong() || resultStr != UNICODE_STRING_SIMPLE("one thousand")) {
+        errln("RuleBasedNumberFormat(spellout-cardinal-feminine) did not return the correct value. Got: %d", result.getLong());
+        errln(resultStr);
+    }
 }
 
 void IntlTestRBNF::TestFractionalRuleSet()

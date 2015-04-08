@@ -117,6 +117,11 @@ private:
     void NotifyAppOfflineStatus(uint32_t appId, int32_t status);
     static PLDHashOperator EnumerateWifiAppsChangingState(const unsigned int &, int32_t, void*);
 
+    nsresult NewChannelFromURIWithProxyFlagsInternal(nsIURI* aURI,
+                                                     nsIURI* aProxyURI,
+                                                     uint32_t aProxyFlags,
+                                                     nsILoadInfo* aLoadInfo,
+                                                     nsIChannel** result);
 private:
     bool                                 mOffline;
     bool                                 mOfflineForProfileChange;
@@ -169,13 +174,13 @@ public:
     {
     }
 
-    NS_IMETHODIMP GetMode(int32_t *aMode)
+    NS_IMETHODIMP GetMode(int32_t *aMode) MOZ_OVERRIDE
     {
         *aMode = mMode;
         return NS_OK;
     }
 
-    NS_IMETHODIMP GetAppId(uint32_t *aAppId)
+    NS_IMETHODIMP GetAppId(uint32_t *aAppId) MOZ_OVERRIDE
     {
         *aAppId = mAppId;
         return NS_OK;

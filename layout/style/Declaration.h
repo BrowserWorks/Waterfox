@@ -146,7 +146,8 @@ public:
     NS_ABORT_IF_FALSE(!mData, "oops");
     NS_ABORT_IF_FALSE(!mImportantData, "oops");
     aExpandedData->Compress(getter_Transfers(mData),
-                            getter_Transfers(mImportantData));
+                            getter_Transfers(mImportantData),
+                            mOrder);
     aExpandedData->AssertInitialState();
   }
 
@@ -276,8 +277,8 @@ public:
 #endif
 
 private:
-  Declaration& operator=(const Declaration& aCopy) MOZ_DELETE;
-  bool operator==(const Declaration& aCopy) const MOZ_DELETE;
+  Declaration& operator=(const Declaration& aCopy) = delete;
+  bool operator==(const Declaration& aCopy) const = delete;
 
   void GetValue(nsCSSProperty aProperty, nsAString& aValue,
                 nsCSSValue::Serialization aValueSerialization) const;

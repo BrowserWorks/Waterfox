@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*******************************************************************************
@@ -271,7 +271,7 @@ static void TestErrorCodes(void) {
 
   if(U_SUCCESS(status) && r != NULL) {
     status = U_USING_DEFAULT_WARNING;
-    r2 = ures_getByKey(r, "LocaleScript", NULL, &status);  /* LocaleScript lives in ti */
+    r2 = ures_getByKey(r, "ExemplarCharacters", NULL, &status);  /* ExemplarCharacters lives in ti */
     checkStatus(__LINE__, U_USING_FALLBACK_WARNING, status);
   }
   ures_close(r);
@@ -424,14 +424,10 @@ static void TestDecodedBundle(){
     /* pre-flight */
     int32_t num =0;
     const char *testdatapath = loadTestData(&error);
-    resB = ures_open(testdatapath, "iscii", &error);
+    resB = ures_open(testdatapath, "encoded", &error);
     srcFromRes=tres_getString(resB,-1,"str",&len,&error);
     if(U_FAILURE(error)){
-#if UCONFIG_NO_LEGACY_CONVERSION
-        log_info("Couldn't load iscii.bin from test data bundle, (because UCONFIG_NO_LEGACY_CONVERSION  is turned on)\n");
-#else
-        log_data_err("Could not find iscii.bin from test data bundle. Error: %s\n", u_errorName(error));
-#endif
+        log_data_err("Could not find encoded.res from test data bundle. Error: %s\n", u_errorName(error));
         ures_close(resB);
         return;
     }
@@ -2213,9 +2209,9 @@ static void TestResourceLevelAliasing(void) {
         status = U_ZERO_ERROR;
       }
       /* testing referencing/composed alias */
-      uk = ures_findResource("ja/LocaleScript/2", uk, &status);
+      uk = ures_findResource("ja/calendar/gregorian/DateTimePatterns/2", uk, &status);
       if((uk == NULL) || U_FAILURE(status)) {
-        log_err_status(status, "Couldn't findResource('ja/LocaleScript/2') err %s\n", u_errorName(status));
+        log_err_status(status, "Couldn't findResource('ja/calendar/gregorian/DateTimePatterns/2') err %s\n", u_errorName(status));
         goto cleanup;
       } 
       
@@ -2234,7 +2230,7 @@ static void TestResourceLevelAliasing(void) {
       }
       
       checkStatus(__LINE__, U_ZERO_ERROR, status);
-      tb = ures_getByKey(aliasB, "LocaleScript", tb, &status);
+      tb = ures_getByKey(aliasB, "DateTimePatterns", tb, &status);
       checkStatus(__LINE__, U_ZERO_ERROR, status);
       tb = ures_getByIndex(tb, 2, tb, &status);
       checkStatus(__LINE__, U_ZERO_ERROR, status);
@@ -2410,14 +2406,14 @@ static void TestDirectAccess(void) {
         }
     }
     
-    t = ures_findResource("ja/LocaleScript", t, &status);
+    t = ures_findResource("ja/ExemplarCharacters", t, &status);
     if(U_FAILURE(status)) {
         log_data_err("Couldn't access keyed resource, error %s\n", u_errorName(status));
         status = U_ZERO_ERROR;
     } else {
         key = ures_getKey(t);
-        if(strcmp(key, "LocaleScript")!=0) {
-            log_err("Got a strange key, expected 'LocaleScript', got %s\n", key);
+        if(strcmp(key, "ExemplarCharacters")!=0) {
+            log_err("Got a strange key, expected 'ExemplarCharacters', got %s\n", key);
         }
     }
     

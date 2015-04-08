@@ -27,7 +27,7 @@
 #include "nsSize.h"                     // for nsIntSize
 #include "gfxReusableSharedImageSurfaceWrapper.h"
 #include "nsExpirationTracker.h"        // for nsExpirationTracker
-#include "nsMathUtils.h"               // for NS_roundf
+#include "nsMathUtils.h"               // for NS_lroundf
 #include "gfx2DGlue.h"
 #include "LayersLogging.h"
 #include "UnitTransforms.h"             // for TransformTo
@@ -151,11 +151,9 @@ ComputeViewTransform(const FrameMetrics& aContentMetrics, const FrameMetrics& aC
   // but with aContentMetrics used in place of mLastContentPaintMetrics, because they
   // should be equivalent, modulo race conditions while transactions are inflight.
 
-  LayerToParentLayerScale scale(aCompositorMetrics.mPresShellResolution
-                                * aCompositorMetrics.GetAsyncZoom().scale);
   ParentLayerPoint translation = (aCompositorMetrics.GetScrollOffset() - aContentMetrics.GetScrollOffset())
                                * aCompositorMetrics.GetZoom();
-  return ViewTransform(scale, -translation);
+  return ViewTransform(aCompositorMetrics.GetAsyncZoom(), -translation);
 }
 
 bool
@@ -213,10 +211,10 @@ SharedFrameMetricsHelper::UpdateFromCompositorFrameMetrics(
   // an endless updating cycle.
   if (fabsf(contentMetrics.GetScrollOffset().x - compositorMetrics.GetScrollOffset().x) <= 2 &&
       fabsf(contentMetrics.GetScrollOffset().y - compositorMetrics.GetScrollOffset().y) <= 2 &&
-      fabsf(contentMetrics.mDisplayPort.x - compositorMetrics.mDisplayPort.x) <= 2 &&
-      fabsf(contentMetrics.mDisplayPort.y - compositorMetrics.mDisplayPort.y) <= 2 &&
-      fabsf(contentMetrics.mDisplayPort.width - compositorMetrics.mDisplayPort.width) <= 2 &&
-      fabsf(contentMetrics.mDisplayPort.height - compositorMetrics.mDisplayPort.height) <= 2) {
+      fabsf(contentMetrics.GetDisplayPort().x - compositorMetrics.GetDisplayPort().x) <= 2 &&
+      fabsf(contentMetrics.GetDisplayPort().y - compositorMetrics.GetDisplayPort().y) <= 2 &&
+      fabsf(contentMetrics.GetDisplayPort().width - compositorMetrics.GetDisplayPort().width) <= 2 &&
+      fabsf(contentMetrics.GetDisplayPort().height - compositorMetrics.GetDisplayPort().height) <= 2) {
     return false;
   }
 
@@ -257,9 +255,9 @@ SharedFrameMetricsHelper::AboutToCheckerboard(const FrameMetrics& aContentMetric
   // converted to app units and then back to CSS pixels before being put in the FrameMetrics.
   // This process can introduce some rounding error, so we inflate the rect by one app unit
   // to account for that.
-  CSSRect painted = (aContentMetrics.mCriticalDisplayPort.IsEmpty()
-                      ? aContentMetrics.mDisplayPort
-                      : aContentMetrics.mCriticalDisplayPort)
+  CSSRect painted = (aContentMetrics.GetCriticalDisplayPort().IsEmpty()
+                      ? aContentMetrics.GetDisplayPort()
+                      : aContentMetrics.GetCriticalDisplayPort())
                     + aContentMetrics.GetScrollOffset();
   painted.Inflate(CSSMargin::FromAppUnits(nsMargin(1, 1, 1, 1)));
 
@@ -273,8 +271,8 @@ SharedFrameMetricsHelper::AboutToCheckerboard(const FrameMetrics& aContentMetric
   // Clamp both rects to the scrollable rect, because having either of those
   // exceed the scrollable rect doesn't make sense, and could lead to false
   // positives.
-  painted = painted.Intersect(aContentMetrics.mScrollableRect);
-  showing = showing.Intersect(aContentMetrics.mScrollableRect);
+  painted = painted.Intersect(aContentMetrics.GetScrollableRect());
+  showing = showing.Intersect(aContentMetrics.GetScrollableRect());
 
   if (!painted.Contains(showing)) {
     TILING_LOG("TILING: About to checkerboard; content %s\n", Stringify(aContentMetrics).c_str());
@@ -595,7 +593,6 @@ CopyFrontToBack(TextureClient* aFront,
 
 void
 TileClient::ValidateBackBufferFromFront(const nsIntRegion& aDirtyRegion,
-                                        bool aCanRerasterizeValidRegion,
                                         nsIntRegion& aAddPaintedRegion)
 {
   if (mBackBuffer && mFrontBuffer) {
@@ -614,9 +611,7 @@ TileClient::ValidateBackBufferFromFront(const nsIntRegion& aDirtyRegion,
 
       aAddPaintedRegion = regionToCopy;
 
-      if (regionToCopy.IsEmpty() ||
-          (aCanRerasterizeValidRegion &&
-           regionToCopy.Area() < tileSize.width * tileSize.height * MINIMUM_TILE_COPY_AREA)) {
+      if (regionToCopy.IsEmpty()) {
         // Just redraw it all.
         return;
       }
@@ -713,13 +708,13 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
                           SurfaceMode aMode,
                           bool *aCreatedTextureClient,
                           nsIntRegion& aAddPaintedRegion,
-                          bool aCanRerasterizeValidRegion,
                           RefPtr<TextureClient>* aBackBufferOnWhite)
 {
   // Try to re-use the front-buffer if possible
   if (mFrontBuffer &&
       mFrontBuffer->HasInternalBuffer() &&
-      mFrontLock->GetReadCount() == 1) {
+      mFrontLock->GetReadCount() == 1 &&
+      !(aMode == SurfaceMode::SURFACE_COMPONENT_ALPHA && !mFrontBufferOnWhite)) {
     // If we had a backbuffer we no longer care about it since we'll
     // re-use the front buffer.
     DiscardBackBuffer();
@@ -777,7 +772,7 @@ TileClient::GetBackBuffer(const nsIntRegion& aDirtyRegion,
     mInvalidBack = nsIntRect(0, 0, mBackBuffer->GetSize().width, mBackBuffer->GetSize().height);
   }
 
-  ValidateBackBufferFromFront(aDirtyRegion, aCanRerasterizeValidRegion, aAddPaintedRegion);
+  ValidateBackBufferFromFront(aDirtyRegion, aAddPaintedRegion);
 
   *aBackBufferOnWhite = mBackBufferOnWhite;
   return mBackBuffer;
@@ -794,7 +789,7 @@ TileClient::GetTileDescriptor()
     // AddRef here and Release when receiving on the host side to make sure the
     // reference count doesn't go to zero before the host receives the message.
     // see TiledLayerBufferComposite::TiledLayerBufferComposite
-    mFrontLock->AddRef();
+    mFrontLock.get()->AddRef();
   }
 
   if (mFrontLock->GetType() == gfxSharedReadLock::TYPE_MEMORY) {
@@ -882,20 +877,7 @@ ClientTiledLayerBuffer::PaintThebes(const nsIntRegion& aNewValidRegion,
   // If this region is empty XMost() - 1 will give us a negative value.
   NS_ASSERTION(!aPaintRegion.GetBounds().IsEmpty(), "Empty paint region\n");
 
-  bool useSinglePaintBuffer = UseSinglePaintBuffer();
-  // XXX The single-tile case doesn't work at the moment, see bug 850396
-  /*
-  if (useSinglePaintBuffer) {
-    // Check if the paint only spans a single tile. If that's
-    // the case there's no point in using a single paint buffer.
-    nsIntRect paintBounds = aPaintRegion.GetBounds();
-    useSinglePaintBuffer = GetTileStart(paintBounds.x) !=
-                           GetTileStart(paintBounds.XMost() - 1) ||
-                           GetTileStart(paintBounds.y) !=
-                           GetTileStart(paintBounds.YMost() - 1);
-  }
-  */
-  if (useSinglePaintBuffer && !gfxPrefs::TiledDrawTargetEnabled()) {
+  if (!gfxPrefs::TiledDrawTargetEnabled()) {
     nsRefPtr<gfxContext> ctxt;
 
     const nsIntRect bounds = aPaintRegion.GetBounds();
@@ -987,6 +969,22 @@ void PadDrawTargetOutFromRegion(RefPtr<DrawTarget> drawTarget, nsIntRegion &regi
       return x;
     }
 
+    static void ensure_memcpy(uint8_t *dst, uint8_t *src, size_t n, uint8_t *bitmap, int stride, int height)
+    {
+        if (src + n > bitmap + stride*height) {
+            MOZ_CRASH("long src memcpy");
+        }
+        if (src < bitmap) {
+            MOZ_CRASH("short src memcpy");
+        }
+        if (dst + n > bitmap + stride*height) {
+            MOZ_CRASH("long dst mempcy");
+        }
+        if (dst < bitmap) {
+            MOZ_CRASH("short dst mempcy");
+        }
+    }
+
     static void visitor(void *closure, VisitSide side, int x1, int y1, int x2, int y2) {
       LockedBits *lb = static_cast<LockedBits*>(closure);
       uint8_t *bitmap = lb->data;
@@ -999,12 +997,14 @@ void PadDrawTargetOutFromRegion(RefPtr<DrawTarget> drawTarget, nsIntRegion &regi
         if (y1 > 0) {
           x1 = clamp(x1, 0, width - 1);
           x2 = clamp(x2, 0, width - 1);
+          ensure_memcpy(&bitmap[x1*bpp + (y1-1) * stride], &bitmap[x1*bpp + y1 * stride], (x2 - x1) * bpp, bitmap, stride, height);
           memcpy(&bitmap[x1*bpp + (y1-1) * stride], &bitmap[x1*bpp + y1 * stride], (x2 - x1) * bpp);
         }
       } else if (side == VisitSide::BOTTOM) {
         if (y1 < height) {
           x1 = clamp(x1, 0, width - 1);
           x2 = clamp(x2, 0, width - 1);
+          ensure_memcpy(&bitmap[x1*bpp + y1 * stride], &bitmap[x1*bpp + (y1-1) * stride], (x2 - x1) * bpp, bitmap, stride, height);
           memcpy(&bitmap[x1*bpp + y1 * stride], &bitmap[x1*bpp + (y1-1) * stride], (x2 - x1) * bpp);
         }
       } else if (side == VisitSide::LEFT) {
@@ -1099,7 +1099,9 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
   nsIntRegion offsetScaledDirtyRegion = aDirtyRegion.MovedBy(-aTileOrigin);
   offsetScaledDirtyRegion.ScaleRoundOut(mResolution, mResolution);
 
-  bool usingSinglePaintBuffer = !!mSinglePaintDrawTarget;
+  bool usingTiledDrawTarget = gfxPrefs::TiledDrawTargetEnabled();
+  MOZ_ASSERT(usingTiledDrawTarget || !!mSinglePaintDrawTarget);
+
   SurfaceMode mode;
   gfxContentType content = GetContentType(&mode);
   nsIntRegion extraPainted;
@@ -1108,7 +1110,6 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     aTile.GetBackBuffer(offsetScaledDirtyRegion,
                         content, mode,
                         &createdTextureClient, extraPainted,
-                        !usingSinglePaintBuffer && !gfxPrefs::TiledDrawTargetEnabled(),
                         &backBufferOnWhite);
 
   extraPainted.MoveBy(aTileOrigin);
@@ -1141,9 +1142,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     }
   }
 
-  if (gfxPrefs::TiledDrawTargetEnabled()) {
-    aTile.Flip();
-
+  if (usingTiledDrawTarget) {
     if (createdTextureClient) {
       if (!mCompositableClient->AddTextureClient(backBuffer)) {
         NS_WARNING("Failed to add tile TextureClient.");
@@ -1172,6 +1171,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     moz2DTile.mTileOrigin = gfx::IntPoint(aTileOrigin.x * mResolution, aTileOrigin.y * mResolution);
     if (!dt || (backBufferOnWhite && !dtOnWhite)) {
       aTile.DiscardFrontBuffer();
+      aTile.DiscardBackBuffer();
       return aTile;
     }
 
@@ -1187,13 +1187,10 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
                          dirtyRect->height);
       drawRect.Scale(mResolution);
 
-      gfx::IntRect copyRect(NS_roundf((dirtyRect->x - mSinglePaintBufferOffset.x) * mResolution),
-                            NS_roundf((dirtyRect->y - mSinglePaintBufferOffset.y) * mResolution),
-                            drawRect.width,
-                            drawRect.height);
-      gfx::IntPoint copyTarget(NS_roundf(drawRect.x), NS_roundf(drawRect.y));
-      // Mark the newly updated area as invalid in the back buffer
-      aTile.mInvalidBack.Or(aTile.mInvalidBack, nsIntRect(copyTarget.x, copyTarget.y, copyRect.width, copyRect.height));
+      // Mark the newly updated area as invalid in the front buffer
+      aTile.mInvalidFront.Or(aTile.mInvalidFront,
+        nsIntRect(NS_lroundf(drawRect.x), NS_lroundf(drawRect.y),
+                  drawRect.width, drawRect.height));
 
       if (mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) {
         dt->FillRect(drawRect, ColorPattern(Color(0.0, 0.0, 0.0, 1.0)));
@@ -1203,10 +1200,18 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
       }
     }
 
+    // The new buffer is now validated, remove the dirty region from it.
+    aTile.mInvalidBack.Sub(nsIntRect(0, 0, GetTileSize().width, GetTileSize().height),
+                           offsetScaledDirtyRegion);
+
+    aTile.Flip();
+
     return aTile;
-  } else {
-    MOZ_ASSERT(!backBufferOnWhite, "Component alpha only supported with TiledDrawTarget");
   }
+
+  // Single paint buffer case:
+
+  MOZ_ASSERT(!backBufferOnWhite, "Component alpha only supported with TiledDrawTarget");
 
   // We must not keep a reference to the DrawTarget after it has been unlocked,
   // make sure these are null'd before unlocking as destruction of the context
@@ -1216,106 +1221,54 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
 
   RefPtr<gfxContext> ctxt = new gfxContext(drawTarget);
 
-  if (usingSinglePaintBuffer) {
-    // XXX Perhaps we should just copy the bounding rectangle here?
-    RefPtr<gfx::SourceSurface> source = mSinglePaintDrawTarget->Snapshot();
-    nsIntRegionRectIterator it(aDirtyRegion);
-    for (const nsIntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
+  // XXX Perhaps we should just copy the bounding rectangle here?
+  RefPtr<gfx::SourceSurface> source = mSinglePaintDrawTarget->Snapshot();
+  nsIntRegionRectIterator it(aDirtyRegion);
+  for (const nsIntRect* dirtyRect = it.Next(); dirtyRect != nullptr; dirtyRect = it.Next()) {
 #ifdef GFX_TILEDLAYER_PREF_WARNINGS
-      printf_stderr(" break into subdirtyRect %i, %i, %i, %i\n",
-                    dirtyRect->x, dirtyRect->y, dirtyRect->width, dirtyRect->height);
+    printf_stderr(" break into subdirtyRect %i, %i, %i, %i\n",
+                  dirtyRect->x, dirtyRect->y, dirtyRect->width, dirtyRect->height);
 #endif
-      gfx::Rect drawRect(dirtyRect->x - aTileOrigin.x,
-                         dirtyRect->y - aTileOrigin.y,
-                         dirtyRect->width,
-                         dirtyRect->height);
-      drawRect.Scale(mResolution);
+    gfx::Rect drawRect(dirtyRect->x - aTileOrigin.x,
+                       dirtyRect->y - aTileOrigin.y,
+                       dirtyRect->width,
+                       dirtyRect->height);
+    drawRect.Scale(mResolution);
 
-      gfx::IntRect copyRect(NS_roundf((dirtyRect->x - mSinglePaintBufferOffset.x) * mResolution),
-                            NS_roundf((dirtyRect->y - mSinglePaintBufferOffset.y) * mResolution),
-                            drawRect.width,
-                            drawRect.height);
-      gfx::IntPoint copyTarget(NS_roundf(drawRect.x), NS_roundf(drawRect.y));
-      drawTarget->CopySurface(source, copyRect, copyTarget);
+    gfx::IntRect copyRect(NS_lroundf((dirtyRect->x - mSinglePaintBufferOffset.x) * mResolution),
+                          NS_lroundf((dirtyRect->y - mSinglePaintBufferOffset.y) * mResolution),
+                          drawRect.width,
+                          drawRect.height);
+    gfx::IntPoint copyTarget(NS_lroundf(drawRect.x), NS_lroundf(drawRect.y));
+    drawTarget->CopySurface(source, copyRect, copyTarget);
 
-      // Mark the newly updated area as invalid in the front buffer
-      aTile.mInvalidFront.Or(aTile.mInvalidFront, nsIntRect(copyTarget.x, copyTarget.y, copyRect.width, copyRect.height));
-    }
-
-    // only worry about padding when not doing low-res
-    // because it simplifies the math and the artifacts
-    // won't be noticable
-    if (mResolution == 1) {
-      nsIntRect unscaledTile = nsIntRect(aTileOrigin.x,
-                                         aTileOrigin.y,
-                                         GetTileSize().width,
-                                         GetTileSize().height);
-
-      nsIntRegion tileValidRegion = GetValidRegion();
-      tileValidRegion.Or(tileValidRegion, aDirtyRegion);
-      // We only need to pad out if the tile has area that's not valid
-      if (!tileValidRegion.Contains(unscaledTile)) {
-        tileValidRegion = tileValidRegion.Intersect(unscaledTile);
-        // translate the region into tile space and pad
-        tileValidRegion.MoveBy(-nsIntPoint(unscaledTile.x, unscaledTile.y));
-        PadDrawTargetOutFromRegion(drawTarget, tileValidRegion);
-      }
-    }
-
-    // The new buffer is now validated, remove the dirty region from it.
-    aTile.mInvalidBack.Sub(nsIntRect(0, 0, GetTileSize().width, GetTileSize().height),
-                           offsetScaledDirtyRegion);
-  } else {
-    // Area of the full tile...
-    nsIntRegion tileRegion =
-      nsIntRect(aTileOrigin.x, aTileOrigin.y,
-                GetScaledTileSize().width, GetScaledTileSize().height);
-
-    // Intersect this area with the portion that's dirty.
-    tileRegion = tileRegion.Intersect(aDirtyRegion);
-
-    // Add the resolution scale to store the dirty region.
-    nsIntPoint unscaledTileOrigin = nsIntPoint(aTileOrigin.x * mResolution,
-                                               aTileOrigin.y * mResolution);
-    nsIntRegion unscaledTileRegion(tileRegion);
-    unscaledTileRegion.ScaleRoundOut(mResolution, mResolution);
-
-    // Move invalid areas into scaled layer space.
-    aTile.mInvalidFront.MoveBy(unscaledTileOrigin);
-    aTile.mInvalidBack.MoveBy(unscaledTileOrigin);
-
-    // Add the area that's going to be redrawn to the invalid area of the
-    // front region.
-    aTile.mInvalidFront.Or(aTile.mInvalidFront, unscaledTileRegion);
-
-    // Add invalid areas of the backbuffer to the area to redraw.
-    tileRegion.Or(tileRegion, aTile.mInvalidBack);
-
-    // Move invalid areas back into tile space.
-    aTile.mInvalidFront.MoveBy(-unscaledTileOrigin);
-
-    // This will be validated now.
-    aTile.mInvalidBack.SetEmpty();
-
-    nsIntRect bounds = tileRegion.GetBounds();
-    bounds.MoveBy(-aTileOrigin);
-
-    if (GetContentType() != gfxContentType::COLOR) {
-      drawTarget->ClearRect(Rect(bounds.x, bounds.y, bounds.width, bounds.height));
-    }
-
-    ctxt->NewPath();
-    ctxt->Clip(gfxRect(bounds.x, bounds.y, bounds.width, bounds.height));
-    ctxt->SetMatrix(
-      ctxt->CurrentMatrix().Translate(-unscaledTileOrigin.x,
-                                      -unscaledTileOrigin.y).
-                            Scale(mResolution, mResolution));
-    mCallback(mPaintedLayer, ctxt,
-              tileRegion.GetBounds(),
-              DrawRegionClip::NONE,
-              nsIntRegion(), mCallbackData);
-
+    // Mark the newly updated area as invalid in the front buffer
+    aTile.mInvalidFront.Or(aTile.mInvalidFront, nsIntRect(copyTarget.x, copyTarget.y, copyRect.width, copyRect.height));
   }
+
+  // only worry about padding when not doing low-res
+  // because it simplifies the math and the artifacts
+  // won't be noticable
+  if (mResolution == 1) {
+    nsIntRect unscaledTile = nsIntRect(aTileOrigin.x,
+                                       aTileOrigin.y,
+                                       GetTileSize().width,
+                                       GetTileSize().height);
+
+    nsIntRegion tileValidRegion = GetValidRegion();
+    tileValidRegion.Or(tileValidRegion, aDirtyRegion);
+    // We only need to pad out if the tile has area that's not valid
+    if (!tileValidRegion.Contains(unscaledTile)) {
+      tileValidRegion = tileValidRegion.Intersect(unscaledTile);
+      // translate the region into tile space and pad
+      tileValidRegion.MoveBy(-nsIntPoint(unscaledTile.x, unscaledTile.y));
+      PadDrawTargetOutFromRegion(drawTarget, tileValidRegion);
+    }
+  }
+
+  // The new buffer is now validated, remove the dirty region from it.
+  aTile.mInvalidBack.Sub(nsIntRect(0, 0, GetTileSize().width, GetTileSize().height),
+                         offsetScaledDirtyRegion);
 
 #ifdef GFX_TILEDLAYER_DEBUG_OVERLAY
   DrawDebugOverlay(drawTarget, aTileOrigin.x * mResolution,
@@ -1329,11 +1282,12 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
     nsIntRect(aTileOrigin.x, aTileOrigin.y,
               GetScaledTileSize().width, GetScaledTileSize().height);
   // Intersect this area with the portion that's invalid.
-  tileRegion = tileRegion.Sub(tileRegion, GetValidRegion());
-  tileRegion = tileRegion.Sub(tileRegion, aDirtyRegion); // Has now been validated
+  tileRegion.SubOut(GetValidRegion());
+  tileRegion.SubOut(aDirtyRegion); // Has now been validated
 
   backBuffer->SetWaste(tileRegion.Area() * mResolution * mResolution);
   backBuffer->Unlock();
+  backBuffer->SyncWithObject(mCompositableClient->GetForwarder()->GetSyncObject());
 
   if (createdTextureClient) {
     if (!mCompositableClient->AddTextureClient(backBuffer)) {
@@ -1363,8 +1317,7 @@ ClientTiledLayerBuffer::ValidateTile(TileClient aTile,
  * (which was generated in GetTransformToAncestorsParentLayer), and
  * modifies it with the ViewTransform from the compositor side so that
  * it reflects what the compositor is actually rendering. This operation
- * basically replaces the nontransient async transform that was injected
- * in GetTransformToAncestorsParentLayer with the complete async transform.
+ * basically adds in the layer's async transform.
  * This function then returns the scroll ancestor's composition bounds,
  * transformed into the painted layer's LayerPixel coordinates, accounting
  * for the compositor state.
@@ -1374,22 +1327,8 @@ GetCompositorSideCompositionBounds(const LayerMetricsWrapper& aScrollAncestor,
                                    const Matrix4x4& aTransformToCompBounds,
                                    const ViewTransform& aAPZTransform)
 {
-  Matrix4x4 nonTransientAPZUntransform = Matrix4x4::Scaling(
-    aScrollAncestor.Metrics().mPresShellResolution,
-    aScrollAncestor.Metrics().mPresShellResolution,
-    1.f);
-  nonTransientAPZUntransform.Invert();
-
-  // Take off the last "term" of aTransformToCompBounds, which
-  // is the APZ's nontransient async transform. Replace it with
-  // the APZ's async transform (this includes the nontransient
-  // component as well).
-  Matrix4x4 transform = aTransformToCompBounds
-                      * nonTransientAPZUntransform
-                      * Matrix4x4(aAPZTransform);
-  transform.Invert();
-
-  return TransformTo<LayerPixel>(transform,
+  Matrix4x4 transform = aTransformToCompBounds * Matrix4x4(aAPZTransform);
+  return TransformTo<LayerPixel>(transform.Inverse(),
             aScrollAncestor.Metrics().mCompositionBounds);
 }
 
@@ -1639,6 +1578,28 @@ ClientTiledLayerBuffer::ProgressiveUpdate(nsIntRegion& aValidRegion,
   // Return false if nothing has been drawn, or give what has been drawn
   // to the shadow layer to upload.
   return isBufferChanged;
+}
+
+void
+TiledContentClient::PrintInfo(std::stringstream& aStream, const char* aPrefix)
+{
+  aStream << aPrefix;
+  aStream << nsPrintfCString("TiledContentClient (0x%p)", this).get();
+
+  if (profiler_feature_active("displaylistdump")) {
+    nsAutoCString pfx(aPrefix);
+    pfx += "  ";
+
+    Dump(aStream, pfx.get(), false);
+  }
+}
+
+void
+TiledContentClient::Dump(std::stringstream& aStream,
+                       const char* aPrefix,
+                       bool aDumpHtml)
+{
+  mTiledBuffer.Dump(aStream, aPrefix, aDumpHtml);
 }
 
 }

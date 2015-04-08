@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/se_FI.xml
@@ -38,7 +38,7 @@ se_FI{
         vi{"vietnamagiella"}
         zh_Hans{"álkes kiinnágiella"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"brihttalaš eaŋgalsgiella"}
         en_US{"amerihkálaš eaŋgalsgiella"}
     }

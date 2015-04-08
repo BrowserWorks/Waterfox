@@ -14,7 +14,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Casting.h"
 #include "mozilla/FloatingPoint.h"
-#include "mozilla/NullPtr.h"
 
 #include <cmath>
 #include <cstring>
@@ -36,8 +35,8 @@
 
 #define WTF_MAKE_NONCOPYABLE(ClassName) \
   private: \
-    ClassName(const ClassName&) MOZ_DELETE; \
-    void operator=(const ClassName&) MOZ_DELETE;
+    ClassName(const ClassName&) = delete; \
+    void operator=(const ClassName&) = delete;
 
 #if defined(_MSC_VER)
 namespace std {

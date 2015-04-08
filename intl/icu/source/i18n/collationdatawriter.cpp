@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationdatawriter.cpp
@@ -68,7 +68,7 @@ static const UDataInfo dataInfo = {
     0,
 
     { 0x55, 0x43, 0x6f, 0x6c },         // dataFormat="UCol"
-    { 4, 0, 0, 0 },                     // formatVersion
+    { 5, 0, 0, 0 },                     // formatVersion
     { 6, 3, 0, 0 }                      // dataVersion
 };
 
@@ -157,6 +157,23 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
         }
     }
 
+    UVector32 codesAndRanges(errorCode);
+    const int32_t *reorderCodes = settings.reorderCodes;
+    int32_t reorderCodesLength = settings.reorderCodesLength;
+    if(settings.hasReordering() &&
+            CollationSettings::reorderTableHasSplitBytes(settings.reorderTable)) {
+        // Rebuild the full list of reorder ranges.
+        // The list in the settings is truncated for efficiency.
+        data.makeReorderRanges(reorderCodes, reorderCodesLength, codesAndRanges, errorCode);
+        // Write the codes, then the ranges.
+        for(int32_t i = 0; i < reorderCodesLength; ++i) {
+            codesAndRanges.insertElementAt(reorderCodes[i], i, errorCode);
+        }
+        if(U_FAILURE(errorCode)) { return 0; }
+        reorderCodes = codesAndRanges.getBuffer();
+        reorderCodesLength = codesAndRanges.size();
+    }
+
     int32_t headerSize;
     if(isBase) {
         headerSize = 0;  // udata_create() writes the header
@@ -171,7 +188,7 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
         if(hasMappings && data.cesLength != 0) {
             // Sum of the sizes of the data items which are
             // not automatically multiples of 8 bytes and which are placed before the CEs.
-            int32_t sum = headerSize + (indexesLength + settings.reorderCodesLength) * 4;
+            int32_t sum = headerSize + (indexesLength + reorderCodesLength) * 4;
             if((sum & 7) != 0) {
                 // We need to add padding somewhere so that the 64-bit CEs are 8-aligned.
                 // We add to the header size here.
@@ -211,7 +228,7 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
     }
 
     indexes[CollationDataReader::IX_REORDER_CODES_OFFSET] = totalSize;
-    totalSize += settings.reorderCodesLength * 4;
+    totalSize += reorderCodesLength * 4;
 
     indexes[CollationDataReader::IX_REORDER_TABLE_OFFSET] = totalSize;
     if(settings.reorderTable != NULL) {
@@ -280,9 +297,13 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
     indexes[CollationDataReader::IX_FAST_LATIN_TABLE_OFFSET] = totalSize;
     totalSize += fastLatinTableLength * 2;
 
+    UnicodeString scripts;
     indexes[CollationDataReader::IX_SCRIPTS_OFFSET] = totalSize;
     if(isBase) {
-        totalSize += data.scriptsLength * 2;
+        scripts.append((UChar)data.numScripts);
+        scripts.append(reinterpret_cast<const UChar *>(data.scriptsIndex), data.numScripts + 16);
+        scripts.append(reinterpret_cast<const UChar *>(data.scriptStarts), data.scriptStartsLength);
+        totalSize += scripts.length() * 2;
     }
 
     indexes[CollationDataReader::IX_COMPRESSIBLE_BYTES_OFFSET] = totalSize;
@@ -299,7 +320,7 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
     }
 
     uprv_memcpy(dest, indexes, indexesLength * 4);
-    copyData(indexes, CollationDataReader::IX_REORDER_CODES_OFFSET, settings.reorderCodes, dest);
+    copyData(indexes, CollationDataReader::IX_REORDER_CODES_OFFSET, reorderCodes, dest);
     copyData(indexes, CollationDataReader::IX_REORDER_TABLE_OFFSET, settings.reorderTable, dest);
     // The trie has already been serialized into the dest buffer.
     copyData(indexes, CollationDataReader::IX_CES_OFFSET, data.ces, dest);
@@ -308,7 +329,7 @@ CollationDataWriter::write(UBool isBase, const UVersionInfo dataVersion,
     copyData(indexes, CollationDataReader::IX_CONTEXTS_OFFSET, data.contexts, dest);
     // The unsafeBackwardSet has already been serialized into the dest buffer.
     copyData(indexes, CollationDataReader::IX_FAST_LATIN_TABLE_OFFSET, data.fastLatinTable, dest);
-    copyData(indexes, CollationDataReader::IX_SCRIPTS_OFFSET, data.scripts, dest);
+    copyData(indexes, CollationDataReader::IX_SCRIPTS_OFFSET, scripts.getBuffer(), dest);
     copyData(indexes, CollationDataReader::IX_COMPRESSIBLE_BYTES_OFFSET, data.compressibleBytes, dest);
 
     return headerSize + totalSize;

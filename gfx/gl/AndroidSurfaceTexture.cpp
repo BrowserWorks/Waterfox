@@ -19,8 +19,9 @@
 #include "GLContext.h"
 
 using namespace mozilla;
-using namespace mozilla::widget::android;
-using namespace mozilla::widget::android::sdk;
+using namespace mozilla::jni;
+using namespace mozilla::widget;
+using namespace mozilla::widget::sdk;
 
 namespace mozilla {
 namespace gl {
@@ -28,12 +29,6 @@ namespace gl {
 // UGH
 static std::map<int, AndroidSurfaceTexture*> sInstances;
 static int sNextID = 0;
-
-static bool
-IsDetachSupported()
-{
-  return AndroidBridge::Bridge()->GetAPIVersion() >= 16; /* Jelly Bean */
-}
 
 static bool
 IsSTSupported()
@@ -86,7 +81,7 @@ AndroidSurfaceTexture::Attach(GLContext* aContext, PRIntervalTime aTimeout)
     return NS_OK;
   }
 
-  if (!IsDetachSupported()) {
+  if (!CanDetach()) {
     return NS_ERROR_NOT_AVAILABLE;
   }
 
@@ -103,9 +98,9 @@ AndroidSurfaceTexture::Attach(GLContext* aContext, PRIntervalTime aTimeout)
   mAttachedContext->MakeCurrent();
   aContext->fGenTextures(1, &mTexture);
 
-  nsresult res;
-  mSurfaceTexture->AttachToGLContext(mTexture, &res);
-  return res;
+  UpdateCanDetach();
+
+  return mSurfaceTexture->AttachToGLContext(mTexture);
 }
 
 nsresult
@@ -113,8 +108,10 @@ AndroidSurfaceTexture::Detach()
 {
   MonitorAutoLock lock(mMonitor);
 
-  if (!IsDetachSupported() ||
-      !mAttachedContext || !mAttachedContext->IsOwningThreadCurrent()) {
+  if (!CanDetach() ||
+      !mAttachedContext ||
+      !mAttachedContext->IsOwningThreadCurrent())
+  {
     return NS_ERROR_FAILURE;
   }
 
@@ -128,17 +125,29 @@ AndroidSurfaceTexture::Detach()
   return NS_OK;
 }
 
+void
+AndroidSurfaceTexture::UpdateCanDetach()
+{
+  // The API for attach/detach only exists on 16+, and PowerVR has some sort of
+  // fencing issue. Additionally, attach/detach seems to be busted on at least some
+  // Mali adapters (400MP2 for sure, bug 1131793)
+  mCanDetach = AndroidBridge::Bridge()->GetAPIVersion() >= 16 &&
+    (!mAttachedContext || mAttachedContext->Vendor() != GLVendor::Imagination) &&
+    (!mAttachedContext || mAttachedContext->Vendor() != GLVendor::ARM /* Mali */);
+}
+
 bool
 AndroidSurfaceTexture::Init(GLContext* aContext, GLuint aTexture)
 {
-  if (!aTexture && !IsDetachSupported()) {
+  UpdateCanDetach();
+
+  if (!aTexture && !CanDetach()) {
     // We have no texture and cannot initialize detached, bail out
     return false;
   }
 
-  nsresult res;
-  mSurfaceTexture = new SurfaceTexture(aTexture, &res);
-  if (NS_FAILED(res)) {
+  if (NS_WARN_IF(NS_FAILED(
+      SurfaceTexture::New(aTexture, ReturnTo(&mSurfaceTexture))))) {
     return false;
   }
 
@@ -148,13 +157,13 @@ AndroidSurfaceTexture::Init(GLContext* aContext, GLuint aTexture)
 
   mAttachedContext = aContext;
 
-  mSurface = new Surface(mSurfaceTexture->wrappedObject(), &res);
-  if (NS_FAILED(res)) {
+  if (NS_WARN_IF(NS_FAILED(
+      Surface::New(mSurfaceTexture, ReturnTo(&mSurface))))) {
     return false;
   }
 
   mNativeWindow = AndroidNativeWindow::CreateFromSurface(GetJNIForThread(),
-                                                         mSurface->wrappedObject());
+                                                         mSurface.Get());
   MOZ_ASSERT(mNativeWindow, "Failed to create native window from surface");
 
   mID = ++sNextID;
@@ -165,10 +174,11 @@ AndroidSurfaceTexture::Init(GLContext* aContext, GLuint aTexture)
 
 AndroidSurfaceTexture::AndroidSurfaceTexture()
   : mTexture(0)
-  , mSurfaceTexture(nullptr)
-  , mSurface(nullptr)
+  , mSurfaceTexture()
+  , mSurface()
   , mMonitor("AndroidSurfaceTexture::mContextMonitor")
   , mAttachedContext(nullptr)
+  , mCanDetach(false)
 {
 }
 
@@ -179,7 +189,7 @@ AndroidSurfaceTexture::~AndroidSurfaceTexture()
   mFrameAvailableCallback = nullptr;
 
   if (mSurfaceTexture) {
-    GeckoAppShell::UnregisterSurfaceTextureFrameListener(mSurfaceTexture->wrappedObject());
+    GeckoAppShell::UnregisterSurfaceTextureFrameListener(mSurfaceTexture);
     mSurfaceTexture = nullptr;
   }
 }
@@ -195,12 +205,10 @@ AndroidSurfaceTexture::GetTransformMatrix(gfx::Matrix4x4& aMatrix)
 {
   JNIEnv* env = GetJNIForThread();
 
-  AutoLocalJNIFrame jniFrame(env);
-
-  jfloatArray jarray = env->NewFloatArray(16);
+  auto jarray = FloatArray::LocalRef::Adopt(env, env->NewFloatArray(16));
   mSurfaceTexture->GetTransformMatrix(jarray);
 
-  jfloat* array = env->GetFloatArrayElements(jarray, nullptr);
+  jfloat* array = env->GetFloatArrayElements(jarray.Get(), nullptr);
 
   aMatrix._11 = array[0];
   aMatrix._12 = array[1];
@@ -222,16 +230,16 @@ AndroidSurfaceTexture::GetTransformMatrix(gfx::Matrix4x4& aMatrix)
   aMatrix._43 = array[14];
   aMatrix._44 = array[15];
 
-  env->ReleaseFloatArrayElements(jarray, array, 0);
+  env->ReleaseFloatArrayElements(jarray.Get(), array, 0);
 }
 
 void
 AndroidSurfaceTexture::SetFrameAvailableCallback(nsIRunnable* aRunnable)
 {
   if (aRunnable) {
-    GeckoAppShell::RegisterSurfaceTextureFrameListener(mSurfaceTexture->wrappedObject(), mID);
+    GeckoAppShell::RegisterSurfaceTextureFrameListener(mSurfaceTexture, mID);
   } else {
-     GeckoAppShell::UnregisterSurfaceTextureFrameListener(mSurfaceTexture->wrappedObject());
+     GeckoAppShell::UnregisterSurfaceTextureFrameListener(mSurfaceTexture);
   }
 
   mFrameAvailableCallback = aRunnable;

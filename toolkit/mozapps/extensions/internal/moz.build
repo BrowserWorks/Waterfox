@@ -10,6 +10,7 @@ EXTRA_JS_MODULES.addons += [
     'AddonRepository_SQLiteMigrator.jsm',
     'AddonUpdateChecker.jsm',
     'Content.js',
+    'GMPProvider.jsm',
     'LightweightThemeImageOptimizer.jsm',
     'SpellCheckDictionaryBootstrap.js',
 ]
@@ -17,7 +18,6 @@ EXTRA_JS_MODULES.addons += [
 # Don't ship unused providers on Android
 if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'android':
     EXTRA_JS_MODULES.addons += [
-        'OpenH264Provider.jsm',
         'PluginProvider.jsm',
     ]
 

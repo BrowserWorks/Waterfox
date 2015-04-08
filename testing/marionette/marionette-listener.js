@@ -39,6 +39,7 @@ let listenerId = null; //unique ID of this listener
 let curFrame = content;
 let previousFrame = null;
 let elementManager = new ElementManager([]);
+let accessibility = new Accessibility();
 let importedScripts = null;
 let inputSource = null;
 
@@ -188,7 +189,6 @@ function startListeners() {
   addMessageListenerId("Marionette:getCookies", getCookies);
   addMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
   addMessageListenerId("Marionette:deleteCookie", deleteCookie);
-  addMessageListenerId("Marionette:ping", ping);
 }
 
 /**
@@ -211,6 +211,7 @@ function waitForReady() {
  */
 function newSession(msg) {
   isB2G = msg.json.B2G;
+  accessibility.strict = msg.json.raisesAccessibilityExceptions;
   resetValues();
   if (isB2G) {
     readyStateTimer.initWithCallback(waitForReady, 100, Ci.nsITimer.TYPE_ONE_SHOT);
@@ -291,7 +292,6 @@ function deleteSession(msg) {
   removeMessageListenerId("Marionette:getCookies", getCookies);
   removeMessageListenerId("Marionette:deleteAllCookies", deleteAllCookies);
   removeMessageListenerId("Marionette:deleteCookie", deleteCookie);
-  removeMessageListenerId("Marionette:ping", ping);
   if (isB2G) {
     content.removeEventListener("mozbrowsershowmodalprompt", modalHandler, false);
   }
@@ -947,11 +947,15 @@ function singleTap(msg) {
   let command_id = msg.json.command_id;
   try {
     let el = elementManager.getKnownElement(msg.json.id, curFrame);
+    let acc = accessibility.getAccessibleObject(el, true);
     // after this block, the element will be scrolled into view
-    if (!checkVisible(el, msg.json.corx, msg.json.cory)) {
-       sendError("Element is not currently visible and may not be manipulated", 11, null, command_id);
-       return;
+    let visible = checkVisible(el, msg.json.corx, msg.json.cory);
+    checkVisibleAccessibility(acc, visible);
+    if (!visible) {
+      sendError("Element is not currently visible and may not be manipulated", 11, null, command_id);
+      return;
     }
+    checkActionableAccessibility(acc);
     if (!curFrame.document.createTouch) {
       mouseEventsOnly = true;
     }
@@ -962,6 +966,64 @@ function singleTap(msg) {
   catch (e) {
     sendError(e.message, e.code, e.stack, msg.json.command_id);
   }
+}
+
+/**
+ * Check if the element's unavailable accessibility state matches the enabled
+ * state
+ * @param nsIAccessible object
+ * @param Boolean enabled element's enabled state
+ */
+function checkEnabledStateAccessibility(accesible, enabled) {
+  if (!accesible) {
+    return;
+  }
+  if (enabled && accessibility.matchState(accesible, 'STATE_UNAVAILABLE')) {
+    accessibility.handleErrorMessage('Element is enabled but disabled via ' +
+      'the accessibility API');
+  }
+}
+
+/**
+ * Check if the element's visible state corresponds to its accessibility API
+ * visibility
+ * @param nsIAccessible object
+ * @param Boolean visible element's visibility state
+ */
+function checkVisibleAccessibility(accesible, visible) {
+  if (!accesible) {
+    return;
+  }
+  let hiddenAccessibility = accessibility.isHidden(accesible);
+  let message;
+  if (visible && hiddenAccessibility) {
+    message = 'Element is not currently visible via the accessibility API ' +
+      'and may not be manipulated by it';
+  } else if (!visible && !hiddenAccessibility) {
+    message = 'Element is currently only visible via the accessibility API ' +
+      'and can be manipulated by it';
+  }
+  accessibility.handleErrorMessage(message);
+}
+
+/**
+ * Check if it is possible to activate an element with the accessibility API
+ * @param nsIAccessible object
+ */
+function checkActionableAccessibility(accesible) {
+  if (!accesible) {
+    return;
+  }
+  let message;
+  if (!accessibility.hasActionCount(accesible)) {
+    message = 'Element does not support any accessible actions';
+  } else if (!accessibility.isActionableRole(accesible)) {
+    message = 'Element does not have a correct accessibility role ' +
+      'and may not be manipulated via the accessibility API';
+  } else if (!accessibility.hasValidName(accesible)) {
+    message = 'Element is missing an accesible name';
+  }
+  accessibility.handleErrorMessage(message);
 }
 
 /**
@@ -1283,21 +1345,23 @@ function get(msg) {
   function checkLoad() {
     checkTimer.cancel();
     end = new Date().getTime();
-    let errorRegex = /about:.+(error)|(blocked)\?/;
+    let aboutErrorRegex = /about:.+(error)\?/;
     let elapse = end - start;
     if (msg.json.pageTimeout == null || elapse <= msg.json.pageTimeout) {
       if (curFrame.document.readyState == "complete") {
         removeEventListener("DOMContentLoaded", onDOMContentLoaded, false);
         sendOk(command_id);
-        // Restart the OOP frame heartbeat now that the URL is loaded
-        sendToServer("Marionette:startHeartbeat");
-      }
-      else if (curFrame.document.readyState == "interactive" &&
-               errorRegex.exec(curFrame.document.baseURI)) {
+      } else if (curFrame.document.readyState == "interactive" &&
+                 aboutErrorRegex.exec(curFrame.document.baseURI) &&
+                 !curFrame.document.baseURI.startsWith(msg.json.url)) {
+        // We have reached an error url without requesting it.
         removeEventListener("DOMContentLoaded", onDOMContentLoaded, false);
         sendError("Error loading page", 13, null, command_id);
-      }
-      else {
+      } else if (curFrame.document.readyState == "interactive" &&
+                 curFrame.document.baseURI.startsWith("about:")) {
+        removeEventListener("DOMContentLoaded", onDOMContentLoaded, false);
+        sendOk(command_id);
+      } else {
         checkTimer.initWithCallback(checkLoad, 100, Ci.nsITimer.TYPE_ONE_SHOT);
       }
     }
@@ -1431,7 +1495,11 @@ function clickElement(msg) {
   let el;
   try {
     el = elementManager.getKnownElement(msg.json.id, curFrame);
-    if (checkVisible(el)) {
+    let acc = accessibility.getAccessibleObject(el, true);
+    let visible = checkVisible(el);
+    checkVisibleAccessibility(acc, visible);
+    if (visible) {
+      checkActionableAccessibility(acc);
       if (utils.isElementEnabled(el)) {
         utils.synthesizeMouseAtCenter(el, {}, el.ownerDocument.defaultView)
       }
@@ -1499,7 +1567,9 @@ function isElementDisplayed(msg) {
   let command_id = msg.json.command_id;
   try {
     let el = elementManager.getKnownElement(msg.json.id, curFrame);
-    sendResponse({value: utils.isElementDisplayed(el)}, command_id);
+    let displayed = utils.isElementDisplayed(el);
+    checkVisibleAccessibility(accessibility.getAccessibleObject(el), displayed);
+    sendResponse({value: displayed}, command_id);
   }
   catch (e) {
     sendError(e.message, e.code, e.stack, command_id);
@@ -1595,7 +1665,10 @@ function isElementEnabled(msg) {
   let command_id = msg.json.command_id;
   try {
     let el = elementManager.getKnownElement(msg.json.id, curFrame);
-    sendResponse({value: utils.isElementEnabled(el)}, command_id);
+    let enabled = utils.isElementEnabled(el);
+    checkEnabledStateAccessibility(accessibility.getAccessibleObject(el),
+      enabled);
+    sendResponse({value: enabled}, command_id);
   }
   catch (e) {
     sendError(e.message, e.code, e.stack, command_id);
@@ -1920,13 +1993,6 @@ function getVisibleCookies(location) {
 function getAppCacheStatus(msg) {
   sendResponse({ value: curFrame.applicationCache.status },
                msg.json.command_id);
-}
-
-/**
- * Received heartbeat ping
- */
-function ping(msg) {
-  sendToServer("Marionette:pong", {}, msg.json.command_id);
 }
 
 // emulator callbacks

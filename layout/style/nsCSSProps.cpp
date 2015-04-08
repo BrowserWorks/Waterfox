@@ -1129,7 +1129,6 @@ KTableValue nsCSSProps::kDisplayKTable[] = {
 const KTableValue nsCSSProps::kEmptyCellsKTable[] = {
   eCSSKeyword_show,                 NS_STYLE_TABLE_EMPTY_CELLS_SHOW,
   eCSSKeyword_hide,                 NS_STYLE_TABLE_EMPTY_CELLS_HIDE,
-  eCSSKeyword__moz_show_background, NS_STYLE_TABLE_EMPTY_CELLS_SHOW_BACKGROUND,
   eCSSKeyword_UNKNOWN,-1
 };
 
@@ -1359,7 +1358,6 @@ const KTableValue nsCSSProps::kFontWeightKTable[] = {
 };
 
 const KTableValue nsCSSProps::kGridAutoFlowKTable[] = {
-  eCSSKeyword_stack, NS_STYLE_GRID_AUTO_FLOW_STACK,
   eCSSKeyword_row, NS_STYLE_GRID_AUTO_FLOW_ROW,
   eCSSKeyword_column, NS_STYLE_GRID_AUTO_FLOW_COLUMN,
   eCSSKeyword_dense, NS_STYLE_GRID_AUTO_FLOW_DENSE,
@@ -1624,6 +1622,16 @@ const KTableValue nsCSSProps::kResizeKTable[] = {
   eCSSKeyword_horizontal, NS_STYLE_RESIZE_HORIZONTAL,
   eCSSKeyword_vertical,   NS_STYLE_RESIZE_VERTICAL,
   eCSSKeyword_UNKNOWN,-1
+};
+
+const KTableValue nsCSSProps::kRubyPositionKTable[] = {
+  eCSSKeyword_over, NS_STYLE_RUBY_POSITION_OVER,
+  eCSSKeyword_under, NS_STYLE_RUBY_POSITION_UNDER,
+  // bug 1055672 for 'inter-character' support
+  // eCSSKeyword_inter_character, NS_STYLE_RUBY_POSITION_INTER_CHARACTER,
+  eCSSKeyword_right, NS_STYLE_RUBY_POSITION_RIGHT,
+  eCSSKeyword_left, NS_STYLE_RUBY_POSITION_LEFT,
+  eCSSKeyword_UNKNOWN, -1
 };
 
 const KTableValue nsCSSProps::kScrollBehaviorKTable[] = {

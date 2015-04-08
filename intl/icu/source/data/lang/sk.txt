@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sk.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sk.xml
- */
 sk{
     Keys{
         calendar{"kalendár"}
@@ -545,7 +542,7 @@ sk{
         zxx{"bez jazykového obsahu"}
         zza{"zázá"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"azerbajdžančina"}
         en_GB{"angličtina (britská)"}
         en_US{"angličtina (americká)"}
@@ -723,7 +720,7 @@ sk{
     Variants{
         SCOTLAND{"škótska štandardná angličtina"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Jazyk: {0}"}
         script{"Písmo: {0}"}

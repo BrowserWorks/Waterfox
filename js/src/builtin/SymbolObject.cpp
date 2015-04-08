@@ -19,17 +19,17 @@ using namespace js;
 const Class SymbolObject::class_ = {
     "Symbol",
     JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) | JSCLASS_HAS_CACHED_PROTO(JSProto_Symbol),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
     convert
 };
 
 SymbolObject *
-SymbolObject::create(JSContext *cx, JS::Symbol *symbol)
+SymbolObject::create(JSContext *cx, JS::HandleSymbol symbol)
 {
     JSObject *obj = NewBuiltinClassInstance(cx, &class_);
     if (!obj)
@@ -63,7 +63,7 @@ SymbolObject::initClass(JSContext *cx, HandleObject obj)
     // This uses &JSObject::class_ because: "The Symbol prototype object is an
     // ordinary object. It is not a Symbol instance and does not have a
     // [[SymbolData]] internal slot." (ES6 rev 24, 19.4.3)
-    RootedObject proto(cx, global->createBlankPrototype(cx, &JSObject::class_));
+    RootedObject proto(cx, global->createBlankPrototype<PlainObject>(cx));
     if (!proto)
         return nullptr;
 

@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ur.xml
- */
 ur{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"عابدجان"}
@@ -217,7 +214,7 @@ ur{
             ec{"بہیا بندراز"}
         }
         "America:Barbados"{
-            ec{"باربادوس"}
+            ec{"بارباڈوس"}
         }
         "America:Belem"{
             ec{"بیلیم"}
@@ -256,7 +253,7 @@ ur{
             ec{"کیٹامارکا"}
         }
         "America:Cayenne"{
-            ec{"کیینّی"}
+            ec{"کائین"}
         }
         "America:Cayman"{
             ec{"کیمین"}
@@ -319,7 +316,7 @@ ur{
             ec{"گلیس کی کھاڑی"}
         }
         "America:Godthab"{
-            ec{"گاڈتھیب"}
+            ec{"نوک"}
         }
         "America:Goose_Bay"{
             ec{"گوس کی کھاڑی"}
@@ -690,9 +687,6 @@ ur{
         "Asia:Choibalsan"{
             ec{"چوئبالسان"}
         }
-        "Asia:Chongqing"{
-            ec{"چانگ کنگ"}
-        }
         "Asia:Colombo"{
             ec{"کولمبو"}
         }
@@ -713,9 +707,6 @@ ur{
         }
         "Asia:Gaza"{
             ec{"غزہ"}
-        }
-        "Asia:Harbin"{
-            ec{"ہربِن"}
         }
         "Asia:Hebron"{
             ec{"ہیبرون"}
@@ -746,9 +737,6 @@ ur{
         }
         "Asia:Karachi"{
             ec{"کراچی"}
-        }
-        "Asia:Kashgar"{
-            ec{"کاشغر"}
         }
         "Asia:Katmandu"{
             ec{"کاٹھمنڈو"}
@@ -796,7 +784,7 @@ ur{
             ec{"اومسک"}
         }
         "Asia:Oral"{
-            ec{"زبانی"}
+            ec{"اورال"}
         }
         "Asia:Phnom_Penh"{
             ec{"پنوم پن"}

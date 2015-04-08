@@ -884,6 +884,34 @@ MMathFunction::writeRecoverData(CompactBufferWriter &writer) const
       case Round:
         writer.writeUnsigned(uint32_t(RInstruction::Recover_Round));
         return true;
+      case Sin:
+        writer.writeUnsigned(uint32_t(RInstruction::Recover_MathFunction));
+        writer.writeByte(function_);
+        return true;
+      default:
+        MOZ_CRASH("Unknown math function.");
+    }
+}
+
+RMathFunction::RMathFunction(CompactBufferReader &reader)
+{
+    function_ = reader.readByte();
+}
+
+bool
+RMathFunction::recover(JSContext *cx, SnapshotIterator &iter) const
+{
+    switch (function_) {
+      case MMathFunction::Sin: {
+        RootedValue arg(cx, iter.read());
+        RootedValue result(cx);
+
+        if (!js::math_sin_handle(cx, arg, &result))
+            return false;
+
+        iter.storeInstructionResult(result);
+        return true;
+      }
       default:
         MOZ_CRASH("Unknown math function.");
     }
@@ -1077,7 +1105,7 @@ RNewObject::RNewObject(CompactBufferReader &reader)
 bool
 RNewObject::recover(JSContext *cx, SnapshotIterator &iter) const
 {
-    RootedNativeObject templateObject(cx, &iter.read().toObject().as<NativeObject>());
+    RootedPlainObject templateObject(cx, &iter.read().toObject().as<PlainObject>());
     RootedValue result(cx);
     JSObject *resultObject = nullptr;
 
@@ -1175,12 +1203,40 @@ RCreateThisWithTemplate::RCreateThisWithTemplate(CompactBufferReader &reader)
 bool
 RCreateThisWithTemplate::recover(JSContext *cx, SnapshotIterator &iter) const
 {
-    RootedNativeObject templateObject(cx, &iter.read().toObject().as<NativeObject>());
+    RootedPlainObject templateObject(cx, &iter.read().toObject().as<PlainObject>());
 
     // See CodeGenerator::visitCreateThisWithTemplate
     gc::AllocKind allocKind = templateObject->asTenured().getAllocKind();
     gc::InitialHeap initialHeap = tenuredHeap_ ? gc::TenuredHeap : gc::DefaultHeap;
     JSObject *resultObject = NativeObject::copy(cx, allocKind, initialHeap, templateObject);
+    if (!resultObject)
+        return false;
+
+    RootedValue result(cx);
+    result.setObject(*resultObject);
+    iter.storeInstructionResult(result);
+    return true;
+}
+
+bool
+MLambda::writeRecoverData(CompactBufferWriter &writer) const
+{
+    MOZ_ASSERT(canRecoverOnBailout());
+    writer.writeUnsigned(uint32_t(RInstruction::Recover_Lambda));
+    return true;
+}
+
+RLambda::RLambda(CompactBufferReader &reader)
+{
+}
+
+bool
+RLambda::recover(JSContext *cx, SnapshotIterator &iter) const
+{
+    RootedObject scopeChain(cx, &iter.read().toObject());
+    RootedFunction fun(cx, &iter.read().toObject().as<JSFunction>());
+
+    JSObject *resultObject = js::Lambda(cx, fun, scopeChain);
     if (!resultObject)
         return false;
 

@@ -443,10 +443,10 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     WebGLTransformFeedback? createTransformFeedback();
     void deleteTransformFeedback(WebGLTransformFeedback? tf);
     [WebGLHandlesContextLoss] GLboolean isTransformFeedback(WebGLTransformFeedback? tf);
-    void bindTransformFeedback(GLenum target, GLuint id);
+    void bindTransformFeedback(GLenum target, WebGLTransformFeedback? tf);
     void beginTransformFeedback(GLenum primitiveMode);
     void endTransformFeedback();
-    void transformFeedbackVaryings(WebGLProgram? program, GLsizei count, sequence<DOMString> varyings, GLenum bufferMode);
+    void transformFeedbackVaryings(WebGLProgram? program, sequence<DOMString> varyings, GLenum bufferMode);
     [NewObject] WebGLActiveInfo? getTransformFeedbackVarying(WebGLProgram? program, GLuint index);
     void pauseTransformFeedback();
     void resumeTransformFeedback();
@@ -454,11 +454,15 @@ interface WebGL2RenderingContext : WebGLRenderingContext
     /* Uniform Buffer Objects and Transform Feedback Buffers */
     void bindBufferBase(GLenum target, GLuint index, WebGLBuffer? buffer);
     void bindBufferRange(GLenum target, GLuint index, WebGLBuffer? buffer, GLintptr offset, GLsizeiptr size);
-    any getIndexedParameter(GLenum target, GLuint index);
+    // Return from getIndexedParameter is WebGLBuffer or GLintptr or GLsizeiptr) but
+    // GLintptr and GLsizeiptr are the same underlying type of long long, so only specify
+    // GLintptr here, otherwise interface generator returns error.
+    (WebGLBuffer or GLintptr)? getIndexedParameter(GLenum target, GLuint index);
     sequence<GLuint>? getUniformIndices(WebGLProgram? program, sequence<DOMString> uniformNames);
     sequence<GLint>? getActiveUniforms(WebGLProgram? program, sequence<GLuint> uniformIndices, GLenum pname);
     GLuint getUniformBlockIndex(WebGLProgram? program, DOMString uniformBlockName);
-    any getActiveUniformBlockParameter(WebGLProgram? program, GLuint uniformBlockIndex, GLenum pname);
+    [Throws]
+    (GLuint or Uint32Array or GLboolean)? getActiveUniformBlockParameter(WebGLProgram? program, GLuint uniformBlockIndex, GLenum pname);
     DOMString? getActiveUniformBlockName(WebGLProgram? program, GLuint uniformBlockIndex);
     void uniformBlockBinding(WebGLProgram? program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
 

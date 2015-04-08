@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2014, International Business Machines Corporation and    *
+* Copyright (C) 1997-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 *
@@ -72,6 +72,7 @@
 #include "dcfmtimp.h"
 #include "plurrule_impl.h"
 #include "decimalformatpattern.h"
+#include "fmtableimp.h"
 
 /*
  * On certain platforms, round is a macro defined in math.h
@@ -1138,11 +1139,6 @@ DecimalFormat::getFixedDecimal(double number, UErrorCode &status) const {
     return result;
 }
 
-// MSVC optimizer bug? 
-// turn off optimization as it causes different behavior in the int64->double->int64 conversion
-#if defined (_MSC_VER)
-#pragma optimize ( "", off )
-#endif
 FixedDecimal
 DecimalFormat::getFixedDecimal(const Formattable &number, UErrorCode &status) const {
     if (U_FAILURE(status)) {
@@ -1164,17 +1160,9 @@ DecimalFormat::getFixedDecimal(const Formattable &number, UErrorCode &status) co
         return getFixedDecimal(number.getDouble(status), status);
     }
 
-    if (type == Formattable::kInt64) {
-        // "volatile" here is a workaround to avoid optimization issues.
-        volatile double fdv = number.getDouble(status);
-        // Note: conversion of int64_t -> double rounds with some compilers to
-        //       values beyond what can be represented as a 64 bit int. Subsequent
-        //       testing or conversion with int64_t produces bad results.
-        //       So filter the problematic values, route them to DigitList.
-        if (fdv != (double)U_INT64_MAX && fdv != (double)U_INT64_MIN &&
-                number.getInt64() == (int64_t)fdv) {
-            return getFixedDecimal(number.getDouble(status), status);
-        }
+    if (type == Formattable::kInt64 && number.getInt64() <= MAX_INT64_IN_DOUBLE &&
+                                       number.getInt64() >= -MAX_INT64_IN_DOUBLE) {
+        return getFixedDecimal(number.getDouble(status), status);
     }
 
     // The only case left is type==int64_t, with a value with more digits than a double can represent.
@@ -1186,10 +1174,6 @@ DecimalFormat::getFixedDecimal(const Formattable &number, UErrorCode &status) co
     digits.set(number.getInt64());
     return getFixedDecimal(digits, status);
 }
-// end workaround MSVC optimizer bug
-#if defined (_MSC_VER)
-#pragma optimize ( "", on )
-#endif
 
 
 // Create a fixed decimal from a DigitList.
@@ -1450,7 +1434,9 @@ DecimalFormat::_format(int64_t number,
         // Slide the number to the start of the output str
     U_ASSERT(destIdx >= 0);
     int32_t length = MAX_IDX - destIdx -1;
-    /*int32_t prefixLen = */ appendAffix(appendTo, number, handler, number<0, TRUE);
+    /*int32_t prefixLen = */ appendAffix(appendTo, static_cast<double>(number), handler, number<0, TRUE);
+
+    // This will be at least 0 even if it was set to a negative number.
     int32_t maxIntDig = getMaximumIntegerDigits();
     int32_t destlength = length<=maxIntDig?length:maxIntDig; // dest length pinned to max int digits
 
@@ -1458,7 +1444,10 @@ DecimalFormat::_format(int64_t number,
       status = U_ILLEGAL_ARGUMENT_ERROR;
     }
 
-    int32_t prependZero = getMinimumIntegerDigits() - destlength;
+    int32_t minDigits = getMinimumIntegerDigits();
+
+    // We always want at least one digit, even if it is just a 0.
+    int32_t prependZero = (minDigits < 1 ? 1 : minDigits) - destlength;
 
 #ifdef FMT_DEBUG
     printf("prependZero=%d, length=%d, minintdig=%d maxintdig=%d destlength=%d skip=%d\n", prependZero, length, getMinimumIntegerDigits(), maxIntDig, destlength, length-destlength);
@@ -1474,7 +1463,7 @@ DecimalFormat::_format(int64_t number,
                     destlength);
     handler.addAttribute(kIntegerField, intBegin, appendTo.length());
 
-    /*int32_t suffixLen =*/ appendAffix(appendTo, number, handler, number<0, FALSE);
+    /*int32_t suffixLen =*/ appendAffix(appendTo, static_cast<double>(number), handler, number<0, FALSE);
 
     //outputStr[length]=0;
     

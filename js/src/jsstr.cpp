@@ -32,12 +32,12 @@
 
 #include "builtin/Intl.h"
 #include "builtin/RegExp.h"
+#include "js/Conversions.h"
 #if ENABLE_INTL_API
 #include "unicode/unorm.h"
 #endif
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
-#include "vm/NumericConversions.h"
 #include "vm/Opcodes.h"
 #include "vm/RegExpObject.h"
 #include "vm/RegExpStatics.h"
@@ -57,6 +57,8 @@ using namespace js::unicode;
 
 using JS::Symbol;
 using JS::SymbolCode;
+using JS::ToInt32;
+using JS::ToUint32;
 
 using mozilla::AssertedCast;
 using mozilla::CheckedInt;
@@ -387,12 +389,8 @@ str_enumerate(JSContext *cx, HandleObject obj)
         if (!str1)
             return false;
         value.setString(str1);
-        if (!JSObject::defineElement(cx, obj, i, value,
-                                     JS_PropertyStub, JS_StrictPropertyStub,
-                                     STRING_ELEMENT_ATTRS))
-        {
+        if (!JSObject::defineElement(cx, obj, i, value, nullptr, nullptr, STRING_ELEMENT_ATTRS))
             return false;
-        }
     }
 
     return true;
@@ -426,13 +424,12 @@ const Class StringObject::class_ = {
     js_String_str,
     JSCLASS_HAS_RESERVED_SLOTS(StringObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_String),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
     str_enumerate,
-    str_resolve,
-    JS_ConvertStub
+    str_resolve
 };
 
 /*
@@ -481,24 +478,6 @@ IsString(HandleValue v)
 }
 
 #if JS_HAS_TOSOURCE
-
-/*
- * String.prototype.quote is generic (as are most string methods), unlike
- * toSource, toString, and valueOf.
- */
-static bool
-str_quote(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    RootedString str(cx, ThisToStringForStringProto(cx, args));
-    if (!str)
-        return false;
-    str = js_QuoteString(cx, str, '"');
-    if (!str)
-        return false;
-    args.rval().setString(str);
-    return true;
-}
 
 MOZ_ALWAYS_INLINE bool
 str_toSource_impl(JSContext *cx, CallArgs args)
@@ -554,26 +533,6 @@ js_str_toString(JSContext *cx, unsigned argc, Value *vp)
 /*
  * Java-like string native methods.
  */
-
-static MOZ_ALWAYS_INLINE bool
-ValueToIntegerRange(JSContext *cx, HandleValue v, int32_t *out)
-{
-    if (v.isInt32()) {
-        *out = v.toInt32();
-    } else {
-        double d;
-        if (!ToInteger(cx, v, &d))
-            return false;
-        if (d > INT32_MAX)
-            *out = INT32_MAX;
-        else if (d < INT32_MIN)
-            *out = INT32_MIN;
-        else
-            *out = int32_t(d);
-    }
-
-    return true;
-}
 
 JSString *
 js::SubstringKernel(JSContext *cx, HandleString str, int32_t beginInt, int32_t lengthInt)
@@ -1705,7 +1664,7 @@ js::str_lastIndexOf(JSContext *cx, unsigned argc, Value *vp)
             if (!ToNumber(cx, args[1], &d))
                 return false;
             if (!IsNaN(d)) {
-                d = ToInteger(d);
+                d = JS::ToInteger(d);
                 if (d <= 0)
                     start = 0;
                 else if (d < start)
@@ -2226,8 +2185,8 @@ class MOZ_STACK_CLASS StringRegExpGuard
     }
 
   private:
-    StringRegExpGuard(const StringRegExpGuard &) MOZ_DELETE;
-    void operator=(const StringRegExpGuard &) MOZ_DELETE;
+    StringRegExpGuard(const StringRegExpGuard &) = delete;
+    void operator=(const StringRegExpGuard &) = delete;
 };
 
 } /* anonymous namespace */
@@ -2479,8 +2438,8 @@ class RopeBuilder {
     JSContext *cx;
     RootedString res;
 
-    RopeBuilder(const RopeBuilder &other) MOZ_DELETE;
-    void operator=(const RopeBuilder &other) MOZ_DELETE;
+    RopeBuilder(const RopeBuilder &other) = delete;
+    void operator=(const RopeBuilder &other) = delete;
 
   public:
     explicit RopeBuilder(JSContext *cx)
@@ -3976,7 +3935,6 @@ str_concat(JSContext *cx, unsigned argc, Value *vp)
 
 static const JSFunctionSpec string_methods[] = {
 #if JS_HAS_TOSOURCE
-    JS_FN("quote",             str_quote,             0,JSFUN_GENERIC_NATIVE),
     JS_FN(js_toSource_str,     str_toSource,          0,0),
 #endif
 
@@ -4484,7 +4442,7 @@ js_strcmp(const char16_t *lhs, const char16_t *rhs)
 }
 
 UniquePtr<char[], JS::FreePolicy>
-js::DuplicateString(js::ThreadSafeContext *cx, const char *s)
+js::DuplicateString(js::ExclusiveContext *cx, const char *s)
 {
     size_t n = strlen(s) + 1;
     auto ret = cx->make_pod_array<char>(n);
@@ -4495,7 +4453,7 @@ js::DuplicateString(js::ThreadSafeContext *cx, const char *s)
 }
 
 UniquePtr<char16_t[], JS::FreePolicy>
-js::DuplicateString(js::ThreadSafeContext *cx, const char16_t *s)
+js::DuplicateString(js::ExclusiveContext *cx, const char16_t *s)
 {
     size_t n = js_strlen(s) + 1;
     auto ret = cx->make_pod_array<char16_t>(n);
@@ -4524,7 +4482,7 @@ template const char16_t *
 js_strchr_limit(const char16_t *s, char16_t c, const char16_t *limit);
 
 char16_t *
-js::InflateString(ThreadSafeContext *cx, const char *bytes, size_t *lengthp)
+js::InflateString(ExclusiveContext *cx, const char *bytes, size_t *lengthp)
 {
     size_t nchars;
     char16_t *chars;
@@ -5124,6 +5082,10 @@ js::PutEscapedStringImpl(char *buffer, size_t bufferSize, FILE *fp, const CharT 
 
 template size_t
 js::PutEscapedStringImpl(char *buffer, size_t bufferSize, FILE *fp, const Latin1Char *chars,
+                         size_t length, uint32_t quote);
+
+template size_t
+js::PutEscapedStringImpl(char *buffer, size_t bufferSize, FILE *fp, const char *chars,
                          size_t length, uint32_t quote);
 
 template size_t

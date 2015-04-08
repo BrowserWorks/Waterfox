@@ -53,7 +53,7 @@ private:
 
   IOPMAssertionID mAssertionID = kIOPMNullAssertionID;
 
-  NS_IMETHOD Callback(const nsAString& aTopic, const nsAString& aState) {
+  NS_IMETHOD Callback(const nsAString& aTopic, const nsAString& aState) MOZ_OVERRIDE {
     if (!aTopic.EqualsASCII("screen")) {
       return NS_OK;
     }
@@ -294,10 +294,6 @@ nsAppShell::Init()
   ::CFRunLoopAddSource(mCFRunLoop, mCFRunLoopSource, kCFRunLoopCommonModes);
 
   rv = nsBaseAppShell::Init();
-
-#ifndef __LP64__
-  TextInputHandler::InstallPluginKeyEventsHandler();
-#endif
 
   if (!gAppShellMethodsSwizzled) {
     // We should only replace the original terminate: method if we're not
@@ -672,10 +668,6 @@ nsAppShell::Exit(void)
 
   mTerminated = true;
 
-#ifndef __LP64__
-  TextInputHandler::RemovePluginKeyEventsHandler();
-#endif
-
   // Quoting from Apple's doc on the [NSApplication stop:] method (from their
   // doc on the NSApplication class):  "If this method is invoked during a
   // modal event loop, it will break that loop but not the main event loop."
@@ -858,7 +850,7 @@ nsAppShell::AfterProcessNextEvent(nsIThreadInternal *aThread,
     nsIRollupListener* rollupListener = nsBaseWidget::GetActiveRollupListener();
     nsCOMPtr<nsIWidget> rollupWidget = rollupListener->GetRollupWidget();
     if (rollupWidget)
-      rollupListener->Rollup(0, nullptr, nullptr);
+      rollupListener->Rollup(0, true, nullptr, nullptr);
   }
 
   NS_OBJC_END_TRY_ABORT_BLOCK;

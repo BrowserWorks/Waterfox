@@ -252,7 +252,6 @@
     <ClCompile Include="coleitr.cpp" />
     <ClCompile Include="coll.cpp" />
     <ClCompile Include="collation.cpp" />
-    <ClCompile Include="collationbasedatabuilder.cpp" />
     <ClCompile Include="collationbuilder.cpp" />
     <ClCompile Include="collationcompare.cpp" />
     <ClCompile Include="collationdata.cpp" />
@@ -366,6 +365,7 @@
     <ClCompile Include="udat.cpp" />
     <ClCompile Include="udateintervalformat.cpp" />
     <ClCompile Include="udatpg.cpp" />
+    <ClCompile Include="ufieldpositer.cpp" />
     <ClCompile Include="ulocdata.c" />
     <ClCompile Include="umsg.cpp" />
     <ClCompile Include="unum.cpp" />
@@ -566,7 +566,6 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
     </CustomBuild>
     <ClInclude Include="collation.h" />
-    <ClInclude Include="collationbasedatabuilder.h" />
     <ClInclude Include="collationbuilder.h" />
     <ClInclude Include="collationcompare.h" />
     <ClInclude Include="collationdata.h" />
@@ -1413,6 +1412,20 @@
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
     </CustomBuild>
     <CustomBuild Include="unicode\udisplaycontext.h">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">copy "%(FullPath)" ..\..\include\unicode
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">copy "%(FullPath)" ..\..\include\unicode
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">copy "%(FullPath)" ..\..\include\unicode
+</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="unicode\ufieldpositer.h">
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">copy "%(FullPath)" ..\..\include\unicode
 </Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\..\include\unicode\%(Filename)%(Extension);%(Outputs)</Outputs>

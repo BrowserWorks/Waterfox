@@ -29,69 +29,72 @@ namespace image {
 
 /*static*/ void
 ImageFactory::Initialize()
+{ }
+
+static bool
+ShouldDownscaleDuringDecode(const nsCString& aMimeType)
 {
+  // Not enabled for anything yet.
+  return false;
 }
 
 static uint32_t
-ComputeImageFlags(ImageURL* uri, bool isMultiPart)
+ComputeImageFlags(ImageURL* uri, const nsCString& aMimeType, bool isMultiPart)
 {
   nsresult rv;
 
   // We default to the static globals.
   bool isDiscardable = gfxPrefs::ImageMemDiscardable();
-  bool doDecodeOnDraw = gfxPrefs::ImageMemDecodeOnDraw();
+  bool doDecodeOnDraw = gfxPrefs::ImageMemDecodeOnDraw() &&
+                        gfxPrefs::AsyncPanZoomEnabled();
+  bool doDownscaleDuringDecode = gfxPrefs::ImageDownscaleDuringDecodeEnabled();
 
-  // We want UI to be as snappy as possible and not to flicker. Disable discarding
-  // and decode-on-draw for chrome URLS.
+  // We want UI to be as snappy as possible and not to flicker. Disable
+  // discarding and decode-on-draw for chrome URLS.
   bool isChrome = false;
   rv = uri->SchemeIs("chrome", &isChrome);
-  if (NS_SUCCEEDED(rv) && isChrome)
+  if (NS_SUCCEEDED(rv) && isChrome) {
     isDiscardable = doDecodeOnDraw = false;
+  }
 
   // We don't want resources like the "loading" icon to be discardable or
   // decode-on-draw either.
   bool isResource = false;
   rv = uri->SchemeIs("resource", &isResource);
-  if (NS_SUCCEEDED(rv) && isResource)
+  if (NS_SUCCEEDED(rv) && isResource) {
     isDiscardable = doDecodeOnDraw = false;
+  }
+
+  // Downscale-during-decode and decode-on-draw are only enabled for certain
+  // content types.
+  if ((doDownscaleDuringDecode || doDecodeOnDraw) &&
+      !ShouldDownscaleDuringDecode(aMimeType)) {
+    doDownscaleDuringDecode = false;
+    doDecodeOnDraw = false;
+  }
 
   // For multipart/x-mixed-replace, we basically want a direct channel to the
-  // decoder. Disable both for this case as well.
-  if (isMultiPart)
-    isDiscardable = doDecodeOnDraw = false;
+  // decoder. Disable everything for this case.
+  if (isMultiPart) {
+    isDiscardable = doDecodeOnDraw = doDownscaleDuringDecode = false;
+  }
 
   // We have all the information we need.
   uint32_t imageFlags = Image::INIT_FLAG_NONE;
-  if (isDiscardable)
+  if (isDiscardable) {
     imageFlags |= Image::INIT_FLAG_DISCARDABLE;
-  if (doDecodeOnDraw)
+  }
+  if (doDecodeOnDraw) {
     imageFlags |= Image::INIT_FLAG_DECODE_ON_DRAW;
-  if (isMultiPart)
+  }
+  if (isMultiPart) {
     imageFlags |= Image::INIT_FLAG_TRANSIENT;
+  }
+  if (doDownscaleDuringDecode) {
+    imageFlags |= Image::INIT_FLAG_DOWNSCALE_DURING_DECODE;
+  }
 
   return imageFlags;
-}
-
-/* static */ bool
-ImageFactory::CanRetargetOnDataAvailable(ImageURL* aURI, bool aIsMultiPart)
-{
-  // We can't retarget OnDataAvailable safely in cases where we aren't storing
-  // source data (and thus need to sync decode in ODA) because allocating frames
-  // off-main-thread is currently not possible and we don't have a workaround in
-  // place yet. (See bug 967985.) For now, we detect those cases and refuse to
-  // retarget. When the problem is fixed, this function can be removed.
-
-  if (aIsMultiPart) {
-    return false;
-  }
-
-  uint32_t imageFlags = ComputeImageFlags(aURI, aIsMultiPart);
-  if (!(imageFlags & Image::INIT_FLAG_DISCARDABLE) &&
-      !(imageFlags & Image::INIT_FLAG_DECODE_ON_DRAW)) {
-    return false;
-  }
-
-  return true;
 }
 
 /* static */ already_AddRefed<Image>
@@ -106,7 +109,7 @@ ImageFactory::CreateImage(nsIRequest* aRequest,
              "Pref observers should have been initialized already");
 
   // Compute the image's initialization flags.
-  uint32_t imageFlags = ComputeImageFlags(aURI, aIsMultiPart);
+  uint32_t imageFlags = ComputeImageFlags(aURI, aMimeType, aIsMultiPart);
 
   // Select the type of image to create based on MIME type.
   if (aMimeType.EqualsLiteral(IMAGE_SVG_XML)) {
@@ -145,10 +148,12 @@ ImageFactory::CreateAnonymousImage(const nsCString& aMimeType)
 int32_t
 SaturateToInt32(int64_t val)
 {
-  if (val > INT_MAX)
+  if (val > INT_MAX) {
     return INT_MAX;
-  if (val < INT_MIN)
+  }
+  if (val < INT_MIN) {
     return INT_MIN;
+  }
 
   return static_cast<int32_t>(val);
 }
@@ -205,7 +210,8 @@ ImageFactory::CreateRasterImage(nsIRequest* aRequest,
   // Pass anything usable on so that the RasterImage can preallocate
   // its source buffer.
   if (len > 0) {
-    uint32_t sizeHint = std::min<uint32_t>(len, 20000000); // Bound by something reasonable
+    // Bound by something reasonable
+    uint32_t sizeHint = std::min<uint32_t>(len, 20000000);
     rv = newImage->SetSourceSizeHint(sizeHint);
     if (NS_FAILED(rv)) {
       // Flush memory, try to get some back, and try again.
@@ -230,8 +236,8 @@ ImageFactory::CreateRasterImage(nsIRequest* aRequest,
       nsCOMPtr<nsIChannel> chan(do_QueryInterface(aRequest));
       nsCOMPtr<nsIPrincipal> principal;
       if (chan) {
-        nsContentUtils::GetSecurityManager()->GetChannelResultPrincipal(chan,
-                                                                        getter_AddRefs(principal));
+        nsContentUtils::GetSecurityManager()
+          ->GetChannelResultPrincipal(chan, getter_AddRefs(principal));
       }
 
       if ((principal &&

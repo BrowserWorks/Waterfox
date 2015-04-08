@@ -688,7 +688,7 @@ UnicodeString&
 LocaleDisplayNamesImpl::localeIdName(const char* localeId,
                                      UnicodeString& result) const {
     if (nameLength == UDISPCTX_LENGTH_SHORT) {
-        langData.getNoFallback("LanguagesShort", localeId, result);
+        langData.getNoFallback("Languages%short", localeId, result);
         if (!result.isBogus()) {
             return result;
         }
@@ -703,7 +703,7 @@ LocaleDisplayNamesImpl::languageDisplayName(const char* lang,
         return result = UnicodeString(lang, -1, US_INV);
     }
     if (nameLength == UDISPCTX_LENGTH_SHORT) {
-        langData.get("LanguagesShort", lang, result);
+        langData.get("Languages%short", lang, result);
         if (!result.isBogus()) {
             return adjustForUsageAndContext(kCapContextUsageLanguage, result);
         }
@@ -735,7 +735,7 @@ UnicodeString&
 LocaleDisplayNamesImpl::regionDisplayName(const char* region,
                                           UnicodeString& result) const {
     if (nameLength == UDISPCTX_LENGTH_SHORT) {
-        regionData.get("CountriesShort", region, result);
+        regionData.get("Countries%short", region, result);
         if (!result.isBogus()) {
             return adjustForUsageAndContext(kCapContextUsageTerritory, result);
         }

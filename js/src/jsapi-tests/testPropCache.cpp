@@ -19,8 +19,7 @@ CounterAdd(JSContext *cx, JS::HandleObject obj, JS::HandleId id, JS::MutableHand
 static const JSClass CounterClass = {
     "Counter",  /* name */
     0,  /* flags */
-    CounterAdd, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-    JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub
+    CounterAdd
 };
 
 BEGIN_TEST(testPropCache_bug505798)

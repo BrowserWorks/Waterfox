@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1997-2014, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -96,11 +96,6 @@ U_COMMON_API UBool U_EXPORT2 umtx_initImplPreInit(UInitOnce &uio) {
 
 // This function is called by the thread that ran an initialization function,
 // just after completing the function.
-//
-//   success: True:  the inialization succeeded. No further calls to the init
-//                   function will be made.
-//            False: the initializtion failed. The next call to umtx_initOnce()
-//                   will retry the initialization.
 
 U_COMMON_API void U_EXPORT2 umtx_initImplPostInit(UInitOnce &uio) {
     umtx_storeRelease(uio.fState, 2);

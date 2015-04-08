@@ -25,13 +25,6 @@
 #endif
 #include "nsGkAtoms.h"
 
-// Something on Linux #defines None, which is an entry in the
-// MediaWaitingFor enum, so undef it here before including the binfing,
-// so that the build doesn't fail...
-#ifdef None
-#undef None
-#endif
-
 // X.h on Linux #defines CurrentTime as 0L, so we have to #undef it here.
 #ifdef CurrentTime
 #undef CurrentTime
@@ -245,6 +238,10 @@ public:
   // Check if the media element had crossorigin set when loading started
   bool ShouldCheckAllowOrigin();
 
+  // Returns true if the currently loaded resource is CORS same-origin with
+  // respect to the document.
+  bool IsCORSSameOrigin();
+
   // Is the media element potentially playing as defined by the HTML 5 specification.
   // http://www.whatwg.org/specs/web-apps/current-work/#potentially-playing
   bool IsPotentiallyPlaying() const;
@@ -282,6 +279,11 @@ public:
   void NotifyLoadError();
 
   void NotifyMediaTrackEnabled(MediaTrack* aTrack);
+
+  /**
+   * Called when tracks become available to the source media stream.
+   */
+  void NotifyMediaStreamTracksAvailable(DOMMediaStream* aStream);
 
   virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
 
@@ -401,6 +403,11 @@ public:
   void FastSeek(double aTime, ErrorResult& aRv);
 
   double Duration() const;
+
+  bool IsEncrypted() const
+  {
+    return mIsEncrypted;
+  }
 
   bool Paused() const
   {
@@ -534,13 +541,11 @@ public:
   already_AddRefed<Promise> SetMediaKeys(MediaKeys* mediaKeys,
                                          ErrorResult& aRv);
 
-  MediaWaitingFor WaitingFor() const;
-
   mozilla::dom::EventHandlerNonNull* GetOnencrypted();
   void SetOnencrypted(mozilla::dom::EventHandlerNonNull* listener);
 
   void DispatchEncrypted(const nsTArray<uint8_t>& aInitData,
-                         const nsAString& aInitDataType);
+                         const nsAString& aInitDataType) MOZ_OVERRIDE;
 
 
   bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
@@ -611,10 +616,16 @@ public:
     return FinishDecoderSetup(aDecoder, aStream, nullptr, nullptr);
   }
 
+  // Returns true if the media element is being destroyed. Used in
+  // dormancy checks to prevent dormant processing for an element
+  // that will soon be gone.
+  bool IsBeingDestroyed();
+
 protected:
   virtual ~HTMLMediaElement();
 
   class MediaLoadListener;
+  class MediaStreamTracksAvailableCallback;
   class StreamListener;
 
   virtual void GetItemValueText(nsAString& text) MOZ_OVERRIDE;
@@ -953,6 +964,8 @@ protected:
     return isPaused;
   }
 
+  void ReportMSETelemetry();
+
   // Check the permissions for audiochannel.
   bool CheckAudioChannelPermissions(const nsAString& aType);
 
@@ -1043,6 +1056,9 @@ protected:
   //   http://www.whatwg.org/specs/web-apps/current-work/#video)
   nsMediaNetworkState mNetworkState;
   nsMediaReadyState mReadyState;
+
+  // Last value passed from codec or stream source to UpdateReadyStateForData.
+  NextFrameStatus mLastNextFrameStatus;
 
   enum LoadAlgorithmState {
     // No load algorithm instance is waiting for a source to be added to the
@@ -1278,6 +1294,9 @@ protected:
   // True if the media has a video track
   bool mHasVideo;
 
+  // True if the media has encryption information.
+  bool mIsEncrypted;
+
   // True if the media's channel's download has been suspended.
   bool mDownloadSuspendedByCache;
 
@@ -1303,8 +1322,6 @@ protected:
   nsRefPtr<AudioTrackList> mAudioTrackList;
 
   nsRefPtr<VideoTrackList> mVideoTrackList;
-
-  MediaWaitingFor mWaitingFor;
 
   enum ElementInTreeState {
     // The MediaElement is not in the DOM tree now.

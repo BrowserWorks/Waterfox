@@ -197,7 +197,7 @@ BrowserElementParent.prototype = {
       "got-visible": this._gotDOMRequestResult,
       "visibilitychange": this._childVisibilityChange,
       "got-set-input-method-active": this._gotDOMRequestResult,
-      "selectionchange": this._handleSelectionChange,
+      "selectionstatechanged": this._handleSelectionStateChanged,
       "scrollviewchange": this._handleScrollViewChange,
       "touchcarettap": this._handleTouchCaretTap
     };
@@ -325,14 +325,6 @@ BrowserElementParent.prototype = {
       this._domRequestReady = true;
       this._runPendingAPICall();
     }
-
-    return {
-      name: this._frameElement.getAttribute('name'),
-      fullscreenAllowed:
-        this._frameElement.hasAttribute('allowfullscreen') ||
-        this._frameElement.hasAttribute('mozallowfullscreen'),
-      isPrivate: this._frameElement.hasAttribute('mozprivatebrowsing')
-    };
   },
 
   _fireCtxMenuEvent: function(data) {
@@ -435,8 +427,8 @@ BrowserElementParent.prototype = {
     }
   },
 
-  _handleSelectionChange: function(data) {
-    let evt = this._createEvent('selectionchange', data.json,
+  _handleSelectionStateChanged: function(data) {
+    let evt = this._createEvent('selectionstatechanged', data.json,
                                 /* cancelable = */ false);
     this._frameElement.dispatchEvent(evt);
   },

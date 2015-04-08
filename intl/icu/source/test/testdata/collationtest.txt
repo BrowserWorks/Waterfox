@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2012-2014 International Business Machines
+﻿# Copyright (c) 2012-2015 International Business Machines
 # Corporation and others. All Rights Reserved.
 #
 # This file should be in UTF-8 with a signature byte sequence ("BOM").
@@ -2476,3 +2476,65 @@
 * compare
 <1 AA
 <2 aą
+
+** test: tailor tertiary-after a common tertiary where there is a lower one
+# Assume that Hiragana small A has a below-common tertiary, and Hiragana A has a common one.
+# See ICU ticket 11448 & CLDR ticket 7222.
+@ rules
+&あ<<<x<<<y<<<z
+* compare
+<1 ぁ
+<3 あ
+<3 x
+<3 y
+<3 z
+<3 ァ
+<1 い
+
+** test: tailor tertiary-after a below-common tertiary
+@ rules
+&ぁ<<<x<<<y<<<z
+* compare
+<1 ぁ
+<3 x
+<3 y
+<3 z
+<3 あ
+<3 ァ
+<1 い
+
+** test: tailor tertiary-before a common tertiary where there is a lower one
+@ rules
+&[before 3]あ<<<x<<<y<<<z
+* compare
+<1 ぁ
+<3 x
+<3 y
+<3 z
+<3 あ
+<3 ァ
+<1 い
+
+** test: tailor tertiary-before a below-common tertiary
+@ rules
+&[before 3]ぁ<<<x<<<y<<<z
+* compare
+<1 x
+<3 y
+<3 z
+<3 ぁ
+<3 あ
+<3 ァ
+<1 い
+
+** test: reorder single scripts not groups, ICU ticket 11449
+@ root
+% reorder Goth Latn
+* compare
+<1 4
+<1 𐌰  # Gothic
+<1 L
+<1 Ω
+# Before ICU 55, the following reordered together with Gothic.
+<1 𐌈  # Old Italic
+<1 𐑐  # Shavian

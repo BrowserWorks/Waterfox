@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/vi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/vi.xml
- */
 vi{
     Keys{
         calendar{"Lịch"}
@@ -535,13 +532,13 @@ vi{
         zxx{"Không có nội dung ngôn ngữ"}
         zza{"Tiếng Zaza"}
     }
-    Languages%variant{
-        ps{"Tiếng Pushto"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"Tiếng Azeri"}
         en_GB{"Tiếng Anh (Anh)"}
         en_US{"Tiếng Anh (Mỹ)"}
+    }
+    Languages%variant{
+        ps{"Tiếng Pushto"}
     }
     Scripts{
         Afak{"Chữ Afaka"}
@@ -913,7 +910,7 @@ vi{
         VALLADER{"VALLADER"}
         WADEGILE{"La Mã hóa Wade-Giles"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Ngôn ngữ: {0}"}
         script{"Chữ viết: {0}"}

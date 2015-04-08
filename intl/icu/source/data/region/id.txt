@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/id.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/id.xml
- */
 id{
     Countries{
         001{"Dunia"}
@@ -136,7 +133,7 @@ id{
         GP{"Guadeloupe"}
         GQ{"Guinea Ekuatorial"}
         GR{"Yunani"}
-        GS{"Georgia Selatan dan Kepulauan Sandwich Selatan"}
+        GS{"Georgia Selatan & Kep. Sandwich Selatan"}
         GT{"Guatemala"}
         GU{"Guam"}
         GW{"Guinea-Bissau"}
@@ -302,6 +299,13 @@ id{
         ZW{"Zimbabwe"}
         ZZ{"Wilayah Tidak Dikenal"}
     }
+    Countries%short{
+        GB{"GB"}
+        HK{"Hong Kong"}
+        MO{"Makau"}
+        PS{"Palestina"}
+        US{"A.S."}
+    }
     Countries%variant{
         CD{"Kongo (RDK)"}
         CG{"Kongo (Republik)"}
@@ -310,12 +314,5 @@ id{
         MK{"Makedonia (BRY)"}
         TL{"Timor Timur"}
     }
-    CountriesShort{
-        GB{"GB"}
-        HK{"Hong Kong"}
-        MO{"Makau"}
-        PS{"Palestina"}
-        US{"A.S."}
-    }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
 }

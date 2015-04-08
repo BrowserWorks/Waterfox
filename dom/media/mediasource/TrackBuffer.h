@@ -7,8 +7,8 @@
 #ifndef MOZILLA_TRACKBUFFER_H_
 #define MOZILLA_TRACKBUFFER_H_
 
+#include "SourceBuffer.h"
 #include "SourceBufferDecoder.h"
-#include "MediaPromise.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/mozalloc.h"
@@ -40,7 +40,8 @@ public:
   // Append data to the current decoder.  Also responsible for calling
   // NotifyDataArrived on the decoder to keep buffered range computation up
   // to date.  Returns false if the append failed.
-  bool AppendData(LargeDataBuffer* aData, int64_t aTimestampOffset /* microseconds */);
+  nsRefPtr<TrackBufferAppendPromise> AppendData(LargeDataBuffer* aData,
+                                                int64_t aTimestampOffset /* microseconds */);
 
   // Evicts data held in the current decoders SourceBufferResource from the
   // start of the buffer through to aPlaybackTime. aThreshold is used to
@@ -60,8 +61,8 @@ public:
   double Buffered(dom::TimeRanges* aRanges);
 
   // Mark the current decoder's resource as ended, clear mCurrentDecoder and
-  // reset mLast{Start,End}Timestamp.
-  void DiscardDecoder();
+  // reset mLast{Start,End}Timestamp.  Main thread only.
+  void DiscardCurrentDecoder();
   // Mark the current decoder's resource as ended.
   void EndCurrentDecoder();
 
@@ -80,9 +81,6 @@ public:
 
   void BreakCycles();
 
-  // Call ResetDecode() on each decoder in mDecoders.
-  void ResetDecode();
-
   // Run MSE Reset Parser State Algorithm.
   // 3.5.2 Reset Parser State
   // http://w3c.github.io/media-source/#sourcebuffer-reset-parser-state
@@ -99,6 +97,16 @@ public:
   // Returns true if data was evicted.
   // Times are in microseconds.
   bool RangeRemoval(int64_t aStart, int64_t aEnd);
+
+  // Abort any pending appendBuffer by rejecting any pending promises.
+  void AbortAppendData();
+
+  // Return the size used by all decoders managed by this TrackBuffer.
+  int64_t GetSize();
+
+  // Return true if we have a partial media segment being appended that is
+  // currently not playable.
+  bool HasOnlyIncompleteMedia();
 
 #ifdef MOZ_EME
   nsresult SetCDMProxy(CDMProxy* aProxy);
@@ -130,6 +138,11 @@ private:
   // Runs decoder initialization including calling ReadMetadata.  Runs as an
   // event on the decode thread pool.
   void InitializeDecoder(SourceBufferDecoder* aDecoder);
+  // Once decoder has been initialized, set mediasource duration if required
+  // and resolve any pending InitializationPromise.
+  // Setting the mediasource duration must be done on the main thread.
+  // TODO: Why is that so?
+  void CompleteInitializeDecoder(SourceBufferDecoder* aDecoder);
 
   // Adds a successfully initialized decoder to mDecoders and (if it's the
   // first decoder initialized), initializes mHasAudio/mHasVideo.  Called
@@ -146,6 +159,9 @@ private:
   // mInitializedDecoders, it must have been removed before calling this
   // function.
   void RemoveDecoder(SourceBufferDecoder* aDecoder);
+
+  // Remove all empty decoders from the provided list;
+  void RemoveEmptyDecoders(nsTArray<SourceBufferDecoder*>& aDecoders);
 
   nsAutoPtr<ContainerParser> mParser;
 
@@ -172,6 +188,7 @@ private:
   nsTArray<nsRefPtr<SourceBufferDecoder>> mWaitingDecoders;
 
   // The decoder that the owning SourceBuffer is currently appending data to.
+  // Modified on the main thread only.
   nsRefPtr<SourceBufferDecoder> mCurrentDecoder;
 
   nsRefPtr<MediaSourceDecoder> mParentDecoder;
@@ -181,9 +198,11 @@ private:
   // AppendData.  Accessed on the main thread only.
   int64_t mLastStartTimestamp;
   Maybe<int64_t> mLastEndTimestamp;
+  void AdjustDecodersTimestampOffset(int32_t aOffset);
 
   // The timestamp offset used by our current decoder, in microseconds.
   int64_t mLastTimestampOffset;
+  int64_t mAdjustedTimestamp;
 
   // Set when the first decoder used by this TrackBuffer is initialized.
   // Protected by mParentDecoder's monitor.
@@ -193,6 +212,9 @@ private:
   MediaPromiseHolder<ShutdownPromise> mShutdownPromise;
   bool mDecoderPerSegment;
   bool mShutdown;
+
+  MediaPromiseHolder<TrackBufferAppendPromise> mInitializationPromise;
+
 };
 
 } // namespace mozilla

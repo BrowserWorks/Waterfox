@@ -156,6 +156,13 @@ CompileRuntime::positiveInfinityValue()
     return runtime()->positiveInfinityValue;
 }
 
+const WellKnownSymbols &
+CompileRuntime::wellKnownSymbols()
+{
+    MOZ_ASSERT(onMainThread());
+    return *runtime()->wellKnownSymbols;
+}
+
 #ifdef DEBUG
 bool
 CompileRuntime::isInsideNursery(gc::Cell *cell)
@@ -176,13 +183,11 @@ CompileRuntime::maybeGetMathCache()
     return runtime()->maybeGetMathCache();
 }
 
-#ifdef JSGC_GENERATIONAL
 const Nursery &
 CompileRuntime::gcNursery()
 {
     return runtime()->gc.nursery;
 }
-#endif
 
 Zone *
 CompileZone::zone()

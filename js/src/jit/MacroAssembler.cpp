@@ -18,13 +18,10 @@
 #include "jit/BaselineJIT.h"
 #include "jit/Lowering.h"
 #include "jit/MIR.h"
-#include "jit/ParallelFunctions.h"
-#include "vm/ForkJoin.h"
+#include "js/Conversions.h"
 #include "vm/TraceLogging.h"
 
-#ifdef JSGC_GENERATIONAL
-# include "jsgcinlines.h"
-#endif
+#include "jsgcinlines.h"
 #include "jsinferinlines.h"
 #include "jsobjinlines.h"
 #include "vm/Interpreter-inl.h"
@@ -33,6 +30,7 @@ using namespace js;
 using namespace js::jit;
 
 using JS::GenericNaN;
+using JS::ToInt32;
 
 namespace {
 
@@ -134,6 +132,15 @@ MacroAssembler::guardTypeSet(const Source &address, const TypeSet *types, Barrie
     if (kind != BarrierKind::TypeTagOnly) {
         Register obj = extractObject(address, scratch);
         guardObjectType(obj, types, scratch, miss);
+    } else {
+#ifdef DEBUG
+        Label fail;
+        Register obj = extractObject(address, scratch);
+        guardObjectType(obj, types, scratch, &fail);
+        jump(&matched);
+        bind(&fail);
+        assumeUnreachable("Unexpected object type");
+#endif
     }
 
     bind(&matched);
@@ -630,16 +637,12 @@ MacroAssembler::checkAllocatorState(Label *fail)
 bool
 MacroAssembler::shouldNurseryAllocate(gc::AllocKind allocKind, gc::InitialHeap initialHeap)
 {
-#ifdef JSGC_GENERATIONAL
     // Note that Ion elides barriers on writes to objects known to be in the
     // nursery, so any allocation that can be made into the nursery must be made
     // into the nursery, even if the nursery is disabled. At runtime these will
     // take the out-of-line path, which is required to insert a barrier for the
     // initializing writes.
     return IsNurseryAllocable(allocKind) && initialHeap != gc::TenuredHeap;
-#else
-    return false;
-#endif
 }
 
 // Inline version of Nursery::allocateObject.
@@ -647,7 +650,6 @@ void
 MacroAssembler::nurseryAllocate(Register result, Register slots, gc::AllocKind allocKind,
                                 size_t nDynamicSlots, gc::InitialHeap initialHeap, Label *fail)
 {
-#ifdef JSGC_GENERATIONAL
     MOZ_ASSERT(IsNurseryAllocable(allocKind));
     MOZ_ASSERT(initialHeap != gc::TenuredHeap);
 
@@ -672,7 +674,6 @@ MacroAssembler::nurseryAllocate(Register result, Register slots, gc::AllocKind a
 
     if (nDynamicSlots)
         computeEffectiveAddress(Address(result, thingSize), slots);
-#endif // JSGC_GENERATIONAL
 }
 
 // Inlined version of FreeList::allocate.
@@ -830,121 +831,6 @@ void
 MacroAssembler::newGCFatInlineString(Register result, Register temp, Label *fail)
 {
     allocateNonObject(result, temp, js::gc::FINALIZE_FAT_INLINE_STRING, fail);
-}
-
-void
-MacroAssembler::newGCThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                              gc::AllocKind allocKind, Label *fail)
-{
-#ifdef JSGC_FJGENERATIONAL
-    if (IsNurseryAllocable(allocKind))
-        return newGCNurseryThingPar(result, cx, tempReg1, tempReg2, allocKind, fail);
-#endif
-    return newGCTenuredThingPar(result, cx, tempReg1, tempReg2, allocKind, fail);
-}
-
-#ifdef JSGC_FJGENERATIONAL
-void
-MacroAssembler::newGCNurseryThingPar(Register result, Register cx,
-                                     Register tempReg1, Register tempReg2,
-                                     gc::AllocKind allocKind, Label *fail)
-{
-    MOZ_ASSERT(IsNurseryAllocable(allocKind));
-
-    uint32_t thingSize = uint32_t(gc::Arena::thingSize(allocKind));
-
-    // Correctness depends on thingSize being smaller than a chunk
-    // (not a problem) and the last chunk of the nursery not being
-    // located at the very top of the address space.  The regular
-    // Nursery makes the same assumption, see nurseryAllocate() above.
-
-    // The ForkJoinNursery is a member variable of the ForkJoinContext.
-    size_t offsetOfPosition =
-        ForkJoinContext::offsetOfFJNursery() + gc::ForkJoinNursery::offsetOfPosition();
-    size_t offsetOfEnd =
-        ForkJoinContext::offsetOfFJNursery() + gc::ForkJoinNursery::offsetOfCurrentEnd();
-    loadPtr(Address(cx, offsetOfPosition), result);
-    loadPtr(Address(cx, offsetOfEnd), tempReg2);
-    computeEffectiveAddress(Address(result, thingSize), tempReg1);
-    branchPtr(Assembler::Below, tempReg2, tempReg1, fail);
-    storePtr(tempReg1, Address(cx, offsetOfPosition));
-}
-#endif
-
-void
-MacroAssembler::newGCTenuredThingPar(Register result, Register cx,
-                                     Register tempReg1, Register tempReg2,
-                                     gc::AllocKind allocKind, Label *fail)
-{
-    // Similar to ::newGCThing(), except that it allocates from a custom
-    // Allocator in the ForkJoinContext*, rather than being hardcoded to the
-    // compartment allocator.  This requires two temporary registers.
-    //
-    // When the ForkJoin generational collector is enabled this is only used
-    // for those object types that cannot be allocated in the ForkJoinNursery.
-    //
-    // Subtle: I wanted to reuse `result` for one of the temporaries, but the
-    // register allocator was assigning it to the same register as `cx`.
-    // Then we overwrite that register which messed up the OOL code.
-
-    uint32_t thingSize = (uint32_t)gc::Arena::thingSize(allocKind);
-
-    // Load the allocator:
-    // tempReg1 = (Allocator*) forkJoinCx->allocator()
-    loadPtr(Address(cx, ThreadSafeContext::offsetOfAllocator()),
-            tempReg1);
-
-    // Get a pointer to the relevant free list:
-    // tempReg1 = (FreeList*) &tempReg1->arenas.freeLists[(allocKind)]
-    uint32_t offset = (offsetof(Allocator, arenas) +
-                       js::gc::ArenaLists::getFreeListOffset(allocKind));
-    addPtr(Imm32(offset), tempReg1);
-
-    // Load first item on the list
-    // tempReg2 = tempReg1->head.first
-    loadPtr(Address(tempReg1, gc::FreeList::offsetOfFirst()), tempReg2);
-
-    // Check whether bump-allocation is possible.
-    // if tempReg1->head.last <= tempReg2, fail
-    branchPtr(Assembler::BelowOrEqual,
-              Address(tempReg1, gc::FreeList::offsetOfLast()),
-              tempReg2,
-              fail);
-
-    // If so, take |first| and advance pointer by thingSize bytes.
-    // result = tempReg2;
-    // tempReg2 += thingSize;
-    movePtr(tempReg2, result);
-    addPtr(Imm32(thingSize), tempReg2);
-
-    // Update |first|.
-    // tempReg1->head.first = tempReg2;
-    storePtr(tempReg2, Address(tempReg1, gc::FreeList::offsetOfFirst()));
-}
-
-void
-MacroAssembler::newGCThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                              NativeObject *templateObject, Label *fail)
-{
-    gc::AllocKind allocKind = templateObject->asTenured().getAllocKind();
-    MOZ_ASSERT(allocKind >= gc::FINALIZE_OBJECT0 && allocKind <= gc::FINALIZE_OBJECT_LAST);
-    MOZ_ASSERT(!templateObject->numDynamicSlots());
-
-    newGCThingPar(result, cx, tempReg1, tempReg2, allocKind, fail);
-}
-
-void
-MacroAssembler::newGCStringPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                               Label *fail)
-{
-    newGCTenuredThingPar(result, cx, tempReg1, tempReg2, js::gc::FINALIZE_STRING, fail);
-}
-
-void
-MacroAssembler::newGCFatInlineStringPar(Register result, Register cx, Register tempReg1,
-                                        Register tempReg2, Label *fail)
-{
-    newGCTenuredThingPar(result, cx, tempReg1, tempReg2, js::gc::FINALIZE_FAT_INLINE_STRING, fail);
 }
 
 void
@@ -1235,28 +1121,12 @@ MacroAssembler::loadStringChar(Register str, Register index, Register output)
     bind(&done);
 }
 
-void
-MacroAssembler::checkInterruptFlagPar(Register tempReg, Label *fail)
-{
-    movePtr(ImmPtr(GetJitContext()->runtime->addressOfInterruptParUint32()), tempReg);
-    branch32(Assembler::NonZero, Address(tempReg, 0), Imm32(0), fail);
-}
-
 // Save an exit frame (which must be aligned to the stack pointer) to
 // PerThreadData::jitTop of the main thread.
 void
 MacroAssembler::linkExitFrame()
 {
     AbsoluteAddress jitTop(GetJitContext()->runtime->addressOfJitTop());
-    storePtr(StackPointer, jitTop);
-}
-
-// Save an exit frame to the thread data of the current thread, given a
-// register that holds a PerThreadData *.
-void
-MacroAssembler::linkParallelExitFrame(Register pt)
-{
-    Address jitTop(pt, offsetof(PerThreadData, jitTop));
     storePtr(StackPointer, jitTop);
 }
 
@@ -1416,52 +1286,19 @@ MacroAssembler::generateBailoutTail(Register scratch, Register bailoutInfo)
 }
 
 void
-MacroAssembler::loadBaselineOrIonRaw(Register script, Register dest, ExecutionMode mode,
-                                     Label *failure)
+MacroAssembler::loadBaselineOrIonRaw(Register script, Register dest, Label *failure)
 {
-    if (mode == SequentialExecution) {
-        loadPtr(Address(script, JSScript::offsetOfBaselineOrIonRaw()), dest);
-        if (failure)
-            branchTestPtr(Assembler::Zero, dest, dest, failure);
-    } else {
-        loadPtr(Address(script, JSScript::offsetOfParallelIonScript()), dest);
-        if (failure)
-            branchPtr(Assembler::BelowOrEqual, dest, ImmPtr(ION_COMPILING_SCRIPT), failure);
-        loadPtr(Address(dest, IonScript::offsetOfMethod()), dest);
-        loadPtr(Address(dest, JitCode::offsetOfCode()), dest);
-    }
+    loadPtr(Address(script, JSScript::offsetOfBaselineOrIonRaw()), dest);
+    if (failure)
+        branchTestPtr(Assembler::Zero, dest, dest, failure);
 }
 
 void
-MacroAssembler::loadBaselineOrIonNoArgCheck(Register script, Register dest, ExecutionMode mode,
-                                            Label *failure)
+MacroAssembler::loadBaselineOrIonNoArgCheck(Register script, Register dest, Label *failure)
 {
-    if (mode == SequentialExecution) {
-        loadPtr(Address(script, JSScript::offsetOfBaselineOrIonSkipArgCheck()), dest);
-        if (failure)
-            branchTestPtr(Assembler::Zero, dest, dest, failure);
-    } else {
-        // Find second register to get the offset to skip argument check
-        Register offset = script;
-        if (script == dest) {
-            GeneralRegisterSet regs(GeneralRegisterSet::All());
-            regs.take(dest);
-            offset = regs.takeAny();
-        }
-
-        loadPtr(Address(script, JSScript::offsetOfParallelIonScript()), dest);
-        if (failure)
-            branchPtr(Assembler::BelowOrEqual, dest, ImmPtr(ION_COMPILING_SCRIPT), failure);
-
-        Push(offset);
-        load32(Address(script, IonScript::offsetOfSkipArgCheckEntryOffset()), offset);
-
-        loadPtr(Address(dest, IonScript::offsetOfMethod()), dest);
-        loadPtr(Address(dest, JitCode::offsetOfCode()), dest);
-        addPtr(offset, dest);
-
-        Pop(offset);
-    }
+    loadPtr(Address(script, JSScript::offsetOfBaselineOrIonSkipArgCheck()), dest);
+    if (failure)
+        branchTestPtr(Assembler::Zero, dest, dest, failure);
 }
 
 void
@@ -1473,96 +1310,7 @@ MacroAssembler::loadBaselineFramePtr(Register framePtr, Register dest)
 }
 
 void
-MacroAssembler::loadForkJoinContext(Register cx, Register scratch)
-{
-    // Load the current ForkJoinContext *. If we need a parallel exit frame,
-    // chances are we are about to do something very slow anyways, so just
-    // call ForkJoinContextPar again instead of using the cached version.
-    setupUnalignedABICall(0, scratch);
-    callWithABI(JS_FUNC_TO_DATA_PTR(void *, ForkJoinContextPar));
-    if (ReturnReg != cx)
-        movePtr(ReturnReg, cx);
-}
-
-void
-MacroAssembler::loadContext(Register cxReg, Register scratch, ExecutionMode executionMode)
-{
-    switch (executionMode) {
-      case SequentialExecution:
-        // The scratch register is not used for sequential execution.
-        loadJSContext(cxReg);
-        break;
-      case ParallelExecution:
-        loadForkJoinContext(cxReg, scratch);
-        break;
-      default:
-        MOZ_CRASH("No such execution mode");
-    }
-}
-
-void
-MacroAssembler::enterParallelExitFrameAndLoadContext(const VMFunction *f, Register cx,
-                                                     Register scratch)
-{
-    loadForkJoinContext(cx, scratch);
-    // Load the PerThreadData from from the cx.
-    loadPtr(Address(cx, offsetof(ForkJoinContext, perThreadData)), scratch);
-    linkParallelExitFrame(scratch);
-    // Push the ioncode.
-    exitCodePatch_ = PushWithPatch(ImmWord(-1));
-    // Push the VMFunction pointer, to mark arguments.
-    Push(ImmPtr(f));
-}
-
-void
-MacroAssembler::enterFakeParallelExitFrame(Register cx, Register scratch,
-                                           JitCode *codeVal)
-{
-    // Load the PerThreadData from from the cx.
-    loadPtr(Address(cx, offsetof(ForkJoinContext, perThreadData)), scratch);
-    linkParallelExitFrame(scratch);
-    Push(ImmPtr(codeVal));
-    Push(ImmPtr(nullptr));
-}
-
-void
-MacroAssembler::enterExitFrameAndLoadContext(const VMFunction *f, Register cxReg, Register scratch,
-                                             ExecutionMode executionMode)
-{
-    switch (executionMode) {
-      case SequentialExecution:
-        // The scratch register is not used for sequential execution.
-        enterExitFrame(f);
-        loadJSContext(cxReg);
-        break;
-      case ParallelExecution:
-        enterParallelExitFrameAndLoadContext(f, cxReg, scratch);
-        break;
-      default:
-        MOZ_CRASH("No such execution mode");
-    }
-}
-
-void
-MacroAssembler::enterFakeExitFrame(Register cxReg, Register scratch,
-                                   ExecutionMode executionMode,
-                                   JitCode *codeVal)
-{
-    switch (executionMode) {
-      case SequentialExecution:
-        // The cx and scratch registers are not used for sequential execution.
-        enterFakeExitFrame(codeVal);
-        break;
-      case ParallelExecution:
-        enterFakeParallelExitFrame(cxReg, scratch, codeVal);
-        break;
-      default:
-        MOZ_CRASH("No such execution mode");
-    }
-}
-
-void
-MacroAssembler::handleFailure(ExecutionMode executionMode)
+MacroAssembler::handleFailure()
 {
     // Re-entry code is irrelevant because the exception will leave the
     // running function and never come back
@@ -1570,17 +1318,7 @@ MacroAssembler::handleFailure(ExecutionMode executionMode)
         sps_->skipNextReenter();
     leaveSPSFrame();
 
-    JitCode *excTail;
-    switch (executionMode) {
-      case SequentialExecution:
-        excTail = GetJitContext()->runtime->jitRuntime()->getExceptionTail();
-        break;
-      case ParallelExecution:
-        excTail = GetJitContext()->runtime->jitRuntime()->getExceptionTailParallel();
-        break;
-      default:
-        MOZ_CRASH("No such execution mode");
-    }
+    JitCode *excTail = GetJitContext()->runtime->jitRuntime()->getExceptionTail();
     jump(excTail);
 
     // Doesn't actually emit code, but balances the leave()
@@ -1668,9 +1406,10 @@ MacroAssembler::printf(const char *output, Register value)
 
 #ifdef JS_TRACE_LOGGING
 void
-MacroAssembler::tracelogStart(Register logger, uint32_t textId)
+MacroAssembler::tracelogStartId(Register logger, uint32_t textId, bool force)
 {
-    void (&TraceLogFunc)(TraceLogger*, uint32_t) = TraceLogStartEvent;
+    if (!force && !TraceLogTextIdEnabled(textId))
+        return;
 
     PushRegsInMask(RegisterSet::Volatile());
 
@@ -1683,16 +1422,14 @@ MacroAssembler::tracelogStart(Register logger, uint32_t textId)
     passABIArg(logger);
     move32(Imm32(textId), temp);
     passABIArg(temp);
-    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
+    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogStartEventPrivate));
 
     PopRegsInMask(RegisterSet::Volatile());
 }
 
 void
-MacroAssembler::tracelogStart(Register logger, Register textId)
+MacroAssembler::tracelogStartId(Register logger, Register textId)
 {
-    void (&TraceLogFunc)(TraceLogger*, uint32_t) = TraceLogStartEvent;
-
     PushRegsInMask(RegisterSet::Volatile());
 
     RegisterSet regs = RegisterSet::Volatile();
@@ -1704,17 +1441,37 @@ MacroAssembler::tracelogStart(Register logger, Register textId)
     setupUnalignedABICall(2, temp);
     passABIArg(logger);
     passABIArg(textId);
-    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
-
-    regs.add(temp);
+    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogStartEventPrivate));
 
     PopRegsInMask(RegisterSet::Volatile());
 }
 
 void
-MacroAssembler::tracelogStop(Register logger, uint32_t textId)
+MacroAssembler::tracelogStartEvent(Register logger, Register event)
 {
-    void (&TraceLogFunc)(TraceLogger*, uint32_t) = TraceLogStopEvent;
+    void (&TraceLogFunc)(TraceLoggerThread *, const TraceLoggerEvent &) = TraceLogStartEvent;
+
+    PushRegsInMask(RegisterSet::Volatile());
+
+    RegisterSet regs = RegisterSet::Volatile();
+    regs.takeUnchecked(logger);
+    regs.takeUnchecked(event);
+
+    Register temp = regs.takeGeneral();
+
+    setupUnalignedABICall(2, temp);
+    passABIArg(logger);
+    passABIArg(event);
+    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
+
+    PopRegsInMask(RegisterSet::Volatile());
+}
+
+void
+MacroAssembler::tracelogStopId(Register logger, uint32_t textId, bool force)
+{
+    if (!force && !TraceLogTextIdEnabled(textId))
+        return;
 
     PushRegsInMask(RegisterSet::Volatile());
 
@@ -1727,23 +1484,19 @@ MacroAssembler::tracelogStop(Register logger, uint32_t textId)
     passABIArg(logger);
     move32(Imm32(textId), temp);
     passABIArg(temp);
-    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
 
-    regs.add(temp);
+    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogStopEventPrivate));
 
     PopRegsInMask(RegisterSet::Volatile());
 }
 
 void
-MacroAssembler::tracelogStop(Register logger, Register textId)
+MacroAssembler::tracelogStopId(Register logger, Register textId)
 {
-#ifdef DEBUG
-    void (&TraceLogFunc)(TraceLogger*, uint32_t) = TraceLogStopEvent;
-
     PushRegsInMask(RegisterSet::Volatile());
-
     RegisterSet regs = RegisterSet::Volatile();
     regs.takeUnchecked(logger);
+
     regs.takeUnchecked(textId);
 
     Register temp = regs.takeGeneral();
@@ -1751,33 +1504,7 @@ MacroAssembler::tracelogStop(Register logger, Register textId)
     setupUnalignedABICall(2, temp);
     passABIArg(logger);
     passABIArg(textId);
-    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
-
-    regs.add(temp);
-
-    PopRegsInMask(RegisterSet::Volatile());
-#else
-    tracelogStop(logger);
-#endif
-}
-
-void
-MacroAssembler::tracelogStop(Register logger)
-{
-    void (&TraceLogFunc)(TraceLogger*) = TraceLogStopEvent;
-
-    PushRegsInMask(RegisterSet::Volatile());
-
-    RegisterSet regs = RegisterSet::Volatile();
-    regs.takeUnchecked(logger);
-
-    Register temp = regs.takeGeneral();
-
-    setupUnalignedABICall(1, temp);
-    passABIArg(logger);
-    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogFunc));
-
-    regs.add(temp);
+    callWithABINoProfiling(JS_FUNC_TO_DATA_PTR(void *, TraceLogStopEventPrivate));
 
     PopRegsInMask(RegisterSet::Volatile());
 }
@@ -2109,7 +1836,7 @@ MacroAssembler::convertValueToInt(JSContext *cx, const Value &v, Register output
             break;
           }
           case IntConversion_Truncate:
-            move32(Imm32(js::ToInt32(d)), output);
+            move32(Imm32(ToInt32(d)), output);
             break;
           case IntConversion_ClampToUint8:
             move32(Imm32(ClampDoubleToUint8(d)), output);
@@ -2190,13 +1917,9 @@ MacroAssembler::convertTypedOrValueToInt(TypedOrValueRegister src, FloatRegister
 void
 MacroAssembler::finish()
 {
-    if (sequentialFailureLabel_.used()) {
-        bind(&sequentialFailureLabel_);
-        handleFailure(SequentialExecution);
-    }
-    if (parallelFailureLabel_.used()) {
-        bind(&parallelFailureLabel_);
-        handleFailure(ParallelExecution);
+    if (failureLabel_.used()) {
+        bind(&failureLabel_);
+        handleFailure();
     }
 
     MacroAssemblerSpecific::finish();

@@ -541,6 +541,9 @@
     <ClCompile Include="listformatter.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
+    <ClCompile Include="ulistformatter.cpp">
+      <Filter>formatting</Filter>
+    </ClCompile>
     <ClCompile Include="messagepattern.cpp">
       <Filter>formatting</Filter>
     </ClCompile>
@@ -1095,6 +1098,9 @@
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\listformatter.h">
+      <Filter>formatting</Filter>
+    </CustomBuild>
+    <CustomBuild Include="unicode\ulistformatter.h">
       <Filter>formatting</Filter>
     </CustomBuild>
     <CustomBuild Include="unicode\appendable.h">

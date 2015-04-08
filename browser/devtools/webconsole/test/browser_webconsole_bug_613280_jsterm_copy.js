@@ -9,10 +9,8 @@
 const TEST_URI = "data:text/html;charset=utf-8,Web Console test for bug 613280";
 
 function test() {
-  addTab(TEST_URI);
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
-    openConsole(null, function(HUD) {
+  loadTab(TEST_URI).then(() => {
+    openConsole().then((HUD) => {
       content.console.log("foobarBazBug613280");
       waitForMessages({
         webconsole: HUD,
@@ -22,8 +20,8 @@ function test() {
           severity: SEVERITY_LOG,
         }],
       }).then(performTest.bind(null, HUD));
-    });
-  }, true);
+    })
+  });
 }
 
 function performTest(HUD, [result]) {
@@ -71,7 +69,9 @@ function performTest(HUD, [result]) {
                getControllerForCommand("cmd_copy");
   is(controller.isCommandEnabled("cmd_copy"), true, "cmd_copy is enabled");
 
-  let selectionText = HUD.iframeWindow.getSelection() + "";
+  // Remove new lines since getSelection() includes one between message and line
+  // number, but the clipboard doesn't (see bug 1119503)
+  let selectionText = (HUD.iframeWindow.getSelection() + "").replace(/\r?\n|\r/g, " ");
   isnot(selectionText.indexOf("foobarBazBug613280"), -1,
         "selection text includes 'foobarBazBug613280'");
 

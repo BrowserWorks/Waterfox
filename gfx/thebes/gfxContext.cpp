@@ -27,7 +27,7 @@
 #include "mozilla/gfx/DrawTargetTiled.h"
 #include <algorithm>
 
-#if CAIRO_HAS_DWRITE_FONT
+#if XP_WIN
 #include "gfxWindowsPlatform.h"
 #endif
 
@@ -239,18 +239,6 @@ gfxContext::Fill(const Pattern& aPattern)
 }
 
 void
-gfxContext::FillWithOpacity(gfxFloat aOpacity)
-{
-  FillWithOpacity(PatternFromState(this), aOpacity);
-}
-
-void
-gfxContext::FillWithOpacity(const Pattern& aPattern, gfxFloat aOpacity)
-{
-  FillAzure(aPattern, Float(aOpacity));
-}
-
-void
 gfxContext::MoveTo(const gfxPoint& pt)
 {
   EnsurePathBuilder();
@@ -307,21 +295,6 @@ gfxContext::Rectangle(const gfxRect& rect, bool snapToPixels)
   mPathBuilder->LineTo(rec.BottomRight());
   mPathBuilder->LineTo(rec.BottomLeft());
   mPathBuilder->Close();
-}
-
-void
-gfxContext::Polygon(const gfxPoint *points, uint32_t numPoints)
-{
-  if (numPoints == 0) {
-    return;
-  }
-
-  EnsurePathBuilder();
-
-  mPathBuilder->MoveTo(ToPoint(points[0]));
-  for (uint32_t i = 1; i < numPoints; i++) {
-    mPathBuilder->LineTo(ToPoint(points[i]));
-  }
 }
 
 void
@@ -1336,7 +1309,11 @@ gfxContext::PushNewDT(gfxContentType content)
     newDT = mDT->CreateSimilarDrawTarget(IntSize(64, 64), format);
 
     if (!newDT) {
-      if (!gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+      if (!gfxPlatform::GetPlatform()->DidRenderingDeviceReset()
+#ifdef XP_WIN
+          && !(mDT->GetBackendType() == BackendType::DIRECT2D1_1 && !gfxWindowsPlatform::GetPlatform()->GetD3D11ContentDevice())
+#endif
+          ) {
         // If even this fails.. we're most likely just out of memory!
         NS_ABORT_OOM(BytesPerPixel(format) * 64 * 64);
       }

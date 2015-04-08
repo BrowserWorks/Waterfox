@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2012-2014, International Business Machines
+* Copyright (C) 2012-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationkeys.cpp
@@ -246,7 +246,6 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
         // +1 so that we can use "<" and primary ignorables test out early.
         variableTop = settings.variableTop + 1;
     }
-    const uint8_t *reorderTable = settings.reorderTable;
 
     uint32_t tertiaryMask = CollationSettings::getTertiaryMask(options);
 
@@ -255,7 +254,7 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
     SortKeyLevel tertiaries;
     SortKeyLevel quaternaries;
 
-    uint32_t compressedP1 = 0;  // 0==no compression; otherwise reordered compressible lead byte
+    uint32_t prevReorderedPrimary = 0;  // 0==no compression
     int32_t commonCases = 0;
     int32_t commonSecondaries = 0;
     int32_t commonTertiaries = 0;
@@ -284,14 +283,15 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
             }
             do {
                 if((levels & Collation::QUATERNARY_LEVEL_FLAG) != 0) {
-                    uint32_t p1 = p >> 24;
-                    if(reorderTable != NULL) { p1 = reorderTable[p1]; }
-                    if(p1 >= QUAT_SHIFTED_LIMIT_BYTE) {
+                    if(settings.hasReordering()) {
+                        p = settings.reorder(p);
+                    }
+                    if((p >> 24) >= QUAT_SHIFTED_LIMIT_BYTE) {
                         // Prevent shifted primary lead bytes from
                         // overlapping with the common compression range.
                         quaternaries.appendByte(QUAT_SHIFTED_LIMIT_BYTE);
                     }
-                    quaternaries.appendWeight32((p1 << 24) | (p & 0xffffff));
+                    quaternaries.appendWeight32(p);
                 }
                 do {
                     ce = iter.nextCE(errorCode);
@@ -304,11 +304,15 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
         // If ce==NO_CE, then write nothing for the primary level but
         // terminate compression on all levels and then exit the loop.
         if(p > Collation::NO_CE_PRIMARY && (levels & Collation::PRIMARY_LEVEL_FLAG) != 0) {
+            // Test the un-reordered primary for compressibility.
+            UBool isCompressible = compressibleBytes[p >> 24];
+            if(settings.hasReordering()) {
+                p = settings.reorder(p);
+            }
             uint32_t p1 = p >> 24;
-            if(reorderTable != NULL) { p1 = reorderTable[p1]; }
-            if(p1 != compressedP1) {
-                if(compressedP1 != 0) {
-                    if(p1 < compressedP1) {
+            if(!isCompressible || p1 != (prevReorderedPrimary >> 24)) {
+                if(prevReorderedPrimary != 0) {
+                    if(p < prevReorderedPrimary) {
                         // No primary compression terminator
                         // at the end of the level or merged segment.
                         if(p1 > Collation::MERGE_SEPARATOR_BYTE) {
@@ -319,12 +323,10 @@ CollationKeys::writeSortKeyUpToQuaternary(CollationIterator &iter,
                     }
                 }
                 sink.Append(p1);
-                // Test the un-reordered lead byte for compressibility but
-                // remember the reordered lead byte.
-                if(compressibleBytes[p >> 24]) {
-                    compressedP1 = p1;
+                if(isCompressible) {
+                    prevReorderedPrimary = p;
                 } else {
-                    compressedP1 = 0;
+                    prevReorderedPrimary = 0;
                 }
             }
             char p2 = (char)(p >> 16);

@@ -15,11 +15,12 @@
 #include "mozilla/dom/DesktopNotification.h"
 #include "mozilla/dom/File.h"
 #include "nsGeolocation.h"
+#include "nsIClassOfService.h"
 #include "nsIHttpProtocolHandler.h"
 #include "nsIContentPolicy.h"
 #include "nsIContentSecurityPolicy.h"
 #include "nsContentPolicyUtils.h"
-#include "nsCrossSiteListenerProxy.h"
+#include "nsCORSListenerProxy.h"
 #include "nsISupportsPriority.h"
 #include "nsICachingChannel.h"
 #include "nsIWebContentHandlerRegistrar.h"
@@ -110,6 +111,10 @@
 #include "mozilla/dom/ContentChild.h"
 
 #include "mozilla/dom/FeatureList.h"
+
+#ifdef MOZ_EME
+#include "mozilla/EMEUtils.h"
+#endif
 
 namespace mozilla {
 namespace dom {
@@ -1190,6 +1195,11 @@ Navigator::SendBeacon(const nsAString& aUrl,
     p->SetPriority(nsISupportsPriority::PRIORITY_LOWEST);
   }
 
+  nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(channel));
+  if (cos) {
+    cos->AddClassFlags(nsIClassOfService::Background);
+  }
+
   nsRefPtr<nsCORSListenerProxy> cors = new nsCORSListenerProxy(new BeaconStreamListener(),
                                                                principal,
                                                                true);
@@ -1207,6 +1217,12 @@ Navigator::SendBeacon(const nsAString& aUrl,
       !contentType.Equals(APPLICATION_WWW_FORM_URLENCODED) &&
       !contentType.Equals(MULTIPART_FORM_DATA) &&
       !contentType.Equals(TEXT_PLAIN)) {
+
+    // we need to set the sameOriginChecker as a notificationCallback
+    // so we can tell the channel not to follow redirects
+    nsCOMPtr<nsIInterfaceRequestor> soc = nsContentUtils::GetSameOriginChecker();
+    channel->SetNotificationCallbacks(soc);
+
     nsCOMPtr<nsIChannel> preflightChannel;
     nsTArray<nsCString> unsafeHeaders;
     unsafeHeaders.AppendElement(NS_LITERAL_CSTRING("Content-Type"));
@@ -1417,6 +1433,19 @@ Navigator::GetFeature(const nsAString& aName, ErrorResult& aRv)
   } // hardware.memory
 #endif
 
+  p->MaybeResolve(JS::UndefinedHandleValue);
+  return p.forget();
+}
+
+already_AddRefed<Promise>
+Navigator::HasFeature(const nsAString& aName, ErrorResult& aRv)
+{
+  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
+  nsRefPtr<Promise> p = Promise::Create(go, aRv);
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
   // Hardcoded manifest features. Some are still b2g specific.
   const char manifestFeatures[][64] = {
     "manifest.origin"
@@ -1433,19 +1462,6 @@ Navigator::GetFeature(const nsAString& aName, ErrorResult& aRv)
       p->MaybeResolve(true);
       return p.forget();
     }
-  }
-
-  p->MaybeResolve(JS::UndefinedHandleValue);
-  return p.forget();
-}
-
-already_AddRefed<Promise>
-Navigator::HasFeature(const nsAString& aName, ErrorResult& aRv)
-{
-  nsCOMPtr<nsIGlobalObject> go = do_QueryInterface(mWindow);
-  nsRefPtr<Promise> p = Promise::Create(go, aRv);
-  if (aRv.Failed()) {
-    return nullptr;
   }
 
   NS_NAMED_LITERAL_STRING(apiWindowPrefix, "api.window.");
@@ -2575,13 +2591,42 @@ Navigator::RequestMediaKeySystemAccess(const nsAString& aKeySystem,
     return nullptr;
   }
 
+  if (!Preferences::GetBool("media.eme.enabled", false)) {
+    // EME disabled by user, send notification to chrome so UI can
+    // inform user.
+    MediaKeySystemAccess::NotifyObservers(mWindow, aKeySystem,
+                                          MediaKeySystemStatus::Api_disabled);
+    p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return p.forget();
+  }
+
   if (aKeySystem.IsEmpty() ||
       (aOptions.WasPassed() && aOptions.Value().IsEmpty())) {
     p->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return p.forget();
   }
 
-  if (!MediaKeySystemAccess::IsKeySystemSupported(aKeySystem)) {
+  // Parse keysystem, split it out into keySystem prefix, and version suffix.
+  nsAutoString keySystem;
+  int32_t minCdmVersion = NO_CDM_VERSION;
+  if (!ParseKeySystem(aKeySystem,
+                      keySystem,
+                      minCdmVersion)) {
+    // Invalid keySystem string, or unsupported keySystem. Send notification
+    // to chrome to show a failure notice.
+    MediaKeySystemAccess::NotifyObservers(mWindow, aKeySystem, MediaKeySystemStatus::Cdm_not_supported);
+    p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
+    return p.forget();
+  }
+
+  MediaKeySystemStatus status = MediaKeySystemAccess::GetKeySystemStatus(keySystem, minCdmVersion);
+  if (status != MediaKeySystemStatus::Available) {
+    if (status != MediaKeySystemStatus::Error) {
+      // Failed due to user disabling something, send a notification to
+      // chrome, so we can show some UI to explain how the user can rectify
+      // the situation.
+      MediaKeySystemAccess::NotifyObservers(mWindow, keySystem, status);
+    }
     p->MaybeReject(NS_ERROR_DOM_NOT_SUPPORTED_ERR);
     return p.forget();
   }
@@ -2589,8 +2634,8 @@ Navigator::RequestMediaKeySystemAccess(const nsAString& aKeySystem,
   // TODO: Wait (async) until the CDM is downloaded, if it's not already.
 
   if (!aOptions.WasPassed() ||
-      MediaKeySystemAccess::IsSupported(aKeySystem, aOptions.Value())) {
-    nsRefPtr<MediaKeySystemAccess> access(new MediaKeySystemAccess(mWindow, aKeySystem));
+      MediaKeySystemAccess::IsSupported(keySystem, aOptions.Value())) {
+    nsRefPtr<MediaKeySystemAccess> access(new MediaKeySystemAccess(mWindow, keySystem));
     p->MaybeResolve(access);
     return p.forget();
   }

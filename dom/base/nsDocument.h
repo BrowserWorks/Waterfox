@@ -59,6 +59,7 @@
 #include "mozilla/EventListenerManager.h"
 #include "mozilla/EventStates.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/PendingPlayerTracker.h"
 #include "mozilla/dom/DOMImplementation.h"
 #include "mozilla/dom/StyleSheetList.h"
 #include "nsDataHashtable.h"
@@ -781,6 +782,7 @@ public:
 
   virtual already_AddRefed<mozilla::dom::UndoManager> GetUndoManager() MOZ_OVERRIDE;
 
+  static bool IsWebAnimationsEnabled(JSContext* aCx, JSObject* aObject);
   virtual mozilla::dom::AnimationTimeline* Timeline() MOZ_OVERRIDE;
 
   virtual nsresult SetSubDocumentFor(Element* aContent,
@@ -990,23 +992,23 @@ public:
                               int32_t aNamespaceID,
                               nsIContent **aResult) MOZ_OVERRIDE;
 
-  virtual void Sanitize();
+  virtual void Sanitize() MOZ_OVERRIDE;
 
   virtual void EnumerateSubDocuments(nsSubDocEnumFunc aCallback,
-                                                 void *aData);
+                                                 void *aData) MOZ_OVERRIDE;
 
-  virtual bool CanSavePresentation(nsIRequest *aNewRequest);
-  virtual void Destroy();
-  virtual void RemovedFromDocShell();
-  virtual already_AddRefed<nsILayoutHistoryState> GetLayoutHistoryState() const;
+  virtual bool CanSavePresentation(nsIRequest *aNewRequest) MOZ_OVERRIDE;
+  virtual void Destroy() MOZ_OVERRIDE;
+  virtual void RemovedFromDocShell() MOZ_OVERRIDE;
+  virtual already_AddRefed<nsILayoutHistoryState> GetLayoutHistoryState() const MOZ_OVERRIDE;
 
-  virtual void BlockOnload();
-  virtual void UnblockOnload(bool aFireSync);
+  virtual void BlockOnload() MOZ_OVERRIDE;
+  virtual void UnblockOnload(bool aFireSync) MOZ_OVERRIDE;
 
-  virtual void AddStyleRelevantLink(mozilla::dom::Link* aLink);
-  virtual void ForgetLink(mozilla::dom::Link* aLink);
+  virtual void AddStyleRelevantLink(mozilla::dom::Link* aLink) MOZ_OVERRIDE;
+  virtual void ForgetLink(mozilla::dom::Link* aLink) MOZ_OVERRIDE;
 
-  void ClearBoxObjectFor(nsIContent* aContent);
+  virtual void ClearBoxObjectFor(nsIContent* aContent) MOZ_OVERRIDE;
 
   virtual already_AddRefed<mozilla::dom::BoxObject>
   GetBoxObjectFor(mozilla::dom::Element* aElement,
@@ -1015,37 +1017,46 @@ public:
   virtual Element*
     GetAnonymousElementByAttribute(nsIContent* aElement,
                                    nsIAtom* aAttrName,
-                                   const nsAString& aAttrValue) const;
+                                   const nsAString& aAttrValue) const MOZ_OVERRIDE;
 
   virtual Element* ElementFromPointHelper(float aX, float aY,
                                                       bool aIgnoreRootScrollFrame,
-                                                      bool aFlushLayout);
+                                                      bool aFlushLayout) MOZ_OVERRIDE;
 
   virtual nsresult NodesFromRectHelper(float aX, float aY,
                                                    float aTopSize, float aRightSize,
                                                    float aBottomSize, float aLeftSize,
                                                    bool aIgnoreRootScrollFrame,
                                                    bool aFlushLayout,
-                                                   nsIDOMNodeList** aReturn);
+                                                   nsIDOMNodeList** aReturn) MOZ_OVERRIDE;
 
-  virtual void FlushSkinBindings();
+  virtual void FlushSkinBindings() MOZ_OVERRIDE;
 
-  virtual nsresult InitializeFrameLoader(nsFrameLoader* aLoader);
-  virtual nsresult FinalizeFrameLoader(nsFrameLoader* aLoader);
-  virtual void TryCancelFrameLoaderInitialization(nsIDocShell* aShell);
-  virtual bool FrameLoaderScheduledToBeFinalized(nsIDocShell* aShell);
+  virtual nsresult InitializeFrameLoader(nsFrameLoader* aLoader) MOZ_OVERRIDE;
+  virtual nsresult FinalizeFrameLoader(nsFrameLoader* aLoader) MOZ_OVERRIDE;
+  virtual void TryCancelFrameLoaderInitialization(nsIDocShell* aShell) MOZ_OVERRIDE;
+  virtual bool FrameLoaderScheduledToBeFinalized(nsIDocShell* aShell) MOZ_OVERRIDE;
   virtual nsIDocument*
     RequestExternalResource(nsIURI* aURI,
                             nsINode* aRequestingNode,
-                            ExternalResourceLoad** aPendingLoad);
+                            ExternalResourceLoad** aPendingLoad) MOZ_OVERRIDE;
   virtual void
-    EnumerateExternalResources(nsSubDocEnumFunc aCallback, void* aData);
+    EnumerateExternalResources(nsSubDocEnumFunc aCallback, void* aData) MOZ_OVERRIDE;
 
   nsTArray<nsCString> mHostObjectURIs;
 
   // Returns our (lazily-initialized) animation controller.
   // If HasAnimationController is true, this is guaranteed to return non-null.
   nsSMILAnimationController* GetAnimationController() MOZ_OVERRIDE;
+
+  virtual mozilla::PendingPlayerTracker*
+  GetPendingPlayerTracker() MOZ_FINAL MOZ_OVERRIDE
+  {
+    return mPendingPlayerTracker;
+  }
+
+  virtual mozilla::PendingPlayerTracker*
+  GetOrCreatePendingPlayerTracker() MOZ_OVERRIDE;
 
   void SetImagesNeedAnimating(bool aAnimating) MOZ_OVERRIDE;
 
@@ -1125,9 +1136,9 @@ public:
   virtual void MozSetImageElement(const nsAString& aImageElementId,
                                   Element* aElement) MOZ_OVERRIDE;
 
-  virtual nsresult AddImage(imgIRequest* aImage);
-  virtual nsresult RemoveImage(imgIRequest* aImage, uint32_t aFlags);
-  virtual nsresult SetImageLockingState(bool aLocked);
+  virtual nsresult AddImage(imgIRequest* aImage) MOZ_OVERRIDE;
+  virtual nsresult RemoveImage(imgIRequest* aImage, uint32_t aFlags) MOZ_OVERRIDE;
+  virtual nsresult SetImageLockingState(bool aLocked) MOZ_OVERRIDE;
 
   // AddPlugin adds a plugin-related element to mPlugins when the element is
   // added to the tree.
@@ -1302,25 +1313,25 @@ public:
                                                     mozilla::ErrorResult& rv) MOZ_OVERRIDE;
   virtual void UseRegistryFromDocument(nsIDocument* aDocument) MOZ_OVERRIDE;
 
-  virtual nsIDocument* MasterDocument()
+  virtual nsIDocument* MasterDocument() MOZ_OVERRIDE
   {
     return mMasterDocument ? mMasterDocument.get()
                            : this;
   }
 
-  virtual void SetMasterDocument(nsIDocument* master)
+  virtual void SetMasterDocument(nsIDocument* master) MOZ_OVERRIDE
   {
     MOZ_ASSERT(master);
     mMasterDocument = master;
     UseRegistryFromDocument(mMasterDocument);
   }
 
-  virtual bool IsMasterDocument()
+  virtual bool IsMasterDocument() MOZ_OVERRIDE
   {
     return !mMasterDocument;
   }
 
-  virtual mozilla::dom::ImportManager* ImportManager()
+  virtual mozilla::dom::ImportManager* ImportManager() MOZ_OVERRIDE
   {
     if (mImportManager) {
       MOZ_ASSERT(!mMasterDocument, "Only the master document has ImportManager set");
@@ -1339,22 +1350,22 @@ public:
     return mImportManager.get();
   }
 
-  virtual bool HasSubImportLink(nsINode* aLink)
+  virtual bool HasSubImportLink(nsINode* aLink) MOZ_OVERRIDE
   {
     return mSubImportLinks.Contains(aLink);
   }
 
-  virtual uint32_t IndexOfSubImportLink(nsINode* aLink)
+  virtual uint32_t IndexOfSubImportLink(nsINode* aLink) MOZ_OVERRIDE
   {
     return mSubImportLinks.IndexOf(aLink);
   }
 
-  virtual void AddSubImportLink(nsINode* aLink)
+  virtual void AddSubImportLink(nsINode* aLink) MOZ_OVERRIDE
   {
     mSubImportLinks.AppendElement(aLink);
   }
 
-  virtual nsINode* GetSubImportLink(uint32_t aIdx)
+  virtual nsINode* GetSubImportLink(uint32_t aIdx) MOZ_OVERRIDE
   {
     return aIdx < mSubImportLinks.Length() ? mSubImportLinks[aIdx].get()
                                            : nullptr;
@@ -1511,6 +1522,10 @@ protected:
   // Array of observers
   nsTObserverArray<nsIDocumentObserver*> mObservers;
 
+  // Tracker for animation players that are waiting to start.
+  // nullptr until GetOrCreatePendingPlayerTracker is called.
+  nsRefPtr<mozilla::PendingPlayerTracker> mPendingPlayerTracker;
+
   // Weak reference to the scope object (aka the script global object)
   // that, unlike mScriptGlobalObject, is never unset once set. This
   // is a weak reference to avoid leaks due to circular references.
@@ -1543,11 +1558,12 @@ private:
 public:
   static void ProcessBaseElementQueue();
 
-  // Modify the prototype and "is" attribute of newly created custom elements.
-  virtual void SwizzleCustomElement(Element* aElement,
-                                    const nsAString& aTypeExtension,
-                                    uint32_t aNamespaceID,
-                                    mozilla::ErrorResult& rv);
+  // Enqueue created callback or register upgrade candidate for
+  // newly created custom elements, possibly extending an existing type.
+  // ex. <x-button>, <button is="x-button> (type extension)
+  virtual void SetupCustomElement(Element* aElement,
+                                  uint32_t aNamespaceID,
+                                  const nsAString* aTypeExtension) MOZ_OVERRIDE;
 
   static bool IsWebComponentsEnabled(JSContext* aCx, JSObject* aObject);
 

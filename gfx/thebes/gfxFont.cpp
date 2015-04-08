@@ -2271,6 +2271,18 @@ gfxFont::Measure(gfxTextRun *aTextRun,
         metrics.mBoundingBox -= gfxPoint(x, 0);
     }
 
+    // If the font may be rendered with a fake-italic effect, we need to allow
+    // for the top-right of the glyphs being skewed to the right, and the
+    // bottom-left being skewed further left.
+    if (mStyle.style != NS_FONT_STYLE_NORMAL && !mFontEntry->IsItalic()) {
+        gfxFloat extendLeftEdge =
+            ceil(OBLIQUE_SKEW_FACTOR * metrics.mBoundingBox.YMost());
+        gfxFloat extendRightEdge =
+            ceil(OBLIQUE_SKEW_FACTOR * -metrics.mBoundingBox.y);
+        metrics.mBoundingBox.width += extendLeftEdge + extendRightEdge;
+        metrics.mBoundingBox.x -= extendLeftEdge;
+    }
+
     if (baselineOffset != 0) {
         metrics.mAscent -= baselineOffset;
         metrics.mDescent += baselineOffset;
@@ -2478,7 +2490,8 @@ gfxFont::ShapeText(gfxContext      *aContext,
 
     NS_WARN_IF_FALSE(ok, "shaper failed, expect scrambled or missing text");
 
-    PostShapingFixup(aContext, aText, aOffset, aLength, aShapedText);
+    PostShapingFixup(aContext, aText, aOffset, aLength, aVertical,
+                     aShapedText);
 
     return ok;
 }
@@ -2488,13 +2501,18 @@ gfxFont::PostShapingFixup(gfxContext      *aContext,
                           const char16_t *aText,
                           uint32_t         aOffset,
                           uint32_t         aLength,
+                          bool             aVertical,
                           gfxShapedText   *aShapedText)
 {
     if (IsSyntheticBold()) {
-        float synBoldOffset =
-                GetSyntheticBoldOffset() * CalcXScale(aContext);
-        aShapedText->AdjustAdvancesForSyntheticBold(synBoldOffset,
-                                                    aOffset, aLength);
+        const Metrics& metrics =
+            GetMetrics(aVertical ? eVertical : eHorizontal);
+        if (metrics.maxAdvance > metrics.aveCharWidth) {
+            float synBoldOffset =
+                    GetSyntheticBoldOffset() * CalcXScale(aContext);
+            aShapedText->AdjustAdvancesForSyntheticBold(synBoldOffset,
+                                                        aOffset, aLength);
+        }
     }
 }
 
@@ -3143,7 +3161,7 @@ gfxFont::InitMetricsFromSfntTables(Metrics& aMetrics)
         if (unitsPerEm == gfxFontEntry::kInvalidUPEM) {
             return false;
         }
-        mFUnitsConvFactor = mAdjustedSize / unitsPerEm;
+        mFUnitsConvFactor = GetAdjustedSize() / unitsPerEm;
     }
 
     // 'hhea' table is required to get vertical extents
@@ -3391,14 +3409,19 @@ gfxFont::CreateVerticalMetrics()
         // These fields should always be present in any valid OS/2 table
         if (len >= offsetof(OS2Table, sTypoLineGap) + sizeof(int16_t)) {
             SET_SIGNED(strikeoutSize, os2->yStrikeoutSize);
-            SET_SIGNED(aveCharWidth, int16_t(os2->sTypoAscender) -
-                                     int16_t(os2->sTypoDescender));
-            metrics->maxAscent =
-                std::max(metrics->maxAscent, int16_t(os2->xAvgCharWidth) *
-                                             gfxFloat(mFUnitsConvFactor));
-            metrics->maxDescent =
-                std::max(metrics->maxDescent, int16_t(os2->xAvgCharWidth) *
-                                              gfxFloat(mFUnitsConvFactor));
+            // Use ascent+descent from the horizontal metrics as the default
+            // advance (aveCharWidth) in vertical mode
+            gfxFloat ascentDescent = gfxFloat(mFUnitsConvFactor) *
+                (int16_t(os2->sTypoAscender) - int16_t(os2->sTypoDescender));
+            metrics->aveCharWidth =
+                std::max(metrics->emHeight, ascentDescent);
+            // Use xAvgCharWidth from horizontal metrics as minimum font extent
+            // for vertical layout, applying half of it to ascent and half to
+            // descent (to work with a default centered baseline).
+            gfxFloat halfCharWidth =
+                int16_t(os2->xAvgCharWidth) * gfxFloat(mFUnitsConvFactor) / 2;
+            metrics->maxAscent = std::max(metrics->maxAscent, halfCharWidth);
+            metrics->maxDescent = std::max(metrics->maxDescent, halfCharWidth);
         }
     }
 
@@ -3428,8 +3451,12 @@ gfxFont::CreateVerticalMetrics()
                 (hb_blob_get_data(vheaTable, &len));
         if (len >= sizeof(MetricsHeader)) {
             SET_UNSIGNED(maxAdvance, vhea->advanceWidthMax);
-            SET_SIGNED(maxAscent, vhea->ascender);
-            SET_SIGNED(maxDescent, -int16_t(vhea->descender));
+            // Redistribute space between ascent/descent because we want a
+            // centered vertical baseline by default.
+            gfxFloat halfExtent = 0.5 * gfxFloat(mFUnitsConvFactor) *
+                (int16_t(vhea->ascender) + std::abs(int16_t(vhea->descender)));
+            metrics->maxAscent = halfExtent;
+            metrics->maxDescent = halfExtent;
             SET_SIGNED(externalLeading, vhea->lineGap);
         }
     }

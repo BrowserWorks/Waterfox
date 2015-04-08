@@ -381,25 +381,11 @@ enum MIRType
     MIRType_Pointer,                   // An opaque pointer that receives no special treatment
     MIRType_Shape,                     // A Shape pointer.
     MIRType_TypeObject,                // A TypeObject pointer.
-    MIRType_ForkJoinContext,           // js::ForkJoinContext*
-    MIRType_Last = MIRType_ForkJoinContext,
+    MIRType_Last = MIRType_TypeObject,
     MIRType_Float32x4 = MIRType_Float32 | (2 << VECTOR_SCALE_SHIFT),
     MIRType_Int32x4   = MIRType_Int32   | (2 << VECTOR_SCALE_SHIFT),
     MIRType_Doublex2  = MIRType_Double  | (1 << VECTOR_SCALE_SHIFT)
 };
-
-static inline MIRType
-ElementType(MIRType type)
-{
-    JS_STATIC_ASSERT(MIRType_Last <= ELEMENT_TYPE_MASK);
-    return static_cast<MIRType>((type >> ELEMENT_TYPE_SHIFT) & ELEMENT_TYPE_MASK);
-}
-
-static inline uint32_t
-VectorSize(MIRType type)
-{
-    return 1 << ((type >> VECTOR_SCALE_SHIFT) & VECTOR_SCALE_MASK);
-}
 
 static inline MIRType
 MIRTypeFromValueType(JSValueType type)
@@ -509,8 +495,6 @@ StringFromMIRType(MIRType type)
       return "Elements";
     case MIRType_Pointer:
       return "Pointer";
-    case MIRType_ForkJoinContext:
-      return "ForkJoinContext";
     case MIRType_Int32x4:
       return "Int32x4";
     case MIRType_Float32x4:
@@ -566,27 +550,16 @@ static inline unsigned
 SimdTypeToLength(MIRType type)
 {
     MOZ_ASSERT(IsSimdType(type));
-    switch (type) {
-      case MIRType_Int32x4:
-      case MIRType_Float32x4:
-        return 4;
-      default: break;
-    }
-    MOZ_CRASH("unexpected SIMD kind");
+    return 1 << ((type >> VECTOR_SCALE_SHIFT) & VECTOR_SCALE_MASK);
 }
 
 static inline MIRType
 SimdTypeToScalarType(MIRType type)
 {
     MOZ_ASSERT(IsSimdType(type));
-    switch (type) {
-      case MIRType_Int32x4:
-        return MIRType_Int32;
-      case MIRType_Float32x4:
-        return MIRType_Float32;
-      default: break;
-    }
-    MOZ_CRASH("unexpected SIMD kind");
+    static_assert(MIRType_Last <= ELEMENT_TYPE_MASK,
+                  "ELEMENT_TYPE_MASK should be larger than the last MIRType");
+    return MIRType((type >> ELEMENT_TYPE_SHIFT) & ELEMENT_TYPE_MASK);
 }
 
 // Indicates a lane in a SIMD register: X for the first lane, Y for the second,

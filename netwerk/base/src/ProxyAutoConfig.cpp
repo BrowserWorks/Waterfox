@@ -272,7 +272,7 @@ public:
   // nsIDNSListener
   NS_IMETHODIMP OnLookupComplete(nsICancelable *request,
                                  nsIDNSRecord *record,
-                                 nsresult status)
+                                 nsresult status) MOZ_OVERRIDE
   {
     if (mTimer) {
       mTimer->Cancel();
@@ -286,7 +286,7 @@ public:
   }
 
   // nsITimerCallback
-  NS_IMETHODIMP Notify(nsITimer *timer) 
+  NS_IMETHODIMP Notify(nsITimer *timer) MOZ_OVERRIDE
   {
     if (mRequest)
       mRequest->Cancel(NS_ERROR_NET_TIMEOUT);
@@ -559,7 +559,7 @@ private:
 
   static const JSClass sGlobalClass;
 
-  JSRuntimeWrapper(JSRuntime* rt)
+  explicit JSRuntimeWrapper(JSRuntime* rt)
      : mRuntime(rt), mContext(nullptr), mGlobal(rt, nullptr), mOK(false)
   {
       MOZ_COUNT_CTOR(JSRuntimeWrapper);
@@ -603,8 +603,8 @@ private:
 const JSClass JSRuntimeWrapper::sGlobalClass = {
   "PACResolutionThreadGlobal",
   JSCLASS_GLOBAL_FLAGS,
-  JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-  JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub,
+  nullptr, nullptr, nullptr, nullptr,
+  nullptr, nullptr, nullptr,
   nullptr, nullptr, nullptr, nullptr,
   JS_GlobalObjectTraceHook
 };

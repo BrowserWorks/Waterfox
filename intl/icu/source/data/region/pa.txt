@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pa.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/pa.xml
- */
 pa{
     Countries{
         001{"ਸੰਸਾਰ"}
@@ -301,6 +298,13 @@ pa{
         ZW{"ਜ਼ਿੰਬਾਬਵੇ"}
         ZZ{"ਅਣਪਛਾਤਾ ਖੇਤਰ"}
     }
+    Countries%short{
+        GB{"ਯੂ.ਕੇ."}
+        HK{"ਹਾਂਗ ਕਾਂਗ"}
+        MO{"ਮਕਾਉ"}
+        PS{"ਫਿਲੀਸਤੀਨ"}
+        US{"ਯੂ.ਐਸ."}
+    }
     Countries%variant{
         CD{"ਕਾਂਗੋ ਲੋਕਤੰਤਰੀ ਗਣਰਾਜ"}
         CG{"ਕਾਂਗੋ ਗਣਰਾਜ"}
@@ -309,12 +313,5 @@ pa{
         MK{"ਮੈਕਡੋਨੀਆ (ਪੂਰਵ ਯੂਗੋਸਲਾਵ ਮੈਕਡੋਨੀਆਈ ਗਣਰਾਜ)"}
         TL{"ਪੂਰਬੀ ਤਿਮੋਰ"}
     }
-    CountriesShort{
-        GB{"ਯੂ.ਕੇ."}
-        HK{"ਹਾਂਗ ਕਾਂਗ"}
-        MO{"ਮਕਾਉ"}
-        PS{"ਫਿਲੀਸਤੀਨ"}
-        US{"ਯੂ.ਐਸ."}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

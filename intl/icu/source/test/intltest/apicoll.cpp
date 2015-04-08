@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 //===============================================================================
@@ -1537,7 +1537,10 @@ void CollationAPITest::TestVariableTopSetting() {
   status = U_ZERO_ERROR;
   vt[0] = 0x24;  // dollar sign (currency symbol)
   uint32_t newVarTop = coll->setVariableTop(vt, 1, status);
-
+  if(U_FAILURE(status)) {
+    errln("setVariableTop(dollar sign) failed: %s", u_errorName(status));
+    return;
+  }
   if(newVarTop != coll->getVariableTop(status)) {
     errln("setVariableTop(dollar sign) != following getVariableTop()");
   }

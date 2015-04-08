@@ -1,4 +1,4 @@
-﻿# Copyright (c) 2001-2014 International Business Machines
+﻿# Copyright (c) 2001-2015 International Business Machines
 # Corporation and others. All Rights Reserved.
 #
 # RBBI Test Data
@@ -163,6 +163,7 @@
 #Hangul
 <data>•\uc5f0\ud569<200> •\uc7a5\ub85c\uad50\ud68c<200> •\u1109\u1161\u11bc\u1112\u1161\u11bc<200> •\u1112\u1161\u11ab\u110b\u1175\u11ab<200> •Hello<200>,• •how<200> •are<200> •you<200> •</data>
 
+<data>•Hello<200>,• •how<200> •are<200> •you<200> •\uc5f0\ud569<200> •\uc7a5\ub85c\uad50\ud68c<200> •\u1109\u1161\u11bc\u1112\u1161\u11bc<200> •\u1112\u1161\u11ab\u110b\u1175\u11ab<200> •</data>
 
 # Words containing non-BMP letters
 <data>•abc\U00010300<200> •abc\N{DESERET SMALL LETTER ENG}<200> •abc\N{MATHEMATICAL BOLD SMALL Z}<200> •abc\N{MATHEMATICAL SANS-SERIF BOLD ITALIC PI SYMBOL}<200> •</data>
@@ -704,6 +705,10 @@ Bangkok)•</data>
 <line>
 <data>•แท็ก•แอปพลิเคชัน•เป็น•พิเศษ•</data>
 
+# Test for #11019
+<line>
+<data>•เบ•เบราว์เซอร์•โพ•โพสต์•โพสท์•</data>
+
 ##########################################################################################
 #
 #   Lao Tests
@@ -898,3 +903,39 @@ Bangkok)•</data>
 <data>•abc/\u05D9 •def•</data>
 <data>•\u05E7\u05D7/\u05D9 •\u05DE\u05E2\u05D9\u05DC•</data>
 <data>•\u05D3\u05E8\u05D5\u05E9\u05D9\u05DD •\u05E9\u05D7\u05E7\u05E0\u05D9\u05DD/\u05D9\u05D5\u05EA•</data>
+
+####################################################################################
+#
+#  Test CSS line break variants: strict, normal, loose
+#
+####################################################################################
+
+<locale ja@lb=strict>
+<line>
+#     •no brk before 3063              •no brk before 301C•no brk btw 2026   •no brk before FF01•
+<data>•\u3084\u3063•\u3071•\u308A\u0020•\u0031\u301C\u0020•\u2026\u2026\u0020•\u30A2\uFF01\u0020•</data>
+
+<locale ja@lb=normal>
+<line>
+#     •brk OK before 3063               •brk OK before 301C •no brk btw 2026   •no brk before FF01•
+<data>•\u3084•\u3063•\u3071•\u308A\u0020•\u0031•\u301C\u0020•\u2026\u2026\u0020•\u30A2\uFF01\u0020•</data>
+
+<locale ja@lb=loose>
+<line>
+#     •brk OK before 3063               •brk OK before 301C •brk OK btw 2026    •brk OK before FF01•
+<data>•\u3084•\u3063•\u3071•\u308A\u0020•\u0031•\u301C\u0020•\u2026•\u2026\u0020•u30A2•\uFF01\u0020•</data>
+
+<locale en@lb=strict>
+<line>
+#     •no brk before 3063              •no brk before 301C•no brk btw 2026   •no brk before FF01•
+<data>•\u3084\u3063•\u3071•\u308A\u0020•\u0031\u301C\u0020•\u2026\u2026\u0020•\u30A2\uFF01\u0020•</data>
+
+<locale en@lb=normal>
+<line>
+#     •brk OK before 3063               •no brk before 301C •no brk btw 2026  •no brk before FF01•
+<data>•\u3084•\u3063•\u3071•\u308A\u0020•\u0031\u301C\u0020•\u2026\u2026\u0020•\u30A2\uFF01\u0020•</data>
+
+<locale en@lb=loose>
+<line>
+#     •brk OK before 3063               •no brk before 301C •brk OK btw 2026   •no brk before FF01•
+<data>•\u3084•\u3063•\u3071•\u308A\u0020•\u0031\u301C\u0020•\u2026•\u2026\u0020•u30A2\uFF01\u0020•</data>

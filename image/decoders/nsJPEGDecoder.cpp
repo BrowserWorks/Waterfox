@@ -84,7 +84,7 @@ METHODDEF(void) my_error_exit (j_common_ptr cinfo);
 #define MAX_JPEG_MARKER_LENGTH  (((uint32_t)1 << 16) - 1)
 
 
-nsJPEGDecoder::nsJPEGDecoder(RasterImage& aImage,
+nsJPEGDecoder::nsJPEGDecoder(RasterImage* aImage,
                              Decoder::DecodeStyle aDecodeStyle)
  : Decoder(aImage)
  , mDecodeStyle(aDecodeStyle)
@@ -143,7 +143,7 @@ void
 nsJPEGDecoder::InitInternal()
 {
   mCMSMode = gfxPlatform::GetCMSMode();
-  if ((mDecodeFlags & DECODER_NO_COLORSPACE_CONVERSION) != 0) {
+  if (GetDecodeFlags() & imgIContainer::FLAG_DECODE_NO_COLORSPACE_CONVERSION) {
     mCMSMode = eCMSMode_Off;
   }
 
@@ -190,8 +190,7 @@ nsJPEGDecoder::FinishInternal()
 }
 
 void
-nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
-                             DecodeStrategy)
+nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
   mSegment = (const JOCTET*)aBuffer;
   mSegmentLen = aCount;
@@ -238,7 +237,7 @@ nsJPEGDecoder::WriteInternal(const char* aBuffer, uint32_t aCount,
         return; // I/O suspension
       }
 
-      int sampleSize = mImage.GetRequestedSampleSize();
+      int sampleSize = mImage->GetRequestedSampleSize();
       if (sampleSize > 0) {
         mInfo.scale_num = 1;
         mInfo.scale_denom = sampleSize;
@@ -580,7 +579,7 @@ nsJPEGDecoder::ReadOrientationFromEXIF()
 void
 nsJPEGDecoder::NotifyDone()
 {
-  PostFrameStop(FrameBlender::kFrameOpaque);
+  PostFrameStop(Opacity::OPAQUE);
   PostDecodeDone();
 }
 

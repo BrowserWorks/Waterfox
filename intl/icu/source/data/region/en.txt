@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/en.xml
- */
 en{
     Countries{
         001{"World"}
@@ -302,6 +299,15 @@ en{
         ZW{"Zimbabwe"}
         ZZ{"Unknown Region"}
     }
+    Countries%short{
+        BA{"Bosnia"}
+        GB{"UK"}
+        HK{"Hong Kong"}
+        MM{"Myanmar"}
+        MO{"Macau"}
+        PS{"Palestine"}
+        US{"US"}
+    }
     Countries%variant{
         CD{"Congo (DRC)"}
         CG{"Congo (Republic)"}
@@ -310,14 +316,5 @@ en{
         MK{"Macedonia (FYROM)"}
         TL{"East Timor"}
     }
-    CountriesShort{
-        BA{"Bosnia"}
-        GB{"U.K."}
-        HK{"Hong Kong"}
-        MM{"Myanmar"}
-        MO{"Macau"}
-        PS{"Palestine"}
-        US{"U.S."}
-    }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.48"}
 }

@@ -29,8 +29,8 @@ MOZ_BEGIN_ENUM_CLASS(TextureFlags, uint32_t)
   NO_FLAGS           = 0,
   // Use nearest-neighbour texture filtering (as opposed to linear filtering).
   USE_NEAREST_FILTER = 1 << 0,
-  // The texture should be flipped along the y-axis when composited.
-  NEEDS_Y_FLIP       = 1 << 1,
+  // The compositor assumes everything is origin-top-left by default.
+  ORIGIN_BOTTOM_LEFT = 1 << 1,
   // Force the texture to be represented using a single tile (note that this means
   // tiled textures, not tiled layers).
   DISALLOW_BIGIMAGE  = 1 << 2,
@@ -158,6 +158,12 @@ MOZ_BEGIN_ENUM_CLASS(DeprecatedTextureHostFlags, uint8_t)
 MOZ_END_ENUM_CLASS(DeprecatedTextureHostFlags)
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(DeprecatedTextureHostFlags)
 
+#ifdef XP_WIN
+typedef void* SyncHandle;
+#else
+typedef uintptr_t SyncHandle;
+#endif // XP_WIN
+
 /**
  * Sent from the compositor to the content-side LayerManager, includes properties
  * of the compositor and should (in the future) include information about what
@@ -171,18 +177,21 @@ struct TextureFactoryIdentifier
   int32_t mMaxTextureSize;
   bool mSupportsTextureBlitting;
   bool mSupportsPartialUploads;
+  SyncHandle mSyncHandle;
 
   explicit TextureFactoryIdentifier(LayersBackend aLayersBackend = LayersBackend::LAYERS_NONE,
                                     GeckoProcessType aParentProcessId = GeckoProcessType_Default,
                                     int32_t aMaxTextureSize = 4096,
                                     bool aSupportsTextureBlitting = false,
-                                    bool aSupportsPartialUploads = false)
+                                    bool aSupportsPartialUploads = false,
+                                    SyncHandle aSyncHandle = 0)
     : mParentBackend(aLayersBackend)
     , mParentProcessId(aParentProcessId)
     , mSupportedBlendModes(gfx::CompositionOp::OP_OVER)
     , mMaxTextureSize(aMaxTextureSize)
     , mSupportsTextureBlitting(aSupportsTextureBlitting)
     , mSupportsPartialUploads(aSupportsPartialUploads)
+    , mSyncHandle(aSyncHandle)
   {}
 };
 

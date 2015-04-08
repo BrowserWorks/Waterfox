@@ -21,12 +21,12 @@ class LIRGeneratorX64 : public LIRGeneratorX86Shared
 
   protected:
     void lowerUntypedPhiInput(MPhi *phi, uint32_t inputPosition, LBlock *block, size_t lirIndex);
-    bool defineUntypedPhi(MPhi *phi, size_t lirIndex);
+    void defineUntypedPhi(MPhi *phi, size_t lirIndex);
 
     // Adds a use at operand |n| of a value-typed insturction.
-    bool useBox(LInstruction *lir, size_t n, MDefinition *mir,
+    void useBox(LInstruction *lir, size_t n, MDefinition *mir,
                 LUse::Policy policy = LUse::REGISTER, bool useAtStart = false);
-    bool useBoxFixed(LInstruction *lir, size_t n, MDefinition *mir, Register reg1, Register);
+    void useBoxFixed(LInstruction *lir, size_t n, MDefinition *mir, Register reg1, Register);
 
     // x86 has constraints on what registers can be formatted for 1-byte
     // stores and loads; on x64 all registers are okay.
@@ -38,27 +38,17 @@ class LIRGeneratorX64 : public LIRGeneratorX86Shared
 
     bool needTempForPostBarrier() { return false; }
 
-    // x64 has a scratch register, so no need for another temp for dispatch
-    // ICs.
-    LDefinition tempForDispatchCache(MIRType outputType = MIRType_None) {
-        return LDefinition::BogusTemp();
-    }
-
   public:
-    bool visitBox(MBox *box);
-    bool visitUnbox(MUnbox *unbox);
-    bool visitReturn(MReturn *ret);
-    bool visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble *ins);
-    bool visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32 *ins);
-    bool visitAsmJSLoadHeap(MAsmJSLoadHeap *ins);
-    bool visitAsmJSStoreHeap(MAsmJSStoreHeap *ins);
-    bool visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins);
-    bool visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins);
-    bool visitSubstr(MSubstr *ins);
-
-    static bool allowInlineForkJoinGetSlice() {
-        return true;
-    }
+    void visitBox(MBox *box);
+    void visitUnbox(MUnbox *unbox);
+    void visitReturn(MReturn *ret);
+    void visitAsmJSUnsignedToDouble(MAsmJSUnsignedToDouble *ins);
+    void visitAsmJSUnsignedToFloat32(MAsmJSUnsignedToFloat32 *ins);
+    void visitAsmJSLoadHeap(MAsmJSLoadHeap *ins);
+    void visitAsmJSStoreHeap(MAsmJSStoreHeap *ins);
+    void visitAsmJSLoadFuncPtr(MAsmJSLoadFuncPtr *ins);
+    void visitStoreTypedArrayElementStatic(MStoreTypedArrayElementStatic *ins);
+    void visitSubstr(MSubstr *ins);
 };
 
 typedef LIRGeneratorX64 LIRGeneratorSpecific;

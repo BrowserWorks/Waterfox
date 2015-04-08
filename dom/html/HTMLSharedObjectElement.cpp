@@ -17,6 +17,11 @@
 #include "nsIScriptError.h"
 #include "nsIWidget.h"
 #include "nsContentUtils.h"
+#ifdef XP_MACOSX
+#include "mozilla/EventDispatcher.h"
+#include "mozilla/dom/Event.h"
+#include "mozilla/dom/HTMLObjectElement.h"
+#endif
 
 NS_IMPL_NS_NEW_HTML_ELEMENT_CHECK_PARSER(SharedObject)
 
@@ -57,6 +62,9 @@ HTMLSharedObjectElement::SetItemValueText(const nsAString& aValue)
 
 HTMLSharedObjectElement::~HTMLSharedObjectElement()
 {
+#ifdef XP_MACOSX
+  HTMLObjectElement::OnFocusBlurPlugin(this, false);
+#endif
   UnregisterActivityObserver();
   DestroyImageLoadingContent();
 }
@@ -108,6 +116,17 @@ NS_INTERFACE_MAP_END_INHERITING(nsGenericHTMLElement)
 
 NS_IMPL_ELEMENT_CLONE(HTMLSharedObjectElement)
 
+#ifdef XP_MACOSX
+
+NS_IMETHODIMP
+HTMLSharedObjectElement::PostHandleEvent(EventChainPostVisitor& aVisitor)
+{
+  HTMLObjectElement::HandleFocusBlurPlugin(this, aVisitor.mEvent);
+  return NS_OK;
+}
+
+#endif // #ifdef XP_MACOSX
+
 nsresult
 HTMLSharedObjectElement::BindToTree(nsIDocument *aDocument,
                                     nsIContent *aParent,
@@ -143,6 +162,14 @@ void
 HTMLSharedObjectElement::UnbindFromTree(bool aDeep,
                                         bool aNullParent)
 {
+#ifdef XP_MACOSX
+  // When a page is reloaded (when an nsIDocument's content is removed), the
+  // focused element isn't necessarily sent an NS_BLUR_CONTENT event. See
+  // nsFocusManager::ContentRemoved(). This means that a widget may think it
+  // still contains a focused plugin when it doesn't -- which in turn can
+  // disable text input in the browser window. See bug 1137229.
+  HTMLObjectElement::OnFocusBlurPlugin(this, false);
+#endif
   nsObjectLoadingContent::UnbindFromTree(aDeep, aNullParent);
   nsGenericHTMLElement::UnbindFromTree(aDeep, aNullParent);
 }

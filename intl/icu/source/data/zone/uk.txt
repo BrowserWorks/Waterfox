@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/uk.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/uk.xml
- */
 uk{
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Абіджан"}
@@ -690,9 +687,6 @@ uk{
         "Asia:Choibalsan"{
             ec{"Чойбалсан"}
         }
-        "Asia:Chongqing"{
-            ec{"Чунцін"}
-        }
         "Asia:Colombo"{
             ec{"Коломбо"}
         }
@@ -713,9 +707,6 @@ uk{
         }
         "Asia:Gaza"{
             ec{"Газа"}
-        }
-        "Asia:Harbin"{
-            ec{"Харбін"}
         }
         "Asia:Hebron"{
             ec{"Хеврон"}
@@ -746,9 +737,6 @@ uk{
         }
         "Asia:Karachi"{
             ec{"Карачі"}
-        }
-        "Asia:Kashgar"{
-            ec{"Кашгар"}
         }
         "Asia:Katmandu"{
             ec{"Катманду"}
@@ -1266,9 +1254,9 @@ uk{
             ec{"Волліс"}
         }
         "meta:Acre"{
-            ld{"Час: Акрі, літній"}
-            lg{"Час: Акрі"}
-            ls{"Час: Акрі, стандартний"}
+            ld{"час: Акрі, літній"}
+            lg{"час: Акрі"}
+            ls{"час: Акрі, стандартний"}
         }
         "meta:Afghanistan"{
             ls{"за часом в Афганістані"}
@@ -1318,9 +1306,9 @@ uk{
             ls{"за північноамериканським тихоокеанським стандартним часом"}
         }
         "meta:Anadyr"{
-            ld{"Час: Анадир, літній"}
-            lg{"Час: Анадир"}
-            ls{"Час: Анадир, стандартний"}
+            ld{"час: Анадир, літній"}
+            lg{"час: Анадир"}
+            ls{"час: Анадир, стандартний"}
         }
         "meta:Apia"{
             ld{"за літнім часом в Апіа"}
@@ -1615,7 +1603,7 @@ uk{
             ls{"за часом у Киргизстані"}
         }
         "meta:Lanka"{
-            ls{"Час: Ланка"}
+            ls{"час: Ланка"}
         }
         "meta:Line_Islands"{
             ls{"за часом на острові Лайн"}
@@ -1759,9 +1747,9 @@ uk{
             ls{"за часом на острові Понапе"}
         }
         "meta:Qyzylorda"{
-            ld{"Час: Кизилорда, літній"}
-            lg{"Час: Кизилорда"}
-            ls{"Час: Кизилорда, стандартний"}
+            ld{"час: Кизилорда, літній"}
+            lg{"час: Кизилорда"}
+            ls{"час: Кизилорда, стандартний"}
         }
         "meta:Reunion"{
             ls{"за часом на острові Реюньйон"}
@@ -1883,8 +1871,8 @@ uk{
         gmtFormat{"GMT{0}"}
         gmtZeroFormat{"GMT"}
         hourFormat{"+HH:mm;-HH:mm"}
-        regionFormat{"Час: {0}"}
-        regionFormatDaylight{"Час: {0}, літній"}
-        regionFormatStandard{"Час: {0}, стандартний"}
+        regionFormat{"час: {0}"}
+        regionFormatDaylight{"час: {0}, літній"}
+        regionFormatStandard{"час: {0}, стандартний"}
     }
 }

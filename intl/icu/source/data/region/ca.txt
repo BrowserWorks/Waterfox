@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ca.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ca.xml
- */
 ca{
     Countries{
         001{"Món"}
@@ -302,18 +299,18 @@ ca{
         ZW{"Zimbàbue"}
         ZZ{"Regió desconeguda"}
     }
-    Countries%variant{
-        CD{"Congo (República Democràtica del Congo)"}
-        CG{"Congo (República del Congo)"}
-        FK{"Illes Malvines (Illes Falkland)"}
-        MK{"Macedònia (Antiga República Iugoslava de Macedònia)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"GB"}
         HK{"Hong Kong"}
         MO{"Macau"}
         PS{"Palestina"}
         US{"EUA"}
     }
-    Version{"2.1.10.42"}
+    Countries%variant{
+        CD{"Congo (República Democràtica del Congo)"}
+        CG{"Congo (República del Congo)"}
+        FK{"Illes Malvines (Illes Falkland)"}
+        MK{"Macedònia (Antiga República Iugoslava de Macedònia)"}
+    }
+    Version{"2.1.12.94"}
 }

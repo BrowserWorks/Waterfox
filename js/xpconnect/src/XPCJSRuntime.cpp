@@ -652,7 +652,7 @@ XPCJSRuntime::SuspectWrappedNative(XPCWrappedNative *wrapper,
     // Only record objects that might be part of a cycle as roots, unless
     // the callback wants all traces (a debug feature).
     JSObject* obj = wrapper->GetFlatJSObjectPreserveColor();
-    if (xpc_IsGrayGCThing(obj) || cb.WantAllTraces())
+    if (JS::ObjectIsMarkedGray(obj) || cb.WantAllTraces())
         cb.NoteJSRoot(obj);
 }
 
@@ -665,8 +665,8 @@ XPCJSRuntime::TraverseAdditionalNativeRoots(nsCycleCollectionNoteRootCallback &c
         XPCTraceableVariant* v = static_cast<XPCTraceableVariant*>(e);
         if (nsCCUncollectableMarker::InGeneration(cb,
                                                   v->CCGeneration())) {
-           jsval val = v->GetJSValPreserveColor();
-           if (val.isObject() && !xpc_IsGrayGCThing(&val.toObject()))
+           JS::Value val = v->GetJSValPreserveColor();
+           if (val.isObject() && !JS::ObjectIsMarkedGray(&val.toObject()))
                continue;
         }
         cb.NoteXPCOMRoot(v);
@@ -1269,8 +1269,6 @@ WatchdogMain(void *arg)
 
 #ifdef MOZ_NUWA_PROCESS
     if (IsNuwaProcess()) {
-        NS_ASSERTION(NuwaMarkCurrentThread != nullptr,
-                     "NuwaMarkCurrentThread is undefined!");
         NuwaMarkCurrentThread(nullptr, nullptr);
         NuwaFreezeCurrentThread();
     }
@@ -2962,7 +2960,7 @@ DiagnosticMemoryCallback(void *ptr, size_t size)
 #endif
 
 static void
-AccumulateTelemetryCallback(int id, uint32_t sample)
+AccumulateTelemetryCallback(int id, uint32_t sample, const char *key)
 {
     switch (id) {
       case JS_TELEMETRY_GC_REASON:
@@ -3013,6 +3011,9 @@ AccumulateTelemetryCallback(int id, uint32_t sample)
       case JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT:
         MOZ_ASSERT(sample <= 5);
         Telemetry::Accumulate(Telemetry::JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT, sample);
+        break;
+      case JS_TELEMETRY_ADDON_EXCEPTIONS:
+        Telemetry::Accumulate(Telemetry::JS_TELEMETRY_ADDON_EXCEPTIONS, nsDependentCString(key), sample);
         break;
       default:
         MOZ_ASSERT_UNREACHABLE("Unexpected JS_TELEMETRY id");
@@ -3154,7 +3155,7 @@ static const JSWrapObjectCallbacks WrapObjectCallbacks = {
 
 XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
    : CycleCollectedJSRuntime(nullptr, JS::DefaultHeapMaxBytes, JS::DefaultNurseryBytes),
-   mJSContextStack(new XPCJSContextStack(MOZ_THIS_IN_INITIALIZER_LIST())),
+   mJSContextStack(new XPCJSContextStack(this)),
    mCallContext(nullptr),
    mAutoRoots(nullptr),
    mResolveName(JSID_VOID),
@@ -3175,10 +3176,10 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
    mVariantRoots(nullptr),
    mWrappedJSRoots(nullptr),
    mObjectHolderRoots(nullptr),
-   mWatchdogManager(new WatchdogManager(MOZ_THIS_IN_INITIALIZER_LIST())),
-   mUnprivilegedJunkScope(MOZ_THIS_IN_INITIALIZER_LIST()->Runtime(), nullptr),
-   mPrivilegedJunkScope(MOZ_THIS_IN_INITIALIZER_LIST()->Runtime(), nullptr),
-   mCompilationScope(MOZ_THIS_IN_INITIALIZER_LIST()->Runtime(), nullptr),
+   mWatchdogManager(new WatchdogManager(this)),
+   mUnprivilegedJunkScope(this->Runtime(), nullptr),
+   mPrivilegedJunkScope(this->Runtime(), nullptr),
+   mCompilationScope(this->Runtime(), nullptr),
    mAsyncSnowWhiteFreer(new AsyncFreeSnowWhite())
 {
     // these jsids filled in later when we have a JSContext to work with.
@@ -3252,7 +3253,7 @@ XPCJSRuntime::XPCJSRuntime(nsXPConnect* aXPConnect)
     // 1MB is the default stack size on Windows, so use 900k.
     // Windows PGO stack frames have unfortunately gotten pretty large lately. :-(
     const size_t kStackQuota = 900 * 1024;
-    const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8) ? 120 * 1024
+    const size_t kTrustedScriptBuffer = (sizeof(size_t) == 8) ? 140 * 1024
                                                               : 80 * 1024;
     // The following two configurations are linux-only. Given the numbers above,
     // we use 50k and 100k trusted buffers on 32-bit and 64-bit respectively.

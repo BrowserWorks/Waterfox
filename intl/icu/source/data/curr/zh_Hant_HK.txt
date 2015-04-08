@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant_HK.xml
@@ -12,10 +12,6 @@ zh_Hant_HK{
             "AED",
             "阿拉伯聯合酋長國迪爾汗",
         }
-        AUD{
-            "AU$",
-            "澳元",
-        }
         AWG{
             "AWG",
             "阿魯巴盾",
@@ -26,15 +22,11 @@ zh_Hant_HK{
         }
         BAD{
             "BAD",
-            "波斯尼亞-黑塞哥維那第納爾",
+            "波斯尼亞-赫塞哥維納第納爾",
         }
         BAM{
             "BAM",
-            "波士尼亞與赫塞哥維納可轉換馬克",
-        }
-        CAD{
-            "CA$",
-            "加元",
+            "波斯尼亞-赫塞哥維納可轉換馬克",
         }
         CRC{
             "CRC",
@@ -66,23 +58,15 @@ zh_Hant_HK{
         }
         MUR{
             "MUR",
-            "毛里求斯盧布",
+            "毛里裘斯盧布",
         }
         MZN{
             "MZN",
-            "莫桑比克美提卡",
+            "莫桑比克梅蒂卡爾",
         }
         NGN{
             "NGN",
             "尼日利亞奈拉",
-        }
-        NZD{
-            "NZ$",
-            "紐西蘭元",
-        }
-        RSD{
-            "RSD",
-            "塞爾維亞第納爾",
         }
         RWF{
             "RWF",
@@ -91,14 +75,6 @@ zh_Hant_HK{
         SAR{
             "SAR",
             "沙特阿拉伯里亞爾",
-        }
-        SGD{
-            "SGD",
-            "新加坡元",
-        }
-        TWD{
-            "NT$",
-            "新台幣",
         }
         USD{
             "US$",
@@ -121,9 +97,6 @@ zh_Hant_HK{
         AED{
             other{"阿拉伯聯合酋長國迪爾汗"}
         }
-        AUD{
-            other{"澳元"}
-        }
         AWG{
             other{"阿魯巴盾"}
         }
@@ -131,13 +104,10 @@ zh_Hant_HK{
             other{"亞塞拜疆馬納特"}
         }
         BAM{
-            other{"波士尼亞與赫塞哥維納可轉換馬克"}
+            other{"波斯尼亞-赫塞哥維納可轉換馬克"}
         }
         CRC{
             other{"哥斯達黎加科郎"}
-        }
-        DKK{
-            other{"丹麥克羅納"}
         }
         ETB{
             other{"埃塞俄比亞比爾"}
@@ -157,41 +127,20 @@ zh_Hant_HK{
         LRD{
             other{"利比利亞元"}
         }
-        LTL{
-            other{"立陶宛里塔"}
-        }
         MUR{
-            other{"毛里求斯盧布"}
+            other{"毛里裘斯盧布"}
         }
         MZN{
-            other{"莫桑比克美提卡"}
+            other{"莫桑比克梅蒂卡爾"}
         }
         NGN{
             other{"尼日利亞奈拉"}
-        }
-        NOK{
-            other{"挪威克羅納"}
-        }
-        NZD{
-            other{"紐西蘭元"}
-        }
-        RSD{
-            other{"塞爾維亞第納爾"}
         }
         RWF{
             other{"盧旺達法郎"}
         }
         SAR{
             other{"沙特阿拉伯里亞爾"}
-        }
-        SEK{
-            other{"瑞典克羅納"}
-        }
-        SGD{
-            other{"新加坡元"}
-        }
-        TWD{
-            other{"新台幣"}
         }
         XAF{
             other{"中非法郎"}
@@ -200,5 +149,5 @@ zh_Hant_HK{
             other{"太平洋法郎"}
         }
     }
-    Version{"2.1.8.28"}
+    Version{"2.1.13.23"}
 }

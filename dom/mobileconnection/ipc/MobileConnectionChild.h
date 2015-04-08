@@ -41,7 +41,7 @@ public:
   Shutdown();
 
 private:
-  MobileConnectionChild() MOZ_DELETE;
+  MobileConnectionChild() = delete;
 
   // MOZ_FINAL suppresses -Werror,-Wdelete-non-virtual-dtor
   ~MobileConnectionChild()
@@ -70,10 +70,6 @@ protected:
   RecvNotifyDataInfoChanged(nsIMobileConnectionInfo* const& aInfo) MOZ_OVERRIDE;
 
   virtual bool
-  RecvNotifyUssdReceived(const nsString& aMessage,
-                         const bool& aSessionEnd) MOZ_OVERRIDE;
-
-  virtual bool
   RecvNotifyDataError(const nsString& aMessage) MOZ_OVERRIDE;
 
   virtual bool
@@ -87,9 +83,6 @@ protected:
 
   virtual bool
   RecvNotifyOtaStatusChanged(const nsString& aStatus) MOZ_OVERRIDE;
-
-  virtual bool
-  RecvNotifyIccChanged(const nsString& aIccId) MOZ_OVERRIDE;
 
   virtual bool
   RecvNotifyRadioStateChanged(const int32_t& aRadioState) MOZ_OVERRIDE;
@@ -112,7 +105,6 @@ private:
   nsCOMArray<nsIMobileConnectionListener> mListeners;
   nsRefPtr<MobileConnectionInfo> mVoice;
   nsRefPtr<MobileConnectionInfo> mData;
-  nsString mIccId;
   int32_t mRadioState;
   nsString mLastNetwork;
   nsString mLastHomeNetwork;
@@ -149,9 +141,6 @@ public:
   DoReply(const MobileConnectionReplySuccessNetworks& aReply);
 
   bool
-  DoReply(const MobileConnectionReplySuccessMmi& aReply);
-
-  bool
   DoReply(const MobileConnectionReplySuccessCallForwarding& aReply);
 
   bool
@@ -168,9 +157,6 @@ public:
 
   bool
   DoReply(const MobileConnectionReplyError& aReply);
-
-  bool
-  DoReply(const MobileConnectionReplyErrorMmi& aReply);
 
 protected:
   virtual

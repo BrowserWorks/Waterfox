@@ -269,7 +269,6 @@ struct ResumeFromException
 };
 
 void HandleException(ResumeFromException *rfe);
-void HandleParallelFailure(ResumeFromException *rfe);
 
 void EnsureExitFrame(CommonFrameLayout *frame);
 
@@ -279,10 +278,7 @@ void MarkIonCompilerRoots(JSTracer *trc);
 JSCompartment *
 TopmostIonActivationCompartment(JSRuntime *rt);
 
-#ifdef JSGC_GENERATIONAL
-template<typename T>
 void UpdateJitActivationsForMinorGC(PerThreadData *ptd, JSTracer *trc);
-#endif
 
 static inline uint32_t
 MakeFrameDescriptor(uint32_t frameSize, FrameType type)
@@ -292,7 +288,7 @@ MakeFrameDescriptor(uint32_t frameSize, FrameType type)
 
 // Returns the JSScript associated with the topmost JIT frame.
 inline JSScript *
-GetTopJitJSScript(ThreadSafeContext *cx, void **returnAddrOut = nullptr)
+GetTopJitJSScript(JSContext *cx, void **returnAddrOut = nullptr)
 {
     JitFrameIterator iter(cx);
     MOZ_ASSERT(iter.type() == JitFrame_Exit);
@@ -810,6 +806,43 @@ struct IonDOMMethodExitFrameLayoutTraits {
         offsetof(IonDOMMethodExitFrameLayout, argc_) -
         offsetof(IonDOMMethodExitFrameLayout, argv_);
 };
+
+// Cannot inherit implementation since we need to extend the top of
+// ExitFrameLayout.
+class LazyLinkExitFrameLayout
+{
+  protected: // silence clang warning about unused private fields
+    JitCode *stubCode_;
+    ExitFooterFrame footer_;
+    JitFrameLayout exit_;
+
+  public:
+    static JitCode *Token() { return (JitCode *) 0xFE; }
+
+    static inline size_t Size() {
+        return sizeof(LazyLinkExitFrameLayout);
+    }
+
+    inline JitCode **stubCode() {
+        return &stubCode_;
+    }
+    inline JitFrameLayout *jsFrame() {
+        return &exit_;
+    }
+    static size_t offsetOfExitFrame() {
+        return offsetof(LazyLinkExitFrameLayout, exit_);
+    }
+};
+
+template <>
+inline LazyLinkExitFrameLayout *
+ExitFrameLayout::as<LazyLinkExitFrameLayout>()
+{
+    MOZ_ASSERT(is<LazyLinkExitFrameLayout>());
+    uint8_t *sp = reinterpret_cast<uint8_t *>(this);
+    sp -= LazyLinkExitFrameLayout::offsetOfExitFrame();
+    return reinterpret_cast<LazyLinkExitFrameLayout *>(sp);
+}
 
 class ICStub;
 

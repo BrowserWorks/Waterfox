@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-* Copyright (C) 1997-2014, International Business Machines Corporation and others.
+* Copyright (C) 1997-2015, International Business Machines Corporation and others.
 * All Rights Reserved.
 ********************************************************************************
 *
@@ -949,7 +949,6 @@ public:
      */
     const UChar* getCurrency() const;
 	
-    /* Cannot use #ifndef U_HIDE_DRAFT_API for the following draft method since it is virtual */
     /**
      * Set a particular UDisplayContext value in the formatter, such as
      * UDISPCTX_CAPITALIZATION_FOR_STANDALONE.
@@ -957,11 +956,10 @@ public:
      * @param status Input/output status. If at entry this indicates a failure
      *               status, the function will do nothing; otherwise this will be
      *               updated with any new status from the function. 
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual void setContext(UDisplayContext value, UErrorCode& status);
 
-    /* Cannot use #ifndef U_HIDE_DRAFT_API for the following draft method since it is virtual */
     /**
      * Get the formatter's UDisplayContext value for the specified UDisplayContextType,
      * such as UDISPCTX_TYPE_CAPITALIZATION.
@@ -970,7 +968,7 @@ public:
      *               status, the function will do nothing; otherwise this will be
      *               updated with any new status from the function. 
      * @return The UDisplayContextValue for the specified type.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UDisplayContext getContext(UDisplayContextType type, UErrorCode& status) const;
 

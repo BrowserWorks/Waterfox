@@ -73,7 +73,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#if defined(_MSC_VER) && _MSC_VER >= 1300
+#if defined(_MSC_VER)
 #  include <stdlib.h>
 #  pragma intrinsic(_byteswap_ushort)
 #  pragma intrinsic(_byteswap_ulong)
@@ -615,9 +615,9 @@ private:
     memcpy(aPtr, &tmp, sizeof(T));
   }
 
-  Endian() MOZ_DELETE;
-  Endian(const Endian& aTther) MOZ_DELETE;
-  void operator=(const Endian& aOther) MOZ_DELETE;
+  Endian() = delete;
+  Endian(const Endian& aTther) = delete;
+  void operator=(const Endian& aOther) = delete;
 };
 
 template<Endianness ThisEndian>

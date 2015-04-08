@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2011-2014, International Business Machines Corporation and    *
+* Copyright (C) 2011-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 */
@@ -301,7 +301,6 @@ TimeZoneNames::createInstance(const Locale& locale, UErrorCode& status) {
     return instance;
 }
 
-#ifndef U_HIDE_DRAFT_API
 TimeZoneNames*
 TimeZoneNames::createTZDBInstance(const Locale& locale, UErrorCode& status) {
     TimeZoneNames *instance = NULL;
@@ -313,7 +312,6 @@ TimeZoneNames::createTZDBInstance(const Locale& locale, UErrorCode& status) {
     }
     return instance;
 }
-#endif /* U_HIDE_DRAFT_API */
 
 UnicodeString&
 TimeZoneNames::getExemplarLocationName(const UnicodeString& tzID, UnicodeString& name) const {
@@ -324,7 +322,8 @@ UnicodeString&
 TimeZoneNames::getDisplayName(const UnicodeString& tzID, UTimeZoneNameType type, UDate date, UnicodeString& name) const {
     getTimeZoneDisplayName(tzID, type, name);
     if (name.isEmpty()) {
-        UnicodeString mzID;
+        UChar mzIDBuf[32];
+        UnicodeString mzID(mzIDBuf, 0, UPRV_LENGTHOF(mzIDBuf));
         getMetaZoneID(tzID, date, mzID);
         getMetaZoneDisplayName(mzID, type, name);
     }

@@ -19,6 +19,7 @@
 #include "jit/IonOptimizationLevels.h"
 #include "jit/IonTypes.h"
 #include "js/UbiNode.h"
+#include "vm/TraceLogging.h"
 
 namespace js {
 
@@ -255,12 +256,6 @@ struct IonScript
     uint32_t constantTable_;
     uint32_t constantEntries_;
 
-    // List of scripts that we call.
-    //
-    // Currently this is only non-nullptr for parallel IonScripts.
-    uint32_t callTargetList_;
-    uint32_t callTargetEntries_;
-
     // List of patchable backedges which are threaded into the runtime's list.
     uint32_t backedgeList_;
     uint32_t backedgeEntries_;
@@ -284,6 +279,9 @@ struct IonScript
     // Number of times we tried to enter this script via OSR but failed due to
     // a LOOPENTRY pc other than osrPc_.
     uint32_t osrPcMismatchCounter_;
+
+    // The tracelogger event used to log the start/stop of this IonScript.
+    TraceLoggerEvent traceLoggerScriptEvent_;
 
     IonBuilder *pendingBuilder_;
 
@@ -329,9 +327,6 @@ struct IonScript
     uint8_t *runtimeData() {
         return  &bottomBuffer()[runtimeData_];
     }
-    JSScript **callTargetList() {
-        return (JSScript **) &bottomBuffer()[callTargetList_];
-    }
     PatchableBackedge *backedgeList() {
         return (PatchableBackedge *) &bottomBuffer()[backedgeList_];
     }
@@ -350,8 +345,7 @@ struct IonScript
                           size_t constants, size_t safepointIndexEntries,
                           size_t osiIndexEntries, size_t cacheEntries,
                           size_t runtimeSize, size_t safepointsSize,
-                          size_t callTargetEntries, size_t backedgeEntries,
-                          OptimizationLevel optimizationLevel);
+                          size_t backedgeEntries, OptimizationLevel optimizationLevel);
     static void Trace(JSTracer *trc, IonScript *script);
     static void Destroy(FreeOp *fop, IonScript *script);
 
@@ -462,6 +456,9 @@ struct IonScript
     bool hasSPSInstrumentation() const {
         return hasSPSInstrumentation_;
     }
+    void setTraceLoggerEvent(TraceLoggerEvent &event) {
+        traceLoggerScriptEvent_ = event;
+    }
     const uint8_t *snapshots() const {
         return reinterpret_cast<const uint8_t *>(this) + snapshots_;
     }
@@ -482,9 +479,6 @@ struct IonScript
     }
     size_t safepointsSize() const {
         return safepointsSize_;
-    }
-    size_t callTargetEntries() const {
-        return callTargetEntries_;
     }
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
         return mallocSizeOf(this);
@@ -545,7 +539,6 @@ struct IonScript
     void copyRuntimeData(const uint8_t *data);
     void copyCacheEntries(const uint32_t *caches, MacroAssembler &masm);
     void copySafepoints(const SafepointWriter *writer);
-    void copyCallTargetEntries(JSScript **callTargets);
     void copyPatchableBackedges(JSContext *cx, JitCode *code,
                                 PatchableBackedgeInfo *backedges,
                                 MacroAssembler &masm);

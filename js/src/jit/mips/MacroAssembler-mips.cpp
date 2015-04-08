@@ -1475,7 +1475,7 @@ MacroAssemblerMIPS::ma_bc1d(FloatRegister lhs, FloatRegister rhs, Label *label,
     branchWithCode(getBranchCode(testKind, fcc), label, jumpKind);
 }
 
-bool
+void
 MacroAssemblerMIPSCompat::buildFakeExitFrame(Register scratch, uint32_t *offset)
 {
     mozilla::DebugOnly<uint32_t> initialDepth = framePushed();
@@ -1491,7 +1491,7 @@ MacroAssemblerMIPSCompat::buildFakeExitFrame(Register scratch, uint32_t *offset)
     *offset = currentOffset();
 
     MOZ_ASSERT(framePushed() == initialDepth + ExitFrameLayout::Size());
-    return addCodeLabel(cl);
+    addCodeLabel(cl);
 }
 
 bool
@@ -2033,8 +2033,8 @@ MacroAssemblerMIPSCompat::store32(Register src, const Address &address)
 void
 MacroAssemblerMIPSCompat::store32(Imm32 src, const Address &address)
 {
-    move32(src, ScratchRegister);
-    storePtr(ScratchRegister, address);
+    move32(src, SecondScratchReg);
+    storePtr(SecondScratchReg, address);
 }
 
 void
@@ -2053,8 +2053,8 @@ template <typename T>
 void
 MacroAssemblerMIPSCompat::storePtr(ImmWord imm, T address)
 {
-    ma_li(ScratchRegister, Imm32(imm.value));
-    ma_sw(ScratchRegister, address);
+    ma_li(SecondScratchReg, Imm32(imm.value));
+    ma_sw(SecondScratchReg, address);
 }
 
 template void MacroAssemblerMIPSCompat::storePtr<Address>(ImmWord imm, Address address);
@@ -2074,8 +2074,8 @@ template <typename T>
 void
 MacroAssemblerMIPSCompat::storePtr(ImmGCPtr imm, T address)
 {
-    ma_li(ScratchRegister, imm);
-    ma_sw(ScratchRegister, address);
+    ma_li(SecondScratchReg, imm);
+    ma_sw(SecondScratchReg, address);
 }
 
 template void MacroAssemblerMIPSCompat::storePtr<Address>(ImmGCPtr imm, Address address);
@@ -3634,8 +3634,6 @@ MacroAssemblerMIPSCompat::toggledCall(JitCode *target, bool enabled)
     return offset;
 }
 
-#ifdef JSGC_GENERATIONAL
-
 void
 MacroAssemblerMIPSCompat::branchPtrInNurseryRange(Condition cond, Register ptr, Register temp,
                                                   Label *label)
@@ -3664,5 +3662,3 @@ MacroAssemblerMIPSCompat::branchValueIsNurseryObject(Condition cond, ValueOperan
 
     bind(&done);
 }
-
-#endif

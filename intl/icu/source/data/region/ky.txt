@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ky.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ky.xml
- */
 ky{
     Countries{
         001{"Дүйнө"}
@@ -301,6 +298,13 @@ ky{
         ZW{"Зимбабве"}
         ZZ{"Белгисиз регион"}
     }
+    Countries%short{
+        GB{"УБ"}
+        HK{"Гонконг"}
+        MO{"Макау"}
+        PS{"Палестина"}
+        US{"АКШ"}
+    }
     Countries%variant{
         CD{"Конго (КДР)"}
         CG{"Конго (Республикасы)"}
@@ -309,12 +313,5 @@ ky{
         MK{"Македония (Мур. Югосл.)"}
         TL{"Чыгыш Тимор"}
     }
-    CountriesShort{
-        GB{"УБ"}
-        HK{"Гонконг"}
-        MO{"Макау"}
-        PS{"Палестина"}
-        US{"АКШ"}
-    }
-    Version{"2.1.10.49"}
+    Version{"2.1.12.94"}
 }

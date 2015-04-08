@@ -54,7 +54,7 @@ class BumpChunk
     char *bumpBase() const { return limit - bumpSpaceSize; }
 
     explicit BumpChunk(size_t bumpSpaceSize)
-      : bump(reinterpret_cast<char *>(MOZ_THIS_IN_INITIALIZER_LIST()) + sizeof(BumpChunk)),
+      : bump(reinterpret_cast<char *>(this) + sizeof(BumpChunk)),
         limit(bump + bumpSpaceSize),
         next_(nullptr), bumpSpaceSize(bumpSpaceSize)
     {
@@ -167,8 +167,8 @@ class LifoAlloc
     size_t      curSize_;
     size_t      peakSize_;
 
-    void operator=(const LifoAlloc &) MOZ_DELETE;
-    LifoAlloc(const LifoAlloc &) MOZ_DELETE;
+    void operator=(const LifoAlloc &) = delete;
+    LifoAlloc(const LifoAlloc &) = delete;
 
     // Return a BumpChunk that can perform an allocation of at least size |n|
     // and add it to the chain appropriately.
@@ -197,14 +197,14 @@ class LifoAlloc
 
     // Append used chunks to the end of this LifoAlloc. We act as if all the
     // chunks in |this| are used, even if they're not, so memory may be wasted.
-    void appendUsed(BumpChunk *start, BumpChunk *latest, BumpChunk *end) {
-        MOZ_ASSERT(start && latest &&  end);
+    void appendUsed(BumpChunk *otherFirst, BumpChunk *otherLatest, BumpChunk *otherLast) {
+        MOZ_ASSERT(otherFirst && otherLatest && otherLast);
         if (last)
-            last->setNext(start);
+            last->setNext(otherFirst);
         else
-            first = latest = start;
-        last = end;
-        this->latest = latest;
+            first = otherFirst;
+        latest = otherLatest;
+        last = otherLast;
     }
 
     void incrementCurSize(size_t size) {

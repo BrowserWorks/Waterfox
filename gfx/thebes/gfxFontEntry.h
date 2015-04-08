@@ -63,7 +63,7 @@ public:
         mHash(0), mBuildOnTheFly(false), mShared(false)
     { }
 
-    gfxCharacterMap(const gfxSparseBitSet& aOther) :
+    explicit gfxCharacterMap(const gfxSparseBitSet& aOther) :
         gfxSparseBitSet(aOther),
         mHash(0), mBuildOnTheFly(false), mShared(false)
     { }
@@ -307,8 +307,8 @@ public:
     private:
         hb_blob_t* mBlob;
         // not implemented:
-        AutoTable(const AutoTable&) MOZ_DELETE;
-        AutoTable& operator=(const AutoTable&) MOZ_DELETE;
+        AutoTable(const AutoTable&) = delete;
+        AutoTable& operator=(const AutoTable&) = delete;
     };
 
     already_AddRefed<gfxFont>

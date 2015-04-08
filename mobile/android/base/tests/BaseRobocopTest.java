@@ -10,13 +10,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
-
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.Assert;
 import org.mozilla.gecko.FennecInstrumentationTestRunner;
 import org.mozilla.gecko.FennecMochitestAssert;
 import org.mozilla.gecko.FennecNativeDriver;
 import org.mozilla.gecko.FennecTalosAssert;
+import org.mozilla.gecko.updater.UpdateServiceHelper;
 
 import android.app.Activity;
 import android.content.Context;
@@ -54,6 +54,9 @@ public abstract class BaseRobocopTest extends ActivityInstrumentationTestCase2<A
 
     protected Assert mAsserter;
     protected String mLogFile;
+
+    protected String mBaseHostnameUrl;
+    protected String mBaseIpUrl;
 
     protected Map<String, String> mConfig;
     protected String mRootPath;
@@ -94,6 +97,9 @@ public abstract class BaseRobocopTest extends ActivityInstrumentationTestCase2<A
 
     @Override
     protected void setUp() throws Exception {
+        // Disable the updater.
+        UpdateServiceHelper.setEnabled(false);
+
         // Load config file from root path (set up by Python script).
         mRootPath = FennecInstrumentationTestRunner.getFennecArguments().getString("deviceroot");
         if (mRootPath == null) {
@@ -112,6 +118,9 @@ public abstract class BaseRobocopTest extends ActivityInstrumentationTestCase2<A
         }
         mAsserter.setLogFile(mLogFile);
         mAsserter.setTestName(getClass().getName());
+
+        mBaseHostnameUrl = mConfig.get("host").replaceAll("(/$)", "");
+        mBaseIpUrl = mConfig.get("rawhost").replaceAll("(/$)", "");
     }
 
     /**

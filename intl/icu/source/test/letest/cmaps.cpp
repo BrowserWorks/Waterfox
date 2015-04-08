@@ -1,6 +1,6 @@
 /***************************************************************************
 *
-*   Copyright (C) 1998-2013, International Business Machines
+*   Copyright (C) 1998-2014, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ************************************************************************/
@@ -121,6 +121,9 @@ CMAPMapper *CMAPMapper::createUnicodeMapper(const CMAPTable *cmap)
     {
       subtable = (const CMAPEncodingSubtable *) ((const char *) cmap + foundOffset);
       //printf("%s:%d: using subtable #%d/%d type %d:%d\n", __FILE__, __LINE__, foundTable, nSubtables, foundPlatformID, foundPlatformSpecificID);
+      (void)foundPlatformID;   // Suppress unused variable compiler warnings.
+      (void)foundTable;
+      (void)foundPlatformSpecificID;
     } else {
       printf("%s:%d: could not find subtable.\n", __FILE__, __LINE__);
       return NULL;

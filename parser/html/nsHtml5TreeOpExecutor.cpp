@@ -962,9 +962,14 @@ nsHtml5TreeOpExecutor::SetSpeculationReferrerPolicy(const nsAString& aReferrerPo
   // Disabled for now.
   return;
   ReferrerPolicy policy = mozilla::net::ReferrerPolicyFromString(aReferrerPolicy);
+  return SetSpeculationReferrerPolicy(policy);
+}
 
+void
+nsHtml5TreeOpExecutor::SetSpeculationReferrerPolicy(ReferrerPolicy aReferrerPolicy)
+{
   if (mSpeculationReferrerPolicyWasSet &&
-      policy != mSpeculationReferrerPolicy) {
+      aReferrerPolicy != mSpeculationReferrerPolicy) {
     // According to the Referrer Policy spec, if there's already been a policy
     // set and another attempt is made to set a _different_ policy, the result
     // is a "No Referrer" policy.
@@ -975,7 +980,7 @@ nsHtml5TreeOpExecutor::SetSpeculationReferrerPolicy(const nsAString& aReferrerPo
     // speculation phase.  The actual referrer policy will be set by
     // HTMLMetaElement::BindToTree().
     mSpeculationReferrerPolicyWasSet = true;
-    mSpeculationReferrerPolicy = policy;
+    mSpeculationReferrerPolicy = aReferrerPolicy;
   }
 }
 

@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /* Modification History:
@@ -133,6 +133,8 @@ void NumberFormatTest::runIndexedTest( int32_t index, UBool exec, const char* &n
   TESTCASE_AUTO(TestAccountingCurrency);
   TESTCASE_AUTO(TestEquality);
   TESTCASE_AUTO(TestCurrencyUsage);
+  TESTCASE_AUTO(TestDoubleLimit11439);
+  TESTCASE_AUTO(TestFastPathConsistent11524);
   TESTCASE_AUTO_END;
 }
 
@@ -3489,14 +3491,14 @@ NumberFormatTest::TestCurrencyParsing() {
         {"hr_HR", "1", "USD", "1,00\\u00a0USD", "1,00\\u00a0USD", "1,00 Ameri\\u010dki dolar"},
         {"id_ID", "1", "USD", "US$1,00", "USD1,00", "1,00 Dolar Amerika Serikat"},
         {"it_IT", "1", "USD", "1,00\\u00a0US$", "1,00\\u00a0USD", "1,00 Dollaro Statunitense"},
-        {"ko_KR", "1", "USD", "US$1.00", "USD1.00", "1.00 \\ubbf8\\uad6d \\ub2ec\\ub7ec"},
-        {"ja_JP", "1", "USD", "$1.00", "USD1.00", "1.00 \\u7c73\\u30c9\\u30eb"},
+        {"ko_KR", "1", "USD", "US$1.00", "USD1.00", "1.00\\ubbf8\\uad6d \\ub2ec\\ub7ec"},
+        {"ja_JP", "1", "USD", "$1.00", "USD1.00", "1.00\\u7c73\\u30c9\\u30eb"},
         {"zh_CN", "1", "CNY", "\\uFFE5\\u00a01.00", "CNY\\u00a01.00", "1.00\\u4EBA\\u6C11\\u5E01"},
         {"zh_TW", "1", "CNY", "CN\\u00A51.00", "CNY1.00", "1.00 \\u4eba\\u6c11\\u5e63"},
         {"zh_Hant", "1", "CNY", "CN\\u00A51.00", "CNY1.00", "1.00 \\u4eba\\u6c11\\u5e63"},
         {"zh_Hant", "1", "JPY", "\\u00A51.00", "JPY1.00", "1.00 \\u65e5\\u5713"},
-        {"ja_JP", "1", "JPY", "\\uFFE51.00", "JPY1.00", "1.00 \\u65e5\\u672c\\u5186"},
-        {"ja_JP", "1", "JPY", "\\u00A51.00", "JPY1.00", "1.00 \\u65e5\\u672c\\u5186"},
+        {"ja_JP", "1", "JPY", "\\uFFE51.00", "JPY1.00", "1.00\\u65e5\\u672c\\u5186"},
+        {"ja_JP", "1", "JPY", "\\u00A51.00", "JPY1.00", "1.00\\u65e5\\u672c\\u5186"},
         {"ru_RU", "1", "RUB", "1,00\\u00A0\\u0440\\u0443\\u0431.", "1,00\\u00A0RUB", "1,00 \\u0420\\u043E\\u0441\\u0441\\u0438\\u0439\\u0441\\u043A\\u0438\\u0439 \\u0440\\u0443\\u0431\\u043B\\u044C"}
     };
     static const UNumberFormatStyle currencyStyles[] = {
@@ -3818,12 +3820,12 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "CAD1.00",
         "CDF1.00",
         "CDF1.00",
-        "CFA Franc BCEAO1.00",
-        "CFA Franc BEAC1.00",
-        "CFA franc BCEAO1.00",
-        "CFA franc BEAC1.00",
-        "CFA francs BCEAO1.00",
-        "CFA francs BEAC1.00",
+        "West African CFA Franc1.00",
+        "Central African CFA Franc1.00",
+        "West African CFA franc1.00",
+        "Central African CFA franc1.00",
+        "West African CFA francs1.00",
+        "Central African CFA francs1.00",
         "CFP Franc1.00",
         "CFP franc1.00",
         "CFP francs1.00",
@@ -4702,9 +4704,9 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "Uruguayan pesos (1975\\u20131993)1.00",
         "Uruguayan pesos (indexed units)1.00",
         "Uruguayan pesos1.00",
-        "Uzbekistan Som1.00",
-        "Uzbekistan som1.00",
-        "Uzbekistan som1.00",
+        "Uzbekistani Som1.00",
+        "Uzbekistani som1.00",
+        "Uzbekistani som1.00",
         "VEB1.00",
         "VEF1.00",
         "VND1.00",
@@ -5550,9 +5552,9 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "1.00 Uruguayan peso random",
         "1.00 Uruguayan pesos (1975\\u20131993) random",
         "1.00 Uruguayan pesos (indexed units) random",
-        "1.00 Uzbekistan Som random",
-        "1.00 Uzbekistan som random",
-        "1.00 Uzbekistan som random",
+        "1.00 Uzbekistani Som random",
+        "1.00 Uzbekistani som random",
+        "1.00 Uzbekistani som random",
         "1.00 Vanuatu Vatu random",
         "1.00 Vanuatu vatu random",
         "1.00 Vanuatu vatus random",
@@ -5717,8 +5719,6 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "C1.00",
         "CA1.00",
         "CD1.00",
-        "CFA Franc BCEA1.00",
-        "CFA Franc BEA1.00",
         "CFP Fran1.00",
         "CFP1.00",
         "CH1.00",
@@ -6088,7 +6088,7 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "Uruguay Peso (1975\\u201319931.00",
         "Uruguay Peso Uruguay1.00",
         "Uruguay Peso (Indexed Units1.00",
-        "Uzbekistan So1.00",
+        "Uzbekistani So1.00",
         "V1.00",
         "VE1.00",
         "VN1.00",
@@ -6097,6 +6097,8 @@ NumberFormatTest::TestParseCurrencyInUCurr() {
         "Venezuelan Bol\\u00edva1.00",
         "Venezuelan Bol\\u00edvar Fuert1.00",
         "Vietnamese Don1.00",
+        "West African CFA Fran1.00",
+        "Central African CFA Fran1.00",
         "WIR Eur1.00",
         "WIR Fran1.00",
         "WS1.00",
@@ -7736,4 +7738,56 @@ void NumberFormatTest::TestCurrencyUsage() {
         delete fmt;
     }
 }
+
+
+// Check the constant MAX_INT64_IN_DOUBLE.
+// The value should convert to a double with no loss of precision.
+// A failure may indicate a platform with a different double format, requiring
+// a revision to the constant.
+//
+// Note that this is actually hard to test, because the language standard gives
+//  compilers considerable flexibility to do unexpected things with rounding and
+//  with overflow in simple int to/from float conversions. Some compilers will completely optimize
+//  away a simple round-trip conversion from int64_t -> double -> int64_t.
+
+void NumberFormatTest::TestDoubleLimit11439() {
+    char  buf[50];
+    for (int64_t num = MAX_INT64_IN_DOUBLE-10; num<=MAX_INT64_IN_DOUBLE; num++) {
+        sprintf(buf, "%lld", (long long)num);
+        double fNum = 0.0;
+        sscanf(buf, "%lf", &fNum);
+        int64_t rtNum = fNum;
+        if (num != rtNum) {
+            errln("%s:%d MAX_INT64_IN_DOUBLE test, %lld did not round trip. Got %lld", __FILE__, __LINE__, (long long)num, (long long)rtNum);
+            return;
+        }
+    }
+    for (int64_t num = -MAX_INT64_IN_DOUBLE+10; num>=-MAX_INT64_IN_DOUBLE; num--) {
+        sprintf(buf, "%lld", (long long)num);
+        double fNum = 0.0;
+        sscanf(buf, "%lf", &fNum);
+        int64_t rtNum = fNum;
+        if (num != rtNum) {
+            errln("%s:%d MAX_INT64_IN_DOUBLE test, %lld did not round trip. Got %lld", __FILE__, __LINE__, (long long)num, (long long)rtNum);
+            return;
+        }
+    }
+}
+
+void NumberFormatTest::TestFastPathConsistent11524() {
+    UErrorCode status = U_ZERO_ERROR;
+    NumberFormat *fmt = NumberFormat::createInstance("en", status);
+    if (U_FAILURE(status) || fmt == NULL) {
+        dataerrln("Failed call to NumberFormat::createInstance() - %s", u_errorName(status));
+        return;
+    }
+    fmt->setMaximumIntegerDigits(INT32_MIN);
+    UnicodeString appendTo;
+    assertEquals("", "0", fmt->format(123, appendTo));
+    appendTo.remove();
+    assertEquals("", "0", fmt->format(12345, appendTo));
+    delete fmt;
+}
+
+
 #endif /* #if !UCONFIG_NO_FORMATTING */

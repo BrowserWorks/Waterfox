@@ -115,10 +115,6 @@ class Debugger;
 class Nursery;
 class StaticBlockObject;
 
-namespace gc {
-class ForkJoinNursery;
-}
-
 typedef JSPropertyOp         PropertyOp;
 typedef JSStrictPropertyOp   StrictPropertyOp;
 typedef JSPropertyDescriptor PropertyDescriptor;
@@ -131,52 +127,136 @@ static const uint32_t SHAPE_MAXIMUM_SLOT = JS_BIT(24) - 2;
  * Shapes use multiplicative hashing, but specialized to
  * minimize footprint.
  */
-struct ShapeTable {
-    static const uint32_t HASH_BITS     = mozilla::tl::BitSize<HashNumber>::value;
+class ShapeTable {
+  public:
+    friend class NativeObject;
     static const uint32_t MIN_ENTRIES   = 11;
+
+    class Entry {
+        // js::Shape pointer tag bit indicating a collision.
+        static const uintptr_t SHAPE_COLLISION = 1;
+        static Shape *const SHAPE_REMOVED; // = SHAPE_COLLISION
+
+        Shape *shape_;
+
+        Entry() = delete;
+        Entry(const Entry&) = delete;
+        Entry& operator=(const Entry&) = delete;
+
+      public:
+        bool isFree() const { return shape_ == nullptr; }
+        bool isRemoved() const { return shape_ == SHAPE_REMOVED; }
+        bool hadCollision() const { return uintptr_t(shape_) & SHAPE_COLLISION; }
+
+        void setFree() { shape_ = nullptr; }
+        void setRemoved() { shape_ = SHAPE_REMOVED; }
+
+        Shape *shape() const {
+            return reinterpret_cast<Shape*>(uintptr_t(shape_) & ~SHAPE_COLLISION);
+        }
+
+        void setShape(Shape *shape) {
+            MOZ_ASSERT(isFree());
+            MOZ_ASSERT(shape);
+            MOZ_ASSERT(shape != SHAPE_REMOVED);
+            shape_ = shape;
+            MOZ_ASSERT(!hadCollision());
+        }
+
+        void flagCollision() {
+            shape_ = reinterpret_cast<Shape*>(uintptr_t(shape_) | SHAPE_COLLISION);
+        }
+        void setPreservingCollision(Shape *shape) {
+            shape_ = reinterpret_cast<Shape*>(uintptr_t(shape) | uintptr_t(hadCollision()));
+        }
+    };
+
+  private:
+    static const uint32_t HASH_BITS     = mozilla::tl::BitSize<HashNumber>::value;
 
     // This value is low because it's common for a ShapeTable to be created
     // with an entryCount of zero.
     static const uint32_t MIN_SIZE_LOG2 = 2;
     static const uint32_t MIN_SIZE      = JS_BIT(MIN_SIZE_LOG2);
 
-    int             hashShift;          /* multiplicative hash shift */
+    uint32_t        hashShift_;         /* multiplicative hash shift */
 
-    uint32_t        entryCount;         /* number of entries in table */
-    uint32_t        removedCount;       /* removed entry sentinels in table */
-    uint32_t        freelist;           /* SHAPE_INVALID_SLOT or head of slot
+    uint32_t        entryCount_;        /* number of entries in table */
+    uint32_t        removedCount_;      /* removed entry sentinels in table */
+
+    uint32_t        freeList_;          /* SHAPE_INVALID_SLOT or head of slot
                                            freelist in owning dictionary-mode
                                            object */
-    js::Shape       **entries;          /* table of ptrs to shared tree nodes */
 
+    Entry           *entries_;          /* table of ptrs to shared tree nodes */
+
+  public:
     explicit ShapeTable(uint32_t nentries)
-      : hashShift(HASH_BITS - MIN_SIZE_LOG2),
-        entryCount(nentries),
-        removedCount(0),
-        freelist(SHAPE_INVALID_SLOT)
+      : hashShift_(HASH_BITS - MIN_SIZE_LOG2),
+        entryCount_(nentries),
+        removedCount_(0),
+        freeList_(SHAPE_INVALID_SLOT),
+        entries_(nullptr)
     {
         /* NB: entries is set by init, which must be called. */
     }
 
     ~ShapeTable() {
-        js_free(entries);
+        js_free(entries_);
     }
 
-    /* By definition, hashShift = HASH_BITS - log2(capacity). */
-    uint32_t capacity() const { return JS_BIT(HASH_BITS - hashShift); }
+    uint32_t entryCount() const { return entryCount_; }
+
+    uint32_t freeList() const { return freeList_; }
+    void setFreeList(uint32_t slot) { freeList_ = slot; }
 
     /*
      * This counts the ShapeTable object itself (which must be
      * heap-allocated) and its |entries| array.
      */
     size_t sizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf) const {
-        return mallocSizeOf(this) + mallocSizeOf(entries);
+        return mallocSizeOf(this) + mallocSizeOf(entries_);
     }
+
+    /*
+     * NB: init and change are fallible but do not report OOM, so callers can
+     * cope or ignore. They do however use the context's calloc method in
+     * order to update the malloc counter on success.
+     */
+    bool init(ExclusiveContext *cx, Shape *lastProp);
+    bool change(int log2Delta, ExclusiveContext *cx);
+    Entry &search(jsid id, bool adding);
+
+#ifdef JSGC_COMPACTING
+    /* Update entries whose shapes have been moved */
+    void fixupAfterMovingGC();
+#endif
+
+  private:
+    Entry &getEntry(uint32_t i) const {
+        MOZ_ASSERT(i < capacity());
+        return entries_[i];
+    }
+    void decEntryCount() {
+        MOZ_ASSERT(entryCount_ > 0);
+        entryCount_--;
+    }
+    void incEntryCount() {
+        entryCount_++;
+        MOZ_ASSERT(entryCount_ + removedCount_ <= capacity());
+    }
+    void incRemovedCount() {
+        removedCount_++;
+        MOZ_ASSERT(entryCount_ + removedCount_ <= capacity());
+    }
+
+    /* By definition, hashShift = HASH_BITS - log2(capacity). */
+    uint32_t capacity() const { return JS_BIT(HASH_BITS - hashShift_); }
 
     /* Whether we need to grow.  We want to do this if the load factor is >= 0.75 */
     bool needsToGrow() const {
         uint32_t size = capacity();
-        return entryCount + removedCount >= size - (size >> 2);
+        return entryCount_ + removedCount_ >= size - (size >> 2);
     }
 
     /*
@@ -184,21 +264,7 @@ struct ShapeTable {
      * and returns false.  This will make any extant pointers into the
      * table invalid.  Don't call this unless needsToGrow() is true.
      */
-    bool grow(ThreadSafeContext *cx);
-
-    /*
-     * NB: init and change are fallible but do not report OOM, so callers can
-     * cope or ignore. They do however use the context's calloc method in
-     * order to update the malloc counter on success.
-     */
-    bool            init(ThreadSafeContext *cx, Shape *lastProp);
-    bool            change(int log2Delta, ThreadSafeContext *cx);
-    Shape           **search(jsid id, bool adding);
-
-#ifdef JSGC_COMPACTING
-    /* Update entries whose shapes have been moved */
-    void            fixupAfterMovingGC();
-#endif
+    bool grow(ExclusiveContext *cx);
 };
 
 /*
@@ -263,7 +329,6 @@ namespace gc {
 void MergeCompartments(JSCompartment *source, JSCompartment *target);
 }
 
-#ifdef JSGC_GENERATIONAL
 // This class is used to add a post barrier on the AccessorShape's getter/setter
 // objects. It updates the shape's entry in the parent's KidsHash table.
 class ShapeGetterSetterRef : public gc::BufferableRef
@@ -278,28 +343,23 @@ class ShapeGetterSetterRef : public gc::BufferableRef
 
     void mark(JSTracer *trc);
 };
-#endif
 
 static inline void
 GetterSetterWriteBarrierPost(AccessorShape *shape, JSObject **objp)
 {
-#ifdef JSGC_GENERATIONAL
     MOZ_ASSERT(shape);
     MOZ_ASSERT(objp);
     MOZ_ASSERT(*objp);
     gc::Cell **cellp = reinterpret_cast<gc::Cell **>(objp);
     if (gc::StoreBuffer *sb = (*cellp)->storeBuffer())
         sb->putGeneric(ShapeGetterSetterRef(shape, objp));
-#endif
 }
 
 static inline void
 GetterSetterWriteBarrierPostRemove(JSRuntime *rt, JSObject **objp)
 {
-#ifdef JSGC_GENERATIONAL
     JS::shadow::Runtime *shadowRuntime = JS::shadow::Runtime::asShadowRuntime(rt);
     shadowRuntime->gcStoreBufferPtr()->removeRelocatableCellFromAnyThread(reinterpret_cast<gc::Cell **>(objp));
-#endif
 }
 
 class BaseShape : public gc::TenuredCell
@@ -367,7 +427,7 @@ class BaseShape : public gc::TenuredCell
     /* For owned BaseShapes, the shape's shape table. */
     ShapeTable       *table_;
 
-    BaseShape(const BaseShape &base) MOZ_DELETE;
+    BaseShape(const BaseShape &base) = delete;
 
   public:
     void finalize(FreeOp *fop);
@@ -440,12 +500,6 @@ class BaseShape : public gc::TenuredCell
      * not already found.
      */
     static UnownedBaseShape* getUnowned(ExclusiveContext *cx, StackBaseShape &base);
-
-    /*
-     * Lookup base shapes from the compartment's baseShapes table, returning
-     * nullptr if not found.
-     */
-    static UnownedBaseShape *lookupUnowned(ThreadSafeContext *cx, const StackBaseShape &base);
 
     /* Get the canonical base shape. */
     inline UnownedBaseShape* unowned();
@@ -542,7 +596,7 @@ struct StackBaseShape : public DefaultHasher<ReadBarrieredUnownedBaseShape>
         compartment(base->compartment())
     {}
 
-    inline StackBaseShape(ThreadSafeContext *cx, const Class *clasp,
+    inline StackBaseShape(ExclusiveContext *cx, const Class *clasp,
                           JSObject *parent, JSObject *metadata, uint32_t objectFlags);
     explicit inline StackBaseShape(Shape *shape);
 
@@ -617,7 +671,6 @@ class Shape : public gc::TenuredCell
     friend class ::JSFunction;
     friend class Bindings;
     friend class Nursery;
-    friend class gc::ForkJoinNursery;
     friend class NativeObject;
     friend class PropertyTree;
     friend class StaticBlockObject;
@@ -672,9 +725,7 @@ class Shape : public gc::TenuredCell
     };
 
     static inline Shape *search(ExclusiveContext *cx, Shape *start, jsid id,
-                                Shape ***pspp, bool adding = false);
-    static inline Shape *searchThreadLocal(ThreadSafeContext *cx, Shape *start, jsid id,
-                                           Shape ***pspp, bool adding = false);
+                                ShapeTable::Entry **pentry, bool adding = false);
     static inline Shape *searchNoHashify(Shape *start, jsid id);
 
     void removeFromDictionary(NativeObject *obj);
@@ -691,7 +742,7 @@ class Shape : public gc::TenuredCell
      * is thread local, which is the case when we clone the entire shape
      * lineage in preparation for converting an object to dictionary mode.
      */
-    static bool hashify(ThreadSafeContext *cx, Shape *shape);
+    static bool hashify(ExclusiveContext *cx, Shape *shape);
     void handoffTableTo(Shape *newShape);
 
     void setParent(Shape *p) {
@@ -702,13 +753,13 @@ class Shape : public gc::TenuredCell
         parent = p;
     }
 
-    bool ensureOwnBaseShape(ThreadSafeContext *cx) {
+    bool ensureOwnBaseShape(ExclusiveContext *cx) {
         if (base()->isOwned())
             return true;
         return makeOwnBaseShape(cx);
     }
 
-    bool makeOwnBaseShape(ThreadSafeContext *cx);
+    bool makeOwnBaseShape(ExclusiveContext *cx);
 
   public:
     bool hasTable() const { return base()->hasTable(); }
@@ -830,7 +881,7 @@ class Shape : public gc::TenuredCell
     inline Shape(UnownedBaseShape *base, uint32_t nfixed);
 
     /* Copy constructor disabled, to avoid misuse of the above form. */
-    Shape(const Shape &other) MOZ_DELETE;
+    Shape(const Shape &other) = delete;
 
     /* Allocate a new shape based on the given StackShape. */
     static inline Shape *new_(ExclusiveContext *cx, StackShape &unrootedOther, uint32_t nfixed);
@@ -1016,7 +1067,7 @@ class Shape : public gc::TenuredCell
 
     uint32_t entryCount() {
         if (hasTable())
-            return table().entryCount;
+            return table().entryCount();
         uint32_t count = 0;
         for (Shape::Range<NoGC> r(this); !r.empty(); r.popFront())
             ++count;
@@ -1110,7 +1161,7 @@ class AutoRooterGetterSetter
     class Inner : private JS::CustomAutoRooter
     {
       public:
-        inline Inner(ThreadSafeContext *cx, uint8_t attrs,
+        inline Inner(ExclusiveContext *cx, uint8_t attrs,
                      PropertyOp *pgetter_, StrictPropertyOp *psetter_);
 
       private:
@@ -1122,10 +1173,10 @@ class AutoRooterGetterSetter
     };
 
   public:
-    inline AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
+    inline AutoRooterGetterSetter(ExclusiveContext *cx, uint8_t attrs,
                                   PropertyOp *pgetter, StrictPropertyOp *psetter
                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
-    inline AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
+    inline AutoRooterGetterSetter(ExclusiveContext *cx, uint8_t attrs,
                                   JSNative *pgetter, JSNative *psetter
                                   MOZ_GUARD_OBJECT_NOTIFIER_PARAM);
 
@@ -1217,7 +1268,6 @@ struct InitialShapeEntry
             nfixed(nfixed), baseFlags(baseFlags)
         {}
 
-#ifdef JSGC_GENERATIONAL
         /*
          * For use by generational GC post barriers. Look up an entry whose
          * parent and metadata fields may have been moved, but was hashed with
@@ -1233,7 +1283,6 @@ struct InitialShapeEntry
             hashMetadata(hashMetadata), matchMetadata(matchMetadata),
             nfixed(nfixed), baseFlags(baseFlags)
         {}
-#endif
     };
 
     inline InitialShapeEntry();
@@ -1333,65 +1382,6 @@ struct StackShape
     // For RootedGeneric<StackShape*>
     void trace(JSTracer *trc);
 };
-
-} /* namespace js */
-
-/* js::Shape pointer tag bit indicating a collision. */
-#define SHAPE_COLLISION                 (uintptr_t(1))
-#define SHAPE_REMOVED                   ((js::Shape *) SHAPE_COLLISION)
-
-/* Functions to get and set shape pointer values and collision flags. */
-
-inline bool
-SHAPE_IS_FREE(js::Shape *shape)
-{
-    return shape == nullptr;
-}
-
-inline bool
-SHAPE_IS_REMOVED(js::Shape *shape)
-{
-    return shape == SHAPE_REMOVED;
-}
-
-inline bool
-SHAPE_IS_LIVE(js::Shape *shape)
-{
-    return shape > SHAPE_REMOVED;
-}
-
-inline void
-SHAPE_FLAG_COLLISION(js::Shape **spp, js::Shape *shape)
-{
-    *spp = reinterpret_cast<js::Shape*>(uintptr_t(shape) | SHAPE_COLLISION);
-}
-
-inline bool
-SHAPE_HAD_COLLISION(js::Shape *shape)
-{
-    return uintptr_t(shape) & SHAPE_COLLISION;
-}
-
-inline js::Shape *
-SHAPE_CLEAR_COLLISION(js::Shape *shape)
-{
-    return reinterpret_cast<js::Shape*>(uintptr_t(shape) & ~SHAPE_COLLISION);
-}
-
-inline js::Shape *
-SHAPE_FETCH(js::Shape **spp)
-{
-    return SHAPE_CLEAR_COLLISION(*spp);
-}
-
-inline void
-SHAPE_STORE_PRESERVING_COLLISION(js::Shape **spp, js::Shape *shape)
-{
-    *spp = reinterpret_cast<js::Shape*>(uintptr_t(shape) |
-                                        uintptr_t(SHAPE_HAD_COLLISION(*spp)));
-}
-
-namespace js {
 
 inline
 Shape::Shape(const StackShape &other, uint32_t nfixed)
@@ -1526,8 +1516,8 @@ Shape::searchNoHashify(Shape *start, jsid id)
      * search. We never hashify into a table in parallel.
      */
     if (start->hasTable()) {
-        Shape **spp = start->table().search(id, false);
-        return SHAPE_FETCH(spp);
+        ShapeTable::Entry &entry = start->table().search(id, false);
+        return entry.shape();
     }
 
     return start->searchLinear(id);

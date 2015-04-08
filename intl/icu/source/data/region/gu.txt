@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/gu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/gu.xml
- */
 gu{
     Countries{
         001{"વિશ્વ"}
@@ -302,6 +299,13 @@ gu{
         ZW{"ઝિમ્બાબ્વે"}
         ZZ{"અજ્ઞાત પ્રદેશ"}
     }
+    Countries%short{
+        GB{"યુ.કે."}
+        HK{"હોંગ કોંગ"}
+        MO{"મકાઉ"}
+        PS{"પેલેસ્ટાઇન"}
+        US{"યુ.એસ."}
+    }
     Countries%variant{
         CD{"કોંગો (ડીઆરસી)"}
         CG{"કોંગો (પ્રજાસત્તાક)"}
@@ -310,12 +314,5 @@ gu{
         MK{"મેસેડોનિયા (FYROM)"}
         TL{"પૂર્વ તિમોર"}
     }
-    CountriesShort{
-        GB{"યુ.કે."}
-        HK{"હોંગ કોંગ"}
-        MO{"મકાઉ"}
-        PS{"પેલેસ્ટાઇન"}
-        US{"યુ.એસ."}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

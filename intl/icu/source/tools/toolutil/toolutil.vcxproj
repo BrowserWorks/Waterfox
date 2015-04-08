@@ -246,7 +246,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="collationinfo.cpp" />
+    <ClCompile Include="collationinfo.cpp">
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
+    </ClCompile>
     <ClCompile Include="denseranges.cpp" />
     <ClCompile Include="filestrm.c" />
     <ClCompile Include="filetools.cpp" />
@@ -268,7 +270,7 @@
     <ClCompile Include="pkgitems.cpp" />
     <ClCompile Include="ppucd.cpp" />
     <ClCompile Include="swapimpl.cpp">
-    	    <DisableLanguageExtensions>false</DisableLanguageExtensions>
+      <DisableLanguageExtensions>false</DisableLanguageExtensions>
     </ClCompile>
     <ClCompile Include="toolutil.cpp">
       <DisableLanguageExtensions>false</DisableLanguageExtensions>

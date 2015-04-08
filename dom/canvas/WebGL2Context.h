@@ -14,6 +14,10 @@ class WebGLSampler;
 class WebGLSync;
 class WebGLTransformFeedback;
 class WebGLVertexArrayObject;
+namespace dom {
+class OwningUnsignedLongOrUint32ArrayOrBoolean;
+class OwningWebGLBufferOrLongLong;
+}
 
 class WebGL2Context
     : public WebGLContext
@@ -34,7 +38,6 @@ public:
     // IMPLEMENT nsWrapperCache
 
     virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
-
 
     // -------------------------------------------------------------------------
     // Buffer objects - WebGL2ContextBuffers.cpp
@@ -126,6 +129,12 @@ public:
     void UniformMatrix4x3fv(WebGLUniformLocation* location, bool transpose, const dom::Float32Array& value);
     void UniformMatrix4x3fv(WebGLUniformLocation* location, bool transpose, const dom::Sequence<GLfloat>& value);
 
+private:
+    void VertexAttribI4iv(GLuint index, size_t length, const GLint* v);
+    void VertexAttribI4uiv(GLuint index, size_t length, const GLuint* v);
+
+public:
+    // GL 3.0 & ES 3.0
     void VertexAttribI4i(GLuint index, GLint x, GLint y, GLint z, GLint w);
     void VertexAttribI4iv(GLuint index, const dom::Sequence<GLint>& v);
     void VertexAttribI4ui(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w);
@@ -210,14 +219,13 @@ public:
     already_AddRefed<WebGLTransformFeedback> CreateTransformFeedback();
     void DeleteTransformFeedback(WebGLTransformFeedback* tf);
     bool IsTransformFeedback(WebGLTransformFeedback* tf);
-    void BindTransformFeedback(GLenum target, GLuint id);
+    void BindTransformFeedback(GLenum target, WebGLTransformFeedback* tf);
     void BeginTransformFeedback(GLenum primitiveMode);
     void EndTransformFeedback();
-    void TransformFeedbackVaryings(WebGLProgram* program, GLsizei count,
-                                   const dom::Sequence<nsString>& varyings, GLenum bufferMode);
-    already_AddRefed<WebGLActiveInfo> GetTransformFeedbackVarying(WebGLProgram* program, GLuint index);
     void PauseTransformFeedback();
     void ResumeTransformFeedback();
+    void TransformFeedbackVaryings(WebGLProgram* program, const dom::Sequence<nsString>& varyings, GLenum bufferMode);
+    already_AddRefed<WebGLActiveInfo> GetTransformFeedbackVarying(WebGLProgram* program, GLuint index);
 
 
     // -------------------------------------------------------------------------
@@ -227,14 +235,23 @@ public:
     void BindBufferBase(GLenum target, GLuint index, WebGLBuffer* buffer);
     void BindBufferRange(GLenum target, GLuint index, WebGLBuffer* buffer, GLintptr offset, GLsizeiptr size);
 */
-    void GetIndexedParameter(JSContext*, GLenum target, GLuint index, JS::MutableHandleValue retval);
-    void GetUniformIndices(WebGLProgram* program, const dom::Sequence<nsString>& uniformNames, dom::Nullable< nsTArray<GLuint> >& retval);
-    void GetActiveUniforms(WebGLProgram* program, const dom::Sequence<GLuint>& uniformIndices, GLenum pname,
+    void GetIndexedParameter(GLenum target, GLuint index,
+                             dom::Nullable<dom::OwningWebGLBufferOrLongLong>& retval);
+    void GetUniformIndices(WebGLProgram* program,
+                           const dom::Sequence<nsString>& uniformNames,
+                           dom::Nullable< nsTArray<GLuint> >& retval);
+    void GetActiveUniforms(WebGLProgram* program,
+                           const dom::Sequence<GLuint>& uniformIndices, GLenum pname,
                            dom::Nullable< nsTArray<GLint> >& retval);
     GLuint GetUniformBlockIndex(WebGLProgram* program, const nsAString& uniformBlockName);
-    void GetActiveUniformBlockParameter(JSContext*, WebGLProgram* program, GLuint uniformBlockIndex, GLenum pname, JS::MutableHandleValue retval);
-    void GetActiveUniformBlockName(WebGLProgram* program, GLuint uniformBlockIndex, dom::DOMString& retval);
-    void UniformBlockBinding(WebGLProgram* program, GLuint uniformBlockIndex, GLuint uniformBlockBinding);
+    void GetActiveUniformBlockParameter(JSContext*, WebGLProgram* program,
+                                        GLuint uniformBlockIndex, GLenum pname,
+                                        dom::Nullable<dom::OwningUnsignedLongOrUint32ArrayOrBoolean>& retval,
+                                        ErrorResult& rv);
+    void GetActiveUniformBlockName(WebGLProgram* program, GLuint uniformBlockIndex,
+                                   nsAString& retval);
+    void UniformBlockBinding(WebGLProgram* program, GLuint uniformBlockIndex,
+                             GLuint uniformBlockBinding);
 
 
     // -------------------------------------------------------------------------
@@ -250,11 +267,17 @@ public:
 private:
     WebGL2Context();
 
+    JS::Value GetTexParameterInternal(const TexTarget& target, GLenum pname) MOZ_OVERRIDE;
+
     bool ValidateSizedInternalFormat(GLenum internalFormat, const char* info);
     bool ValidateTexStorage(GLenum target, GLsizei levels, GLenum internalformat,
                                 GLsizei width, GLsizei height, GLsizei depth,
                                 const char* info);
-    JS::Value GetTexParameterInternal(const TexTarget& target, GLenum pname) MOZ_OVERRIDE;
+
+    virtual bool ValidateAttribPointerType(bool integerMode, GLenum type, GLsizei* alignment, const char* info) MOZ_OVERRIDE;
+    virtual bool ValidateBufferTarget(GLenum target, const char* info) MOZ_OVERRIDE;
+    virtual bool ValidateBufferIndexedTarget(GLenum target, const char* info) MOZ_OVERRIDE;
+    virtual bool ValidateBufferForTarget(GLenum target, WebGLBuffer* buffer, const char* info) MOZ_OVERRIDE;
 };
 
 } // namespace mozilla

@@ -65,7 +65,8 @@ public:
   void GetKeySystem(nsString& retval) const;
 
   // JavaScript: MediaKeys.createSession()
-  already_AddRefed<MediaKeySession> CreateSession(SessionType aSessionType,
+  already_AddRefed<MediaKeySession> CreateSession(JSContext* aCx,
+                                                  SessionType aSessionType,
                                                   ErrorResult& aRv);
 
   // JavaScript: MediaKeys.SetServerCertificate()
@@ -74,15 +75,21 @@ public:
 
   already_AddRefed<MediaKeySession> GetSession(const nsAString& aSessionId);
 
-  // Called once a Create() operation succeeds.
+  // Removes and returns MediaKeySession from the set of sessions awaiting
+  // their sessionId to be assigned.
+  already_AddRefed<MediaKeySession> GetPendingSession(uint32_t aToken);
+
+  // Called once a Init() operation succeeds.
   void OnCDMCreated(PromiseId aId, const nsACString& aNodeId);
-  // Called when GenerateRequest or Load have been called on a MediaKeySession
-  // and we are waiting for its initialisation to finish.
-  void OnSessionPending(PromiseId aId, MediaKeySession* aSession);
-  // Called once a CreateSession succeeds.
-  void OnSessionCreated(PromiseId aId, const nsAString& aSessionId);
+
+  // Called once the CDM generates a sessionId while servicing a
+  // MediaKeySession.generateRequest() or MediaKeySession.load() call,
+  // once the sessionId of a MediaKeySession is known.
+  void OnSessionIdReady(MediaKeySession* aSession);
+
   // Called once a LoadSession succeeds.
   void OnSessionLoaded(PromiseId aId, bool aSuccess);
+
   // Called once a session has closed.
   void OnSessionClosed(MediaKeySession* aSession);
 
@@ -104,16 +111,12 @@ public:
 
   void Shutdown();
 
+  // Called by CDMProxy when CDM crashes or shuts down. It is different from
+  // Shutdown which is called from the script/dom side.
+  void Terminated();
+
   // Returns true if this MediaKeys has been bound to a media element.
   bool IsBoundToMediaElement() const;
-
-  // Return NS_OK if the principals are the same as when the MediaKeys
-  // was created, failure otherwise.
-  nsresult CheckPrincipals();
-
-  // Returns a pointer to the bound media element's owner doc.
-  // If we're not bound, this returns null.
-  nsIDocument* GetOwnerDoc() const;
 
 private:
 

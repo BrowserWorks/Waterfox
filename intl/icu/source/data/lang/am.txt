@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/am.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/am.xml
- */
 am{
     Keys{
         calendar{"የቀን አቆጣጠር"}
@@ -291,14 +288,14 @@ am{
         zu{"ዙሉኛ"}
         zxx{"ቋንቋዊ ይዘት አይደለም"}
     }
-    Languages%variant{
-        ps{"ፑሽቶ"}
-        ug{"ኡይገር"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"አዜሪ"}
         en_GB{"የዩናይትድ ኪንግደም እንግሊዝኛ"}
         en_US{"የዩ ኤስ እንግሊዝኛ"}
+    }
+    Languages%variant{
+        ps{"ፑሽቶ"}
+        ug{"ኡይገር"}
     }
     Scripts{
         Arab{"ዓረብኛ"}
@@ -461,7 +458,7 @@ am{
             vaii{"የቫይ አሃዞች"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

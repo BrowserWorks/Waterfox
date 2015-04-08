@@ -41,7 +41,8 @@ TiledLayerBufferComposite::RecycleCallback(TextureHost* textureHost, void* aClos
 
 TiledLayerBufferComposite::TiledLayerBufferComposite(ISurfaceAllocator* aAllocator,
                                                      const SurfaceDescriptorTiles& aDescriptor,
-                                                     const nsIntRegion& aOldPaintedRegion)
+                                                     const nsIntRegion& aOldPaintedRegion,
+                                                     Compositor* aCompositor)
 {
   mIsValid = true;
   mHasDoubleBufferedTiles = false;
@@ -61,8 +62,8 @@ TiledLayerBufferComposite::TiledLayerBufferComposite(ISurfaceAllocator* aAllocat
 
   const InfallibleTArray<TileDescriptor>& tiles = aDescriptor.tiles();
   for(size_t i = 0; i < tiles.Length(); i++) {
-    RefPtr<TextureHost> texture;
-    RefPtr<TextureHost> textureOnWhite;
+    CompositableTextureHostRef texture;
+    CompositableTextureHostRef textureOnWhite;
     const TileDescriptor& tileDesc = tiles[i];
     switch (tileDesc.type()) {
       case TileDescriptor::TTexturedTileDescriptor : {
@@ -90,11 +91,25 @@ TiledLayerBufferComposite::TiledLayerBufferComposite(ISurfaceAllocator* aAllocat
           sharedLock = reinterpret_cast<gfxMemorySharedReadLock*>(ipcLock.get_uintptr_t());
           if (sharedLock) {
             // The corresponding AddRef is in TiledClient::GetTileDescriptor
-            sharedLock->Release();
+            sharedLock.get()->Release();
           }
         }
 
-        mRetainedTiles.AppendElement(TileHost(sharedLock, texture, textureOnWhite));
+        CompositableTextureSourceRef textureSource;
+        CompositableTextureSourceRef textureSourceOnWhite;
+        if (texture) {
+          texture->SetCompositor(aCompositor);
+          texture->PrepareTextureSource(textureSource);
+        }
+        if (textureOnWhite) {
+          textureOnWhite->SetCompositor(aCompositor);
+          textureOnWhite->PrepareTextureSource(textureSourceOnWhite);
+        }
+        mRetainedTiles.AppendElement(TileHost(sharedLock,
+                                              texture.get(),
+                                              textureOnWhite.get(),
+                                              textureSource.get(),
+                                              textureSourceOnWhite.get()));
         break;
       }
       default:
@@ -130,6 +145,8 @@ TiledLayerBufferComposite::ReleaseTextureHosts()
   for (size_t i = 0; i < mRetainedTiles.Length(); i++) {
     mRetainedTiles[i].mTextureHost = nullptr;
     mRetainedTiles[i].mTextureHostOnWhite = nullptr;
+    mRetainedTiles[i].mTextureSource = nullptr;
+    mRetainedTiles[i].mTextureSourceOnWhite = nullptr;
   }
 }
 
@@ -321,8 +338,10 @@ TiledContentHost::UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
       }
     }
     mLowPrecisionTiledBuffer =
-      TiledLayerBufferComposite(aAllocator, aTiledDescriptor,
-                                mLowPrecisionTiledBuffer.GetPaintedRegion());
+      TiledLayerBufferComposite(aAllocator,
+                                aTiledDescriptor,
+                                mLowPrecisionTiledBuffer.GetPaintedRegion(),
+                                mCompositor);
     if (!mLowPrecisionTiledBuffer.IsValid()) {
       // Something bad happened. Stop here, return false (kills the child process),
       // and do as little work as possible on the received data as it appears
@@ -341,8 +360,10 @@ TiledContentHost::UseTiledLayerBuffer(ISurfaceAllocator* aAllocator,
         mOldTiledBuffer.ReleaseTextureHosts();
       }
     }
-    mTiledBuffer = TiledLayerBufferComposite(aAllocator, aTiledDescriptor,
-                                             mTiledBuffer.GetPaintedRegion());
+    mTiledBuffer = TiledLayerBufferComposite(aAllocator,
+                                             aTiledDescriptor,
+                                             mTiledBuffer.GetPaintedRegion(),
+                                             mCompositor);
     if (!mTiledBuffer.IsValid()) {
       // Something bad happened. Stop here, return false (kills the child process),
       // and do as little work as possible on the received data as it appears
@@ -410,7 +431,7 @@ TiledContentHost::Composite(EffectChain& aEffectChain,
 
   nsIntRegion tmpRegion;
   const nsIntRegion* renderRegion = aVisibleRegion;
-#ifndef MOZ_GFX_OPTIMIZE_MOBILE
+#ifndef MOZ_IGNORE_PAINT_WILL_RESAMPLE
   if (PaintWillResample()) {
     // If we're resampling, then the texture image will contain exactly the
     // entire visible region's bounds, and we should draw it all in one quad
@@ -477,14 +498,16 @@ TiledContentHost::RenderTile(const TileHost& aTile,
     NS_WARNING("Failed to lock tile");
     return;
   }
-  RefPtr<TextureSource> source = aTile.mTextureHost->GetTextureSources();
-  RefPtr<TextureSource> sourceOnWhite =
-    aTile.mTextureHostOnWhite ? aTile.mTextureHostOnWhite->GetTextureSources() : nullptr;
-  if (!source || (aTile.mTextureHostOnWhite && !sourceOnWhite)) {
+
+  if (!aTile.mTextureHost->BindTextureSource(aTile.mTextureSource)) {
     return;
   }
 
-  RefPtr<TexturedEffect> effect = CreateTexturedEffect(source, sourceOnWhite, aFilter, true);
+  if (aTile.mTextureHostOnWhite && !aTile.mTextureHostOnWhite->BindTextureSource(aTile.mTextureSourceOnWhite)) {
+    return;
+  }
+
+  RefPtr<TexturedEffect> effect = CreateTexturedEffect(aTile.mTextureSource, aTile.mTextureSourceOnWhite, aFilter, true);
   if (!effect) {
     return;
   }
@@ -606,35 +629,21 @@ TiledContentHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   aStream << aPrefix;
   aStream << nsPrintfCString("TiledContentHost (0x%p)", this).get();
 
+  if (gfxPrefs::LayersDumpTexture() || profiler_feature_active("layersdump")) {
+    nsAutoCString pfx(aPrefix);
+    pfx += "  ";
+
+    Dump(aStream, pfx.get(), false);
+  }
 }
 
-#ifdef MOZ_DUMP_PAINTING
 void
 TiledContentHost::Dump(std::stringstream& aStream,
                        const char* aPrefix,
                        bool aDumpHtml)
 {
-  TiledLayerBufferComposite::Iterator it = mTiledBuffer.TilesBegin();
-  TiledLayerBufferComposite::Iterator stop = mTiledBuffer.TilesEnd();
-  if (aDumpHtml) {
-    aStream << "<ul>";
-  }
-  for (;it != stop; ++it) {
-    aStream << aPrefix;
-    aStream << (aDumpHtml ? "<li> <a href=" : "Tile ");
-    if (it->IsPlaceholderTile()) {
-      aStream << "empty tile";
-    } else {
-      DumpTextureHost(aStream, it->mTextureHost);
-      DumpTextureHost(aStream, it->mTextureHostOnWhite);
-    }
-    aStream << (aDumpHtml ? " >Tile</a></li>" : " ");
-  }
-  if (aDumpHtml) {
-    aStream << "</ul>";
-  }
+  mTiledBuffer.Dump(aStream, aPrefix, aDumpHtml);
 }
-#endif
 
 } // namespace
 } // namespace

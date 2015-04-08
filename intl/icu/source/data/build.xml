@@ -113,7 +113,7 @@
 		<remapper>
 		  <remap sourcePath="/Keys" targetDir="lang" />
 		  <remap sourcePath="/Languages" targetDir="lang" />
-		  <remap sourcePath="/LanguagesShort" targetDir="lang" />
+		  <remap sourcePath="/Languages%short" targetDir="lang" />
 		  <remap sourcePath="/Languages%secondary" targetDir="lang" />
 		  <remap sourcePath="/Languages%variant" targetDir="lang" />
 		  <remap sourcePath="/Scripts" targetDir="lang" />
@@ -129,7 +129,7 @@
 		  <remap sourcePath="/localeDisplayPattern" targetDir="lang" />
 		  <remap sourcePath="/Countries" targetDir="region" />
 		  <remap sourcePath="/Countries%variant" targetDir="region" />
-		  <remap sourcePath="/CountriesShort" targetDir="region" />
+		  <remap sourcePath="/Countries%short" targetDir="region" />
 		  <remap sourcePath="/Currencies" targetDir="curr" />
 		  <remap sourcePath="/Currencies%narrow" targetDir="curr" />
 		  <remap sourcePath="/Currencies%variant" targetDir="curr" />

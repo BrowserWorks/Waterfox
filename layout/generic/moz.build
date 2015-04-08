@@ -82,6 +82,7 @@ UNIFIED_SOURCES += [
     'nsPlaceholderFrame.cpp',
     'nsRubyBaseContainerFrame.cpp',
     'nsRubyBaseFrame.cpp',
+    'nsRubyContentFrame.cpp',
     'nsRubyFrame.cpp',
     'nsRubyTextContainerFrame.cpp',
     'nsRubyTextFrame.cpp',
@@ -94,6 +95,8 @@ UNIFIED_SOURCES += [
     'nsTextRunTransformations.cpp',
     'nsVideoFrame.cpp',
     'nsViewportFrame.cpp',
+    'RubyReflowState.cpp',
+    'RubyUtils.cpp',
     'ScrollbarActivity.cpp',
     'StickyScrollContainer.cpp',
     'TextOverflow.cpp',
@@ -105,11 +108,6 @@ SOURCES += [
     'nsLineLayout.cpp',
     'nsPluginFrame.cpp',
 ]
-
-if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
-    UNIFIED_SOURCES += [
-        'nsPluginUtilsOSX.mm',
-    ]
 
 FAIL_ON_WARNINGS = not CONFIG['_MSC_VER']
 

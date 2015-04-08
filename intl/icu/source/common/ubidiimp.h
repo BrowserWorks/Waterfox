@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1999-2014, International Business Machines
+*   Copyright (C) 1999-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -184,8 +184,8 @@ typedef struct BracketData {
 typedef struct Isolate {
     int32_t startON;
     int32_t start1;
+    int32_t state;
     int16_t stateImp;
-    int16_t state;
 } Isolate;
 
 typedef struct Run {

@@ -922,6 +922,15 @@
 
           var controller = this.view.QueryInterface(Components.interfaces.nsIAutoCompleteController);
 
+          var searchBar = BrowserSearch.searchBar;
+          var popupForSearchBar = searchBar && searchBar.textbox == this.mInput;
+          if (popupForSearchBar) {
+            searchBar.telemetrySearchDetails = {
+              index: controller.selection.currentIndex,
+              kind: "mouse"
+            };
+          }
+
           // Check for unmodified left-click, and use default behavior
           if (aEvent.button == 0 && !aEvent.shiftKey && !aEvent.ctrlKey &&
               !aEvent.altKey && !aEvent.metaKey) {
@@ -930,8 +939,7 @@
           }
 
           // Check for middle-click or modified clicks on the search bar
-          var searchBar = BrowserSearch.searchBar;
-          if (searchBar && searchBar.textbox == this.mInput) {
+          if (popupForSearchBar) {
             // Handle search bar popup clicks
             var search = controller.getValueAt(this.selectedIndex);
 
@@ -968,8 +976,8 @@
     <resources>
       <stylesheet src="chrome://browser/skin/searchbar.css"/>
     </resources>
-    <content ignorekeys="true" level="top">
-      <xul:hbox xbl:inherits="collapsed=showonlysettings" anonid="searchbar-engine"
+    <content ignorekeys="true" level="top" consumeoutsideclicks="never">
+      <xul:hbox anonid="searchbar-engine" xbl:inherits="showonlysettings"
                 class="search-panel-header search-panel-current-engine">
         <xul:image class="searchbar-engine-image" xbl:inherits="src"/>
         <xul:label anonid="searchbar-engine-name" flex="1" crop="end"
@@ -983,20 +991,23 @@
         </xul:treecols>
         <xul:treechildren class="autocomplete-treebody"/>
       </xul:tree>
-      <xul:hbox anonid="search-panel-one-offs-header"
-                class="search-panel-header search-panel-current-input"
-                xbl:inherits="hidden=showonlysettings">
-        <xul:label anonid="searchbar-oneoffheader-before" value="&searchFor.label;"/>
-        <xul:label anonid="searchbar-oneoffheader-searchtext" flex="1" crop="end" class="search-panel-input-value"/>
-        <xul:label anonid="searchbar-oneoffheader-after" flex="10000" value="&searchWith.label;"/>
-      </xul:hbox>
+      <xul:deck anonid="search-panel-one-offs-header"
+                selectedIndex="0"
+                class="search-panel-header search-panel-current-input">
+        <xul:label anonid="searchbar-oneoffheader-search" value="&searchWithHeader.label;"/>
+        <xul:hbox anonid="search-panel-searchforwith"
+                  class="search-panel-current-input">
+          <xul:label anonid="searchbar-oneoffheader-before" value="&searchFor.label;"/>
+          <xul:label anonid="searchbar-oneoffheader-searchtext" flex="1" crop="end" class="search-panel-input-value"/>
+          <xul:label anonid="searchbar-oneoffheader-after" flex="10000" value="&searchWith.label;"/>
+        </xul:hbox>
+      </xul:deck>
       <xul:description anonid="search-panel-one-offs"
-                       class="search-panel-one-offs"
-                       xbl:inherits="hidden=showonlysettings"/>
+                       role="group"
+                       class="search-panel-one-offs"/>
       <xul:vbox anonid="add-engines"/>
       <xul:button anonid="search-settings"
-                  xbl:inherits="showonlysettings"
-                  oncommand="openPreferences('paneSearch')"
+                  oncommand="BrowserUITelemetry.countSearchSettingsEvent('searchbar');openPreferences('paneSearch')"
                   class="search-setting-button search-panel-header"
                   label="&changeSearchSettings.button;"/>
     </content>
@@ -1006,6 +1017,18 @@
            false after the mousedown event has been triggered to detect what
            caused rollup. -->
       <field name="_isHiding">false</field>
+      <field name="_bundle">null</field>
+      <property name="bundle" readonly="true">
+        <getter>
+          <![CDATA[
+            if (!this._bundle) {
+              const kBundleURI = "chrome://browser/locale/search.properties";
+              this._bundle = Services.strings.createBundle(kBundleURI);
+            }
+            return this._bundle;
+          ]]>
+        </getter>
+      </property>
 
       <method name="updateHeader">
         <body><![CDATA[
@@ -1021,10 +1044,8 @@
             this.removeAttribute("src");
           }
 
-          const kBundleURI = "chrome://browser/locale/search.properties";
-          let bundle = Services.strings.createBundle(kBundleURI);
-          let headerText = bundle.formatStringFromName("searchHeader",
-                                                       [currentEngine.name], 1);
+          let headerText = this.bundle.formatStringFromName("searchHeader",
+                                                            [currentEngine.name], 1);
           document.getAnonymousElementByAttribute(this, "anonid", "searchbar-engine-name")
                   .setAttribute("value", headerText);
           document.getAnonymousElementByAttribute(this, "anonid", "searchbar-engine")
@@ -1033,6 +1054,12 @@
       </method>
     </implementation>
     <handlers>
+      <handler event="popuphidden"><![CDATA[
+        Services.tm.mainThread.dispatch(function() {
+          document.getElementById("searchbar").textbox.selectedButton = null;
+        }, Ci.nsIThread.DISPATCH_NORMAL);
+      ]]></handler>
+
       <handler event="popupshowing"><![CDATA[
         // First handle deciding if we are showing the reduced version of the
         // popup containing only the preferences button. We do this if the
@@ -1060,12 +1087,31 @@
         let headerSearchText =
           document.getAnonymousElementByAttribute(this, "anonid",
                                                   "searchbar-oneoffheader-searchtext");
+        let headerPanel =
+          document.getAnonymousElementByAttribute(this, "anonid",
+                                                  "search-panel-one-offs-header");
+        let list = document.getAnonymousElementByAttribute(this, "anonid",
+                                                           "search-panel-one-offs");
         let textbox = searchbar.textbox;
         let self = this;
         let inputHandler = function() {
           headerSearchText.setAttribute("value", textbox.value);
-          if (textbox.value)
+          let groupText;
+          if (textbox.value) {
             self.removeAttribute("showonlysettings");
+            groupText = headerSearchText.previousSibling.value +
+                        '"' + headerSearchText.value + '"' +
+                        headerSearchText.nextSibling.value;
+            headerPanel.selectedIndex = 1;
+          }
+          else {
+            let noSearchHeader =
+              document.getAnonymousElementByAttribute(self, "anonid",
+                                                      "searchbar-oneoffheader-search");
+            groupText = noSearchHeader.value;
+            headerPanel.selectedIndex = 0;
+          }
+          list.setAttribute("aria-label", groupText);
         };
         textbox.addEventListener("input", inputHandler);
         this.addEventListener("popuphiding", function hiding() {
@@ -1085,14 +1131,13 @@
         const kXULNS =
           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
-        let addEngines = getBrowser().mCurrentBrowser.engines;
+        let addEngines = gBrowser.selectedBrowser.engines;
         if (addEngines && addEngines.length > 0) {
-          const kBundleURI = "chrome://browser/locale/search.properties";
-          let bundle = Services.strings.createBundle(kBundleURI);
           for (let engine of addEngines) {
             let button = document.createElementNS(kXULNS, "button");
-            let label = bundle.formatStringFromName("cmd_addFoundEngine",
-                                                    [engine.title], 1);
+            let label = this.bundle.formatStringFromName("cmd_addFoundEngine",
+                                                         [engine.title], 1);
+            button.id = "searchbar-add-engine-" + engine.title.replace(/ /g, '-');
             button.setAttribute("class", "addengine-item");
             button.setAttribute("label", label);
             button.setAttribute("pack", "start");
@@ -1110,19 +1155,18 @@
         }
 
         // Finally, build the list of one-off buttons.
-        let list = document.getAnonymousElementByAttribute(this, "anonid",
-                                                           "search-panel-one-offs")
         while (list.firstChild)
           list.firstChild.remove();
+        textbox._selectedButton = null;
 
-        let hiddenList;
-        try {
-          let pref =
-            Services.prefs.getCharPref("browser.search.hiddenOneOffs");
-          hiddenList = pref ? pref.split(",") : [];
-        } catch(e) {
-          hiddenList = [];
-        }
+        // Avoid setting the selection based on mouse events before
+        // the 'popupshown' event has fired.
+        this._ignoreMouseEvents = true;
+
+        let Preferences =
+          Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
+        let pref = Preferences.get("browser.search.hiddenOneOffs");
+        let hiddenList = pref ? pref.split(",") : [];
 
         let currentEngineName = Services.search.currentEngine.name;
         let engines = Services.search.getVisibleEngines()
@@ -1131,7 +1175,8 @@
 
         let header = document.getAnonymousElementByAttribute(this, "anonid",
                                                              "search-panel-one-offs-header")
-        header.collapsed = list.collapsed = !engines.length;
+        // header is a xul:deck so collapsed doesn't work on it, see bug 589569.
+        header.hidden = list.collapsed = !engines.length;
 
         // 49px is the min-width of each search engine button,
         // adapt this const when changing the css.
@@ -1169,11 +1214,15 @@
         let height = rowCount * 33; // 32px per row, 1px border.
         list.setAttribute("height", height + "px");
 
+        // Ensure we can refer to the settings button by ID:
+        let settingsEl = document.getAnonymousElementByAttribute(this, "anonid", "search-settings");
+        settingsEl.id = this.id + "-anon-search-settings";
+
         let dummyItems = enginesPerRow - (engines.length % enginesPerRow || enginesPerRow);
         for (let i = 0; i < engines.length; ++i) {
           let engine = engines[i];
           let button = document.createElementNS(kXULNS, "button");
-          button.setAttribute("label", engine.name);
+          button.id = "searchbar-engine-one-off-item-" + engine.name.replace(/ /g, '-');
           let uri = "chrome://browser/skin/search-engine-placeholder.png";
           if (engine.iconURI) {
             uri = PlacesUtils.getImageURLForResolution(window, engine.iconURI.spec);
@@ -1205,6 +1254,10 @@
         }
       ]]></handler>
 
+      <handler event="popupshown"><![CDATA[
+        this._ignoreMouseEvents = false;
+      ]]></handler>
+
       <handler event="mousedown"><![CDATA[
         // Required to receive click events from the buttons on Linux.
         event.preventDefault();
@@ -1212,14 +1265,30 @@
 
       <handler event="mouseover"><![CDATA[
         let target = event.originalTarget;
-        if (target.localName == "button" &&
-            target.classList.contains("searchbar-engine-one-off-item") &&
-            !target.classList.contains("dummy")) {
-          let list = document.getAnonymousElementByAttribute(this, "anonid",
-                                                             "search-panel-one-offs")
-          for (let button = list.firstChild; button; button = button.nextSibling)
-            button.removeAttribute("selected");
-        }
+        if (target.localName != "button")
+          return;
+
+        // We ignore mouse events between the popupshowing and popupshown
+        // events to avoid selecting the button that happens to be under the
+        // mouse when the panel opens.
+        if (this._ignoreMouseEvents)
+          return;
+
+        if ((target.classList.contains("searchbar-engine-one-off-item") &&
+             !target.classList.contains("dummy")) ||
+            target.classList.contains("addengine-item") ||
+            target.classList.contains("search-setting-button"))
+          document.getElementById("searchbar").textbox.selectedButton = target;
+      ]]></handler>
+
+      <handler event="mouseout"><![CDATA[
+        let target = event.originalTarget;
+        if (target.localName != "button")
+          return;
+
+        let textbox = document.getElementById("searchbar").textbox;
+        if (textbox.selectedButton == target)
+          textbox.selectedButton = null;
       ]]></handler>
 
       <handler event="click"><![CDATA[

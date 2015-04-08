@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/yi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/yi.xml
- */
 yi{
     Countries{
         001{"וועלט"}
@@ -234,11 +231,11 @@ yi{
         ZW{"זימבאַבווע"}
         ZZ{"אומבאַוואוסטער ראַיאן"}
     }
+    Countries%short{
+        US{"פֿ\u0022ש"}
+    }
     Countries%variant{
         TL{"מזרח טימאר"}
-    }
-    CountriesShort{
-        US{"פֿ\u0022ש"}
     }
     Version{"2.1.7.41"}
 }

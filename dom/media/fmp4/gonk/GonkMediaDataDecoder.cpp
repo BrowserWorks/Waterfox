@@ -10,9 +10,8 @@
 #include "MediaCodecProxy.h"
 
 #include "prlog.h"
-#define LOG_TAG "GonkMediaDataDecoder(blake)"
 #include <android/log.h>
-#define ALOG(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define GMDD_LOG(...) __android_log_print(ANDROID_LOG_DEBUG, "GonkMediaDataDecoder", __VA_ARGS__)
 
 #ifdef PR_LOGGING
 PRLogModuleInfo* GetDemuxerLog();
@@ -26,7 +25,7 @@ using namespace android;
 namespace mozilla {
 
 GonkMediaDataDecoder::GonkMediaDataDecoder(GonkDecoderManager* aManager,
-                                           MediaTaskQueue* aTaskQueue,
+                                           FlushableMediaTaskQueue* aTaskQueue,
                                            MediaDataDecoderCallback* aCallback)
   : mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
@@ -76,7 +75,7 @@ GonkMediaDataDecoder::ProcessDecode(mp4_demuxer::MP4Sample* aSample)
   nsresult rv = mManager->Input(aSample);
   if (rv != NS_OK) {
     NS_WARNING("GonkAudioDecoder failed to input data");
-    ALOG("Failed to input data err: %d",rv);
+    GMDD_LOG("Failed to input data err: %d",rv);
     mCallback->Error();
     return;
   }
@@ -90,8 +89,9 @@ void
 GonkMediaDataDecoder::ProcessOutput()
 {
   nsRefPtr<MediaData> output;
-  nsresult rv;
-  while (true && !mDrainComplete) {
+  nsresult rv = NS_ERROR_ABORT;
+
+  while (!mDrainComplete) {
     rv = mManager->Output(mLastStreamOffset, output);
     if (rv == NS_OK) {
       mCallback->Output(output);
@@ -111,7 +111,7 @@ GonkMediaDataDecoder::ProcessOutput()
   }
   if (rv != NS_OK) {
     NS_WARNING("GonkMediaDataDecoder failed to output data");
-    ALOG("Failed to output data");
+    GMDD_LOG("Failed to output data");
     // GonkDecoderManangers report NS_ERROR_ABORT when EOS is reached.
     if (rv == NS_ERROR_ABORT) {
       if (output) {
@@ -122,6 +122,7 @@ GonkMediaDataDecoder::ProcessOutput()
       mDrainComplete = true;
       return;
     }
+    GMDD_LOG("Callback error!");
     mCallback->Error();
   }
 }

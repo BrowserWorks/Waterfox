@@ -126,12 +126,25 @@ WebrtcAudioConduit::~WebrtcAudioConduit()
   }
 }
 
+bool WebrtcAudioConduit::SetLocalSSRC(unsigned int ssrc)
+{
+  return !mPtrRTP->SetLocalSSRC(mChannel, ssrc);
+}
+
 bool WebrtcAudioConduit::GetLocalSSRC(unsigned int* ssrc) {
   return !mPtrRTP->GetLocalSSRC(mChannel, *ssrc);
 }
 
 bool WebrtcAudioConduit::GetRemoteSSRC(unsigned int* ssrc) {
   return !mPtrRTP->GetRemoteSSRC(mChannel, *ssrc);
+}
+
+bool WebrtcAudioConduit::SetLocalCNAME(const char* cname)
+{
+  char temp[256];
+  strncpy(temp, cname, sizeof(temp) - 1);
+  temp[sizeof(temp) - 1] = 0;
+  return !mPtrRTP->SetRTCP_CNAME(mChannel, temp);
 }
 
 bool WebrtcAudioConduit::GetAVStats(int32_t* jitterBufferDelayMs,
@@ -861,6 +874,10 @@ WebrtcAudioConduit::CodecConfigToWebRTCCodec(const AudioCodecConfig* codecInfo,
   cinst.rate     =  codecInfo->mRate;
   cinst.pacsize  =  codecInfo->mPacSize;
   cinst.plfreq   =  codecInfo->mFreq;
+  if (codecInfo->mName == "G722") {
+    // Compensate for G.722 spec error in RFC 1890
+    cinst.plfreq = 16000;
+  }
   cinst.channels =  codecInfo->mChannels;
   return true;
  }

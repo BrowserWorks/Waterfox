@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (C) 2008-2014, International Business Machines Corporation and
+* Copyright (C) 2008-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -223,7 +223,7 @@ DateIntervalInfo::initializeData(const Locale& locale, UErrorCode& err)
   char parentLocale[ULOC_FULLNAME_CAPACITY];
   uprv_strcpy(parentLocale, locName);
   UErrorCode status = U_ZERO_ERROR;
-  Hashtable skeletonSet(FALSE, status);
+  Hashtable skeletonKeyPairs(FALSE, status);
   if ( U_FAILURE(status) ) {
       return;
   }
@@ -277,10 +277,6 @@ DateIntervalInfo::initializeData(const Locale& locale, UErrorCode& err)
                     continue;
                 }
                 UnicodeString skeletonUniStr(skeleton, -1, US_INV);
-                if ( skeletonSet.geti(skeletonUniStr) == 1 ) {
-                    continue;
-                }
-                skeletonSet.puti(skeletonUniStr, 1, status);
                 if ( uprv_strcmp(skeleton, gFallbackPatternTag) == 0 ) {
                     continue;  // fallback
                 }
@@ -304,6 +300,12 @@ DateIntervalInfo::initializeData(const Locale& locale, UErrorCode& err)
                     if ( U_FAILURE(status) ) {
                         break;
                     }
+                    UnicodeString keyUniStr(key, -1, US_INV);
+                    UnicodeString skeletonKeyPair(skeletonUniStr + keyUniStr);
+                    if ( skeletonKeyPairs.geti(skeletonKeyPair) == 1 ) {
+                        continue;
+                    }
+                    skeletonKeyPairs.puti(skeletonKeyPair, 1, status);
         
                     UCalendarDateFields calendarField = UCAL_FIELD_COUNT;
                     if ( !uprv_strcmp(key, "y") ) {

@@ -13,6 +13,7 @@
 #include "nsWeakPtr.h"
 #include "nsWeakReference.h"
 #include "Units.h"
+#include "mozilla/dom/SelectionStateChangedEvent.h"
 #include "mozilla/EventForwards.h"
 #include "mozilla/WeakPtr.h"
 
@@ -75,6 +76,9 @@ public:
   NS_DECL_NSIREFLOWOBSERVER
   NS_DECL_NSISELECTIONLISTENER
 
+  // Notify selection carets about the blur event to hidden itself
+  void NotifyBlur(bool aIsLeavingDocument);
+
   // nsIScrollObserver
   virtual void ScrollPositionChanged() MOZ_OVERRIDE;
 
@@ -86,11 +90,6 @@ public:
   void Terminate();
 
   nsEventStatus HandleEvent(WidgetEvent* aEvent);
-
-  /**
-   * Set visibility for selection caret.
-   */
-  void SetVisibility(bool aVisible);
 
   bool GetVisibility() const
   {
@@ -109,7 +108,12 @@ public:
 private:
   virtual ~SelectionCarets();
 
-  SelectionCarets() MOZ_DELETE;
+  SelectionCarets() = delete;
+
+  /**
+   * Set visibility for selection caret.
+   */
+  void SetVisibility(bool aVisible);
 
   /**
    * Update selection caret position base on current selection range.
@@ -117,8 +121,8 @@ private:
   void UpdateSelectionCarets();
 
   /**
-   * Select word base on current position, only active when element
-   * is focused. Triggered by long tap event.
+   * Select a word base on current position, which activates only if element is
+   * selectable. Triggered by long tap event.
    */
   nsresult SelectWord();
 
@@ -195,10 +199,16 @@ private:
    */
   void SetTilted(bool aIsTilt);
 
-  // Utility function
+  // Utility functions
   dom::Selection* GetSelection();
   already_AddRefed<nsFrameSelection> GetFrameSelection();
   nsIContent* GetFocusedContent();
+  void DispatchSelectionStateChangedEvent(dom::Selection* aSelection,
+                                          dom::SelectionState aState);
+  void DispatchSelectionStateChangedEvent(dom::Selection* aSelection,
+                                          const dom::Sequence<dom::SelectionState>& aStates);
+  void DispatchCustomEvent(const nsAString& aEvent);
+  nsRect GetSelectionBoundingRect(dom::Selection* aSel);
 
   /**
    * Detecting long tap using timer
@@ -232,6 +242,20 @@ private:
   int32_t mActiveTouchId;
 
   nscoord mCaretCenterToDownPointOffsetY;
+
+  // The horizontal boundary is defined by the first selected frame which
+  // determines the start-caret position. When users drag the end-caret up,
+  // the touch input(pos.y) will be changed to not cross this boundary.
+  // Otherwise, the selection range changes to one character only
+  // which causes the bad user experience.
+  nscoord mDragUpYBoundary;
+  // The horizontal boundary is defined by the last selected frame which
+  // determines the end-caret position. When users drag the start-caret down,
+  // the touch input(pos.y) will be changed to not cross this boundary.
+  // Otherwise, the selection range changes to one character only
+  // which causes the bad user experience.
+  nscoord mDragDownYBoundary;
+
   DragMode mDragMode;
 
   // True if AsyncPanZoom is enabled
@@ -239,6 +263,7 @@ private:
 
   bool mEndCaretVisible;
   bool mStartCaretVisible;
+  bool mSelectionVisibleInScrollFrames;
   bool mVisible;
 
   // Preference

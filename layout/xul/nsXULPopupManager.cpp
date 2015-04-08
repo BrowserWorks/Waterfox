@@ -180,7 +180,8 @@ nsXULPopupManager::GetInstance()
 }
 
 bool
-nsXULPopupManager::Rollup(uint32_t aCount, const nsIntPoint* pos, nsIContent** aLastRolledUp)
+nsXULPopupManager::Rollup(uint32_t aCount, bool aFlush,
+                          const nsIntPoint* pos, nsIContent** aLastRolledUp)
 {
   bool consume = false;
 
@@ -201,10 +202,13 @@ nsXULPopupManager::Rollup(uint32_t aCount, const nsIntPoint* pos, nsIContent** a
       *aLastRolledUp = first->Content();
     }
 
-    consume = item->Frame()->ConsumeOutsideClicks();
-    // If the click was over the anchor, always consume the click. This way,
-    // clicking on a menu doesn't reopen the menu.
-    if (!consume && pos) {
+    ConsumeOutsideClicksResult consumeResult = item->Frame()->ConsumeOutsideClicks();
+    consume = (consumeResult == ConsumeOutsideClicks_True);
+
+    // If ConsumeOutsideClicks_ParentOnly was returned, then only consume the
+    // click is it was over the anchor. This way, clicking on a menu doesn't
+    // reopen the menu.
+    if (consumeResult == ConsumeOutsideClicks_ParentOnly && pos) {
       nsCOMPtr<nsIContent> anchor = item->Frame()->GetAnchor();
 
       // Check if the anchor has indicated another node to use for checking
@@ -248,7 +252,16 @@ nsXULPopupManager::Rollup(uint32_t aCount, const nsIntPoint* pos, nsIContent** a
       }
     }
 
+    nsPresContext* presContext = item->Frame()->PresContext();
+    nsRefPtr<nsViewManager> viewManager = presContext->PresShell()->GetViewManager();
+
     HidePopup(item->Content(), true, true, false, true, lastPopup);
+
+    if (aFlush) {
+      // The popup's visibility doesn't update until the minimize animation has
+      // finished, so call UpdateWidgetGeometry to update it right away.
+      viewManager->UpdateWidgetGeometry();
+    }
   }
 
   return consume;
@@ -2160,7 +2173,7 @@ nsXULPopupManager::HandleKeyboardEventWithKeyCode(
 #endif
       // close popups or deactivate menubar when Tab or F10 are pressed
       if (aTopVisibleMenuItem) {
-        Rollup(0, nullptr, nullptr);
+        Rollup(0, false, nullptr, nullptr);
       } else if (mActiveMenuBar) {
         mActiveMenuBar->MenuClosed();
       }
@@ -2438,7 +2451,7 @@ nsXULPopupManager::KeyDown(nsIDOMKeyEvent* aKeyEvent)
         // The access key just went down and no other
         // modifiers are already down.
         if (mPopups)
-          Rollup(0, nullptr, nullptr);
+          Rollup(0, false, nullptr, nullptr);
         else if (mActiveMenuBar)
           mActiveMenuBar->MenuClosed();
       }

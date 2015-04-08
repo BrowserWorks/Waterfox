@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/th.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/th.xml
- */
 th{
     Keys{
         calendar{"ปฏิทิน"}
@@ -635,14 +632,14 @@ th{
         zxx{"ไม่มีข้อมูลภาษา"}
         zza{"ซาซา"}
     }
-    Languages%variant{
-        ps{"พุชโต"}
-        ug{"อุยกูร์"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"อะเซอรี"}
         en_GB{"อังกฤษ - อังกฤษ"}
         en_US{"อังกฤษ - อเมริกัน"}
+    }
+    Languages%variant{
+        ps{"พุชโต"}
+        ug{"อุยกูร์"}
     }
     Scripts{
         Afak{"อะฟาคา"}
@@ -1024,7 +1021,7 @@ th{
         VALLADER{"วัลลาเดอร์"}
         WADEGILE{"การถอดอักษรแบบเวด-ไจลส์"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"ภาษา: {0}"}
         script{"สคริปต์: {0}"}

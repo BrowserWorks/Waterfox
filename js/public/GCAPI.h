@@ -7,8 +7,6 @@
 #ifndef js_GCAPI_h
 #define js_GCAPI_h
 
-#include "mozilla/NullPtr.h"
-
 #include "js/HeapAPI.h"
 
 namespace js {
@@ -30,6 +28,17 @@ typedef enum JSGCMode {
      */
     JSGC_MODE_INCREMENTAL = 2
 } JSGCMode;
+
+/*
+ * Kinds of js_GC invocation.
+ */
+typedef enum JSGCInvocationKind {
+    /* Normal invocation. */
+    GC_NORMAL = 0,
+
+    /* Minimize GC triggers and release empty GC chunks right away. */
+    GC_SHRINK = 1
+} JSGCInvocationKind;
 
 namespace JS {
 
@@ -130,13 +139,13 @@ enum Reason {
 /*
  * Schedule the given zone to be collected as part of the next GC.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 PrepareZoneForGC(Zone *zone);
 
 /*
  * Schedule all zones to be collected in the next GC.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 PrepareForFullGC(JSRuntime *rt);
 
 /*
@@ -144,21 +153,21 @@ PrepareForFullGC(JSRuntime *rt);
  * previous incremental slice must be selected in subsequent slices as well.
  * This function selects those slices automatically.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 PrepareForIncrementalGC(JSRuntime *rt);
 
 /*
  * Returns true if any zone in the system has been scheduled for GC with one of
  * the functions above or by the JS engine.
  */
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsGCScheduled(JSRuntime *rt);
 
 /*
  * Undoes the effect of the Prepare methods above. The given zone will not be
  * collected in the next GC.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 SkipZoneForGC(Zone *zone);
 
 /*
@@ -168,20 +177,16 @@ SkipZoneForGC(Zone *zone);
  */
 
 /*
- * Performs a non-incremental collection of all selected zones. Some objects
- * that are unreachable from the program may still be alive afterwards because
- * of internal references.
+ * Performs a non-incremental collection of all selected zones.
+ *
+ * If the gckind argument is GC_NORMAL, then some objects that are unreachable
+ * from the program may still be alive afterwards because of internal
+ * references; if GC_SHRINK is passed then caches and other temporary references
+ * to objects will be cleared and all unreferenced objects will be removed from
+ * the system.
  */
-extern JS_FRIEND_API(void)
-GCForReason(JSRuntime *rt, gcreason::Reason reason);
-
-/*
- * Perform a non-incremental collection after clearing caches and other
- * temporary references to objects. This will remove all unreferenced objects
- * in the system.
- */
-extern JS_FRIEND_API(void)
-ShrinkingGC(JSRuntime *rt, gcreason::Reason reason);
+extern JS_PUBLIC_API(void)
+GCForReason(JSRuntime *rt, JSGCInvocationKind gckind, gcreason::Reason reason);
 
 /*
  * Incremental GC:
@@ -207,16 +212,28 @@ ShrinkingGC(JSRuntime *rt, gcreason::Reason reason);
  */
 
 /*
- * Begin an incremental collection and perform one slice worth of work or
- * perform a slice of an ongoing incremental collection. When this function
- * returns, the collection is not complete. This function must be called
- * repeatedly until !IsIncrementalGCInProgress(rt).
+ * Begin an incremental collection and perform one slice worth of work. When
+ * this function returns, the collection may not be complete.
+ * IncrementalGCSlice() must be called repeatedly until
+ * !IsIncrementalGCInProgress(rt).
  *
  * Note: SpiderMonkey's GC is not realtime. Slices in practice may be longer or
  *       shorter than the requested interval.
  */
-extern JS_FRIEND_API(void)
-IncrementalGC(JSRuntime *rt, gcreason::Reason reason, int64_t millis = 0);
+extern JS_PUBLIC_API(void)
+StartIncrementalGC(JSRuntime *rt, JSGCInvocationKind gckind, gcreason::Reason reason,
+                   int64_t millis = 0);
+
+/*
+ * Perform a slice of an ongoing incremental collection. When this function
+ * returns, the collection may not be complete. It must be called repeatedly
+ * until !IsIncrementalGCInProgress(rt).
+ *
+ * Note: SpiderMonkey's GC is not realtime. Slices in practice may be longer or
+ *       shorter than the requested interval.
+ */
+extern JS_PUBLIC_API(void)
+IncrementalGCSlice(JSRuntime *rt, gcreason::Reason reason, int64_t millis = 0);
 
 /*
  * If IsIncrementalGCInProgress(rt), this call finishes the ongoing collection
@@ -224,7 +241,7 @@ IncrementalGC(JSRuntime *rt, gcreason::Reason reason, int64_t millis = 0);
  * this is equivalent to GCForReason. When this function returns,
  * IsIncrementalGCInProgress(rt) will always be false.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 FinishIncrementalGC(JSRuntime *rt, gcreason::Reason reason);
 
 enum GCProgress {
@@ -244,7 +261,7 @@ enum GCProgress {
     GC_CYCLE_END
 };
 
-struct JS_FRIEND_API(GCDescription) {
+struct JS_PUBLIC_API(GCDescription) {
     bool isCompartment_;
 
     explicit GCDescription(bool isCompartment)
@@ -262,7 +279,7 @@ typedef void
  * callback may be used for GC notifications as well as to perform additional
  * marking.
  */
-extern JS_FRIEND_API(GCSliceCallback)
+extern JS_PUBLIC_API(GCSliceCallback)
 SetGCSliceCallback(JSRuntime *rt, GCSliceCallback callback);
 
 /*
@@ -271,7 +288,7 @@ SetGCSliceCallback(JSRuntime *rt, GCSliceCallback callback);
  * There is not currently a way to re-enable incremental GC once it has been
  * disabled on the runtime.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 DisableIncrementalGC(JSRuntime *rt);
 
 /*
@@ -282,14 +299,29 @@ DisableIncrementalGC(JSRuntime *rt);
  * GCDescription returned by GCSliceCallback may help narrow down the cause if
  * collections are not happening incrementally when expected.
  */
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsIncrementalGCEnabled(JSRuntime *rt);
+
+/*
+ * Compacting GC defaults to enabled, but may be disabled for testing or in
+ * embeddings that have not implemented the necessary object moved hooks or weak
+ * pointer callbacks.  There is not currently a way to re-enable compacting GC
+ * once it has been disabled on the runtime.
+ */
+extern JS_PUBLIC_API(void)
+DisableCompactingGC(JSRuntime *rt);
+
+/*
+ * Returns true if compacting GC is enabled.
+ */
+extern JS_PUBLIC_API(bool)
+IsCompactingGCEnabled(JSRuntime *rt);
 
 /*
  * Returns true while an incremental GC is ongoing, both when actively
  * collecting and between slices.
  */
-JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsIncrementalGCInProgress(JSRuntime *rt);
 
 /*
@@ -297,29 +329,29 @@ IsIncrementalGCInProgress(JSRuntime *rt);
  * This is generally only true when running mutator code in-between GC slices.
  * At other times, the barrier may be elided for performance.
  */
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsIncrementalBarrierNeeded(JSRuntime *rt);
 
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsIncrementalBarrierNeeded(JSContext *cx);
 
 /*
  * Notify the GC that a reference to a GC thing is about to be overwritten.
  * These methods must be called if IsIncrementalBarrierNeeded.
  */
-extern JS_FRIEND_API(void)
-IncrementalReferenceBarrier(void *ptr, JSGCTraceKind kind);
+extern JS_PUBLIC_API(void)
+IncrementalReferenceBarrier(GCCellPtr thing);
 
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 IncrementalValueBarrier(const Value &v);
 
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 IncrementalObjectBarrier(JSObject *obj);
 
 /*
  * Returns true if the most recent GC ran incrementally.
  */
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 WasIncrementalGC(JSRuntime *rt);
 
 /*
@@ -331,10 +363,10 @@ WasIncrementalGC(JSRuntime *rt);
  */
 
 /* Ensure that generational GC is disabled within some scope. */
-class JS_FRIEND_API(AutoDisableGenerationalGC)
+class JS_PUBLIC_API(AutoDisableGenerationalGC)
 {
     js::gc::GCRuntime *gc;
-#if defined(JSGC_GENERATIONAL) && defined(JS_GC_ZEAL)
+#ifdef JS_GC_ZEAL
     bool restartVerifier;
 #endif
 
@@ -347,7 +379,7 @@ class JS_FRIEND_API(AutoDisableGenerationalGC)
  * Returns true if generational allocation and collection is currently enabled
  * on the given runtime.
  */
-extern JS_FRIEND_API(bool)
+extern JS_PUBLIC_API(bool)
 IsGenerationalGCEnabled(JSRuntime *rt);
 
 /*
@@ -355,7 +387,7 @@ IsGenerationalGCEnabled(JSRuntime *rt);
  * of GCs that have been run, but is guaranteed to be monotonically increasing
  * with GC activity.
  */
-extern JS_FRIEND_API(size_t)
+extern JS_PUBLIC_API(size_t)
 GetGCNumber();
 
 /*
@@ -363,7 +395,7 @@ GetGCNumber();
  * back to the system incase it is needed soon afterwards. This call forces the
  * GC to return this memory immediately.
  */
-extern JS_FRIEND_API(void)
+extern JS_PUBLIC_API(void)
 ShrinkGCBuffers(JSRuntime *rt);
 
 /*
@@ -471,7 +503,7 @@ class JS_PUBLIC_API(AutoCheckCannotGC) : public AutoAssertOnGC
  * JSTRACE_SHAPE. |thing| should be non-null.
  */
 extern JS_FRIEND_API(bool)
-UnmarkGrayGCThingRecursively(void *thing, JSGCTraceKind kind);
+UnmarkGrayGCThingRecursively(GCCellPtr thing);
 
 } /* namespace JS */
 
@@ -479,24 +511,35 @@ namespace js {
 namespace gc {
 
 static MOZ_ALWAYS_INLINE void
-ExposeGCThingToActiveJS(void *thing, JSGCTraceKind kind)
+ExposeGCThingToActiveJS(JS::GCCellPtr thing)
 {
-    MOZ_ASSERT(kind != JSTRACE_SHAPE);
+    MOZ_ASSERT(thing.kind() != JSTRACE_SHAPE);
 
-    JS::shadow::Runtime *rt = GetGCThingRuntime(thing);
-#ifdef JSGC_GENERATIONAL
     /*
      * GC things residing in the nursery cannot be gray: they have no mark bits.
      * All live objects in the nursery are moved to tenured at the beginning of
      * each GC slice, so the gray marker never sees nursery things.
      */
-    if (IsInsideNursery((Cell *)thing))
+    if (IsInsideNursery(thing.asCell()))
         return;
-#endif
-    if (JS::IsIncrementalBarrierNeededOnTenuredGCThing(rt, thing, kind))
-        JS::IncrementalReferenceBarrier(thing, kind);
+    JS::shadow::Runtime *rt = detail::GetGCThingRuntime(thing.unsafeAsUIntPtr());
+    if (IsIncrementalBarrierNeededOnTenuredGCThing(rt, thing))
+        JS::IncrementalReferenceBarrier(thing);
     else if (JS::GCThingIsMarkedGray(thing))
-        JS::UnmarkGrayGCThingRecursively(thing, kind);
+        JS::UnmarkGrayGCThingRecursively(thing);
+}
+
+static MOZ_ALWAYS_INLINE void
+MarkGCThingAsLive(JSRuntime *aRt, JS::GCCellPtr thing)
+{
+    JS::shadow::Runtime *rt = JS::shadow::Runtime::asShadowRuntime(aRt);
+    /*
+     * Any object in the nursery will not be freed during any GC running at that time.
+     */
+    if (IsInsideNursery(thing.asCell()))
+        return;
+    if (IsIncrementalBarrierNeededOnTenuredGCThing(rt, thing))
+        JS::IncrementalReferenceBarrier(thing);
 }
 
 } /* namespace gc */
@@ -513,38 +556,23 @@ namespace JS {
 static MOZ_ALWAYS_INLINE void
 ExposeObjectToActiveJS(JSObject *obj)
 {
-    js::gc::ExposeGCThingToActiveJS(obj, JSTRACE_OBJECT);
+    js::gc::ExposeGCThingToActiveJS(GCCellPtr(obj));
 }
 
 static MOZ_ALWAYS_INLINE void
 ExposeScriptToActiveJS(JSScript *script)
 {
-    js::gc::ExposeGCThingToActiveJS(script, JSTRACE_SCRIPT);
+    js::gc::ExposeGCThingToActiveJS(GCCellPtr(script));
 }
 
 /*
- * If a GC is currently marking, mark the object black.
+ * If a GC is currently marking, mark the string black.
  */
-static MOZ_ALWAYS_INLINE void
-MarkGCThingAsLive(JSRuntime *rt_, void *thing, JSGCTraceKind kind)
-{
-    shadow::Runtime *rt = shadow::Runtime::asShadowRuntime(rt_);
-#ifdef JSGC_GENERATIONAL
-    /*
-     * Any object in the nursery will not be freed during any GC running at that time.
-     */
-    if (js::gc::IsInsideNursery((js::gc::Cell *)thing))
-        return;
-#endif
-    if (IsIncrementalBarrierNeededOnTenuredGCThing(rt, thing, kind))
-        IncrementalReferenceBarrier(thing, kind);
-}
-
 static MOZ_ALWAYS_INLINE void
 MarkStringAsLive(Zone *zone, JSString *string)
 {
     JSRuntime *rt = JS::shadow::Zone::asShadowZone(zone)->runtimeFromMainThread();
-    MarkGCThingAsLive(rt, string, JSTRACE_STRING);
+    js::gc::MarkGCThingAsLive(rt, GCCellPtr(string));
 }
 
 /*

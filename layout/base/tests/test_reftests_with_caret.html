@@ -15,6 +15,8 @@
 <script type="text/javascript">
 
 SimpleTest.waitForExplicitFinish();
+SimpleTest.requestFlakyTimeout("untriaged");
+SimpleTest.requestLongerTimeout(2);
 
 var iframes = [];
 function callbackTestIframe(iframe)

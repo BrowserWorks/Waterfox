@@ -15,6 +15,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "NetUtil",
                                   "resource://gre/modules/NetUtil.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Prefetcher",
+                                  "resource://gre/modules/Prefetcher.jsm");
 
 // Similar to Python. Returns dict[key] if it exists. Otherwise,
 // sets dict[key] to default_ and returns default_.
@@ -112,14 +114,14 @@ let ContentPolicyParent = {
     this._policies = new Map();
   },
 
-  addContentPolicy: function(name, cid) {
+  addContentPolicy: function(addon, name, cid) {
     this._policies.set(name, cid);
-    NotificationTracker.add(["content-policy"]);
+    NotificationTracker.add(["content-policy", addon]);
   },
 
-  removeContentPolicy: function(name) {
+  removeContentPolicy: function(addon, name) {
     this._policies.delete(name);
-    NotificationTracker.remove(["content-policy"]);
+    NotificationTracker.remove(["content-policy", addon]);
   },
 
   receiveMessage: function (aMessage) {
@@ -143,13 +145,15 @@ let ContentPolicyParent = {
         let contentLocation = BrowserUtils.makeURI(aData.contentLocation);
         let requestOrigin = aData.requestOrigin ? BrowserUtils.makeURI(aData.requestOrigin) : null;
 
-        let result = policy.shouldLoad(aData.contentType,
-                                       contentLocation,
-                                       requestOrigin,
-                                       aObjects.node,
-                                       aData.mimeTypeGuess,
-                                       null,
-                                       aData.requestPrincipal);
+        let result = Prefetcher.withPrefetching(aData.prefetched, aObjects, () => {
+          return policy.shouldLoad(aData.contentType,
+                                   contentLocation,
+                                   requestOrigin,
+                                   aObjects.node,
+                                   aData.mimeTypeGuess,
+                                   null,
+                                   aData.requestPrincipal);
+        });
         if (result != Ci.nsIContentPolicy.ACCEPT && result != 0)
           return result;
       } catch (e) {
@@ -169,7 +173,7 @@ let CategoryManagerInterposition = new Interposition("CategoryManagerInterpositi
 CategoryManagerInterposition.methods.addCategoryEntry =
   function(addon, target, category, entry, value, persist, replace) {
     if (category == "content-policy") {
-      ContentPolicyParent.addContentPolicy(entry, value);
+      ContentPolicyParent.addContentPolicy(addon, entry, value);
     }
 
     target.addCategoryEntry(category, entry, value, persist, replace);
@@ -178,7 +182,7 @@ CategoryManagerInterposition.methods.addCategoryEntry =
 CategoryManagerInterposition.methods.deleteCategoryEntry =
   function(addon, target, category, entry, persist) {
     if (category == "content-policy") {
-      ContentPolicyParent.removeContentPolicy(entry);
+      ContentPolicyParent.removeContentPolicy(addon, entry);
     }
 
     target.deleteCategoryEntry(category, entry, persist);
@@ -196,15 +200,15 @@ let AboutProtocolParent = {
     this._protocols = [];
   },
 
-  registerFactory: function(class_, className, contractID, factory) {
+  registerFactory: function(addon, class_, className, contractID, factory) {
     this._protocols.push({contractID: contractID, factory: factory});
-    NotificationTracker.add(["about-protocol", contractID]);
+    NotificationTracker.add(["about-protocol", contractID, addon]);
   },
 
-  unregisterFactory: function(class_, factory) {
+  unregisterFactory: function(addon, class_, factory) {
     for (let i = 0; i < this._protocols.length; i++) {
       if (this._protocols[i].factory == factory) {
-        NotificationTracker.remove(["about-protocol", this._protocols[i].contractID]);
+        NotificationTracker.remove(["about-protocol", this._protocols[i].contractID, addon]);
         this._protocols.splice(i, 1);
         break;
       }
@@ -241,7 +245,11 @@ let AboutProtocolParent = {
     try {
       let channel = module.newChannel(uri, null);
       channel.notificationCallbacks = msg.objects.notificationCallbacks;
-      channel.loadGroup = {notificationCallbacks: msg.objects.loadGroupNotificationCallbacks};
+      if (msg.objects.loadGroupNotificationCallbacks) {
+        channel.loadGroup = {notificationCallbacks: msg.objects.loadGroupNotificationCallbacks};
+      } else {
+        channel.loadGroup = null;
+      }
       let stream = channel.open();
       let data = NetUtil.readInputStreamToString(stream, stream.available(), {});
       return {
@@ -260,7 +268,7 @@ let ComponentRegistrarInterposition = new Interposition("ComponentRegistrarInter
 ComponentRegistrarInterposition.methods.registerFactory =
   function(addon, target, class_, className, contractID, factory) {
     if (contractID && contractID.startsWith("@mozilla.org/network/protocol/about;1?")) {
-      AboutProtocolParent.registerFactory(class_, className, contractID, factory);
+      AboutProtocolParent.registerFactory(addon, class_, className, contractID, factory);
     }
 
     target.registerFactory(class_, className, contractID, factory);
@@ -268,7 +276,7 @@ ComponentRegistrarInterposition.methods.registerFactory =
 
 ComponentRegistrarInterposition.methods.unregisterFactory =
   function(addon, target, class_, factory) {
-    AboutProtocolParent.unregisterFactory(class_, factory);
+    AboutProtocolParent.unregisterFactory(addon, class_, factory);
     target.unregisterFactory(class_, factory);
   };
 
@@ -288,14 +296,14 @@ let ObserverParent = {
     ppmm.addMessageListener("Addons:Observer:Run", this);
   },
 
-  addObserver: function(observer, topic, ownsWeak) {
+  addObserver: function(addon, observer, topic, ownsWeak) {
     Services.obs.addObserver(observer, "e10s-" + topic, ownsWeak);
-    NotificationTracker.add(["observer", topic]);
+    NotificationTracker.add(["observer", topic, addon]);
   },
 
-  removeObserver: function(observer, topic) {
+  removeObserver: function(addon, observer, topic) {
     Services.obs.removeObserver(observer, "e10s-" + topic);
-    NotificationTracker.remove(["observer", topic]);
+    NotificationTracker.remove(["observer", topic, addon]);
   },
 
   receiveMessage: function(msg) {
@@ -331,7 +339,7 @@ let ObserverInterposition = new Interposition("ObserverInterposition");
 ObserverInterposition.methods.addObserver =
   function(addon, target, observer, topic, ownsWeak) {
     if (TOPIC_WHITELIST.indexOf(topic) >= 0) {
-      ObserverParent.addObserver(observer, topic);
+      ObserverParent.addObserver(addon, observer, topic);
     }
 
     target.addObserver(observer, topic, ownsWeak);
@@ -340,7 +348,7 @@ ObserverInterposition.methods.addObserver =
 ObserverInterposition.methods.removeObserver =
   function(addon, target, observer, topic) {
     if (TOPIC_WHITELIST.indexOf(topic) >= 0) {
-      ObserverParent.removeObserver(observer, topic);
+      ObserverParent.removeObserver(addon, observer, topic);
     }
 
     target.removeObserver(observer, topic);
@@ -400,7 +408,7 @@ let EventTargetParent = {
     return [browser, window];
   },
 
-  addEventListener: function(target, type, listener, useCapture, wantsUntrusted) {
+  addEventListener: function(addon, target, type, listener, useCapture, wantsUntrusted) {
     let newTarget = this.redirectEventTarget(target);
     if (!newTarget) {
       return;
@@ -409,7 +417,7 @@ let EventTargetParent = {
     useCapture = useCapture || false;
     wantsUntrusted = wantsUntrusted || false;
 
-    NotificationTracker.add(["event", type, useCapture]);
+    NotificationTracker.add(["event", type, useCapture, addon]);
 
     let listeners = this._listeners.get(newTarget);
     if (!listeners) {
@@ -430,7 +438,7 @@ let EventTargetParent = {
     forType.push({listener: listener, wantsUntrusted: wantsUntrusted, useCapture: useCapture});
   },
 
-  removeEventListener: function(target, type, listener, useCapture) {
+  removeEventListener: function(addon, target, type, listener, useCapture) {
     let newTarget = this.redirectEventTarget(target);
     if (!newTarget) {
       return;
@@ -447,7 +455,7 @@ let EventTargetParent = {
     for (let i = 0; i < forType.length; i++) {
       if (forType[i].listener === listener && forType[i].useCapture === useCapture) {
         forType.splice(i, 1);
-        NotificationTracker.remove(["event", type, useCapture]);
+        NotificationTracker.remove(["event", type, useCapture, addon]);
         break;
       }
     }
@@ -457,12 +465,14 @@ let EventTargetParent = {
     switch (msg.name) {
       case "Addons:Event:Run":
         this.dispatch(msg.target, msg.data.type, msg.data.capturing,
-                      msg.data.isTrusted, msg.objects.event);
+                      msg.data.isTrusted, msg.data.prefetched, msg.objects);
         break;
     }
   },
 
-  dispatch: function(browser, type, capturing, isTrusted, event) {
+  dispatch: function(browser, type, capturing, isTrusted, prefetched, cpows) {
+    let event = cpows.event;
+    let eventTarget = cpows.eventTarget;
     let targets = this.getTargets(browser);
     for (let target of targets) {
       let listeners = this._listeners.get(target);
@@ -481,11 +491,13 @@ let EventTargetParent = {
 
       for (let handler of handlers) {
         try {
-          if ("handleEvent" in handler) {
-            handler.handleEvent(event);
-          } else {
-            handler.call(event.target, event);
-          }
+          Prefetcher.withPrefetching(prefetched, cpows, () => {
+            if ("handleEvent" in handler) {
+              handler.handleEvent(event);
+            } else {
+              handler.call(event.target, event);
+            }
+          });
         } catch (e) {
           Cu.reportError(e);
         }
@@ -537,13 +549,13 @@ let EventTargetInterposition = new Interposition("EventTargetInterposition");
 
 EventTargetInterposition.methods.addEventListener =
   function(addon, target, type, listener, useCapture, wantsUntrusted) {
-    EventTargetParent.addEventListener(target, type, listener, useCapture, wantsUntrusted);
+    EventTargetParent.addEventListener(addon, target, type, listener, useCapture, wantsUntrusted);
     target.addEventListener(type, makeFilteringListener(type, listener), useCapture, wantsUntrusted);
   };
 
 EventTargetInterposition.methods.removeEventListener =
   function(addon, target, type, listener, useCapture) {
-    EventTargetParent.removeEventListener(target, type, listener, useCapture);
+    EventTargetParent.removeEventListener(addon, target, type, listener, useCapture);
     target.removeEventListener(type, makeFilteringListener(type, listener), useCapture);
   };
 
@@ -738,14 +750,25 @@ let DummyContentDocument = {
   location: { href: "about:blank" }
 };
 
-RemoteBrowserElementInterposition.getters.contentDocument = function(addon, target) {
-  // If we don't have a CPOW yet, just return something we can use to
-  // examine readyState. This is useful for tests that create a new
-  // tab and then immediately start polling readyState.
-  if (!target.contentDocumentAsCPOW) {
+function getContentDocument(addon, browser)
+{
+  let doc = Prefetcher.lookupInCache(addon, browser.contentWindowAsCPOW, "document");
+  if (doc) {
+    return doc;
+  }
+
+  doc = browser.contentDocumentAsCPOW;
+  if (!doc) {
+    // If we don't have a CPOW yet, just return something we can use to
+    // examine readyState. This is useful for tests that create a new
+    // tab and then immediately start polling readyState.
     return DummyContentDocument;
   }
-  return target.contentDocumentAsCPOW;
+  return doc;
+}
+
+RemoteBrowserElementInterposition.getters.contentDocument = function(addon, target) {
+  return getContentDocument(addon, target);
 };
 
 let TabBrowserElementInterposition = new Interposition("TabBrowserElementInterposition",
@@ -760,10 +783,7 @@ TabBrowserElementInterposition.getters.contentWindow = function(addon, target) {
 
 TabBrowserElementInterposition.getters.contentDocument = function(addon, target) {
   let browser = target.selectedBrowser;
-  if (!browser.contentDocumentAsCPOW) {
-    return DummyContentDocument;
-  }
-  return browser.contentDocumentAsCPOW;
+  return getContentDocument(addon, browser);
 };
 
 let ChromeWindowInterposition = new Interposition("ChromeWindowInterposition",

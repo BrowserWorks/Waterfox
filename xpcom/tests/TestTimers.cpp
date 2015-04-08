@@ -42,7 +42,7 @@ public:
     return mThread;
   }
 
-  nsIThread* operator->() const {
+  nsIThread* operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN {
     return mThread;
   }
 
@@ -78,7 +78,7 @@ public:
   TimerCallback(nsIThread** aThreadPtr, ReentrantMonitor* aReentrantMonitor)
   : mThreadPtr(aThreadPtr), mReentrantMonitor(aReentrantMonitor) { }
 
-  NS_IMETHOD Notify(nsITimer* aTimer) {
+  NS_IMETHOD Notify(nsITimer* aTimer) MOZ_OVERRIDE {
     NS_ASSERTION(mThreadPtr, "Callback was not supposed to be called!");
     nsCOMPtr<nsIThread> current(do_GetCurrentThread());
 

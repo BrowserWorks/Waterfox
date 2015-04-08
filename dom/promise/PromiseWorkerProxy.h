@@ -62,12 +62,13 @@ class PromiseWorkerProxy : public PromiseNativeHandler,
   friend class PromiseWorkerProxyRunnable;
 
   // This overrides the non-threadsafe refcounting in PromiseNativeHandler.
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(PromiseWorkerProxy)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(PromiseWorkerProxy, MOZ_OVERRIDE)
 
 public:
-  PromiseWorkerProxy(workers::WorkerPrivate* aWorkerPrivate,
-                     Promise* aWorkerPromise,
-                     JSStructuredCloneCallbacks* aCallbacks = nullptr);
+  static already_AddRefed<PromiseWorkerProxy>
+  Create(workers::WorkerPrivate* aWorkerPrivate,
+         Promise* aWorkerPromise,
+         const JSStructuredCloneCallbacks* aCallbacks = nullptr);
 
   workers::WorkerPrivate* GetWorkerPrivate() const;
 
@@ -87,6 +88,10 @@ protected:
   virtual bool Notify(JSContext* aCx, workers::Status aStatus) MOZ_OVERRIDE;
 
 private:
+  PromiseWorkerProxy(workers::WorkerPrivate* aWorkerPrivate,
+                     Promise* aWorkerPromise,
+                     const JSStructuredCloneCallbacks* aCallbacks = nullptr);
+
   virtual ~PromiseWorkerProxy();
 
   // Function pointer for calling Promise::{ResolveInternal,RejectInternal}.
@@ -104,7 +109,7 @@ private:
 
   bool mCleanedUp; // To specify if the cleanUp() has been done.
 
-  JSStructuredCloneCallbacks* mCallbacks;
+  const JSStructuredCloneCallbacks* mCallbacks;
 
   // Aimed to keep objects alive when doing the structured-clone read/write,
   // which can be added by calling StoreISupports() on the main thread.

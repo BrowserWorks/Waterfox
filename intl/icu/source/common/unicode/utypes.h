@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1996-2014, International Business Machines
+*   Copyright (C) 1996-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -651,8 +651,9 @@ typedef enum UErrorCode {
     U_REGEX_STOPPED_BY_CALLER,            /**< Matching operation aborted by user callback fn.    */
 #ifndef U_HIDE_DRAFT_API
     U_REGEX_PATTERN_TOO_BIG,              /**< Pattern exceeds limits on size or complexity. @draft ICU 55 */
+    U_REGEX_INVALID_CAPTURE_GROUP_NAME,   /**< Invalid capture group name. @draft ICU 55 */
 #endif  /* U_HIDE_DRAFT_API */
-    U_REGEX_ERROR_LIMIT=U_REGEX_STOPPED_BY_CALLER+2, /**< This must always be the last value to indicate the limit for regexp errors */
+    U_REGEX_ERROR_LIMIT=U_REGEX_STOPPED_BY_CALLER+3, /**< This must always be the last value to indicate the limit for regexp errors */
 
     /*
      * The error code in the range 0x10400-0x104ff are reserved for IDNA related error codes

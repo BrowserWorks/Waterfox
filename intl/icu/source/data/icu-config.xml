@@ -1,7 +1,7 @@
 <!--
 /*
 *******************************************************************************
-* Copyright (C) 2005-2014, International Business Machines Corporation and    *
+* Copyright (C) 2005-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.	                                         *
 *******************************************************************************
 */
@@ -648,11 +648,10 @@
 		<include locales="sv_FI"/>
 		<include locales="sv_SE"/>
 		<include locales="sw"/>
+		<include locales="sw_CD"/>
 		<include locales="sw_KE"/>
 		<include locales="sw_TZ"/>
 		<include locales="sw_UG"/>
-		<include locales="swc"/>
-		<include locales="swc_CD"/>
 		<include locales="ta"/>
 		<include locales="ta_IN"/>
 		<include locales="ta_LK"/>
@@ -740,31 +739,4 @@
 		<include locales="zu"/>
 		<include locales="zu_ZA"/>
 	</locales>
-	<paths>
-		<include xpath="//ldml/.*"/>
-		<include xpath="//ldml/collations/.*" alt="short"/>
-		<include xpath="//ldml/.*" draft="contributed"/>
-		<include xpath="//ldml/.*/special/.*"/>
-		<include xpath="//supplementalData/.*"/>
-		<include xpath="//supplementalMetaData/.*"/>
-		<!-- Exclude unusable data -->
-		<!-- Need to allow alt=.* for ldml/collations, but exclude for others -->
-		<exclude xpath="//ldml/fallback/.*" alt=".*"/>
-		<exclude xpath="//ldml/localeDisplayNames/.*" alt=".*"/>
-		<exclude xpath="//ldml/layout/.*" alt=".*"/>
-		<exclude xpath="//ldml/characters/.*" alt=".*"/>
-		<exclude xpath="//ldml/delimiters/.*" alt=".*"/>
-		<exclude xpath="//ldml/measurement/.*" alt=".*"/>
-		<exclude xpath="//ldml/dates/.*" alt=".*"/>
-		<exclude xpath="//ldml/numbers/.*" alt=".*"/>
-		<exclude xpath="//ldml/units/.*" alt=".*"/>
-		<exclude xpath="//ldml/listPatterns/.*" alt=".*"/>
-		<exclude xpath="//ldml/posix/.*" alt=".*"/>
-		<exclude xpath="//ldml/segmentations/.*" alt=".*"/>
-		<exclude xpath="//ldml/rbnf/.*" alt=".*"/>
-		<exclude xpath="//ldml/.*" draft="provisional"/>
-		<exclude xpath="//ldml/.*" draft="unconfirmed"/>
-		<exclude xpath="//ldml/dates/localizedPatternChars.*"/>
-		<exclude xpath="//ldml/posix/messages/.*"/>
-	</paths>
 </config>

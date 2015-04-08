@@ -55,10 +55,6 @@ int __real_pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mtx);
 int __real_pthread_cond_timedwait(pthread_cond_t *cond,
                                   pthread_mutex_t *mtx,
                                   const struct timespec *abstime);
-int __real___pthread_cond_timedwait(pthread_cond_t *cond,
-                                    pthread_mutex_t *mtx,
-                                    const struct timespec *abstime,
-                                    clockid_t clock);
 int __real_pthread_mutex_lock(pthread_mutex_t *mtx);
 int __real_poll(struct pollfd *fds, nfds_t nfds, int timeout);
 int __real_epoll_create(int size);
@@ -332,32 +328,6 @@ GetThreadInfo(pthread_t threadID) {
     pthread_mutex_unlock(&sThreadCountLock);
   }
   return tinfo;
-}
-
-/**
- * Get thread info using the specified native thread ID.
- *
- * @return thread_info_t with nativeThreadID == specified threadID
- */
-static thread_info_t*
-GetThreadInfo(pid_t threadID) {
-  if (sIsNuwaProcess) {
-    REAL(pthread_mutex_lock)(&sThreadCountLock);
-  }
-  thread_info_t *thrinfo = nullptr;
-  for (thread_info_t *tinfo = sAllThreads.getFirst();
-       tinfo;
-       tinfo = tinfo->getNext()) {
-    if (tinfo->origNativeThreadID == threadID) {
-      thrinfo = tinfo;
-      break;
-    }
-  }
-  if (sIsNuwaProcess) {
-    pthread_mutex_unlock(&sThreadCountLock);
-  }
-
-  return thrinfo;
 }
 
 #if !defined(HAVE_THREAD_TLS_KEYWORD)
@@ -913,11 +883,16 @@ static int sRecreateGatePassed = 0;
  * 3) Freeze point 2: blocks the current thread by acquiring sThreadFreezeLock.
  *    If freezing is not enabled then revert the counter change in freeze
  *    point 1.
+ *
+ * Note: the purpose of the '(void) variable;' statements is to avoid
+ *       -Wunused-but-set-variable warnings.
  */
 #define THREAD_FREEZE_POINT1()                                 \
   bool freezeCountChg = false;                                 \
   bool recreated = false;                                      \
+  (void) recreated;                                            \
   volatile bool freezePoint2 = false;                          \
+  (void) freezePoint2;                                         \
   thread_info_t *tinfo;                                        \
   if (sIsNuwaProcess &&                                        \
       (tinfo = CUR_THREAD_INFO) &&                             \
@@ -1123,47 +1098,6 @@ __wrap_pthread_cond_timedwait(pthread_cond_t *cond,
   return rv;
 }
 
-extern "C" int __pthread_cond_timedwait(pthread_cond_t *cond,
-                                        pthread_mutex_t *mtx,
-                                        const struct timespec *abstime,
-                                        clockid_t clock);
-
-extern "C" MFBT_API int
-__wrap___pthread_cond_timedwait(pthread_cond_t *cond,
-                                pthread_mutex_t *mtx,
-                                const struct timespec *abstime,
-                                clockid_t clock) {
-  int rv = 0;
-
-  THREAD_FREEZE_POINT1_VIP();
-  if (freezePoint2) {
-    RECREATE_CONTINUE();
-    RECREATE_PASS_VIP();
-    RECREATE_GATE_VIP();
-    return rv;
-  }
-  if (recreated && mtx) {
-    if (!freezePoint1) {
-      tinfo->condMutex = mtx;
-      if (!pthread_mutex_trylock(mtx)) {
-        tinfo->condMutexNeedsBalancing = true;
-      }
-    }
-    RECREATE_CONTINUE();
-    RECREATE_PASS_VIP();
-  }
-  rv = REAL(__pthread_cond_timedwait)(cond, mtx, abstime, clock);
-  if (recreated && mtx) {
-    if (tinfo->condMutex) {
-      tinfo->condMutexNeedsBalancing = false;
-      pthread_mutex_unlock(mtx);
-    }
-    RECREATE_GATE_VIP();
-  }
-  THREAD_FREEZE_POINT2_VIP();
-
-  return rv;
-}
 
 extern "C" MFBT_API int
 __wrap_pthread_mutex_lock(pthread_mutex_t *mtx) {

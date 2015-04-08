@@ -198,8 +198,7 @@ class MacroAssembler : public MacroAssemblerSpecific
     IonInstrumentation *sps_;
 
     // Labels for handling exceptions and failures.
-    NonAssertingLabel sequentialFailureLabel_;
-    NonAssertingLabel parallelFailureLabel_;
+    NonAssertingLabel failureLabel_;
 
   public:
     // If instrumentation should be emitted, then the sps parameter should be
@@ -830,30 +829,10 @@ class MacroAssembler : public MacroAssemblerSpecific
     void newGCString(Register result, Register temp, Label *fail);
     void newGCFatInlineString(Register result, Register temp, Label *fail);
 
-    void newGCThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                       gc::AllocKind allocKind, Label *fail);
-#ifdef JSGC_FJGENERATIONAL
-    void newGCNurseryThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                              gc::AllocKind allocKind, Label *fail);
-#endif
-    void newGCTenuredThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                              gc::AllocKind allocKind, Label *fail);
-    void newGCThingPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                       NativeObject *templateObject, Label *fail);
-    void newGCStringPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                        Label *fail);
-    void newGCFatInlineStringPar(Register result, Register cx, Register tempReg1, Register tempReg2,
-                                 Label *fail);
-
-
     // Compares two strings for equality based on the JSOP.
     // This checks for identical pointers, atoms and length and fails for everything else.
     void compareStrings(JSOp op, Register left, Register right, Register result,
                         Label *fail);
-
-    // Checks the flags that signal that parallel code may need to interrupt or
-    // abort.  Branches to fail in that case.
-    void checkInterruptFlagPar(Register tempReg, Label *fail);
 
     // If the JitCode that created this assembler needs to transition into the VM,
     // we want to store the JitCode on the stack in order to mark it during a GC.
@@ -863,13 +842,16 @@ class MacroAssembler : public MacroAssemblerSpecific
 
   private:
     void linkExitFrame();
-    void linkParallelExitFrame(Register pt);
 
   public:
+    void PushStubCode() {
+        exitCodePatch_ = PushWithPatch(ImmWord(-1));
+    }
+
     void enterExitFrame(const VMFunction *f = nullptr) {
         linkExitFrame();
         // Push the ioncode. (Bailout or VM wrapper)
-        exitCodePatch_ = PushWithPatch(ImmWord(-1));
+        PushStubCode();
         // Push VMFunction pointer, to mark arguments.
         Push(ImmPtr(f));
     }
@@ -888,22 +870,8 @@ class MacroAssembler : public MacroAssemblerSpecific
         movePtr(ImmPtr(GetJitContext()->runtime->addressOfThreadPool()), pool);
     }
 
-    void loadForkJoinContext(Register cx, Register scratch);
-    void loadContext(Register cxReg, Register scratch, ExecutionMode executionMode);
-
-    void enterParallelExitFrameAndLoadContext(const VMFunction *f, Register cx,
-                                              Register scratch);
-
-    void enterExitFrameAndLoadContext(const VMFunction *f, Register cxReg, Register scratch,
-                                      ExecutionMode executionMode);
-
-    void enterFakeParallelExitFrame(Register cx, Register scratch, JitCode *codeVal);
-
-    void enterFakeExitFrame(Register cxReg, Register scratch, ExecutionMode executionMode,
-                            JitCode *codeVal);
-
-    void leaveExitFrame() {
-        freeStack(ExitFooterFrame::Size());
+    void leaveExitFrame(size_t extraFrame = 0) {
+        freeStack(ExitFooterFrame::Size() + extraFrame);
     }
 
     bool hasEnteredExitFrame() const {
@@ -1173,8 +1141,8 @@ class MacroAssembler : public MacroAssemblerSpecific
     void spsMarkJit(SPSProfiler *p, Register framePtr, Register temp);
     void spsUnmarkJit(SPSProfiler *p, Register temp);
 
-    void loadBaselineOrIonRaw(Register script, Register dest, ExecutionMode mode, Label *failure);
-    void loadBaselineOrIonNoArgCheck(Register callee, Register dest, ExecutionMode mode, Label *failure);
+    void loadBaselineOrIonRaw(Register script, Register dest, Label *failure);
+    void loadBaselineOrIonNoArgCheck(Register callee, Register dest, Label *failure);
 
     void loadBaselineFramePtr(Register framePtr, Register dest);
 
@@ -1184,20 +1152,16 @@ class MacroAssembler : public MacroAssemblerSpecific
     }
 
   private:
-    void handleFailure(ExecutionMode executionMode);
+    void handleFailure();
 
   public:
     Label *exceptionLabel() {
         // Exceptions are currently handled the same way as sequential failures.
-        return &sequentialFailureLabel_;
+        return &failureLabel_;
     }
 
-    Label *failureLabel(ExecutionMode executionMode) {
-        switch (executionMode) {
-          case SequentialExecution: return &sequentialFailureLabel_;
-          case ParallelExecution: return &parallelFailureLabel_;
-          default: MOZ_CRASH("Unexpected execution mode");
-        }
+    Label *failureLabel() {
+        return &failureLabel_;
     }
 
     void finish();
@@ -1207,11 +1171,11 @@ class MacroAssembler : public MacroAssemblerSpecific
     void printf(const char *output, Register value);
 
 #ifdef JS_TRACE_LOGGING
-    void tracelogStart(Register logger, uint32_t textId);
-    void tracelogStart(Register logger, Register textId);
-    void tracelogStop(Register logger, uint32_t textId);
-    void tracelogStop(Register logger, Register textId);
-    void tracelogStop(Register logger);
+    void tracelogStartId(Register logger, uint32_t textId, bool force = false);
+    void tracelogStartId(Register logger, Register textId);
+    void tracelogStartEvent(Register logger, Register event);
+    void tracelogStopId(Register logger, uint32_t textId, bool force = false);
+    void tracelogStopId(Register logger, Register textId);
 #endif
 
 #define DISPATCH_FLOATING_POINT_OP(method, type, arg1d, arg1f, arg2)    \

@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ur.xml
- */
 ur{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -894,9 +891,8 @@ ur{
                 other{"{0} آرک منٹ"}
             }
             arc-second{
-                dnam{"arcsec"}
-                one{"{0}سیکنڈ"}
-                other{"{0} سیکنڈ"}
+                one{"{0} آرک سیکنڈ"}
+                other{"{0} آرک سیکنڈ"}
             }
             degree{
                 dnam{"ڈگری"}
@@ -1036,9 +1032,9 @@ ur{
                 per{"{0} فی گھنٹہ"}
             }
             microsecond{
-                dnam{"μs"}
-                one{"{0} μs"}
-                other{"{0} μs"}
+                dnam{"مائیکرو سیکنڈ"}
+                one{"{0} مائیکرو سیکنڈ"}
+                other{"{0} مائیکرو سیکنڈ"}
             }
             millisecond{
                 dnam{"ملی سیکنڈ"}

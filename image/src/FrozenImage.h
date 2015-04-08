@@ -31,7 +31,6 @@ class FrozenImage : public ImageWrapper
 public:
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual nsIntRect FrameRect(uint32_t aWhichFrame) MOZ_OVERRIDE;
   virtual void IncrementAnimationConsumers() MOZ_OVERRIDE;
   virtual void DecrementAnimationConsumers() MOZ_OVERRIDE;
 
@@ -40,13 +39,13 @@ public:
     GetFrame(uint32_t aWhichFrame, uint32_t aFlags) MOZ_OVERRIDE;
   NS_IMETHOD GetImageContainer(layers::LayerManager* aManager,
                                layers::ImageContainer** _retval) MOZ_OVERRIDE;
-  NS_IMETHOD Draw(gfxContext* aContext,
-                  const nsIntSize& aSize,
-                  const ImageRegion& aRegion,
-                  uint32_t aWhichFrame,
-                  GraphicsFilter aFilter,
-                  const Maybe<SVGImageContext>& aSVGContext,
-                  uint32_t aFlags) MOZ_OVERRIDE;
+  NS_IMETHOD_(DrawResult) Draw(gfxContext* aContext,
+                               const nsIntSize& aSize,
+                               const ImageRegion& aRegion,
+                               uint32_t aWhichFrame,
+                               GraphicsFilter aFilter,
+                               const Maybe<SVGImageContext>& aSVGContext,
+                               uint32_t aFlags) MOZ_OVERRIDE;
   NS_IMETHOD_(void) RequestRefresh(const TimeStamp& aTime) MOZ_OVERRIDE;
   NS_IMETHOD GetAnimationMode(uint16_t* aAnimationMode) MOZ_OVERRIDE;
   NS_IMETHOD SetAnimationMode(uint16_t aAnimationMode) MOZ_OVERRIDE;

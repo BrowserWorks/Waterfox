@@ -393,14 +393,14 @@
 @BINPATH@/components/crypto-SDR.js
 @BINPATH@/components/jsconsole-clhandler.manifest
 @BINPATH@/components/jsconsole-clhandler.js
-@BINPATH@/components/nsDownloadManagerUI.manifest
-@BINPATH@/components/nsDownloadManagerUI.js
 @BINPATH@/components/Downloads.manifest
 @BINPATH@/components/DownloadLegacy.js
 @BINPATH@/components/nsSidebar.manifest
 @BINPATH@/components/nsSidebar.js
 @BINPATH@/components/nsAsyncShutdown.manifest
 @BINPATH@/components/nsAsyncShutdown.js
+@BINPATH@/components/htmlMenuBuilder.js
+@BINPATH@/components/htmlMenuBuilder.manifest
 
 ; WiFi, NetworkManager, NetworkStats
 #ifdef MOZ_WIDGET_GONK
@@ -451,6 +451,8 @@
 @BINPATH@/components/RILContentHelper.js
 @BINPATH@/components/RILSystemMessengerHelper.js
 @BINPATH@/components/RILSystemMessengerHelper.manifest
+@BINPATH@/components/SmsService.js
+@BINPATH@/components/SmsService.manifest
 @BINPATH@/components/TelephonyAudioService.js
 @BINPATH@/components/TelephonyAudioService.manifest
 @BINPATH@/components/TelephonyService.js
@@ -531,6 +533,7 @@
 @BINPATH@/components/nsNfc.js
 @BINPATH@/components/Nfc.manifest
 @BINPATH@/components/Nfc.js
+@BINPATH@/components/NfcContentHelper.manifest
 @BINPATH@/components/NfcContentHelper.js
 #endif
 #ifdef MOZ_ENABLE_DBUS

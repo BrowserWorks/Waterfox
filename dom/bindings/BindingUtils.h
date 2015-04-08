@@ -25,6 +25,7 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/Likely.h"
 #include "mozilla/MemoryReporting.h"
+#include "mozilla/CycleCollectedJSRuntime.h"
 #include "nsCycleCollector.h"
 #include "nsIXPConnect.h"
 #include "nsJSUtils.h"
@@ -1809,16 +1810,15 @@ ThrowingConstructor(JSContext* cx, unsigned argc, JS::Value* vp);
 bool
 ThrowConstructorWithoutNew(JSContext* cx, const char* name);
 
-// vp is allowed to be null; in that case no get will be attempted,
-// and *found will simply indicate whether the property exists.
 bool
 GetPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
                        JS::Handle<jsid> id, bool* found,
-                       JS::Value* vp);
+                       JS::MutableHandle<JS::Value> vp);
 
+//
 bool
 HasPropertyOnPrototype(JSContext* cx, JS::Handle<JSObject*> proxy,
-                       JS::Handle<jsid> id);
+                       JS::Handle<jsid> id, bool* has);
 
 
 // Append the property names in "names" to "props". If
@@ -1922,8 +1922,8 @@ private:
   static const size_t sInlineCapacity = 64;
   nsString::char_type mInlineStorage[sInlineCapacity];
 
-  FakeString(const FakeString& other) MOZ_DELETE;
-  void operator=(const FakeString& other) MOZ_DELETE;
+  FakeString(const FakeString& other) = delete;
+  void operator=(const FakeString& other) = delete;
 
   void SetData(nsString::char_type* aData) {
     MOZ_ASSERT(mFlags == nsString::F_TERMINATED);
@@ -2062,14 +2062,14 @@ template<typename T,
          bool isOwningUnion=IsBaseOf<AllOwningUnionBase, T>::value>
 class SequenceTracer
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 };
 
 // sequence<object> or sequence<object?>
 template<>
 class SequenceTracer<JSObject*, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, JSObject** objp, JSObject** end) {
@@ -2083,7 +2083,7 @@ public:
 template<>
 class SequenceTracer<JS::Value, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, JS::Value* valp, JS::Value* end) {
@@ -2097,7 +2097,7 @@ public:
 template<typename T>
 class SequenceTracer<Sequence<T>, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, Sequence<T>* seqp, Sequence<T>* end) {
@@ -2111,7 +2111,7 @@ public:
 template<typename T>
 class SequenceTracer<nsTArray<T>, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, nsTArray<T>* seqp, nsTArray<T>* end) {
@@ -2125,7 +2125,7 @@ public:
 template<typename T>
 class SequenceTracer<T, true, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, T* dictp, T* end) {
@@ -2139,7 +2139,7 @@ public:
 template<typename T>
 class SequenceTracer<T, false, true, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, T* arrayp, T* end) {
@@ -2153,7 +2153,7 @@ public:
 template<typename T>
 class SequenceTracer<T, false, false, true>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, T* arrayp, T* end) {
@@ -2167,7 +2167,7 @@ public:
 template<typename T>
 class SequenceTracer<Nullable<T>, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, Nullable<T>* seqp,
@@ -2207,7 +2207,7 @@ void TraceMozMap(JSTracer* trc, MozMap<T>& map)
 template<typename T>
 class SequenceTracer<MozMap<T>, false, false, false>
 {
-  explicit SequenceTracer() MOZ_DELETE; // Should never be instantiated
+  explicit SequenceTracer() = delete; // Should never be instantiated
 
 public:
   static void TraceSequence(JSTracer* trc, MozMap<T>* seqp, MozMap<T>* end) {
@@ -2651,19 +2651,19 @@ GetUnforgeableHolder(JSObject* aGlobal, prototypes::ID aId)
 }
 
 // Given a JSObject* that represents the chrome side of a JS-implemented WebIDL
-// interface, get the nsPIDOMWindow corresponding to the content side, if any.
+// interface, get the nsIGlobalObject corresponding to the content side, if any.
 // A false return means an exception was thrown.
 bool
-GetWindowForJSImplementedObject(JSContext* cx, JS::Handle<JSObject*> obj,
-                                nsPIDOMWindow** window);
+GetContentGlobalForJSImplementedObject(JSContext* cx, JS::Handle<JSObject*> obj,
+                                       nsIGlobalObject** global);
 
 void
 ConstructJSImplementation(JSContext* aCx, const char* aContractId,
-                          nsPIDOMWindow* aWindow,
+                          nsIGlobalObject* aGlobal,
                           JS::MutableHandle<JSObject*> aObject,
                           ErrorResult& aRv);
 
-already_AddRefed<nsPIDOMWindow>
+already_AddRefed<nsIGlobalObject>
 ConstructJSImplementation(JSContext* aCx, const char* aContractId,
                           const GlobalObject& aGlobal,
                           JS::MutableHandle<JSObject*> aObject,
@@ -3079,6 +3079,28 @@ WrappedJSToDictionary(JSContext* aCx, nsISupports* aObject, T& aDictionary)
   return aDictionary.Init(aCx, v);
 }
 
+template<class T>
+inline bool
+WrappedJSToDictionary(nsISupports* aObject, T& aDictionary)
+{
+  nsCOMPtr<nsIXPConnectWrappedJS> wrappedObj = do_QueryInterface(aObject);
+  NS_ENSURE_TRUE(wrappedObj, false);
+  JS::Rooted<JSObject*> obj(CycleCollectedJSRuntime::Get()->Runtime(),
+                            wrappedObj->GetJSObject());
+  NS_ENSURE_TRUE(obj, false);
+
+  nsIGlobalObject* global = xpc::NativeGlobal(obj);
+  NS_ENSURE_TRUE(global, false);
+
+  // we need this AutoEntryScript here because the spec requires us to execute
+  // getters when parsing a dictionary
+  AutoEntryScript aes(global);
+  aes.TakeOwnershipOfErrorReporting();
+
+  JS::Rooted<JS::Value> v(aes.cx(), JS::ObjectValue(*obj));
+  return aDictionary.Init(aes.cx(), v);
+}
+
 
 template<class T, class S>
 inline nsRefPtr<T>
@@ -3096,7 +3118,7 @@ StrongOrRawPtr(T* aPtr)
 
 template<class T, template<typename> class SmartPtr, class S>
 inline void
-StrongOrRawPtr(SmartPtr<S>&& aPtr) MOZ_DELETE;
+StrongOrRawPtr(SmartPtr<S>&& aPtr) = delete;
 
 inline
 JSObject*

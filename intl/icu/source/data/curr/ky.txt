@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ky.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ky.xml
- */
 ky{
     Currencies{
         AED{
@@ -1290,5 +1287,5 @@ ky{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.10.49"}
+    Version{"2.1.12.94"}
 }

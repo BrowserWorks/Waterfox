@@ -22,7 +22,7 @@ PRLogModuleInfo* GetDemuxerLog();
 namespace mozilla {
 
 WMFMediaDataDecoder::WMFMediaDataDecoder(MFTManager* aMFTManager,
-                                         MediaTaskQueue* aTaskQueue,
+                                         FlushableMediaTaskQueue* aTaskQueue,
                                          MediaDataDecoderCallback* aCallback)
   : mTaskQueue(aTaskQueue)
   , mCallback(aCallback)
@@ -139,12 +139,14 @@ WMFMediaDataDecoder::Flush()
 void
 WMFMediaDataDecoder::ProcessDrain()
 {
-  // Order the decoder to drain...
-  if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
-    NS_WARNING("Failed to send DRAIN command to MFT");
+  if (mDecoder) {
+    // Order the decoder to drain...
+    if (FAILED(mDecoder->SendMFTMessage(MFT_MESSAGE_COMMAND_DRAIN, 0))) {
+      NS_WARNING("Failed to send DRAIN command to MFT");
+    }
+    // Then extract all available output.
+    ProcessOutput();
   }
-  // Then extract all available output.
-  ProcessOutput();
   mCallback->DrainComplete();
 }
 
@@ -177,6 +179,11 @@ void
 WMFMediaDataDecoder::ReleaseDecoder()
 {
   ReleaseMediaResources();
+}
+
+bool
+WMFMediaDataDecoder::IsHardwareAccelerated() const {
+  return mMFTManager && mMFTManager->IsHardwareAccelerated();
 }
 
 } // namespace mozilla

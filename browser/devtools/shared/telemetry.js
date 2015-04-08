@@ -105,6 +105,11 @@ Telemetry.prototype = {
       userHistogram: "DEVTOOLS_FONTINSPECTOR_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_FONTINSPECTOR_TIME_ACTIVE_SECONDS"
     },
+    animationinspector: {
+      histogram: "DEVTOOLS_ANIMATIONINSPECTOR_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_ANIMATIONINSPECTOR_OPENED_PER_USER_FLAG",
+      timerHistogram: "DEVTOOLS_ANIMATIONINSPECTOR_TIME_ACTIVE_SECONDS"
+    },
     jsdebugger: {
       histogram: "DEVTOOLS_JSDEBUGGER_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_JSDEBUGGER_OPENED_PER_USER_FLAG",
@@ -169,6 +174,18 @@ Telemetry.prototype = {
       histogram: "DEVTOOLS_RESPONSIVE_OPENED_BOOLEAN",
       userHistogram: "DEVTOOLS_RESPONSIVE_OPENED_PER_USER_FLAG",
       timerHistogram: "DEVTOOLS_RESPONSIVE_TIME_ACTIVE_SECONDS"
+    },
+    eyedropper: {
+      histogram: "DEVTOOLS_EYEDROPPER_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_EYEDROPPER_OPENED_PER_USER_FLAG",
+    },
+    menueyedropper: {
+      histogram: "DEVTOOLS_MENU_EYEDROPPER_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_MENU_EYEDROPPER_OPENED_PER_USER_FLAG",
+    },
+    pickereyedropper: {
+      histogram: "DEVTOOLS_PICKER_EYEDROPPER_OPENED_BOOLEAN",
+      userHistogram: "DEVTOOLS_PICKER_EYEDROPPER_OPENED_PER_USER_FLAG",
     },
     developertoolbar: {
       histogram: "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_BOOLEAN",

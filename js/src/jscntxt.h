@@ -21,15 +21,6 @@
 
 struct DtoaState;
 
-extern void
-js_ReportOutOfMemory(js::ThreadSafeContext *cx);
-
-extern void
-js_ReportAllocationOverflow(js::ThreadSafeContext *cx);
-
-extern void
-js_ReportOverRecursed(js::ThreadSafeContext *cx);
-
 namespace js {
 
 namespace jit {
@@ -160,11 +151,6 @@ struct ThreadSafeContext : ContextFriendFields,
 {
     friend struct StackBaseShape;
     friend class Activation;
-    friend UnownedBaseShape *BaseShape::lookupUnowned(ThreadSafeContext *cx,
-                                                      const StackBaseShape &base);
-    friend Shape *NativeObject::lookupChildProperty(ThreadSafeContext *cx,
-                                                    HandleNativeObject obj, HandleShape parent,
-                                                    StackShape &child);
 
   public:
     enum ContextKind {
@@ -278,7 +264,7 @@ struct ThreadSafeContext : ContextFriendFields,
     }
 
     void reportAllocationOverflow() {
-        js_ReportAllocationOverflow(this);
+        js_ReportAllocationOverflow(asExclusiveContext());
     }
 
     // Accessors for immutable runtime data.
@@ -375,7 +361,8 @@ class ExclusiveContext : public ThreadSafeContext
     }
 
     // Zone local methods that can be used freely from an ExclusiveContext.
-    types::TypeObject *getNewType(const Class *clasp, TaggedProto proto, JSFunction *fun = nullptr);
+    types::TypeObject *getNewType(const Class *clasp, TaggedProto proto,
+                                  JSObject *associated = nullptr);
     types::TypeObject *getSingletonType(const Class *clasp, TaggedProto proto);
     inline js::LifoAlloc &typeLifoAlloc();
 
@@ -534,25 +521,10 @@ struct JSContext : public js::ExclusiveContext,
     inline JSScript *currentScript(jsbytecode **pc = nullptr,
                                    MaybeAllowCrossCompartment = DONT_ALLOW_CROSS_COMPARTMENT) const;
 
-#ifdef MOZ_TRACE_JSCALLS
-    /* Function entry/exit debugging callback. */
-    JSFunctionCallback    functionCallback;
-
-    void doFunctionCallback(const JSFunction *fun,
-                            const JSScript *scr,
-                            int entering) const
-    {
-        if (functionCallback)
-            functionCallback(fun, scr, this, entering);
-    }
-#endif
-
     // The generational GC nursery may only be used on the main thread.
-#ifdef JSGC_GENERATIONAL
     inline js::Nursery &nursery() {
         return runtime_->gc.nursery;
     }
-#endif
 
     void minorGC(JS::gcreason::Reason reason) {
         runtime_->gc.minorGC(this, reason);
@@ -977,22 +949,18 @@ bool intrinsic_UnsafePutElements(JSContext *cx, unsigned argc, Value *vp);
 bool intrinsic_DefineDataProperty(JSContext *cx, unsigned argc, Value *vp);
 bool intrinsic_UnsafeSetReservedSlot(JSContext *cx, unsigned argc, Value *vp);
 bool intrinsic_UnsafeGetReservedSlot(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_HaveSameClass(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_UnsafeGetObjectFromReservedSlot(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_UnsafeGetInt32FromReservedSlot(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_UnsafeGetStringFromReservedSlot(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_UnsafeGetBooleanFromReservedSlot(JSContext *cx, unsigned argc, Value *vp);
 bool intrinsic_IsPackedArray(JSContext *cx, unsigned argc, Value *vp);
 
-bool intrinsic_ShouldForceSequential(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_NewParallelArray(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_ForkJoinGetSlice(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_InParallelSection(JSContext *cx, unsigned argc, Value *vp);
-
-bool intrinsic_ObjectIsTypedObject(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_ObjectIsTransparentTypedObject(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_ObjectIsOpaqueTypedObject(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_ObjectIsTypeDescr(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_TypeDescrIsSimpleType(JSContext *cx, unsigned argc, Value *vp);
-bool intrinsic_TypeDescrIsArrayType(JSContext *cx, unsigned argc, Value *vp);
-
 bool intrinsic_IsSuspendedStarGenerator(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_IsArrayIterator(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_IsStringIterator(JSContext *cx, unsigned argc, Value *vp);
+
+bool intrinsic_IsTypedArray(JSContext *cx, unsigned argc, Value *vp);
+bool intrinsic_TypedArrayLength(JSContext *cx, unsigned argc, Value *vp);
 
 class AutoLockForExclusiveAccess
 {

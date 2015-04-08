@@ -1,5 +1,12 @@
 // Tests that the suggestion popup appears at the right times in response to
-// focus and clicks.
+// focus and user events (mouse, keyboard, drop).
+
+// Instead of loading ChromeUtils.js into the test scope in browser-test.js for all tests,
+// we only need ChromeUtils.js for a few files which is why we are using loadSubScript.
+var ChromeUtils = {};
+this._scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"].
+                     getService(Ci.mozIJSSubScriptLoader);
+this._scriptLoader.loadSubScript("chrome://mochikit/content/tests/SimpleTest/ChromeUtils.js", ChromeUtils);
 
 const searchbar = document.getElementById("searchbar");
 const searchIcon = document.getAnonymousElementByAttribute(searchbar, "anonid", "searchbar-search-button");
@@ -22,34 +29,6 @@ function synthesizeNativeMouseClick(aElement) {
 
   utils.sendNativeMouseEvent(x * scale, y * scale, mouseDown, 0, null);
   utils.sendNativeMouseEvent(x * scale, y * scale, mouseUp, 0, null);
-}
-
-function promiseNewEngine(basename) {
-  return new Promise((resolve, reject) => {
-    info("Waiting for engine to be added: " + basename);
-    Services.search.init({
-      onInitComplete: function() {
-        let url = getRootDirectory(gTestPath) + basename;
-        let current = Services.search.currentEngine;
-        Services.search.addEngine(url, Ci.nsISearchEngine.TYPE_MOZSEARCH, "", false, {
-          onSuccess: function (engine) {
-            info("Search engine added: " + basename);
-            Services.search.currentEngine = engine;
-            registerCleanupFunction(() => {
-              Services.search.currentEngine = current;
-              Services.search.removeEngine(engine);
-              info("Search engine removed: " + basename);
-            });
-            resolve(engine);
-          },
-          onError: function (errCode) {
-            ok(false, "addEngine failed with error code " + errCode);
-            reject();
-          }
-        });
-      }
-    });
-  });
 }
 
 add_task(function* init() {
@@ -201,6 +180,27 @@ add_task(function* focus_change_closes_popup() {
   textbox.value = "";
 });
 
+// Moving focus away from the search box should close the small popup
+add_task(function* focus_change_closes_small_popup() {
+  gURLBar.focus();
+
+  let promise = promiseEvent(searchPopup, "popupshown");
+  // For some reason sending the mouse event immediately doesn't open the popup.
+  SimpleTest.executeSoon(() => {
+    EventUtils.synthesizeMouseAtCenter(searchIcon, {});
+  });
+  yield promise;
+  is(searchPopup.getAttribute("showonlysettings"), "true", "Should show the small popup");
+
+  is(Services.focus.focusedElement, textbox.inputField, "Should have focused the search bar");
+
+  promise = promiseEvent(searchPopup, "popuphidden");
+  let promise2 = promiseEvent(searchbar, "blur");
+  EventUtils.synthesizeKey("VK_TAB", { shiftKey: true });
+  yield promise;
+  yield promise2;
+});
+
 // Pressing escape should close the popup.
 add_task(function* escape_closes_popup() {
   gURLBar.focus();
@@ -217,6 +217,37 @@ add_task(function* escape_closes_popup() {
 
   promise = promiseEvent(searchPopup, "popuphidden");
   EventUtils.synthesizeKey("VK_ESCAPE", {});
+  yield promise;
+
+  textbox.value = "";
+});
+
+// Pressing contextmenu should close the popup.
+add_task(function* contextmenu_closes_popup() {
+  gURLBar.focus();
+  textbox.value = "foo";
+
+  let promise = promiseEvent(searchPopup, "popupshown");
+  EventUtils.synthesizeMouseAtCenter(textbox, {});
+  yield promise;
+  isnot(searchPopup.getAttribute("showonlysettings"), "true", "Should show the full popup");
+
+  is(Services.focus.focusedElement, textbox.inputField, "Should have focused the search bar");
+  is(textbox.selectionStart, 0, "Should have selected all of the text");
+  is(textbox.selectionEnd, 3, "Should have selected all of the text");
+
+  promise = promiseEvent(searchPopup, "popuphidden");
+
+  //synthesizeKey does not work with VK_CONTEXT_MENU (bug 1127368)
+  EventUtils.synthesizeMouseAtCenter(textbox, { type: "contextmenu", button: null });
+
+  yield promise;
+
+  let contextPopup =
+    document.getAnonymousElementByAttribute(textbox.inputField.parentNode,
+                                            "anonid", "input-box-contextmenu");
+  promise = promiseEvent(contextPopup, "popuphidden");
+  contextPopup.hidePopup();
   yield promise;
 
   textbox.value = "";
@@ -366,6 +397,21 @@ add_task(function* dont_consume_clicks() {
   yield promise;
 
   is(Services.focus.focusedElement, gURLBar.inputField, "Should have focused the URL bar");
+
+  textbox.value = "";
+});
+
+// Dropping text to the searchbar should open the popup
+add_task(function* drop_opens_popup() {
+  let promise = promiseEvent(searchPopup, "popupshown");
+  ChromeUtils.synthesizeDrop(searchIcon, textbox.inputField, [[ {type: "text/plain", data: "foo" } ]], "move", window);
+  yield promise;
+
+  isnot(searchPopup.getAttribute("showonlysettings"), "true", "Should show the full popup");
+  is(Services.focus.focusedElement, textbox.inputField, "Should have focused the search bar");
+  promise = promiseEvent(searchPopup, "popuphidden");
+  searchPopup.hidePopup();
+  yield promise;
 
   textbox.value = "";
 });

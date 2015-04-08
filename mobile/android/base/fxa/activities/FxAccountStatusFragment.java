@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
@@ -59,6 +60,7 @@ public class FxAccountStatusFragment
   // schedule the sync as usual. See also comment below about garbage
   // collection.
   private static final long DELAY_IN_MILLISECONDS_BEFORE_REQUESTING_SYNC = 5 * 1000;
+  private static final long LAST_SYNCED_TIME_UPDATE_INTERVAL_IN_MILLISECONDS = 60 * 1000;
 
   // By default, the auth/account server preference is only shown when the
   // account is configured to use a custom server. In debug mode, this is set.
@@ -77,6 +79,7 @@ public class FxAccountStatusFragment
   protected Preference needsVerificationPreference;
   protected Preference needsMasterSyncAutomaticallyEnabledPreference;
   protected Preference needsAccountEnabledPreference;
+  protected Preference needsFinishMigratingPreference;
 
   protected PreferenceCategory syncCategory;
 
@@ -102,6 +105,9 @@ public class FxAccountStatusFragment
   // This Runnable references the fxAccount above, but it is not specific to a
   // single account. (That is, it does not capture a single account instance.)
   protected Runnable requestSyncRunnable;
+
+  // Runnable to update last synced time.
+  protected Runnable lastSyncedTimeUpdateRunnable;
 
   protected final InnerSyncStatusDelegate syncStatusDelegate = new InnerSyncStatusDelegate();
 
@@ -138,6 +144,7 @@ public class FxAccountStatusFragment
     needsVerificationPreference = ensureFindPreference("needs_verification");
     needsMasterSyncAutomaticallyEnabledPreference = ensureFindPreference("needs_master_sync_automatically_enabled");
     needsAccountEnabledPreference = ensureFindPreference("needs_account_enabled");
+    needsFinishMigratingPreference = ensureFindPreference("needs_finish_migrating");
 
     syncCategory = (PreferenceCategory) ensureFindPreference("sync_category");
 
@@ -157,6 +164,7 @@ public class FxAccountStatusFragment
     needsPasswordPreference.setOnPreferenceClickListener(this);
     needsVerificationPreference.setOnPreferenceClickListener(this);
     needsAccountEnabledPreference.setOnPreferenceClickListener(this);
+    needsFinishMigratingPreference.setOnPreferenceClickListener(this);
 
     bookmarksPreference.setOnPreferenceClickListener(this);
     historyPreference.setOnPreferenceClickListener(this);
@@ -192,6 +200,20 @@ public class FxAccountStatusFragment
   public boolean onPreferenceClick(Preference preference) {
     if (preference == needsPasswordPreference) {
       Intent intent = new Intent(getActivity(), FxAccountUpdateCredentialsActivity.class);
+      final Bundle extras = getExtrasForAccount();
+      if (extras != null) {
+        intent.putExtras(extras);
+      }
+      // Per http://stackoverflow.com/a/8992365, this triggers a known bug with
+      // the soft keyboard not being shown for the started activity. Why, Android, why?
+      intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+      startActivity(intent);
+
+      return true;
+    }
+
+    if (preference == needsFinishMigratingPreference) {
+      final Intent intent = new Intent(getActivity(), FxAccountFinishMigratingActivity.class);
       final Bundle extras = getExtrasForAccount();
       if (extras != null) {
         intent.putExtras(extras);
@@ -280,6 +302,7 @@ public class FxAccountStatusFragment
         this.needsVerificationPreference,
         this.needsMasterSyncAutomaticallyEnabledPreference,
         this.needsAccountEnabledPreference,
+        this.needsFinishMigratingPreference,
     };
     for (Preference errorPreference : errorPreferences) {
       final boolean currentlyShown = null != findPreference(errorPreference.getKey());
@@ -315,6 +338,9 @@ public class FxAccountStatusFragment
 
   protected void showNeedsMasterSyncAutomaticallyEnabled() {
     syncCategory.setTitle(R.string.fxaccount_status_sync);
+    needsMasterSyncAutomaticallyEnabledPreference.setTitle(AppConstants.Versions.preLollipop ?
+                                                   R.string.fxaccount_status_needs_master_sync_automatically_enabled :
+                                                   R.string.fxaccount_status_needs_master_sync_automatically_enabled_v21);
     showOnlyOneErrorPreference(needsMasterSyncAutomaticallyEnabledPreference);
     setCheckboxesEnabled(false);
   }
@@ -322,6 +348,12 @@ public class FxAccountStatusFragment
   protected void showNeedsAccountEnabled() {
     syncCategory.setTitle(R.string.fxaccount_status_sync);
     showOnlyOneErrorPreference(needsAccountEnabledPreference);
+    setCheckboxesEnabled(false);
+  }
+
+  protected void showNeedsFinishMigrating() {
+    syncCategory.setTitle(R.string.fxaccount_status_sync);
+    showOnlyOneErrorPreference(needsFinishMigratingPreference);
     setCheckboxesEnabled(false);
   }
 
@@ -397,6 +429,7 @@ public class FxAccountStatusFragment
     // a reference to this fragment alive, but we expect posted runnables to be
     // serviced very quickly, so this is not an issue.
     requestSyncRunnable = new RequestSyncRunnable();
+    lastSyncedTimeUpdateRunnable = new LastSyncTimeUpdateRunnable();
 
     // We would very much like register these status observers in bookended
     // onResume/onPause calls, but because the Fragment gets onResume during the
@@ -413,6 +446,11 @@ public class FxAccountStatusFragment
   public void onPause() {
     super.onPause();
     FxAccountSyncStatusHelper.getInstance().stopObserving(syncStatusDelegate);
+
+    // Focus lost, remove scheduled update if any.
+    if (lastSyncedTimeUpdateRunnable != null) {
+      handler.removeCallbacks(lastSyncedTimeUpdateRunnable);
+    }
   }
 
   protected void hardRefresh() {
@@ -464,8 +502,12 @@ public class FxAccountStatusFragment
       case NeedsVerification:
         showNeedsVerification();
         break;
-      default:
+      case NeedsFinishMigrating:
+        showNeedsFinishMigrating();
+        break;
+      case None:
         showConnected();
+        break;
       }
 
       // We check for the master setting last, since it is not strictly
@@ -503,8 +545,13 @@ public class FxAccountStatusFragment
     } else {
       syncNowPreference.setTitle(R.string.fxaccount_status_sync_now);
     }
+    scheduleAndUpdateLastSyncedTime();
+  }
+
+  private void scheduleAndUpdateLastSyncedTime() {
     final String lastSynced = getLastSyncedString(fxAccount.getLastSyncedTimestamp());
     syncNowPreference.setSummary(lastSynced);
+    handler.postDelayed(lastSyncedTimeUpdateRunnable, LAST_SYNCED_TIME_UPDATE_INTERVAL_IN_MILLISECONDS);
   }
 
   protected void updateAuthServerPreference() {
@@ -667,6 +714,16 @@ public class FxAccountStatusFragment
   }
 
   /**
+   * The Runnable that schedules a future update and updates the last synced time.
+   */
+  protected class LastSyncTimeUpdateRunnable implements Runnable  {
+    @Override
+    public void run() {
+      scheduleAndUpdateLastSyncedTime();
+    }
+  }
+
+  /**
    * A separate listener to separate debug logic from main code paths.
    */
   protected class DebugPreferenceClickListener implements OnPreferenceClickListener {
@@ -703,6 +760,11 @@ public class FxAccountStatusFragment
         State state = fxAccount.getState();
         fxAccount.setState(state.makeDoghouseState());
         refresh();
+      } else if ("debug_migrated_from_sync11".equals(key)) {
+        Logger.info(LOG_TAG, "Moving to MigratedFromSync11 state: Requiring password.");
+        State state = fxAccount.getState();
+        fxAccount.setState(state.makeMigratedFromSync11State(null));
+        refresh();
       } else {
         return false;
       }
@@ -729,7 +791,8 @@ public class FxAccountStatusFragment
         "debug_force_sync",
         "debug_forget_certificate",
         "debug_require_password",
-        "debug_require_upgrade" };
+        "debug_require_upgrade",
+        "debug_migrated_from_sync11" };
     for (String debugKey : debugKeys) {
       final Preference button = ensureFindPreference(debugKey);
       button.setTitle(debugKey); // Not very friendly, but this is for debugging only!

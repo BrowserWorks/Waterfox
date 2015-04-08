@@ -5,54 +5,28 @@
 #include "nsISupports.idl"
 
 interface nsIMobileCallForwardingOptions;
+interface nsITelephonyCallInfo;
 
-[scriptable, uuid(464d4cf8-454a-4cdb-9329-bfe7ede97103)]
+[scriptable, uuid(3cdc0b98-0c5f-489d-9190-083d137f40da)]
 interface nsITelephonyListener : nsISupports
 {
   /**
-   * Notified when a telephony call changes state.
-   *
-   * @param clientId
-            Indicate the RIL client, 0 ~ (number of client - 1).
-   * @param callIndex
-   *        Call identifier assigned by the RIL.
-   * @param callState
-   *        One of the nsITelephonyService::CALL_STATE_* values.
-   * @param number
-   *        Number of the other party.
-   * @param numberPresentation
-   *        Presentation of the call number.
-   *        One of the nsITelephonyProvider::CALL_PRESENTATION_* values.
-   * @param name
-   *        Name of the other party.
-   * @param namePresentation
-   *        Presentation of the call name.
-   *        One of the nsITelephonyProvider::CALL_PRESENTATION_* values.
-   * @param isOutgoing
-   *        Indicates whether this call is outgoing or incoming.
-   * @param isEmergency
-   *        Indicates whether this call is an emergency call.
-   * @param isConference
-   *        Indicates whether this call is a conference call.
-   * @param isSwitchable
-   *        Indicates whether this call can be switched between states of
-   *        nsITelephonyService::CALL_STATE_CONNECTED and
-   *        nsITelephonyService::CALL_STATE_HELD.
-   * @param isMergeable
-   *        Indicates whether this call be be added into a conference.
+   * Called when enumeration asked by nsITelephonyService::enumerateCalls
+   * is completed.
    */
-  void callStateChanged(in unsigned long clientId,
-                        in unsigned long callIndex,
-                        in unsigned short callState,
-                        in AString number,
-                        in unsigned short numberPresentation,
-                        in AString name,
-                        in unsigned short namePresentation,
-                        in boolean isOutgoing,
-                        in boolean isEmergency,
-                        in boolean isConference,
-                        in boolean isSwitchable,
-                        in boolean isMergeable);
+  void enumerateCallStateComplete();
+
+  /**
+   * Called when nsITelephonyService is asked to enumerate the current
+   * telephony call state (nsITelephonyService::enumerateCalls). This is
+   * called once per call that is currently managed by the RIL.
+   */
+  void enumerateCallState(in nsITelephonyCallInfo info);
+
+  /**
+   * Notified when a telephony call changes state.
+   */
+  void callStateChanged(in nsITelephonyCallInfo info);
 
   /**
    * Called when participants of a conference call have been updated, and the
@@ -64,57 +38,6 @@ interface nsITelephonyListener : nsISupports
    *        nsITelephonyService::CALL_STATE_CONNECTED.
    */
   void conferenceCallStateChanged(in unsigned short callState);
-
-  /**
-   * Called when enumeration asked by nsITelephonyService::enumerateCalls
-   * is completed.
-   */
-  void enumerateCallStateComplete();
-
-  /**
-   * Called when nsITelephonyService is asked to enumerate the current
-   * telephony call state (nsITelephonyService::enumerateCalls). This is
-   * called once per call that is currently managed by the RIL.
-   *
-   * @param clientId
-            Indicate the RIL client, 0 ~ (number of client - 1).
-   * @param callIndex
-   *        Call identifier assigned by the RIL.
-   * @param callState
-   *        One of the nsITelephonyService::CALL_STATE_* values.
-   * @param number
-   *        Number of the other party.
-   * @param numberPresentation
-   *        Presentation of the call number.
-   *        One of the nsITelephonyProvider::CALL_PRESENTATION_* values.
-   * @param name
-   *        Name of the other party.
-   * @param namePresentation
-   *        Presentation of the call name.
-   *        One of the nsITelephonyProvider::CALL_PRESENTATION_* values.
-   * @param isOutgoing
-   *        Indicates whether this call is outgoing or incoming.
-   * @param isConference
-   *        Indicates whether this call is a conference call.
-   * @param isSwitchable
-   *        Indicates whether this call can be switched between states of
-   *        nsITelephonyService::CALL_STATE_CONNECTED and
-   *        nsITelephonyService::CALL_STATE_HELD.
-   * @param isMergeable
-   *        Indicates whether this call be be added into a conference.
-   */
-  void enumerateCallState(in unsigned long clientId,
-                          in unsigned long callIndex,
-                          in unsigned short callState,
-                          in AString number,
-                          in unsigned short numberPresentation,
-                          in AString name,
-                          in unsigned short namePresentation,
-                          in boolean isOutgoing,
-                          in boolean isEmergency,
-                          in boolean isConference,
-                          in boolean isSwitchable,
-                          in boolean isMergeable);
 
   /**
    * Notify when RIL receives supplementary service notification.
@@ -191,7 +114,7 @@ interface nsITelephonyCallback : nsISupports
 /**
  * A callback interface for handling asynchronous response for telephony.dial.
  */
-[scriptable, uuid(ac5fa441-a48a-4efb-af08-48a0f41fde63)]
+[scriptable, uuid(e16c6e6f-93c6-4e1e-99bf-592b98f67e15)]
 interface nsITelephonyDialCallback : nsITelephonyCallback
 {
   /**
@@ -207,12 +130,16 @@ interface nsITelephonyDialCallback : nsITelephonyCallback
    * Called when a dial request is treated as a call setup and the result
    * succeeds.
    *
+   * @param clientId
+            Indicate the RIL client, 0 ~ (number of client - 1).
    * @param callIndex
    *        Call index from RIL.
    * @param number
    *        Dialed out phone number (ex: Temporary CLIR prefix will be removed)
    */
-  void notifyDialCallSuccess(in unsigned long callIndex, in AString number);
+  void notifyDialCallSuccess(in unsigned long cliendId,
+                             in unsigned long callIndex,
+                             in AString number);
 
   /**
    * Called when a MMI code request succeeds.
@@ -247,7 +174,7 @@ interface nsITelephonyDialCallback : nsITelephonyCallback
  * XPCOM component (in the content process) that provides the telephony
  * information.
  */
-[scriptable, uuid(6fa2d94b-80ee-4085-b6a0-535811ba9bb6)]
+[scriptable, uuid(a91fa6be-0acc-4d36-99f1-3e3a88e83ae9)]
 interface nsITelephonyService : nsISupports
 {
   const unsigned short CALL_STATE_UNKNOWN = 0;
@@ -291,15 +218,29 @@ interface nsITelephonyService : nsISupports
    */
   void dial(in unsigned long clientId, in DOMString number,
             in boolean isEmergency, in nsITelephonyDialCallback callback);
-  void hangUp(in unsigned long clientId, in unsigned long callIndex);
+
+  void sendTones(in unsigned long clientId, in DOMString dtmfChars,
+                 in unsigned long pauseDuration, in unsigned long toneDuration,
+                 in nsITelephonyCallback callback);
 
   void startTone(in unsigned long clientId, in DOMString dtmfChar);
   void stopTone(in unsigned long clientId);
 
-  void answerCall(in unsigned long clientId, in unsigned long callIndex);
-  void rejectCall(in unsigned long clientId, in unsigned long callIndex);
-  void holdCall(in unsigned long clientId, in unsigned long callIndex);
-  void resumeCall(in unsigned long clientId, in unsigned long callIndex);
+  void answerCall(in unsigned long clientId,
+                  in unsigned long callIndex,
+                  in nsITelephonyCallback callback);
+  void rejectCall(in unsigned long clientId,
+                  in unsigned long callIndex,
+                  in nsITelephonyCallback callback);
+  void hangUpCall(in unsigned long clientId,
+                  in unsigned long callIndex,
+                  in nsITelephonyCallback callback);
+  void holdCall(in unsigned long clientId,
+                in unsigned long callIndex,
+                in nsITelephonyCallback callback);
+  void resumeCall(in unsigned long clientId,
+                  in unsigned long callIndex,
+                  in nsITelephonyCallback callback);
 
   void conferenceCall(in unsigned long clientId);
   void separateCall(in unsigned long clientId, in unsigned long callIndex);
@@ -317,6 +258,14 @@ interface nsITelephonyService : nsISupports
    */
   void sendUSSD(in unsigned long clientId, in DOMString ussd,
                 in nsITelephonyCallback callback);
+
+  /**
+   * Cancel an existing USSD session.
+   *
+   * If successful, callback.notifySuccess() will be called.
+   * Otherwise, callback.notifyError() will be called.
+   */
+  void cancelUSSD(in unsigned long cliendId, in nsITelephonyCallback callback);
 
   attribute bool microphoneMuted;
   attribute bool speakerEnabled;

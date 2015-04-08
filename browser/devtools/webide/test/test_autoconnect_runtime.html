@@ -21,7 +21,7 @@
         Task.spawn(function* () {
 
           Cu.import("resource://gre/modules/devtools/dbg-server.jsm");
-          DebuggerServer.init(function () { return true; });
+          DebuggerServer.init();
           DebuggerServer.addBrowserActors();
 
           let win = yield openWebIDE();
@@ -71,7 +71,7 @@
           win.AppManager.runtimeList.usb.push(fakeRuntime);
           win.AppManager.update("runtimelist");
 
-          yield waitForUpdate(win, "list-tabs-response");
+          yield waitForUpdate(win, "runtime-apps-found");
 
           is(Object.keys(DebuggerServer._connections).length, 1, "Automatically reconnected");
 

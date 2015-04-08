@@ -36,6 +36,7 @@ class   nsIntRegion;
 class   nsIScreen;
 
 namespace mozilla {
+class CompositorVsyncDispatcher;
 namespace dom {
 class TabChild;
 }
@@ -102,8 +103,8 @@ typedef void* nsNativeWidget;
 #endif
 
 #define NS_IWIDGET_IID \
-{ 0x13239ca, 0xaf3f, 0x4f27, \
-  { 0xaf, 0x83, 0x47, 0xa9, 0x82, 0x3d, 0x99, 0xee } };
+{ 0x316E4600, 0x15DB, 0x47AE, \
+  { 0xBF, 0xE4, 0x5B, 0xCD, 0xFF, 0x80, 0x80, 0x83 } };
 
 /*
  * Window shadow styles
@@ -406,7 +407,9 @@ struct IMEState {
 };
 
 struct InputContext {
-  InputContext() : mNativeIMEContext(nullptr) {}
+  InputContext()
+    : mNativeIMEContext(nullptr)
+  {}
 
   bool IsPasswordEditor() const
   {
@@ -691,6 +694,7 @@ class nsIWidget : public nsISupports {
     typedef mozilla::widget::InputContext InputContext;
     typedef mozilla::widget::InputContextAction InputContextAction;
     typedef mozilla::widget::SizeConstraints SizeConstraints;
+    typedef mozilla::CompositorVsyncDispatcher CompositorVsyncDispatcher;
 
     // Used in UpdateThemeGeometries.
     struct ThemeGeometry {
@@ -868,6 +872,11 @@ class nsIWidget : public nsISupports {
      * the number of device pixels per inch.
      */
     virtual float GetDPI() = 0;
+
+    /**
+     * Returns the CompositorVsyncDispatcher associated with this widget
+     */
+    virtual CompositorVsyncDispatcher* GetCompositorVsyncDispatcher() = 0;
 
     /**
      * Return the default scale factor for the window. This is the
@@ -1932,6 +1941,28 @@ public:
      */
     NS_IMETHOD NotifyIME(const IMENotification& aIMENotification) = 0;
 
+    /**
+     * Start plugin IME.  If this results in a string getting committed, the
+     * result is in aCommitted (otherwise aCommitted is empty).
+     *
+     * aKeyboardEvent     The event with which plugin IME is to be started
+     * panelX and panelY  Location in screen coordinates of the IME input panel
+     *                    (should be just under the plugin)
+     * aCommitted         The string committed during IME -- otherwise empty
+     */
+    NS_IMETHOD StartPluginIME(const mozilla::WidgetKeyboardEvent& aKeyboardEvent,
+                              int32_t aPanelX, int32_t aPanelY,
+                              nsString& aCommitted) = 0;
+
+    /**
+     * Tells the widget whether or not a plugin (inside the widget) has the
+     * keyboard focus.  Should be sent when the keyboard focus changes too or
+     * from a plugin.
+     *
+     * aFocused  Whether or not a plugin is focused
+     */
+    NS_IMETHOD SetPluginFocused(bool& aFocused) = 0;
+
     /*
      * Notifies the input context changes.
      */
@@ -1966,11 +1997,6 @@ public:
                         const mozilla::WidgetKeyboardEvent& aEvent,
                         DoCommandCallback aCallback,
                         void* aCallbackData) = 0;
-
-    /**
-     * Set layers acceleration to 'True' or 'False'
-     */
-    NS_IMETHOD SetLayersAcceleration(bool aEnabled) = 0;
 
     /*
      * Get toggled key states.

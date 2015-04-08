@@ -42,18 +42,18 @@ public:
                            const nsAString& aExpression, bool* aAllowEval,
                            ErrorResult& aError);
 
-  virtual const char16_t *GetHandlerText();
-  virtual Function* GetCallback()
+  virtual const char16_t* GetHandlerText() MOZ_OVERRIDE;
+  virtual Function* GetCallback() MOZ_OVERRIDE
   {
     return mFunction;
   }
-  virtual void GetLocation(const char **aFileName, uint32_t *aLineNo)
+  virtual void GetLocation(const char** aFileName, uint32_t* aLineNo) MOZ_OVERRIDE
   {
     *aFileName = mFileName.get();
     *aLineNo = mLineNo;
   }
 
-  virtual const nsTArray<JS::Value>& GetArgs()
+  virtual const nsTArray<JS::Value>& GetArgs() MOZ_OVERRIDE
   {
     return mArgs;
   }
@@ -173,11 +173,8 @@ CheckCSPForEval(JSContext* aCx, nsGlobalWindow* aWindow, ErrorResult& aError)
 
     // Get the calling location.
     uint32_t lineNum = 0;
-    const char *fileName;
     nsAutoString fileNameString;
-    if (nsJSUtils::GetCallingLocation(aCx, &fileName, &lineNum)) {
-      AppendUTF8toUTF16(fileName, fileNameString);
-    } else {
+    if (!nsJSUtils::GetCallingLocation(aCx, fileNameString, &lineNum)) {
       fileNameString.AssignLiteral("unknown");
     }
 
@@ -233,10 +230,7 @@ nsJSScriptTimeoutHandler::nsJSScriptTimeoutHandler(JSContext* aCx,
   }
 
   // Get the calling location.
-  const char *filename;
-  if (nsJSUtils::GetCallingLocation(aCx, &filename, &mLineNo)) {
-    mFileName.Assign(filename);
-  }
+  nsJSUtils::GetCallingLocation(aCx, mFileName, &mLineNo);
 }
 
 nsJSScriptTimeoutHandler::~nsJSScriptTimeoutHandler()
@@ -353,10 +347,7 @@ nsJSScriptTimeoutHandler::Init(nsGlobalWindow *aWindow, bool *aIsInterval,
     AssignJSFlatString(mExpr, expr);
 
     // Get the calling location.
-    const char *filename;
-    if (nsJSUtils::GetCallingLocation(cx, &filename, &mLineNo)) {
-      mFileName.Assign(filename);
-    }
+    nsJSUtils::GetCallingLocation(cx, mFileName, &mLineNo);
   } else if (funobj) {
     *aAllowEval = true;
 

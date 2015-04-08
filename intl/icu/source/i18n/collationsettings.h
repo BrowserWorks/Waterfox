@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationsettings.h
@@ -22,6 +22,8 @@
 #include "umutex.h"
 
 U_NAMESPACE_BEGIN
+
+struct CollationData;
 
 /**
  * Collation settings/options/attributes.
@@ -103,6 +105,8 @@ struct U_I18N_API CollationSettings : public SharedObject {
                       (MAX_VAR_PUNCT << MAX_VARIABLE_SHIFT)),
               variableTop(0),
               reorderTable(NULL),
+              minHighNoReorder(0),
+              reorderRanges(NULL), reorderRangesLength(0),
               reorderCodes(NULL), reorderCodesLength(0), reorderCodesCapacity(0),
               fastLatinOptions(-1) {}
 
@@ -118,8 +122,23 @@ struct U_I18N_API CollationSettings : public SharedObject {
     int32_t hashCode() const;
 
     void resetReordering();
-    void aliasReordering(const int32_t *codes, int32_t length, const uint8_t *table);
-    UBool setReordering(const int32_t *codes, int32_t length, const uint8_t table[256]);
+    void aliasReordering(const CollationData &data, const int32_t *codes, int32_t length,
+                         const uint32_t *ranges, int32_t rangesLength,
+                         const uint8_t *table, UErrorCode &errorCode);
+    void setReordering(const CollationData &data, const int32_t *codes, int32_t codesLength,
+                       UErrorCode &errorCode);
+    void copyReorderingFrom(const CollationSettings &other, UErrorCode &errorCode);
+
+    inline UBool hasReordering() const { return reorderTable != NULL; }
+    static UBool reorderTableHasSplitBytes(const uint8_t table[256]);
+    inline uint32_t reorder(uint32_t p) const {
+        uint8_t b = reorderTable[p >> 24];
+        if(b != 0 || p <= Collation::NO_CE_PRIMARY) {
+            return ((uint32_t)b << 24) | (p & 0xffffff);
+        } else {
+            return reorderEx(p);
+        }
+    }
 
     void setStrength(int32_t value, int32_t defaultOptions, UErrorCode &errorCode);
 
@@ -194,23 +213,57 @@ struct U_I18N_API CollationSettings : public SharedObject {
     int32_t options;
     /** Variable-top primary weight. */
     uint32_t variableTop;
-    /** 256-byte table for reordering permutation of primary lead bytes; NULL if no reordering. */
+    /**
+     * 256-byte table for reordering permutation of primary lead bytes; NULL if no reordering.
+     * A 0 entry at a non-zero index means that the primary lead byte is "split"
+     * (there are different offsets for primaries that share that lead byte)
+     * and the reordering offset must be determined via the reorderRanges.
+     */
     const uint8_t *reorderTable;
+    /** Limit of last reordered range. 0 if no reordering or no split bytes. */
+    uint32_t minHighNoReorder;
+    /**
+     * Primary-weight ranges for script reordering,
+     * to be used by reorder(p) for split-reordered primary lead bytes.
+     *
+     * Each entry is a (limit, offset) pair.
+     * The upper 16 bits of the entry are the upper 16 bits of the
+     * exclusive primary limit of a range.
+     * Primaries between the previous limit and this one have their lead bytes
+     * modified by the signed offset (-0xff..+0xff) stored in the lower 16 bits.
+     *
+     * CollationData::makeReorderRanges() writes a full list where the first range
+     * (at least for terminators and separators) has a 0 offset.
+     * The last range has a non-zero offset.
+     * minHighNoReorder is set to the limit of that last range.
+     *
+     * In the settings object, the initial ranges before the first split lead byte
+     * are omitted for efficiency; they are handled by reorder(p) via the reorderTable.
+     * If there are no split-reordered lead bytes, then no ranges are needed.
+     */
+    const uint32_t *reorderRanges;
+    int32_t reorderRangesLength;
     /** Array of reorder codes; ignored if reorderCodesLength == 0. */
     const int32_t *reorderCodes;
     /** Number of reorder codes; 0 if no reordering. */
     int32_t reorderCodesLength;
     /**
      * Capacity of reorderCodes.
-     * If 0, then the table and codes are aliases.
+     * If 0, then the codes, the ranges, and the table are aliases.
      * Otherwise, this object owns the memory via the reorderCodes pointer;
-     * the table and the codes are in the same memory block, with the codes first.
+     * the codes, the ranges, and the table are in the same memory block, in that order.
      */
     int32_t reorderCodesCapacity;
 
     /** Options for CollationFastLatin. Negative if disabled. */
     int32_t fastLatinOptions;
     uint16_t fastLatinPrimaries[0x180];
+
+private:
+    void setReorderArrays(const int32_t *codes, int32_t codesLength,
+                          const uint32_t *ranges, int32_t rangesLength,
+                          const uint8_t *table, UErrorCode &errorCode);
+    uint32_t reorderEx(uint32_t p) const;
 };
 
 U_NAMESPACE_END

@@ -41,21 +41,21 @@ public:
   NS_DECL_NSAHTTPSEGMENTREADER
   NS_DECL_NSAHTTPSEGMENTWRITER
 
-  explicit Http2Session(nsISocketTransport *);
+ Http2Session(nsISocketTransport *, uint32_t version);
 
   bool AddStream(nsAHttpTransaction *, int32_t,
-                 bool, nsIInterfaceRequestor *);
-  bool CanReuse() { return !mShouldGoAway && !mClosed; }
-  bool RoomForMoreStreams();
+                 bool, nsIInterfaceRequestor *) MOZ_OVERRIDE;
+  bool CanReuse() MOZ_OVERRIDE { return !mShouldGoAway && !mClosed; }
+  bool RoomForMoreStreams() MOZ_OVERRIDE;
 
   // When the connection is active this is called up to once every 1 second
   // return the interval (in seconds) that the connection next wants to
   // have this invoked. It might happen sooner depending on the needs of
   // other connections.
-  uint32_t  ReadTimeoutTick(PRIntervalTime now);
+  uint32_t  ReadTimeoutTick(PRIntervalTime now) MOZ_OVERRIDE;
 
   // Idle time represents time since "goodput".. e.g. a data or header frame
-  PRIntervalTime IdleTime();
+  PRIntervalTime IdleTime() MOZ_OVERRIDE;
 
   // Registering with a newID of 0 means pick the next available odd ID
   uint32_t RegisterStreamID(Http2Stream *, uint32_t aNewID = 0);
@@ -161,6 +161,14 @@ public:
   const static uint8_t kFrameHeaderBytes = kFrameLengthBytes + kFrameFlagBytes +
     kFrameTypeBytes + kFrameStreamIDBytes;
 
+  enum {
+    kLeaderGroupID =     0x3,
+    kOtherGroupID =       0x5,
+    kBackgroundGroupID =  0x7,
+    kSpeculativeGroupID = 0x9,
+    kFollowerGroupID =    0xB
+  };
+
   static nsresult RecvHeaders(Http2Session *);
   static nsresult RecvPriority(Http2Session *);
   static nsresult RecvRstStream(Http2Session *);
@@ -184,13 +192,13 @@ public:
                     const char *, uint32_t);
 
   // an overload of nsAHttpConnection
-  void TransactionHasDataToWrite(nsAHttpTransaction *);
+  void TransactionHasDataToWrite(nsAHttpTransaction *) MOZ_OVERRIDE;
 
   // a similar version for Http2Stream
   void TransactionHasDataToWrite(Http2Stream *);
 
   // an overload of nsAHttpSegementReader
-  virtual nsresult CommitToSegmentSize(uint32_t size, bool forceCommitment);
+  virtual nsresult CommitToSegmentSize(uint32_t size, bool forceCommitment) MOZ_OVERRIDE;
   nsresult BufferOutput(const char *, uint32_t, uint32_t *);
   void     FlushOutputQueue();
   uint32_t AmountOfOutputBuffered() { return mOutputQueueUsed - mOutputQueueSent; }
@@ -205,7 +213,7 @@ public:
 
   uint64_t Serial() { return mSerial; }
 
-  void PrintDiagnostics (nsCString &log);
+  void PrintDiagnostics (nsCString &log) MOZ_OVERRIDE;
 
   // Streams need access to these
   uint32_t SendingChunkSize() { return mSendingChunkSize; }
@@ -217,6 +225,8 @@ public:
   void GetNegotiatedToken(nsACString &s) { s.Assign(mNegotiatedToken); }
 
   void SendPing() MOZ_OVERRIDE;
+  bool MaybeReTunnel(nsAHttpTransaction *) MOZ_OVERRIDE;
+  bool UseH2Deps() { return mUseH2Deps; }
 
 private:
 
@@ -260,6 +270,7 @@ private:
   void        ActivateStream(Http2Stream *);
   void        ProcessPending();
   nsresult    SetInputFrameDataStream(uint32_t);
+  void        CreatePriorityNode(uint32_t, uint32_t, uint8_t, const char *);
   bool        VerifyStream(Http2Stream *, uint32_t);
   void        SetNeedsCleanup();
 
@@ -469,13 +480,16 @@ private:
   // For caching whether we negotiated "h2" or "h2-<draft>"
   nsCString mNegotiatedToken;
 
+  bool mUseH2Deps;
+  uint32_t mVersion; // HTTP2_VERSION_ from nsHttp.h remove when draft support removed
+
 private:
 /// connect tunnels
   void DispatchOnTunnel(nsAHttpTransaction *, nsIInterfaceRequestor *);
+  void CreateTunnel(nsHttpTransaction *, nsHttpConnectionInfo *, nsIInterfaceRequestor *);
   void RegisterTunnel(Http2Stream *);
   void UnRegisterTunnel(Http2Stream *);
   uint32_t FindTunnelCount(nsHttpConnectionInfo *);
-
   nsDataHashtable<nsCStringHashKey, uint32_t> mTunnelHash;
 };
 

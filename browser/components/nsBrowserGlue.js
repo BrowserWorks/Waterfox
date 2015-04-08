@@ -50,9 +50,6 @@ XPCOMUtils.defineLazyModuleGetter(this, "PageThumbs",
 XPCOMUtils.defineLazyModuleGetter(this, "NewTabUtils",
                                   "resource://gre/modules/NewTabUtils.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserNewTabPreloader",
-                                  "resource:///modules/BrowserNewTabPreloader.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizationTabPreloader",
                                   "resource:///modules/CustomizationTabPreloader.jsm");
 
@@ -88,6 +85,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "RemotePrompt",
 XPCOMUtils.defineLazyModuleGetter(this, "ContentPrefServiceParent",
                                   "resource://gre/modules/ContentPrefServiceParent.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "SelfSupportBackend",
+                                  "resource:///modules/SelfSupportBackend.jsm");
+
 XPCOMUtils.defineLazyModuleGetter(this, "SessionStore",
                                   "resource:///modules/sessionstore/SessionStore.jsm");
 
@@ -114,6 +114,13 @@ XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
 #ifdef E10S_TESTING_ONLY
 XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
                                   "resource://gre/modules/UpdateChannel.jsm");
+#endif
+
+
+#if defined(MOZ_UPDATE_CHANNEL) && MOZ_UPDATE_CHANNEL != release
+#define MOZ_DEBUG_UA // Shorthand define for subsequent conditional sections.
+XPCOMUtils.defineLazyModuleGetter(this, "UserAgentOverrides",
+                                  "resource://gre/modules/UserAgentOverrides.jsm");
 #endif
 
 XPCOMUtils.defineLazyGetter(this, "ShellService", function() {
@@ -407,6 +414,19 @@ BrowserGlue.prototype = {
 #endif
         break;
       case "browser-search-engine-modified":
+        // Ensure we cleanup the hiddenOneOffs pref when removing
+        // an engine, and that newly added engines are visible.
+        if (data == "engine-added" || data == "engine-removed") {
+          let engineName = subject.QueryInterface(Ci.nsISearchEngine).name;
+          let Preferences =
+            Cu.import("resource://gre/modules/Preferences.jsm", {}).Preferences;
+          let pref = Preferences.get("browser.search.hiddenOneOffs");
+          let hiddenList = pref ? pref.split(",") : [];
+          hiddenList = hiddenList.filter(x => x !== engineName);
+          Preferences.set("browser.search.hiddenOneOffs",
+                          hiddenList.join(","));
+        }
+
         if (data != "engine-default" && data != "engine-current") {
           break;
         }
@@ -590,8 +610,15 @@ BrowserGlue.prototype = {
 
     LoginManagerParent.init();
 
+    SelfSupportBackend.init();
+
 #ifdef NIGHTLY_BUILD
     Services.prefs.addObserver(POLARIS_ENABLED, this, false);
+#endif
+
+#ifdef MOZ_DEBUG_UA
+    UserAgentOverrides.init();
+    DebugUserAgent.init();
 #endif
 
     Services.obs.notifyObservers(null, "browser-ui-startup-complete", "");
@@ -811,7 +838,8 @@ BrowserGlue.prototype = {
       Cu.reportError("Could not end startup crash tracking in quit-application-granted: " + e);
     }
 
-    BrowserNewTabPreloader.uninit();
+    SelfSupportBackend.uninit();
+
     CustomizationTabPreloader.uninit();
     WebappManager.uninit();
 #ifdef NIGHTLY_BUILD
@@ -819,11 +847,17 @@ BrowserGlue.prototype = {
       SignInToWebsiteUX.uninit();
     }
 #endif
+#ifdef MOZ_DEBUG_UA
+    UserAgentOverrides.uninit();
+#endif
     webrtcUI.uninit();
     FormValidationHandler.uninit();
   },
 
   _initServiceDiscovery: function () {
+    if (!Services.prefs.getBoolPref("browser.casting.enabled")) {
+      return;
+    }
     var rokuDevice = {
       id: "roku:ecp",
       target: "roku:ecp",
@@ -831,7 +865,7 @@ BrowserGlue.prototype = {
         Cu.import("resource://gre/modules/RokuApp.jsm");
         return new RokuApp(aService);
       },
-      mirror: false,
+      mirror: true,
       types: ["video/mp4"],
       extensions: ["mp4"]
     };
@@ -1479,7 +1513,7 @@ BrowserGlue.prototype = {
   },
 
   _migrateUI: function BG__migrateUI() {
-    const UI_VERSION = 26;
+    const UI_VERSION = 27;
     const BROWSER_DOCURL = "chrome://browser/content/browser.xul";
     let currentUIVersion = 0;
     try {
@@ -1786,6 +1820,15 @@ BrowserGlue.prototype = {
       if (defaultBehavior != -1 &&
           !!(defaultBehavior & Ci.mozIPlacesAutoComplete["BEHAVIOR_TYPED"])) {
         Services.prefs.setBoolPref("browser.urlbar.suggest.history.onlyTyped", true);
+      }
+    }
+
+    if (currentUIVersion < 27) {
+      // Fix up document color use:
+      const kOldColorPref = "browser.display.use_document_colors";
+      if (Services.prefs.prefHasUserValue(kOldColorPref) &&
+          !Services.prefs.getBoolPref(kOldColorPref)) {
+        Services.prefs.setIntPref("browser.display.document_color_use", 2);
       }
     }
 
@@ -2399,28 +2442,28 @@ let DefaultBrowserCheck = {
   },
 
   prompt: function(win) {
-    let brandBundle = win.document.getElementById("bundle_brand");
-    let shellBundle = win.document.getElementById("bundle_shell");
-
-    let brandShortName = brandBundle.getString("brandShortName");
-    let promptMessage = shellBundle.getFormattedString("setDefaultBrowserMessage2",
-                                                       [brandShortName]);
-
-    let yesButton = shellBundle.getFormattedString("setDefaultBrowserConfirm.label",
-                                                   [brandShortName]);
-
-    let notNowButton = shellBundle.getString("setDefaultBrowserNotNow.label");
-    let notNowButtonKey = shellBundle.getString("setDefaultBrowserNotNow.accesskey");
-
-    let neverLabel = shellBundle.getString("setDefaultBrowserNever.label");
-    let neverKey = shellBundle.getString("setDefaultBrowserNever.accesskey");
-
     let useNotificationBar = Services.prefs.getBoolPref("browser.defaultbrowser.notificationbar");
+
+    let brandBundle = win.document.getElementById("bundle_brand");
+    let brandShortName = brandBundle.getString("brandShortName");
+
+    let shellBundle = win.document.getElementById("bundle_shell");
+    let buttonPrefix = "setDefaultBrowser" + (useNotificationBar ? "" : "Alert");
+    let yesButton = shellBundle.getFormattedString(buttonPrefix + "Confirm.label",
+                                                   [brandShortName]);
+    let notNowButton = shellBundle.getString(buttonPrefix + "NotNow.label");
+
     if (useNotificationBar) {
+      let promptMessage = shellBundle.getFormattedString("setDefaultBrowserMessage2",
+                                                         [brandShortName]);
       let optionsMessage = shellBundle.getString("setDefaultBrowserOptions.label");
       let optionsKey = shellBundle.getString("setDefaultBrowserOptions.accesskey");
 
+      let neverLabel = shellBundle.getString("setDefaultBrowserNever.label");
+      let neverKey = shellBundle.getString("setDefaultBrowserNever.accesskey");
+
       let yesButtonKey = shellBundle.getString("setDefaultBrowserConfirm.accesskey");
+      let notNowButtonKey = shellBundle.getString("setDefaultBrowserNotNow.accesskey");
 
       let notificationBox = win.document.getElementById("high-priority-global-notificationbox");
 
@@ -2458,17 +2501,21 @@ let DefaultBrowserCheck = {
     } else {
       // Modal prompt
       let promptTitle = shellBundle.getString("setDefaultBrowserTitle");
+      let promptMessage = shellBundle.getFormattedString("setDefaultBrowserMessage",
+                                                         [brandShortName]);
+      let askLabel = shellBundle.getFormattedString("setDefaultBrowserDontAsk",
+                                                    [brandShortName]);
 
       let ps = Services.prompt;
-      let dontAsk = { value: false };
+      let shouldAsk = { value: true };
       let buttonFlags = (ps.BUTTON_TITLE_IS_STRING * ps.BUTTON_POS_0) +
                         (ps.BUTTON_TITLE_IS_STRING * ps.BUTTON_POS_1) +
                         ps.BUTTON_POS_0_DEFAULT;
       let rv = ps.confirmEx(win, promptTitle, promptMessage, buttonFlags,
-                            yesButton, notNowButton, null, neverLabel, dontAsk);
+                            yesButton, notNowButton, null, askLabel, shouldAsk);
       if (rv == 0) {
         this.setAsDefault();
-      } else if (dontAsk.value) {
+      } else if (!shouldAsk.value) {
         ShellService.shouldCheckDefaultBrowser = false;
       }
     }
@@ -2489,7 +2536,7 @@ let DefaultBrowserCheck = {
 let E10SUINotification = {
   // Increase this number each time we want to roll out an
   // e10s testing period to Nightly users.
-  CURRENT_NOTICE_COUNT: 2,
+  CURRENT_NOTICE_COUNT: 3,
   CURRENT_PROMPT_PREF: "browser.displayedE10SPrompt.1",
   PREVIOUS_PROMPT_PREF: "browser.displayedE10SPrompt",
 
@@ -2722,3 +2769,36 @@ let globalMM = Cc["@mozilla.org/globalmessagemanager;1"].getService(Ci.nsIMessag
 globalMM.addMessageListener("UITour:onPageEvent", function(aMessage) {
   UITour.onPageEvent(aMessage, aMessage.data);
 });
+
+#ifdef MOZ_DEBUG_UA
+// Modify the user agent string for specific domains
+// to route debug information through their logging.
+var DebugUserAgent = {
+  DEBUG_UA: null,
+  DOMAINS: [
+    'youtube.com',
+    'www.youtube.com',
+    'youtube-nocookie.com',
+    'www.youtube-nocookie.com',
+  ],
+
+  init: function() {
+    // Only run if the MediaSource Extension API is available.
+    if (!Services.prefs.getBoolPref("media.mediasource.enabled")) {
+      return;
+    }
+    // Install our override filter.
+    UserAgentOverrides.addComplexOverride(this.onRequest.bind(this));
+    let ua = Cc["@mozilla.org/network/protocol;1?name=http"]
+                .getService(Ci.nsIHttpProtocolHandler).userAgent;
+    this.DEBUG_UA = ua + " Build/" + Services.appinfo.appBuildID;
+  },
+
+  onRequest: function(channel, defaultUA) {
+    if (this.DOMAINS.indexOf(channel.URI.host) != -1) {
+      return this.DEBUG_UA;
+    }
+    return null;
+  },
+};
+#endif // MOZ_DEBUG_UA

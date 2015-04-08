@@ -12,16 +12,22 @@ const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/te
 
 let HUD, outputNode;
 
-function test() {
-  addTab(TEST_URI);
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
-    openConsole(null, consoleOpened);
-  }, true);
-}
+"use strict";
+
+let test = asyncTest(function* () {
+  yield loadTab(TEST_URI);
+
+  let hud = yield openConsole();
+  yield consoleOpened(hud);
+  yield testContextMenuCopy();
+
+  HUD = outputNode = null;
+});
 
 function consoleOpened(aHud) {
   HUD = aHud;
+
+  let deferred = promise.defer();
 
   // See bugs 574036, 586386 and 587617.
   outputNode = HUD.outputNode;
@@ -51,19 +57,24 @@ function consoleOpened(aHud) {
     controller = top.document.commandDispatcher.getControllerForCommand("cmd_copy");
     is(controller.isCommandEnabled("cmd_copy"), true, "cmd_copy is enabled");
 
-    let selection = HUD.iframeWindow.getSelection() + "";
+    // Remove new lines since getSelection() includes one between message and line
+    // number, but the clipboard doesn't (see bug 1119503)
+    let selection = (HUD.iframeWindow.getSelection() + "").replace(/\r?\n|\r/g, " ");
     isnot(selection.indexOf("bug587617"), -1,
           "selection text includes 'bug587617'");
 
     waitForClipboard((str) => { return selection.trim() == str.trim(); },
       () => { goDoCommand("cmd_copy") },
-      testContextMenuCopy, testContextMenuCopy);
+      deferred.resolve, deferred.resolve);
   });
+  return deferred.promise;
 }
 
 // Test that the context menu "Copy" (which has a different code path) works
 // properly as well.
 function testContextMenuCopy() {
+  let deferred = promise.defer();
+
   let contextMenuId = outputNode.parentNode.getAttribute("context");
   let contextMenu = HUD.ui.document.getElementById(contextMenuId);
   ok(contextMenu, "the output node has a context menu");
@@ -71,13 +82,17 @@ function testContextMenuCopy() {
   let copyItem = contextMenu.querySelector("*[command='cmd_copy']");
   ok(copyItem, "the context menu on the output node has a \"Copy\" item");
 
-  let selection = HUD.iframeWindow.getSelection() + "";
+  // Remove new lines since getSelection() includes one between message and line
+  // number, but the clipboard doesn't (see bug 1119503)
+  let selection = (HUD.iframeWindow.getSelection() + "").replace(/\r?\n|\r/g, " ");
 
   copyItem.doCommand();
 
   waitForClipboard((str) => { return selection.trim() == str.trim(); },
     () => { goDoCommand("cmd_copy") },
-    finishTest, finishTest);
+    deferred.resolve, deferred.resolve);
   HUD = outputNode = null;
+
+  return deferred.promise;
 }
 

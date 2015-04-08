@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/en.xml
- */
 en{
-    Version{"2.1.10.42"}
+    Version{"2.1.13.48"}
     units{
         acceleration{
             g-force{
@@ -1452,7 +1449,7 @@ en{
             hour{
                 dnam{"hours"}
                 one{"{0} hr"}
-                other{"{0} hrs"}
+                other{"{0} hr"}
                 per{"{0}ph"}
             }
             microsecond{
@@ -1468,7 +1465,7 @@ en{
             minute{
                 dnam{"mins"}
                 one{"{0} min"}
-                other{"{0} mins"}
+                other{"{0} min"}
             }
             month{
                 dnam{"months"}
@@ -1483,7 +1480,7 @@ en{
             second{
                 dnam{"secs"}
                 one{"{0} sec"}
-                other{"{0} secs"}
+                other{"{0} sec"}
                 per{"{0}ps"}
             }
             week{

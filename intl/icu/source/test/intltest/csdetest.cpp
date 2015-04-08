@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 2005-2013, International Business Machines
+ *   Copyright (C) 2005-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
  */
@@ -584,6 +584,7 @@ void CharsetDetectionTest::DetectionTest()
 
 void CharsetDetectionTest::IBM424Test()
 {
+#if !UCONFIG_ONLY_HTML_CONVERSION
     UErrorCode status = U_ZERO_ERROR;
     
     static const UChar chars[] = {
@@ -676,10 +677,12 @@ bail:
     freeBytes(bytes);
     freeBytes(bytes_r);
     ucsdet_close(csd);
+#endif
 }
 
 void CharsetDetectionTest::IBM420Test()
 {
+#if !UCONFIG_ONLY_HTML_CONVERSION
     UErrorCode status = U_ZERO_ERROR;
     
     static const UChar chars[] = {
@@ -764,6 +767,7 @@ bail:
     freeBytes(bytes);
     freeBytes(bytes_r);
     ucsdet_close(csd);
+#endif
 }
 
 

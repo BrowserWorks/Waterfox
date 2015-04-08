@@ -4,8 +4,8 @@
 "use strict";
 
 const { Cc, Ci, Cu, Cr } = require("chrome");
-const { extend } = require("sdk/util/object");
 const { Task } = require("resource://gre/modules/Task.jsm");
+const { extend } = require("sdk/util/object");
 
 loader.lazyRequireGetter(this, "Services");
 loader.lazyRequireGetter(this, "promise");
@@ -19,10 +19,9 @@ loader.lazyRequireGetter(this, "DevToolsUtils",
 loader.lazyImporter(this, "gDevTools",
   "resource:///modules/devtools/gDevTools.jsm");
 
-let showTimelineMemory = () => Services.prefs.getBoolPref("devtools.performance.ui.show-timeline-memory");
-
 /**
- * A cache of all PerformanceActorsConnection instances. The keys are Target objects.
+ * A cache of all PerformanceActorsConnection instances.
+ * The keys are Target objects.
  */
 let SharedPerformanceActors = new WeakMap();
 
@@ -44,7 +43,7 @@ SharedPerformanceActors.forTarget = function(target) {
 };
 
 /**
- * A connection to underlying actors (profiler, memory, framerate, etc)
+ * A connection to underlying actors (profiler, memory, framerate, etc.)
  * shared by all tools in a target.
  *
  * Use `SharedPerformanceActors.forTarget` to make sure you get the same
@@ -64,7 +63,6 @@ function PerformanceActorsConnection(target) {
 }
 
 PerformanceActorsConnection.prototype = {
-
   /**
    * Initializes a connection to the profiler and other miscellaneous actors.
    * If already open, nothing happens.
@@ -108,7 +106,7 @@ PerformanceActorsConnection.prototype = {
     if (this._target.chrome) {
       this._profiler = this._target.form.profilerActor;
     }
-    // Or when we are debugging content processes, we already have the tab
+    // When we are debugging content processes, we already have the tab
     // specific one. Use it immediately.
     else if (this._target.form && this._target.form.profilerActor) {
       this._profiler = this._target.form.profilerActor;
@@ -204,6 +202,7 @@ function PerformanceFront(connection) {
 
   // Pipe events from TimelineActor to the PerformanceFront
   connection._timeline.on("markers", markers => this.emit("markers", markers));
+  connection._timeline.on("frames", (delta, frames) => this.emit("frames", delta, frames));
   connection._timeline.on("memory", (delta, measurement) => this.emit("memory", delta, measurement));
   connection._timeline.on("ticks", (delta, timestamps) => this.emit("ticks", delta, timestamps));
 }
@@ -212,10 +211,13 @@ PerformanceFront.prototype = {
   /**
    * Manually begins a recording session.
    *
+   * @param object options
+   *        An options object to pass to the timeline front. Supported
+   *        properties are `withTicks` and `withMemory`.
    * @return object
    *         A promise that is resolved once recording has started.
    */
-  startRecording: Task.async(function*() {
+  startRecording: Task.async(function*(options = {}) {
     let { isActive, currentTime } = yield this._request("profiler", "isActive");
 
     // Start the profiler only if it wasn't already active. The built-in
@@ -223,10 +225,9 @@ PerformanceFront.prototype = {
     // for all targets and interacts with the whole platform, so we don't want
     // to affect other clients by stopping (or restarting) it.
     if (!isActive) {
-      // Extend the options so that protocol.js doesn't modify
-      // the source object.
-      let options = extend({}, this._customPerformanceOptions);
-      yield this._request("profiler", "startProfiler", options);
+      // Extend the profiler options so that protocol.js doesn't modify the original.
+      let profilerOptions = extend({}, this._customProfilerOptions);
+      yield this._request("profiler", "startProfiler", profilerOptions);
       this._profilingStartTime = 0;
       this.emit("profiler-activated");
     } else {
@@ -236,8 +237,10 @@ PerformanceFront.prototype = {
 
     // The timeline actor is target-dependent, so just make sure
     // it's recording.
-    let withMemory = showTimelineMemory();
-    yield this._request("timeline", "start", { withTicks: true, withMemory: withMemory });
+    let startTime = yield this._request("timeline", "start", options);
+
+    // Return only the start time from the timeline actor.
+    return { startTime };
   }),
 
   /**
@@ -254,12 +257,13 @@ PerformanceFront.prototype = {
     filterSamples(profilerData, this._profilingStartTime);
     offsetSampleTimes(profilerData, this._profilingStartTime);
 
-    yield this._request("timeline", "stop");
+    let endTime = yield this._request("timeline", "stop");
 
     // Join all the acquired data and return it for outside consumers.
     return {
       recordingDuration: profilerData.currentTime - this._profilingStartTime,
-      profilerData: profilerData
+      profilerData: profilerData,
+      endTime: endTime
     };
   }),
 
@@ -269,7 +273,7 @@ PerformanceFront.prototype = {
    *
    * Used in tests and for older backend implementations.
    */
-  _customPerformanceOptions: {
+  _customProfilerOptions: {
     entries: 1000000,
     interval: 1,
     features: ["js"]

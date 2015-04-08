@@ -121,7 +121,7 @@ function make_CA {
 SERIALNO=$RANDOM
 
 function make_INT {
-  INT_RESPONSES="y\n0\ny\n2\n7\nhttp://localhost:8080/\n\nn\nn\n"
+  INT_RESPONSES="y\n0\ny\n2\n7\nhttp://localhost:8888/\n\nn\nn\n"
   NICKNAME="${1}"
   SUBJECT="${2}"
   CA="${3}"
@@ -171,7 +171,7 @@ function make_V1 {
 }
 
 function make_EE {
-  CERT_RESPONSES="n\n\ny\n2\n7\nhttp://localhost:8080/\n\nn\nn\n"
+  CERT_RESPONSES="n\n\ny\n2\n7\nhttp://localhost:8888/\n\nn\nn\n"
   NICKNAME="${1}"
   SUBJECT="${2}"
   CA="${3}"
@@ -267,6 +267,7 @@ export_cert localhostAndExampleCom default-ee.der
 make_EE ocspOtherEndEntity 'CN=Other Cert' testCA "localhost,*.example.com"
 
 make_INT testINT 'CN=Test Intermediate' testCA
+export_cert testINT test-int.der
 make_EE ocspEEWithIntermediate 'CN=Test End-entity with Intermediate' testINT "localhost,*.example.com"
 make_EE expired 'CN=Expired Test End-entity' testCA "expired.example.com" "-w -400"
 export_cert expired expired-ee.der
@@ -279,6 +280,7 @@ make_EE selfsigned 'CN=Self-signed Test End-entity' testCA "selfsigned.example.c
 # get regenerated. Either way, deletedINT will then be removed again.
 make_INT deletedINT 'CN=Test Intermediate to delete' testCA
 make_EE unknownissuer 'CN=Test End-entity from unknown issuer' deletedINT "unknownissuer.example.com"
+export_cert unknownissuer unknown-issuer.der
 
 $RUN_MOZILLA $CERTUTIL -d $DB_ARGUMENT -D -n deletedINT
 
@@ -306,7 +308,7 @@ make_delegated invalidDelegatedSignerWrongExtKeyUsage 'CN=Test Invalid Delegated
 make_INT self-signed-EE-with-cA-true 'CN=Test Self-signed End-entity with CA true' unused "-x -8 self-signed-end-entity-with-cA-true.example.com"
 make_INT ca-used-as-end-entity 'CN=Test Intermediate used as End-Entity' testCA "-8 ca-used-as-end-entity.example.com"
 
-make_delegated badKeysizeDelegatedSigner 'CN=Bad Keysize Delegated Responder' testCA "--extKeyUsage ocspResponder -g 1008"
+make_delegated rsa-1008-keysizeDelegatedSigner 'CN=RSA 1008 Key Size Test Delegated Responder' testCA "--extKeyUsage ocspResponder -g 1008"
 make_EE inadequateKeySizeEE 'CN=Inadequate Key Size End-Entity' testINT "inadequate-key-size-ee.example.com" "-g 1008"
 
 make_EE_with_nsCertType nsCertTypeCritical 'CN=nsCertType Critical' testCA "localhost,*.example.com" "y"
@@ -319,5 +321,11 @@ make_EE_with_nsCertType nsCertTypeCriticalWithExtKeyUsage 'CN=nsCertType Critica
 make_V1 v1Cert 'CN=V1 Cert' testCA
 export_cert v1Cert v1Cert.der
 make_EE eeIssuedByV1Cert 'CN=EE Issued by V1 Cert' v1Cert "localhost,*.example.com"
+
+make_EE eeIssuedByNonCA 'CN=EE Issued by non-CA' localhostAndExampleCom "localhost,*.example.com"
+
+# Make a valid EE using testINT to test OneCRL revocation of testINT
+make_EE eeIssuedByIntermediate 'CN=EE issued by intermediate' testINT "localhost"
+export_cert eeIssuedByIntermediate test-int-ee.der
 
 cleanup

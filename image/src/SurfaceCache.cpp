@@ -15,6 +15,7 @@
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Move.h"
+#include "mozilla/Mutex.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/StaticPtr.h"
 #include "nsIMemoryReporter.h"
@@ -51,7 +52,6 @@ class SurfaceCacheImpl;
 
 // The single surface cache instance.
 static StaticRefPtr<SurfaceCacheImpl> sInstance;
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // SurfaceCache Implementation
@@ -119,7 +119,8 @@ class CachedSurface
 {
   ~CachedSurface() {}
 public:
-  NS_INLINE_DECL_REFCOUNTING(CachedSurface)
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(CachedSurface)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(CachedSurface)
 
   CachedSurface(imgFrame*          aSurface,
                 const Cost         aCost,
@@ -215,7 +216,8 @@ class ImageSurfaceCache
 public:
   ImageSurfaceCache() : mLocked(false) { }
 
-  NS_INLINE_DECL_REFCOUNTING(ImageSurfaceCache)
+  MOZ_DECLARE_REFCOUNTED_TYPENAME(ImageSurfaceCache)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ImageSurfaceCache)
 
   typedef nsRefPtrHashtable<nsGenericHashKey<SurfaceKey>, CachedSurface> SurfaceTable;
 
@@ -246,6 +248,23 @@ public:
     return surface.forget();
   }
 
+  already_AddRefed<CachedSurface>
+  LookupBestMatch(const SurfaceKey&      aSurfaceKey,
+                  const Maybe<uint32_t>& aAlternateFlags)
+  {
+    // Try for a perfect match first.
+    nsRefPtr<CachedSurface> surface;
+    mSurfaces.Get(aSurfaceKey, getter_AddRefs(surface));
+    if (surface) {
+      return surface.forget();
+    }
+
+    // There's no perfect match, so find the best match we can.
+    MatchContext matchContext(aSurfaceKey, aAlternateFlags);
+    ForEach(TryToImproveMatch, &matchContext);
+    return matchContext.mBestMatch.forget();
+  }
+
   void ForEach(SurfaceTable::EnumReadFunction aFunction, void* aData)
   {
     mSurfaces.EnumerateRead(aFunction, aData);
@@ -255,6 +274,75 @@ public:
   bool IsLocked() const { return mLocked; }
 
 private:
+  struct MatchContext
+  {
+    MatchContext(const SurfaceKey& aIdealKey,
+                 const Maybe<uint32_t>& aAlternateFlags)
+      : mIdealKey(aIdealKey)
+      , mAlternateFlags(aAlternateFlags)
+    { }
+
+    const SurfaceKey& mIdealKey;
+    const Maybe<uint32_t> mAlternateFlags;
+    nsRefPtr<CachedSurface> mBestMatch;
+  };
+
+  static PLDHashOperator TryToImproveMatch(const SurfaceKey& aSurfaceKey,
+                                           CachedSurface*    aSurface,
+                                           void*             aContext)
+  {
+    auto context = static_cast<MatchContext*>(aContext);
+    const SurfaceKey& idealKey = context->mIdealKey;
+
+    // Matching the animation time and SVG context is required.
+    if (aSurfaceKey.AnimationTime() != idealKey.AnimationTime() ||
+        aSurfaceKey.SVGContext() != idealKey.SVGContext()) {
+      return PL_DHASH_NEXT;
+    }
+
+    // Matching the flags is required, but we can match the alternate flags as
+    // well if some were provided.
+    if (aSurfaceKey.Flags() != idealKey.Flags() &&
+        Some(aSurfaceKey.Flags()) != context->mAlternateFlags) {
+      return PL_DHASH_NEXT;
+    }
+
+    // Anything is better than nothing! (Within the constraints we just
+    // checked, of course.)
+    if (!context->mBestMatch) {
+      context->mBestMatch = aSurface;
+      return PL_DHASH_NEXT;
+    }
+
+    MOZ_ASSERT(context->mBestMatch, "Should have a current best match");
+    SurfaceKey bestMatchKey = context->mBestMatch->GetSurfaceKey();
+
+    // Compare sizes. We use an area-based heuristic here instead of computing a
+    // truly optimal answer, since it seems very unlikely to make a difference
+    // for realistic sizes.
+    int64_t idealArea = idealKey.Size().width * idealKey.Size().height;
+    int64_t surfaceArea = aSurfaceKey.Size().width * aSurfaceKey.Size().height;
+    int64_t bestMatchArea =
+      bestMatchKey.Size().width * bestMatchKey.Size().height;
+
+    // If the best match is smaller than the ideal size, prefer bigger sizes.
+    if (bestMatchArea < idealArea) {
+      if (surfaceArea > bestMatchArea) {
+        context->mBestMatch = aSurface;
+      }
+      return PL_DHASH_NEXT;
+    }
+
+    // Other, prefer sizes closer to the ideal size, but still not smaller.
+    if (idealArea <= surfaceArea && surfaceArea < bestMatchArea) {
+      context->mBestMatch = aSurface;
+      return PL_DHASH_NEXT;
+    }
+
+    // This surface isn't an improvement over the current best match.
+    return PL_DHASH_NEXT;
+  }
+
   SurfaceTable mSurfaces;
   bool         mLocked;
 };
@@ -274,9 +362,9 @@ public:
   SurfaceCacheImpl(uint32_t aSurfaceCacheExpirationTimeMS,
                    uint32_t aSurfaceCacheDiscardFactor,
                    uint32_t aSurfaceCacheSize)
-    : mExpirationTracker(MOZ_THIS_IN_INITIALIZER_LIST(),
-                         aSurfaceCacheExpirationTimeMS)
+    : mExpirationTracker(aSurfaceCacheExpirationTimeMS)
     , mMemoryPressureObserver(new MemoryPressureObserver)
+    , mMutex("SurfaceCache")
     , mDiscardFactor(aSurfaceCacheDiscardFactor)
     , mMaxCost(aSurfaceCacheSize)
     , mAvailableCost(aSurfaceCacheSize)
@@ -298,23 +386,26 @@ private:
   }
 
 public:
-  void InitMemoryReporter() {
-    RegisterWeakMemoryReporter(this);
-  }
+  void InitMemoryReporter() { RegisterWeakMemoryReporter(this); }
 
-  bool Insert(imgFrame*         aSurface,
-              const Cost        aCost,
-              const ImageKey    aImageKey,
-              const SurfaceKey& aSurfaceKey,
-              Lifetime          aLifetime)
+  Mutex& GetMutex() { return mMutex; }
+
+  InsertOutcome Insert(imgFrame*         aSurface,
+                       const Cost        aCost,
+                       const ImageKey    aImageKey,
+                       const SurfaceKey& aSurfaceKey,
+                       Lifetime          aLifetime)
   {
-    MOZ_ASSERT(!Lookup(aImageKey, aSurfaceKey),
-               "Inserting a duplicate surface into the SurfaceCache");
+    // If this is a duplicate surface, refuse to replace the original.
+    if (MOZ_UNLIKELY(Lookup(aImageKey, aSurfaceKey))) {
+      return InsertOutcome::FAILURE_ALREADY_PRESENT;
+    }
 
     // If this is bigger than we can hold after discarding everything we can,
     // refuse to cache it.
-    if (!CanHoldAfterDiscarding(aCost))
-      return false;
+    if (MOZ_UNLIKELY(!CanHoldAfterDiscarding(aCost))) {
+      return InsertOutcome::FAILURE;
+    }
 
     // Remove elements in order of cost until we can fit this in the cache. Note
     // that locked surfaces aren't in mCosts, so we never remove them here.
@@ -339,7 +430,7 @@ public:
     if (cache->IsLocked() && aLifetime == Lifetime::Persistent) {
       surface->SetLocked(true);
       if (!surface->IsLocked()) {
-        return false;
+        return InsertOutcome::FAILURE;
       }
     }
 
@@ -348,7 +439,7 @@ public:
     cache->Insert(aSurfaceKey, surface);
     StartTracking(surface);
 
-    return true;
+    return InsertOutcome::SUCCESS;
   }
 
   void Remove(CachedSurface* aSurface)
@@ -441,7 +532,50 @@ public:
       return DrawableFrameRef();
     }
 
-    if (!surface->IsLocked()) {
+    if (cache->IsLocked()) {
+      LockSurface(surface);
+    } else {
+      mExpirationTracker.MarkUsed(surface);
+    }
+
+    return ref;
+  }
+
+  DrawableFrameRef LookupBestMatch(const ImageKey         aImageKey,
+                                   const SurfaceKey&      aSurfaceKey,
+                                   const Maybe<uint32_t>& aAlternateFlags)
+  {
+    nsRefPtr<ImageSurfaceCache> cache = GetImageCache(aImageKey);
+    if (!cache)
+      return DrawableFrameRef();  // No cached surfaces for this image.
+
+    // Repeatedly look up the best match, trying again if the resulting surface
+    // has been freed by the operating system, until we can either lock a
+    // surface for drawing or there are no matching surfaces left.
+    // XXX(seth): This is O(N^2), but N is expected to be very small. If we
+    // encounter a performance problem here we can revisit this.
+
+    nsRefPtr<CachedSurface> surface;
+    DrawableFrameRef ref;
+    while (true) {
+      surface = cache->LookupBestMatch(aSurfaceKey, aAlternateFlags);
+      if (!surface) {
+        return DrawableFrameRef();  // Lookup in the per-image cache missed.
+      }
+
+      ref = surface->DrawableRef();
+      if (ref) {
+        break;
+      }
+
+      // The surface was released by the operating system. Remove the cache
+      // entry as well.
+      Remove(surface);
+    }
+
+    if (cache->IsLocked()) {
+      LockSurface(surface);
+    } else {
       mExpirationTracker.MarkUsed(surface);
     }
 
@@ -477,17 +611,32 @@ public:
 
     cache->SetLocked(true);
 
-    // Try to lock all the surfaces the per-image cache is holding.
-    cache->ForEach(DoLockSurface, this);
+    // We don't relock this image's existing surfaces right away; instead, the
+    // image should arrange for Lookup() to touch them if they are still useful.
   }
 
   void UnlockImage(const ImageKey aImageKey)
   {
     nsRefPtr<ImageSurfaceCache> cache = GetImageCache(aImageKey);
-    if (!cache)
-      return;  // Already unlocked and removed.
+    if (!cache || !cache->IsLocked()) {
+      return;  // Already unlocked.
+    }
 
     cache->SetLocked(false);
+
+    // Unlock all the surfaces the per-image cache is holding.
+    cache->ForEach(DoUnlockSurface, this);
+  }
+
+  void UnlockSurfaces(const ImageKey aImageKey)
+  {
+    nsRefPtr<ImageSurfaceCache> cache = GetImageCache(aImageKey);
+    if (!cache || !cache->IsLocked()) {
+      return;  // Already unlocked.
+    }
+
+    // (Note that we *don't* unlock the per-image cache here; that's the
+    // difference between this and UnlockImage.)
 
     // Unlock all the surfaces the per-image cache is holding.
     cache->ForEach(DoUnlockSurface, this);
@@ -548,30 +697,25 @@ public:
     }
   }
 
+  void LockSurface(CachedSurface* aSurface)
+  {
+    if (aSurface->GetLifetime() == Lifetime::Transient ||
+        aSurface->IsLocked()) {
+      return;
+    }
+
+    StopTracking(aSurface);
+
+    // Lock the surface. This can fail.
+    aSurface->SetLocked(true);
+    StartTracking(aSurface);
+  }
+
   static PLDHashOperator DoStopTracking(const SurfaceKey&,
                                         CachedSurface*    aSurface,
                                         void*             aCache)
   {
     static_cast<SurfaceCacheImpl*>(aCache)->StopTracking(aSurface);
-    return PL_DHASH_NEXT;
-  }
-
-  static PLDHashOperator DoLockSurface(const SurfaceKey&,
-                                       CachedSurface*    aSurface,
-                                       void*             aCache)
-  {
-    if (aSurface->GetLifetime() == Lifetime::Transient ||
-        aSurface->IsLocked()) {
-      return PL_DHASH_NEXT;
-    }
-
-    auto cache = static_cast<SurfaceCacheImpl*>(aCache);
-    cache->StopTracking(aSurface);
-
-    // Lock the surface. This can fail.
-    aSurface->SetLocked(true);
-    cache->StartTracking(aSurface);
-
     return PL_DHASH_NEXT;
   }
 
@@ -598,6 +742,8 @@ public:
                  nsISupports*             aData,
                  bool                     aAnonymize) MOZ_OVERRIDE
   {
+    MutexAutoLock lock(mMutex);
+
     // We have explicit memory reporting for the surface cache which is more
     // accurate than the cost metrics we report here, but these metrics are
     // still useful to report, since they control the cache's behavior.
@@ -665,21 +811,18 @@ private:
 
   struct SurfaceTracker : public nsExpirationTracker<CachedSurface, 2>
   {
-    SurfaceTracker(SurfaceCacheImpl* aCache, uint32_t aSurfaceCacheExpirationTimeMS)
+    explicit SurfaceTracker(uint32_t aSurfaceCacheExpirationTimeMS)
       : nsExpirationTracker<CachedSurface, 2>(aSurfaceCacheExpirationTimeMS)
-      , mCache(aCache)
     { }
 
   protected:
     virtual void NotifyExpired(CachedSurface* aSurface) MOZ_OVERRIDE
     {
-      if (mCache) {
-        mCache->Remove(aSurface);
+      if (sInstance) {
+        MutexAutoLock lock(sInstance->GetMutex());
+        sInstance->Remove(aSurface);
       }
     }
-
-  private:
-    SurfaceCacheImpl* const mCache;  // Weak pointer to owner.
   };
 
   struct MemoryPressureObserver : public nsIObserver
@@ -691,6 +834,7 @@ private:
                        const char16_t*) MOZ_OVERRIDE
     {
       if (sInstance && strcmp(aTopic, "memory-pressure") == 0) {
+        MutexAutoLock lock(sInstance->GetMutex());
         sInstance->DiscardForMemoryPressure();
       }
       return NS_OK;
@@ -700,11 +844,11 @@ private:
     virtual ~MemoryPressureObserver() { }
   };
 
-
   nsTArray<CostEntry>                                       mCosts;
   nsRefPtrHashtable<nsPtrHashKey<Image>, ImageSurfaceCache> mImageCaches;
   SurfaceTracker                                            mExpirationTracker;
   nsRefPtr<MemoryPressureObserver>                          mMemoryPressureObserver;
+  Mutex                                                     mMutex;
   const uint32_t                                            mDiscardFactor;
   const Cost                                                mMaxCost;
   Cost                                                      mAvailableCost;
@@ -722,6 +866,7 @@ NS_IMPL_ISUPPORTS(SurfaceCacheImpl::MemoryPressureObserver, nsIObserver)
 SurfaceCache::Initialize()
 {
   // Initialize preferences.
+  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!sInstance, "Shouldn't initialize more than once");
 
   // See gfxPrefs for the default values of these preferences.
@@ -775,33 +920,56 @@ SurfaceCache::Initialize()
 /* static */ void
 SurfaceCache::Shutdown()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(sInstance, "No singleton - was Shutdown() called twice?");
   sInstance = nullptr;
 }
 
 /* static */ DrawableFrameRef
-SurfaceCache::Lookup(const ImageKey    aImageKey,
-                     const SurfaceKey& aSurfaceKey)
+SurfaceCache::Lookup(const ImageKey         aImageKey,
+                     const SurfaceKey&      aSurfaceKey,
+                     const Maybe<uint32_t>& aAlternateFlags /* = Nothing() */)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (!sInstance) {
     return DrawableFrameRef();
   }
 
-  return sInstance->Lookup(aImageKey, aSurfaceKey);
+  MutexAutoLock lock(sInstance->GetMutex());
+
+  DrawableFrameRef ref = sInstance->Lookup(aImageKey, aSurfaceKey);
+  if (!ref && aAlternateFlags) {
+    ref = sInstance->Lookup(aImageKey,
+                            aSurfaceKey.WithNewFlags(*aAlternateFlags));
+  }
+
+  return ref;
 }
 
-/* static */ bool
+/* static */ DrawableFrameRef
+SurfaceCache::LookupBestMatch(const ImageKey         aImageKey,
+                              const SurfaceKey&      aSurfaceKey,
+                              const Maybe<uint32_t>& aAlternateFlags
+                                /* = Nothing() */)
+{
+  if (!sInstance) {
+    return DrawableFrameRef();
+  }
+
+  MutexAutoLock lock(sInstance->GetMutex());
+  return sInstance->LookupBestMatch(aImageKey, aSurfaceKey, aAlternateFlags);
+}
+
+/* static */ InsertOutcome
 SurfaceCache::Insert(imgFrame*         aSurface,
                      const ImageKey    aImageKey,
                      const SurfaceKey& aSurfaceKey,
                      Lifetime          aLifetime)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (!sInstance) {
-    return false;
+    return InsertOutcome::FAILURE;
   }
 
+  MutexAutoLock lock(sInstance->GetMutex());
   Cost cost = ComputeCost(aSurfaceKey.Size());
   return sInstance->Insert(aSurface, cost, aImageKey, aSurfaceKey, aLifetime);
 }
@@ -809,7 +977,6 @@ SurfaceCache::Insert(imgFrame*         aSurface,
 /* static */ bool
 SurfaceCache::CanHold(const IntSize& aSize)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (!sInstance) {
     return false;
   }
@@ -818,11 +985,21 @@ SurfaceCache::CanHold(const IntSize& aSize)
   return sInstance->CanHold(cost);
 }
 
+/* static */ bool
+SurfaceCache::CanHold(size_t aSize)
+{
+  if (!sInstance) {
+    return false;
+  }
+
+  return sInstance->CanHold(aSize);
+}
+
 /* static */ void
 SurfaceCache::LockImage(Image* aImageKey)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
     return sInstance->LockImage(aImageKey);
   }
 }
@@ -830,9 +1007,18 @@ SurfaceCache::LockImage(Image* aImageKey)
 /* static */ void
 SurfaceCache::UnlockImage(Image* aImageKey)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
     return sInstance->UnlockImage(aImageKey);
+  }
+}
+
+/* static */ void
+SurfaceCache::UnlockSurfaces(const ImageKey aImageKey)
+{
+  if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
+    return sInstance->UnlockSurfaces(aImageKey);
   }
 }
 
@@ -840,8 +1026,8 @@ SurfaceCache::UnlockImage(Image* aImageKey)
 SurfaceCache::RemoveSurface(const ImageKey    aImageKey,
                             const SurfaceKey& aSurfaceKey)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
     sInstance->RemoveSurface(aImageKey, aSurfaceKey);
   }
 }
@@ -849,8 +1035,8 @@ SurfaceCache::RemoveSurface(const ImageKey    aImageKey,
 /* static */ void
 SurfaceCache::RemoveImage(Image* aImageKey)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
     sInstance->RemoveImage(aImageKey);
   }
 }
@@ -858,8 +1044,8 @@ SurfaceCache::RemoveImage(Image* aImageKey)
 /* static */ void
 SurfaceCache::DiscardAll()
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (sInstance) {
+    MutexAutoLock lock(sInstance->GetMutex());
     sInstance->DiscardAll();
   }
 }
@@ -869,11 +1055,11 @@ SurfaceCache::SizeOfSurfaces(const ImageKey    aImageKey,
                              gfxMemoryLocation aLocation,
                              MallocSizeOf      aMallocSizeOf)
 {
-  MOZ_ASSERT(NS_IsMainThread());
   if (!sInstance) {
     return 0;
   }
 
+  MutexAutoLock lock(sInstance->GetMutex());
   return sInstance->SizeOfSurfaces(aImageKey, aLocation, aMallocSizeOf);
 }
 

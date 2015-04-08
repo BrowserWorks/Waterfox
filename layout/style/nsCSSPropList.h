@@ -567,6 +567,7 @@ CSS_PROP_BACKGROUND(
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
         CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
         CSS_PROPERTY_VALUE_LIST_USES_COMMAS |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_STORES_CALC,
     "",
     0,
@@ -1135,6 +1136,7 @@ CSS_PROP_TABLEBORDER(
     border_spacing,
     BorderSpacing,
     CSS_PROPERTY_PARSE_FUNCTION |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_VALUE_NONNEGATIVE,
     "",
     0,
@@ -2465,6 +2467,7 @@ CSS_PROP_POSITION(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_HLPO | VARIANT_CALC,
@@ -2478,6 +2481,7 @@ CSS_PROP_POSITION(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_HKLPO | VARIANT_CALC,
@@ -2491,6 +2495,7 @@ CSS_PROP_POSITION(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_AHLP | VARIANT_CALC,
@@ -2504,6 +2509,7 @@ CSS_PROP_POSITION(
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_VALUE_NONNEGATIVE |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_AHKLP | VARIANT_CALC,
@@ -2976,6 +2982,17 @@ CSS_PROP_POSITION(
     nullptr,
     offsetof(nsStylePosition, mOffset),
     eStyleAnimType_Sides_Right)
+CSS_PROP_TEXT(
+    ruby-position,
+    ruby_position,
+    RubyPosition,
+    CSS_PROPERTY_PARSE_VALUE |
+        CSS_PROPERTY_VALUE_PARSER_FUNCTION,
+    "layout.css.ruby.enabled",
+    0,
+    kRubyPositionKTable,
+    CSS_PROP_NO_OFFSET,
+    eStyleAnimType_None)
 CSS_PROP_DISPLAY(
     scroll-behavior,
     scroll_behavior,
@@ -3088,13 +3105,14 @@ CSS_PROP_TEXT(
     TextIndent,
     CSS_PROPERTY_PARSE_VALUE |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_HLP | VARIANT_CALC,
     nullptr,
     offsetof(nsStyleText, mTextIndent),
     eStyleAnimType_Coord)
-CSS_PROP_TEXT(
+CSS_PROP_VISIBILITY(
     text-orientation,
     text_orientation,
     TextOrientation,
@@ -3102,7 +3120,7 @@ CSS_PROP_TEXT(
     "layout.css.vertical-text.enabled",
     VARIANT_HK,
     kTextOrientationKTable,
-    offsetof(nsStyleText, mTextOrientation),
+    offsetof(nsStyleVisibility, mTextOrientation),
     eStyleAnimType_EnumU8)
 CSS_PROP_TEXTRESET(
     text-overflow,
@@ -3358,6 +3376,7 @@ CSS_PROP_TEXTRESET(
         CSS_PROPERTY_APPLIES_TO_FIRST_LETTER_AND_FIRST_LINE |
         CSS_PROPERTY_APPLIES_TO_PLACEHOLDER |
         CSS_PROPERTY_STORES_CALC |
+        CSS_PROPERTY_UNITLESS_LENGTH_QUIRK |
         CSS_PROPERTY_GETCS_NEEDS_LAYOUT_FLUSH,
     "",
     VARIANT_HKLP | VARIANT_CALC,

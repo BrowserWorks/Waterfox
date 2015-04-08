@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 2003-2014, International Business Machines Corporation
+* Copyright (C) 2003-2015, International Business Machines Corporation
 * and others. All Rights Reserved.
 ******************************************************************************
 *
@@ -318,6 +318,41 @@ int32_t IslamicCalendar::handleGetLimit(UCalendarDateFields field, ELimitType li
 // Assorted calculation utilities
 //
 
+// we could compress this down more if we need to
+static const int8_t umAlQuraYrStartEstimateFix[] = {
+     0,  0, -1,  0, -1,  0,  0,  0,  0,  0, // 1300..
+    -1,  0,  0,  0,  0,  0,  0,  0, -1,  0, // 1310..
+     1,  0,  1,  1,  0,  0,  0,  0,  1,  0, // 1320..
+     0,  0,  0,  0,  0,  0,  1,  0,  0,  0, // 1330..
+     0,  0,  1,  0,  0, -1, -1,  0,  0,  0, // 1340..
+     1,  0,  0, -1,  0,  0,  0,  1,  1,  0, // 1350..
+     0,  0,  0,  0,  0,  0,  0, -1,  0,  0, // 1360..
+     0,  1,  1,  0,  0, -1,  0,  1,  0,  1, // 1370..
+     1,  0,  0, -1,  0,  1,  0,  0,  0, -1, // 1380..
+     0,  1,  0,  1,  0,  0,  0, -1,  0,  0, // 1390..
+     0,  0, -1, -1,  0, -1,  0,  1,  0,  0, // 1400..
+     0, -1,  0,  0,  0,  1,  0,  0,  0,  0, // 1410..
+     0,  1,  0,  0, -1, -1,  0,  0,  0,  1, // 1420..
+     0,  0, -1, -1,  0, -1,  0,  0, -1, -1, // 1430..
+     0, -1,  0, -1,  0,  0, -1, -1,  0,  0, // 1440..
+     0,  0,  0,  0, -1,  0,  1,  0,  1,  1, // 1450..
+     0,  0, -1,  0,  1,  0,  0,  0,  0,  0, // 1460..
+     1,  0,  1,  0,  0,  0, -1,  0,  1,  0, // 1470..
+     0, -1, -1,  0,  0,  0,  1,  0,  0,  0, // 1480..
+     0,  0,  0,  0,  1,  0,  0,  0,  0,  0, // 1490..
+     1,  0,  0, -1,  0,  0,  0,  1,  1,  0, // 1500..
+     0, -1,  0,  1,  0,  1,  1,  0,  0,  0, // 1510..
+     0,  1,  0,  0,  0, -1,  0,  0,  0,  1, // 1520..
+     0,  0,  0, -1,  0,  0,  0,  0,  0, -1, // 1530..
+     0, -1,  0,  1,  0,  0,  0, -1,  0,  1, // 1540..
+     0,  1,  0,  0,  0,  0,  0,  1,  0,  0, // 1550..
+    -1,  0,  0,  0,  0,  1,  0,  0,  0, -1, // 1560..
+     0,  0,  0,  0, -1, -1,  0, -1,  0,  1, // 1570..
+     0,  0, -1, -1,  0,  0,  1,  1,  0,  0, // 1580..
+    -1,  0,  0,  0,  0,  1,  0,  0,  0,  0, // 1590..
+     1 // 1600
+};
+
 /**
 * Determine whether a year is a leap year in the Islamic civil calendar
 */
@@ -338,12 +373,11 @@ int32_t IslamicCalendar::yearStart(int32_t year) const{
     } else if(cType==ASTRONOMICAL){
         return trueMonthStart(12*(year-1));
     } else {
-        int32_t ys = yearStart(UMALQURA_YEAR_START-1);
-        ys+= handleGetYearLength(UMALQURA_YEAR_START-1);
-        for(int i=UMALQURA_YEAR_START; i< year; i++){  
-            ys+= handleGetYearLength(i);
-        }
-        return ys;
+        year -= UMALQURA_YEAR_START;
+        // rounded least-squares fit of the dates previously calculated from UMALQURA_MONTHLENGTH iteration
+        int32_t yrStartLinearEstimate = (int32_t)((354.36720 * (double)year) + 460322.05 + 0.5);
+        // need a slight correction to some
+        return yrStartLinearEstimate + umAlQuraYrStartEstimateFix[year];
     }
 }
 
@@ -352,7 +386,7 @@ int32_t IslamicCalendar::yearStart(int32_t year) const{
 * from the Hijri epoch, origin 0.
 *
 * @param year  The hijri year
-* @param year  The hijri month, 0-based (assumed to be in range 0..11)
+* @param month The hijri month, 0-based (assumed to be in range 0..11)
 */
 int32_t IslamicCalendar::monthStart(int32_t year, int32_t month) const {
     if (cType == CIVIL || cType == TBLA) {

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ky.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ky.xml
- */
 ky{
     Keys{
         calendar{"календарь"}
@@ -236,7 +233,7 @@ ky{
         zu{"зулуча"}
         zxx{"тилдик мазмун жок"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"англисче (УБ)"}
         en_US{"англисче (АКШ)"}
     }
@@ -342,7 +339,7 @@ ky{
             tibt{"тибет сандары"}
         }
     }
-    Version{"2.1.10.49"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"тили: {0}"}
         script{"жазуусу: {0}"}

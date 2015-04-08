@@ -377,7 +377,6 @@
 @RESPATH@/browser/components/nsSetDefaultBrowser.js
 @RESPATH@/browser/components/BrowserDownloads.manifest
 @RESPATH@/browser/components/DownloadsStartup.js
-@RESPATH@/browser/components/DownloadsUI.js
 @RESPATH@/browser/components/BrowserPlaces.manifest
 @RESPATH@/browser/components/devtools-clhandler.manifest
 @RESPATH@/browser/components/devtools-clhandler.js
@@ -413,8 +412,6 @@
 #endif
 @RESPATH@/components/nsHelperAppDlg.manifest
 @RESPATH@/components/nsHelperAppDlg.js
-@RESPATH@/components/nsDownloadManagerUI.manifest
-@RESPATH@/components/nsDownloadManagerUI.js
 @RESPATH@/components/NetworkGeolocationProvider.manifest
 @RESPATH@/components/NetworkGeolocationProvider.js
 @RESPATH@/browser/components/nsSidebar.manifest
@@ -542,6 +539,8 @@
 @RESPATH@/components/Identity.manifest
 @RESPATH@/components/recording-cmdline.js
 @RESPATH@/components/recording-cmdline.manifest
+@RESPATH@/components/htmlMenuBuilder.js
+@RESPATH@/components/htmlMenuBuilder.manifest
 
 @RESPATH@/components/PermissionSettings.js
 @RESPATH@/components/PermissionSettings.manifest
@@ -896,13 +895,14 @@ bin/libfreebl_32int64_3.so
 @RESPATH@/components/nsTerminatorTelemetry.js
 @RESPATH@/components/terminator.manifest
 
-#ifdef MOZ_ASAN
-#ifdef CLANG_CXX
+#if defined(CLANG_CXX)
+#if defined(MOZ_ASAN) || defined(MOZ_TSAN)
 @BINPATH@/llvm-symbolizer
 #endif
-#ifdef CLANG_CL
-@BINPATH@/clang_rt.asan_dynamic-i386.dll
 #endif
+
+#if defined(MOZ_ASAN) && defined(CLANG_CL)
+@BINPATH@/clang_rt.asan_dynamic-i386.dll
 #endif
 
 

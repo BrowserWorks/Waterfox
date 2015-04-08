@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ug.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ug.xml
- */
 ug{
     Keys{
         calendar{"يىلنامە"}
@@ -526,7 +523,7 @@ ug{
         zxx{"تىل مەزمۇنى يوق"}
         zza{"زازاچە"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"ئەنگلىيە ئىنگلىزچە"}
         en_US{"ئامېرىكا ئىنگلىزچە"}
     }

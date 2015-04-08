@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2004-2014, International Business Machines
+* Copyright (c) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 * Author: Alan Liu
@@ -29,45 +29,43 @@
  * For example, for English, when formatting "3 hours"
  * Wide is "3 hours"; short is "3 hrs"; narrow is "3h";
  * formatting "3 hours 17 minutes" as numeric give "3:17"
- * @draft ICU 53
+ * @stable ICU 53
  */
 enum UMeasureFormatWidth {
 
-#ifndef U_HIDE_DRAFT_API
     // Wide, short, and narrow must be first and in this order.
     /**
      * Spell out measure units.
-     * @draft ICU 53 
+     * @stable ICU 53 
      */
     UMEASFMT_WIDTH_WIDE,
  
     /**
      * Abbreviate measure units.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UMEASFMT_WIDTH_SHORT,
 
     /**
      * Use symbols for measure units when possible.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UMEASFMT_WIDTH_NARROW,
 
     /**
      * Completely omit measure units when possible. For example, format
      * '5 hours, 37 minutes' as '5:37'
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UMEASFMT_WIDTH_NUMERIC,
-#endif /* U_HIDE_DRAFT_API */
 
     /**
      * Count of values in this enum.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UMEASFMT_WIDTH_COUNT = 4
 };
-/** @draft ICU 53 */
+/** @stable ICU 53 */
 typedef enum UMeasureFormatWidth UMeasureFormatWidth; 
 
 U_NAMESPACE_BEGIN
@@ -97,34 +95,32 @@ class U_I18N_API MeasureFormat : public Format {
     using Format::parseObject;
     using Format::format;
 
-#ifndef U_HIDE_DRAFT_API
     /**
      * Constructor.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     MeasureFormat(
             const Locale &locale, UMeasureFormatWidth width, UErrorCode &status);
 
     /**
      * Constructor.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     MeasureFormat(
             const Locale &locale,
             UMeasureFormatWidth width,
             NumberFormat *nfToAdopt,
             UErrorCode &status);
-#endif /* U_HIDE_DRAFT_API */
 
     /**
      * Copy constructor.
-     * @draft ICU 53
+     * @stable ICU 3.0
      */
     MeasureFormat(const MeasureFormat &other);
 
     /**
      * Assignment operator.
-     * @draft ICU 53
+     * @stable ICU 3.0
      */
     MeasureFormat &operator=(const MeasureFormat &rhs);
 
@@ -136,19 +132,19 @@ class U_I18N_API MeasureFormat : public Format {
 
     /**
      * Return true if given Format objects are semantically equal.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UBool operator==(const Format &other) const;
 
     /**
      * Clones this object polymorphically.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual Format *clone() const;
 
     /**
      * Formats object to produce a string.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UnicodeString &format(
             const Formattable &obj,
@@ -167,7 +163,6 @@ class U_I18N_API MeasureFormat : public Format {
             Formattable &reslt,
             ParsePosition &pos) const;
 
-#ifndef U_HIDE_DRAFT_API
     /**
      * Formats measure objects to produce a string. An example of such a
      * formatted string is 3 meters, 3.5 centimeters. Measure objects appear
@@ -182,7 +177,7 @@ class U_I18N_API MeasureFormat : public Format {
      * @param status the error.
      * @return appendTo reference
      *
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UnicodeString &formatMeasures(
             const Measure *measures,
@@ -190,7 +185,6 @@ class U_I18N_API MeasureFormat : public Format {
             UnicodeString &appendTo,
             FieldPosition &pos,
             UErrorCode &status) const;
-#endif  /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_DRAFT_API
     /**
@@ -244,7 +238,7 @@ class U_I18N_API MeasureFormat : public Format {
      * .       erived::getStaticClassID()) ...
      * </pre>
      * @return          The class ID for all objects of this class.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     static UClassID U_EXPORT2 getStaticClassID(void);
 
@@ -257,7 +251,7 @@ class U_I18N_API MeasureFormat : public Format {
      * @return          The class ID for this object. All objects of a
      *                  given class have the same class ID.  Objects of
      *                  other classes have different class IDs.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UClassID getDynamicClassID(void) const;
 

@@ -2422,14 +2422,13 @@ static void TestGetKeywordValuesForLocale(void) {
 
     UErrorCode status = U_ZERO_ERROR;
     UEnumeration *keywordValues = NULL;
-    int32_t i, n, size, valueLength;
+    int32_t i, n, size;
     const char *locale = NULL, *value = NULL;
     UBool errorOccurred = FALSE;
 
     for (i = 0; i < UPRV_LENGTHOF(PREFERRED) && !errorOccurred; i++) {
         locale = PREFERRED[i][0];
         value = NULL;
-        valueLength = 0;
         size = 0;
 
         keywordValues = ucol_getKeywordValuesForLocale("collation", locale, TRUE, &status);
@@ -2438,6 +2437,7 @@ static void TestGetKeywordValuesForLocale(void) {
             break;
         }
         size = uenum_count(keywordValues, &status);
+        (void)size;
 
         for (n = 0; (value = PREFERRED[i][n+1]) != NULL; n++) {
             if (!uenum_contains(keywordValues, value, &status)) {

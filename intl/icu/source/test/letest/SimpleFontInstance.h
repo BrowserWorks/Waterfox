@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1999-2007, International Business Machines
+ *   Copyright (C) 1999-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -34,7 +34,7 @@ public:
 
     virtual ~SimpleFontInstance();
 
-    virtual const void *getFontTable(LETag tableTag) const;
+    virtual const void *getFontTable(LETag tableTag, size_t &length) const;
 
     virtual le_int32 getUnitsPerEM() const;
 

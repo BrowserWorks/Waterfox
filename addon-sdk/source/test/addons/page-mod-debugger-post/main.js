@@ -29,7 +29,7 @@ exports.testDebugger = function(assert, done) {
   set('devtools.debugger.log', true);
 
   if (!DebuggerServer.initialized) {
-    DebuggerServer.init(() => true);
+    DebuggerServer.init();
     DebuggerServer.addBrowserActors();
   }
 
@@ -92,7 +92,7 @@ function testDebuggerStatement([aGrip, aResponse]) {
       ok(true, 'the page-mod was attached to ' + mod.tab.url);
 
       require('sdk/timers').setTimeout(function() {
-        let debuggee = getMostRecentBrowserWindow().gBrowser.selectedTab.linkedBrowser.contentWindow.wrappedJSObject;
+        let debuggee = getMostRecentBrowserWindow().gBrowser.selectedBrowser.contentWindow.wrappedJSObject;
         debuggee.runDebuggerStatement();
         ok(true, 'called runDebuggerStatement');
       }, 500)

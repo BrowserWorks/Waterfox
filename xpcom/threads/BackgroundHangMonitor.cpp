@@ -39,8 +39,6 @@ private:
 
 #ifdef MOZ_NUWA_PROCESS
     if (IsNuwaProcess()) {
-      NS_ASSERTION(NuwaMarkCurrentThread,
-                   "NuwaMarkCurrentThread is undefined!");
       NuwaMarkCurrentThread(nullptr, nullptr);
     }
 #endif
@@ -361,6 +359,13 @@ BackgroundHangThread::ReportHang(PRIntervalTime aHangTime)
 {
   // Recovered from a hang; called on the monitor thread
   // mManager->mLock IS locked
+
+  // Remove unwanted "js::RunScript" frame from the stack
+  for (const char** f = &mHangStack.back(); f >= mHangStack.begin(); f--) {
+    if (!mHangStack.IsInBuffer(*f) && !strcmp(*f, "js::RunScript")) {
+      mHangStack.erase(f);
+    }
+  }
 
   Telemetry::HangHistogram newHistogram(Move(mHangStack));
   for (Telemetry::HangHistogram* oldHistogram = mStats.mHangs.begin();

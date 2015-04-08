@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2014, International Business Machines Corporation and         *
+* Copyright (C) 2014-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 *
@@ -582,11 +582,11 @@ void MeasureFormatTest::TestFormatPeriodEn() {
             {t_2y_5M_3w_4d, UPRV_LENGTHOF(t_2y_5M_3w_4d), "2 years, 5 months, 3 weeks, 4 days"}};
 
     ExpectedResult abbrevData[] = {
-            {t_1m_59_9996s, UPRV_LENGTHOF(t_1m_59_9996s), "1 min, 59.9996 secs"},
-            {t_19m, UPRV_LENGTHOF(t_19m), "19 mins"},
-            {t_1h_23_5s, UPRV_LENGTHOF(t_1h_23_5s), "1 hr, 23.5 secs"},
-            {t_1h_23_5m, UPRV_LENGTHOF(t_1h_23_5m), "1 hr, 23.5 mins"},
-            {t_1h_0m_23s, UPRV_LENGTHOF(t_1h_0m_23s), "1 hr, 0 mins, 23 secs"},
+            {t_1m_59_9996s, UPRV_LENGTHOF(t_1m_59_9996s), "1 min, 59.9996 sec"},
+            {t_19m, UPRV_LENGTHOF(t_19m), "19 min"},
+            {t_1h_23_5s, UPRV_LENGTHOF(t_1h_23_5s), "1 hr, 23.5 sec"},
+            {t_1h_23_5m, UPRV_LENGTHOF(t_1h_23_5m), "1 hr, 23.5 min"},
+            {t_1h_0m_23s, UPRV_LENGTHOF(t_1h_0m_23s), "1 hr, 0 min, 23 sec"},
             {t_2y_5M_3w_4d, UPRV_LENGTHOF(t_2y_5M_3w_4d), "2 yrs, 5 mths, 3 wks, 4 days"}};
 
     ExpectedResult narrowData[] = {
@@ -1258,7 +1258,7 @@ void MeasureFormatTest::TestGroupingSeparator() {
     }
     assertEquals(
             "grouping separator",
-            "2,147,483,647 yrs, -2,147,483,648 mths, -987 days, 1,362 hrs, 987 mins",
+            "2,147,483,647 yrs, -2,147,483,648 mths, -987 days, 1,362 hr, 987 min",
             appendTo);
     assertEquals("begin index", 9, pos.getBeginIndex());
     assertEquals("end index", 10, pos.getEndIndex());

@@ -3,20 +3,26 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+/* CSS Variables specific to this panel that aren't defined by the themes */
+.theme-dark {
+  --cell-border-color: rgba(255,255,255,0.15);
+  --focus-cell-border-color: rgba(255,255,255,0.5);
+  --row-alt-background-color: rgba(29,79,115,0.15);
+  --row-hover-background-color: rgba(29,79,115,0.25);
+}
+
+.theme-light {
+  --cell-border-color: rgba(0,0,0,0.15);
+  --focus-cell-border-color: rgba(0,0,0,0.3);
+  --row-alt-background-color: rgba(76,158,217,0.1);
+  --row-hover-background-color: rgba(76,158,217,0.2);
+}
+
 /* Toolbar */
 
+#performance-toolbar > tabs,
 #performance-toolbar {
-  -moz-border-end: 1px solid;
-}
-
-.theme-dark #performance-toolbar > tabs,
-.theme-dark #performance-toolbar {
-  -moz-border-end-color: #000; /* Splitters */
-}
-
-.theme-light #performance-toolbar > tabs,
-.theme-light #performance-toolbar {
-  -moz-border-end-color: #aaa; /* Splitters */
+  -moz-border-end-color: var(--theme-splitter-color);
 }
 
 /* Overview Panel */
@@ -33,15 +39,21 @@
   pointer-events: none;
 }
 
+/* Details Panel */
+
+#select-waterfall-view {
+  list-style-image: url(performance-icons.svg#details-waterfall);
+}
+
+#select-calltree-view {
+  list-style-image: url(performance-icons.svg#details-call-tree);
+}
+
+#select-flamegraph-view {
+  list-style-image: url(performance-icons.svg#details-flamegraph);
+}
+
 /* Profile call tree */
-
-.theme-dark .call-tree-headers-container {
-  border-top: 1px solid #000;
-}
-
-.theme-light .call-tree-headers-container {
-  border-top: 1px solid #aaa;
-}
 
 .call-tree-cells-container {
   /* Hack: force hardware acceleration */
@@ -82,23 +94,14 @@
   -moz-box-align: center;
   overflow: hidden;
   padding: 1px 4px;
+  color: var(--theme-body-color);
+  -moz-border-end-color: var(--cell-border-color);
 }
 
 .call-tree-header:not(:last-child),
 .call-tree-cell:not(:last-child) {
-  -moz-border-end: 1px solid;
-}
-
-.theme-dark .call-tree-header,
-.theme-dark .call-tree-cell {
-  -moz-border-end-color: rgba(255,255,255,0.15);
-  color: #8fa1b2; /* Body Text */
-}
-
-.theme-light .call-tree-header,
-.theme-light .call-tree-cell {
-  -moz-border-end-color: rgba(0,0,0,0.15);
-  color: #18191a; /* Body Text */
+  -moz-border-end-width: 1px;
+  -moz-border-end-style: solid;
 }
 
 .call-tree-header:not(:last-child) {
@@ -109,56 +112,32 @@
   text-align: end;
 }
 
-.theme-dark .call-tree-header {
-  background-color: #252c33; /* Tab Toolbar */
+.call-tree-header {
+  background-color: var(--theme-tab-toolbar-background);
 }
 
-.theme-light .call-tree-header {
-  background-color: #ebeced; /* Tab Toolbar */
+.call-tree-item:last-child:not(:focus) {
+  border-bottom: 1px solid var(--cell-border-color);
 }
 
-.theme-dark .call-tree-item:last-child:not(:focus) {
-  border-bottom: 1px solid rgba(255,255,255,0.15);
+.call-tree-item:nth-child(2n) {
+  background-color: var(--row-alt-background-color);
 }
 
-.theme-light .call-tree-item:last-child:not(:focus) {
-  border-bottom: 1px solid rgba(0,0,0,0.15);
+.call-tree-item:hover {
+  background-color: var(--row-hover-background-color);
 }
 
-.theme-dark .call-tree-item:nth-child(2n) {
-  background-color: rgba(29,79,115,0.15);
-}
-
-.theme-light .call-tree-item:nth-child(2n) {
-  background-color: rgba(76,158,217,0.1);
-}
-
-.theme-dark .call-tree-item:hover {
-  background-color: rgba(29,79,115,0.25);
-}
-
-.theme-light .call-tree-item:hover {
-  background-color: rgba(76,158,217,0.2);
-}
-
-.theme-dark .call-tree-item:focus {
-  background-color: #1d4f73; /* Select Highlight Blue */
-}
-
-.theme-light .call-tree-item:focus {
-  background-color: #4c9ed9; /* Select Highlight Blue */
+.call-tree-item:focus {
+  background-color: var(--theme-selection-background);
 }
 
 .call-tree-item:focus label {
-  color: #f5f7fa !important; /* Light foreground text */
+  color: var(--theme-selection-color) !important;
 }
 
-.theme-dark .call-tree-item:focus .call-tree-cell {
-  -moz-border-end-color: rgba(0,0,0,0.3);
-}
-
-.theme-light .call-tree-item:focus .call-tree-cell {
-  -moz-border-end-color: rgba(255,255,255,0.5);
+.call-tree-item:focus .call-tree-cell {
+  -moz-border-end-color: var(--focus-cell-border-color);
 }
 
 .call-tree-item:not([origin="content"]) .call-tree-name,
@@ -177,33 +156,18 @@
   text-decoration: underline;
 }
 
-.theme-dark .call-tree-url {
-  color: #46afe3;
+.call-tree-url {
+  color: var(--theme-highlight-blue);
 }
 
-.theme-light .call-tree-url {
-  color: #0088cc;
-}
-
-.theme-dark .call-tree-line {
-  color: #d96629;
-}
-
-.theme-light .call-tree-line {
-  color: #f13c00;
+.call-tree-line {
+  color: var(--theme-highlight-orange);
 }
 
 .call-tree-host {
   -moz-margin-start: 8px !important;
   font-size: 90%;
-}
-
-.theme-dark .call-tree-host {
-  color: #8fa1b2;
-}
-
-.theme-light .call-tree-host {
-  color: #8fa1b2;
+  color: var(--theme-content-color2);
 }
 
 .call-tree-url[value=""],
@@ -254,4 +218,146 @@
 .call-tree-category {
   transform: scale(0.75);
   transform-origin: center right;
+}
+
+/**
+ * Details Waterfall Styles
+ */
+
+.waterfall-list-contents {
+  /* Hack: force hardware acceleration */
+  transform: translateZ(1px);
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.waterfall-header-contents {
+  overflow-x: hidden;
+}
+
+.waterfall-background-ticks {
+  /* Background created on a <canvas> in js. */
+  /* @see browser/devtools/timeline/widgets/waterfall.js */
+  background-image: -moz-element(#waterfall-background);
+  background-repeat: repeat-y;
+  background-position: -1px center;
+}
+
+.waterfall-marker-container[is-spacer] {
+  pointer-events: none;
+}
+
+.theme-dark .waterfall-marker-container:not([is-spacer]):nth-child(2n) {
+  background-color: rgba(255,255,255,0.03);
+}
+
+.theme-light .waterfall-marker-container:not([is-spacer]):nth-child(2n) {
+  background-color: rgba(128,128,128,0.03);
+}
+
+.theme-dark .waterfall-marker-container:hover {
+  background-color: rgba(255,255,255,0.1) !important;
+}
+
+.theme-light .waterfall-marker-container:hover {
+  background-color: rgba(128,128,128,0.1) !important;
+}
+
+.waterfall-marker-item {
+  overflow: hidden;
+}
+
+.waterfall-sidebar {
+  -moz-border-end: 1px solid var(--theme-splitter-color);
+}
+
+.waterfall-marker-container:hover > .waterfall-sidebar {
+  background-color: transparent;
+}
+
+.waterfall-header-name {
+  padding: 4px;
+}
+
+.waterfall-header-tick {
+  width: 100px;
+  font-size: 9px;
+  transform-origin: left center;
+  color: var(--theme-body-color);
+}
+
+.waterfall-header-tick:not(:first-child) {
+  -moz-margin-start: -100px !important; /* Don't affect layout. */
+}
+
+.waterfall-marker-bullet {
+  width: 8px;
+  height: 8px;
+  -moz-margin-start: 8px;
+  -moz-margin-end: 6px;
+  border: 1px solid;
+  border-radius: 1px;
+}
+
+.waterfall-marker-name {
+  font-size: 95%;
+  padding-bottom: 1px !important;
+}
+
+.waterfall-marker-bar {
+  height: 9px;
+  border: 1px solid;
+  border-radius: 1px;
+  transform-origin: left center;
+}
+
+.waterfall-marker-container.selected > .waterfall-sidebar,
+.waterfall-marker-container.selected > .waterfall-marker-item {
+  background-color: var(--theme-selection-background);
+  color: var(--theme-selection-color);
+}
+
+.waterfall-marker-container.selected .waterfall-marker-bullet,
+.waterfall-marker-container.selected .waterfall-marker-bar {
+  border-color: initial !important;
+}
+
+.waterfall-marker-location {
+   color: -moz-nativehyperlinktext;
+}
+
+.waterfall-marker-location:hover,
+.waterfall-marker-location:focus {
+   text-decoration: underline;
+}
+
+#waterfall-details {
+  -moz-padding-start: 8px;
+  -moz-padding-end: 8px;
+  padding-top: 2vh;
+  overflow: auto;
+}
+
+.marker-details-bullet {
+  width: 8px;
+  height: 8px;
+  border: 1px solid;
+  border-radius: 1px;
+}
+
+#waterfall-details > * {
+  padding-top: 3px;
+}
+
+.marker-details-labelname {
+  -moz-padding-end: 4px;
+}
+
+.marker-details-type {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.marker-details-duration {
+  font-weight: bold;
 }

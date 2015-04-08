@@ -45,7 +45,8 @@ asserts(6-12) load 265986-1.html # Bug 512405
 load 265999-1.html
 load 266222-1.html
 asserts(1-7) load 266360-1.html # bug 576358
-asserts(2) load 266445-1.html
+load 266445-1.html
+asserts(2) load 266445-2.html
 load 268157-1.html
 load 269566-1.html
 load 272647-1.html
@@ -453,3 +454,6 @@ load 973390-1.html
 load 1001237.html
 load 1043163-1.html
 load 1061028.html
+load 1116104.html
+load 1107508-1.html
+load 1127198-1.html

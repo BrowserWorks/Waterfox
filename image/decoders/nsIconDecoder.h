@@ -38,11 +38,10 @@ class nsIconDecoder : public Decoder
 {
 public:
 
-  explicit nsIconDecoder(RasterImage& aImage);
+  explicit nsIconDecoder(RasterImage* aImage);
   virtual ~nsIconDecoder();
 
-  virtual void WriteInternal(const char* aBuffer, uint32_t aCount,
-                             DecodeStrategy aStrategy) MOZ_OVERRIDE;
+  virtual void WriteInternal(const char* aBuffer, uint32_t aCount) MOZ_OVERRIDE;
 
   uint8_t mWidth;
   uint8_t mHeight;

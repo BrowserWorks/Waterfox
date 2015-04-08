@@ -51,6 +51,7 @@ JSCompartment::JSCompartment(Zone *zone, const JS::CompartmentOptions &options =
 #endif
     global_(nullptr),
     enterCompartmentDepth(0),
+    totalTime(0),
     data(nullptr),
     objectMetadataCallback(nullptr),
     lastAnimationTime(0),
@@ -140,6 +141,8 @@ JSRuntime::createJitRuntime(JSContext *cx)
     jitRuntime_ = jrt;
 
     if (!jitRuntime_->initialize(cx)) {
+        js_ReportOutOfMemory(cx);
+
         js_delete(jitRuntime_);
         jitRuntime_ = nullptr;
 
@@ -179,8 +182,6 @@ JSCompartment::ensureJitCompartmentExists(JSContext *cx)
 
     return true;
 }
-
-#ifdef JSGC_GENERATIONAL
 
 /*
  * This class is used to add a post barrier on the crossCompartmentWrappers map,
@@ -236,8 +237,6 @@ JSCompartment::checkWrapperMapAfterMovingGC()
 }
 #endif
 
-#endif
-
 bool
 JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, const js::Value &wrapper)
 {
@@ -249,7 +248,6 @@ JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, con
     MOZ_ASSERT_IF(wrapped.kind != CrossCompartmentKey::StringWrapper, wrapper.isObject());
     bool success = crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper));
 
-#ifdef JSGC_GENERATIONAL
     /* There's no point allocating wrappers in the nursery since we will tenure them anyway. */
     MOZ_ASSERT(!IsInsideNursery(static_cast<gc::Cell *>(wrapper.toGCThing())));
 
@@ -257,7 +255,6 @@ JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, con
         WrapperMapRef ref(&crossCompartmentWrappers, wrapped);
         cx->runtime()->gc.storeBuffer.putGeneric(ref);
     }
-#endif
 
     return success;
 }

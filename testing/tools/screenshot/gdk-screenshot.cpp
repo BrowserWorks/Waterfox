@@ -42,7 +42,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-#include "mozilla/NullPtr.h"
 
 gboolean save_to_stdout(const gchar *buf, gsize count,
                         GError **error, gpointer data)
@@ -127,10 +126,10 @@ int main(int argc, char** argv)
   }
 #endif
 
-  GdkWindow* window = gdk_get_default_root_window();
   GdkPixbuf* screenshot = nullptr;
 // TODO GTK3
 #if (MOZ_WIDGET_GTK == 2)
+  GdkWindow* window = gdk_get_default_root_window();
   screenshot = gdk_pixbuf_get_from_drawable(nullptr, window, nullptr,
                                             0, 0, 0, 0,
                                             gdk_screen_width(),

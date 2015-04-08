@@ -65,7 +65,7 @@ nsXPCWrappedJS::CanSkip()
 
     // If this wrapper holds a gray object, need to trace it.
     JSObject *obj = GetJSObjectPreserveColor();
-    if (obj && xpc_IsGrayGCThing(obj))
+    if (obj && JS::ObjectIsMarkedGray(obj))
         return false;
 
     // For non-root wrappers, check if the root wrapper will be
@@ -123,7 +123,7 @@ NS_CYCLE_COLLECTION_CLASSNAME(nsXPCWrappedJS)::Traverse
     if (tmp->IsValid()) {
         MOZ_ASSERT(refcnt > 1);
         NS_CYCLE_COLLECTION_NOTE_EDGE_NAME(cb, "mJSObj");
-        cb.NoteJSChild(tmp->GetJSObjectPreserveColor());
+        cb.NoteJSObject(tmp->GetJSObjectPreserveColor());
     }
 
     if (tmp->IsRootWrapper()) {
@@ -385,7 +385,7 @@ nsXPCWrappedJS::nsXPCWrappedJS(JSContext* cx,
                                nsresult *rv)
     : mJSObj(aJSObj),
       mClass(aClass),
-      mRoot(root ? root : MOZ_THIS_IN_INITIALIZER_LIST()),
+      mRoot(root ? root : this),
       mNext(nullptr)
 {
     *rv = InitStub(GetClass()->GetIID());

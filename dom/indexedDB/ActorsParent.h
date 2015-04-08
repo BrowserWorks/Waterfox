@@ -7,16 +7,11 @@
 
 template <class> struct already_AddRefed;
 class nsCString;
+struct nsID;
 class nsIPrincipal;
 class nsPIDOMWindow;
 
 namespace mozilla {
-namespace ipc {
-
-class PBackgroundParent;
-
-} // namespace ipc
-
 namespace dom {
 
 class TabParent;
@@ -29,18 +24,16 @@ class Client;
 
 namespace indexedDB {
 
-class OptionalWindowId;
+class LoggingInfo;
 class PBackgroundIDBFactoryParent;
 class PIndexedDBPermissionRequestParent;
 
 PBackgroundIDBFactoryParent*
-AllocPBackgroundIDBFactoryParent(mozilla::ipc::PBackgroundParent* aManager,
-                                 const OptionalWindowId& aOptionalWindowId);
+AllocPBackgroundIDBFactoryParent(const LoggingInfo& aLoggingInfo);
 
 bool
-RecvPBackgroundIDBFactoryConstructor(mozilla::ipc::PBackgroundParent* aManager,
-                                     PBackgroundIDBFactoryParent* aActor,
-                                     const OptionalWindowId& aOptionalWindowId);
+RecvPBackgroundIDBFactoryConstructor(PBackgroundIDBFactoryParent* aActor,
+                                     const LoggingInfo& aLoggingInfo);
 
 bool
 DeallocPBackgroundIDBFactoryParent(PBackgroundIDBFactoryParent* aActor);

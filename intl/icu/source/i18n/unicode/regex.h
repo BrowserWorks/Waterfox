@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 2002-2014, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *   file name:  regex.h
@@ -54,6 +54,8 @@
 #include "unicode/uregex.h"
 
 // Forward Declarations
+
+struct UHashtable;
 
 U_NAMESPACE_BEGIN
 
@@ -136,7 +138,7 @@ public:
 
     /**
      * Create an exact copy of this RegexPattern object.  Since RegexPattern is not
-     * intended to be subclasses, <code>clone()</code> and the copy construction are
+     * intended to be subclassed, <code>clone()</code> and the copy construction are
      * equivalent operations.
      * @return the copy of this RegexPattern
      * @stable ICU 2.4
@@ -438,6 +440,41 @@ public:
 
 
     /**
+     * Get the group number corresponding to a named capture group.
+     * The returned number can be used with any function that access
+     * capture groups by number.
+     *
+     * The function returns an error status if the specified name does not
+     * appear in the pattern.
+     *
+     * @param  groupName   The capture group name.
+     * @param  status      A UErrorCode to receive any errors.
+     *
+     * @draft ICU 55
+     */
+    virtual int32_t groupNumberFromName(const UnicodeString &groupName, UErrorCode &status) const;
+
+
+    /**
+     * Get the group number corresponding to a named capture group.
+     * The returned number can be used with any function that access
+     * capture groups by number.
+     *
+     * The function returns an error status if the specified name does not
+     * appear in the pattern.
+     *
+     * @param  groupName   The capture group name,
+     *                     platform invariant characters only.
+     * @param  nameLength  The length of the name, or -1 if the name is
+     *                     nul-terminated.
+     * @param  status      A UErrorCode to receive any errors.
+     *
+     * @draft ICU 55
+     */
+    virtual int32_t groupNumberFromName(const char *groupName, int32_t nameLength, UErrorCode &status) const;
+
+
+    /**
      * Split a string into fields.  Somewhat like split() from Perl or Java.
      * Pattern matches identify delimiters that separate the input
      * into fields.  The input data between the delimiters becomes the
@@ -573,8 +610,6 @@ private:
     UVector32       *fGroupMap;    // Map from capture group number to position of
                                    //   the group's variables in the matcher stack frame.
 
-    int32_t         fMaxCaptureDigits;
-
     UnicodeSet     **fStaticSets;  // Ptr to static (shared) sets for predefined
                                    //   regex character classes, e.g. Word.
 
@@ -588,6 +623,8 @@ private:
     UChar32         fInitialChar;
     Regex8BitSet   *fInitialChars8;
     UBool           fNeedsAltInput;
+
+    UHashtable     *fNamedCaptureMap;  // Map from capture group names to numbers.
 
     friend class RegexCompile;
     friend class RegexMatcher;
@@ -812,7 +849,7 @@ public:
     *     position may not be valid with the altered input string.</p>
     *  @param   status  A reference to a UErrorCode to receive any errors.
     *  @return  TRUE if a match is found.
-    *  @internal
+    *  @draft ICU 55
     */
     virtual UBool find(UErrorCode &status);
 
@@ -854,7 +891,6 @@ public:
     */
     virtual UnicodeString group(int32_t groupNum, UErrorCode &status) const;
 
-
    /**
     *   Returns the number of capturing groups in this matcher's pattern.
     *   @return the number of capture groups
@@ -895,24 +931,6 @@ public:
     *   @stable ICU 4.6
     */
     virtual UText *group(int32_t groupNum, UText *dest, int64_t &group_len, UErrorCode &status) const;
-
-   /**
-    *   Returns a string containing the text captured by the given group
-    *   during the previous match operation.  Group(0) is the entire match.
-    *
-    *   @param   groupNum    the capture group number
-    *   @param   dest        A mutable UText in which the matching text is placed.
-    *                        If NULL, a new UText will be created (which may not be mutable).
-    *   @param   status      A reference to a UErrorCode to receive any errors.
-    *                        Possible errors are  U_REGEX_INVALID_STATE if no match
-    *                        has been attempted or the last match failed.
-    *   @return  A string containing the matched input text. If a pre-allocated UText
-    *            was provided, it will always be used and returned.
-    *
-    *   @internal ICU 4.4 technology preview
-    */
-    virtual UText *group(int32_t groupNum, UText *dest, UErrorCode &status) const;
-
 
    /**
     *   Returns the index in the input string of the start of the text matched
@@ -962,7 +980,6 @@ public:
     *    @stable ICU 4.6
     */
     virtual int64_t start64(int32_t group, UErrorCode &status) const;
-
 
    /**
     *    Returns the index in the input string of the first character following the
@@ -1032,7 +1049,6 @@ public:
     *   @stable ICU 4.6
     */
     virtual int64_t end64(int32_t group, UErrorCode &status) const;
-
 
    /**
     *   Resets this matcher.  The effect is to remove any memory of previous matches,

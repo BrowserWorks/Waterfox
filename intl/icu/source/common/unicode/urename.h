@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-*   Copyright (C) 2002-2014, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *******************************************************************************
 *
@@ -104,7 +104,6 @@
 #define _UTF7Data U_ICU_ENTRY_POINT_RENAME(_UTF7Data)
 #define _UTF8Data U_ICU_ENTRY_POINT_RENAME(_UTF8Data)
 #define cmemory_cleanup U_ICU_ENTRY_POINT_RENAME(cmemory_cleanup)
-#define cmemory_inUse U_ICU_ENTRY_POINT_RENAME(cmemory_inUse)
 #define gTimeZoneFilesInitOnce U_ICU_ENTRY_POINT_RENAME(gTimeZoneFilesInitOnce)
 #define izrule_clone U_ICU_ENTRY_POINT_RENAME(izrule_clone)
 #define izrule_close U_ICU_ENTRY_POINT_RENAME(izrule_close)
@@ -204,6 +203,7 @@
 #define u_UCharsToChars U_ICU_ENTRY_POINT_RENAME(u_UCharsToChars)
 #define u_austrcpy U_ICU_ENTRY_POINT_RENAME(u_austrcpy)
 #define u_austrncpy U_ICU_ENTRY_POINT_RENAME(u_austrncpy)
+#define u_caseInsensitivePrefixMatch U_ICU_ENTRY_POINT_RENAME(u_caseInsensitivePrefixMatch)
 #define u_catclose U_ICU_ENTRY_POINT_RENAME(u_catclose)
 #define u_catgets U_ICU_ENTRY_POINT_RENAME(u_catgets)
 #define u_catopen U_ICU_ENTRY_POINT_RENAME(u_catopen)
@@ -802,6 +802,8 @@
 #define udat_countSymbols U_ICU_ENTRY_POINT_RENAME(udat_countSymbols)
 #define udat_format U_ICU_ENTRY_POINT_RENAME(udat_format)
 #define udat_formatCalendar U_ICU_ENTRY_POINT_RENAME(udat_formatCalendar)
+#define udat_formatCalendarForFields U_ICU_ENTRY_POINT_RENAME(udat_formatCalendarForFields)
+#define udat_formatForFields U_ICU_ENTRY_POINT_RENAME(udat_formatForFields)
 #define udat_get2DigitYearStart U_ICU_ENTRY_POINT_RENAME(udat_get2DigitYearStart)
 #define udat_getAvailable U_ICU_ENTRY_POINT_RENAME(udat_getAvailable)
 #define udat_getBooleanAttribute U_ICU_ENTRY_POINT_RENAME(udat_getBooleanAttribute)
@@ -885,6 +887,9 @@
 #define uenum_reset U_ICU_ENTRY_POINT_RENAME(uenum_reset)
 #define uenum_unext U_ICU_ENTRY_POINT_RENAME(uenum_unext)
 #define uenum_unextDefault U_ICU_ENTRY_POINT_RENAME(uenum_unextDefault)
+#define ufieldpositer_close U_ICU_ENTRY_POINT_RENAME(ufieldpositer_close)
+#define ufieldpositer_next U_ICU_ENTRY_POINT_RENAME(ufieldpositer_next)
+#define ufieldpositer_open U_ICU_ENTRY_POINT_RENAME(ufieldpositer_open)
 #define ufile_close_translit U_ICU_ENTRY_POINT_RENAME(ufile_close_translit)
 #define ufile_fill_uchar_buffer U_ICU_ENTRY_POINT_RENAME(ufile_fill_uchar_buffer)
 #define ufile_flush_io U_ICU_ENTRY_POINT_RENAME(ufile_flush_io)
@@ -1010,6 +1015,9 @@
 #define ulist_next_keyword_value U_ICU_ENTRY_POINT_RENAME(ulist_next_keyword_value)
 #define ulist_resetList U_ICU_ENTRY_POINT_RENAME(ulist_resetList)
 #define ulist_reset_keyword_values_iterator U_ICU_ENTRY_POINT_RENAME(ulist_reset_keyword_values_iterator)
+#define ulistfmt_close U_ICU_ENTRY_POINT_RENAME(ulistfmt_close)
+#define ulistfmt_format U_ICU_ENTRY_POINT_RENAME(ulistfmt_format)
+#define ulistfmt_open U_ICU_ENTRY_POINT_RENAME(ulistfmt_open)
 #define uloc_acceptLanguage U_ICU_ENTRY_POINT_RENAME(uloc_acceptLanguage)
 #define uloc_acceptLanguageFromHTTP U_ICU_ENTRY_POINT_RENAME(uloc_acceptLanguageFromHTTP)
 #define uloc_addLikelySubtags U_ICU_ENTRY_POINT_RENAME(uloc_addLikelySubtags)
@@ -1380,8 +1388,9 @@
 #define uregex_getUText U_ICU_ENTRY_POINT_RENAME(uregex_getUText)
 #define uregex_group U_ICU_ENTRY_POINT_RENAME(uregex_group)
 #define uregex_groupCount U_ICU_ENTRY_POINT_RENAME(uregex_groupCount)
+#define uregex_groupNumberFromCName U_ICU_ENTRY_POINT_RENAME(uregex_groupNumberFromCName)
+#define uregex_groupNumberFromName U_ICU_ENTRY_POINT_RENAME(uregex_groupNumberFromName)
 #define uregex_groupUText U_ICU_ENTRY_POINT_RENAME(uregex_groupUText)
-#define uregex_groupUTextDeep U_ICU_ENTRY_POINT_RENAME(uregex_groupUTextDeep)
 #define uregex_hasAnchoringBounds U_ICU_ENTRY_POINT_RENAME(uregex_hasAnchoringBounds)
 #define uregex_hasTransparentBounds U_ICU_ENTRY_POINT_RENAME(uregex_hasTransparentBounds)
 #define uregex_hitEnd U_ICU_ENTRY_POINT_RENAME(uregex_hitEnd)

@@ -40,7 +40,7 @@ public:
          const nsHTMLReflowState& aReflowState,
          nsReflowStatus&          aStatus) MOZ_OVERRIDE;
 
-  virtual nsQueryFrame::FrameIID GetFrameId() = 0;
+  virtual nsQueryFrame::FrameIID GetFrameId() MOZ_OVERRIDE = 0;
 
 protected:
   explicit nsMathMLSelectedFrame(nsStyleContext* aContext) :
@@ -53,7 +53,7 @@ protected:
   bool            mInvalidMarkup;
   
 private:
-  void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE MOZ_DELETE;
+  void* operator new(size_t, nsIPresShell*) MOZ_MUST_OVERRIDE = delete;
 };
 
 #endif /* nsMathMLSelectedFrame_h___ */

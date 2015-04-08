@@ -5,7 +5,7 @@
 #include "nsISupports.idl"
 #include "nsIVariant.idl"
 
-[scriptable, builtinclass, uuid(0766ab99-70a1-4e0a-a37e-e9f086e88c42)]
+[scriptable, builtinclass, uuid(bbfebbc6-76eb-407c-b77d-363a69bc5c30)]
 interface nsIMediaDevice : nsISupports
 {
   readonly attribute DOMString type;
@@ -31,7 +31,7 @@ interface nsIDOMGetUserMediaSuccessCallback : nsISupports
   void onSuccess(in nsISupports value);
 };
 
-[scriptable, function, uuid(088c74f5-0fbf-42d6-87f5-f248e759c6b7)]
+[scriptable, function, uuid(39e96c61-2636-4f0e-918e-9bb64276492a)]
 interface nsIDOMGetUserMediaErrorCallback : nsISupports
 {
   void onError(in nsISupports error);

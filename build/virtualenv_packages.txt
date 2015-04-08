@@ -10,7 +10,6 @@ optional:setup.py:python/psutil:build_ext:--inplace
 optional:psutil.pth:python/psutil
 which.pth:python/which
 ply.pth:other-licenses/ply/
-codegen.pth:python/codegen/
 mock.pth:python/mock-1.0.0
 mozilla.pth:build
 mozilla.pth:config
@@ -25,3 +24,4 @@ objdir:build
 gyp.pth:media/webrtc/trunk/tools/gyp/pylib
 pyasn1.pth:python/pyasn1
 bitstring.pth:python/bitstring
+redo.pth:python/redo

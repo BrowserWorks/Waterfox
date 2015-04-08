@@ -1,5 +1,5 @@
 //
-//   Copyright (C) 2002-2014 International Business Machines Corporation
+//   Copyright (C) 2002-2015 International Business Machines Corporation
 //   and others. All rights reserved.
 //
 //   file:  regeximp.h
@@ -173,7 +173,10 @@ enum {
      URX_BACKSLASH_BU  = 53,   // \b or \B in UREGEX_UWORD mode, using Unicode style
                                //   word boundaries.
      URX_DOLLAR_D      = 54,   // $ end of input test, in UNIX_LINES mode.
-     URX_DOLLAR_MD     = 55    // $ end of input test, in MULTI_LINE and UNIX_LINES mode.
+     URX_DOLLAR_MD     = 55,   // $ end of input test, in MULTI_LINE and UNIX_LINES mode.
+     URX_BACKSLASH_H   = 56,   // Value field:  0:  \h    1:  \H
+     URX_BACKSLASH_R   = 57,   // Any line break sequence.
+     URX_BACKSLASH_V   = 58    // Value field:  0:  \v    1:  \V
 
 };
 
@@ -235,7 +238,10 @@ enum {
         "LOOP_DOT_I",          \
         "BACKSLASH_BU",        \
         "DOLLAR_D",            \
-        "DOLLAR_MD"
+        "DOLLAR_MD",           \
+        "URX_BACKSLASH_H",     \
+        "URX_BACKSLASH_R",     \
+        "URX_BACKSLASH_V" 
 
 
 //

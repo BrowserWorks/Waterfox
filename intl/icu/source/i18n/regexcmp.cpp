@@ -1,7 +1,7 @@
 //
 //  file:  regexcmp.cpp
 //
-//  Copyright (C) 2002-2014 International Business Machines Corporation and others.
+//  Copyright (C) 2002-2015 International Business Machines Corporation and others.
 //  All Rights Reserved.
 //
 //  This file contains the ICU regular expression compiler, which is responsible
@@ -70,6 +70,7 @@ RegexCompile::RegexCompile(RegexPattern *rxp, UErrorCode &status) :
 
     fMatchOpenParen   = -1;
     fMatchCloseParen  = -1;
+    fCaptureName      = NULL;
 
     if (U_SUCCESS(status) && U_FAILURE(rxp->fDeferredStatus)) {
         status = rxp->fDeferredStatus;
@@ -86,6 +87,8 @@ static const UChar      chDash      = 0x2d;      // '-'
 //
 //------------------------------------------------------------------------------
 RegexCompile::~RegexCompile() {
+    delete fCaptureName;         // Normally will be NULL, but can exist if pattern
+                                 //   compilation stops with a syntax error.
 }
 
 static inline void addCategory(UnicodeSet *set, int32_t value, UErrorCode& ec) {
@@ -287,17 +290,6 @@ void    RegexCompile::compile(
     //
 
     //
-    // Compute the number of digits requried for the largest capture group number.
-    //
-    fRXPat->fMaxCaptureDigits = 1;
-    int32_t  n = 10;
-    int32_t  groupCount = fRXPat->fGroupMap->size();
-    while (n <= groupCount) {
-        fRXPat->fMaxCaptureDigits++;
-        n *= 10;
-    }
-
-    //
     // The pattern's fFrameSize so far has accumulated the requirements for
     //   storage for capture parentheses, counters, etc. that are encountered
     //   in the pattern.  Add space for the two variables that are always
@@ -438,8 +430,25 @@ UBool RegexCompile::doParseActions(int32_t action)
         break;
 
 
+    case doBeginNamedCapture:
+        // Scanning (?<letter.
+        //   The first letter of the name will come through again under doConinueNamedCapture.
+        fCaptureName = new UnicodeString();
+        if (fCaptureName == NULL) {
+            error(U_MEMORY_ALLOCATION_ERROR);
+        }
+        break;
+
+    case  doContinueNamedCapture:
+        fCaptureName->append(fC.fChar);
+        break;
+
+    case doBadNamedCapture:
+        error(U_REGEX_INVALID_CAPTURE_GROUP_NAME);
+        break;
+        
     case doOpenCaptureParen:
-        // Open Paren.
+        // Open Capturing Paren, possibly named.
         //   Compile to a
         //      - NOP, which later may be replaced by a save-state if the
         //         parenthesized group gets a * quantifier, followed by
@@ -474,8 +483,18 @@ UBool RegexCompile::doParseActions(int32_t action)
 
             // Save the mapping from group number to stack frame variable position.
             fRXPat->fGroupMap->addElement(varsLoc, *fStatus);
+
+            // If this is a named capture group, add the name->group number mapping.
+            if (fCaptureName != NULL) {
+                int32_t groupNumber = fRXPat->fGroupMap->size();
+                int32_t previousMapping = uhash_puti(fRXPat->fNamedCaptureMap, fCaptureName, groupNumber, fStatus);
+                fCaptureName = NULL;    // hash table takes ownership of the name (key) string.
+                if (previousMapping > 0 && U_SUCCESS(*fStatus)) {
+                    error(U_REGEX_INVALID_CAPTURE_GROUP_NAME);
+                }
+            }
         }
-         break;
+        break;
 
     case doOpenNonCaptureParen:
         // Open non-caputuring (grouping only) Paren.
@@ -1169,6 +1188,21 @@ UBool RegexCompile::doParseActions(int32_t action)
         appendOp(URX_BACKSLASH_G, 0);
         break;
 
+    case doBackslashH:
+        fixLiterals(FALSE);
+        appendOp(URX_BACKSLASH_H, 1);
+        break;
+
+    case doBackslashh:
+        fixLiterals(FALSE);
+        appendOp(URX_BACKSLASH_H, 0);
+        break;
+
+    case doBackslashR:
+        fixLiterals(FALSE);
+        appendOp(URX_BACKSLASH_R, 0);
+        break;
+
     case doBackslashS:
         fixLiterals(FALSE);
         appendOp(URX_STAT_SETREF_N, URX_ISSPACE_SET);
@@ -1177,6 +1211,16 @@ UBool RegexCompile::doParseActions(int32_t action)
     case doBackslashs:
         fixLiterals(FALSE);
         appendOp(URX_STATIC_SETREF, URX_ISSPACE_SET);
+        break;
+
+    case doBackslashV:
+        fixLiterals(FALSE);
+        appendOp(URX_BACKSLASH_V, 1);
+        break;
+
+    case doBackslashv:
+        fixLiterals(FALSE);
+        appendOp(URX_BACKSLASH_V, 0);
         break;
 
     case doBackslashW:
@@ -1270,7 +1314,41 @@ UBool RegexCompile::doParseActions(int32_t action)
         }
         break;
 
+    case doBeginNamedBackRef:
+        U_ASSERT(fCaptureName == NULL);
+        fCaptureName = new UnicodeString;
+        if (fCaptureName == NULL) {
+            error(U_MEMORY_ALLOCATION_ERROR);
+        }
+        break;
+            
+    case doContinueNamedBackRef:
+        fCaptureName->append(fC.fChar);
+        break;
 
+    case doCompleteNamedBackRef:
+        {
+        int32_t groupNumber = uhash_geti(fRXPat->fNamedCaptureMap, fCaptureName);
+        if (groupNumber == 0) {
+            // Group name has not been defined.
+            //   Could be a forward reference. If we choose to support them at some
+            //   future time, extra mechanism will be required at this point.
+            error(U_REGEX_INVALID_CAPTURE_GROUP_NAME);
+        } else {
+            // Given the number, handle identically to a \n numbered back reference.
+            // See comments above, under doBackRef
+            fixLiterals(FALSE);
+            if (fModeFlags & UREGEX_CASE_INSENSITIVE) {
+                appendOp(URX_BACKREF_I, groupNumber);
+            } else {
+                appendOp(URX_BACKREF, groupNumber);
+            }
+        }
+        delete fCaptureName;
+        fCaptureName = NULL;
+        break;
+        }
+       
     case doPossessivePlus:
         // Possessive ++ quantifier.
         // Compiles to
@@ -1492,6 +1570,48 @@ UBool RegexCompile::doParseActions(int32_t action)
             digits.applyIntPropertyValue(UCHAR_GENERAL_CATEGORY_MASK, U_GC_ND_MASK, *fStatus);
             digits.complement();
             set->addAll(digits);
+            break;
+        }
+
+    case doSetBackslash_h:
+        {
+            UnicodeSet *set = (UnicodeSet *)fSetStack.peek();
+            UnicodeSet h;
+            h.applyIntPropertyValue(UCHAR_GENERAL_CATEGORY_MASK, U_GC_ZS_MASK, *fStatus);
+            h.add((UChar32)9);   // Tab
+            set->addAll(h);
+            break;
+        }
+
+    case doSetBackslash_H:
+        {
+            UnicodeSet *set = (UnicodeSet *)fSetStack.peek();
+            UnicodeSet h;
+            h.applyIntPropertyValue(UCHAR_GENERAL_CATEGORY_MASK, U_GC_ZS_MASK, *fStatus);
+            h.add((UChar32)9);   // Tab
+            h.complement();
+            set->addAll(h);
+            break;
+        }
+
+    case doSetBackslash_v:
+        {
+            UnicodeSet *set = (UnicodeSet *)fSetStack.peek();
+            set->add((UChar32)0x0a, (UChar32)0x0d);  // add range
+            set->add((UChar32)0x85);
+            set->add((UChar32)0x2028, (UChar32)0x2029);
+            break;
+        }
+
+    case doSetBackslash_V:
+        {
+            UnicodeSet *set = (UnicodeSet *)fSetStack.peek();
+            UnicodeSet v;
+            v.add((UChar32)0x0a, (UChar32)0x0d);  // add range
+            v.add((UChar32)0x85);
+            v.add((UChar32)0x2028, (UChar32)0x2029);
+            v.complement();
+            set->addAll(v);
             break;
         }
 
@@ -2696,6 +2816,43 @@ void   RegexCompile::matchStartType() {
             break;
 
 
+        case URX_BACKSLASH_H:
+            // Horiz white space
+            if (currentLen == 0) {
+                UnicodeSet s;
+                s.applyIntPropertyValue(UCHAR_GENERAL_CATEGORY_MASK, U_GC_ZS_MASK, *fStatus);
+                s.add((UChar32)9);   // Tab
+                if (URX_VAL(op) != 0) {
+                    s.complement();
+                }
+                fRXPat->fInitialChars->addAll(s);
+                numInitialStrings += 2;
+            }
+            currentLen++;
+            atStart = FALSE;
+            break;
+
+
+        case URX_BACKSLASH_R:       // Any line ending sequence
+        case URX_BACKSLASH_V:       // Any line ending code point, with optional negation
+            if (currentLen == 0) {
+                UnicodeSet s;
+                s.add((UChar32)0x0a, (UChar32)0x0d);  // add range
+                s.add((UChar32)0x85);
+                s.add((UChar32)0x2028, (UChar32)0x2029);
+                if (URX_VAL(op) != 0) {
+                     // Complement option applies to URX_BACKSLASH_V only.
+                     s.complement();
+                }
+                fRXPat->fInitialChars->addAll(s);
+                numInitialStrings += 2;
+            }
+            currentLen++;
+            atStart = FALSE;
+            break;
+
+
+
         case URX_ONECHAR_I:
             // Case Insensitive Single Character.
             if (currentLen == 0) {
@@ -3084,6 +3241,9 @@ int32_t   RegexCompile::minMatchLength(int32_t start, int32_t end) {
         case URX_STAT_SETREF_N:
         case URX_SETREF:
         case URX_BACKSLASH_D:
+        case URX_BACKSLASH_H:
+        case URX_BACKSLASH_R:
+        case URX_BACKSLASH_V:
         case URX_ONECHAR_I:
         case URX_BACKSLASH_X:   // Grahpeme Cluster.  Minimum is 1, max unbounded.
         case URX_DOTANY_ALL:    // . matches one or two.
@@ -3365,6 +3525,9 @@ int32_t   RegexCompile::maxMatchLength(int32_t start, int32_t end) {
         case URX_STAT_SETREF_N:
         case URX_SETREF:
         case URX_BACKSLASH_D:
+        case URX_BACKSLASH_H:
+        case URX_BACKSLASH_R:
+        case URX_BACKSLASH_V:
         case URX_ONECHAR_I:
         case URX_DOTANY_ALL:
         case URX_DOTANY:
@@ -3478,7 +3641,7 @@ int32_t   RegexCompile::maxMatchLength(int32_t start, int32_t end) {
                     break;
                 }
 
-                int32_t maxLoopCount = fRXPat->fCompiledPat->elementAti(loc+3);
+                int32_t maxLoopCount = static_cast<int32_t>(fRXPat->fCompiledPat->elementAti(loc+3));
                 if (maxLoopCount == -1) {
                     // Unbounded Loop. No upper bound on match length.
                     currentLen = INT32_MAX;
@@ -3693,6 +3856,9 @@ void RegexCompile::stripNOPs() {
         case URX_LOOP_C:
         case URX_DOLLAR_D:
         case URX_DOLLAR_MD:
+        case URX_BACKSLASH_H:
+        case URX_BACKSLASH_R:
+        case URX_BACKSLASH_V:
             // These instructions are unaltered by the relocation.
             fRXPat->fCompiledPat->setElementAt(op, dst);
             dst++;

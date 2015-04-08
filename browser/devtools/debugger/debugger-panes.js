@@ -136,9 +136,8 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
    *        - staged: true to stage the item to be appended later
    */
   addSource: function(aSource, aOptions = {}) {
-    if (!(aSource.url || aSource.introductionUrl)) {
-      // These would be most likely eval scripts introduced in inline
-      // JavaScript in HTML, and we don't show those yet (bug 1097873)
+    if (!aSource.url) {
+      // We don't show any unnamed eval scripts yet (see bug 1124106)
       return;
     }
 
@@ -170,21 +169,10 @@ SourcesView.prototype = Heritage.extend(WidgetMethods, {
   },
 
   _parseUrl: function(aSource) {
-    let fullUrl = aSource.url || aSource.introductionUrl;
+    let fullUrl = aSource.url;
     let url = fullUrl.split(" -> ").pop();
     let label = aSource.addonPath ? aSource.addonPath : SourceUtils.getSourceLabel(url);
-    let group;
-
-    if (!aSource.url && aSource.introductionUrl) {
-      label += ' > ' + aSource.introductionType;
-      group = 'evals';
-    }
-    else if(aSource.addonID) {
-      group = aSource.addonID;
-    }
-    else {
-      group = SourceUtils.getSourceGroup(url);
-    }
+    let group = aSource.addonID ? aSource.addonID : SourceUtils.getSourceGroup(url);
 
     return {
       label: label,
@@ -2529,7 +2517,7 @@ EventListenersView.prototype = Heritage.extend(WidgetMethods, {
       "overflow", "resize", "scroll", "underflow", "zoom")) {
       group = L10N.getStr("displayEvents");
     } else if (starts("drag") || starts("drop")) {
-      group = L10N.getStr("Drag and dropEvents");
+      group = L10N.getStr("dragAndDropEvents");
     } else if (starts("gamepad")) {
       group = L10N.getStr("gamepadEvents");
     } else if (is("canplay", "canplaythrough", "durationchange", "emptied",
@@ -2553,7 +2541,7 @@ EventListenersView.prototype = Heritage.extend(WidgetMethods, {
       "visibilitychange")) {
       group = L10N.getStr("navigationEvents");
     } else if (is("pointerlockchange", "pointerlockerror")) {
-      group = L10N.getStr("Pointer lockEvents");
+      group = L10N.getStr("pointerLockEvents");
     } else if (is("compassneedscalibration", "userproximity")) {
       group = L10N.getStr("sensorEvents");
     } else if (starts("storage")) {

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/zh_Hant.xml
- */
 zh_Hant{
     %%Parent{"root"}
     Keys{
@@ -627,7 +624,7 @@ zh_Hant{
         zxx{"無語言內容"}
         zza{"扎扎文"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"亞塞拜然文"}
     }
     Scripts{
@@ -998,7 +995,7 @@ zh_Hant{
         VALLADER{"瑞士瓦勒德方言"}
         WADEGILE{"威妥瑪式拼音"}
     }
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"語言：{0}"}
         script{"文字：{0}"}

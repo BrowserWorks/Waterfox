@@ -1,5 +1,5 @@
 /*
- * (C) Copyright IBM Corp. and others 1998-2014 - All Rights Reserved
+ * (C) Copyright IBM Corp. and others 1998-2015 - All Rights Reserved
  */
 
 #include "LETypes.h"
@@ -606,9 +606,9 @@ LayoutEngine *LayoutEngine::layoutEngineFactory(const LEFontInstance *fontInstan
             break;
         }
     } else {
-        MorphTableHeader2 *morxTable = (MorphTableHeader2 *)fontInstance->getFontTable(morxTableTag);
-        if (morxTable != NULL && SWAPL(morxTable->version)==0x00020000) {
-            result = new GXLayoutEngine2(fontInstance, scriptCode, languageCode, morxTable, typoFlags, success);
+        LEReferenceTo<MorphTableHeader2> morxTable(fontInstance, morxTableTag, success);
+        if (LE_SUCCESS(success) && morxTable.isValid() && SWAPL(morxTable->version)==0x00020000) {
+          result = new GXLayoutEngine2(fontInstance, scriptCode, languageCode, morxTable, typoFlags, success);
         } else {
           LEReferenceTo<MorphTableHeader> mortTable(fontInstance, mortTableTag, success);
           if (LE_SUCCESS(success) && mortTable.isValid() && SWAPL(mortTable->version)==0x00010000) { // mort

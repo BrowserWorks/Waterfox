@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-* Copyright (c) 2004-2014, International Business Machines
+* Copyright (c) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 **********************************************************************
 * Author: Alan Liu
@@ -108,7 +108,7 @@ class U_I18N_API Measure: public UObject {
      * .       erived::getStaticClassID()) ...
      * </pre>
      * @return          The class ID for all objects of this class.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     static UClassID U_EXPORT2 getStaticClassID(void);
 
@@ -121,7 +121,7 @@ class U_I18N_API Measure: public UObject {
      * @return          The class ID for this object. All objects of a
      *                  given class have the same class ID.  Objects of
      *                  other classes have different class IDs.
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UClassID getDynamicClassID(void) const;
 

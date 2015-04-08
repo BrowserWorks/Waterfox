@@ -9,8 +9,8 @@
 // ocsp-stapling-none.example.com doesn't staple an OCSP response, so
 // connecting to it will cause a request to the OCSP responder. As with all of
 // these tests, the OCSP AIA (i.e. the url of the responder) in the certificate
-// is http://localhost:8080. Since this test opens a TCP socket listening on
-// port 8080 that just accepts connections and then ignores them (with
+// is http://localhost:8888. Since this test opens a TCP socket listening on
+// port 8888 that just accepts connections and then ignores them (with
 // connect/read/write timeouts of 30 seconds), the OCSP requests should cancel
 // themselves. When OCSP hard-fail is enabled, connections will be terminated.
 // Otherwise, they will succeed.
@@ -21,7 +21,7 @@ let gSocketListener = {
     socketTransport.setTimeout(Ci.nsISocketTransport.TIMEOUT_READ_WRITE, 30);
   },
 
-  onStopListening: function(serverSocket, socketTransport) {}
+  onStopListening: function(serverSocket, status) {}
 };
 
 function run_test() {
@@ -31,7 +31,7 @@ function run_test() {
 
   let socket = Cc["@mozilla.org/network/server-socket;1"]
                  .createInstance(Ci.nsIServerSocket);
-  socket.init(8080, true, -1);
+  socket.init(8888, true, -1);
   socket.asyncListen(gSocketListener);
 
   add_tests_in_mode(true);
@@ -56,18 +56,28 @@ function add_tests_in_mode(useHardFail) {
   // Reset state
   add_test(function() {
     let endTime = new Date();
+    let timeDifference = endTime - startTime;
+    do_print(`useHardFail = ${useHardFail}`);
+    do_print(`startTime = ${startTime.getTime()} (${startTime})`);
+    do_print(`endTime = ${endTime.getTime()} (${endTime})`);
+    do_print(`timeDifference = ${timeDifference}ms`);
+
     // With OCSP hard-fail on, we timeout after 10 seconds.
     // With OCSP soft-fail, we timeout after 2 seconds.
+    // Date() is not guaranteed to be monotonic, so add extra fuzz time to
+    // prevent intermittent failures (this only appeared to be a problem on
+    // Windows XP). See Bug 1121117.
+    const FUZZ_MS = 300;
     if (useHardFail) {
-      do_check_true((endTime - startTime) > 10000);
+      do_check_true(timeDifference + FUZZ_MS > 10000);
     } else {
-      do_check_true((endTime - startTime) > 2000);
+      do_check_true(timeDifference + FUZZ_MS > 2000);
     }
     // Make sure we didn't wait too long.
     // (Unfortunately, we probably can't have a tight upper bound on
     // how long is too long for this test, because we might be running
     // on slow hardware.)
-    do_check_true((endTime - startTime) < 60000);
+    do_check_true(timeDifference < 60000);
     clearOCSPCache();
     run_next_test();
   });

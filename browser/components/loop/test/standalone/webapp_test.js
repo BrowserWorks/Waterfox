@@ -53,7 +53,7 @@ describe("loop.webapp", function() {
 
   describe("#init", function() {
     beforeEach(function() {
-      sandbox.stub(React, "renderComponent");
+      sandbox.stub(React, "render");
       loop.config.feedbackApiUrl = "http://fake.invalid";
       sandbox.stub(loop.Dispatcher.prototype, "dispatch");
     });
@@ -61,10 +61,10 @@ describe("loop.webapp", function() {
     it("should create the WebappRootView", function() {
       loop.webapp.init();
 
-      sinon.assert.calledOnce(React.renderComponent);
-      sinon.assert.calledWith(React.renderComponent,
+      sinon.assert.calledOnce(React.render);
+      sinon.assert.calledWith(React.render,
         sinon.match(function(value) {
-          return TestUtils.isDescriptorOfType(value,
+          return TestUtils.isCompositeComponentElement(value,
             loop.webapp.WebappRootView);
       }));
     });
@@ -106,7 +106,8 @@ describe("loop.webapp", function() {
 
     function mountTestComponent(props) {
       return TestUtils.renderIntoDocument(
-        loop.webapp.OutgoingConversationView(props));
+        React.createElement(
+          loop.webapp.OutgoingConversationView, props));
     }
 
     beforeEach(function() {
@@ -124,7 +125,9 @@ describe("loop.webapp", function() {
         client: client,
         conversation: conversation,
         notifications: notifications,
-        sdk: {},
+        sdk: {
+          on: sandbox.stub()
+        },
         feedbackStore: feedbackStore
       });
     });
@@ -620,11 +623,12 @@ describe("loop.webapp", function() {
 
         sandbox.stub(client, "requestCallUrlInfo");
         view = React.addons.TestUtils.renderIntoDocument(
-          loop.webapp.FailedConversationView({
-            conversation: conversation,
-            client: client,
-            notifications: notifications
-          }));
+          React.createElement(
+            loop.webapp.FailedConversationView, {
+              conversation: conversation,
+              client: client,
+              notifications: notifications
+            }));
       });
 
       it("should play a failure sound, once", function() {
@@ -645,16 +649,17 @@ describe("loop.webapp", function() {
 
     function mountTestComponent() {
       return TestUtils.renderIntoDocument(
-        loop.webapp.WebappRootView({
-          client: client,
-          helper: helper,
-          notifications: notifications,
-          sdk: sdk,
-          conversation: conversationModel,
-          standaloneAppStore: standaloneAppStore,
-          activeRoomStore: activeRoomStore,
-          feedbackStore: feedbackStore
-        }));
+        React.createElement(
+          loop.webapp.WebappRootView, {
+            client: client,
+            helper: helper,
+            notifications: notifications,
+            sdk: sdk,
+            conversation: conversationModel,
+            standaloneAppStore: standaloneAppStore,
+            activeRoomStore: activeRoomStore,
+            feedbackStore: feedbackStore
+          }));
     }
 
     beforeEach(function() {
@@ -739,7 +744,8 @@ describe("loop.webapp", function() {
       standaloneMedia.setSingleton(multiplexGum);
       sandbox.stub(standaloneMedia._MultiplexGum.prototype, "reset");
 
-      TestUtils.renderIntoDocument(loop.webapp.HomeView());
+      TestUtils.renderIntoDocument(
+        React.createElement(loop.webapp.HomeView));
 
       sinon.assert.calledOnce(multiplexGum.reset);
       sinon.assert.calledWithExactly(multiplexGum.reset);
@@ -766,9 +772,10 @@ describe("loop.webapp", function() {
       sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
 
       view = React.addons.TestUtils.renderIntoDocument(
-        loop.webapp.WaitingConversationView({
-          websocket: websocket
-        })
+        React.createElement(
+          loop.webapp.WaitingConversationView, {
+            websocket: websocket
+          })
       );
     });
 
@@ -849,12 +856,12 @@ describe("loop.webapp", function() {
         };
 
         view = React.addons.TestUtils.renderIntoDocument(
-            loop.webapp.StartConversationView({
+          React.createElement(
+            loop.webapp.StartConversationView, {
               conversation: conversation,
               notifications: notifications,
               client: standaloneClientStub
-            })
-        );
+            }));
       });
 
       it("should start the audio-video conversation establishment process",
@@ -945,12 +952,12 @@ describe("loop.webapp", function() {
         requestCallUrlInfo = sandbox.stub();
 
         view = React.addons.TestUtils.renderIntoDocument(
-            loop.webapp.StartConversationView({
-              conversation: conversation,
-              notifications: notifications,
-              client: {requestCallUrlInfo: requestCallUrlInfo}
-            })
-          );
+            React.createElement(
+              loop.webapp.StartConversationView, {
+                conversation: conversation,
+                notifications: notifications,
+                client: {requestCallUrlInfo: requestCallUrlInfo}
+              }));
 
         loop.config.marketplaceUrl = "http://market/";
       });
@@ -1030,12 +1037,12 @@ describe("loop.webapp", function() {
         var tos;
 
         view = React.addons.TestUtils.renderIntoDocument(
-          loop.webapp.StartConversationView({
-            conversation: conversation,
-            notifications: notifications,
-            client: {requestCallUrlInfo: requestCallUrlInfo}
-          })
-        );
+          React.createElement(
+            loop.webapp.StartConversationView, {
+              conversation: conversation,
+              notifications: notifications,
+              client: {requestCallUrlInfo: requestCallUrlInfo}
+            }));
         tos = view.getDOMNode().querySelector(".terms-service");
 
         expect(tos.classList.contains("hide")).to.equal(false);
@@ -1046,12 +1053,12 @@ describe("loop.webapp", function() {
 
         localStorage.setItem("has-seen-tos", "true");
         view = React.addons.TestUtils.renderIntoDocument(
-          loop.webapp.StartConversationView({
-            conversation: conversation,
-            notifications: notifications,
-            client: {requestCallUrlInfo: requestCallUrlInfo}
-          })
-        );
+          React.createElement(
+            loop.webapp.StartConversationView, {
+              conversation: conversation,
+              notifications: notifications,
+              client: {requestCallUrlInfo: requestCallUrlInfo}
+            }));
         tos = view.getDOMNode().querySelector(".terms-service");
 
         expect(tos.classList.contains("hide")).to.equal(true);
@@ -1075,13 +1082,13 @@ describe("loop.webapp", function() {
       });
       sandbox.stub(window, "XMLHttpRequest").returns(fakeAudioXHR);
       view = React.addons.TestUtils.renderIntoDocument(
-        loop.webapp.EndedConversationView({
-          conversation: conversation,
-          sdk: {},
-          feedbackStore: feedbackStore,
-          onAfterFeedbackReceived: function(){}
-        })
-      );
+        React.createElement(
+          loop.webapp.EndedConversationView, {
+            conversation: conversation,
+            sdk: {},
+            feedbackStore: feedbackStore,
+            onAfterFeedbackReceived: function(){}
+          }));
     });
 
     it("should render a ConversationView", function() {
@@ -1096,17 +1103,20 @@ describe("loop.webapp", function() {
   describe("PromoteFirefoxView", function() {
     describe("#render", function() {
       it("should not render when using Firefox", function() {
-        var comp = TestUtils.renderIntoDocument(loop.webapp.PromoteFirefoxView({
-          helper: {isFirefox: function() { return true; }}
-        }));
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(loop.webapp.PromoteFirefoxView, {
+            helper: {isFirefox: function() { return true; }}
+          }));
 
         expect(comp.getDOMNode().querySelectorAll("h3").length).eql(0);
       });
 
       it("should render when not using Firefox", function() {
-        var comp = TestUtils.renderIntoDocument(loop.webapp.PromoteFirefoxView({
-          helper: {isFirefox: function() { return false; }}
-        }));
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(
+            loop.webapp.PromoteFirefoxView, {
+              helper: {isFirefox: function() { return false; }}
+            }));
 
         expect(comp.getDOMNode().querySelectorAll("h3").length).eql(1);
       });
@@ -1144,12 +1154,12 @@ describe("loop.webapp", function() {
         };
 
         view = React.addons.TestUtils.renderIntoDocument(
-            loop.webapp.StartConversationView({
+          React.createElement(
+            loop.webapp.StartConversationView, {
               conversation: conversation,
               notifications: notifications,
               client: standaloneClientStub
-            })
-        );
+            }));
 
         // default to succeeding with a null local media object
         stubGetPermsAndCacheMedia.callsArgWith(1, {});
@@ -1169,8 +1179,7 @@ describe("loop.webapp", function() {
       before(function() {
         model = new loop.webapp.FxOSConversationModel({
           loopToken: "fakeToken",
-          callerId: "callerId",
-          callType: "callType"
+          callerId: "callerId"
         });
 
         realMozActivity = window.MozActivity;
@@ -1214,13 +1223,44 @@ describe("loop.webapp", function() {
 
         beforeEach(function() {
           trigger = sandbox.stub(model, "trigger");
+          _activityProps = undefined;
         });
 
         afterEach(function() {
           trigger.restore();
         });
 
-        it("Activity properties", function() {
+        it("Activity properties with video call", function() {
+          expect(_activityProps).to.not.exist;
+          model.setupOutgoingCall("audio-video");
+          expect(_activityProps).to.exist;
+          expect(_activityProps).eql({
+            name: "loop-call",
+            data: {
+              type: "loop/token",
+              token: "fakeToken",
+              callerId: "callerId",
+              video: true
+            }
+          });
+        });
+
+        it("Activity properties with audio call", function() {
+          expect(_activityProps).to.not.exist;
+          model.setupOutgoingCall("audio");
+          expect(_activityProps).to.exist;
+          expect(_activityProps).eql({
+            name: "loop-call",
+            data: {
+              type: "loop/token",
+              token: "fakeToken",
+              callerId: "callerId",
+              video: false
+            }
+          });
+        });
+
+        it("Activity properties by default", function() {
           expect(_activityProps).to.not.exist;
           model.setupOutgoingCall();
           expect(_activityProps).to.exist;
@@ -1230,7 +1270,7 @@ describe("loop.webapp", function() {
               type: "loop/token",
               token: "fakeToken",
               callerId: "callerId",
-              callType: "callType"
+              video: false
             }
           });
         });
@@ -1262,12 +1302,12 @@ describe("loop.webapp", function() {
 
         before(function() {
           view = React.addons.TestUtils.renderIntoDocument(
-            loop.webapp.StartConversationView({
-              conversation: model,
-              notifications: notifications,
-              client: {requestCallUrlInfo: sandbox.stub()}
-            })
-          );
+            React.createElement(
+              loop.webapp.StartConversationView, {
+                conversation: model,
+                notifications: notifications,
+                client: {requestCallUrlInfo: sandbox.stub()}
+              }));
         });
 
         beforeEach(function() {

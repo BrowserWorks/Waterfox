@@ -6,6 +6,7 @@ import os
 import StringIO
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 
 import mozfile
 
@@ -655,6 +656,58 @@ class TestMachFormatter(FormatterTest):
         self.assertIn("Unexpected results: 0", self.loglines)
 
 
+class TestXUnitFormatter(FormatterTest):
+
+    def get_formatter(self):
+        return formatters.XUnitFormatter()
+
+    def log_as_xml(self):
+        return ET.fromstring('\n'.join(self.loglines))
+
+    def test_stacktrace_is_present(self):
+        self.logger.suite_start([])
+        self.logger.test_start("test1")
+        self.logger.test_end("test1", "fail", message="Test message", stack='this\nis\na\nstack')
+        self.logger.suite_end()
+
+        root = self.log_as_xml()
+        self.assertIn('this\nis\na\nstack', root.find('testcase/failure').text)
+
+    def test_failure_message(self):
+        self.logger.suite_start([])
+        self.logger.test_start("test1")
+        self.logger.test_end("test1", "fail", message="Test message")
+        self.logger.suite_end()
+
+        root = self.log_as_xml()
+        self.assertEquals('Expected OK, got FAIL', root.find('testcase/failure').get('message'))
+
+    def test_suite_attrs(self):
+        self.logger.suite_start([])
+        self.logger.test_start("test1")
+        self.logger.test_end("test1", "ok", message="Test message")
+        self.logger.suite_end()
+
+        root = self.log_as_xml()
+        self.assertEqual(root.get('skips'), '0')
+        self.assertEqual(root.get('failures'), '0')
+        self.assertEqual(root.get('errors'), '0')
+        self.assertEqual(root.get('tests'), '1')
+        self.assertEqual(root.get('time'), '0.00')
+
+    def test_time_is_not_rounded(self):
+        # call formatter directly, it is easier here
+        formatter = self.get_formatter()
+        formatter.suite_start(dict(time=55000))
+        formatter.test_start(dict(time=55100))
+        formatter.test_end(dict(time=55558, test='id', message='message', status='PASS'))
+        xml_string = formatter.suite_end(dict(time=55559))
+
+        root = ET.fromstring(xml_string)
+        self.assertEqual(root.get('time'), '0.56')
+        self.assertEqual(root.find('testcase').get('time'), '0.46')
+
+
 class TestCommandline(unittest.TestCase):
 
     def setUp(self):
@@ -735,6 +788,105 @@ class TestCommandline(unittest.TestCase):
         commandline.add_logging_group(parser)
         args = parser.parse_args(["--log-tbpl-level=error"])
         self.assertRaises(ValueError, commandline.setup_logging, "test_fmtopts", args, {})
+
+class TestBuffer(BaseStructuredTest):
+
+    def assert_log_equals(self, expected, actual=None):
+        if actual is None:
+            actual = self.pop_last_item()
+
+        all_expected = {"pid": os.getpid(),
+                        "thread": "MainThread",
+                        "source": "testBuffer"}
+        specials = set(["time"])
+
+        all_expected.update(expected)
+        for key, value in all_expected.iteritems():
+            self.assertEqual(actual[key], value)
+
+        self.assertEquals(set(all_expected.keys()) | specials, set(actual.keys()))
+
+    def setUp(self):
+        self.logger = structuredlog.StructuredLogger("testBuffer")
+        self.handler = handlers.BufferHandler(TestHandler(), message_limit=4)
+        self.logger.add_handler(self.handler)
+
+    def tearDown(self):
+        self.logger.remove_handler(self.handler)
+
+    def pop_last_item(self):
+        return self.handler.inner.items.pop()
+
+    def test_buffer_messages(self):
+        self.logger.suite_start([])
+        self.logger.test_start("test1")
+        self.logger.send_message("buffer", "off")
+        self.logger.test_status("test1", "sub1", status="PASS")
+        # Even for buffered actions, the buffer does not interfere if
+        # buffering is turned off.
+        self.assert_log_equals({"action": "test_status",
+                                "test": "test1",
+                                "status": "PASS",
+                                "subtest": "sub1"})
+        self.logger.send_message("buffer", "on")
+        self.logger.test_status("test1", "sub2", status="PASS")
+        self.logger.test_status("test1", "sub3", status="PASS")
+        self.logger.test_status("test1", "sub4", status="PASS")
+        self.logger.test_status("test1", "sub5", status="PASS")
+        self.logger.test_status("test1", "sub6", status="PASS")
+        self.logger.test_status("test1", "sub7", status="PASS")
+        self.logger.test_end("test1", status="OK")
+        self.logger.send_message("buffer", "clear")
+        self.assert_log_equals({"action": "test_end",
+                                "test": "test1",
+                                "status": "OK"})
+        self.logger.suite_end()
+
+
+    def test_buffer_size(self):
+        self.logger.suite_start([])
+        self.logger.test_start("test1")
+        self.logger.test_status("test1", "sub1", status="PASS")
+        self.logger.test_status("test1", "sub2", status="PASS")
+        self.logger.test_status("test1", "sub3", status="PASS")
+        self.logger.test_status("test1", "sub4", status="PASS")
+        self.logger.test_status("test1", "sub5", status="PASS")
+        self.logger.test_status("test1", "sub6", status="PASS")
+        self.logger.test_status("test1", "sub7", status="PASS")
+
+        # No test status messages made it to the underlying handler.
+        self.assert_log_equals({"action": "test_start",
+                                "test": "test1"})
+
+        # The buffer's actual size never grows beyond the specified limit.
+        self.assertEquals(len(self.handler._buffer), 4)
+
+        self.logger.test_status("test1", "sub8", status="FAIL")
+        # The number of messages deleted comes back in a list.
+        self.assertEquals([4], self.logger.send_message("buffer", "flush"))
+
+        # When the buffer is dumped, the failure is the last thing logged
+        self.assert_log_equals({"action": "test_status",
+                                "test": "test1",
+                                "subtest": "sub8",
+                                "status": "FAIL",
+                                "expected": "PASS"})
+        # Three additional messages should have been retained for context
+        self.assert_log_equals({"action": "test_status",
+                                "test": "test1",
+                                "status": "PASS",
+                                "subtest": "sub7"})
+        self.assert_log_equals({"action": "test_status",
+                                "test": "test1",
+                                "status": "PASS",
+                                "subtest": "sub6"})
+        self.assert_log_equals({"action": "test_status",
+                                "test": "test1",
+                                "status": "PASS",
+                                "subtest": "sub5"})
+        self.assert_log_equals({"action": "suite_start",
+                                "tests": []})
+
 
 class TestReader(unittest.TestCase):
     def to_file_like(self, obj):

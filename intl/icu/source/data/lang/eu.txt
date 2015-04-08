@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/eu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/eu.xml
- */
 eu{
     Keys{
         calendar{"Egutegia"}
@@ -274,12 +271,12 @@ eu{
         zu{"zuluera"}
         zxx{"ez dago eduki linguistikorik"}
     }
-    Languages%variant{
-        ps{"pashtoera"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"azeriera"}
         en_US{"ingelesa (AEB)"}
+    }
+    Languages%variant{
+        ps{"pashtoera"}
     }
     Scripts{
         Arab{"arabiarra"}
@@ -449,7 +446,7 @@ eu{
         SCOTLAND{"ESKOZIAR INGELESA"}
         VALENCIA{"VALENTZIERA"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

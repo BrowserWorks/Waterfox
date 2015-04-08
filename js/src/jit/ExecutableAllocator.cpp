@@ -29,6 +29,8 @@
 
 #include "js/MemoryMetrics.h"
 
+#define UNW_FLAG_EHANDLER  0x01 //Define this manually because ICL 14 SP1+VS2010 does not call the correct unwind headers
+
 using namespace js::jit;
 
 size_t ExecutableAllocator::pageSize = 0;

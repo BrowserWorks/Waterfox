@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/de.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/de.xml
- */
 de{
     Countries{
         001{"Welt"}
@@ -57,7 +54,7 @@ de{
         AT{"Österreich"}
         AU{"Australien"}
         AW{"Aruba"}
-        AX{"Åland-Inseln"}
+        AX{"Ålandinseln"}
         AZ{"Aserbaidschan"}
         BA{"Bosnien und Herzegowina"}
         BB{"Barbados"}
@@ -72,7 +69,7 @@ de{
         BM{"Bermuda"}
         BN{"Brunei Darussalam"}
         BO{"Bolivien"}
-        BQ{"Karibische Niederlande"}
+        BQ{"Bonaire, Sint Eustatius und Saba"}
         BR{"Brasilien"}
         BS{"Bahamas"}
         BT{"Bhutan"}
@@ -168,8 +165,8 @@ de{
         KI{"Kiribati"}
         KM{"Komoren"}
         KN{"St. Kitts und Nevis"}
-        KP{"Demokratische Volksrepublik Korea"}
-        KR{"Republik Korea"}
+        KP{"Nordkorea"}
+        KR{"Südkorea"}
         KW{"Kuwait"}
         KY{"Kaimaninseln"}
         KZ{"Kasachstan"}
@@ -239,7 +236,7 @@ de{
         RE{"Réunion"}
         RO{"Rumänien"}
         RS{"Serbien"}
-        RU{"Russische Föderation"}
+        RU{"Russland"}
         RW{"Ruanda"}
         SA{"Saudi-Arabien"}
         SB{"Salomonen"}
@@ -302,6 +299,13 @@ de{
         ZW{"Simbabwe"}
         ZZ{"Unbekannte Region"}
     }
+    Countries%short{
+        GB{"UK"}
+        HK{"Hongkong"}
+        MO{"Macau"}
+        PS{"Palästina"}
+        US{"USA"}
+    }
     Countries%variant{
         CD{"Kongo (Demokratische Republik)"}
         CG{"Kongo (Republik)"}
@@ -310,12 +314,5 @@ de{
         MK{"Mazedonien (EJR)"}
         TL{"Osttimor"}
     }
-    CountriesShort{
-        GB{"UK"}
-        HK{"Hongkong"}
-        MO{"Macau"}
-        PS{"Palästina"}
-        US{"USA"}
-    }
-    Version{"2.1.10.51"}
+    Version{"2.1.13.4"}
 }

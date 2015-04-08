@@ -147,13 +147,18 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
     return false;
   }
 
+  // Don't try to update to an invalid image. We return true because the caller
+  // would attempt to recreate the ImageClient otherwise, and that isn't going
+  // to help.
+  if (!image->IsValid()) {
+    return true;
+  }
+
   if (mLastPaintedImageSerial == image->GetSerial()) {
     return true;
   }
 
-  RefPtr<TextureClient> texture = image->AsSharedImage()
-                                ? image->AsSharedImage()->GetTextureClient(this)
-                                : nullptr;
+  RefPtr<TextureClient> texture = image->GetTextureClient(this);
 
   AutoRemoveTexture autoRemoveTexture(this);
   if (texture != mFrontBuffer) {
@@ -192,15 +197,17 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
 
       if (image->GetFormat() == ImageFormat::EGLIMAGE) {
         EGLImageImage* typedImage = static_cast<EGLImageImage*>(image);
-        texture = new EGLImageTextureClient(mTextureFlags,
-                                           typedImage,
-                                           size);
+        texture = new EGLImageTextureClient(GetForwarder(),
+                                            mTextureFlags,
+                                            typedImage,
+                                            size);
 #ifdef MOZ_WIDGET_ANDROID
       } else if (image->GetFormat() == ImageFormat::SURFACE_TEXTURE) {
         SurfaceTextureImage* typedImage = static_cast<SurfaceTextureImage*>(image);
         const SurfaceTextureImage::Data* data = typedImage->GetData();
-        texture = new SurfaceTextureClient(mTextureFlags, data->mSurfTex,
-                                          size, data->mInverted);
+        texture = new SurfaceTextureClient(GetForwarder(), mTextureFlags,
+                                           data->mSurfTex, size,
+                                           data->mOriginPos);
 #endif
       } else {
         MOZ_ASSERT(false, "Bad ImageFormat.");
@@ -242,6 +249,9 @@ ImageClientSingle::UpdateImage(ImageContainer* aContainer, uint32_t aContentFlag
 
   mLastPaintedImageSerial = image->GetSerial();
   aContainer->NotifyPaintedImage(image);
+
+  texture->SyncWithObject(GetForwarder()->GetSyncObject());
+
   return true;
 }
 

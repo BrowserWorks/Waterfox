@@ -46,24 +46,17 @@ public class ToolbarComponent extends BaseComponent {
         return this;
     }
 
-    public ToolbarComponent assertTitle(final String title, final String url) {
-        // We are asserting visible state - we shouldn't know if the title is null.
-        fAssertNotNull("The title argument is not null", title);
+    public ToolbarComponent assertTitle(final String url) {
         fAssertNotNull("The url argument is not null", url);
 
-        // TODO: We should also check the title bar preference.
         final String expected;
-        if (!NewTabletUI.isEnabled(mActivity)) {
-            expected = title;
+        final String absoluteURL = NavigationHelper.adjustUrl(url);
+        if (StringHelper.ABOUT_HOME_URL.equals(absoluteURL)) {
+            expected = StringHelper.ABOUT_HOME_TITLE;
+        } else if (absoluteURL.startsWith(URL_HTTP_PREFIX)) {
+            expected = absoluteURL.substring(URL_HTTP_PREFIX.length());
         } else {
-            final String absoluteURL = NavigationHelper.adjustUrl(url);
-            if (StringHelper.ABOUT_HOME_URL.equals(absoluteURL)) {
-                expected = StringHelper.ABOUT_HOME_TITLE;
-            } else if (absoluteURL.startsWith(URL_HTTP_PREFIX)) {
-                expected = absoluteURL.substring(URL_HTTP_PREFIX.length());
-            } else {
-                expected = absoluteURL;
-            }
+            expected = absoluteURL;
         }
 
         fAssertEquals("The Toolbar title is " + expected, expected, getTitle());
@@ -76,10 +69,21 @@ public class ToolbarComponent extends BaseComponent {
         return this;
     }
 
+    public ToolbarComponent assertIsUrlEditTextSelected() {
+        fAssertTrue("The edit text is selected", isUrlEditTextSelected());
+        return this;
+    }
+
+    public ToolbarComponent assertIsUrlEditTextNotSelected() {
+        fAssertFalse("The edit text is not selected", isUrlEditTextSelected());
+        return this;
+    }
+
     /**
      * Returns the root View for the browser toolbar.
      */
     private View getToolbarView() {
+        mSolo.waitForView(R.id.browser_toolbar);
         return mSolo.getView(R.id.browser_toolbar);
     }
 
@@ -112,8 +116,8 @@ public class ToolbarComponent extends BaseComponent {
     /**
      * Returns the View for the edit cancel button in the browser toolbar.
      */
-    private ImageButton getEditCancelButton() {
-        return (ImageButton) getToolbarView().findViewById(R.id.edit_cancel);
+    private View getEditCancelButton() {
+        return getToolbarView().findViewById(R.id.edit_cancel);
     }
 
     private String getTitle() {
@@ -175,7 +179,15 @@ public class ToolbarComponent extends BaseComponent {
     public ToolbarComponent dismissEditingMode() {
         assertIsEditing();
 
-        mSolo.clickOnView(getEditCancelButton());
+        if (DeviceHelper.isTablet()) {
+            final EditText urlEditText = getUrlEditText();
+            if (urlEditText.isFocused()) {
+                mSolo.goBack();
+            }
+            mSolo.goBack();
+        } else {
+            mSolo.clickOnView(getEditCancelButton());
+        }
 
         waitForNotEditing();
 
@@ -192,7 +204,7 @@ public class ToolbarComponent extends BaseComponent {
                 urlEditText.isInputMethodTarget());
 
         mSolo.clearEditText(urlEditText);
-        mSolo.enterText(urlEditText, url);
+        mSolo.typeText(urlEditText, url);
 
         return this;
     }
@@ -245,5 +257,9 @@ public class ToolbarComponent extends BaseComponent {
                 return !isEditing();
             }
         });
+    }
+
+    private boolean isUrlEditTextSelected() {
+        return getUrlEditText().isSelected();
     }
 }

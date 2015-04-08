@@ -17,6 +17,7 @@
 #include <android/log.h>
 #include <string.h>
 
+#include "ImageLayers.h"
 #include "libdisplay/GonkDisplay.h"
 #include "HwcUtils.h"
 #include "HwcComposer2D.h"
@@ -29,6 +30,7 @@
 #include "mozilla/StaticPtr.h"
 #include "cutils/properties.h"
 #include "gfx2DGlue.h"
+#include "nsWindow.h"
 
 #if ANDROID_VERSION >= 17
 #include "libdisplay/FramebufferSurface.h"
@@ -153,9 +155,7 @@ HwcComposer2D::Init(hwc_display_t dpy, hwc_surface_t sur, gl::GLContext* aGLCont
         mRBSwapSupport = false;
     }
 
-    if (RegisterHwcEventCallback()) {
-        EnableVsync(true);
-    }
+    RegisterHwcEventCallback();
 #else
     char propValue[PROPERTY_VALUE_MAX];
     property_get("ro.display.colorfill", propValue, "0");
@@ -180,17 +180,22 @@ HwcComposer2D::GetInstance()
     return sInstance;
 }
 
-void
+bool
 HwcComposer2D::EnableVsync(bool aEnable)
 {
 #if ANDROID_VERSION >= 17
-    if (NS_IsMainThread()) {
-        RunVsyncEventControl(aEnable);
-    } else {
-        nsRefPtr<nsIRunnable> event =
-            NS_NewRunnableMethodWithArg<bool>(this, &HwcComposer2D::RunVsyncEventControl, aEnable);
-        NS_DispatchToMainThread(event);
+    MOZ_ASSERT(NS_IsMainThread());
+    if (!mHasHWVsync) {
+      return false;
     }
+
+    HwcDevice* device = (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
+    if (!device) {
+      return false;
+    }
+
+    device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, aEnable);
+    return aEnable;
 #endif
 }
 
@@ -207,25 +212,8 @@ HwcComposer2D::RegisterHwcEventCallback()
     // Disable Vsync first, and then register callback functions.
     device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
     device->registerProcs(device, &sHWCProcs);
-    mHasHWVsync = true;
-
-    if (!gfxPrefs::HardwareVsyncEnabled()) {
-        device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, false);
-        mHasHWVsync = false;
-    }
-
+    mHasHWVsync = gfxPrefs::HardwareVsyncEnabled();
     return mHasHWVsync;
-}
-
-void
-HwcComposer2D::RunVsyncEventControl(bool aEnable)
-{
-    if (mHasHWVsync) {
-        HwcDevice* device = (HwcDevice*)GetGonkDisplay()->GetHWCDevice();
-        if (device && device->eventControl) {
-            device->eventControl(device, HWC_DISPLAY_PRIMARY, HWC_EVENT_VSYNC, aEnable);
-        }
-    }
 }
 
 void
@@ -237,7 +225,7 @@ HwcComposer2D::Vsync(int aDisplay, nsecs_t aVsyncTimestamp)
       LOGE("Non-uniform vsync interval: %lld\n", vsyncInterval);
     }
     mLastVsyncTime = aVsyncTimestamp;
-    VsyncDispatcher::GetInstance()->NotifyVsync(vsyncTime);
+    nsWindow::NotifyVsync(vsyncTime);
 }
 
 // Called on the "invalidator" thread (run from HAL).
@@ -332,10 +320,15 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     uint8_t opacity = std::min(0xFF, (int)(aLayer->GetEffectiveOpacity() * 256.0));
 #if ANDROID_VERSION < 18
     if (opacity < 0xFF) {
-        LOGD("%s Layer has planar semitransparency which is unsupported", aLayer->Name());
+        LOGD("%s Layer has planar semitransparency which is unsupported by hwcomposer", aLayer->Name());
         return false;
     }
 #endif
+
+    if (aLayer->GetMaskLayer()) {
+      LOGD("%s Layer has MaskLayer which is unsupported by hwcomposer", aLayer->Name());
+      return false;
+    }
 
     nsIntRect clip;
     if (!HwcUtils::CalculateClipRect(aParentTransform,
@@ -356,14 +349,19 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     //
     // A 2D transform with PreservesAxisAlignedRectangles() has all the attributes
     // above
-    Matrix transform;
-    Matrix4x4 transform3D = aLayer->GetEffectiveTransform();
-
-    if (!transform3D.Is2D(&transform) || !transform.PreservesAxisAlignedRectangles()) {
-        LOGD("Layer has a 3D transform or a non-square angle rotation");
+    Matrix layerTransform;
+    if (!aLayer->GetEffectiveTransform().Is2D(&layerTransform) ||
+        !layerTransform.PreservesAxisAlignedRectangles()) {
+        LOGD("Layer EffectiveTransform has a 3D transform or a non-square angle rotation");
         return false;
     }
 
+    Matrix layerBufferTransform;
+    if (!aLayer->GetEffectiveTransformForBuffer().Is2D(&layerBufferTransform) ||
+        !layerBufferTransform.PreservesAxisAlignedRectangles()) {
+        LOGD("Layer EffectiveTransformForBuffer has a 3D transform or a non-square angle rotation");
+      return false;
+    }
 
     if (ContainerLayer* container = aLayer->AsContainerLayer()) {
         if (container->UseIntermediateSurface()) {
@@ -374,7 +372,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         container->SortChildrenBy3DZOrder(children);
 
         for (uint32_t i = 0; i < children.Length(); i++) {
-            if (!PrepareLayerList(children[i], clip, transform)) {
+            if (!PrepareLayerList(children[i], clip, layerTransform)) {
                 return false;
             }
         }
@@ -398,18 +396,27 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
     if (fillColor) {
         bufferRect = nsIntRect(visibleRect);
     } else {
+        nsIntRect layerRect;
         if (state.mHasOwnOffset) {
             bufferRect = nsIntRect(state.mOffset.x, state.mOffset.y,
                                    state.mSize.width, state.mSize.height);
+            layerRect = bufferRect;
         } else {
             //Since the buffer doesn't have its own offset, assign the whole
             //surface size as its buffer bounds
             bufferRect = nsIntRect(0, 0, state.mSize.width, state.mSize.height);
+            layerRect = bufferRect;
+            if (aLayer->GetType() == Layer::TYPE_IMAGE) {
+                ImageLayer* imageLayer = static_cast<ImageLayer*>(aLayer);
+                if(imageLayer->GetScaleMode() != ScaleMode::SCALE_NONE) {
+                  layerRect = nsIntRect(0, 0, imageLayer->GetScaleToSize().width, imageLayer->GetScaleToSize().height);
+                }
+            }
         }
         // In some cases the visible rect assigned to the layer can be larger
         // than the layer's surface, e.g., an ImageLayer with a small Image
         // in it.
-        visibleRect.IntersectRect(visibleRect, bufferRect);
+        visibleRect.IntersectRect(visibleRect, layerRect);
     }
 
     // Buffer rotation is not to be confused with the angled rotation done by a transform matrix
@@ -419,12 +426,16 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         return false;
     }
 
+    const bool needsYFlip = state.OriginBottomLeft() ? true
+                                                     : false;
+
     hwc_rect_t sourceCrop, displayFrame;
     if(!HwcUtils::PrepareLayerRects(visibleRect,
-                          transform,
+                          layerTransform,
+                          layerBufferTransform,
                           clip,
                           bufferRect,
-                          state.YFlipped(),
+                          needsYFlip,
                           &(sourceCrop),
                           &(displayFrame)))
     {
@@ -505,7 +516,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
         // And ignore scaling.
         //
         // Reflection is applied before rotation
-        gfx::Matrix rotation = transform;
+        gfx::Matrix rotation = layerTransform;
         // Compute fuzzy zero like PreservesAxisAlignedRectangles()
         if (fabs(rotation._11) < 1e-6) {
             if (rotation._21 < 0) {
@@ -601,7 +612,10 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
             }
         }
 
-        if (state.YFlipped()) {
+        const bool needsYFlip = state.OriginBottomLeft() ? true
+                                                         : false;
+
+        if (needsYFlip) {
            // Invert vertical reflection flag if it was already set
            hwcLayer.transform ^= HWC_TRANSFORM_FLIP_V;
         }
@@ -610,7 +624,8 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
             mVisibleRegions.push_back(HwcUtils::RectVector());
             HwcUtils::RectVector* visibleRects = &(mVisibleRegions.back());
             if(!HwcUtils::PrepareVisibleRegion(visibleRegion,
-                                     transform,
+                                     layerTransform,
+                                     layerBufferTransform,
                                      clip,
                                      bufferRect,
                                      visibleRects)) {

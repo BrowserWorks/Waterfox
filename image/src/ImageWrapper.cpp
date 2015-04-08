@@ -33,12 +33,6 @@ ImageWrapper::GetProgressTracker()
   return mInnerImage->GetProgressTracker();
 }
 
-nsIntRect
-ImageWrapper::FrameRect(uint32_t aWhichFrame)
-{
-  return mInnerImage->FrameRect(aWhichFrame);
-}
-
 size_t
 ImageWrapper::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
 {
@@ -93,7 +87,8 @@ ImageWrapper::OnImageDataComplete(nsIRequest* aRequest,
                                   nsresult aStatus,
                                   bool aLastPart)
 {
-  return mInnerImage->OnImageDataComplete(aRequest, aContext, aStatus, aLastPart);
+  return mInnerImage->OnImageDataComplete(aRequest, aContext, aStatus,
+                                          aLastPart);
 }
 
 void
@@ -198,12 +193,13 @@ ImageWrapper::IsOpaque()
 }
 
 NS_IMETHODIMP
-ImageWrapper::GetImageContainer(LayerManager* aManager, ImageContainer** _retval)
+ImageWrapper::GetImageContainer(LayerManager* aManager,
+                                ImageContainer** _retval)
 {
   return mInnerImage->GetImageContainer(aManager, _retval);
 }
 
-NS_IMETHODIMP
+NS_IMETHODIMP_(DrawResult)
 ImageWrapper::Draw(gfxContext* aContext,
                    const nsIntSize& aSize,
                    const ImageRegion& aRegion,
@@ -228,10 +224,10 @@ ImageWrapper::StartDecoding()
   return mInnerImage->StartDecoding();
 }
 
-bool
-ImageWrapper::IsDecoded()
+NS_IMETHODIMP
+ImageWrapper::RequestDecodeForSize(const nsIntSize& aSize, uint32_t aFlags)
 {
-  return mInnerImage->IsDecoded();
+  return mInnerImage->RequestDecodeForSize(aSize, aFlags);
 }
 
 NS_IMETHODIMP
@@ -299,10 +295,12 @@ ImageWrapper::SetAnimationStartTime(const TimeStamp& aTime)
 }
 
 nsIntSize
-ImageWrapper::OptimalImageSizeForDest(const gfxSize& aDest, uint32_t aWhichFrame,
+ImageWrapper::OptimalImageSizeForDest(const gfxSize& aDest,
+                                      uint32_t aWhichFrame,
                                       GraphicsFilter aFilter, uint32_t aFlags)
 {
-  return mInnerImage->OptimalImageSizeForDest(aDest, aWhichFrame, aFilter, aFlags);
+  return mInnerImage->OptimalImageSizeForDest(aDest, aWhichFrame, aFilter,
+                                              aFlags);
 }
 
 NS_IMETHODIMP_(nsIntRect)

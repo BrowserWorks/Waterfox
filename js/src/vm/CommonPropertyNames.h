@@ -12,6 +12,7 @@
 #include "jsprototypes.h"
 
 #define FOR_EACH_COMMON_PROPERTYNAME(macro) \
+    macro(add, add, "add") \
     macro(anonymous, anonymous, "anonymous") \
     macro(Any, Any, "Any") \
     macro(apply, apply, "apply") \
@@ -60,6 +61,7 @@
     macro(displayURL, displayURL, "displayURL") \
     macro(done, done, "done") \
     macro(dotGenerator, dotGenerator, ".generator") \
+    macro(dotGenRVal, dotGenRVal, ".genrval") \
     macro(each, each, "each") \
     macro(elementType, elementType, "elementType") \
     macro(empty, empty, "") \
@@ -195,6 +197,7 @@
     macro(true, true_, "true") \
     macro(unescape, unescape, "unescape") \
     macro(uneval, uneval, "uneval") \
+    macro(unicode, unicode, "unicode") \
     macro(uninitialized, uninitialized, "uninitialized") \
     macro(uint8, uint8, "uint8") \
     macro(uint8Clamped, uint8Clamped, "uint8Clamped") \
@@ -208,11 +211,13 @@
     macro(useAsm, useAsm, "use asm") \
     macro(useStrict, useStrict, "use strict") \
     macro(value, value, "value") \
+    macro(values, values, "values") \
     macro(valueOf, valueOf, "valueOf") \
     macro(var, var, "var") \
     macro(variable, variable, "variable") \
     macro(void0, void0, "(void 0)") \
     macro(watch, watch, "watch") \
+    macro(WeakSet_add, WeakSet_add, "WeakSet_add") \
     macro(writable, writable, "writable") \
     macro(w, w, "w") \
     macro(x, x, "x") \

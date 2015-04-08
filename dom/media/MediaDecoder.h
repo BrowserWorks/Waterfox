@@ -346,14 +346,6 @@ public:
   // the seek target.
   virtual nsresult Seek(double aTime, SeekTarget::Type aSeekType);
 
-  // Enables decoders to supply an enclosing byte range for a seek offset.
-  // E.g. used by ChannelMediaResource to download a whole cluster for
-  // DASH-WebM.
-  virtual nsresult GetByteRangeForSeek(int64_t const aOffset,
-                                       MediaByteRange &aByteRange) {
-    return NS_ERROR_NOT_AVAILABLE;
-  }
-
   // Initialize state machine and schedule it.
   nsresult InitializeStateMachine(MediaDecoder* aCloneDonor);
 
@@ -374,9 +366,6 @@ public:
   virtual void Pause();
   // Adjust the speed of the playback, optionally with pitch correction,
   virtual void SetVolume(double aVolume);
-  // Sets whether audio is being captured. If it is, we won't play any
-  // of our audio.
-  virtual void SetAudioCaptured(bool aCaptured);
 
   virtual void NotifyWaitingForResourcesStatusChanged() MOZ_OVERRIDE;
 
@@ -408,8 +397,6 @@ public:
 
     // The following group of fields are protected by the decoder's monitor
     // and can be read or written on any thread.
-    int64_t mLastAudioPacketTime; // microseconds
-    int64_t mLastAudioPacketEndTime; // microseconds
     // Count of audio frames written to the stream
     int64_t mAudioFramesWritten;
     // Saved value of aInitialTime. Timestamp of the first audio and/or
@@ -419,6 +406,7 @@ public:
     // Therefore video packets starting at or after this time need to be copied
     // to the output stream.
     int64_t mNextVideoTime; // microseconds
+    int64_t mNextAudioTime; // microseconds
     MediaDecoder* mDecoder;
     // The last video image sent to the stream. Useful if we need to replicate
     // the image.
@@ -949,7 +937,9 @@ public:
         mReentrantMonitor("MediaDecoder::FrameStats"),
         mParsedFrames(0),
         mDecodedFrames(0),
-        mPresentedFrames(0) {}
+        mPresentedFrames(0),
+        mDroppedFrames(0),
+        mCorruptFrames(0) {}
 
     // Returns number of frames which have been parsed from the media.
     // Can be called on any thread.
@@ -973,14 +963,28 @@ public:
       return mPresentedFrames;
     }
 
+    // Number of frames that have been skipped because they have missed their
+    // compoisition deadline.
+    uint32_t GetDroppedFrames() {
+      ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+      return mDroppedFrames + mCorruptFrames;
+    }
+
+    uint32_t GetCorruptedFrames() {
+      ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+      return mCorruptFrames;
+    }
+
     // Increments the parsed and decoded frame counters by the passed in counts.
     // Can be called on any thread.
-    void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded) {
-      if (aParsed == 0 && aDecoded == 0)
+    void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
+                             uint32_t aDropped) {
+      if (aParsed == 0 && aDecoded == 0 && aDropped == 0)
         return;
       ReentrantMonitorAutoEnter mon(mReentrantMonitor);
       mParsedFrames += aParsed;
       mDecodedFrames += aDecoded;
+      mDroppedFrames += aDropped;
     }
 
     // Increments the presented frame counters.
@@ -988,6 +992,11 @@ public:
     void NotifyPresentedFrame() {
       ReentrantMonitorAutoEnter mon(mReentrantMonitor);
       ++mPresentedFrames;
+    }
+
+    void NotifyCorruptFrame() {
+      ReentrantMonitorAutoEnter mon(mReentrantMonitor);
+      ++mCorruptFrames;
     }
 
   private:
@@ -1006,6 +1015,10 @@ public:
     // Number of decoded frames which were actually sent down the rendering
     // pipeline to be painted ("presented"). Access protected by mReentrantMonitor.
     uint32_t mPresentedFrames;
+
+    uint32_t mDroppedFrames;
+
+    uint32_t mCorruptFrames;
   };
 
   // Return the frame decode/paint related statistics.
@@ -1013,9 +1026,10 @@ public:
 
   // Increments the parsed and decoded frame counters by the passed in counts.
   // Can be called on any thread.
-  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded) MOZ_OVERRIDE
+  virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
+                                   uint32_t aDropped) MOZ_OVERRIDE
   {
-    GetFrameStatistics().NotifyDecodedFrames(aParsed, aDecoded);
+    GetFrameStatistics().NotifyDecodedFrames(aParsed, aDecoded, aDropped);
   }
 
 protected:
@@ -1065,9 +1079,6 @@ protected:
   // only.
   int64_t mDuration;
 
-  // True when playback should start with audio captured (not playing).
-  bool mInitialAudioCaptured;
-
   // True if the media is seekable (i.e. supports random access).
   bool mMediaSeekable;
 
@@ -1089,40 +1100,11 @@ protected:
   // Media data resource.
   nsRefPtr<MediaResource> mResource;
 
+private:
   // |ReentrantMonitor| for detecting when the video play state changes. A call
   // to |Wait| on this monitor will block the thread until the next state
-  // change.
-  // Using a wrapper class to restrict direct access to the |ReentrantMonitor|
-  // object. Subclasses may override |MediaDecoder|::|GetReentrantMonitor|
-  // e.g. |DASHRepDecoder|::|GetReentrantMonitor| returns the monitor in the
-  // main |DASHDecoder| object. In this case, directly accessing the
-  // member variable mReentrantMonitor in |DASHRepDecoder| is wrong.
-  // The wrapper |RestrictedAccessMonitor| restricts use to the getter
-  // function rather than the object itself.
-private:
-  class RestrictedAccessMonitor
-  {
-  public:
-    explicit RestrictedAccessMonitor(const char* aName) :
-      mReentrantMonitor(aName)
-    {
-      MOZ_COUNT_CTOR(RestrictedAccessMonitor);
-    }
-    ~RestrictedAccessMonitor()
-    {
-      MOZ_COUNT_DTOR(RestrictedAccessMonitor);
-    }
-
-    // Returns a ref to the reentrant monitor
-    ReentrantMonitor& GetReentrantMonitor() {
-      return mReentrantMonitor;
-    }
-  private:
-    ReentrantMonitor mReentrantMonitor;
-  };
-
-  // The |RestrictedAccessMonitor| member object.
-  RestrictedAccessMonitor mReentrantMonitor;
+  // change.  Explicitly private for force access via GetReentrantMonitor.
+  ReentrantMonitor mReentrantMonitor;
 
 #ifdef MOZ_EME
   nsRefPtr<CDMProxy> mProxy;

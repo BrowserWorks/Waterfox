@@ -7,6 +7,7 @@ from SocketServer import ThreadingMixIn
 import ssl
 import sys
 import threading
+import time
 import traceback
 import types
 import urlparse
@@ -110,7 +111,8 @@ class WebTestServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
     daemon_threads = True
 
     def __init__(self, server_address, RequestHandlerClass, router, rewriter, bind_hostname,
-                 config=None, use_ssl=False, key_file=None, certificate=None, **kwargs):
+                 config=None, use_ssl=False, key_file=None, certificate=None,
+                 encrypt_after_connect=False, latency=None, **kwargs):
         """Server for HTTP(s) Requests
 
         :param server_address: tuple of (server_name, port)
@@ -133,16 +135,25 @@ class WebTestServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
 
         :param certificate: Path to certificate to use if SSL is enabled.
 
+        :param encrypt_after_connect: For each connection, don't start encryption
+                                      until a CONNECT message has been received.
+                                      This enables the server to act as a
+                                      self-proxy.
+
         :param bind_hostname True to bind the server to both the hostname and
                              port specified in the server_address parameter.
                              False to bind the server only to the port in the
                              server_address parameter, but not to the hostname.
+        :param latency: Delay in ms to wait before seving each response, or
+                        callable that returns a delay in ms
         """
         self.router = router
         self.rewriter = rewriter
 
         self.scheme = "https" if use_ssl else "http"
         self.logger = get_logger()
+
+        self.latency = latency
 
         if bind_hostname:
             hostname_port = server_address
@@ -160,10 +171,15 @@ class WebTestServer(ThreadingMixIn, BaseHTTPServer.HTTPServer):
                              "domains": {"": server_address[0]},
                              "ports": {"http": [self.server_address[1]]}}
 
-        if use_ssl:
+
+        self.key_file = key_file
+        self.certificate = certificate
+        self.encrypt_after_connect = use_ssl and encrypt_after_connect
+
+        if use_ssl and not encrypt_after_connect:
             self.socket = ssl.wrap_socket(self.socket,
-                                          keyfile=key_file,
-                                          certfile=certificate,
+                                          keyfile=self.key_file,
+                                          certfile=self.certificate,
                                           server_side=True)
 
     def handle_error(self, request, client_address):
@@ -187,7 +203,7 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
     def handle_one_request(self):
         response = None
-        logger = get_logger()
+        self.logger = get_logger()
         try:
             self.close_connection = False
             request_line_is_valid = self.get_request_line()
@@ -205,13 +221,26 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             request = Request(self)
             response = Response(self, request)
 
+            if request.method == "CONNECT":
+                self.handle_connect(response)
+                return
+
             if not request_line_is_valid:
                 response.set_error(414)
                 response.write()
                 return
 
-            logger.debug("%s %s" % (request.method, request.request_path))
+            self.logger.debug("%s %s" % (request.method, request.request_path))
             handler = self.server.router.get_handler(request)
+
+            if self.server.latency is not None:
+                if callable(self.server.latency):
+                    latency = self.server.latency()
+                else:
+                    latency = self.server.latency
+                self.logger.warning("Latency enabled. Sleeping %i ms" % latency)
+                time.sleep(latency / 1000.)
+
             if handler is None:
                 response.set_error(404)
             else:
@@ -226,11 +255,11 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                         err = []
                         err.append(traceback.format_exc())
                     response.set_error(500, "\n".join(err))
-            logger.debug("%i %s %s (%s) %i" % (response.status[0],
-                                               request.method,
-                                               request.request_path,
-                                               request.headers.get('Referer'),
-                                               request.raw_input.length))
+            self.logger.debug("%i %s %s (%s) %i" % (response.status[0],
+                                                    request.method,
+                                                    request.request_path,
+                                                    request.headers.get('Referer'),
+                                                    request.raw_input.length))
 
             if not response.writer.content_written:
                 response.write()
@@ -273,6 +302,19 @@ class WebTestRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.close_connection = True
         return True
 
+    def handle_connect(self, response):
+        self.logger.debug("Got CONNECT")
+        response.status = 200
+        response.write()
+        if self.server.encrypt_after_connect:
+            self.logger.debug("Enabling SSL for connection")
+            self.request = ssl.wrap_socket(self.connection,
+                                           keyfile=self.server.key_file,
+                                           certfile=self.server.certificate,
+                                           server_side=True)
+            self.setup()
+        return
+
 
 class WebTestHttpd(object):
     """
@@ -283,6 +325,10 @@ class WebTestHttpd(object):
     :param use_ssl: Use a SSL server if no explicit server_cls is supplied
     :param key_file: Path to key file to use if ssl is enabled
     :param certificate: Path to certificate file to use if ssl is enabled
+    :param encrypt_after_connect: For each connection, don't start encryption
+                                  until a CONNECT message has been received.
+                                  This enables the server to act as a
+                                  self-proxy.
     :param router_cls: Router class to use when matching URLs to handlers
     :param doc_root: Document root for serving files
     :param routes: List of routes with which to initialize the router
@@ -291,6 +337,8 @@ class WebTestHttpd(object):
     :param config: Dictionary holding environment configuration settings for
                    handlers to read, or None to use the default values.
     :param bind_hostname: Boolean indicating whether to bind server to hostname.
+    :param latency: Delay in ms to wait before seving each response, or
+                    callable that returns a delay in ms
 
     HTTP server designed for testing scenarios.
 
@@ -324,10 +372,10 @@ class WebTestHttpd(object):
     """
     def __init__(self, host="127.0.0.1", port=8000,
                  server_cls=None, handler_cls=WebTestRequestHandler,
-                 use_ssl=False, key_file=None, certificate=None, router_cls=Router,
-                 doc_root=os.curdir, routes=None,
+                 use_ssl=False, key_file=None, certificate=None, encrypt_after_connect=False,
+                 router_cls=Router, doc_root=os.curdir, routes=None,
                  rewriter_cls=RequestRewriter, bind_hostname=True, rewrites=None,
-                 config=None):
+                 latency=None, config=None):
 
         if routes is None:
             routes = default_routes.routes
@@ -357,7 +405,9 @@ class WebTestHttpd(object):
                                     bind_hostname=bind_hostname,
                                     use_ssl=use_ssl,
                                     key_file=key_file,
-                                    certificate=certificate)
+                                    certificate=certificate,
+                                    encrypt_after_connect=encrypt_after_connect,
+                                    latency=latency)
             self.started = False
 
             _host, self.port = self.httpd.socket.getsockname()

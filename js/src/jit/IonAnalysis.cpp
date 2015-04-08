@@ -260,7 +260,7 @@ MaybeFoldConditionBlock(MIRGraph &graph, MBasicBlock *initialBlock)
 
     MBasicBlock *trueTarget = trueBranch;
     if (BlockComputesConstant(trueBranch, trueResult)) {
-        trueTarget = trueResult->toConstant()->valueToBoolean()
+        trueTarget = trueResult->constantToBoolean()
                      ? finalTest->ifTrue()
                      : finalTest->ifFalse();
         testBlock->removePredecessor(trueBranch);
@@ -272,7 +272,7 @@ MaybeFoldConditionBlock(MIRGraph &graph, MBasicBlock *initialBlock)
 
     MBasicBlock *falseTarget = falseBranch;
     if (BlockComputesConstant(falseBranch, falseResult)) {
-        falseTarget = falseResult->toConstant()->valueToBoolean()
+        falseTarget = falseResult->constantToBoolean()
                       ? finalTest->ifTrue()
                       : finalTest->ifFalse();
         testBlock->removePredecessor(falseBranch);
@@ -1069,7 +1069,7 @@ TypeAnalyzer::adjustPhiInputs(MPhi *phi)
             // the original box.
             phi->replaceOperand(i, in->toUnbox()->input());
         } else {
-            MDefinition *box = BoxInputsPolicy::alwaysBoxAt(alloc(), in->block()->lastIns(), in);
+            MDefinition *box = AlwaysBoxAt(alloc(), in->block()->lastIns(), in);
             phi->replaceOperand(i, box);
         }
     }
@@ -2036,6 +2036,63 @@ jit::AssertGraphCoherency(MIRGraph &graph)
 }
 
 #ifdef DEBUG
+static bool
+IsResumableMIRType(MIRType type)
+{
+    // see CodeGeneratorShared::encodeAllocation
+    switch (type) {
+      case MIRType_Undefined:
+      case MIRType_Null:
+      case MIRType_Boolean:
+      case MIRType_Int32:
+      case MIRType_Double:
+      case MIRType_Float32:
+      case MIRType_String:
+      case MIRType_Symbol:
+      case MIRType_Object:
+      case MIRType_MagicOptimizedArguments:
+      case MIRType_MagicOptimizedOut:
+      case MIRType_MagicUninitializedLexical:
+      case MIRType_Value:
+        return true;
+
+      case MIRType_MagicHole:
+      case MIRType_MagicIsConstructing:
+      case MIRType_ObjectOrNull:
+      case MIRType_None:
+      case MIRType_Slots:
+      case MIRType_Elements:
+      case MIRType_Pointer:
+      case MIRType_Shape:
+      case MIRType_TypeObject:
+      case MIRType_Float32x4:
+      case MIRType_Int32x4:
+      case MIRType_Doublex2:
+        return false;
+    }
+    MOZ_CRASH("Unknown MIRType.");
+}
+
+static void
+AssertResumableOperands(MNode *node)
+{
+    for (size_t i = 0, e = node->numOperands(); i < e; ++i) {
+        MDefinition *op = node->getOperand(i);
+        if (op->isRecoveredOnBailout())
+            continue;
+        MOZ_ASSERT(IsResumableMIRType(op->type()),
+                   "Resume point cannot encode its operands");
+    }
+}
+
+static void
+AssertIfResumableInstruction(MDefinition *def)
+{
+    if (!def->isRecoveredOnBailout())
+        return;
+    AssertResumableOperands(def);
+}
+
 static void
 AssertResumePointDominatedByOperands(MResumePoint *resume)
 {
@@ -2133,15 +2190,22 @@ jit::AssertExtendedGraphCoherency(MIRGraph &graph)
                     } while (*opIter != ins);
                 }
             }
-            if (MResumePoint *resume = ins->resumePoint())
+            AssertIfResumableInstruction(ins);
+            if (MResumePoint *resume = ins->resumePoint()) {
                 AssertResumePointDominatedByOperands(resume);
+                AssertResumableOperands(resume);
+            }
         }
 
         // Verify that the block resume points are dominated by their operands.
-        if (MResumePoint *resume = block->entryResumePoint())
+        if (MResumePoint *resume = block->entryResumePoint()) {
             AssertResumePointDominatedByOperands(resume);
-        if (MResumePoint *resume = block->outerResumePoint())
+            AssertResumableOperands(resume);
+        }
+        if (MResumePoint *resume = block->outerResumePoint()) {
             AssertResumePointDominatedByOperands(resume);
+            AssertResumableOperands(resume);
+        }
     }
 #endif
 }
@@ -2205,8 +2269,8 @@ jit::ExtractLinearSum(MDefinition *ins)
     if (ins->type() != MIRType_Int32)
         return SimpleLinearSum(ins, 0);
 
-    if (ins->isConstant()) {
-        const Value &v = ins->toConstant()->value();
+    if (ins->isConstantValue()) {
+        const Value &v = ins->constantValue();
         MOZ_ASSERT(v.isInt32());
         return SimpleLinearSum(nullptr, v.toInt32());
     } else if (ins->isAdd() || ins->isSub()) {
@@ -2607,8 +2671,8 @@ LinearSum::add(MDefinition *term, int32_t scale)
     if (scale == 0)
         return true;
 
-    if (term->isConstant()) {
-        int32_t constant = term->toConstant()->value().toInt32();
+    if (term->isConstantValue()) {
+        int32_t constant = term->constantValue().toInt32();
         if (!SafeMul(constant, scale, &constant))
             return false;
         return add(constant);
@@ -2686,7 +2750,7 @@ jit::ConvertLinearSum(TempAllocator &alloc, MBasicBlock *block, const LinearSum 
 
     for (size_t i = 0; i < sum.numTerms(); i++) {
         LinearTerm term = sum.term(i);
-        MOZ_ASSERT(!term.term->isConstant());
+        MOZ_ASSERT(!term.term->isConstantValue());
         if (term.scale == 1) {
             if (def) {
                 def = MAdd::New(alloc, def, term.term);
@@ -2818,7 +2882,7 @@ jit::ConvertLinearInequality(TempAllocator &alloc, MBasicBlock *block, const Lin
 static bool
 AnalyzePoppedThis(JSContext *cx, types::TypeObject *type,
                   MDefinition *thisValue, MInstruction *ins, bool definitelyExecuted,
-                  HandleNativeObject baseobj,
+                  HandlePlainObject baseobj,
                   Vector<types::TypeNewScript::Initializer> *initializerList,
                   Vector<PropertyName *> *accessedProperties,
                   bool *phandled)
@@ -2952,7 +3016,7 @@ CmpInstructions(const void *a, const void *b)
 
 bool
 jit::AnalyzeNewScriptDefiniteProperties(JSContext *cx, JSFunction *fun,
-                                        types::TypeObject *type, HandleNativeObject baseobj,
+                                        types::TypeObject *type, HandlePlainObject baseobj,
                                         Vector<types::TypeNewScript::Initializer> *initializerList)
 {
     MOZ_ASSERT(cx->zone()->types.activeAnalysis);

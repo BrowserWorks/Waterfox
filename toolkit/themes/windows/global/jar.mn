@@ -11,6 +11,7 @@ toolkit.jar:
         skin/classic/global/aboutCache.css
         skin/classic/global/aboutCacheEntry.css
         skin/classic/global/aboutMemory.css
+        skin/classic/global/aboutReader.css
         skin/classic/global/aboutSupport.css
         skin/classic/global/appPicker.css
         skin/classic/global/arrow.css
@@ -171,10 +172,10 @@ toolkit.jar:
         skin/classic/global/media/videoClickToPlayButton.svg     (media/videoClickToPlayButton.svg)
         skin/classic/global/menu/shared-menu-check.png           (../../shared/menu-check.png)
 *       skin/classic/global/in-content/common.css                (in-content/common.css)
-        skin/classic/global/in-content/check.png                 (../../shared/in-content/check.png)
-        skin/classic/global/in-content/check@2x.png              (../../shared/in-content/check@2x.png)
+        skin/classic/global/in-content/check.svg                 (../../shared/in-content/check.svg)
         skin/classic/global/in-content/dropdown.svg              (../../shared/in-content/dropdown.svg)
         skin/classic/global/in-content/help-glyph.svg            (../../shared/in-content/help-glyph.svg)
+        skin/classic/global/in-content/radio.svg                 (../../shared/in-content/radio.svg)
         skin/classic/global/in-content/sorter.png                (../../shared/in-content/sorter.png)
         skin/classic/global/in-content/sorter@2x.png             (../../shared/in-content/sorter@2x.png)
         skin/classic/global/printpreview/arrow-left.png          (printpreview/arrow-left.png)
@@ -206,6 +207,7 @@ toolkit.jar:
         skin/classic/aero/global/aboutCache.css
         skin/classic/aero/global/aboutCacheEntry.css
         skin/classic/aero/global/aboutMemory.css
+        skin/classic/aero/global/aboutReader.css
         skin/classic/aero/global/aboutSupport.css
         skin/classic/aero/global/appPicker.css
         skin/classic/aero/global/arrow.css
@@ -363,10 +365,10 @@ toolkit.jar:
         skin/classic/aero/global/media/videoClickToPlayButton.svg        (media/videoClickToPlayButton.svg)
         skin/classic/aero/global/menu/shared-menu-check.png              (../../shared/menu-check.png)
 *       skin/classic/aero/global/in-content/common.css                   (in-content/common.css)
-        skin/classic/aero/global/in-content/check.png                    (../../shared/in-content/check.png)
-        skin/classic/aero/global/in-content/check@2x.png                 (../../shared/in-content/check@2x.png)
+        skin/classic/aero/global/in-content/check.svg                    (../../shared/in-content/check.svg)
         skin/classic/aero/global/in-content/dropdown.svg                 (../../shared/in-content/dropdown.svg)
         skin/classic/aero/global/in-content/help-glyph.svg               (../../shared/in-content/help-glyph.svg)
+        skin/classic/aero/global/in-content/radio.svg                    (../../shared/in-content/radio.svg)
         skin/classic/aero/global/in-content/sorter.png                   (../../shared/in-content/sorter.png)
         skin/classic/aero/global/in-content/sorter@2x.png                (../../shared/in-content/sorter@2x.png)
         skin/classic/aero/global/printpreview/arrow-left.png             (printpreview/arrow-left-aero.png)

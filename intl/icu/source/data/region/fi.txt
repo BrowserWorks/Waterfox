@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fi.xml
- */
 fi{
     Countries{
         001{"maailma"}
@@ -123,7 +120,7 @@ fi{
         FO{"Färsaaret"}
         FR{"Ranska"}
         GA{"Gabon"}
-        GB{"Yhdistynyt kuningaskunta"}
+        GB{"Iso-Britannia"}
         GD{"Grenada"}
         GE{"Georgia"}
         GF{"Ranskan Guayana"}
@@ -265,7 +262,7 @@ fi{
         TA{"Tristan da Cunha"}
         TC{"Turks- ja Caicossaaret"}
         TD{"Tšad"}
-        TF{"Ranskan ulkopuoliset eteläiset alueet"}
+        TF{"Ranskan eteläiset alueet"}
         TG{"Togo"}
         TH{"Thaimaa"}
         TJ{"Tadžikistan"}
@@ -302,6 +299,13 @@ fi{
         ZW{"Zimbabwe"}
         ZZ{"tuntematon alue"}
     }
+    Countries%short{
+        GB{"Britannia"}
+        HK{"Hongkong"}
+        MO{"Macao"}
+        PS{"Palestiina"}
+        US{"USA"}
+    }
     Countries%variant{
         CD{"Kongo-Kinshasa"}
         CG{"Kongo-Brazzaville"}
@@ -310,12 +314,5 @@ fi{
         MK{"EJT Makedonia"}
         TL{"Timor-Leste"}
     }
-    CountriesShort{
-        GB{"Britannia"}
-        HK{"Hongkong"}
-        MO{"Macao"}
-        PS{"Palestiina"}
-        US{"USA"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.33"}
 }

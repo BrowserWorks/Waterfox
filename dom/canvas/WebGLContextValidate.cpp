@@ -228,6 +228,50 @@ WebGLContext::ValidateBlendFuncEnumsCompatibility(GLenum sfactor,
 }
 
 bool
+WebGLContext::ValidateDataOffsetSize(WebGLintptr offset, WebGLsizeiptr size, WebGLsizeiptr bufferSize, const char* info)
+{
+    if (offset < 0) {
+        ErrorInvalidValue("%s: offset must be positive", info);
+        return false;
+    }
+
+    if (size < 0) {
+        ErrorInvalidValue("%s: size must be positive", info);
+        return false;
+    }
+
+    // *** Careful *** WebGLsizeiptr is always 64-bits but GLsizeiptr
+    // is like intptr_t. On some platforms it is 32-bits.
+    CheckedInt<GLsizeiptr> neededBytes = CheckedInt<GLsizeiptr>(offset) + size;
+    if (!neededBytes.isValid() || neededBytes.value() > bufferSize) {
+        ErrorInvalidValue("%s: invalid range", info);
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * Check data ranges [readOffset, readOffset + size] and [writeOffset,
+ * writeOffset + size] for overlap.
+ *
+ * It is assumed that offset and size have already been validated with
+ * ValidateDataOffsetSize().
+ */
+bool
+WebGLContext::ValidateDataRanges(WebGLintptr readOffset, WebGLintptr writeOffset, WebGLsizeiptr size, const char* info)
+{
+    MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(readOffset) + size).isValid());
+    MOZ_ASSERT((CheckedInt<WebGLsizeiptr>(writeOffset) + size).isValid());
+
+    bool separate = (readOffset + size < writeOffset || writeOffset + size < readOffset);
+    if (!separate)
+        ErrorInvalidValue("%s: ranges [readOffset, readOffset + size) and [writeOffset, writeOffset + size) overlap");
+
+    return separate;
+}
+
+bool
 WebGLContext::ValidateTextureTargetEnum(GLenum target, const char* info)
 {
     switch (target) {
@@ -1212,9 +1256,9 @@ WebGLContext::ValidateTexInputData(GLenum type, js::Scalar::Type jsArrayType,
                                    WebGLTexImageFunc func,
                                    WebGLTexDimensions dims)
 {
-    // We're using js::Scalar::TypeMax as dummy value for when the tex source
-    // wasn't a typed array.
-    if (jsArrayType == js::Scalar::TypeMax)
+    // We're using js::Scalar::MaxTypedArrayViewType as dummy value for when
+    // the tex source wasn't a typed array.
+    if (jsArrayType == js::Scalar::MaxTypedArrayViewType)
         return true;
 
     const char invalidTypedArray[] = "%s: Invalid typed array type for given"
@@ -1715,6 +1759,78 @@ WebGLContext::ValidateUniformMatrixArraySetter(WebGLUniformLocation* loc,
     *out_rawLoc = loc->Location();
     *out_numElementsToUpload = std::min((size_t)loc->Info().arraySize,
                                         setterArraySize / setterElemSize);
+    return true;
+}
+
+bool
+WebGLContext::ValidateAttribIndex(GLuint index, const char* info)
+{
+    bool valid = (index < MaxVertexAttribs());
+
+    if (!valid) {
+        if (index == GLuint(-1)) {
+            ErrorInvalidValue("%s: -1 is not a valid `index`. This value"
+                              " probably comes from a getAttribLocation()"
+                              " call, where this return value -1 means"
+                              " that the passed name didn't correspond to"
+                              " an active attribute in the specified"
+                              " program.", info);
+        } else {
+            ErrorInvalidValue("%s: `index` must be less than"
+                              " MAX_VERTEX_ATTRIBS.", info);
+        }
+    }
+
+    return valid;
+}
+
+bool
+WebGLContext::ValidateAttribPointer(bool integerMode, GLuint index, GLint size, GLenum type,
+                                    WebGLboolean normalized, GLsizei stride,
+                                    WebGLintptr byteOffset, const char* info)
+{
+    WebGLBuffer* buffer = mBoundArrayBuffer;
+    if (!buffer) {
+        ErrorInvalidOperation("%s: must have valid GL_ARRAY_BUFFER binding", info);
+        return false;
+    }
+
+    GLsizei requiredAlignment = 0;
+    if (!ValidateAttribPointerType(integerMode, type, &requiredAlignment, info))
+        return false;
+
+    // requiredAlignment should always be a power of two
+    MOZ_ASSERT(IsPOTAssumingNonnegative(requiredAlignment));
+    GLsizei requiredAlignmentMask = requiredAlignment - 1;
+
+    if (size < 1 || size > 4) {
+        ErrorInvalidValue("%s: invalid element size", info);
+        return false;
+    }
+
+    // see WebGL spec section 6.6 "Vertex Attribute Data Stride"
+    if (stride < 0 || stride > 255) {
+        ErrorInvalidValue("%s: negative or too large stride", info);
+        return false;
+    }
+
+    if (byteOffset < 0) {
+        ErrorInvalidValue("%s: negative offset", info);
+        return false;
+    }
+
+    if (stride & requiredAlignmentMask) {
+        ErrorInvalidOperation("%s: stride doesn't satisfy the alignment "
+                              "requirement of given type", info);
+        return false;
+    }
+
+    if (byteOffset & requiredAlignmentMask) {
+        ErrorInvalidOperation("%s: byteOffset doesn't satisfy the alignment "
+                              "requirement of given type", info);
+        return false;
+    }
+
     return true;
 }
 

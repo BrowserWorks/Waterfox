@@ -12,6 +12,8 @@
 #include "jemalloc_types.h"
 #include "mozilla/Types.h"
 
+#include <stdbool.h>
+
 #if defined(MOZ_NATIVE_JEMALLOC)
 
 MOZ_IMPORT_API int
@@ -21,7 +23,7 @@ je_(mallctlnametomib)(const char *name, size_t *mibp, size_t *miblenp);
 MOZ_IMPORT_API int
 je_(mallctlbymib)(const size_t *mib, size_t miblen, void *oldp, size_t *oldlenp, void *newp, size_t newlen);
 MOZ_IMPORT_API int
-je_(nallocm)(size_t *rsize, size_t size, int flags);
+je_(nallocx)(size_t size, int flags);
 
 #else
 #  include "jemalloc/jemalloc.h"
@@ -47,18 +49,86 @@ je_(nallocm)(size_t *rsize, size_t size, int flags);
 	je_(mallctlbymib)(mib, miblen, &v, &sz, NULL, 0);		\
 } while (0)
 
+#define	CTL_IJ_GET(n, v, i, j) do {					\
+	size_t mib[6];							\
+	size_t miblen = sizeof(mib) / sizeof(mib[0]);			\
+	size_t sz = sizeof(v);						\
+	je_(mallctlnametomib)(n, mib, &miblen);				\
+	mib[2] = i;							\
+	mib[4] = j;							\
+	je_(mallctlbymib)(mib, miblen, &v, &sz, NULL, 0);			\
+} while (0)
+
+/*
+ * VARIABLE_ARRAY is copied from
+ * memory/jemalloc/src/include/jemalloc/internal/jemalloc_internal.h.in
+ */
+#if __STDC_VERSION__ < 199901L
+#  ifdef _MSC_VER
+#    include <malloc.h>
+#    define alloca _alloca
+#  else
+#    ifdef HAVE_ALLOCA_H
+#      include <alloca.h>
+#    else
+#      include <stdlib.h>
+#    endif
+#  endif
+#  define VARIABLE_ARRAY(type, name, count) \
+	type *name = alloca(sizeof(type) * (count))
+#else
+#  define VARIABLE_ARRAY(type, name, count) type name[(count)]
+#endif
+
 MOZ_MEMORY_API size_t
 malloc_good_size_impl(size_t size)
 {
-  size_t ret;
-  /* je_nallocm crashes when given a size of 0. As
+  /* je_nallocx crashes when given a size of 0. As
    * malloc_usable_size(malloc(0)) and malloc_usable_size(malloc(1))
    * return the same value, use a size of 1. */
   if (size == 0)
     size = 1;
-  if (!je_(nallocm)(&ret, size, 0))
-    return ret;
-  return size;
+  return je_(nallocx)(size, 0);
+}
+
+static size_t
+compute_bin_unused(unsigned int narenas)
+{
+    size_t bin_unused = 0;
+
+    uint32_t nregs; // number of regions per run in the j-th bin
+    size_t reg_size; // size of regions served by the j-th bin
+    size_t curruns; // number of runs belonging to a bin
+    size_t curregs; // number of allocated regions in a bin
+
+    unsigned int nbins; // number of bins per arena
+    unsigned int i, j;
+
+    // narenas also counts uninitialized arenas, and initialized arenas
+    // are not guaranteed to be adjacent
+    VARIABLE_ARRAY(bool, initialized, narenas);
+    size_t isz = sizeof(initialized) / sizeof(initialized[0]);
+
+    je_(mallctl)("arenas.initialized", initialized, &isz, NULL, 0);
+    CTL_GET("arenas.nbins", nbins);
+
+    for (j = 0; j < nbins; j++) {
+        CTL_I_GET("arenas.bin.0.nregs", nregs, j);
+        CTL_I_GET("arenas.bin.0.size", reg_size, j);
+
+        for (i = 0; i < narenas; i++) {
+            if (!initialized[i]) {
+                continue;
+            }
+
+            CTL_IJ_GET("stats.arenas.0.bins.0.curruns", curruns, i, j);
+            CTL_IJ_GET("stats.arenas.0.bins.0.curregs", curregs, i, j);
+
+            bin_unused += (nregs * curruns - curregs) * reg_size;
+        }
+    }
+
+    return bin_unused;
 }
 
 MOZ_JEMALLOC_API void
@@ -80,6 +150,7 @@ jemalloc_stats_impl(jemalloc_stats_t *stats)
   CTL_GET("stats.allocated", allocated);
   CTL_GET("stats.mapped", mapped);
   CTL_GET("opt.lg_chunk", lg_chunk);
+  CTL_GET("stats.bookkeeping", stats->bookkeeping);
 
   /* get the summation for all arenas, i == narenas */
   CTL_I_GET("stats.arenas.0.pdirty", pdirty, narenas);
@@ -89,11 +160,8 @@ jemalloc_stats_impl(jemalloc_stats_t *stats)
   stats->allocated = allocated;
   stats->waste = active - allocated;
   stats->page_cache = pdirty * page;
-
-  // We could get this value out of base.c::base_pages, but that really should
-  // be an upstream change, so don't worry about it for now.
-  stats->bookkeeping = 0;
-  stats->bin_unused = 0;
+  stats->bin_unused = compute_bin_unused(narenas);
+  stats->waste -= stats->bin_unused;
 }
 
 MOZ_JEMALLOC_API void
@@ -104,5 +172,12 @@ jemalloc_purge_freed_pages_impl()
 MOZ_JEMALLOC_API void
 jemalloc_free_dirty_pages_impl()
 {
-  je_(mallctl)("arenas.purge", NULL, 0, NULL, 0);
+  unsigned narenas;
+  size_t mib[3];
+  size_t miblen = sizeof(mib) / sizeof(mib[0]);
+
+  CTL_GET("arenas.narenas", narenas);
+  je_(mallctlnametomib)("arena.0.purge", mib, &miblen);
+  mib[1] = narenas;
+  je_(mallctlbymib)(mib, miblen, NULL, NULL, NULL, 0);
 }

@@ -164,7 +164,7 @@ class CommandChain MOZ_FINAL
 {
 public:
   CommandChain(const NetworkParams& aParams,
-               CommandFunc aCmds[],
+               const CommandFunc aCmds[],
                uint32_t aLength,
                ErrorCallback aError)
   : mIndex(-1)
@@ -196,7 +196,7 @@ public:
 private:
   uint32_t mIndex;
   NetworkParams mParams;
-  CommandFunc* mCommands;
+  const CommandFunc* mCommands;
   uint32_t mLength;
   ErrorCallback mError;
 };
@@ -263,21 +263,21 @@ private:
    * function pointer array holds all netd commands should be executed
    * in sequence to accomplish a given command by other module.
    */
-  static CommandFunc sWifiEnableChain[];
-  static CommandFunc sWifiDisableChain[];
-  static CommandFunc sWifiFailChain[];
-  static CommandFunc sWifiRetryChain[];
-  static CommandFunc sWifiOperationModeChain[];
-  static CommandFunc sUSBEnableChain[];
-  static CommandFunc sUSBDisableChain[];
-  static CommandFunc sUSBFailChain[];
-  static CommandFunc sUpdateUpStreamChain[];
-  static CommandFunc sStartDhcpServerChain[];
-  static CommandFunc sStopDhcpServerChain[];
-  static CommandFunc sNetworkInterfaceEnableAlarmChain[];
-  static CommandFunc sNetworkInterfaceDisableAlarmChain[];
-  static CommandFunc sNetworkInterfaceSetAlarmChain[];
-  static CommandFunc sSetDnsChain[];
+  static const CommandFunc sWifiEnableChain[];
+  static const CommandFunc sWifiDisableChain[];
+  static const CommandFunc sWifiFailChain[];
+  static const CommandFunc sWifiRetryChain[];
+  static const CommandFunc sWifiOperationModeChain[];
+  static const CommandFunc sUSBEnableChain[];
+  static const CommandFunc sUSBDisableChain[];
+  static const CommandFunc sUSBFailChain[];
+  static const CommandFunc sUpdateUpStreamChain[];
+  static const CommandFunc sStartDhcpServerChain[];
+  static const CommandFunc sStopDhcpServerChain[];
+  static const CommandFunc sNetworkInterfaceEnableAlarmChain[];
+  static const CommandFunc sNetworkInterfaceDisableAlarmChain[];
+  static const CommandFunc sNetworkInterfaceSetAlarmChain[];
+  static const CommandFunc sSetDnsChain[];
 
   /**
    * Individual netd command stored in command chain.
@@ -360,6 +360,15 @@ private:
   inline bool isComplete(uint32_t code);
   inline bool isProceeding(uint32_t code);
   void Shutdown();
+  static void runNextQueuedCommandChain();
+  static void finalizeSuccess(CommandChain* aChain,
+                              mozilla::dom::NetworkResultOptions& aResult);
+
+  template<size_t N>
+  static void runChain(const NetworkParams& aParams,
+                       const CommandFunc (&aCmds)[N],
+                       ErrorCallback aError);
+
   /**
    * Callback function to send netd result to main thread.
    */

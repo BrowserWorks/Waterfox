@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ml.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ml.xml
- */
 ml{
     Keys{
         calendar{"കലണ്ടർ"}
@@ -545,14 +542,14 @@ ml{
         zxx{"ഭാഷാപരമായ ഉള്ളടക്കമൊന്നുമില്ല"}
         zza{"സാസാ"}
     }
-    Languages%variant{
-        ps{"പുഷ്തോ"}
-        ug{"ഉയ്ഗൂർ"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"അസേരി"}
         en_GB{"യു.കെ. ഇംഗ്ലീഷ്"}
         en_US{"യു.എസ്. ഇംഗ്ലീഷ്"}
+    }
+    Languages%variant{
+        ps{"പുഷ്തോ"}
+        ug{"ഉയ്ഗൂർ"}
     }
     Scripts{
         Arab{"അറബിക്"}
@@ -818,7 +815,7 @@ ml{
         POSIX{"കമ്പ്യൂട്ടർ"}
         REVISED{"പരിഷ്ക്കരിച്ച ലിപി"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"ഭാഷ: {0}"}
         script{"ലിപി: {0}"}

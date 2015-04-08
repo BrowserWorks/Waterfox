@@ -26,6 +26,13 @@ using mozilla::dom::Animation;
 using mozilla::dom::AnimationPlayer;
 using mozilla::CSSAnimationPlayer;
 
+mozilla::dom::Promise*
+CSSAnimationPlayer::GetReady(ErrorResult& aRv)
+{
+  FlushStyle();
+  return AnimationPlayer::GetReady(aRv);
+}
+
 void
 CSSAnimationPlayer::Play()
 {
@@ -324,6 +331,7 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
           // Although we're doing this while iterating this is safe because
           // we're not changing the length of newPlayers and we've finished
           // iterating over the list of old iterations.
+          newPlayer->Cancel();
           newPlayer = nullptr;
           newPlayers.ReplaceElementAt(newIdx, oldPlayer);
           collection->mPlayers.RemoveElementAt(oldIdx);
@@ -336,6 +344,11 @@ nsAnimationManager::CheckAnimationRule(nsStyleContext* aStyleContext,
     collection->mPlayers.SwapElements(newPlayers);
     collection->mNeedsRefreshes = true;
     collection->Tick();
+
+    // Cancel removed animations
+    for (size_t newPlayerIdx = newPlayers.Length(); newPlayerIdx-- != 0; ) {
+      newPlayers[newPlayerIdx]->Cancel();
+    }
 
     TimeStamp refreshTime = mPresContext->RefreshDriver()->MostRecentRefresh();
     UpdateStyleAndEvents(collection, refreshTime,
@@ -414,7 +427,6 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
   ResolvedStyleCache resolvedStyles;
 
   const nsStyleDisplay *disp = aStyleContext->StyleDisplay();
-  Nullable<TimeDuration> now = aTimeline->GetCurrentTime();
 
   for (size_t animIdx = 0, animEnd = disp->mAnimationNameCount;
        animIdx != animEnd; ++animIdx) {
@@ -450,7 +462,11 @@ nsAnimationManager::BuildAnimations(nsStyleContext* aStyleContext,
                     aStyleContext->GetPseudoType(), timing, src.GetName());
     dest->SetSource(destAnim);
 
-    dest->mStartTime = now;
+    // Even in the case where we call PauseFromStyle below, we still need to
+    // call PlayFromStyle first. This is because a newly-created player is idle
+    // and has no effect until it is played (or otherwise given a start time).
+    dest->PlayFromStyle();
+
     if (src.GetPlayState() == NS_STYLE_ANIMATION_PLAY_STATE_PAUSED) {
       dest->PauseFromStyle();
     }

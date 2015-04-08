@@ -201,15 +201,6 @@ IsAndroidAvailable()
 #ifndef MOZ_WIDGET_ANDROID
   return false;
 #else
-  // PowerVR is very slow at texture allocation for some reason, which causes poor performance.
-  nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
-
-  nsString vendor;
-  if (NS_FAILED(gfxInfo->GetAdapterVendorID(vendor)) ||
-      vendor.Find("Imagination") == 0) {
-    return nullptr;
-  }
-
   // We need android.media.MediaCodec which exists in API level 16 and higher.
   return AndroidBridge::Bridge()->GetAPIVersion() >= 16;
 #endif
@@ -219,6 +210,12 @@ static bool
 IsGonkMP4DecoderAvailable()
 {
   return Preferences::GetBool("media.fragmented-mp4.gonk.enabled", false);
+}
+
+static bool
+IsGMPDecoderAvailable()
+{
+  return Preferences::GetBool("media.fragmented-mp4.gmp.enabled", false);
 }
 
 static bool
@@ -233,6 +230,7 @@ HavePlatformMPEGDecoders()
          IsFFmpegAvailable() ||
          IsAppleAvailable() ||
          IsGonkMP4DecoderAvailable() ||
+         IsGMPDecoderAvailable() ||
          // TODO: Other platforms...
          false;
 }

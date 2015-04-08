@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ta.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ta.xml
- */
 ta{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"அபிட்ஜான்"}
@@ -690,9 +687,6 @@ ta{
         "Asia:Choibalsan"{
             ec{"சோய்பால்சான்"}
         }
-        "Asia:Chongqing"{
-            ec{"சாங்குயிங்"}
-        }
         "Asia:Colombo"{
             ec{"கொழும்பு"}
         }
@@ -713,9 +707,6 @@ ta{
         }
         "Asia:Gaza"{
             ec{"காஸா"}
-        }
-        "Asia:Harbin"{
-            ec{"ஹர்பின்"}
         }
         "Asia:Hebron"{
             ec{"ஹெப்ரான்"}
@@ -746,9 +737,6 @@ ta{
         }
         "Asia:Karachi"{
             ec{"கராச்சி"}
-        }
-        "Asia:Kashgar"{
-            ec{"கஷ்கர்"}
         }
         "Asia:Katmandu"{
             ec{"காத்மாண்டு"}
@@ -1414,7 +1402,7 @@ ta{
             ls{"ப்ரசிலியா நிலையான நேரம்"}
         }
         "meta:Brunei"{
-            ls{"புருனே டருஸ்ஸலாம் நேரம்"}
+            ls{"புருணை டாரு சலாம் நேரம்"}
         }
         "meta:Cape_Verde"{
             ld{"கேப் வெர்டே கோடை நேரம்"}
@@ -1578,13 +1566,13 @@ ta{
             ls{"இந்தோசீன நேரம்"}
         }
         "meta:Indonesia_Central"{
-            ls{"மத்திய இந்தோனேஷிய நேரம்"}
+            ls{"மத்திய இந்தோனேசிய நேரம்"}
         }
         "meta:Indonesia_Eastern"{
-            ls{"கிழக்கத்திய இந்தோனேஷிய நேரம்"}
+            ls{"கிழக்கத்திய இந்தோனேசிய நேரம்"}
         }
         "meta:Indonesia_Western"{
-            ls{"மேற்கத்திய இந்தோனேஷியா நேரம்"}
+            ls{"மேற்கத்திய இந்தோனேசிய நேரம்"}
         }
         "meta:Iran"{
             ld{"ஈரான் பகலொளி நேரம்"}
@@ -1658,7 +1646,7 @@ ta{
             ls{"மகதன் நிலையான நேரம்"}
         }
         "meta:Malaysia"{
-            ls{"மலேஷிய நேரம்"}
+            ls{"மலேசிய நேரம்"}
         }
         "meta:Maldives"{
             ls{"மாலத்தீவு நேரம்"}
@@ -1815,7 +1803,7 @@ ta{
             ls{"சீசெல்ஸ் நேரம்"}
         }
         "meta:Singapore"{
-            ls{"சிங்கப்பூர் நிலையான நேரம்"}
+            ls{"சிங்கப்பூர் நேரம்"}
         }
         "meta:Solomon"{
             ls{"சாலமன் தீவுகள் நேரம்"}

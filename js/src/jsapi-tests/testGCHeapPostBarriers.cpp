@@ -5,13 +5,15 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-#ifdef JSGC_GENERATIONAL
-
 #include "js/RootingAPI.h"
 #include "jsapi-tests/tests.h"
 
 BEGIN_TEST(testGCHeapPostBarriers)
 {
+#ifdef JS_GC_ZEAL
+    AutoLeaveZeal nozeal(cx);
+#endif /* JS_GC_ZEAL */
+
     /* Sanity check - objects start in the nursery and then become tenured. */
     JS_GC(cx->runtime());
     JS::RootedObject obj(cx, NurseryObject());
@@ -85,5 +87,3 @@ JSFunction *NurseryFunction()
 }
 
 END_TEST(testGCHeapPostBarriers)
-
-#endif

@@ -57,6 +57,8 @@ namespace {
   static int sBusyToneInterval = 3700; //unit: ms
 } // anonymous namespace
 
+const int BluetoothHfpManager::MAX_NUM_CLIENTS = 1;
+
 static bool
 IsValidDtmf(const char aChar) {
   // Valid DTMF: [*#0-9ABCD]
@@ -71,7 +73,7 @@ IsSupportedChld(const int aChld) {
   return (aChld >= 0 && aChld <= 3);
 }
 
-class BluetoothHfpManager::GetVolumeTask : public nsISettingsServiceCallback
+class BluetoothHfpManager::GetVolumeTask MOZ_FINAL : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
@@ -308,7 +310,7 @@ public:
   {
     BluetoothHfpManager* hfpManager = BluetoothHfpManager::Get();
 
-    mInterface->Init(hfpManager, this);
+    mInterface->Init(hfpManager, BluetoothHfpManager::MAX_NUM_CLIENTS, this);
   }
 
 private:
@@ -616,11 +618,8 @@ BluetoothHfpManager::HandleVolumeChanged(nsISupports* aSubject)
   // The string that we're interested in will be a JSON string that looks like:
   //  {"key":"volumeup", "value":10}
   //  {"key":"volumedown", "value":2}
-  AutoJSAPI jsapi;
-  jsapi.Init();
-  JSContext* cx = jsapi.cx();
-  RootedDictionary<dom::SettingChangeNotification> setting(cx);
-  if (!WrappedJSToDictionary(cx, aSubject, setting)) {
+  RootedDictionary<dom::SettingChangeNotification> setting(nsContentUtils::RootingCx());
+  if (!WrappedJSToDictionary(aSubject, setting)) {
     return;
   }
   if (!setting.mKey.EqualsASCII(AUDIO_VOLUME_BT_SCO_ID)) {
@@ -641,8 +640,9 @@ BluetoothHfpManager::HandleVolumeChanged(nsISupports* aSubject)
   // Only send volume back when there's a connected headset
   if (IsConnected()) {
     NS_ENSURE_TRUE_VOID(sBluetoothHfpInterface);
-    sBluetoothHfpInterface->VolumeControl(HFP_VOLUME_TYPE_SPEAKER, mCurrentVgs,
-                                          new VolumeControlResultHandler());
+    sBluetoothHfpInterface->VolumeControl(
+      HFP_VOLUME_TYPE_SPEAKER, mCurrentVgs, mDeviceAddress,
+      new VolumeControlResultHandler());
   }
 }
 
@@ -683,9 +683,7 @@ BluetoothHfpManager::HandleVoiceConnectionChanged(uint32_t aClientId)
                        HFP_NETWORK_STATE_NOT_AVAILABLE;
 
   // Signal
-  JSContext* cx = nsContentUtils::GetSafeJSContext();
-  NS_ENSURE_TRUE_VOID(cx);
-  JS::Rooted<JS::Value> value(cx);
+  JS::Rooted<JS::Value> value(nsContentUtils::RootingCxForThread());
   voiceInfo->GetRelSignalStrength(&value);
   NS_ENSURE_TRUE_VOID(value.isNumber());
   mSignal = (int)ceil(value.toNumber() / 20.0);
@@ -772,7 +770,7 @@ BluetoothHfpManager::SendCLCC(Call& aCall, int aIndex)
   sBluetoothHfpInterface->ClccResponse(
     aIndex, aCall.mDirection, callState, HFP_CALL_MODE_VOICE,
     HFP_CALL_MPTY_TYPE_SINGLE, aCall.mNumber,
-    aCall.mType, new ClccResponseResultHandler());
+    aCall.mType, mDeviceAddress, new ClccResponseResultHandler());
 }
 
 class FormattedAtResponseResultHandler MOZ_FINAL
@@ -792,7 +790,7 @@ BluetoothHfpManager::SendLine(const char* aMessage)
   NS_ENSURE_TRUE_VOID(sBluetoothHfpInterface);
 
   sBluetoothHfpInterface->FormattedAtResponse(
-    aMessage, new FormattedAtResponseResultHandler());
+    aMessage, mDeviceAddress, new FormattedAtResponseResultHandler());
 }
 
 class AtResponseResultHandler MOZ_FINAL
@@ -812,7 +810,7 @@ BluetoothHfpManager::SendResponse(BluetoothHandsfreeAtResponse aResponseCode)
   NS_ENSURE_TRUE_VOID(sBluetoothHfpInterface);
 
   sBluetoothHfpInterface->AtResponse(
-    aResponseCode, 0, new AtResponseResultHandler());
+    aResponseCode, 0, mDeviceAddress, new AtResponseResultHandler());
 }
 
 class PhoneStateChangeResultHandler MOZ_FINAL
@@ -1366,7 +1364,7 @@ BluetoothHfpManager::AudioStateNotification(
 }
 
 void
-BluetoothHfpManager::AnswerCallNotification()
+BluetoothHfpManager::AnswerCallNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1374,7 +1372,7 @@ BluetoothHfpManager::AnswerCallNotification()
 }
 
 void
-BluetoothHfpManager::HangupCallNotification()
+BluetoothHfpManager::HangupCallNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1383,7 +1381,7 @@ BluetoothHfpManager::HangupCallNotification()
 
 void
 BluetoothHfpManager::VolumeNotification(
-  BluetoothHandsfreeVolumeType aType, int aVolume)
+  BluetoothHandsfreeVolumeType aType, int aVolume, const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1410,7 +1408,7 @@ BluetoothHfpManager::VolumeNotification(
 }
 
 void
-BluetoothHfpManager::DtmfNotification(char aDtmf)
+BluetoothHfpManager::DtmfNotification(char aDtmf, const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1422,7 +1420,8 @@ BluetoothHfpManager::DtmfNotification(char aDtmf)
 }
 
 void
-BluetoothHfpManager::CallHoldNotification(BluetoothHandsfreeCallHoldType aChld)
+BluetoothHfpManager::CallHoldNotification(BluetoothHandsfreeCallHoldType aChld,
+                                          const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1440,7 +1439,8 @@ BluetoothHfpManager::CallHoldNotification(BluetoothHandsfreeCallHoldType aChld)
   NotifyDialer(NS_ConvertUTF8toUTF16(message));
 }
 
-void BluetoothHfpManager::DialCallNotification(const nsAString& aNumber)
+void BluetoothHfpManager::DialCallNotification(const nsAString& aNumber,
+                                               const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1481,7 +1481,7 @@ void BluetoothHfpManager::DialCallNotification(const nsAString& aNumber)
 }
 
 void
-BluetoothHfpManager::CnumNotification()
+BluetoothHfpManager::CnumNotification(const nsAString& aBdAddress)
 {
   static const uint8_t sAddressType[] {
     [HFP_CALL_ADDRESS_TYPE_UNKNOWN] = 0x81,
@@ -1515,7 +1515,7 @@ public:
 };
 
 void
-BluetoothHfpManager::CindNotification()
+BluetoothHfpManager::CindNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1526,9 +1526,11 @@ BluetoothHfpManager::CindNotification()
   BluetoothHandsfreeCallState callState =
     ConvertToBluetoothHandsfreeCallState(GetCallSetupState());
 
-  sBluetoothHfpInterface->CindResponse(mService, numActive, numHeld,
-                                       callState, mSignal, mRoam, mBattChg,
-                                       new CindResponseResultHandler());
+  sBluetoothHfpInterface->CindResponse(
+    mService, numActive, numHeld,
+    callState, mSignal, mRoam, mBattChg,
+    aBdAddress,
+    new CindResponseResultHandler());
 }
 
 class CopsResponseResultHandler MOZ_FINAL
@@ -1543,7 +1545,7 @@ public:
 };
 
 void
-BluetoothHfpManager::CopsNotification()
+BluetoothHfpManager::CopsNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1551,11 +1553,11 @@ BluetoothHfpManager::CopsNotification()
 
   sBluetoothHfpInterface->CopsResponse(
     NS_ConvertUTF16toUTF8(mOperatorName).get(),
-    new CopsResponseResultHandler());
+    aBdAddress, new CopsResponseResultHandler());
 }
 
 void
-BluetoothHfpManager::ClccNotification()
+BluetoothHfpManager::ClccNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1576,7 +1578,8 @@ BluetoothHfpManager::ClccNotification()
 }
 
 void
-BluetoothHfpManager::UnknownAtNotification(const nsACString& aAtString)
+BluetoothHfpManager::UnknownAtNotification(const nsACString& aAtString,
+                                           const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -1586,7 +1589,7 @@ BluetoothHfpManager::UnknownAtNotification(const nsACString& aAtString)
 }
 
 void
-BluetoothHfpManager::KeyPressedNotification()
+BluetoothHfpManager::KeyPressedNotification(const nsAString& aBdAddress)
 {
   MOZ_ASSERT(NS_IsMainThread());
 

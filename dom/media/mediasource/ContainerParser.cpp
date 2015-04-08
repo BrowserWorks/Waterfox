@@ -16,30 +16,32 @@
 
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaSourceLog();
-extern PRLogModuleInfo* GetMediaSourceAPILog();
 
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#define MSE_DEBUGV(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG+1, (__VA_ARGS__))
-#define MSE_API(...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, (__VA_ARGS__))
+/* Polyfill __func__ on MSVC to pass to the log. */
+#ifdef _MSC_VER
+#define __func__ __FUNCTION__
+#endif
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+#define MSE_DEBUG(name, arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (TOSTRING(name) "(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
 #else
 #define MSE_DEBUG(...)
-#define MSE_DEBUGV(...)
-#define MSE_API(...)
 #endif
 
 namespace mozilla {
 
-ContainerParser::ContainerParser()
-  : mInitData(new LargeDataBuffer())
-  , mHasInitData(false)
+ContainerParser::ContainerParser(const nsACString& aType)
+  : mHasInitData(false)
+  , mType(aType)
 {
 }
 
 bool
 ContainerParser::IsInitSegmentPresent(LargeDataBuffer* aData)
 {
-MSE_DEBUG("ContainerParser(%p)::IsInitSegmentPresent aLength=%u [%x%x%x%x]",
-            this, aData->Length(),
+MSE_DEBUG(ContainerParser, "aLength=%u [%x%x%x%x]",
+            aData->Length(),
             aData->Length() > 0 ? (*aData)[0] : 0,
             aData->Length() > 1 ? (*aData)[1] : 0,
             aData->Length() > 2 ? (*aData)[2] : 0,
@@ -50,8 +52,8 @@ return false;
 bool
 ContainerParser::IsMediaSegmentPresent(LargeDataBuffer* aData)
 {
-  MSE_DEBUG("ContainerParser(%p)::IsMediaSegmentPresent aLength=%u [%x%x%x%x]",
-            this, aData->Length(),
+  MSE_DEBUG(ContainerParser, "aLength=%u [%x%x%x%x]",
+            aData->Length(),
             aData->Length() > 0 ? (*aData)[0] : 0,
             aData->Length() > 1 ? (*aData)[1] : 0,
             aData->Length() > 2 ? (*aData)[2] : 0,
@@ -79,17 +81,24 @@ ContainerParser::GetRoundingError()
   return 0;
 }
 
+bool
+ContainerParser::HasCompleteInitData()
+{
+  return mHasInitData && !!mInitData->Length();
+}
+
 LargeDataBuffer*
 ContainerParser::InitData()
 {
-  MOZ_ASSERT(mHasInitData);
   return mInitData;
 }
 
 class WebMContainerParser : public ContainerParser {
 public:
-  WebMContainerParser()
-    : mParser(0), mOffset(0)
+  explicit WebMContainerParser(const nsACString& aType)
+    : ContainerParser(aType)
+    , mParser(0)
+    , mOffset(0)
   {}
 
   static const unsigned NS_PER_USEC = 1000;
@@ -105,7 +114,9 @@ public:
     // ...
     // DocType == "webm"
     // ...
-    // 0x18538067 // Segment (must be "unknown" size)
+    // 0x18538067 // Segment (must be "unknown" size or contain a value large
+                  // enough to include the Segment Information and Tracks
+                  // elements that follow)
     // 0x1549a966 // -> Segment Info
     // 0x1654ae6b // -> One or more Tracks
     if (aData->Length() >= 4 &&
@@ -145,6 +156,8 @@ public:
       mOffset = 0;
       mParser = WebMBufferedParser(0);
       mOverlappedMapping.Clear();
+      mInitData = new LargeDataBuffer();
+      mResource = new SourceBufferResource(NS_LITERAL_CSTRING("video/webm"));
     }
 
     // XXX if it only adds new mappings, overlapped but not available
@@ -154,22 +167,27 @@ public:
     mOverlappedMapping.Clear();
     ReentrantMonitor dummy("dummy");
     mParser.Append(aData->Elements(), aData->Length(), mapping, dummy);
+    if (mResource) {
+      mResource->AppendData(aData);
+    }
 
     // XXX This is a bit of a hack.  Assume if there are no timecodes
     // present and it's an init segment that it's _just_ an init segment.
     // We should be more precise.
-    if (initSegment) {
-      uint32_t length = aData->Length();
-      if (!mapping.IsEmpty()) {
-        length = mapping[0].mSyncOffset;
-        MOZ_ASSERT(length <= aData->Length());
-      }
-      MSE_DEBUG("WebMContainerParser(%p)::ParseStartAndEndTimestamps: Stashed init of %u bytes.",
-                this, length);
-      if (!mInitData->ReplaceElementsAt(0, mInitData->Length(),
-                                        aData->Elements(), length)) {
-        // Unlikely OOM
-        return false;
+    if (initSegment || !HasCompleteInitData()) {
+      if (mParser.mInitEndOffset > 0) {
+        MOZ_ASSERT(mParser.mInitEndOffset <= mResource->GetLength());
+        if (!mInitData->SetLength(mParser.mInitEndOffset)) {
+          // Super unlikely OOM
+          return false;
+        }
+        char* buffer = reinterpret_cast<char*>(mInitData->Elements());
+        mResource->ReadFromCache(buffer, 0, mParser.mInitEndOffset);
+        MSE_DEBUG(WebMContainerParser, "Stashed init of %u bytes.",
+                  mParser.mInitEndOffset);
+        mResource = nullptr;
+      } else {
+        MSE_DEBUG(WebMContainerParser, "Incomplete init found.");
       }
       mHasInitData = true;
     }
@@ -193,8 +211,8 @@ public:
     aStart = mapping[0].mTimecode / NS_PER_USEC;
     aEnd = (mapping[endIdx].mTimecode + frameDuration) / NS_PER_USEC;
 
-    MSE_DEBUG("WebMContainerParser(%p)::ParseStartAndEndTimestamps: [%lld, %lld] [fso=%lld, leo=%lld, l=%u endIdx=%u]",
-              this, aStart, aEnd, mapping[0].mSyncOffset, mapping[endIdx].mEndOffset, mapping.Length(), endIdx);
+    MSE_DEBUG(WebMContainerParser, "[%lld, %lld] [fso=%lld, leo=%lld, l=%u endIdx=%u]",
+              aStart, aEnd, mapping[0].mSyncOffset, mapping[endIdx].mEndOffset, mapping.Length(), endIdx);
 
     mapping.RemoveElementsAt(0, endIdx + 1);
     mOverlappedMapping.AppendElements(mapping);
@@ -216,7 +234,10 @@ private:
 
 class MP4ContainerParser : public ContainerParser {
 public:
-  MP4ContainerParser() :mMonitor("MP4ContainerParser Index Monitor") {}
+  explicit MP4ContainerParser(const nsACString& aType)
+    : ContainerParser(aType)
+    , mMonitor("MP4ContainerParser Index Monitor")
+  {}
 
   bool IsInitSegmentPresent(LargeDataBuffer* aData)
   {
@@ -269,7 +290,8 @@ public:
       // consumers of ParseStartAndEndTimestamps to add their timestamp offset
       // manually. This allows the ContainerParser to be shared across different
       // timestampOffsets.
-      mParser = new mp4_demuxer::MoofParser(mStream, 0, 0, &mMonitor);
+      mParser = new mp4_demuxer::MoofParser(mStream, 0, &mMonitor);
+      mInitData = new LargeDataBuffer();
     } else if (!mStream || !mParser) {
       return false;
     }
@@ -281,16 +303,20 @@ public:
     byteRanges.AppendElement(mbr);
     mParser->RebuildFragmentedIndex(byteRanges);
 
-    if (initSegment) {
+    if (initSegment || !HasCompleteInitData()) {
       const MediaByteRange& range = mParser->mInitRange;
-      MSE_DEBUG("MP4ContainerParser(%p)::ParseStartAndEndTimestamps: Stashed init of %u bytes.",
-                this, range.mEnd - range.mStart);
-
-      if (!mInitData->ReplaceElementsAt(0, mInitData->Length(),
-                                        aData->Elements() + range.mStart,
-                                        range.mEnd - range.mStart)) {
-        // Super unlikely OOM
-        return false;
+      uint32_t length = range.mEnd - range.mStart;
+      if (length) {
+        if (!mInitData->SetLength(length)) {
+          // Super unlikely OOM
+          return false;
+        }
+        char* buffer = reinterpret_cast<char*>(mInitData->Elements());
+        mResource->ReadFromCache(buffer, range.mStart, length);
+        MSE_DEBUG(MP4ContainerParser ,"Stashed init of %u bytes.",
+                  length);
+      } else {
+        MSE_DEBUG(MP4ContainerParser, "Incomplete init found.");
       }
       mHasInitData = true;
     }
@@ -304,22 +330,21 @@ public:
     }
     aStart = compositionRange.start;
     aEnd = compositionRange.end;
-    MSE_DEBUG("MP4ContainerParser(%p)::ParseStartAndEndTimestamps: [%lld, %lld]",
-              this, aStart, aEnd);
+    MSE_DEBUG(MP4ContainerParser, "[%lld, %lld]",
+              aStart, aEnd);
     return true;
   }
 
-  // Gaps of up to 20ms (marginally longer than a single frame at 60fps) are considered
+  // Gaps of up to 35ms (marginally longer than a single frame at 30fps) are considered
   // to be sequential frames.
   int64_t GetRoundingError()
   {
-    return 20000;
+    return 35000;
   }
 
 private:
   nsRefPtr<MP4Stream> mStream;
   nsAutoPtr<mp4_demuxer::MoofParser> mParser;
-  nsRefPtr<SourceBufferResource> mResource;
   Monitor mMonitor;
 };
 
@@ -327,13 +352,15 @@ private:
 ContainerParser::CreateForMIMEType(const nsACString& aType)
 {
   if (aType.LowerCaseEqualsLiteral("video/webm") || aType.LowerCaseEqualsLiteral("audio/webm")) {
-    return new WebMContainerParser();
+    return new WebMContainerParser(aType);
   }
 
   if (aType.LowerCaseEqualsLiteral("video/mp4") || aType.LowerCaseEqualsLiteral("audio/mp4")) {
-    return new MP4ContainerParser();
+    return new MP4ContainerParser(aType);
   }
-  return new ContainerParser();
+  return new ContainerParser(aType);
 }
+
+#undef MSE_DEBUG
 
 } // namespace mozilla

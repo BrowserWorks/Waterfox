@@ -70,6 +70,7 @@ class CompileRuntime
     const StaticStrings &staticStrings();
     const Value &NaNValue();
     const Value &positiveInfinityValue();
+    const WellKnownSymbols &wellKnownSymbols();
 
 #ifdef DEBUG
     bool isInsideNursery(gc::Cell *cell);
@@ -80,9 +81,7 @@ class CompileRuntime
 
     const MathCache *maybeGetMathCache();
 
-#ifdef JSGC_GENERATIONAL
     const Nursery &gcNursery();
-#endif
 };
 
 class CompileZone

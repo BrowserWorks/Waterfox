@@ -8,10 +8,11 @@ const { classes: Cc, interfaces: Ci, utils: Cu } = Components;
 let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 let { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
-let { debuggerSocketConnect, DebuggerClient } =
+let { DebuggerClient } =
   Cu.import("resource://gre/modules/devtools/dbg-client.jsm", {});
 let { ViewHelpers } =
   Cu.import("resource:///modules/devtools/ViewHelpers.jsm", {});
+let { Task } = Cu.import("resource://gre/modules/Task.jsm", {});
 
 /**
  * Shortcuts for accessing various debugger preferences.
@@ -23,13 +24,13 @@ let Prefs = new ViewHelpers.Prefs("devtools.debugger", {
 
 let gToolbox, gClient;
 
-function connect() {
+let connect = Task.async(function*() {
   window.removeEventListener("load", connect);
   // Initiate the connection
-  let transport = debuggerSocketConnect(
-    Prefs.chromeDebuggingHost,
-    Prefs.chromeDebuggingPort
-  );
+  let transport = yield DebuggerClient.socketConnect({
+    host: Prefs.chromeDebuggingHost,
+    port: Prefs.chromeDebuggingPort
+  });
   gClient = new DebuggerClient(transport);
   gClient.connect(() => {
     let addonID = getParameterByName("addonID");
@@ -43,7 +44,7 @@ function connect() {
       gClient.listTabs(openToolbox);
     }
   });
-}
+});
 
 // Certain options should be toggled since we can assume chrome debugging here
 function setPrefDefaults() {
@@ -56,7 +57,7 @@ window.addEventListener("load", function() {
   let cmdClose = document.getElementById("toolbox-cmd-close");
   cmdClose.addEventListener("command", onCloseCommand);
   setPrefDefaults();
-  connect();
+  connect().catch(Cu.reportError);
 });
 
 function onCloseCommand(event) {
@@ -106,12 +107,10 @@ function bindToolboxHandlers() {
   // Badge the dock icon to differentiate this process from the main application process.
   updateBadgeText(false);
 
-  // Check if the debugger panel is already loaded otherwise listen for it to be.
-  if (gToolbox.getPanel("jsdebugger")) {
-    setupThreadListeners(gToolbox.getPanel("jsdebugger"));
-  } else {
-    gToolbox.once("jsdebugger-ready", (e, panel) => setupThreadListeners(panel));
-  }
+  // Once the debugger panel opens listen for thread pause / resume.
+  gToolbox.getPanelWhenReady("jsdebugger").then(panel => {
+    setupThreadListeners(panel);
+  });
 #endif
 }
 

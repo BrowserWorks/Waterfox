@@ -31,6 +31,21 @@ loop.OTSdkDriver = (function() {
         "setupStreamElements",
         "setMute"
       ]);
+
+    /**
+     * XXX This is a workaround for desktop machines that do not have a
+     * camera installed. As we don't yet have device enumeration, when
+     * we do, this can be removed (bug 1138851), and the sdk should handle it.
+     */
+    if ("isDesktop" in options && options.isDesktop &&
+        !window.MediaStreamTrack.getSources) {
+      // If there's no getSources function, the sdk defines its own and caches
+      // the result. So here we define the "normal" one which doesn't get cached, so
+      // we can change it later.
+      window.MediaStreamTrack.getSources = function(callback) {
+        callback([{kind: "audio"}, {kind: "video"}]);
+      };
+    }
   };
 
   OTSdkDriver.prototype = {
@@ -46,15 +61,36 @@ loop.OTSdkDriver = (function() {
       this.getRemoteElement = actionData.getRemoteElementFunc;
       this.publisherConfig = actionData.publisherConfig;
 
+      this.sdk.on("exception", this._onOTException.bind(this));
+
       // At this state we init the publisher, even though we might be waiting for
       // the initial connect of the session. This saves time when setting up
       // the media.
+      this._publishLocalStreams();
+    },
+
+    /**
+     * Internal function to publish a local stream.
+     * XXX This can be simplified when bug 1138851 is actioned.
+     */
+    _publishLocalStreams: function() {
       this.publisher = this.sdk.initPublisher(this.getLocalElement(),
         this.publisherConfig);
       this.publisher.on("accessAllowed", this._onPublishComplete.bind(this));
       this.publisher.on("accessDenied", this._onPublishDenied.bind(this));
       this.publisher.on("accessDialogOpened",
         this._onAccessDialogOpened.bind(this));
+    },
+
+    /**
+     * Forces the sdk into not using video, and starts publishing again.
+     * XXX This is part of the work around that will be removed by bug 1138851.
+     */
+    retryPublishWithoutVideo: function() {
+      window.MediaStreamTrack.getSources = function(callback) {
+        callback([{kind: "audio"}]);
+      };
+      this._publishLocalStreams();
     },
 
     /**
@@ -194,12 +230,22 @@ loop.OTSdkDriver = (function() {
      * https://tokbox.com/opentok/libraries/client/js/reference/SessionDisconnectEvent.html
      */
     _onSessionDisconnected: function(event) {
-      // We only need to worry about the network disconnected reason here.
-      if (event.reason === "networkDisconnected") {
-        this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
-          reason: FAILURE_REASONS.NETWORK_DISCONNECTED
-        }));
+      var reason;
+      switch (event.reason) {
+        case "networkDisconnected":
+          reason = FAILURE_REASONS.NETWORK_DISCONNECTED;
+          break;
+        case "forceDisconnected":
+          reason = FAILURE_REASONS.EXPIRED_OR_INVALID;
+          break;
+        default:
+          // Other cases don't need to be handled.
+          return;
       }
+
+      this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+        reason: reason
+      }));
     },
 
     /**
@@ -270,6 +316,22 @@ loop.OTSdkDriver = (function() {
       this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
         reason: FAILURE_REASONS.MEDIA_DENIED
       }));
+    },
+
+    _onOTException: function(event) {
+      if (event.code === OT.ExceptionCodes.UNABLE_TO_PUBLISH &&
+          event.message === "Unknown Error while getting user media") {
+        // We free up the publisher here in case the store wants to try
+        // grabbing the media again.
+        if (this.publisher) {
+          this.publisher.off("accessAllowed accessDenied accessDialogOpened streamCreated");
+          this.publisher.destroy();
+          delete this.publisher;
+        }
+        this.dispatcher.dispatch(new sharedActions.ConnectionFailure({
+          reason: FAILURE_REASONS.UNABLE_TO_PUBLISH_MEDIA
+        }));
+      }
     },
 
     /**

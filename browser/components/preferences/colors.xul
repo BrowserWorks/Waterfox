@@ -28,7 +28,7 @@
             helpTopic="prefs-fonts-and-colors">
   
     <preferences>
-      <preference id="browser.display.use_document_colors"  name="browser.display.use_document_colors"  type="bool"/>
+      <preference id="browser.display.document_color_use"   name="browser.display.document_color_use"   type="int"/>
       <preference id="browser.anchor_color"                 name="browser.anchor_color"                 type="string"/>
       <preference id="browser.visited_color"                name="browser.visited_color"                type="string"/>
       <preference id="browser.underline_anchors"            name="browser.underline_anchors"            type="bool"/>
@@ -80,10 +80,23 @@
         </hbox>
       </groupbox>
     </hbox>
-    <hbox>
-      <checkbox id="useDocumentColors" 
-                label="&allowPagesToUse.label;" accesskey="&allowPagesToUse.accesskey;"
-                preference="browser.display.use_document_colors" flex="1"/>
-    </hbox>
+#ifdef XP_WIN
+    <vbox align="start">
+#else
+    <vbox>
+#endif
+      <label accesskey="&overridePageColors.accesskey;"
+             control="useDocumentColors">&overridePageColors.label;</label>
+      <menulist id="useDocumentColors" preference="browser.display.document_color_use">
+        <menupopup>
+          <menuitem label="&overridePageColors.always.label;"
+                    value="2" id="documentColorAlways"/>
+          <menuitem label="&overridePageColors.auto.label;"
+                    value="0" id="documentColorAutomatic"/>
+          <menuitem label="&overridePageColors.never.label;"
+                    value="1" id="documentColorNever"/>
+        </menupopup>
+      </menulist>
+    </vbox>
   </prefpane>
 </prefwindow>

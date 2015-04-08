@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/dz.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/dz.xml
- */
 dz{
     Countries{
         001{"འཛམ་གླིང༌"}
@@ -300,6 +297,10 @@ dz{
         ZW{"ཛིམ་བྷབ་ཝེ"}
         ZZ{"ངོ་མ་ཤེས་པའི་ལུང་ཕྱོགས"}
     }
+    Countries%short{
+        HK{"ཧོང་ཀོང"}
+        MO{"མཀ་ཨའུ"}
+    }
     Countries%variant{
         CD{"ཌེ་མོ་ཀེརེ་ཊིཀ་ རི་པབ་ལིཀ་ ཨོཕ་ ཀོང་གྷོ"}
         CG{"རི་པབ་ལིཀ་ ཨོཕ་ ཀོང་གྷོ"}
@@ -307,10 +308,6 @@ dz{
         FK{"ཕལྐ་ལནྜ་གླིང་ཚོམ (ཨིས་ལཱས་མལ་བི་ཎཱས)"}
         MK{"མ་སེ་ཌོ་ནི་ཡ་ (ཡུ་གོ་སླཱ་བི་ཡ)"}
         TL{"ཤར་ཕྱོགས་ཏི་་མོར"}
-    }
-    CountriesShort{
-        HK{"ཧོང་ཀོང"}
-        MO{"མཀ་ཨའུ"}
     }
     Version{"2.1.6.69"}
 }

@@ -1389,11 +1389,11 @@ nsFlexContainerFrame::
 
   if (aFlexItem.IsStretched()) {
     childRSForMeasuringHeight.SetComputedWidth(aFlexItem.GetCrossSize());
-    childRSForMeasuringHeight.mFlags.mHResize = true;
+    childRSForMeasuringHeight.SetHResize(true);
   }
 
   if (aForceVerticalResizeForMeasuringReflow) {
-    childRSForMeasuringHeight.mFlags.mVResize = true;
+    childRSForMeasuringHeight.SetVResize(true);
   }
 
   nsHTMLReflowMetrics childDesiredSize(childRSForMeasuringHeight);
@@ -1728,13 +1728,13 @@ public:
 
 private:
   // Redeclare the frame-related methods from PositionTracker as private with
-  // MOZ_DELETE, to be sure (at compile time) that no client code can invoke
+  // = delete, to be sure (at compile time) that no client code can invoke
   // them. (Unlike the other PositionTracker derived classes, this class here
   // deals with FlexLines, not with individual FlexItems or frames.)
-  void EnterMargin(const nsMargin& aMargin) MOZ_DELETE;
-  void ExitMargin(const nsMargin& aMargin) MOZ_DELETE;
-  void EnterChildFrame(nscoord aChildFrameSize) MOZ_DELETE;
-  void ExitChildFrame(nscoord aChildFrameSize) MOZ_DELETE;
+  void EnterMargin(const nsMargin& aMargin) = delete;
+  void ExitMargin(const nsMargin& aMargin) = delete;
+  void EnterChildFrame(nscoord aChildFrameSize) = delete;
+  void ExitChildFrame(nscoord aChildFrameSize) = delete;
 
   nscoord  mPackingSpaceRemaining;
   uint32_t mNumPackingSpacesRemaining;
@@ -3273,7 +3273,7 @@ nsFlexContainerFrame::SizeItemInCrossAxis(
     // not imposing that height for *this* measuring reflow, so we need to
     // tell it to treat this reflow as a vertical resize (regardless of
     // whether any of its ancestors are being resized).
-    aChildReflowState.mFlags.mVResize = true;
+    aChildReflowState.SetVResize(true);
   }
   nsHTMLReflowMetrics childDesiredSize(aChildReflowState);
   nsReflowStatus childReflowStatus;
@@ -3671,10 +3671,10 @@ nsFlexContainerFrame::DoFlexLayout(nsPresContext*           aPresContext,
           // sets mHResize whenever our computed width has changed since the
           // previous reflow. Still, it's nice for symmetry, and it may become
           // necessary once we support orthogonal flows.)
-          childReflowState.mFlags.mHResize = true;
+          childReflowState.SetHResize(true);
         }
         if (didOverrideComputedHeight) {
-          childReflowState.mFlags.mVResize = true;
+          childReflowState.SetVResize(true);
         }
       }
       // NOTE: Be very careful about doing anything else with childReflowState

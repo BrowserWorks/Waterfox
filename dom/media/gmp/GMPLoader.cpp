@@ -7,7 +7,6 @@
 #include "GMPLoader.h"
 #include <stdio.h>
 #include "mozilla/Attributes.h"
-#include "mozilla/NullPtr.h"
 #include "gmp-entrypoints.h"
 #include "prlink.h"
 
@@ -15,6 +14,7 @@
 
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
 #include "mozilla/sandboxTarget.h"
+#include "mozilla/Scoped.h"
 #include "windows.h"
 #include <intrin.h>
 #include <assert.h>
@@ -32,6 +32,31 @@
 #include "rlz/lib/machine_id.h"
 #include "rlz/lib/string_utils.h"
 #include "sha256.h"
+#endif
+
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+namespace {
+
+// Scoped type used by Load
+struct ScopedActCtxHandleTraits
+{
+  typedef HANDLE type;
+
+  static type empty()
+  {
+    return INVALID_HANDLE_VALUE;
+  }
+
+  static void release(type aActCtxHandle)
+  {
+    if (aActCtxHandle != INVALID_HANDLE_VALUE) {
+      ReleaseActCtx(aActCtxHandle);
+    }
+  }
+};
+typedef mozilla::Scoped<ScopedActCtxHandleTraits> ScopedActCtxHandle;
+
+} // anonymous namespace
 #endif
 
 namespace mozilla {
@@ -72,6 +97,43 @@ GMPLoader* CreateGMPLoader(SandboxStarter* aStarter) {
   return static_cast<GMPLoader*>(new GMPLoaderImpl(aStarter));
 }
 
+#if defined(XP_WIN) && defined(HASH_NODE_ID_WITH_DEVICE_ID)
+MOZ_NEVER_INLINE
+static bool
+GetStackAfterCurrentFrame(uint8_t** aOutTop, uint8_t** aOutBottom)
+{
+  // "Top" of the free space on the stack is directly after the memory
+  // holding our return address.
+  uint8_t* top = (uint8_t*)_AddressOfReturnAddress();
+
+  // Look down the stack until we find the guard page...
+  MEMORY_BASIC_INFORMATION memInfo = {0};
+  uint8_t* bottom = top;
+  while (1) {
+    if (!VirtualQuery(bottom, &memInfo, sizeof(memInfo))) {
+      return false;
+    }
+    if ((memInfo.Protect & PAGE_GUARD) == PAGE_GUARD) {
+      bottom = (uint8_t*)memInfo.BaseAddress + memInfo.RegionSize;
+#ifdef DEBUG
+      if (!VirtualQuery(bottom, &memInfo, sizeof(memInfo))) {
+        return false;
+      }
+      assert(!(memInfo.Protect & PAGE_GUARD)); // Should have found boundary.
+#endif
+      break;
+    } else if (memInfo.State != MEM_COMMIT ||
+               (memInfo.AllocationProtect & PAGE_READWRITE) != PAGE_READWRITE) {
+      return false;
+    }
+    bottom = (uint8_t*)memInfo.BaseAddress - 1;
+  }
+  *aOutTop = top;
+  *aOutBottom = bottom;
+  return true;
+}
+#endif
+
 bool
 GMPLoaderImpl::Load(const char* aLibPath,
                     uint32_t aLibPathLen,
@@ -109,23 +171,59 @@ GMPLoaderImpl::Load(const char* aLibPath,
     if (!rlz_lib::BytesToString(digest, SHA256_LENGTH, &nodeId)) {
       return false;
     }
-    // TODO: (Bug 1114867) Clear any memory on the stack that may have been
-    // used by functions we've called that may have left behind data that
-    // can be used to uniquely identify the user.
+    // We've successfully bound the origin salt to node id.
+    // rlz_lib::GetRawMachineId and/or the system functions it
+    // called could have left user identifiable data on the stack,
+    // so carefully zero the stack down to the guard page.
+    uint8_t* top;
+    uint8_t* bottom;
+    if (!GetStackAfterCurrentFrame(&top, &bottom)) {
+      return false;
+    }
+    assert(top >= bottom);
+    // Inline instructions equivalent to RtlSecureZeroMemory().
+    // We can't just use RtlSecureZeroMemory here directly, as in debug
+    // builds, RtlSecureZeroMemory() can't be inlined, and the stack
+    // memory it uses would get wiped by itself running, causing crashes.
+    for (volatile uint8_t* p = (volatile uint8_t*)bottom; p < top; p++) {
+      *p = 0;
+    }
   } else
 #endif
   {
     nodeId = std::string(aOriginSalt, aOriginSalt + aOriginSaltLen);
   }
 
-#if defined(MOZ_GMP_SANDBOX)
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+  // If the GMP DLL is a side-by-side assembly with static imports then the DLL
+  // loader will attempt to create an activation context which will fail because
+  // of the sandbox. If we create an activation context before we start the
+  // sandbox then this one will get picked up by the DLL loader.
+  int pathLen = MultiByteToWideChar(CP_ACP, 0, aLibPath, -1, nullptr, 0);
+  if (pathLen == 0) {
+    return false;
+  }
+
+  wchar_t* widePath = new wchar_t[pathLen];
+  if (MultiByteToWideChar(CP_ACP, 0, aLibPath, -1, widePath, pathLen) == 0) {
+    delete[] widePath;
+    return false;
+  }
+
+  ACTCTX actCtx = { sizeof(actCtx) };
+  actCtx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+  actCtx.lpSource = widePath;
+  actCtx.lpResourceName = ISOLATIONAWARE_MANIFEST_RESOURCE_ID;
+  ScopedActCtxHandle actCtxHandle(CreateActCtx(&actCtx));
+  delete[] widePath;
+#endif
+
   // Start the sandbox now that we've generated the device bound node id.
   // This must happen after the node id is bound to the device id, as
   // generating the device id requires privileges.
   if (mSandboxStarter) {
     mSandboxStarter->Start(aLibPath);
   }
-#endif
 
   // Load the GMP.
   PRLibSpec libSpec;

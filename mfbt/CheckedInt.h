@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include "mozilla/Assertions.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/IntegerTypeTraits.h"
 
 namespace mozilla {
@@ -351,7 +352,7 @@ IsDivValid(T aX, T aY)
          !(IsSigned<T>::value && aX == MinValue<T>::value && aY == T(-1));
 }
 
-template<typename T, bool IsTSigned = IsSigned<T>::value>
+template<typename T, bool IsSigned = IsSigned<T>::value>
 struct IsModValidImpl;
 
 template<typename T>
@@ -525,7 +526,7 @@ public:
    * argument is valid.
    */
   template<typename U>
-  CheckedInt(U aValue)
+  CheckedInt(U aValue) MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT
     : mValue(T(aValue)),
       mIsValid(detail::IsInRange<T>(aValue))
   {
@@ -667,11 +668,11 @@ private:
    * The !=, <, <=, >, >= operators are disabled:
    * see the comment on operator==.
    */
-  template<typename U> bool operator !=(U aOther) const MOZ_DELETE;
-  template<typename U> bool operator < (U aOther) const MOZ_DELETE;
-  template<typename U> bool operator <=(U aOther) const MOZ_DELETE;
-  template<typename U> bool operator > (U aOther) const MOZ_DELETE;
-  template<typename U> bool operator >=(U aOther) const MOZ_DELETE;
+  template<typename U> bool operator !=(U aOther) const = delete;
+  template<typename U> bool operator < (U aOther) const = delete;
+  template<typename U> bool operator <=(U aOther) const = delete;
+  template<typename U> bool operator > (U aOther) const = delete;
+  template<typename U> bool operator >=(U aOther) const = delete;
 };
 
 #define MOZ_CHECKEDINT_BASIC_BINARY_OPERATOR(NAME, OP)                        \

@@ -9,7 +9,7 @@
 #define __mozilla_widget_GfxInfoBase_h__
 
 #include "nsIGfxInfo.h"
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(XP_WIN)
 #include "nsIGfxInfo2.h"
 #endif
 #include "nsCOMPtr.h"
@@ -28,7 +28,7 @@ namespace mozilla {
 namespace widget {  
 
 class GfxInfoBase : public nsIGfxInfo,
-#ifdef XP_MACOSX
+#if defined(XP_MACOSX) || defined(XP_WIN)
                     public nsIGfxInfo2,
 #endif
                     public nsIObserver,
@@ -50,13 +50,13 @@ public:
   // using GfxInfoBase::GetFeatureSuggestedDriverVersion;
   // using GfxInfoBase::GetWebGLParameter;
   // to import the relevant methods into their namespace.
-  NS_IMETHOD GetFeatureStatus(int32_t aFeature, int32_t *_retval);
-  NS_IMETHOD GetFeatureSuggestedDriverVersion(int32_t aFeature, nsAString & _retval);
-  NS_IMETHOD GetWebGLParameter(const nsAString & aParam, nsAString & _retval);
+  NS_IMETHOD GetFeatureStatus(int32_t aFeature, int32_t *_retval) MOZ_OVERRIDE;
+  NS_IMETHOD GetFeatureSuggestedDriverVersion(int32_t aFeature, nsAString & _retval) MOZ_OVERRIDE;
+  NS_IMETHOD GetWebGLParameter(const nsAString & aParam, nsAString & _retval) MOZ_OVERRIDE;
 
-  NS_IMETHOD GetFailures(uint32_t *failureCount, char ***failures);
-  NS_IMETHOD_(void) LogFailure(const nsACString &failure);
-  NS_IMETHOD GetInfo(JSContext*, JS::MutableHandle<JS::Value>);
+  NS_IMETHOD GetFailures(uint32_t *failureCount, char ***failures) MOZ_OVERRIDE;
+  NS_IMETHOD_(void) LogFailure(const nsACString &failure) MOZ_OVERRIDE;
+  NS_IMETHOD GetInfo(JSContext*, JS::MutableHandle<JS::Value>) MOZ_OVERRIDE;
 
   // Initialization function. If you override this, you must call this class's
   // version of Init first.
@@ -68,7 +68,7 @@ public:
   virtual nsresult Init();
   
   // only useful on X11
-  NS_IMETHOD_(void) GetData() { }
+  NS_IMETHOD_(void) GetData() MOZ_OVERRIDE { }
 
   static void AddCollector(GfxInfoCollectorBase* collector);
   static void RemoveCollector(GfxInfoCollectorBase* collector);

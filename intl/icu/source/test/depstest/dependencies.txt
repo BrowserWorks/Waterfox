@@ -1,5 +1,5 @@
 # -*- icu-dependencies -*-
-# Copyright (C) 2011-2014, International Business Machines
+# Copyright (C) 2011-2015, International Business Machines
 # Corporation and others. All Rights Reserved.
 #
 # file name: dependencies.txt
@@ -506,7 +506,7 @@ group: service_registration
     hashtable uvector
 
 group: listformatter
-    listformatter.o
+    listformatter.o ulistformatter.o
   deps
     resourcebundle simplepatternformatter
 
@@ -800,10 +800,6 @@ group: collation
     uclean_i18n propname
 
 group: collation_builder
-    # The CollationBaseDataBuilder is only called from genuca, and maybe from tests.
-    # It is in the i18n library so that it gets maintained and refactored together with
-    # related code.
-    collationbasedatabuilder.o
     collationbuilder.o collationdatabuilder.o collationfastlatinbuilder.o
     collationruleparser.o collationweights.o
   deps
@@ -877,7 +873,7 @@ group: formattable_cnv
     formattable unistr_cnv conversion
 
 group: format
-    format.o fphdlimp.o fpositer.o
+    format.o fphdlimp.o fpositer.o ufieldpositer.o
   deps
     resourcebundle parsepos uvector32
 

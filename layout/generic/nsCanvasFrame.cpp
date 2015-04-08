@@ -346,7 +346,7 @@ nsDisplayCanvasBackgroundImage::Paint(nsDisplayListBuilder* aBuilder,
 
   if (dt) {
     BlitSurface(dest->GetDrawTarget(), destRect, dt);
-    frame->Properties().Set(nsIFrame::CachedBackgroundImageDT(), dt.forget().drop());
+    frame->Properties().Set(nsIFrame::CachedBackgroundImageDT(), dt.forget().take());
   }
 }
 
@@ -595,11 +595,11 @@ nsCanvasFrame::Reflow(nsPresContext*           aPresContext,
       kidReflowState(aPresContext, aReflowState, kidFrame,
                      aReflowState.AvailableSize(kidFrame->GetWritingMode()));
 
-    if (aReflowState.mFlags.mVResize &&
+    if (aReflowState.IsVResize() &&
         (kidFrame->GetStateBits() & NS_FRAME_CONTAINS_RELATIVE_HEIGHT)) {
       // Tell our kid it's being vertically resized too.  Bit of a
       // hack for framesets.
-      kidReflowState.mFlags.mVResize = true;
+      kidReflowState.SetVResize(true);
     }
 
     nsPoint kidPt(kidReflowState.ComputedPhysicalMargin().left,

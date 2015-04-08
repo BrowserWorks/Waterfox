@@ -173,25 +173,26 @@ static NS_DEFINE_IID(kIOutputStreamIID, NS_IOUTPUTSTREAM_IID);
 NS_IMPL_ISUPPORTS0(nsNPAPIPluginInstance)
 
 nsNPAPIPluginInstance::nsNPAPIPluginInstance()
-  :
-    mDrawingModel(kDefaultDrawingModel),
+  : mDrawingModel(kDefaultDrawingModel)
 #ifdef MOZ_WIDGET_ANDROID
-    mANPDrawingModel(0),
-    mFullScreenOrientation(dom::eScreenOrientation_LandscapePrimary),
-    mWakeLocked(false),
-    mFullScreen(false),
-    mInverted(false),
+  , mANPDrawingModel(0)
+  , mFullScreenOrientation(dom::eScreenOrientation_LandscapePrimary)
+  , mWakeLocked(false)
+  , mFullScreen(false)
+  , mOriginPos(gl::OriginPos::TopLeft)
 #endif
-    mRunning(NOT_STARTED),
-    mWindowless(false),
-    mTransparent(false),
-    mCached(false),
-    mUsesDOMForCursor(false),
-    mInPluginInitCall(false),
-    mPlugin(nullptr),
-    mMIMEType(nullptr),
-    mOwner(nullptr),
-    mCurrentPluginEvent(nullptr)
+  , mRunning(NOT_STARTED)
+  , mWindowless(false)
+  , mTransparent(false)
+  , mCached(false)
+  , mUsesDOMForCursor(false)
+  , mInPluginInitCall(false)
+  , mPlugin(nullptr)
+  , mMIMEType(nullptr)
+  , mOwner(nullptr)
+#ifdef XP_MACOSX
+  , mCurrentPluginEvent(nullptr)
+#endif
 #ifdef MOZ_WIDGET_ANDROID
   , mOnScreen(true)
 #endif
@@ -522,7 +523,7 @@ nsNPAPIPluginInstance::Start()
     return NS_ERROR_FAILURE;
   }
 
-  return NS_OK;
+  return newResult;
 }
 
 nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window)
@@ -671,7 +672,9 @@ nsresult nsNPAPIPluginInstance::HandleEvent(void* event, int16_t* result,
   int16_t tmpResult = kNPEventNotHandled;
 
   if (pluginFunctions->event) {
+#ifdef XP_MACOSX
     mCurrentPluginEvent = event;
+#endif
 #if defined(XP_WIN)
     NS_TRY_SAFE_CALL_RETURN(tmpResult, (*pluginFunctions->event)(&mNPP, event), this,
                             aSafeToReenterGecko);
@@ -685,7 +688,9 @@ nsresult nsNPAPIPluginInstance::HandleEvent(void* event, int16_t* result,
 
     if (result)
       *result = tmpResult;
+#ifdef XP_MACOSX
     mCurrentPluginEvent = nullptr;
+#endif
   }
 
   return NS_OK;
@@ -844,7 +849,7 @@ void nsNPAPIPluginInstance::NotifyFullScreen(bool aFullScreen)
   SendLifecycleEvent(this, mFullScreen ? kEnterFullScreen_ANPLifecycleAction : kExitFullScreen_ANPLifecycleAction);
 
   if (mFullScreen && mFullScreenOrientation != dom::eScreenOrientation_None) {
-    mozilla::widget::android::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
+    widget::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
   }
 }
 
@@ -901,11 +906,11 @@ void nsNPAPIPluginInstance::SetFullScreenOrientation(uint32_t orientation)
     // We're already fullscreen so immediately apply the orientation change
 
     if (mFullScreenOrientation != dom::eScreenOrientation_None) {
-      mozilla::widget::android::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
+      widget::GeckoAppShell::LockScreenOrientation(mFullScreenOrientation);
     } else if (oldOrientation != dom::eScreenOrientation_None) {
       // We applied an orientation when we entered fullscreen, but
       // we don't want it anymore
-      mozilla::widget::android::GeckoAppShell::UnlockScreenOrientation();
+      widget::GeckoAppShell::UnlockScreenOrientation();
     }
   }
 }
@@ -1051,14 +1056,6 @@ void nsNPAPIPluginInstance::GetVideos(nsTArray<VideoInfo*>& aVideos)
     aVideos.AppendElement(it->second);
 }
 
-void nsNPAPIPluginInstance::SetInverted(bool aInverted)
-{
-  if (aInverted == mInverted)
-    return;
-
-  mInverted = aInverted;
-}
-
 nsNPAPIPluginInstance* nsNPAPIPluginInstance::GetFromNPP(NPP npp)
 {
   std::map<NPP, nsNPAPIPluginInstance*>::iterator it;
@@ -1152,7 +1149,8 @@ nsNPAPIPluginInstance::ShouldCache()
 nsresult
 nsNPAPIPluginInstance::IsWindowless(bool* isWindowless)
 {
-#ifdef MOZ_WIDGET_ANDROID
+#if defined(MOZ_WIDGET_ANDROID) || defined(XP_MACOSX)
+  // All OS X plugins are windowless.
   // On android, pre-honeycomb, all plugins are treated as windowless.
   *isWindowless = true;
 #else
@@ -1511,23 +1509,13 @@ nsNPAPIPluginInstance::UnscheduleTimer(uint32_t timerID)
   delete t;
 }
 
-// Show the context menu at the location for the current event.
-// This can only be called from within an NPP_SendEvent call.
-NPError
-nsNPAPIPluginInstance::PopUpContextMenu(NPMenu* menu)
-{
-  if (mOwner && mCurrentPluginEvent)
-    return mOwner->ShowNativeContextMenu(menu, mCurrentPluginEvent);
-
-  return NPERR_GENERIC_ERROR;
-}
-
 NPBool
 nsNPAPIPluginInstance::ConvertPoint(double sourceX, double sourceY, NPCoordinateSpace sourceSpace,
                                     double *destX, double *destY, NPCoordinateSpace destSpace)
 {
-  if (mOwner)
+  if (mOwner) {
     return mOwner->ConvertPoint(sourceX, sourceY, sourceSpace, destX, destY, destSpace);
+  }
 
   return false;
 }

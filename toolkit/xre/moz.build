@@ -155,6 +155,12 @@ LOCAL_INCLUDES += [
     '/xpcom/build',
 ]
 
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
+    LOCAL_INCLUDES += [
+        '/widget',
+        '/widget/cocoa',
+    ]
+
 if CONFIG['MOZ_ENABLE_XREMOTE']:
     LOCAL_INCLUDES += [
         '/widget/xremoteclient',
@@ -162,9 +168,13 @@ if CONFIG['MOZ_ENABLE_XREMOTE']:
 
 if CONFIG['MOZ_B2G_LOADER']:
     DEFINES['OMNIJAR_NAME'] = CONFIG['OMNIJAR_NAME']
+
 CXXFLAGS += CONFIG['TK_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_CFLAGS']
 CXXFLAGS += CONFIG['MOZ_DBUS_GLIB_CFLAGS']
 
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['MOZ_PANGO_CFLAGS']
+
+if CONFIG['_MSC_VER']:
+    FAIL_ON_WARNINGS = True

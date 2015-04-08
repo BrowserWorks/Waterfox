@@ -795,6 +795,7 @@ protected:
   bool ParseOverflow();
   bool ParsePadding();
   bool ParseQuotes();
+  bool ParseRubyPosition(nsCSSValue& aValue);
   bool ParseSize();
   bool ParseTextAlign(nsCSSValue& aValue,
                       const KTableValue aTable[]);
@@ -1481,6 +1482,7 @@ CSSParserImpl::ParseProperty(const nsCSSProperty aPropID,
   NS_PRECONDITION(aSheetPrincipal, "Must have principal here!");
   NS_PRECONDITION(aBaseURI, "need base URI");
   NS_PRECONDITION(aDeclaration, "Need declaration to parse into!");
+  MOZ_ASSERT(aPropID != eCSSPropertyExtra_variable);
 
   mData.AssertInitialState();
   mTempData.AssertInitialState();
@@ -6038,24 +6040,22 @@ CSSParserImpl::ParseDeclarationBlock(uint32_t aFlags, nsCSSContextType aContext)
   }
   css::Declaration* declaration = new css::Declaration();
   mData.AssertInitialState();
-  if (declaration) {
-    for (;;) {
-      bool changed;
-      if (!ParseDeclaration(declaration, aFlags, true, &changed, aContext)) {
-        if (!SkipDeclaration(checkForBraces)) {
+  for (;;) {
+    bool changed;
+    if (!ParseDeclaration(declaration, aFlags, true, &changed, aContext)) {
+      if (!SkipDeclaration(checkForBraces)) {
+        break;
+      }
+      if (checkForBraces) {
+        if (ExpectSymbol('}', true)) {
           break;
         }
-        if (checkForBraces) {
-          if (ExpectSymbol('}', true)) {
-            break;
-          }
-        }
-        // Since the skipped declaration didn't end the block we parse
-        // the next declaration.
       }
+      // Since the skipped declaration didn't end the block we parse
+      // the next declaration.
     }
-    declaration->CompressFrom(&mData);
   }
+  declaration->CompressFrom(&mData);
   return declaration;
 }
 
@@ -6523,6 +6523,7 @@ CSSParserImpl::ParseDeclaration(css::Declaration* aDeclaration,
     // Map property name to its ID.
     propID = LookupEnabledProperty(propertyName);
     if (eCSSProperty_UNKNOWN == propID ||
+        eCSSPropertyExtra_variable == propID ||
         (aContext == eCSSContext_Page &&
          !nsCSSProps::PropHasFlags(propID,
                                    CSS_PROPERTY_APPLIES_TO_PAGE_RULE))) { // unknown property
@@ -7646,7 +7647,6 @@ CSSParserImpl::ParseGridAutoFlow()
 
   static const int32_t mask[] = {
     NS_STYLE_GRID_AUTO_FLOW_ROW | NS_STYLE_GRID_AUTO_FLOW_COLUMN,
-    NS_STYLE_GRID_AUTO_FLOW_DENSE | NS_STYLE_GRID_AUTO_FLOW_STACK,
     MASK_END_VALUE
   };
   if (!ParseBitmaskValues(value, nsCSSProps::kGridAutoFlowKTable, mask)) {
@@ -7654,15 +7654,9 @@ CSSParserImpl::ParseGridAutoFlow()
   }
   int32_t bitField = value.GetIntValue();
 
-  // Requires one of these
-  if (!(bitField & NS_STYLE_GRID_AUTO_FLOW_ROW ||
-        bitField & NS_STYLE_GRID_AUTO_FLOW_COLUMN ||
-        bitField & NS_STYLE_GRID_AUTO_FLOW_STACK)) {
-    return false;
-  }
-
-  // 'stack' without 'row' or 'column' defaults to 'stack row'
-  if (bitField == NS_STYLE_GRID_AUTO_FLOW_STACK) {
+  // If neither row nor column is provided, row is assumed.
+  if (!(bitField & (NS_STYLE_GRID_AUTO_FLOW_ROW |
+                    NS_STYLE_GRID_AUTO_FLOW_COLUMN))) {
     value.SetIntValue(bitField | NS_STYLE_GRID_AUTO_FLOW_ROW,
                       eCSSUnit_Enumerated);
   }
@@ -8525,11 +8519,10 @@ CSSParserImpl::ParseGrid()
   }
 
   // The values starts with a <'grid-auto-flow'> if and only if
-  // it starts with a 'stack', 'dense', 'column' or 'row' keyword.
+  // it starts with a 'dense', 'column' or 'row' keyword.
   if (mToken.mType == eCSSToken_Ident) {
     nsCSSKeyword keyword = nsCSSKeywords::LookupKeyword(mToken.mIdent);
-    if (keyword == eCSSKeyword_stack ||
-        keyword == eCSSKeyword_dense ||
+    if (keyword == eCSSKeyword_dense ||
         keyword == eCSSKeyword_column ||
         keyword == eCSSKeyword_row) {
       UngetToken();
@@ -9516,6 +9509,7 @@ CSSParserImpl::ParseProperty(nsCSSProperty aPropID)
                     "hashless color quirk should not be set");
   NS_ABORT_IF_FALSE(!mUnitlessLengthQuirk,
                     "unitless length quirk should not be set");
+  MOZ_ASSERT(aPropID != eCSSPropertyExtra_variable);
 
   if (mNavQuirkMode) {
     mHashlessColorQuirk =
@@ -10008,6 +10002,8 @@ CSSParserImpl::ParseSingleValueProperty(nsCSSValue& aValue,
         return ParseListStyleType(aValue);
       case eCSSProperty_marks:
         return ParseMarks(aValue);
+      case eCSSProperty_ruby_position:
+        return ParseRubyPosition(aValue);
       case eCSSProperty_text_align:
         return ParseTextAlign(aValue);
       case eCSSProperty_text_align_last:
@@ -13122,6 +13118,34 @@ CSSParserImpl::ParseQuotes()
   }
   AppendValue(eCSSProperty_quotes, value);
   return true;
+}
+
+static const int32_t gRubyPositionMask[] = {
+  // vertical values
+  NS_STYLE_RUBY_POSITION_OVER |
+    NS_STYLE_RUBY_POSITION_UNDER |
+    NS_STYLE_RUBY_POSITION_INTER_CHARACTER,
+  // horizontal values
+  NS_STYLE_RUBY_POSITION_RIGHT |
+    NS_STYLE_RUBY_POSITION_LEFT,
+  // end
+  MASK_END_VALUE
+};
+
+bool
+CSSParserImpl::ParseRubyPosition(nsCSSValue& aValue)
+{
+  if (ParseVariant(aValue, VARIANT_INHERIT, nullptr)) {
+    return true;
+  }
+  if (!ParseBitmaskValues(aValue, nsCSSProps::kRubyPositionKTable,
+                          gRubyPositionMask)) {
+    return false;
+  }
+  auto value = aValue.GetIntValue();
+  // The specified value must include *both* a vertical keyword *and*
+  // a horizontal keyword. We reject it here if either is missing.
+  return (value & gRubyPositionMask[0]) && (value & gRubyPositionMask[1]);
 }
 
 bool

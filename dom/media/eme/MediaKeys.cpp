@@ -13,7 +13,7 @@
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/UnionTypes.h"
 #include "mozilla/CDMProxy.h"
-#include "mozilla/EMELog.h"
+#include "mozilla/EMEUtils.h"
 #include "nsContentUtils.h"
 #include "nsIScriptObjectPrincipal.h"
 #include "mozilla/Preferences.h"
@@ -27,6 +27,8 @@
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
 #include "mozIGeckoMediaPluginService.h"
+#include "mozilla/dom/MediaKeySystemAccess.h"
+#include "nsPrintfCString.h"
 
 namespace mozilla {
 
@@ -58,11 +60,49 @@ RejectPromises(const uint32_t& aKey,
                void* aClosure)
 {
   aPromise->MaybeReject(NS_ERROR_DOM_INVALID_STATE_ERR);
+  ((MediaKeys*)aClosure)->Release();
   return PL_DHASH_NEXT;
 }
 
 MediaKeys::~MediaKeys()
 {
+  Shutdown();
+}
+
+static PLDHashOperator
+CopySessions(const nsAString& aKey,
+             nsRefPtr<MediaKeySession>& aSession,
+             void* aClosure)
+{
+  KeySessionHashMap* p = static_cast<KeySessionHashMap*>(aClosure);
+  p->Put(aSession->GetSessionId(), aSession);
+  return PL_DHASH_NEXT;
+}
+
+static PLDHashOperator
+CloseSessions(const nsAString& aKey,
+              nsRefPtr<MediaKeySession>& aSession,
+              void* aClosure)
+{
+  aSession->OnClosed();
+  return PL_DHASH_NEXT;
+}
+
+void
+MediaKeys::Terminated()
+{
+  KeySessionHashMap keySessions;
+  // Remove entries during iteration will screw it. Make a copy first.
+  mKeySessions.Enumerate(&CopySessions, &keySessions);
+  keySessions.Enumerate(&CloseSessions, nullptr);
+  keySessions.Clear();
+  MOZ_ASSERT(mKeySessions.Count() == 0);
+
+  // Notify the element about that CDM has terminated.
+  if (mElement) {
+    mElement->DecodeError();
+  }
+
   Shutdown();
 }
 
@@ -74,7 +114,9 @@ MediaKeys::Shutdown()
     mProxy = nullptr;
   }
 
-  mPromises.Enumerate(&RejectPromises, nullptr);
+  nsRefPtr<MediaKeys> kungFuDeathGrip = this;
+
+  mPromises.Enumerate(&RejectPromises, this);
   mPromises.Clear();
 }
 
@@ -132,6 +174,13 @@ MediaKeys::StorePromise(Promise* aPromise)
   static uint32_t sEMEPromiseCount = 1;
   MOZ_ASSERT(aPromise);
   uint32_t id = sEMEPromiseCount++;
+
+  EME_LOG("MediaKeys::StorePromise() id=%d", id);
+
+  // Keep MediaKeys alive for the lifetime of its promises. Any still-pending
+  // promises are rejected in Shutdown().
+  AddRef();
+
   mPromises.Put(id, aPromise);
   return id;
 }
@@ -139,18 +188,23 @@ MediaKeys::StorePromise(Promise* aPromise)
 already_AddRefed<Promise>
 MediaKeys::RetrievePromise(PromiseId aId)
 {
-  MOZ_ASSERT(mPromises.Contains(aId));
+  if (!mPromises.Contains(aId)) {
+    NS_WARNING(nsPrintfCString("Tried to retrieve a non-existent promise id=%d", aId).get());
+    return nullptr;
+  }
   nsRefPtr<Promise> promise;
   mPromises.Remove(aId, getter_AddRefs(promise));
+  Release();
   return promise.forget();
 }
 
 void
 MediaKeys::RejectPromise(PromiseId aId, nsresult aExceptionCode)
 {
+  EME_LOG("MediaKeys::RejectPromise(%d, 0x%x)", aId, aExceptionCode);
+
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to reject a non-existent promise");
     return;
   }
   if (mPendingSessions.Contains(aId)) {
@@ -171,11 +225,34 @@ MediaKeys::RejectPromise(PromiseId aId, nsresult aExceptionCode)
 }
 
 void
+MediaKeys::OnSessionIdReady(MediaKeySession* aSession)
+{
+  if (!aSession) {
+    NS_WARNING("Invalid MediaKeySession passed to OnSessionIdReady()");
+    return;
+  }
+  if (mKeySessions.Contains(aSession->GetSessionId())) {
+    NS_WARNING("MediaKeySession's made ready multiple times!");
+    return;
+  }
+  if (mPendingSessions.Contains(aSession->Token())) {
+    NS_WARNING("MediaKeySession made ready when it wasn't waiting to be ready!");
+    return;
+  }
+  if (aSession->GetSessionId().IsEmpty()) {
+    NS_WARNING("MediaKeySession with invalid sessionId passed to OnSessionIdReady()");
+    return;
+  }
+  mKeySessions.Put(aSession->GetSessionId(), aSession);
+}
+
+void
 MediaKeys::ResolvePromise(PromiseId aId)
 {
+  EME_LOG("MediaKeys::ResolvePromise(%d)", aId);
+
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
   if (mPendingSessions.Contains(aId)) {
@@ -288,63 +365,41 @@ MediaKeys::OnCDMCreated(PromiseId aId, const nsACString& aNodeId)
 {
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
   mNodeId = aNodeId;
   nsRefPtr<MediaKeys> keys(this);
+  EME_LOG("MediaKeys::OnCDMCreated() resolve promise id=%d", aId);
   promise->MaybeResolve(keys);
   if (mCreatePromiseId == aId) {
     Release();
   }
+
+  MediaKeySystemAccess::NotifyObservers(mParent,
+                                        mKeySystem,
+                                        MediaKeySystemStatus::Cdm_created);
 }
 
 already_AddRefed<MediaKeySession>
-MediaKeys::CreateSession(SessionType aSessionType,
+MediaKeys::CreateSession(JSContext* aCx,
+                         SessionType aSessionType,
                          ErrorResult& aRv)
 {
-  nsRefPtr<MediaKeySession> session = new MediaKeySession(GetParentObject(),
+  nsRefPtr<MediaKeySession> session = new MediaKeySession(aCx,
+                                                          GetParentObject(),
                                                           this,
                                                           mKeySystem,
                                                           aSessionType,
                                                           aRv);
 
+  if (aRv.Failed()) {
+    return nullptr;
+  }
+
+  // Add session to the set of sessions awaiting their sessionId being ready.
+  mPendingSessions.Put(session->Token(), session);
+
   return session.forget();
-}
-
-void
-MediaKeys::OnSessionPending(PromiseId aId, MediaKeySession* aSession)
-{
-  MOZ_ASSERT(mPromises.Contains(aId));
-  MOZ_ASSERT(!mPendingSessions.Contains(aId));
-  mPendingSessions.Put(aId, aSession);
-}
-
-void
-MediaKeys::OnSessionCreated(PromiseId aId, const nsAString& aSessionId)
-{
-  nsRefPtr<Promise> promise(RetrievePromise(aId));
-  if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
-    return;
-  }
-  MOZ_ASSERT(mPendingSessions.Contains(aId));
-
-  nsRefPtr<MediaKeySession> session;
-  bool gotSession = mPendingSessions.Get(aId, getter_AddRefs(session));
-  // Session has completed creation/loading, remove it from mPendingSessions,
-  // and resolve the promise with it. We store it in mKeySessions, so we can
-  // find it again if we need to send messages to it etc.
-  mPendingSessions.Remove(aId);
-  if (!gotSession || !session) {
-    NS_WARNING("Received activation for non-existent session!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    return;
-  }
-
-  session->Init(aSessionId);
-  mKeySessions.Put(aSessionId, session);
-  promise->MaybeResolve(session);
 }
 
 void
@@ -352,27 +407,10 @@ MediaKeys::OnSessionLoaded(PromiseId aId, bool aSuccess)
 {
   nsRefPtr<Promise> promise(RetrievePromise(aId));
   if (!promise) {
-    NS_WARNING("MediaKeys tried to resolve a non-existent promise");
     return;
   }
-  MOZ_ASSERT(mPendingSessions.Contains(aId));
+  EME_LOG("MediaKeys::OnSessionLoaded() resolve promise id=%d", aId);
 
-  nsRefPtr<MediaKeySession> session;
-  bool gotSession = mPendingSessions.Get(aId, getter_AddRefs(session));
-  // Session has completed creation/loading, remove it from mPendingSessions,
-  // and resolve the promise with it. We store it in mKeySessions, so we can
-  // find it again if we need to send messages to it etc.
-  mPendingSessions.Remove(aId);
-  if (!gotSession || !session) {
-    NS_WARNING("Received activation for non-existent session!");
-    promise->MaybeReject(NS_ERROR_DOM_INVALID_ACCESS_ERR);
-    return;
-  }
-
-  MOZ_ASSERT(!session->GetSessionId().IsEmpty() &&
-             !mKeySessions.Contains(session->GetSessionId()));
-
-  mKeySessions.Put(session->GetSessionId(), session);
   promise->MaybeResolve(aSuccess);
 }
 
@@ -389,6 +427,15 @@ MediaKeys::GetSession(const nsAString& aSessionId)
 {
   nsRefPtr<MediaKeySession> session;
   mKeySessions.Get(aSessionId, getter_AddRefs(session));
+  return session.forget();
+}
+
+already_AddRefed<MediaKeySession>
+MediaKeys::GetPendingSession(uint32_t aToken)
+{
+  nsRefPtr<MediaKeySession> session;
+  mPendingSessions.Get(aToken, getter_AddRefs(session));
+  mPendingSessions.Remove(aToken);
   return session.forget();
 }
 
@@ -415,33 +462,6 @@ MediaKeys::Bind(HTMLMediaElement* aElement)
   }
 
   mElement = aElement;
-  nsresult rv = CheckPrincipals();
-  if (NS_FAILED(rv)) {
-    mElement = nullptr;
-    return rv;
-  }
-
-  return NS_OK;
-}
-
-nsresult
-MediaKeys::CheckPrincipals()
-{
-  MOZ_ASSERT(NS_IsMainThread());
-  if (!IsBoundToMediaElement()) {
-    return NS_ERROR_FAILURE;
-  }
-
-  nsRefPtr<nsIPrincipal> elementPrincipal(mElement->GetCurrentPrincipal());
-  nsRefPtr<nsIPrincipal> elementTopLevelPrincipal(mElement->GetTopLevelPrincipal());
-  if (!elementPrincipal ||
-      !mPrincipal ||
-      !elementPrincipal->Equals(mPrincipal) ||
-      !elementTopLevelPrincipal ||
-      !mTopLevelPrincipal ||
-      !elementTopLevelPrincipal->Equals(mTopLevelPrincipal)) {
-    return NS_ERROR_FAILURE;
-  }
 
   return NS_OK;
 }
@@ -462,12 +482,6 @@ CopyArrayBufferViewOrArrayBufferData(const ArrayBufferViewOrArrayBuffer& aBuffer
     return false;
   }
   return true;
-}
-
-nsIDocument*
-MediaKeys::GetOwnerDoc() const
-{
-  return mElement ? mElement->OwnerDoc() : nullptr;
 }
 
 } // namespace dom

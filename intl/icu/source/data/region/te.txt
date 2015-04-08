@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/te.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/te.xml
- */
 te{
     Countries{
         001{"ప్రపంచం"}
@@ -302,6 +299,13 @@ te{
         ZW{"జింబాబ్వే"}
         ZZ{"తెలియని ప్రాంతం"}
     }
+    Countries%short{
+        GB{"యు.కె."}
+        HK{"హాంకాంగ్"}
+        MO{"మకావు"}
+        PS{"పాలస్తీనా"}
+        US{"యు.ఎస్."}
+    }
     Countries%variant{
         CD{"కాంగో (DRC)"}
         CG{"కాంగో (రిపబ్లిక్)"}
@@ -309,12 +313,5 @@ te{
         MK{"మేసిడోనియా (FYROM)"}
         TL{"తూర్పు తైమూర్"}
     }
-    CountriesShort{
-        GB{"యు.కె."}
-        HK{"హాంకాంగ్"}
-        MO{"మకావు"}
-        PS{"పాలస్తీనా"}
-        US{"యు.ఎస్."}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

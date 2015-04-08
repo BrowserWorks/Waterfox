@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fr.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fr.xml
- */
 fr{
-    Version{"2.1.8.9"}
+    Version{"2.1.13.46"}
     durationUnits{
         hm{"hh:mm"}
         hms{"hh:mm:ss"}
@@ -248,9 +245,9 @@ fr{
                 other{"{0} calories"}
             }
             foodcalorie{
-                dnam{"grandes calories"}
-                one{"{0} grande calorie"}
-                other{"{0} grandes calories"}
+                dnam{"kilocalories"}
+                one{"{0} kilocalorie"}
+                other{"{0} kilocalories"}
             }
             joule{
                 dnam{"joules"}
@@ -1199,9 +1196,9 @@ fr{
                 other{"{0} cal"}
             }
             foodcalorie{
-                dnam{"Cal"}
-                one{"{0} Cal"}
-                other{"{0} Cal"}
+                dnam{"kcal"}
+                one{"{0} kcal"}
+                other{"{0} kcal"}
             }
             joule{
                 dnam{"J"}

@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_MX.xml
@@ -16,7 +16,6 @@ es_MX{
         017{"África Central"}
         018{"África del Sur"}
         019{"Américas"}
-        021{"América Septentrional"}
         030{"Asia Oriental"}
         034{"Asia del Sur"}
         035{"Sudeste Asiático"}
@@ -26,14 +25,10 @@ es_MX{
         151{"Europa Oriental"}
         154{"Europa del Norte"}
         155{"Europa Occidental"}
-        BA{"Bosnia-Herzegovina"}
         BD{"Bangladesh"}
         CC{"Islas Cocos (Keeling)"}
-        CG{"Congo Brazzaville"}
         CX{"Isla de Navidad"}
         GG{"Guernsey"}
-        GS{"Islas Georgias del Sur y Sandwich del Sur"}
-        GW{"Guinea-Bissau"}
         HK{
             "Región Administrativa Especial de Hong Kong de la República Popular Chin"
             "a"
@@ -41,14 +36,13 @@ es_MX{
         IC{"Islas Canarias"}
         MO{"Región Administrativa Especial de Macao de la República Popular China"}
         PW{"Palaos"}
-        QA{"Qatar"}
         QO{"Islas Ultramarinas"}
         TA{"Tristán de Acuña"}
-        UM{"Islas UltramarinasMenores de Estados Unidos"}
+        UM{"Islas Ultramarinas Menores de Estados Unidos"}
         VI{"Islas Vírgenes de los Estados Unidos"}
     }
-    CountriesShort{
+    Countries%short{
         GB{"RU"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.23"}
 }

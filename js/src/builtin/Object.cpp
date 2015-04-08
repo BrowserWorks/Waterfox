@@ -11,6 +11,7 @@
 
 #include "jscntxt.h"
 
+#include "builtin/Eval.h"
 #include "frontend/BytecodeCompiler.h"
 #include "vm/StringBuffer.h"
 
@@ -64,7 +65,8 @@ obj_propertyIsEnumerable(JSContext *cx, unsigned argc, Value *vp)
         /* Step 3. */
         Shape *shape;
         if (!obj->is<ProxyObject>() &&
-            HasOwnProperty<NoGC>(cx, obj->getOps()->lookupGeneric, obj, id, &pobj, &shape))
+            NonProxyLookupOwnProperty<NoGC>(cx, obj->getOps()->lookupGeneric, obj, id,
+                                            &pobj, &shape))
         {
             /* Step 4. */
             if (!shape) {
@@ -321,7 +323,7 @@ JS_BasicObjectToString(JSContext *cx, HandleObject obj)
 {
     // Some classes are really common, don't allocate new strings for them.
     // The ordering below is based on the measurements in bug 966264.
-    if (obj->is<JSObject>())
+    if (obj->is<PlainObject>())
         return cx->names().objectObject;
     if (obj->is<StringObject>())
         return cx->names().objectString;
@@ -405,146 +407,6 @@ js::obj_valueOf(JSContext *cx, unsigned argc, Value *vp)
     args.rval().setObject(*obj);
     return true;
 }
-
-#if JS_OLD_GETTER_SETTER_METHODS
-
-enum DefineType { GetterAccessor, SetterAccessor };
-
-template<DefineType Type>
-static bool
-DefineAccessor(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-    if (!BoxNonStrictThis(cx, args))
-        return false;
-
-    if (args.length() < 2 || !IsCallable(args[1])) {
-        JS_ReportErrorNumber(cx, js_GetErrorMessage, nullptr,
-                             JSMSG_BAD_GETTER_OR_SETTER,
-                             Type == GetterAccessor ? js_getter_str : js_setter_str);
-        return false;
-    }
-
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, args[0], &id))
-        return false;
-
-    RootedObject descObj(cx, NewBuiltinClassInstance(cx, &JSObject::class_));
-    if (!descObj)
-        return false;
-
-    JSAtomState &names = cx->names();
-    RootedValue trueVal(cx, BooleanValue(true));
-
-    /* enumerable: true */
-    if (!JSObject::defineProperty(cx, descObj, names.enumerable, trueVal))
-        return false;
-
-    /* configurable: true */
-    if (!JSObject::defineProperty(cx, descObj, names.configurable, trueVal))
-        return false;
-
-    /* enumerable: true */
-    PropertyName *acc = (Type == GetterAccessor) ? names.get : names.set;
-    RootedValue accessorVal(cx, args[1]);
-    if (!JSObject::defineProperty(cx, descObj, acc, accessorVal))
-        return false;
-
-    RootedObject thisObj(cx, &args.thisv().toObject());
-
-    bool dummy;
-    RootedValue descObjValue(cx, ObjectValue(*descObj));
-    if (!DefineOwnProperty(cx, thisObj, id, descObjValue, &dummy))
-        return false;
-
-    args.rval().setUndefined();
-    return true;
-}
-
-JS_FRIEND_API(bool)
-js::obj_defineGetter(JSContext *cx, unsigned argc, Value *vp)
-{
-    return DefineAccessor<GetterAccessor>(cx, argc, vp);
-}
-
-JS_FRIEND_API(bool)
-js::obj_defineSetter(JSContext *cx, unsigned argc, Value *vp)
-{
-    return DefineAccessor<SetterAccessor>(cx, argc, vp);
-}
-
-static bool
-obj_lookupGetter(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, args.get(0), &id))
-        return false;
-    RootedObject obj(cx, ToObject(cx, args.thisv()));
-    if (!obj)
-        return false;
-    if (obj->is<ProxyObject>()) {
-        // The vanilla getter lookup code below requires that the object is
-        // native. Handle proxies separately.
-        args.rval().setUndefined();
-        Rooted<PropertyDescriptor> desc(cx);
-        if (!Proxy::getPropertyDescriptor(cx, obj, id, &desc))
-            return false;
-        if (desc.object() && desc.hasGetterObject() && desc.getterObject())
-            args.rval().setObject(*desc.getterObject());
-        return true;
-    }
-    RootedObject pobj(cx);
-    RootedShape shape(cx);
-    if (!JSObject::lookupGeneric(cx, obj, id, &pobj, &shape))
-        return false;
-    args.rval().setUndefined();
-    if (shape) {
-        if (pobj->isNative() && !IsImplicitDenseOrTypedArrayElement(shape)) {
-            if (shape->hasGetterValue())
-                args.rval().set(shape->getterValue());
-        }
-    }
-    return true;
-}
-
-static bool
-obj_lookupSetter(JSContext *cx, unsigned argc, Value *vp)
-{
-    CallArgs args = CallArgsFromVp(argc, vp);
-
-    RootedId id(cx);
-    if (!ValueToId<CanGC>(cx, args.get(0), &id))
-        return false;
-    RootedObject obj(cx, ToObject(cx, args.thisv()));
-    if (!obj)
-        return false;
-    if (obj->is<ProxyObject>()) {
-        // The vanilla setter lookup code below requires that the object is
-        // native. Handle proxies separately.
-        args.rval().setUndefined();
-        Rooted<PropertyDescriptor> desc(cx);
-        if (!Proxy::getPropertyDescriptor(cx, obj, id, &desc))
-            return false;
-        if (desc.object() && desc.hasSetterObject() && desc.setterObject())
-            args.rval().setObject(*desc.setterObject());
-        return true;
-    }
-    RootedObject pobj(cx);
-    RootedShape shape(cx);
-    if (!JSObject::lookupGeneric(cx, obj, id, &pobj, &shape))
-        return false;
-    args.rval().setUndefined();
-    if (shape) {
-        if (pobj->isNative() && !IsImplicitDenseOrTypedArrayElement(shape)) {
-            if (shape->hasSetterValue())
-                args.rval().set(shape->setterValue());
-        }
-    }
-    return true;
-}
-#endif /* JS_OLD_GETTER_SETTER_METHODS */
 
 // ES6 draft rev27 (2014/08/24) 19.1.2.9 Object.getPrototypeOf(O)
 bool
@@ -723,7 +585,8 @@ js::obj_hasOwnProperty(JSContext *cx, unsigned argc, Value *vp)
         JSObject *obj = &args.thisv().toObject(), *obj2;
         Shape *prop;
         if (!obj->is<ProxyObject>() &&
-            HasOwnProperty<NoGC>(cx, obj->getOps()->lookupGeneric, obj, id, &obj2, &prop))
+            NonProxyLookupOwnProperty<NoGC>(cx, obj->getOps()->lookupGeneric, obj, id,
+                                            &obj2, &prop))
         {
             args.rval().setBoolean(!!prop);
             return true;
@@ -739,15 +602,6 @@ js::obj_hasOwnProperty(JSContext *cx, unsigned argc, Value *vp)
     RootedObject obj(cx, ToObject(cx, args.thisv()));
     if (!obj)
         return false;
-
-    /* Non-standard code for proxies. */
-    if (obj->is<ProxyObject>()) {
-        bool has;
-        if (!Proxy::hasOwn(cx, obj, idRoot, &has))
-            return false;
-        args.rval().setBoolean(has);
-        return true;
-    }
 
     /* Step 3. */
     bool found;
@@ -812,7 +666,7 @@ js::obj_create(JSContext *cx, unsigned argc, Value *vp)
      * Use the callee's global as the parent of the new object to avoid dynamic
      * scoping (i.e., using the caller's global).
      */
-    RootedObject obj(cx, NewObjectWithGivenProto(cx, &JSObject::class_, proto, &args.callee().global()));
+    RootedObject obj(cx, NewObjectWithGivenProto<PlainObject>(cx, proto, &args.callee().global()));
     if (!obj)
         return false;
 
@@ -946,8 +800,8 @@ obj_getOwnPropertySymbols(JSContext *cx, unsigned argc, Value *vp)
 }
 
 /* ES5 15.2.3.6: Object.defineProperty(O, P, Attributes) */
-static bool
-obj_defineProperty(JSContext *cx, unsigned argc, Value *vp)
+bool
+js::obj_defineProperty(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
     RootedObject obj(cx);
@@ -1183,8 +1037,7 @@ ProtoSetter(JSContext *cx, unsigned argc, Value *vp)
     return true;
 }
 
-
-const JSFunctionSpec js::object_methods[] = {
+static const JSFunctionSpec object_methods[] = {
 #if JS_HAS_TOSOURCE
     JS_FN(js_toSource_str,             obj_toSource,                0,0),
 #endif
@@ -1199,22 +1052,23 @@ const JSFunctionSpec js::object_methods[] = {
     JS_FN(js_isPrototypeOf_str,        obj_isPrototypeOf,           1,0),
     JS_FN(js_propertyIsEnumerable_str, obj_propertyIsEnumerable,    1,0),
 #if JS_OLD_GETTER_SETTER_METHODS
-    JS_FN(js_defineGetter_str,         js::obj_defineGetter,        2,0),
-    JS_FN(js_defineSetter_str,         js::obj_defineSetter,        2,0),
-    JS_FN(js_lookupGetter_str,         obj_lookupGetter,            1,0),
-    JS_FN(js_lookupSetter_str,         obj_lookupSetter,            1,0),
+    JS_SELF_HOSTED_FN(js_defineGetter_str, "ObjectDefineGetter",    2,JSPROP_DEFINE_LATE),
+    JS_SELF_HOSTED_FN(js_defineSetter_str, "ObjectDefineSetter",    2,JSPROP_DEFINE_LATE),
+    JS_SELF_HOSTED_FN(js_lookupGetter_str, "ObjectLookupGetter",    1,JSPROP_DEFINE_LATE),
+    JS_SELF_HOSTED_FN(js_lookupSetter_str, "ObjectLookupSetter",    1,JSPROP_DEFINE_LATE),
 #endif
     JS_FS_END
 };
 
-const JSPropertySpec js::object_properties[] = {
+static const JSPropertySpec object_properties[] = {
 #if JS_HAS_OBJ_PROTO_PROP
     JS_PSGS("__proto__", ProtoGetter, ProtoSetter, 0),
 #endif
     JS_PS_END
 };
 
-const JSFunctionSpec js::object_static_methods[] = {
+static const JSFunctionSpec object_static_methods[] = {
+    JS_SELF_HOSTED_FN("assign",        "ObjectStaticAssign",        2,JSPROP_DEFINE_LATE),
     JS_FN("getPrototypeOf",            obj_getPrototypeOf,          1,0),
     JS_FN("setPrototypeOf",            obj_setPrototypeOf,          2,0),
     JS_FN("getOwnPropertyDescriptor",  obj_getOwnPropertyDescriptor,2,0),
@@ -1234,13 +1088,130 @@ const JSFunctionSpec js::object_static_methods[] = {
     JS_FS_END
 };
 
-/*
- * For Object, self-hosted functions have to be done at a different
- * time, after the intrinsic holder has been set, so we put them
- * in a different array.
- */
-const JSFunctionSpec js::object_static_selfhosted_methods[] = {
-    JS_SELF_HOSTED_FN("assign",        "ObjectStaticAssign",        2,0),
-    JS_FS_END
+static JSObject *
+CreateObjectConstructor(JSContext *cx, JSProtoKey key)
+{
+    Rooted<GlobalObject*> self(cx, cx->global());
+    if (!GlobalObject::ensureConstructor(cx, self, JSProto_Function))
+        return nullptr;
+
+    RootedObject functionProto(cx, &self->getPrototype(JSProto_Function).toObject());
+
+    /* Create the Object function now that we have a [[Prototype]] for it. */
+    RootedObject ctor(cx, NewObjectWithGivenProto(cx, &JSFunction::class_, functionProto,
+                                                  self, SingletonObject));
+    if (!ctor)
+        return nullptr;
+    return NewFunction(cx, ctor, obj_construct, 1, JSFunction::NATIVE_CTOR, self,
+                       HandlePropertyName(cx->names().Object));
+}
+
+static JSObject *
+CreateObjectPrototype(JSContext *cx, JSProtoKey key)
+{
+    Rooted<GlobalObject*> self(cx, cx->global());
+
+    MOZ_ASSERT(!cx->runtime()->isAtomsCompartment(cx->compartment()));
+    MOZ_ASSERT(self->isNative());
+
+    /*
+     * Create |Object.prototype| first, mirroring CreateBlankProto but for the
+     * prototype of the created object.
+     */
+    RootedPlainObject objectProto(cx, NewObjectWithGivenProto<PlainObject>(cx, nullptr,
+                                                                           self, SingletonObject));
+    if (!objectProto)
+        return nullptr;
+
+    /*
+     * The default 'new' type of Object.prototype is required by type inference
+     * to have unknown properties, to simplify handling of e.g. heterogenous
+     * objects in JSON and script literals.
+     */
+    if (!JSObject::setNewTypeUnknown(cx, &PlainObject::class_, objectProto))
+        return nullptr;
+
+    return objectProto;
+}
+
+static bool
+FinishObjectClassInit(JSContext *cx, JS::HandleObject ctor, JS::HandleObject proto)
+{
+    Rooted<GlobalObject*> self(cx, cx->global());
+
+    /* ES5 15.1.2.1. */
+    RootedId evalId(cx, NameToId(cx->names().eval));
+    JSObject *evalobj = DefineFunction(cx, self, evalId, IndirectEval, 1, JSFUN_STUB_GSOPS);
+    if (!evalobj)
+        return false;
+    self->setOriginalEval(evalobj);
+
+    RootedObject intrinsicsHolder(cx);
+    bool isSelfHostingGlobal = cx->runtime()->isSelfHostingGlobal(self);
+    if (isSelfHostingGlobal) {
+        intrinsicsHolder = self;
+    } else {
+        intrinsicsHolder = NewObjectWithGivenProto<PlainObject>(cx, proto, self, TenuredObject);
+        if (!intrinsicsHolder)
+            return false;
+    }
+    self->setIntrinsicsHolder(intrinsicsHolder);
+    /* Define a property 'global' with the current global as its value. */
+    RootedValue global(cx, ObjectValue(*self));
+    if (!JSObject::defineProperty(cx, intrinsicsHolder, cx->names().global, global,
+                                  nullptr, nullptr, JSPROP_PERMANENT | JSPROP_READONLY))
+    {
+        return false;
+    }
+
+    /*
+     * Define self-hosted functions after setting the intrinsics holder
+     * (which is needed to define self-hosted functions)
+     */
+    if (!isSelfHostingGlobal) {
+        if (!JS_DefineFunctions(cx, ctor, object_static_methods, OnlyDefineLateProperties))
+            return false;
+        if (!JS_DefineFunctions(cx, proto, object_methods, OnlyDefineLateProperties))
+            return false;
+    }
+
+    /*
+     * The global object should have |Object.prototype| as its [[Prototype]].
+     * Eventually we'd like to have standard classes be there from the start,
+     * and thus we would know we were always setting what had previously been a
+     * null [[Prototype]], but right now some code assumes it can set the
+     * [[Prototype]] before standard classes have been initialized.  For now,
+     * only set the [[Prototype]] if it hasn't already been set.
+     */
+    Rooted<TaggedProto> tagged(cx, TaggedProto(proto));
+    if (self->shouldSplicePrototype(cx) && !self->splicePrototype(cx, self->getClass(), tagged))
+        return false;
+    return true;
+}
+
+const Class PlainObject::class_ = {
+    js_Object_str,
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Object),
+    nullptr,  /* addProperty */
+    nullptr,  /* delProperty */
+    nullptr,  /* getProperty */
+    nullptr,  /* setProperty */
+    nullptr,  /* enumerate */
+    nullptr,  /* resolve */
+    nullptr,  /* convert */
+    nullptr,  /* finalize */
+    nullptr,  /* call */
+    nullptr,  /* hasInstance */
+    nullptr,  /* construct */
+    nullptr,  /* trace */
+    {
+        CreateObjectConstructor,
+        CreateObjectPrototype,
+        object_static_methods,
+        object_methods,
+        object_properties,
+        FinishObjectClassInit
+    }
 };
 
+const Class* const js::ObjectClassPtr = &PlainObject::class_;

@@ -6,6 +6,8 @@
 #ifndef nsTablePainter_h__
 #define nsTablePainter_h__
 
+#include "imgIContainer.h"
+
 #include "celldata.h"
 
 // flags for Paint, PaintChild, PaintChildren are currently only used by tables.
@@ -26,6 +28,8 @@ class TableBackgroundPainter
    * Helper class for painting table backgrounds
    *
    */
+
+  typedef mozilla::image::DrawResult DrawResult;
 
   public:
 
@@ -80,9 +84,12 @@ class TableBackgroundPainter
       *                      to the outer grid lines in border-collapse
       * @param aPaintTableBackground - if true, the table background
       * is included, otherwise it isn't
+      * @returns DrawResult::SUCCESS if all painting was successful. If some
+      *          painting failed or an improved result could be achieved by sync
+      *          decoding images, returns another value.
       */
-    nsresult PaintTable(nsTableFrame* aTableFrame, const nsMargin& aDeflate,
-                        bool aPaintTableBackground);
+    DrawResult PaintTable(nsTableFrame* aTableFrame, const nsMargin& aDeflate,
+                          bool aPaintTableBackground);
 
     /** Paint background for the row group and its children down through cells
       * (Cells themselves will only be painted in border collapse)
@@ -90,8 +97,11 @@ class TableBackgroundPainter
       * Table Row Group must do a flagged TABLE_BG_PAINT ::Paint call on its
       * children afterwards
       * @param aFrame - the table row group frame
+      * @returns DrawResult::SUCCESS if all painting was successful. If some
+      *          painting failed or an improved result could be achieved by sync
+      *          decoding images, returns another value.
       */
-    nsresult PaintRowGroup(nsTableRowGroupFrame* aFrame)
+    DrawResult PaintRowGroup(nsTableRowGroupFrame* aFrame)
     { return PaintRowGroup(aFrame, false); }
 
     /** Paint background for the row and its children down through cells
@@ -100,8 +110,11 @@ class TableBackgroundPainter
       * Table Row must do a flagged TABLE_BG_PAINT ::Paint call on its
       * children afterwards
       * @param aFrame - the table row frame
+      * @returns DrawResult::SUCCESS if all painting was successful. If some
+      *          painting failed or an improved result could be achieved by sync
+      *          decoding images, returns another value.
       */
-    nsresult PaintRow(nsTableRowFrame* aFrame)
+    DrawResult PaintRow(nsTableRowFrame* aFrame)
     { return PaintRow(aFrame, false); }
 
   private:
@@ -115,27 +128,49 @@ class TableBackgroundPainter
       * @param aDeflate        - adjustment to frame's rect (used for quirks BC)
       *                          may be null
       */
-    nsresult PaintTableFrame(nsTableFrame*         aTableFrame,
-                             nsTableRowGroupFrame* aFirstRowGroup,
-                             nsTableRowGroupFrame* aLastRowGroup,
-                             const nsMargin&       aDeflate);
+    DrawResult PaintTableFrame(nsTableFrame*         aTableFrame,
+                               nsTableRowGroupFrame* aFirstRowGroup,
+                               nsTableRowGroupFrame* aLastRowGroup,
+                               const nsMargin&       aDeflate);
 
     /* aPassThrough params indicate whether to paint the element or to just
      * pass through and paint underlying layers only
      * See Public versions for function descriptions
      */
-    nsresult PaintRowGroup(nsTableRowGroupFrame* aFrame,
-                           bool                  aPassThrough);
-    nsresult PaintRow(nsTableRowFrame* aFrame,
-                      bool             aPassThrough);
+    DrawResult PaintRowGroup(nsTableRowGroupFrame* aFrame,
+                             bool                  aPassThrough);
+    DrawResult PaintRow(nsTableRowFrame* aFrame,
+                        bool             aPassThrough);
 
     /** Paint table background layers for this cell space
       * Also paints cell's own background in border-collapse mode
-      * @param aFrame      - the cell
-      * @param aPassSelf   - pass this cell; i.e. paint only underlying layers
+      * @param aCell           - the cell
+      * @param aCellBGRect     - background rect for the cell
+      * @param aRowBGRect      - background rect for the row
+      * @param aRowGroupBGRect - background rect for the row group
+      * @param aColBGRect      - background rect for the column and column group
+      * @param aPassSelf       - pass this cell; i.e. paint only underlying layers
       */
-    nsresult PaintCell(nsTableCellFrame* aFrame,
-                       bool              aPassSelf);
+    DrawResult PaintCell(nsTableCellFrame* aCell,
+                         nsRect&           aCellBGRect,
+                         nsRect&           aRowBGRect,
+                         nsRect&           aRowGroupBGRect,
+                         nsRect&           aColBGRect,
+                         bool              aPassSelf);
+
+    /** Compute table background layer positions for this cell space
+      * @param aCell              - the cell
+      * @param aCellBGRectOut     - outparam: background rect for the cell
+      * @param aRowBGRectOut      - outparam: background rect for the row
+      * @param aRowGroupBGRectOut - outparam: background rect for the row group
+      * @param aColBGRectOut      - outparam: background rect for the column
+                                    and column group
+      */
+    void ComputeCellBackgrounds(nsTableCellFrame* aCell,
+                                nsRect&           aCellBGRect,
+                                nsRect&           aRowBGRect,
+                                nsRect&           aRowGroupBGRect,
+                                nsRect&           aColBGRect);
 
     /** Translate mRenderingContext, mDirtyRect, and mCols' column and
       * colgroup coords
@@ -183,8 +218,8 @@ class TableBackgroundPainter
       bool ShouldSetBCBorder();
 
       /** Set border-collapse border with aBorderWidth as widths */
-      nsresult SetBCBorder(nsMargin&               aBorderWidth,
-                           TableBackgroundPainter* aPainter);
+      void SetBCBorder(nsMargin&               aBorderWidth,
+                       TableBackgroundPainter* aPainter);
 
       private:
       nsStyleBorder* mSynthBorder;
@@ -214,7 +249,6 @@ class TableBackgroundPainter
     uint32_t             mNumCols;
     TableBackgroundData  mRowGroup; //current row group
     TableBackgroundData  mRow;      //current row
-    nsRect               mCellRect; //current cell's rect
 
     nsStyleBorder        mZeroBorder;  //cached zero-width border
     uint32_t             mBGPaintFlags;

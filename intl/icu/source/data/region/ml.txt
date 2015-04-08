@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ml.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ml.xml
- */
 ml{
     Countries{
         001{"ലോകം"}
@@ -302,6 +299,13 @@ ml{
         ZW{"സിംബാബ്‌വേ"}
         ZZ{"അജ്ഞാത പ്രദേശം"}
     }
+    Countries%short{
+        GB{"യു.കെ."}
+        HK{"ഹോങ്കോങ്ങ്"}
+        MO{"മക്കാവു"}
+        PS{"പലസ്‌തീൻ"}
+        US{"യു.എസ്"}
+    }
     Countries%variant{
         CD{"കോംഗോ (DRC)"}
         CG{"കോംഗോ (റിപ്പബ്ലിക്ക്)"}
@@ -310,12 +314,5 @@ ml{
         MK{"മാസിഡോണിയ (FYROM)"}
         TL{"കിഴക്കൻ തിമോർ"}
     }
-    CountriesShort{
-        GB{"യു.കെ."}
-        HK{"ഹോങ്കോങ്ങ്"}
-        MO{"മക്കാവു"}
-        PS{"പലസ്‌തീൻ"}
-        US{"യു.എസ്"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

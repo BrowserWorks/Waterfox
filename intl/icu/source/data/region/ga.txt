@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ga.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ga.xml
- */
 ga{
     Countries{
         001{"An Domhan"}
@@ -302,18 +299,18 @@ ga{
         ZW{"An tSiombáib"}
         ZZ{"Réigiún Anaithnid"}
     }
-    Countries%variant{
-        CD{"An Congó (PDC)"}
-        CG{"An Congó (Poblacht)"}
-        FK{"Oileáin Fháclainne (Islas Malvinas)"}
-        MK{"An Mhacadóin (PIIM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"RA"}
         HK{"Hong Cong"}
         MO{"Macao"}
         PS{"An Phalaistín"}
         US{"SAM"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"An Congó (PDC)"}
+        CG{"An Congó (Poblacht)"}
+        FK{"Oileáin Fháclainne (Islas Malvinas)"}
+        MK{"An Mhacadóin (PIIM)"}
+    }
+    Version{"2.1.12.94"}
 }

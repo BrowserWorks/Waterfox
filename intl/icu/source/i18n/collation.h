@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2010-2014, International Business Machines
+* Copyright (C) 2010-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collation.h
@@ -486,10 +486,6 @@ public:
 
     static inline int64_t unassignedCEFromCodePoint(UChar32 c) {
         return makeCE(unassignedPrimaryFromCodePoint(c));
-    }
-
-    static inline uint32_t reorder(const uint8_t reorderTable[256], uint32_t primary) {
-        return ((uint32_t)reorderTable[primary >> 24] << 24) | (primary & 0xffffff);
     }
 
 private:

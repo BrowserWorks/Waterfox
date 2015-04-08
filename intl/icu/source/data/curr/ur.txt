@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ur.xml
- */
 ur{
     Currencies{
         AED{
@@ -165,7 +162,7 @@ ur{
         }
         DKK{
             "DKK",
-            "ڈنمارک کرونر",
+            "ڈنمارک کرون",
         }
         DOP{
             "DOP",
@@ -429,7 +426,7 @@ ur{
         }
         NOK{
             "NOK",
-            "ناروے کرونر",
+            "ناروے کرون",
         }
         NPR{
             "NPR",
@@ -871,8 +868,8 @@ ur{
             other{"جبوتی فرانک"}
         }
         DKK{
-            one{"ڈنمارک کرونر"}
-            other{"ڈنمارک کرونر"}
+            one{"ڈنمارک کرون"}
+            other{"ڈنمارک کرون"}
         }
         DOP{
             one{"ڈومنیکن پیسو"}
@@ -1127,8 +1124,8 @@ ur{
             other{"نکارا گوا کا کورڈوبا"}
         }
         NOK{
-            one{"ناروے کرونر"}
-            other{"ناروے کرونر"}
+            one{"ناروے کرون"}
+            other{"ناروے کرون"}
         }
         NPR{
             one{"نیپالی روپیہ"}
@@ -1355,5 +1352,5 @@ ur{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

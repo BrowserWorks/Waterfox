@@ -145,7 +145,7 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
     // last paint.
     float presShellResolution = aMetrics.mPresShellResolution
                               * aMetrics.GetAsyncZoom().scale;
-    aUtils->SetResolution(presShellResolution, presShellResolution);
+    aUtils->SetResolutionAndScaleTo(presShellResolution, presShellResolution);
 
     // Finally, we set the displayport.
     nsCOMPtr<nsIContent> content = nsLayoutUtils::FindContentFor(aMetrics.GetScrollId());
@@ -164,8 +164,7 @@ APZCCallbackHelper::UpdateRootFrame(nsIDOMWindowUtils* aUtils,
                                             margins.bottom,
                                             element, 0);
     CSSRect baseCSS = aMetrics.CalculateCompositedRectInCssPixels();
-    nsRect base(baseCSS.x * nsPresContext::AppUnitsPerCSSPixel(),
-                baseCSS.y * nsPresContext::AppUnitsPerCSSPixel(),
+    nsRect base(0, 0,
                 baseCSS.width * nsPresContext::AppUnitsPerCSSPixel(),
                 baseCSS.height * nsPresContext::AppUnitsPerCSSPixel());
     nsLayoutUtils::SetDisplayPortBaseIfNotSet(content, base);
@@ -208,8 +207,7 @@ APZCCallbackHelper::UpdateSubFrame(nsIContent* aContent,
                                                margins.bottom,
                                                element, 0);
         CSSRect baseCSS = aMetrics.CalculateCompositedRectInCssPixels();
-        nsRect base(baseCSS.x * nsPresContext::AppUnitsPerCSSPixel(),
-                    baseCSS.y * nsPresContext::AppUnitsPerCSSPixel(),
+        nsRect base(0, 0,
                     baseCSS.width * nsPresContext::AppUnitsPerCSSPixel(),
                     baseCSS.height * nsPresContext::AppUnitsPerCSSPixel());
         nsLayoutUtils::SetDisplayPortBaseIfNotSet(aContent, base);

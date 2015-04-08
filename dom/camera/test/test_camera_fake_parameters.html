@@ -17,7 +17,7 @@
 var whichCamera = navigator.mozCameras.getListOfCameras()[0];
 var initialConfig = {
   mode: 'picture',
-  recorderProfile: 'cif',
+  recorderProfile: 'high',
   previewSize: {
     width: 352,
     height: 288
@@ -36,7 +36,7 @@ function end() {
 }
 function next() {
   if (cameraObj) {
-    cameraObj.release(
+    cameraObj.release().then(
       function success() {
         CameraTest.next();
       },
@@ -345,7 +345,7 @@ var tests = [
         run();
       });
     },
-    test: function testFakeFocusAreas(cam, cap) {
+    test: function testFakePictureSizes(cam, cap) {
       // validate the capability attribute
       ok(cap.pictureSizes.length == 3, "pictureSizes.length = " + cap.pictureSizes.length);
       var found = 0;
@@ -368,7 +368,7 @@ var tests = [
         // settings are applied. Yes--this is an ugly hack.
         cam.setConfiguration({ mode: 'video',
                                recorderProfile: 'weird-unsupported-profile'
-                             }, resolve, resolve);
+                             }).then(resolve, resolve);
       });
       var sizeGenerator = function() {
         var sizes = [ { height: 3264, width: 1836 },
@@ -400,6 +400,34 @@ var tests = [
 
       nextSize();
     },
+  },
+  {
+    key: "bug-1052851",
+    prep: function setupFakeMetering(test) {
+      // We should reject duplicate values.
+      test.setFakeParameters(
+        "auto-exposure=frame-average;auto-exposure-values=spot,frame-average,center-weighted,spot,center-weighted",
+        function () {
+        run();
+      });
+    },
+    test: function testFakeMetering(cam, cap) {
+      ok(cap.meteringModes.length == 3, "Metering modes length = " + cap.meteringModes.length);
+
+      // make sure expected values are present
+      [ "spot", "frame-average", "center-weighted" ].forEach(function(mode) {
+        ok(cap.meteringModes.indexOf(mode) != -1, "Metering mode '" + mode + "' is present");
+      });
+
+      // test setters/getters for individual metering modes
+      cap.meteringModes.forEach(function(mode, index) {
+        cam.meteringMode = mode;
+        ok(cam.meteringMode === mode,
+          "Metering Mode[" + index + "] = " + mode + ", cam.meteringMode = " + cam.meteringMode);
+      });
+
+      next();
+    }
   },
 ];
 

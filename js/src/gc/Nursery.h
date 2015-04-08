@@ -8,14 +8,13 @@
 #ifndef gc_Nursery_h
 #define gc_Nursery_h
 
-#ifdef JSGC_GENERATIONAL
-
 #include "jsalloc.h"
 #include "jspubtd.h"
 
 #include "ds/BitArray.h"
 #include "gc/Heap.h"
 #include "gc/Memory.h"
+#include "js/Class.h"
 #include "js/GCAPI.h"
 #include "js/HashTable.h"
 #include "js/HeapAPI.h"
@@ -38,7 +37,6 @@ namespace gc {
 struct Cell;
 class Collector;
 class MinorCollectionTracer;
-class ForkJoinNursery;
 } /* namespace gc */
 
 namespace types {
@@ -67,7 +65,10 @@ class Nursery
         heapEnd_(0),
         currentChunk_(0),
         numActiveChunks_(0),
-        numNurseryChunks_(0)
+        numNurseryChunks_(0),
+        finalizers_(nullptr),
+        profileThreshold_(0),
+        enableProfiling_(false)
     {}
     ~Nursery();
 
@@ -88,7 +89,7 @@ class Nursery
      * Check whether an arbitrary pointer is within the nursery. This is
      * slower than IsInsideNursery(Cell*), but works on all types of pointers.
      */
-    MOZ_ALWAYS_INLINE bool isInside(gc::Cell *cellp) const MOZ_DELETE;
+    MOZ_ALWAYS_INLINE bool isInside(gc::Cell *cellp) const = delete;
     MOZ_ALWAYS_INLINE bool isInside(const void *p) const {
         return uintptr_t(p) >= heapStart_ && uintptr_t(p) < heapEnd_;
     }
@@ -97,7 +98,7 @@ class Nursery
      * Allocate and return a pointer to a new GC object with its |slots|
      * pointer pre-filled. Returns nullptr if the Nursery is full.
      */
-    JSObject *allocateObject(JSContext *cx, size_t size, size_t numDynamic);
+    JSObject *allocateObject(JSContext *cx, size_t size, size_t numDynamic, const js::Class *clasp);
 
     /* Allocate a slots array for the given object. */
     HeapSlot *allocateSlots(JSObject *obj, uint32_t nslots);
@@ -134,8 +135,6 @@ class Nursery
 
     /* Forward a slots/elements pointer stored in an Ion frame. */
     void forwardBufferPointer(HeapSlot **pSlotsElems);
-
-    static void forwardBufferPointer(JSTracer* trc, HeapSlot **pSlotsElems);
 
     void maybeSetForwardingPointer(JSTracer *trc, void *oldData, void *newData, bool direct) {
         if (IsMinorCollectionTracer(trc) && isInside(oldData))
@@ -202,6 +201,20 @@ class Nursery
 
     /* Number of chunks allocated for the nursery. */
     int numNurseryChunks_;
+
+    /* Keep track of objects that need finalization. */
+    class ListItem {
+        ListItem *next_;
+        JSObject *object_;
+      public:
+        ListItem(ListItem *tail, JSObject *obj) : next_(tail), object_(obj) {}
+        ListItem *next() const { return next_; }
+        JSObject *get() { return object_; }
+    } *finalizers_;
+
+    /* Report minor collections taking more than this many us, if enabled. */
+    int64_t profileThreshold_;
+    bool enableProfiling_;
 
     /*
      * The set of externally malloced slots potentially kept live by objects
@@ -289,6 +302,7 @@ class Nursery
 
     /* Common internal allocator function. */
     void *allocate(size_t size);
+    void verifyFinalizerList();
 
     /*
      * Move the object at |src| in the Nursery to an already-allocated cell
@@ -312,6 +326,9 @@ class Nursery
     void setElementsForwardingPointer(ObjectElements *oldHeader, ObjectElements *newHeader,
                                       uint32_t nelems);
 
+    /* Run finalizers on all finalizable things in the nursery. */
+    void runFinalizers();
+
     /* Free malloced pointers owned by freed things in the nursery. */
     void freeHugeSlots();
 
@@ -333,5 +350,4 @@ class Nursery
 
 } /* namespace js */
 
-#endif /* JSGC_GENERATIONAL */
 #endif /* gc_Nursery_h */

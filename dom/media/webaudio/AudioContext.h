@@ -59,6 +59,7 @@ class MediaStreamAudioSourceNode;
 class OscillatorNode;
 class PannerNode;
 class ScriptProcessorNode;
+class StereoPannerNode;
 class WaveShaperNode;
 class PeriodicWave;
 class Promise;
@@ -143,6 +144,9 @@ public:
                         uint32_t aNumberOfOutputChannels,
                         ErrorResult& aRv);
 
+  already_AddRefed<StereoPannerNode>
+  CreateStereoPanner();
+
   already_AddRefed<AnalyserNode>
   CreateAnalyser();
 
@@ -192,7 +196,7 @@ public:
                   ErrorResult& aRv);
 
   // OfflineAudioContext methods
-  void StartRendering(ErrorResult& aRv);
+  already_AddRefed<Promise> StartRendering(ErrorResult& aRv);
   IMPL_EVENT_HANDLER(complete)
 
   bool IsOffline() const { return mIsOffline; }
@@ -258,7 +262,7 @@ private:
 
   size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const;
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize);
+                            nsISupports* aData, bool aAnonymize) MOZ_OVERRIDE;
 
   friend struct ::mozilla::WebAudioDecodeJob;
 

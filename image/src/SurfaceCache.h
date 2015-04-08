@@ -63,6 +63,14 @@ public:
   }
 
   IntSize Size() const { return mSize; }
+  Maybe<SVGImageContext> SVGContext() const { return mSVGContext; }
+  float AnimationTime() const { return mAnimationTime; }
+  uint32_t Flags() const { return mFlags; }
+
+  SurfaceKey WithNewFlags(uint32_t aFlags) const
+  {
+    return SurfaceKey(mSize, mSVGContext, mAnimationTime, aFlags);
+  }
 
 private:
   SurfaceKey(const IntSize& aSize,
@@ -79,10 +87,10 @@ private:
     return aSIC.Hash();
   }
 
-  friend SurfaceKey RasterSurfaceKey(const IntSize&, const uint32_t);
+  friend SurfaceKey RasterSurfaceKey(const IntSize&, uint32_t, uint32_t);
   friend SurfaceKey VectorSurfaceKey(const IntSize&,
                                      const Maybe<SVGImageContext>&,
-                                     const float);
+                                     float);
 
   IntSize                mSize;
   Maybe<SVGImageContext> mSVGContext;
@@ -92,18 +100,16 @@ private:
 
 inline SurfaceKey
 RasterSurfaceKey(const gfx::IntSize& aSize,
-                 const uint32_t aFlags)
+                 uint32_t aFlags,
+                 uint32_t aFrameNum)
 {
-  // We don't care about aAnimationTime for RasterImage because it's not
-  // currently possible to store anything but the first frame in the
-  // SurfaceCache.
-  return SurfaceKey(aSize, Nothing(), 0.0f, aFlags);
+  return SurfaceKey(aSize, Nothing(), float(aFrameNum), aFlags);
 }
 
 inline SurfaceKey
 VectorSurfaceKey(const gfx::IntSize& aSize,
                  const Maybe<SVGImageContext>& aSVGContext,
-                 const float aAnimationTime)
+                 float aAnimationTime)
 {
   // We don't care about aFlags for VectorImage because none of the flags we
   // have right now influence VectorImage's rendering. If we add a new flag that
@@ -115,6 +121,12 @@ MOZ_BEGIN_ENUM_CLASS(Lifetime, uint8_t)
   Transient,
   Persistent
 MOZ_END_ENUM_CLASS(Lifetime)
+
+MOZ_BEGIN_ENUM_CLASS(InsertOutcome, uint8_t)
+  SUCCESS,                 // Success (but see Insert documentation).
+  FAILURE,                 // Couldn't insert (e.g., for capacity reasons).
+  FAILURE_ALREADY_PRESENT  // A surface with the same key is already present.
+MOZ_END_ENUM_CLASS(InsertOutcome)
 
 /**
  * SurfaceCache is an imagelib-global service that allows caching of temporary
@@ -137,9 +149,6 @@ MOZ_END_ENUM_CLASS(Lifetime)
  * Any image which stores surfaces in the SurfaceCache *must* ensure that it
  * calls RemoveImage() before it is destroyed. See the comments for
  * RemoveImage() for more details.
- *
- * SurfaceCache is not thread-safe; it should only be accessed from the main
- * thread.
  */
 struct SurfaceCache
 {
@@ -159,6 +168,9 @@ struct SurfaceCache
    * Look up the imgFrame containing a surface in the cache and returns a
    * drawable reference to that imgFrame.
    *
+   * If the image associated with the surface is locked, then the surface will
+   * be locked before it is returned.
+   *
    * If the imgFrame was found in the cache, but had stored its surface in a
    * volatile buffer which was discarded by the OS, then it is automatically
    * removed from the cache and an empty DrawableFrameRef is returned. Note that
@@ -167,35 +179,75 @@ struct SurfaceCache
    *
    * @param aImageKey    Key data identifying which image the surface belongs to.
    * @param aSurfaceKey  Key data which uniquely identifies the requested surface.
+   * @param aAlternateFlags If not Nothing(), a different set of flags than the
+   *                        ones specified in @aSurfaceKey which are also
+   *                        acceptable to the caller. This is more efficient
+   *                        than calling Lookup() twice, which requires taking a
+   *                        lock each time.
    *
    * @return a DrawableFrameRef to the imgFrame wrapping the requested surface,
    *         or an empty DrawableFrameRef if not found.
    */
   static DrawableFrameRef Lookup(const ImageKey    aImageKey,
-                                 const SurfaceKey& aSurfaceKey);
+                                 const SurfaceKey& aSurfaceKey,
+                                 const Maybe<uint32_t>& aAlternateFlags
+                                   = Nothing());
 
   /**
-   * Insert a surface into the cache. It is an error to call this function
-   * without first calling Lookup to verify that the surface is not already in
-   * the cache.
+   * Looks up the best matching surface in the cache and returns a drawable
+   * reference to the imgFrame containing it.
+   *
+   * Returned surfaces may vary from the requested surface only in terms of
+   * size, unless @aAlternateFlags is specified.
+   *
+   * If the image associated with the surface is locked, then the surface will
+   * be locked before it is returned.
+   *
+   * @param aImageKey    Key data identifying which image the surface belongs to.
+   * @param aSurfaceKey  Key data which identifies the ideal surface to return.
+   * @param aAlternateFlags If not Nothing(), a different set of flags than the
+   *                        ones specified in @aSurfaceKey which are also
+   *                        acceptable to the caller. This is much more
+   *                        efficient than calling LookupBestMatch() twice.
+   *
+   * @return a DrawableFrameRef to the imgFrame wrapping a surface similar to
+   *         the requested surface, or an empty DrawableFrameRef if not found.
+   */
+  static DrawableFrameRef LookupBestMatch(const ImageKey    aImageKey,
+                                          const SurfaceKey& aSurfaceKey,
+                                          const Maybe<uint32_t>& aAlternateFlags
+                                            = Nothing());
+
+  /**
+   * Insert a surface into the cache. If a surface with the same ImageKey and
+   * SurfaceKey is already in the cache, Insert returns FAILURE_ALREADY_PRESENT.
    *
    * Each surface in the cache has a lifetime, either Transient or Persistent.
    * Transient surfaces can expire from the cache at any time. Persistent
-   * surfaces can ordinarily also expire from the cache at any time, but if the
-   * image they're associated with is locked, then these surfaces will never
-   * expire. This means that surfaces which cannot be rematerialized should be
-   * inserted with a persistent lifetime *after* the image is locked with
-   * LockImage(); if you use the other order, the surfaces might expire before
-   * LockImage() gets called.
+   * surfaces, on the other hand, will never expire as long as they remain
+   * locked, but if they become unlocked, can expire just like transient
+   * surfaces. When it is first inserted, a persistent surface is locked if its
+   * associated image is locked. When that image is later unlocked, the surface
+   * becomes unlocked too. To become locked again at that point, two things must
+   * happen: the image must become locked again (via LockImage()), and the
+   * surface must be touched again (via one of the Lookup() functions).
+   *
+   * All of this means that a very particular procedure has to be followed for
+   * surfaces which cannot be rematerialized. First, they must be inserted
+   * with a persistent lifetime *after* the image is locked with LockImage(); if
+   * you use the other order, the surfaces might expire before LockImage() gets
+   * called or before the surface is touched again by Lookup(). Second, the
+   * image they are associated with must never be unlocked.
    *
    * If a surface cannot be rematerialized, it may be important to know whether
-   * it was inserted into the cache successfully. Insert() returns false if it
+   * it was inserted into the cache successfully. Insert() returns FAILURE if it
    * failed to insert the surface, which could happen because of capacity
    * reasons, or because it was already freed by the OS. If you aren't inserting
    * a surface with persistent lifetime, or if the surface isn't associated with
-   * a locked image, the return value is useless: the surface might expire
-   * immediately after being inserted, even though Insert() returned true. Thus,
-   * most callers do not need to check the return value.
+   * a locked image, checking for SUCCESS or FAILURE is useless: the surface
+   * might expire immediately after being inserted, even though Insert()
+   * returned SUCCESS. Thus, many callers do not need to check the result of
+   * Insert() at all.
    *
    * @param aTarget      The new surface (wrapped in an imgFrame) to insert into
    *                     the cache.
@@ -204,14 +256,18 @@ struct SurfaceCache
    * @param aLifetime    Whether this is a transient surface that can always be
    *                     allowed to expire, or a persistent surface that
    *                     shouldn't expire if the image is locked.
-   * @return false if the surface could not be inserted. Only check this if
-   *         inserting a persistent surface associated with a locked image (see
-   *         above for more information).
+   * @return SUCCESS if the surface was inserted successfully. (But see above
+   *           for more information about when you should check this.)
+   *         FAILURE if the surface could not be inserted, e.g. for capacity
+   *           reasons. (But see above for more information about when you
+   *           should check this.)
+   *         FAILURE_ALREADY_PRESENT if a surface with the same ImageKey and
+   *           SurfaceKey already exists in the cache.
    */
-  static bool Insert(imgFrame*         aSurface,
-                     const ImageKey    aImageKey,
-                     const SurfaceKey& aSurfaceKey,
-                     Lifetime          aLifetime);
+  static InsertOutcome Insert(imgFrame*         aSurface,
+                              const ImageKey    aImageKey,
+                              const SurfaceKey& aSurfaceKey,
+                              Lifetime          aLifetime);
 
   /**
    * Checks if a surface of a given size could possibly be stored in the cache.
@@ -228,10 +284,20 @@ struct SurfaceCache
    * @return false if the surface cache can't hold a surface of that size.
    */
   static bool CanHold(const IntSize& aSize);
+  static bool CanHold(size_t aSize);
 
   /**
-   * Locks an image, preventing any of that image's surfaces from expiring
-   * unless they have a transient lifetime.
+   * Locks an image. Any of the image's persistent surfaces which are either
+   * inserted or accessed while the image is locked will not expire.
+   *
+   * Locking an image does not automatically lock that image's existing
+   * surfaces. A call to LockImage() guarantees that persistent surfaces which
+   * are inserted afterward will not expire before the next call to
+   * UnlockImage() or UnlockSurfaces() for that image. Surfaces that are
+   * accessed via Lookup() or LookupBestMatch() after a LockImage() call will
+   * also not expire until the next UnlockImage() or UnlockSurfaces() call for
+   * that image. Any other surfaces owned by the image may expire at any time,
+   * whether they are persistent or transient.
    *
    * Regardless of locking, any of an image's surfaces may be removed using
    * RemoveSurface(), and all of an image's surfaces are removed by
@@ -256,9 +322,30 @@ struct SurfaceCache
    * It's OK to call UnlockImage() on an image that's already unlocked; this has
    * no effect.
    *
-   * @param aImageKey    The image to lock.
+   * @param aImageKey    The image to unlock.
    */
   static void UnlockImage(const ImageKey aImageKey);
+
+  /**
+   * Unlocks the existing surfaces of an image, allowing them to expire at any
+   * time.
+   *
+   * This does not unlock the image itself, so accessing the surfaces via
+   * Lookup() or LookupBestMatch() will lock them again, and prevent them from
+   * expiring.
+   *
+   * This is intended to be used in situations where it's no longer clear that
+   * all of the persistent surfaces owned by an image are needed. Calling
+   * UnlockSurfaces() and then taking some action that will cause Lookup() to
+   * touch any surfaces that are still useful will permit the remaining surfaces
+   * to expire from the cache.
+   *
+   * If the image is unlocked, this has no effect.
+   *
+   * @param aImageKey    The image which should have its existing surfaces
+   *                     unlocked.
+   */
+  static void UnlockSurfaces(const ImageKey aImageKey);
 
   /**
    * Removes a surface from the cache, if it's present. If it's not present,

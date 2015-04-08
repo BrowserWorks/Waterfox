@@ -5,6 +5,8 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "BluetoothDaemonInterface.h"
+#include "BluetoothDaemonA2dpInterface.h"
+#include "BluetoothDaemonAvrcpInterface.h"
 #include "BluetoothDaemonHandsfreeInterface.h"
 #include "BluetoothDaemonHelpers.h"
 #include "BluetoothDaemonSetupInterface.h"
@@ -29,13 +31,18 @@ public:
   //
 
   nsresult RegisterModuleCmd(uint8_t aId, uint8_t aMode,
+                             uint32_t aMaxNumClients,
                              BluetoothSetupResultHandler* aRes)
   {
     MOZ_ASSERT(NS_IsMainThread());
 
     nsAutoPtr<BluetoothDaemonPDU> pdu(new BluetoothDaemonPDU(0x00, 0x01, 0));
 
+#if ANDROID_VERSION >= 21
+    nsresult rv = PackPDU(aId, aMode, aMaxNumClients, *pdu);
+#else
     nsresult rv = PackPDU(aId, aMode, *pdu);
+#endif
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -186,6 +193,9 @@ static BluetoothNotificationHandler* sNotificationHandler;
 class BluetoothDaemonCoreModule
 {
 public:
+
+  static const int MAX_NUM_CLIENTS;
+
   virtual nsresult Send(BluetoothDaemonPDU* aPDU, void* aUserData) = 0;
 
   nsresult EnableCmd(BluetoothResultHandler* aRes)
@@ -404,14 +414,20 @@ public:
   }
 
   nsresult CreateBondCmd(const nsAString& aBdAddr,
+                         BluetoothTransport aTransport,
                          BluetoothResultHandler* aRes)
   {
     MOZ_ASSERT(NS_IsMainThread());
 
     nsAutoPtr<BluetoothDaemonPDU> pdu(new BluetoothDaemonPDU(0x01, 0x0d, 0));
 
+#if ANDROID_VERSION >= 21
+    nsresult rv = PackPDU(
+      PackConversion<nsAString, BluetoothAddress>(aBdAddr), aTransport, *pdu);
+#else
     nsresult rv = PackPDU(
       PackConversion<nsAString, BluetoothAddress>(aBdAddr), *pdu);
+#endif
     if (NS_FAILED(rv)) {
       return rv;
     }
@@ -1355,17 +1371,69 @@ private:
 // Protocol handling
 //
 
+// |BluetoothDaemonProtocol| is the central class for communicating
+// with the Bluetooth daemon. It maintains both socket connections
+// to the external daemon and implements the complete HAL protocol
+// by inheriting from base-class modules.
+//
+// Each |BluetoothDaemon*Module| class implements an individual
+// module of the HAL protocol. Each class contains the abstract
+// methods
+//
+//  - |Send|,
+//  - |RegisterModule|, and
+//  - |UnregisterModule|.
+//
+// Module classes use |Send| to send out command PDUs. The socket
+// in |BluetoothDaemonProtocol| is required for sending. The abstract
+// method hides all these internal details from the modules.
+//
+// |RegisterModule| is required during module initialization, when
+// modules must register themselves at the daemon. The register command
+// is not part of the module itself, but contained in the Setup module
+// (id of 0x00). The abstract method |RegisterModule| allows modules to
+// call into the Setup module for generating the register command.
+//
+// |UnregisterModule| works like |RegisterModule|, but for cleanups.
+//
+// |BluetoothDaemonProtocol| also handles PDU receiving. It implements
+// the method |Handle| from |BluetoothDaemonPDUConsumer|. The socket
+// connections of type |BluetoothDaemonConnection| invoke this method
+// to forward received PDUs for processing by higher layers. The
+// implementation of |Handle| checks the service id of the PDU and
+// forwards it to the correct module class using the module's method
+// |HandleSvc|. Further PDU processing is module-dependent.
+//
+// To summarize the interface between |BluetoothDaemonProtocol| and
+// modules; the former implements the abstract methods
+//
+//  - |Send|,
+//  - |RegisterModule|, and
+//  - |UnregisterModule|,
+//
+// which allow modules to send out data. Each module implements the
+// method
+//
+//  - |HandleSvc|,
+//
+const int BluetoothDaemonCoreModule::MAX_NUM_CLIENTS = 1;
+
+// which is called by |BluetoothDaemonProtcol| to hand over received
+// PDUs into a module.
+//
 class BluetoothDaemonProtocol MOZ_FINAL
   : public BluetoothDaemonPDUConsumer
   , public BluetoothDaemonSetupModule
   , public BluetoothDaemonCoreModule
   , public BluetoothDaemonSocketModule
   , public BluetoothDaemonHandsfreeModule
+  , public BluetoothDaemonA2dpModule
+  , public BluetoothDaemonAvrcpModule
 {
 public:
   BluetoothDaemonProtocol(BluetoothDaemonConnection* aConnection);
 
-  nsresult RegisterModule(uint8_t aId, uint8_t aMode,
+  nsresult RegisterModule(uint8_t aId, uint8_t aMode, uint32_t aMaxNumClients,
                           BluetoothSetupResultHandler* aRes) MOZ_OVERRIDE;
 
   nsresult UnregisterModule(uint8_t aId,
@@ -1394,6 +1462,10 @@ private:
                        BluetoothDaemonPDU& aPDU, void* aUserData);
   void HandleHandsfreeSvc(const BluetoothDaemonPDUHeader& aHeader,
                           BluetoothDaemonPDU& aPDU, void* aUserData);
+  void HandleA2dpSvc(const BluetoothDaemonPDUHeader& aHeader,
+                     BluetoothDaemonPDU& aPDU, void* aUserData);
+  void HandleAvrcpSvc(const BluetoothDaemonPDUHeader& aHeader,
+                      BluetoothDaemonPDU& aPDU, void* aUserData);
 
   BluetoothDaemonConnection* mConnection;
   nsTArray<void*> mUserDataQ;
@@ -1408,9 +1480,11 @@ BluetoothDaemonProtocol::BluetoothDaemonProtocol(
 
 nsresult
 BluetoothDaemonProtocol::RegisterModule(uint8_t aId, uint8_t aMode,
+                                        uint32_t aMaxNumClients,
                                         BluetoothSetupResultHandler* aRes)
 {
-  return BluetoothDaemonSetupModule::RegisterModuleCmd(aId, aMode, aRes);
+  return BluetoothDaemonSetupModule::RegisterModuleCmd(aId, aMode,
+                                                       aMaxNumClients, aRes);
 }
 
 nsresult
@@ -1463,6 +1537,22 @@ BluetoothDaemonProtocol::HandleHandsfreeSvc(
 }
 
 void
+BluetoothDaemonProtocol::HandleA2dpSvc(
+  const BluetoothDaemonPDUHeader& aHeader, BluetoothDaemonPDU& aPDU,
+  void* aUserData)
+{
+  BluetoothDaemonA2dpModule::HandleSvc(aHeader, aPDU, aUserData);
+}
+
+void
+BluetoothDaemonProtocol::HandleAvrcpSvc(
+  const BluetoothDaemonPDUHeader& aHeader, BluetoothDaemonPDU& aPDU,
+  void* aUserData)
+{
+  BluetoothDaemonAvrcpModule::HandleSvc(aHeader, aPDU, aUserData);
+}
+
+void
 BluetoothDaemonProtocol::Handle(BluetoothDaemonPDU& aPDU)
 {
   static void (BluetoothDaemonProtocol::* const HandleSvc[])(
@@ -1473,7 +1563,12 @@ BluetoothDaemonProtocol::Handle(BluetoothDaemonPDU& aPDU)
     INIT_ARRAY_AT(0x03, nullptr), // HID host
     INIT_ARRAY_AT(0x04, nullptr), // PAN
     INIT_ARRAY_AT(BluetoothDaemonHandsfreeModule::SERVICE_ID,
-      &BluetoothDaemonProtocol::HandleHandsfreeSvc)
+      &BluetoothDaemonProtocol::HandleHandsfreeSvc),
+    INIT_ARRAY_AT(BluetoothDaemonA2dpModule::SERVICE_ID,
+      &BluetoothDaemonProtocol::HandleA2dpSvc),
+    INIT_ARRAY_AT(0x07, nullptr), // Health
+    INIT_ARRAY_AT(BluetoothDaemonAvrcpModule::SERVICE_ID,
+      &BluetoothDaemonProtocol::HandleAvrcpSvc)
   };
 
   BluetoothDaemonPDUHeader header;
@@ -1669,7 +1764,8 @@ public:
     if (!mRegisteredSocketModule) {
       mRegisteredSocketModule = true;
       // Init, step 4: Register Socket module
-      mInterface->mProtocol->RegisterModuleCmd(0x02, 0x00, this);
+      mInterface->mProtocol->RegisterModuleCmd(0x02, 0x00,
+        BluetoothDaemonSocketModule::MAX_NUM_CLIENTS, this);
     } else if (mRes) {
       // Init, step 5: Signal success to caller
       mRes->Init();
@@ -1708,7 +1804,8 @@ BluetoothDaemonInterface::OnConnectSuccess(enum Channel aChannel)
 
         // Init, step 3: Register Core module
         nsresult rv = mProtocol->RegisterModuleCmd(
-          0x01, 0x00, new InitResultHandler(this, res));
+          0x01, 0x00, BluetoothDaemonCoreModule::MAX_NUM_CLIENTS,
+          new InitResultHandler(this, res));
         if (NS_FAILED(rv) && res) {
           DispatchError(res, STATUS_FAIL);
         }
@@ -1940,10 +2037,11 @@ BluetoothDaemonInterface::CancelDiscovery(BluetoothResultHandler* aRes)
 
 void
 BluetoothDaemonInterface::CreateBond(const nsAString& aBdAddr,
+                                     BluetoothTransport aTransport,
                                      BluetoothResultHandler* aRes)
 {
   static_cast<BluetoothDaemonCoreModule*>
-    (mProtocol)->CreateBondCmd(aBdAddr, aRes);
+    (mProtocol)->CreateBondCmd(aBdAddr, aTransport, aRes);
 }
 
 void
@@ -1960,6 +2058,15 @@ BluetoothDaemonInterface::CancelBond(const nsAString& aBdAddr,
 {
   static_cast<BluetoothDaemonCoreModule*>
     (mProtocol)->CancelBondCmd(aBdAddr, aRes);
+}
+
+/* Connection */
+
+void
+BluetoothDaemonInterface::GetConnectionState(const nsAString& aBdAddr,
+                                             BluetoothResultHandler* aRes)
+{
+  // NO-OP: no corresponding interface of current BlueZ
 }
 
 /* Authentication */
@@ -2013,6 +2120,14 @@ BluetoothDaemonInterface::LeTestMode(uint16_t aOpcode, uint8_t* aBuf,
     (mProtocol)->LeTestModeCmd(aOpcode, aBuf, aLen, aRes);
 }
 
+/* Energy Information */
+
+void
+BluetoothDaemonInterface::ReadEnergyInfo(BluetoothResultHandler* aRes)
+{
+  // NO-OP: no corresponding interface of current BlueZ
+}
+
 void
 BluetoothDaemonInterface::DispatchError(BluetoothResultHandler* aRes,
                                         BluetoothStatus aStatus)
@@ -2053,13 +2168,25 @@ BluetoothDaemonInterface::GetBluetoothHandsfreeInterface()
 BluetoothA2dpInterface*
 BluetoothDaemonInterface::GetBluetoothA2dpInterface()
 {
-  return nullptr;
+  if (mA2dpInterface) {
+    return mA2dpInterface;
+  }
+
+  mA2dpInterface = new BluetoothDaemonA2dpInterface(mProtocol);
+
+  return mA2dpInterface;
 }
 
 BluetoothAvrcpInterface*
 BluetoothDaemonInterface::GetBluetoothAvrcpInterface()
 {
-  return nullptr;
+  if (mAvrcpInterface) {
+    return mAvrcpInterface;
+  }
+
+  mAvrcpInterface = new BluetoothDaemonAvrcpInterface(mProtocol);
+
+  return mAvrcpInterface;
 }
 
 END_BLUETOOTH_NAMESPACE

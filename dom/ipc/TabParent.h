@@ -20,6 +20,7 @@
 #include "nsIXULBrowserWindow.h"
 #include "nsWeakReference.h"
 #include "Units.h"
+#include "WritingModes.h"
 #include "js/TypeDecls.h"
 
 class nsFrameLoader;
@@ -126,8 +127,8 @@ public:
 
     virtual bool RecvMoveFocus(const bool& aForward) MOZ_OVERRIDE;
     virtual bool RecvEvent(const RemoteDOMEvent& aEvent) MOZ_OVERRIDE;
-    virtual bool RecvReplyKeyEvent(const WidgetKeyboardEvent& event);
-    virtual bool RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& event);
+    virtual bool RecvReplyKeyEvent(const WidgetKeyboardEvent& aEvent) MOZ_OVERRIDE;
+    virtual bool RecvDispatchAfterKeyboardEvent(const WidgetKeyboardEvent& aEvent) MOZ_OVERRIDE;
     virtual bool RecvBrowserFrameOpenWindow(PBrowserParent* aOpener,
                                             const nsString& aURL,
                                             const nsString& aName,
@@ -172,12 +173,23 @@ public:
     virtual bool RecvNotifyIMESelection(const uint32_t& aSeqno,
                                         const uint32_t& aAnchor,
                                         const uint32_t& aFocus,
+                                        const mozilla::WritingMode& aWritingMode,
                                         const bool& aCausedByComposition) MOZ_OVERRIDE;
     virtual bool RecvNotifyIMETextHint(const nsString& aText) MOZ_OVERRIDE;
     virtual bool RecvNotifyIMEMouseButtonEvent(const widget::IMENotification& aEventMessage,
                                                bool* aConsumedByIME) MOZ_OVERRIDE;
+    virtual bool RecvNotifyIMEEditorRect(const nsIntRect& aRect) MOZ_OVERRIDE;
+    virtual bool RecvNotifyIMEPositionChange(
+                   const nsIntRect& aEditoRect,
+                   const InfallibleTArray<nsIntRect>& aCompositionRects,
+                   const nsIntRect& aCaretRect) MOZ_OVERRIDE;
     virtual bool RecvEndIMEComposition(const bool& aCancel,
                                        nsString* aComposition) MOZ_OVERRIDE;
+    virtual bool RecvStartPluginIME(const WidgetKeyboardEvent& aKeyboardEvent,
+                                    const int32_t& aPanelX,
+                                    const int32_t& aPanelY,
+                                    nsString* aCommitted) MOZ_OVERRIDE;
+    virtual bool RecvSetPluginFocused(const bool& aFocused) MOZ_OVERRIDE;
     virtual bool RecvGetInputContext(int32_t* aIMEEnabled,
                                      int32_t* aIMEOpen,
                                      intptr_t* aNativeIMEContext) MOZ_OVERRIDE;
@@ -189,12 +201,15 @@ public:
                                      const int32_t& aCause,
                                      const int32_t& aFocusChange) MOZ_OVERRIDE;
     virtual bool RecvRequestFocus(const bool& aCanRaise) MOZ_OVERRIDE;
+    virtual bool RecvEnableDisableCommands(const nsString& aAction,
+                                           const nsTArray<nsCString>& aEnabledCommands,
+                                           const nsTArray<nsCString>& aDisabledCommands) MOZ_OVERRIDE;
     virtual bool RecvSetCursor(const uint32_t& aValue, const bool& aForce) MOZ_OVERRIDE;
     virtual bool RecvSetBackgroundColor(const nscolor& aValue) MOZ_OVERRIDE;
     virtual bool RecvSetStatus(const uint32_t& aType, const nsString& aStatus) MOZ_OVERRIDE;
-    virtual bool RecvIsParentWindowMainWidgetVisible(bool* aIsVisible);
-    virtual bool RecvShowTooltip(const uint32_t& aX, const uint32_t& aY, const nsString& aTooltip);
-    virtual bool RecvHideTooltip();
+    virtual bool RecvIsParentWindowMainWidgetVisible(bool* aIsVisible) MOZ_OVERRIDE;
+    virtual bool RecvShowTooltip(const uint32_t& aX, const uint32_t& aY, const nsString& aTooltip) MOZ_OVERRIDE;
+    virtual bool RecvHideTooltip() MOZ_OVERRIDE;
     virtual bool RecvGetDPI(float* aValue) MOZ_OVERRIDE;
     virtual bool RecvGetDefaultScale(double* aValue) MOZ_OVERRIDE;
     virtual bool RecvGetWidgetNativeData(WindowsHandle* aValue) MOZ_OVERRIDE;
@@ -205,9 +220,9 @@ public:
                                            const ViewID& aViewId,
                                            const bool& aIsRoot,
                                            const ZoomConstraints& aConstraints) MOZ_OVERRIDE;
-    virtual bool RecvContentReceivedTouch(const ScrollableLayerGuid& aGuid,
-                                          const uint64_t& aInputBlockId,
-                                          const bool& aPreventDefault) MOZ_OVERRIDE;
+    virtual bool RecvContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
+                                               const uint64_t& aInputBlockId,
+                                               const bool& aPreventDefault) MOZ_OVERRIDE;
     virtual bool RecvSetTargetAPZC(const uint64_t& aInputBlockId,
                                    const nsTArray<ScrollableLayerGuid>& aTargets) MOZ_OVERRIDE;
 
@@ -220,7 +235,8 @@ public:
     // message-sending functions under a layer of indirection and
     // eating the return values
     void Show(const nsIntSize& size);
-    void UpdateDimensions(const nsIntRect& rect, const nsIntSize& size);
+    void UpdateDimensions(const nsIntRect& rect, const nsIntSize& size,
+                          const nsIntPoint& chromeDisp);
     void UpdateFrame(const layers::FrameMetrics& aFrameMetrics);
     void UIResolutionChanged();
     void AcknowledgeScrollUpdate(const ViewID& aScrollId, const uint32_t& aScrollGeneration);
@@ -379,6 +395,7 @@ protected:
     nsString mIMECacheText;
     uint32_t mIMESelectionAnchor;
     uint32_t mIMESelectionFocus;
+    mozilla::WritingMode mWritingMode;
     bool mIMEComposing;
     bool mIMECompositionEnding;
     // Buffer to store composition text during ResetInputState
@@ -391,6 +408,7 @@ protected:
     InfallibleTArray<nsIntRect> mIMECompositionRects;
     uint32_t mIMECaretOffset;
     nsIntRect mIMECaretRect;
+    nsIntRect mIMEEditorRect;
 
     // The number of event series we're currently capturing.
     int32_t mEventCaptureDepth;
@@ -454,6 +472,18 @@ private:
     nsCOMPtr<nsILoadContext> mLoadContext;
 
     TabId mTabId;
+
+private:
+    // This is used when APZ needs to find the TabParent associated with a layer
+    // to dispatch events.
+    typedef nsDataHashtable<nsUint64HashKey, TabParent*> LayerToTabParentTable;
+    static LayerToTabParentTable* sLayerToTabParentTable;
+
+    static void AddTabParentToTable(uint64_t aLayersId, TabParent* aTabParent);
+    static void RemoveTabParentFromTable(uint64_t aLayersId);
+
+public:
+    static TabParent* GetTabParentFromLayersId(uint64_t aLayersId);
 };
 
 } // namespace dom

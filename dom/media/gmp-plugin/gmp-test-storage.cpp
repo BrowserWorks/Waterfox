@@ -12,17 +12,24 @@
 class WriteRecordClient : public GMPRecordClient {
 public:
   GMPErr Init(GMPRecord* aRecord,
-              GMPTask* aContinuation,
+              GMPTask* aOnSuccess,
+              GMPTask* aOnFailure,
               const uint8_t* aData,
               uint32_t aDataSize) {
     mRecord = aRecord;
-    mContinuation = aContinuation;
+    mOnSuccess = aOnSuccess;
+    mOnFailure = aOnFailure;
     mData.insert(mData.end(), aData, aData + aDataSize);
     return mRecord->Open();
   }
 
   virtual void OpenComplete(GMPErr aStatus) MOZ_OVERRIDE {
-    mRecord->Write(&mData.front(), mData.size());
+    if (GMP_SUCCEEDED(aStatus)) {
+      mRecord->Write(mData.size() ? &mData.front() : nullptr, mData.size());
+    } else {
+      GMPRunOnMainThread(mOnFailure);
+      mOnSuccess->Destroy();
+    }
   }
 
   virtual void ReadComplete(GMPErr aStatus,
@@ -36,15 +43,20 @@ public:
     // just after the Open() call succeeds, immediately closing the
     // record we just opened.
     mRecord->Close();
-    if (mContinuation) {
-      GMPRunOnMainThread(mContinuation);
+    if (GMP_SUCCEEDED(aStatus)) {
+      GMPRunOnMainThread(mOnSuccess);
+      mOnFailure->Destroy();
+    } else {
+      GMPRunOnMainThread(mOnFailure);
+      mOnSuccess->Destroy();
     }
     delete this;
   }
 
 private:
   GMPRecord* mRecord;
-  GMPTask* mContinuation;
+  GMPTask* mOnSuccess;
+  GMPTask* mOnFailure;
   std::vector<uint8_t> mData;
 };
 
@@ -52,7 +64,8 @@ GMPErr
 WriteRecord(const std::string& aRecordName,
             const uint8_t* aData,
             uint32_t aNumBytes,
-            GMPTask* aContinuation)
+            GMPTask* aOnSuccess,
+            GMPTask* aOnFailure)
 {
   GMPRecord* record;
   WriteRecordClient* client = new WriteRecordClient();
@@ -61,20 +74,24 @@ WriteRecord(const std::string& aRecordName,
                            &record,
                            client);
   if (GMP_FAILED(err)) {
+    GMPRunOnMainThread(aOnFailure);
+    aOnSuccess->Destroy();
     return err;
   }
-  return client->Init(record, aContinuation, aData, aNumBytes);
+  return client->Init(record, aOnSuccess, aOnFailure, aData, aNumBytes);
 }
 
 GMPErr
 WriteRecord(const std::string& aRecordName,
             const std::string& aData,
-            GMPTask* aContinuation)
+            GMPTask* aOnSuccess,
+            GMPTask* aOnFailure)
 {
   return WriteRecord(aRecordName,
                      (const uint8_t*)aData.c_str(),
                      aData.size(),
-                     aContinuation);
+                     aOnSuccess,
+                     aOnFailure);
 }
 
 class ReadRecordClient : public GMPRecordClient {
@@ -154,44 +171,58 @@ GMPRunOnMainThread(GMPTask* aTask)
 
 class OpenRecordClient : public GMPRecordClient {
 public:
-  GMPErr Init(GMPRecord* aRecord,
-              OpenContinuation* aContinuation) {
-    mRecord = aRecord;
-    mContinuation = aContinuation;
-    return mRecord->Open();
+  /*
+   * This function will take the memory ownership of the parameters and
+   * delete them when done.
+   */
+  static void Open(const std::string& aRecordName,
+            OpenContinuation* aContinuation) {
+    MOZ_ASSERT(aContinuation);
+    (new OpenRecordClient(aContinuation))->Do(aRecordName);
   }
 
   virtual void OpenComplete(GMPErr aStatus) MOZ_OVERRIDE {
-    mContinuation->OpenComplete(aStatus, mRecord);
-    delete this;
+    Done(aStatus);
   }
 
   virtual void ReadComplete(GMPErr aStatus,
                             const uint8_t* aData,
-                            uint32_t aDataSize) MOZ_OVERRIDE { }
+                            uint32_t aDataSize) MOZ_OVERRIDE {
+    MOZ_CRASH("Should not reach here.");
+  }
 
-  virtual void WriteComplete(GMPErr aStatus) MOZ_OVERRIDE { }
+  virtual void WriteComplete(GMPErr aStatus) MOZ_OVERRIDE {
+    MOZ_CRASH("Should not reach here.");
+  }
 
 private:
+  explicit OpenRecordClient(OpenContinuation* aContinuation)
+    : mRecord(nullptr), mContinuation(aContinuation) {}
+
+  void Do(const std::string& aName) {
+    auto err = GMPOpenRecord(aName.c_str(), aName.size(), &mRecord, this);
+    if (GMP_FAILED(err) ||
+        GMP_FAILED(err = mRecord->Open())) {
+      Done(err);
+    }
+  }
+
+  void Done(GMPErr err) {
+    // mContinuation is responsible for closing mRecord.
+    mContinuation->OpenComplete(err, mRecord);
+    delete mContinuation;
+    delete this;
+  }
+
   GMPRecord* mRecord;
   OpenContinuation* mContinuation;
 };
 
-GMPErr
+void
 GMPOpenRecord(const std::string& aRecordName,
               OpenContinuation* aContinuation)
 {
-  MOZ_ASSERT(aContinuation);
-  GMPRecord* record;
-  OpenRecordClient* client = new OpenRecordClient();
-  auto err = GMPOpenRecord(aRecordName.c_str(),
-                           aRecordName.size(),
-                           &record,
-                           client);
-  if (GMP_FAILED(err)) {
-    return err;
-  }
-  return client->Init(record, aContinuation);
+  OpenRecordClient::Open(aRecordName, aContinuation);
 }
 
 GMPErr

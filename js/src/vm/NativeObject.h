@@ -21,7 +21,6 @@
 #include "gc/Heap.h"
 #include "gc/Marking.h"
 #include "js/Value.h"
-#include "vm/NumericConversions.h"
 #include "vm/Shape.h"
 #include "vm/String.h"
 
@@ -29,10 +28,6 @@ namespace js {
 
 class Nursery;
 class Shape;
-
-namespace gc {
-class ForkJoinNursery;
-}
 
 /*
  * To really poison a set of values, using 'magic' or 'undefined' isn't good
@@ -91,10 +86,8 @@ class ArrayObject;
  * |setterIsStrict| indicates whether invalid changes will cause a TypeError
  * to be thrown.
  */
-template <ExecutionMode mode>
 extern bool
-ArraySetLength(typename ExecutionModeTraits<mode>::ContextType cx,
-               Handle<ArrayObject*> obj, HandleId id,
+ArraySetLength(JSContext *cx, Handle<ArrayObject*> obj, HandleId id,
                unsigned attrs, HandleValue value, bool setterIsStrict);
 
 /*
@@ -191,12 +184,9 @@ class ObjectElements
     friend class NativeObject;
     friend class ArrayObject;
     friend class Nursery;
-    friend class gc::ForkJoinNursery;
 
-    template <ExecutionMode mode>
     friend bool
-    ArraySetLength(typename ExecutionModeTraits<mode>::ContextType cx,
-                   Handle<ArrayObject*> obj, HandleId id,
+    ArraySetLength(JSContext *cx, Handle<ArrayObject*> obj, HandleId id,
                    unsigned attrs, HandleValue value, bool setterIsStrict);
 
     /* See Flags enum above. */
@@ -311,12 +301,10 @@ IsObjectValueInCompartment(Value v, JSCompartment *comp);
 inline void
 DenseRangeWriteBarrierPost(JSRuntime *rt, NativeObject *obj, uint32_t start, uint32_t count)
 {
-#ifdef JSGC_GENERATIONAL
     if (count > 0) {
         JS::shadow::Runtime *shadowRuntime = JS::shadow::Runtime::asShadowRuntime(rt);
         shadowRuntime->gcStoreBufferPtr()->putSlotFromAnyThread(obj, HeapSlot::Element, start, count);
     }
-#endif
 }
 
 /*
@@ -411,7 +399,7 @@ class NativeObject : public JSObject
      * Update the last property, keeping the number of allocated slots in sync
      * with the object's new slot span.
      */
-    static bool setLastProperty(ThreadSafeContext *cx,
+    static bool setLastProperty(ExclusiveContext *cx,
                                 HandleNativeObject obj, HandleShape shape);
 
     // As for setLastProperty(), but allows the number of fixed slots to
@@ -428,7 +416,7 @@ class NativeObject : public JSObject
 #endif
 
     Shape *
-    replaceWithNewEquivalentShape(ThreadSafeContext *cx,
+    replaceWithNewEquivalentShape(ExclusiveContext *cx,
                                   Shape *existingShape, Shape *newShape = nullptr,
                                   bool accessorShape = false);
 
@@ -444,13 +432,12 @@ class NativeObject : public JSObject
      * Update the slot span directly for a dictionary object, and allocate
      * slots to cover the new span if necessary.
      */
-    static bool setSlotSpan(ThreadSafeContext *cx, HandleNativeObject obj, uint32_t span);
+    static bool setSlotSpan(ExclusiveContext *cx, HandleNativeObject obj, uint32_t span);
 
-    bool toDictionaryMode(ThreadSafeContext *cx);
+    bool toDictionaryMode(ExclusiveContext *cx);
 
   private:
     friend class Nursery;
-    friend class gc::ForkJoinNursery;
 
     /*
      * Get internal pointers to the range of values starting at start and
@@ -543,7 +530,7 @@ class NativeObject : public JSObject
     }
 
   public:
-    bool generateOwnShape(ThreadSafeContext *cx, Shape *newShape = nullptr) {
+    bool generateOwnShape(ExclusiveContext *cx, Shape *newShape = nullptr) {
         return replaceWithNewEquivalentShape(cx, lastProperty(), newShape);
     }
 
@@ -588,9 +575,9 @@ class NativeObject : public JSObject
      * The number of allocated slots is not stored explicitly, and changes to
      * the slots must track changes in the slot span.
      */
-    static bool growSlots(ThreadSafeContext *cx, HandleNativeObject obj, uint32_t oldCount,
+    static bool growSlots(ExclusiveContext *cx, HandleNativeObject obj, uint32_t oldCount,
                           uint32_t newCount);
-    static void shrinkSlots(ThreadSafeContext *cx, HandleNativeObject obj, uint32_t oldCount,
+    static void shrinkSlots(ExclusiveContext *cx, HandleNativeObject obj, uint32_t oldCount,
                             uint32_t newCount);
 
     bool hasDynamicSlots() const { return !!slots_; }
@@ -642,32 +629,16 @@ class NativeObject : public JSObject
      * after calling object-parameter-free shape methods, avoiding coupling
      * logic across the object vs. shape module wall.
      */
-    static bool allocSlot(ThreadSafeContext *cx, HandleNativeObject obj, uint32_t *slotp);
+    static bool allocSlot(ExclusiveContext *cx, HandleNativeObject obj, uint32_t *slotp);
     void freeSlot(uint32_t slot);
 
   private:
-    static Shape *getChildPropertyOnDictionary(ThreadSafeContext *cx, HandleNativeObject obj,
+    static Shape *getChildPropertyOnDictionary(ExclusiveContext *cx, HandleNativeObject obj,
                                                HandleShape parent, StackShape &child);
     static Shape *getChildProperty(ExclusiveContext *cx, HandleNativeObject obj,
                                    HandleShape parent, StackShape &child);
-    template <ExecutionMode mode>
-    static inline Shape *
-    getOrLookupChildProperty(typename ExecutionModeTraits<mode>::ExclusiveContextType cx,
-                             HandleNativeObject obj, HandleShape parent, StackShape &child)
-    {
-        if (mode == ParallelExecution)
-            return lookupChildProperty(cx, obj, parent, child);
-        return getChildProperty(cx->asExclusiveContext(), obj, parent, child);
-    }
 
   public:
-    /*
-     * XXX: This should be private, but is public because it needs to be a
-     * friend of ThreadSafeContext to get to the propertyTree on cx->compartment_.
-     */
-    static Shape *lookupChildProperty(ThreadSafeContext *cx, HandleNativeObject obj,
-                                      HandleShape parent, StackShape &child);
-
     /* Add a property whose id is not yet in this scope. */
     static Shape *addProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId id,
                               JSPropertyOp getter, JSStrictPropertyOp setter,
@@ -681,26 +652,21 @@ class NativeObject : public JSObject
                            uint32_t slot, unsigned attrs);
 
     /* Add or overwrite a property for id in this scope. */
-    template <ExecutionMode mode>
     static Shape *
-    putProperty(typename ExecutionModeTraits<mode>::ExclusiveContextType cx,
-                HandleNativeObject obj, HandleId id,
+    putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId id,
                 JSPropertyOp getter, JSStrictPropertyOp setter,
                 uint32_t slot, unsigned attrs,
                 unsigned flags);
-    template <ExecutionMode mode>
     static inline Shape *
-    putProperty(typename ExecutionModeTraits<mode>::ExclusiveContextType cx,
-                HandleObject obj, PropertyName *name,
+    putProperty(ExclusiveContext *cx, HandleObject obj, PropertyName *name,
                 JSPropertyOp getter, JSStrictPropertyOp setter,
                 uint32_t slot, unsigned attrs,
                 unsigned flags);
 
     /* Change the given property into a sibling with the same id in this scope. */
-    template <ExecutionMode mode>
     static Shape *
-    changeProperty(typename ExecutionModeTraits<mode>::ExclusiveContextType cx,
-                   HandleNativeObject obj, HandleShape shape, unsigned attrs, unsigned mask,
+    changeProperty(ExclusiveContext *cx, HandleNativeObject obj,
+                   HandleShape shape, unsigned attrs, unsigned mask,
                    JSPropertyOp getter, JSStrictPropertyOp setter);
 
     static inline bool changePropertyAttributes(JSContext *cx, HandleNativeObject obj,
@@ -720,12 +686,10 @@ class NativeObject : public JSObject
      * 1. getter and setter must be normalized based on flags (see jsscope.cpp).
      * 2. Checks for non-extensibility must be done by callers.
      */
-    template <ExecutionMode mode>
     static Shape *
-    addPropertyInternal(typename ExecutionModeTraits<mode>::ExclusiveContextType cx,
-                        HandleNativeObject obj, HandleId id,
+    addPropertyInternal(ExclusiveContext *cx, HandleNativeObject obj, HandleId id,
                         JSPropertyOp getter, JSStrictPropertyOp setter,
-                        uint32_t slot, unsigned attrs, unsigned flags, Shape **spp,
+                        uint32_t slot, unsigned attrs, unsigned flags, ShapeTable::Entry *entry,
                         bool allowDictionary);
 
     void fillInAfterSwap(JSContext *cx, const Vector<Value> &values, void *priv);
@@ -812,7 +776,7 @@ class NativeObject : public JSObject
     static const uint32_t MAX_FIXED_SLOTS = 16;
 
   protected:
-    static inline bool updateSlotsForSpan(ThreadSafeContext *cx,
+    static inline bool updateSlotsForSpan(ExclusiveContext *cx,
                                           HandleNativeObject obj, size_t oldSpan, size_t newSpan);
 
   public:
@@ -912,7 +876,7 @@ class NativeObject : public JSObject
     }
 
     /* Accessors for elements. */
-    bool ensureElements(ThreadSafeContext *cx, uint32_t capacity) {
+    bool ensureElements(ExclusiveContext *cx, uint32_t capacity) {
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
         if (capacity > getDenseCapacity())
             return growElements(cx, capacity);
@@ -920,24 +884,24 @@ class NativeObject : public JSObject
     }
 
     static uint32_t goodAllocated(uint32_t n, uint32_t length);
-    bool growElements(ThreadSafeContext *cx, uint32_t newcap);
-    void shrinkElements(ThreadSafeContext *cx, uint32_t cap);
+    bool growElements(ExclusiveContext *cx, uint32_t newcap);
+    void shrinkElements(ExclusiveContext *cx, uint32_t cap);
     void setDynamicElements(ObjectElements *header) {
         MOZ_ASSERT(!hasDynamicElements());
         elements_ = header->elements();
         MOZ_ASSERT(hasDynamicElements());
     }
 
-    static bool CopyElementsForWrite(ThreadSafeContext *cx, NativeObject *obj);
+    static bool CopyElementsForWrite(ExclusiveContext *cx, NativeObject *obj);
 
-    bool maybeCopyElementsForWrite(ThreadSafeContext *cx) {
+    bool maybeCopyElementsForWrite(ExclusiveContext *cx) {
         if (denseElementsAreCopyOnWrite())
             return CopyElementsForWrite(cx, this);
         return true;
     }
 
   private:
-    inline void ensureDenseInitializedLengthNoPackedCheck(ThreadSafeContext *cx,
+    inline void ensureDenseInitializedLengthNoPackedCheck(ExclusiveContext *cx,
                                                           uint32_t index, uint32_t extra);
 
   public:
@@ -950,8 +914,6 @@ class NativeObject : public JSObject
 
     inline void ensureDenseInitializedLength(ExclusiveContext *cx,
                                              uint32_t index, uint32_t extra);
-    inline void ensureDenseInitializedLengthPreservePackedFlag(ThreadSafeContext *cx,
-                                                               uint32_t index, uint32_t extra);
     void setDenseElement(uint32_t index, const Value &val) {
         MOZ_ASSERT(index < getDenseInitializedLength());
         MOZ_ASSERT(!denseElementsAreCopyOnWrite());
@@ -971,7 +933,6 @@ class NativeObject : public JSObject
             setDenseElement(index, val);
     }
 
-    inline bool setDenseElementIfHasType(uint32_t index, const Value &val);
     inline void setDenseElementWithType(ExclusiveContext *cx, uint32_t index,
                                         const Value &val);
     inline void initDenseElementWithType(ExclusiveContext *cx, uint32_t index,
@@ -1077,17 +1038,11 @@ class NativeObject : public JSObject
      */
     enum EnsureDenseResult { ED_OK, ED_FAILED, ED_SPARSE };
 
-  private:
-    inline EnsureDenseResult ensureDenseElementsNoPackedCheck(ThreadSafeContext *cx,
-                                                              uint32_t index, uint32_t extra);
-
   public:
     inline EnsureDenseResult ensureDenseElements(ExclusiveContext *cx,
                                                  uint32_t index, uint32_t extra);
-    inline EnsureDenseResult ensureDenseElementsPreservePackedFlag(ThreadSafeContext *cx,
-                                                                   uint32_t index, uint32_t extra);
 
-    inline EnsureDenseResult extendDenseElements(ThreadSafeContext *cx,
+    inline EnsureDenseResult extendDenseElements(ExclusiveContext *cx,
                                                  uint32_t requiredCapacity, uint32_t extra);
 
     /* Convert a single dense element to a sparse property. */
@@ -1164,14 +1119,12 @@ class NativeObject : public JSObject
     inline void privateWriteBarrierPre(void **oldval);
 
     void privateWriteBarrierPost(void **pprivate) {
-#ifdef JSGC_GENERATIONAL
         gc::Cell **cellp = reinterpret_cast<gc::Cell **>(pprivate);
         MOZ_ASSERT(cellp);
         MOZ_ASSERT(*cellp);
         gc::StoreBuffer *storeBuffer = (*cellp)->storeBuffer();
         if (storeBuffer)
             storeBuffer->putCellFromAnyThread(cellp);
-#endif
     }
 
     /* Private data accessors. */
@@ -1237,16 +1190,22 @@ class NativeObject : public JSObject
     static size_t offsetOfSlots() { return offsetof(NativeObject, slots_); }
 };
 
+// Object class for plain native objects created using '{}' object literals,
+// 'new Object()', 'Object.create', etc.
+class PlainObject : public NativeObject
+{
+  public:
+    static const js::Class class_;
+};
+
 inline void
 NativeObject::privateWriteBarrierPre(void **oldval)
 {
-#ifdef JSGC_INCREMENTAL
     JS::shadow::Zone *shadowZone = this->shadowZoneFromAnyThread();
     if (shadowZone->needsIncrementalBarrier()) {
         if (*oldval && getClass()->trace)
             getClass()->trace(shadowZone->barrierTracer(), this);
     }
-#endif
 }
 
 #ifdef DEBUG
@@ -1326,15 +1285,12 @@ enum QualifiedBool {
     Qualified = 1
 };
 
-template <ExecutionMode mode>
 extern bool
-SetPropertyHelper(typename ExecutionModeTraits<mode>::ContextType cx,
-                  HandleNativeObject obj,
-                  HandleObject receiver, HandleId id, QualifiedBool qualified,
-                  MutableHandleValue vp, bool strict);
+SetPropertyHelper(JSContext *cx, HandleNativeObject obj, HandleObject receiver, HandleId id,
+                  QualifiedBool qualified, MutableHandleValue vp, bool strict);
 
 extern bool
-SetElementHelper(JSContext *cx, HandleNativeObject obj, HandleObject Receiver, uint32_t index,
+SetElementHelper(JSContext *cx, HandleNativeObject obj, HandleObject receiver, uint32_t index,
                  MutableHandleValue vp, bool strict);
 
 extern bool
@@ -1424,8 +1380,8 @@ JSObject::setGeneric(JSContext *cx, js::HandleObject obj, js::HandleObject recei
 {
     if (obj->getOps()->setGeneric)
         return nonNativeSetProperty(cx, obj, receiver, id, vp, strict);
-    return js::baseops::SetPropertyHelper<js::SequentialExecution>(
-        cx, obj.as<js::NativeObject>(), receiver, id, js::baseops::Qualified, vp, strict);
+    return js::baseops::SetPropertyHelper(cx, obj.as<js::NativeObject>(),
+                                          receiver, id, js::baseops::Qualified, vp, strict);
 }
 
 /* static */ inline bool

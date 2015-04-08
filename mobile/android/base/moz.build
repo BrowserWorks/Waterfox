@@ -327,8 +327,8 @@ gbjar.sources += [
     'InputMethods.java',
     'IntentHelper.java',
     'JavaAddonManager.java',
-    'LocaleAware.java',
     'LocaleManager.java',
+    'Locales.java',
     'lwt/LightweightTheme.java',
     'lwt/LightweightThemeDrawable.java',
     'MediaCastingBar.java',
@@ -553,7 +553,6 @@ if CONFIG['MOZ_ANDROID_NEW_TABLET_UI'] and max_sdk_version >= 11:
         'tabs/TabStripItemView.java',
         'tabs/TabStripView.java'
     ]
-    ANDROID_RES_DIRS += [ SRCDIR + '/newtablet/res' ]
 
 gbjar.sources += sync_java_files
 gbjar.extra_jars += [
@@ -611,7 +610,6 @@ gtjar.sources += [ thirdparty_source_dir + f for f in [
     'com/nineoldandroids/view/ViewPropertyAnimatorHC.java',
     'com/nineoldandroids/view/ViewPropertyAnimatorICS.java',
     'com/nineoldandroids/view/ViewPropertyAnimatorPreHC.java',
-    'com/readystatesoftware/systembartint/SystemBarTintManager.java',
     'com/squareup/picasso/Action.java',
     'com/squareup/picasso/AssetBitmapHunter.java',
     'com/squareup/picasso/BitmapHunter.java',

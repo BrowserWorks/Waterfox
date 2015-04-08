@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/en.xml
- */
 en{
     Currencies{
         ADP{
@@ -1029,7 +1026,7 @@ en{
         }
         UZS{
             "UZS",
-            "Uzbekistan Som",
+            "Uzbekistani Som",
         }
         VEB{
             "VEB",
@@ -1057,7 +1054,7 @@ en{
         }
         XAF{
             "FCFA",
-            "CFA Franc BEAC",
+            "Central African CFA Franc",
         }
         XAG{
             "XAG",
@@ -1105,7 +1102,7 @@ en{
         }
         XOF{
             "CFA",
-            "CFA Franc BCEAO",
+            "West African CFA Franc",
         }
         XPD{
             "XPD",
@@ -1842,8 +1839,8 @@ en{
             other{"Moldovan lei"}
         }
         MGA{
-            one{"Malagasy Ariary"}
-            other{"Malagasy Ariaries"}
+            one{"Malagasy ariary"}
+            other{"Malagasy ariaries"}
         }
         MGF{
             one{"Malagasy franc"}
@@ -1898,8 +1895,8 @@ en{
             other{"Maldivian rufiyaas"}
         }
         MWK{
-            one{"Malawian Kwacha"}
-            other{"Malawian Kwachas"}
+            one{"Malawian kwacha"}
+            other{"Malawian kwachas"}
         }
         MXN{
             one{"Mexican peso"}
@@ -2218,8 +2215,8 @@ en{
             other{"Uruguayan pesos"}
         }
         UZS{
-            one{"Uzbekistan som"}
-            other{"Uzbekistan som"}
+            one{"Uzbekistani som"}
+            other{"Uzbekistani som"}
         }
         VEB{
             one{"Venezuelan bolívar (1871–2008)"}
@@ -2246,8 +2243,8 @@ en{
             other{"Samoan tala"}
         }
         XAF{
-            one{"CFA franc BEAC"}
-            other{"CFA francs BEAC"}
+            one{"Central African CFA franc"}
+            other{"Central African CFA francs"}
         }
         XAG{
             one{"troy ounce of silver"}
@@ -2294,8 +2291,8 @@ en{
             other{"French UIC-francs"}
         }
         XOF{
-            one{"CFA franc BCEAO"}
-            other{"CFA francs BCEAO"}
+            one{"West African CFA franc"}
+            other{"West African CFA francs"}
         }
         XPD{
             one{"troy ounce of palladium"}
@@ -2394,5 +2391,5 @@ en{
         one{"{0} {1}"}
         other{"{0} {1}"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.48"}
 }

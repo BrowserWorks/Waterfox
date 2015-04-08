@@ -6,7 +6,6 @@
 #ifndef PROFILER_FUNCS_H
 #define PROFILER_FUNCS_H
 
-#include "mozilla/NullPtr.h"
 #include "js/TypeDecls.h"
 #include "js/ProfilingStack.h"
 #include <stdint.h>
@@ -96,6 +95,8 @@ void mozilla_sampler_tracing(const char* aCategory, const char* aInfo,
 void mozilla_sampler_tracing(const char* aCategory, const char* aInfo,
                              ProfilerBacktrace* aCause,
                              TracingMetadata aMetaData);
+
+void mozilla_sampler_log(const char *fmt, va_list args);
 
 #endif
 

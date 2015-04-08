@@ -23,6 +23,7 @@
 #include "include/SampleTable.h"
 #include "include/ESDS.h"
 
+#include <algorithm>
 #include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1242,6 +1243,12 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         case FOURCC('s', 'a', 'm', 'r'):
         case FOURCC('s', 'a', 'w', 'b'):
         {
+            // QT's MP4 may have an empty MP4A atom within a MP4A atom.
+            // Ignore it.
+            if (chunk_data_size == 4) {
+                *offset += chunk_size;
+                break;
+            }
             uint8_t buffer[8 + 20];
             if (chunk_data_size < (ssize_t)sizeof(buffer)) {
                 // Basic AudioSampleEntry size.
@@ -1254,6 +1261,7 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             }
 
             uint16_t data_ref_index = U16_AT(&buffer[6]);
+            uint16_t qt_version = U16_AT(&buffer[8]);
             uint32_t num_channels = U16_AT(&buffer[16]);
 
             uint16_t sample_size = U16_AT(&buffer[18]);
@@ -1270,8 +1278,41 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             mLastTrack->meta->setInt32(kKeySampleSize, sample_size);
             mLastTrack->meta->setInt32(kKeySampleRate, sample_rate);
 
+            uint64_t skip = 0;
+            if (qt_version == 1) {
+                // Skip QTv1 extension
+                // uint32_t SamplesPerPacket
+                // uint32_t BytesPerPacket
+                // uint32_t BytesPerFrame
+                // uint32_t BytesPerSample
+                skip = 16;
+            } else if (qt_version == 2) {
+                // Skip QTv2 extension
+                // uint32_t Qt V2 StructSize
+                // double SampleRate
+                // uint32_t ChannelCount
+                // uint32_t Reserved
+                // uint32_t BitsPerChannel
+                // uint32_t LPCMFormatSpecificFlags
+                // uint32_t BytesPerAudioPacket
+                // uint32_t LPCMFramesPerAudioPacket
+                // if (Qt V2 StructSize > 72) {
+                //     StructSize-72: Qt V2 extension
+                // }
+                uint32_t structSize32;
+                if (mDataSource->readAt(
+                            data_offset + 28, &structSize32, sizeof(structSize32))
+                        < (ssize_t)sizeof(structSize32)) {
+                    return ERROR_IO;
+                }
+                uint32_t structSize = ntohl(structSize32);
+                skip += 36;
+                if (structSize > 72) {
+                    skip += structSize - 72;
+                }
+            }
             off64_t stop_offset = *offset + chunk_size;
-            *offset = data_offset + sizeof(buffer);
+            *offset = data_offset + sizeof(buffer) + skip;
             while (*offset < stop_offset) {
                 status_t err = parseChunk(offset, depth + 1);
                 if (err != OK) {
@@ -1334,6 +1375,11 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 status_t err = parseChunk(offset, depth + 1);
                 if (err != OK) {
                     return err;
+                }
+                // Some Apple QuickTime muxed videos appear to have some padding.
+                // Ignore it and assume we've reached the end.
+                if (stop_offset - *offset < 8) {
+                    *offset = stop_offset;
                 }
             }
 
@@ -1853,6 +1899,23 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
             parseSegmentIndex(data_offset, chunk_data_size);
             *offset += chunk_size;
             return UNKNOWN_ERROR; // stop parsing after sidx
+        }
+
+        case FOURCC('w', 'a', 'v', 'e'):
+        {
+            off64_t stop_offset = *offset + chunk_size;
+            *offset = data_offset;
+            while (*offset < stop_offset) {
+                status_t err = parseChunk(offset, depth + 1);
+                if (err != OK) {
+                    return err;
+                }
+            }
+
+            if (*offset != stop_offset) {
+                return ERROR_MALFORMED;
+            }
+            break;
         }
 
         default:
@@ -3282,14 +3345,14 @@ bool MPEG4Source::ensureSrcBufferAllocated(int32_t aSize) {
 }
 
 bool MPEG4Source::ensureMediaBufferAllocated(int32_t aSize) {
-  if (mBuffer->size() < aSize) {
-      ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
-            aSize, mBuffer->size());
-      mBuffer->release();
-      mBuffer = NULL;
-      return false;
+  if (mBuffer->ensuresize(aSize)) {
+      return true;
   }
-  return true;
+  ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
+        aSize, mBuffer->size());
+  mBuffer->release();
+  mBuffer = NULL;
+  return false;
 }
 
 status_t MPEG4Source::read(
@@ -3416,12 +3479,7 @@ status_t MPEG4Source::read(
 
         int32_t max_size;
         CHECK(mFormat->findInt32(kKeyMaxInputSize, &max_size));
-        if (!ValidInputSize(max_size)) {
-          ALOGE("Invalid max input size %d", max_size);
-          return ERROR_MALFORMED;
-        }
-        mBuffer = new MediaBuffer(max_size);
-        assert(mBuffer);
+        mBuffer = new MediaBuffer(std::min(max_size, 1024 * 1024));
     }
 
     if (!mIsAVC || mWantsNALFragments) {
@@ -3497,7 +3555,14 @@ status_t MPEG4Source::read(
         // Each NAL unit is split up into its constituent fragments and
         // each one of them returned in its own buffer.
 
-        CHECK(mBuffer->range_length() >= mNALLengthSize);
+        if (mBuffer->range_length() < mNALLengthSize) {
+            ALOGE("incomplete NAL unit.");
+
+            mBuffer->release();
+            mBuffer = NULL;
+
+            return ERROR_MALFORMED;
+        }
 
         const uint8_t *src =
             (const uint8_t *)mBuffer->data() + mBuffer->range_offset();
@@ -3543,6 +3608,8 @@ status_t MPEG4Source::read(
                 mDataSource->readAt(offset, (uint8_t*)mBuffer->data(), size);
         } else {
             if (!ensureSrcBufferAllocated(size)) {
+                ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
+                      size, mSrcBackend.Length());
                 return ERROR_MALFORMED;
             }
             num_bytes_read = mDataSource->readAt(offset, mSrcBuffer, size);
@@ -3560,7 +3627,6 @@ status_t MPEG4Source::read(
             mBuffer->set_range(0, size);
 
         } else {
-            uint8_t *dstData = (uint8_t *)mBuffer->data();
             size_t srcOffset = 0;
             size_t dstOffset = 0;
 
@@ -3587,6 +3653,7 @@ status_t MPEG4Source::read(
                 if (!ensureMediaBufferAllocated(dstOffset + 4 + nalLength)) {
                     return ERROR_MALFORMED;
                 }
+                uint8_t *dstData = (uint8_t *)mBuffer->data();
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 24);
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 16);
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 8);
@@ -3786,12 +3853,7 @@ status_t MPEG4Source::fragmentedRead(
 
         int32_t max_size;
         CHECK(mFormat->findInt32(kKeyMaxInputSize, &max_size));
-        if (!ValidInputSize(max_size)) {
-          ALOGE("Invalid max input size %d", max_size);
-          return ERROR_MALFORMED;
-        }
-        mBuffer = new MediaBuffer(max_size);
-        assert(mBuffer);
+        mBuffer = new MediaBuffer(std::min(max_size, 1024 * 1024));
     }
 
     const Sample *smpl = &mCurrentSamples[mCurrentSampleIndex];
@@ -3859,7 +3921,14 @@ status_t MPEG4Source::fragmentedRead(
         // Each NAL unit is split up into its constituent fragments and
         // each one of them returned in its own buffer.
 
-        CHECK(mBuffer->range_length() >= mNALLengthSize);
+        if (mBuffer->range_length() < mNALLengthSize) {
+            ALOGE("incomplete NAL unit.");
+
+            mBuffer->release();
+            mBuffer = NULL;
+
+            return ERROR_MALFORMED;
+        }
 
         const uint8_t *src =
             (const uint8_t *)mBuffer->data() + mBuffer->range_offset();
@@ -3906,6 +3975,8 @@ status_t MPEG4Source::fragmentedRead(
                 mDataSource->readAt(offset, (uint8_t*)mBuffer->data(), size);
         } else {
             if (!ensureSrcBufferAllocated(size)) {
+                ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
+                      size, mSrcBackend.Length());
                 return ERROR_MALFORMED;
             }
             num_bytes_read = mDataSource->readAt(offset, mSrcBuffer, size);
@@ -3924,7 +3995,6 @@ status_t MPEG4Source::fragmentedRead(
             mBuffer->set_range(0, size);
 
         } else {
-            uint8_t *dstData = (uint8_t *)mBuffer->data();
             size_t srcOffset = 0;
             size_t dstOffset = 0;
 
@@ -3951,6 +4021,7 @@ status_t MPEG4Source::fragmentedRead(
                 if (!ensureMediaBufferAllocated(dstOffset + 4 + nalLength)) {
                     return ERROR_MALFORMED;
                 }
+                uint8_t *dstData = (uint8_t *)mBuffer->data();
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 24);
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 16);
                 dstData[dstOffset++] = (uint8_t) (nalLength >> 8);

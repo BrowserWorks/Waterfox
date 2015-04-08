@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/it.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/it.xml
- */
 it{
     Countries{
         001{"Mondo"}
@@ -142,7 +139,7 @@ it{
         GW{"Guinea-Bissau"}
         GY{"Guyana"}
         HK{"RAS di Hong Kong"}
-        HM{"Isole Heard ed Isole McDonald"}
+        HM{"Isole Heard e McDonald"}
         HN{"Honduras"}
         HR{"Croazia"}
         HT{"Haiti"}
@@ -302,18 +299,18 @@ it{
         ZW{"Zimbabwe"}
         ZZ{"Regione non valida o sconosciuta"}
     }
-    Countries%variant{
-        CD{"Congo (RDC)"}
-        CG{"Congo (repubblica)"}
-        FK{"Isole Falkland (isole Malvine)"}
-        MK{"Repubblica ex Jugoslava di Macedonia"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"GB"}
         HK{"Hong-Kong"}
         MO{"Macao"}
         PS{"Palestina"}
         US{"USA"}
     }
-    Version{"2.1.8.32"}
+    Countries%variant{
+        CD{"Congo (RDC)"}
+        CG{"Congo (repubblica)"}
+        FK{"Isole Falkland (isole Malvine)"}
+        MK{"Repubblica ex Jugoslava di Macedonia"}
+    }
+    Version{"2.1.13.6"}
 }

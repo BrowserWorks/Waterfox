@@ -6,6 +6,7 @@
 #ifndef GFX_GLIMAGES_H
 #define GFX_GLIMAGES_H
 
+#include "GLContextTypes.h"
 #include "GLTypes.h"
 #include "ImageContainer.h"             // for Image
 #include "ImageTypes.h"                 // for ImageFormat::SHARED_GLTEXTURE
@@ -20,7 +21,7 @@ namespace layers {
 
 class GLImage : public Image {
 public:
-  GLImage(ImageFormat aFormat) : Image(nullptr, aFormat){}
+  explicit GLImage(ImageFormat aFormat) : Image(nullptr, aFormat){}
 
   virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE;
 };
@@ -31,10 +32,11 @@ public:
     EGLImage mImage;
     EGLSync mSync;
     gfx::IntSize mSize;
-    bool mInverted;
+    gl::OriginPos mOriginPos;
     bool mOwns;
 
-    Data() : mImage(nullptr), mSync(nullptr), mSize(0, 0), mInverted(false), mOwns(false)
+    Data() : mImage(nullptr), mSync(nullptr), mSize(0, 0),
+             mOriginPos(gl::OriginPos::TopLeft), mOwns(false)
     {
     }
   };
@@ -60,7 +62,7 @@ public:
   struct Data {
     mozilla::gl::AndroidSurfaceTexture* mSurfTex;
     gfx::IntSize mSize;
-    bool mInverted;
+    gl::OriginPos mOriginPos;
   };
 
   void SetData(const Data& aData) { mData = aData; }

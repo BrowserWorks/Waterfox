@@ -81,6 +81,8 @@ public:
 
   virtual bool IsAsync() const MOZ_OVERRIDE { return true; }
 
+  virtual void DisableHardwareAcceleration() MOZ_OVERRIDE;
+
 private:
 
   bool InitDemuxer();
@@ -127,7 +129,6 @@ private:
   size_t SizeOfQueue(TrackType aTrack);
 
   nsRefPtr<MP4Stream> mStream;
-  int64_t mTimestampOffset;
   nsAutoPtr<mp4_demuxer::MP4Demuxer> mDemuxer;
   nsRefPtr<PlatformDecoderModule> mPlatform;
 
@@ -186,7 +187,7 @@ private:
     nsRefPtr<MediaDataDecoder> mDecoder;
     // TaskQueue on which decoder can choose to decode.
     // Only non-null up until the decoder is created.
-    nsRefPtr<MediaTaskQueue> mTaskQueue;
+    nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
     // Callback that receives output and error notifications from the decoder.
     nsAutoPtr<DecoderCallback> mCallback;
     // Decoded samples returned my mDecoder awaiting being returned to
@@ -260,6 +261,9 @@ private:
 
   // True if we've read the streams' metadata.
   bool mDemuxerInitialized;
+
+  // True if we've gathered telemetry from an SPS.
+  bool mFoundSPSForTelemetry;
 
   // Synchronized by decoder monitor.
   bool mIsEncrypted;

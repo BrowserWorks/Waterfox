@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2004-2014, International Business Machines Corporation and
+ * Copyright (c) 2004-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /********************************************************************************
@@ -1022,7 +1022,7 @@ static void TestRegexCAPI(void) {
         TEST_ASSERT_SUCCESS(status);
         bufPtr = buf;
         bufCap = UPRV_LENGTHOF(buf);
-        u_uastrncpy(repl, "abc\\u0041\\U00000042 \\\\ $ \\abc", UPRV_LENGTHOF(repl));
+        u_uastrncpy(repl, "abc\\u0041\\U00000042 \\\\ \\$ \\abc", UPRV_LENGTHOF(repl));
         uregex_appendReplacement(re, repl, -1, &bufPtr, &bufCap, &status);
         TEST_ASSERT_SUCCESS(status);
         TEST_ASSERT_STRING("abcAB \\ $ abc", buf, TRUE); 
@@ -1754,16 +1754,14 @@ static void TestUTextAPI(void) {
     }
 
     /*
-     *  group()
+     *  groupUText()
      */
     {
         UChar    text1[80];
         UText   *actual;
         UBool    result;
-
-        const char str_abcinteriordef[] = { 0x61, 0x62, 0x63, 0x20, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x69, 0x6f, 0x72, 0x20, 0x64, 0x65, 0x66, 0x00 }; /* abc interior def */
-        const char str_interior[] = { 0x20, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x69, 0x6f, 0x72, 0x20, 0x00 }; /* ' interior ' */
-        
+        int64_t  groupLen = 0;
+        UChar    groupBuf[20];
 
         u_uastrncpy(text1, "noise abc interior def, and this is off the end",  UPRV_LENGTHOF(text1));
 
@@ -1775,58 +1773,38 @@ static void TestUTextAPI(void) {
         result = uregex_find(re, 0, &status);
         TEST_ASSERT(result==TRUE);
 
-        /*  Capture Group 0, the full match.  Should succeed.  */
-        status = U_ZERO_ERROR;
-        actual = uregex_groupUTextDeep(re, 0, NULL, &status);
-        TEST_ASSERT_SUCCESS(status);
-        TEST_ASSERT_UTEXT(str_abcinteriordef, actual);
-        utext_close(actual);
-
         /*  Capture Group 0 with shallow clone API.  Should succeed.  */
         status = U_ZERO_ERROR;
-        {
-            int64_t      group_len;
-            int32_t      len16;
-            UErrorCode   shallowStatus = U_ZERO_ERROR;
-            int64_t      nativeIndex;
-            UChar *groupChars;
-            UText groupText = UTEXT_INITIALIZER;
+        actual = uregex_groupUText(re, 0, NULL, &groupLen, &status);
+        TEST_ASSERT_SUCCESS(status);
 
-            actual = uregex_groupUText(re, 0, NULL, &group_len, &status);
-            TEST_ASSERT_SUCCESS(status);
+        TEST_ASSERT(utext_getNativeIndex(actual) == 6);  /* index of "abc " within "noise abc ..." */
+        TEST_ASSERT(groupLen == 16);   /* length of "abc interior def"  */
+        utext_extract(actual, 6 /*start index */, 6+16 /*limit index*/, groupBuf, sizeof(groupBuf), &status);
 
-            nativeIndex = utext_getNativeIndex(actual);
-            /*  Following returns U_INDEX_OUTOFBOUNDS_ERROR... looks like a bug in ucstrFuncs UTextFuncs [utext.cpp]  */
-            /*  len16 = utext_extract(actual, nativeIndex, nativeIndex + group_len, NULL, 0, &shallowStatus);  */
-            len16 = (int32_t)group_len;
-            
-            groupChars = (UChar *)malloc(sizeof(UChar)*(len16+1));
-            utext_extract(actual, nativeIndex, nativeIndex + group_len, groupChars, len16+1, &shallowStatus);
-
-            utext_openUChars(&groupText, groupChars, len16, &shallowStatus);
-            
-            TEST_ASSERT_UTEXT(str_abcinteriordef, &groupText);
-            utext_close(&groupText);
-            free(groupChars);
-        }
+        TEST_ASSERT_STRING("abc interior def", groupBuf, TRUE);
         utext_close(actual);
 
         /*  Capture group #1.  Should succeed. */
         status = U_ZERO_ERROR;
-        actual = uregex_groupUTextDeep(re, 1, NULL, &status);
+
+        actual = uregex_groupUText(re, 1, NULL, &groupLen, &status);
         TEST_ASSERT_SUCCESS(status);
-        TEST_ASSERT_UTEXT(str_interior, actual);
+        TEST_ASSERT(9 == utext_getNativeIndex(actual));    /* index of " interior " within "noise abc interior def ... " */
+                                                           /*    (within the string text1)           */
+        TEST_ASSERT(10 == groupLen);                       /* length of " interior " */
+        utext_extract(actual, 9 /*start index*/, 9+10 /*limit index*/, groupBuf, sizeof(groupBuf), &status);
+        TEST_ASSERT_STRING(" interior ", groupBuf, TRUE);
+
         utext_close(actual);
 
         /*  Capture group out of range.  Error. */
         status = U_ZERO_ERROR;
-        actual = uregex_groupUTextDeep(re, 2, NULL, &status);
+        actual = uregex_groupUText(re, 2, NULL, &groupLen, &status);
         TEST_ASSERT(status == U_INDEX_OUTOFBOUNDS_ERROR);
-        TEST_ASSERT(utext_nativeLength(actual) == 0);
         utext_close(actual);
 
         uregex_close(re);
-
     }
     
     /*
@@ -1839,7 +1817,8 @@ static void TestUTextAPI(void) {
         UText   *result;
         const char str_Replxxx[] = { 0x52, 0x65, 0x70, 0x6c, 0x61, 0x63, 0x65, 0x20, 0x3c, 0x61, 0x61, 0x3e, 0x20, 0x78, 0x31, 0x78, 0x20, 0x78, 0x2e, 0x2e, 0x2e, 0x78, 0x2e, 0x00 }; /* Replace <aa> x1x x...x. */
         const char str_Nomatchhere[] = { 0x4e, 0x6f, 0x20, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x20, 0x68, 0x65, 0x72, 0x65, 0x2e, 0x00 }; /* No match here. */
-        const char str_u00411U00000042a[] =  { 0x5c, 0x5c, 0x5c, 0x75, 0x30, 0x30, 0x34, 0x31, 0x24, 0x31, 0x5c, 0x55, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x34, 0x32, 0x24, 0x5c, 0x61, 0x00 }; /* \\\u0041$1\U00000042$\a */
+        const char str_u00411U00000042a[] =  { 0x5c, 0x5c, 0x5c, 0x75, 0x30, 0x30, 0x34, 0x31, 0x24, 0x31, 
+               0x5c, 0x55, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x34, 0x32, 0x5c, 0x24, 0x5c, 0x61, 0x00 }; /* \\\u0041$1\U00000042\$\a */
         const char str_1x[] = { 0x3c, 0x24, 0x31, 0x3e, 0x00 }; /* <$1> */
         const char str_ReplaceAaaBax1xxx[] = { 0x52, 0x65, 0x70, 0x6c, 0x61, 0x63, 0x65, 0x20, 0x5c, 0x41, 0x61, 0x61, 0x42, 0x24, 0x61, 0x20, 0x78, 0x31, 0x78, 0x20, 0x78, 0x2e, 0x2e, 0x2e, 0x78, 0x2e, 0x00 }; /* Replace \AaaB$a x1x x...x. */
         status = U_ZERO_ERROR;
@@ -1947,7 +1926,7 @@ static void TestUTextAPI(void) {
         TEST_ASSERT_SUCCESS(status);
         bufPtr = buf;
         bufCap = UPRV_LENGTHOF(buf);
-        u_uastrncpy(repl, "abc\\u0041\\U00000042 \\\\ $ \\abc", UPRV_LENGTHOF(repl));
+        u_uastrncpy(repl, "abc\\u0041\\U00000042 \\\\ \\$ \\abc", UPRV_LENGTHOF(repl));
         uregex_appendReplacement(re, repl, -1, &bufPtr, &bufCap, &status);
         TEST_ASSERT_SUCCESS(status);
         TEST_ASSERT_STRING("abcAB \\ $ abc", buf, TRUE); 

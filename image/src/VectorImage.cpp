@@ -250,9 +250,9 @@ public:
     , mImageFlags(aImageFlags)
   {}
   virtual bool operator()(gfxContext* aContext,
-                            const gfxRect& aFillRect,
-                            const GraphicsFilter& aFilter,
-                            const gfxMatrix& aTransform);
+                          const gfxRect& aFillRect,
+                          const GraphicsFilter& aFilter,
+                          const gfxMatrix& aTransform);
 private:
   nsRefPtr<SVGDocumentWrapper> mSVGDocumentWrapper;
   const nsIntRect              mViewport;
@@ -357,12 +357,6 @@ VectorImage::Init(const char* aMimeType,
 
   mIsInitialized = true;
   return NS_OK;
-}
-
-nsIntRect
-VectorImage::FrameRect(uint32_t aWhichFrame)
-{
-  return nsIntRect::GetMaxSizedIntRect();
 }
 
 size_t
@@ -500,8 +494,9 @@ VectorImage::RequestRefresh(const TimeStamp& aTime)
     return;
   }
 
-  // TODO: Implement for b666446.
   EvaluateAnimation();
+
+  mSVGDocumentWrapper->TickRefreshDriver();
 
   if (mHasPendingInvalidation) {
     SendInvalidationNotifications();
@@ -695,13 +690,12 @@ VectorImage::GetFrame(uint32_t aWhichFrame,
 
   nsRefPtr<gfxContext> context = new gfxContext(dt);
 
-  nsresult rv = Draw(context, imageIntSize,
+  auto result = Draw(context, imageIntSize,
                      ImageRegion::Create(imageIntSize),
                      aWhichFrame, GraphicsFilter::FILTER_NEAREST,
                      Nothing(), aFlags);
 
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return dt->Snapshot();
+  return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
 
 //******************************************************************************
@@ -749,15 +743,13 @@ struct SVGDrawingParameters
 
 //******************************************************************************
 /* [noscript] void draw(in gfxContext aContext,
- *                      in gfxGraphicsFilter aFilter,
- *                      [const] in gfxMatrix aUserSpaceToImageSpace,
- *                      [const] in gfxRect aFill,
- *                      [const] in nsIntRect aSubimage,
- *                      [const] in nsIntSize aViewportSize,
- *                      [const] in SVGImageContext aSVGContext,
+ *                      [const] in nsIntSize aSize,
+ *                      [const] in ImageRegion aRegion,
  *                      in uint32_t aWhichFrame,
+ *                      in gfxGraphicsFilter aFilter,
+ *                      [const] in MaybeSVGImageContext aSVGContext,
  *                      in uint32_t aFlags); */
-NS_IMETHODIMP
+NS_IMETHODIMP_(DrawResult)
 VectorImage::Draw(gfxContext* aContext,
                   const nsIntSize& aSize,
                   const ImageRegion& aRegion,
@@ -766,16 +758,25 @@ VectorImage::Draw(gfxContext* aContext,
                   const Maybe<SVGImageContext>& aSVGContext,
                   uint32_t aFlags)
 {
-  if (aWhichFrame > FRAME_MAX_VALUE)
-    return NS_ERROR_INVALID_ARG;
+  if (aWhichFrame > FRAME_MAX_VALUE) {
+    return DrawResult::BAD_ARGS;
+  }
 
-  NS_ENSURE_ARG_POINTER(aContext);
-  if (mError || !mIsFullyLoaded)
-    return NS_ERROR_FAILURE;
+  if (!aContext) {
+    return DrawResult::BAD_ARGS;
+  }
+
+  if (mError) {
+    return DrawResult::BAD_IMAGE;
+  }
+
+  if (!mIsFullyLoaded) {
+    return DrawResult::NOT_READY;
+  }
 
   if (mIsDrawing) {
     NS_WARNING("Refusing to make re-entrant call to VectorImage::Draw");
-    return NS_ERROR_FAILURE;
+    return DrawResult::TEMPORARY_ERROR;
   }
 
   if (mAnimationConsumers == 0 && mProgressTracker) {
@@ -796,7 +797,7 @@ VectorImage::Draw(gfxContext* aContext,
 
   if (aFlags & FLAG_BYPASS_SURFACE_CACHE) {
     CreateSurfaceAndShow(params);
-    return NS_OK;
+    return DrawResult::SUCCESS;
   }
 
   DrawableFrameRef frameRef =
@@ -812,7 +813,7 @@ VectorImage::Draw(gfxContext* aContext,
       nsRefPtr<gfxDrawable> svgDrawable =
         new gfxSurfaceDrawable(surface, ThebesIntSize(frameRef->GetSize()));
       Show(svgDrawable, params);
-      return NS_OK;
+      return DrawResult::SUCCESS;
     }
 
     // We lost our surface due to some catastrophic event.
@@ -821,7 +822,7 @@ VectorImage::Draw(gfxContext* aContext,
 
   CreateSurfaceAndShow(params);
 
-  return NS_OK;
+  return DrawResult::SUCCESS;
 }
 
 void
@@ -921,10 +922,13 @@ VectorImage::StartDecoding()
   return NS_OK;
 }
 
-bool
-VectorImage::IsDecoded()
+NS_IMETHODIMP
+VectorImage::RequestDecodeForSize(const nsIntSize& aSize, uint32_t aFlags)
 {
-  return mIsFullyLoaded || mError;
+  // Nothing to do for SVG images, though in theory we could rasterize to the
+  // provided size ahead of time if we supported off-main-thread SVG
+  // rasterization...
+  return NS_OK;
 }
 
 //******************************************************************************

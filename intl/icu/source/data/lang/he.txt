@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/he.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/he.xml
- */
 he{
     Keys{
         calendar{"לוח שנה"}
@@ -545,14 +542,14 @@ he{
         zxx{"ללא תוכן לשוני"}
         zza{"זאזא"}
     }
-    Languages%variant{
-        ps{"פושטו"}
-        ug{"אויגור"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"אזרית"}
         en_GB{"אנגלית בריטית"}
         en_US{"אנגלית אמריקאית"}
+    }
+    Languages%variant{
+        ps{"פושטו"}
+        ug{"אויגור"}
     }
     Scripts{
         Arab{"ערבי"}
@@ -748,7 +745,7 @@ he{
         POSIX{"מחשב"}
         SCOTLAND{"אנגלית סקוטית סטנדרטית"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"שפה:‏ {0}"}
         script{"כתב: {0}"}

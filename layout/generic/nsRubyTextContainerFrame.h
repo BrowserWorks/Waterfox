@@ -42,6 +42,21 @@ public:
   virtual nsresult GetFrameName(nsAString& aResult) const MOZ_OVERRIDE;
 #endif
 
+  // nsContainerFrame overrides
+  virtual void SetInitialChildList(ChildListID aListID,
+                                   nsFrameList& aChildList) MOZ_OVERRIDE;
+  virtual void AppendFrames(ChildListID aListID,
+                            nsFrameList& aFrameList) MOZ_OVERRIDE;
+  virtual void InsertFrames(ChildListID aListID, nsIFrame* aPrevFrame,
+                            nsFrameList& aFrameList) MOZ_OVERRIDE;
+  virtual void RemoveFrame(ChildListID aListID,
+                           nsIFrame* aOldFrame) MOZ_OVERRIDE;
+
+  bool IsSpanContainer() const
+  {
+    return GetStateBits() & NS_RUBY_TEXT_CONTAINER_IS_SPAN;
+  }
+
 protected:
   friend nsContainerFrame*
     NS_NewRubyTextContainerFrame(nsIPresShell* aPresShell,
@@ -49,13 +64,10 @@ protected:
   explicit nsRubyTextContainerFrame(nsStyleContext* aContext)
     : nsRubyTextContainerFrameSuper(aContext) {}
 
-  friend class nsRubyBaseContainerFrame;
-  void SetISize(nscoord aISize) { mISize = aISize; }
+  void UpdateSpanFlag();
 
-  // The intended dimensions of the ruby text container. These are modified
-  // whenever a ruby text box is reflowed and used when the ruby text container
-  // is reflowed.
-  nscoord mISize;
+  // For MoveOverflowToChildList
+  friend class nsRubyBaseContainerFrame;
 };
 
 #endif /* nsRubyTextContainerFrame_h___ */

@@ -67,7 +67,7 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
   public static final String SYNC_EXTRAS_RESPECT_LOCAL_RATE_LIMIT = "respect_local_rate_limit";
   public static final String SYNC_EXTRAS_RESPECT_REMOTE_SERVER_BACKOFF = "respect_remote_server_backoff";
 
-  protected static final int NOTIFICATION_ID = LOG_TAG.hashCode();
+  public static final int NOTIFICATION_ID = LOG_TAG.hashCode();
 
   // Tracks the last seen storage hostname for backoff purposes.
   private static final String PREF_BACKOFF_STORAGE_HOST = "backoffStorageHost";
@@ -237,6 +237,15 @@ public class FxAccountSyncAdapter extends AbstractThreadedSyncAdapter {
     @Override
     public void informUnauthorizedResponse(GlobalSession globalSession, URI oldClusterURL) {
       schedulePolicy.onUnauthorized();
+    }
+
+    @Override
+    public void informMigrated(GlobalSession globalSession) {
+      // It's not possible to migrate a Firefox Account to another Account type
+      // yet. Yell loudly but otherwise ignore.
+      Logger.error(LOG_TAG,
+          "Firefox Account informMigrated called, but it's not yet possible to migrate.  " +
+          "Ignoring even though something is terribly wrong.");
     }
 
     @Override

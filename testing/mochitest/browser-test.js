@@ -5,7 +5,11 @@ var gConfig;
 
 if (Cc === undefined) {
   var Cc = Components.classes;
+}
+if (Ci === undefined) {
   var Ci = Components.interfaces;
+}
+if (Cu === undefined) {
   var Cu = Components.utils;
 }
 
@@ -15,14 +19,14 @@ Cu.import("resource://gre/modules/Task.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Services",
   "resource://gre/modules/Services.jsm");
 
-XPCOMUtils.defineLazyModuleGetter(this, "BrowserNewTabPreloader",
-  "resource:///modules/BrowserNewTabPreloader.jsm");
-
 XPCOMUtils.defineLazyModuleGetter(this, "CustomizationTabPreloader",
   "resource:///modules/CustomizationTabPreloader.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "ContentSearch",
   "resource:///modules/ContentSearch.jsm");
+
+XPCOMUtils.defineLazyModuleGetter(this, "SelfSupportBackend",
+  "resource:///modules/SelfSupportBackend.jsm");
 
 const SIMPLETEST_OVERRIDES =
   ["ok", "is", "isnot", "ise", "todo", "todo_is", "todo_isnot", "info", "expectAssertions", "requestCompleteLog"];
@@ -34,6 +38,15 @@ window.addEventListener("load", function testOnLoad() {
     setTimeout(testInit, 0);
   });
 });
+
+function b2gStart() {
+  let homescreen = document.getElementById('systemapp');
+  var webNav = homescreen.contentWindow.QueryInterface(Ci.nsIInterfaceRequestor)
+                                   .getInterface(Ci.nsIWebNavigation);
+  var url = "chrome://mochikit/content/harness.xul?manifestFile=tests.json";
+
+  webNav.loadURI(url, null, null, null, null);
+}
 
 function testInit() {
   gConfig = readConfig();
@@ -363,7 +376,7 @@ Tester.prototype = {
       }
 
       if (testScope.__expected == 'fail' && testScope.__num_failed <= 0) {
-        this.currentTest.addResult(new testResult(false, "We expected at least one assertion to fail because this test file was marked as fail-if in the manifest", "", false));
+        this.currentTest.addResult(new testResult(false, "We expected at least one assertion to fail because this test file was marked as fail-if in the manifest!", "", true));
       }
 
       this.Promise.Debugging.flushUncaughtErrors();
@@ -504,7 +517,14 @@ Tester.prototype = {
             Cu.import("resource://gre/modules/BackgroundPageThumbs.jsm", {});
           BackgroundPageThumbs._destroy();
 
-          BrowserNewTabPreloader.uninit();
+          // Destroy preloaded browsers.
+          if (gBrowser._preloadedBrowser) {
+            let browser = gBrowser._preloadedBrowser;
+            gBrowser._preloadedBrowser = null;
+            gBrowser.getNotificationBox(browser).remove();
+          }
+
+          SelfSupportBackend.uninit();
           CustomizationTabPreloader.uninit();
           SocialFlyout.unload();
           SocialShare.uninit();
@@ -699,7 +719,8 @@ Tester.prototype = {
       var self = this;
       var timeoutExpires = Date.now() + gTimeoutSeconds * 1000;
       var waitUntilAtLeast = timeoutExpires - 1000;
-      this.currentTest.scope.__waitTimer = setTimeout(function timeoutFn() {
+      this.currentTest.scope.__waitTimer =
+        this.SimpleTest._originalSetTimeout.apply(window, [function timeoutFn() {
         // We sometimes get woken up long before the gTimeoutSeconds
         // have elapsed (when running in chaos mode for example). This
         // code ensures that we don't wrongly time out in that case.
@@ -738,7 +759,7 @@ Tester.prototype = {
         self.currentTest.timedOut = true;
         self.currentTest.scope.__waitTimer = null;
         self.nextTest();
-      }, gTimeoutSeconds * 1000);
+      }, gTimeoutSeconds * 1000]);
     }
   },
 

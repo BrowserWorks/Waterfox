@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1996-2014, International Business Machines
+* Copyright (C) 1996-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationcompare.cpp
@@ -95,10 +95,9 @@ CollationCompare::compareUpToQuaternary(CollationIterator &left, CollationIterat
 
         if(leftPrimary != rightPrimary) {
             // Return the primary difference, with script reordering.
-            const uint8_t *reorderTable = settings.reorderTable;
-            if (reorderTable != NULL) {
-                leftPrimary = Collation::reorder(reorderTable, leftPrimary);
-                rightPrimary = Collation::reorder(reorderTable, rightPrimary);
+            if(settings.hasReordering()) {
+                leftPrimary = settings.reorder(leftPrimary);
+                rightPrimary = settings.reorder(rightPrimary);
             }
             return (leftPrimary < rightPrimary) ? UCOL_LESS : UCOL_GREATER;
         }
@@ -340,10 +339,9 @@ CollationCompare::compareUpToQuaternary(CollationIterator &left, CollationIterat
 
         if(leftQuaternary != rightQuaternary) {
             // Return the difference, with script reordering.
-            const uint8_t *reorderTable = settings.reorderTable;
-            if (reorderTable != NULL) {
-                leftQuaternary = Collation::reorder(reorderTable, leftQuaternary);
-                rightQuaternary = Collation::reorder(reorderTable, rightQuaternary);
+            if(settings.hasReordering()) {
+                leftQuaternary = settings.reorder(leftQuaternary);
+                rightQuaternary = settings.reorder(rightQuaternary);
             }
             return (leftQuaternary < rightQuaternary) ? UCOL_LESS : UCOL_GREATER;
         }

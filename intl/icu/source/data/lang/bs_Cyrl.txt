@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/bs_Cyrl.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/bs_Cyrl.xml
- */
 bs_Cyrl{
     %%Parent{"root"}
     Keys{
@@ -461,11 +458,11 @@ bs_Cyrl{
         zxx{"без лингвистичког садржаја"}
         zza{"заза"}
     }
+    Languages%short{
+        az{"азерски"}
+    }
     Languages%variant{
         ps{"пашто"}
-    }
-    LanguagesShort{
-        az{"азерски"}
     }
     Scripts{
         Arab{"арапско писмо"}
@@ -702,7 +699,7 @@ bs_Cyrl{
         TARASK{"Тараскијевичка ортографија"}
         VALENCIA{"Валенцијска"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

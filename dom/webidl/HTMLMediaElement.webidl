@@ -50,6 +50,8 @@ interface HTMLMediaElement : HTMLElement {
   [Throws]
   void fastSeek(double time);
   readonly attribute unrestricted double duration;
+  [ChromeOnly]
+  readonly attribute boolean isEncrypted;
   // TODO: Bug 847376 - readonly attribute any startDate;
   readonly attribute boolean paused;
   [SetterThrows]
@@ -112,9 +114,9 @@ partial interface HTMLMediaElement {
   [Func="IsChromeOrXBL"] attribute boolean mozIsCasting;
 
   // Mozilla extension: stream capture
-  [Throws]
+  [Throws, UnsafeInPrerendering]
   MediaStream mozCaptureStream();
-  [Throws]
+  [Throws, UnsafeInPrerendering]
   MediaStream mozCaptureStreamUntilEnded();
   readonly attribute boolean mozAudioCaptured;
 
@@ -140,26 +142,17 @@ partial interface HTMLMediaElement {
   // * onmozinterruptend - called when the interruption is concluded
 };
 
-enum MediaWaitingFor {
-  "none",
-  "data",
-  "key"
-};
-
 #ifdef MOZ_EME
 // Encrypted Media Extensions
 partial interface HTMLMediaElement {
-  [Pref="media.eme.enabled"]
+  [Pref="media.eme.apiVisible"]
   readonly attribute MediaKeys? mediaKeys;
 
   // void, not any: https://www.w3.org/Bugs/Public/show_bug.cgi?id=26457
-  [Pref="media.eme.enabled", Throws, NewObject]
+  [Pref="media.eme.apiVisible", NewObject]
   Promise<void> setMediaKeys(MediaKeys? mediaKeys);
 
-  [Pref="media.eme.enabled"]
+  [Pref="media.eme.apiVisible"]
   attribute EventHandler onencrypted;
-
-  [Pref="media.eme.enabled"]
-  readonly attribute MediaWaitingFor waitingFor;
 };
 #endif

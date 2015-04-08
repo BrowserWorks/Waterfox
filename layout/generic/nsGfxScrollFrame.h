@@ -177,6 +177,7 @@ public:
   nsSize GetScrollPositionClampingScrollPortSize() const;
   gfxSize GetResolution() const;
   void SetResolution(const gfxSize& aResolution);
+  void SetResolutionAndScaleTo(const gfxSize& aResolution);
 
 protected:
   nsRect GetScrollRangeForClamping() const;
@@ -450,15 +451,20 @@ public:
   // If true, the layer should always be active because we always build a
   // scrollable layer. Used for asynchronous scrolling.
   bool mShouldBuildScrollableLayer:1;
+
   // If true, add clipping in ScrollFrameHelper::ComputeFrameMetrics.
   bool mAddClipRectToLayer:1;
 
   // True if this frame has been scrolled at least once
   bool mHasBeenScrolled:1;
 
-  // True if the frame's resolution has been set via SetResolution or restored
-  // via RestoreState.
+  // True if the frame's resolution has been set via SetResolution or
+  // SetResolutionAndScaleTo or restored via RestoreState.
   bool mIsResolutionSet:1;
+
+  // True if the frame's resolution has been set via SetResolutionAndScaleTo.
+  // Only meaningful for root scroll frames.
+  bool mScaleToResolution:1;
 
 protected:
   /**
@@ -506,6 +512,14 @@ public:
 
   NS_DECL_QUERYFRAME
   NS_DECL_FRAMEARENA_HELPERS
+
+  virtual mozilla::WritingMode GetWritingMode() const MOZ_OVERRIDE
+  {
+    if (mHelper.mScrolledFrame) {
+      return mHelper.mScrolledFrame->GetWritingMode();
+    }
+    return nsIFrame::GetWritingMode();
+  }
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
@@ -633,6 +647,9 @@ public:
   }
   virtual void SetResolution(const gfxSize& aResolution) MOZ_OVERRIDE {
     return mHelper.SetResolution(aResolution);
+  }
+  virtual void SetResolutionAndScaleTo(const gfxSize& aResolution) MOZ_OVERRIDE {
+    return mHelper.SetResolutionAndScaleTo(aResolution);
   }
   virtual nsSize GetLineScrollAmount() const MOZ_OVERRIDE {
     return mHelper.GetLineScrollAmount();
@@ -788,7 +805,7 @@ public:
                           nscoord aNewPos) MOZ_OVERRIDE {
     mHelper.ThumbMoved(aScrollbar, aOldPos, aNewPos);
   }
-  virtual void VisibilityChanged(bool aVisible) {}
+  virtual void VisibilityChanged(bool aVisible) MOZ_OVERRIDE {}
   virtual nsIFrame* GetScrollbarBox(bool aVertical) MOZ_OVERRIDE {
     return mHelper.GetScrollbarBox(aVertical);
   }
@@ -804,7 +821,7 @@ public:
 #endif
 
 protected:
-  nsHTMLScrollFrame(nsIPresShell* aShell, nsStyleContext* aContext, bool aIsRoot);
+  nsHTMLScrollFrame(nsStyleContext* aContext, bool aIsRoot);
   void SetSuppressScrollbarUpdate(bool aSuppress) {
     mHelper.mSupppressScrollbarUpdate = aSuppress;
   }
@@ -995,6 +1012,9 @@ public:
   virtual void SetResolution(const gfxSize& aResolution) MOZ_OVERRIDE {
     return mHelper.SetResolution(aResolution);
   }
+  virtual void SetResolutionAndScaleTo(const gfxSize& aResolution) MOZ_OVERRIDE {
+    return mHelper.SetResolutionAndScaleTo(aResolution);
+  }
   virtual nsSize GetLineScrollAmount() const MOZ_OVERRIDE {
     return mHelper.GetLineScrollAmount();
   }
@@ -1153,7 +1173,7 @@ public:
                           nscoord aNewPos) MOZ_OVERRIDE {
     mHelper.ThumbMoved(aScrollbar, aOldPos, aNewPos);
   }
-  virtual void VisibilityChanged(bool aVisible) {}
+  virtual void VisibilityChanged(bool aVisible) MOZ_OVERRIDE {}
   virtual nsIFrame* GetScrollbarBox(bool aVertical) MOZ_OVERRIDE {
     return mHelper.GetScrollbarBox(aVertical);
   }
@@ -1166,7 +1186,7 @@ public:
 #endif
 
 protected:
-  nsXULScrollFrame(nsIPresShell* aShell, nsStyleContext* aContext, bool aIsRoot,
+  nsXULScrollFrame(nsStyleContext* aContext, bool aIsRoot,
                    bool aClipAllDescendants);
 
   void ClampAndSetBounds(nsBoxLayoutState& aState, 

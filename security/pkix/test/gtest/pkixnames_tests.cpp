@@ -22,14 +22,17 @@
  * limitations under the License.
  */
 #include "pkix/pkix.h"
+#include "pkixcheck.h"
 #include "pkixder.h"
 #include "pkixgtest.h"
 #include "pkixtestutil.h"
+#include "pkixutil.h"
 
 namespace mozilla { namespace pkix {
 
-bool PresentedDNSIDMatchesReferenceDNSID(Input presentedDNSID,
-                                         Input referenceDNSID);
+Result MatchPresentedDNSIDWithReferenceDNSID(Input presentedDNSID,
+                                             Input referenceDNSID,
+                                             /*out*/ bool& matches);
 
 bool IsValidReferenceDNSID(Input hostname);
 bool IsValidPresentedDNSID(Input hostname);
@@ -45,13 +48,15 @@ struct PresentedMatchesReference
 {
   ByteString presentedDNSID;
   ByteString referenceDNSID;
-  bool matches;
+  Result expectedResult;
+  bool expectedMatches; // only valid when expectedResult == Success
 };
 
 #define DNS_ID_MATCH(a, b) \
   { \
     ByteString(reinterpret_cast<const uint8_t*>(a), sizeof(a) - 1), \
     ByteString(reinterpret_cast<const uint8_t*>(b), sizeof(b) - 1), \
+    Success, \
     true \
   }
 
@@ -59,12 +64,20 @@ struct PresentedMatchesReference
   { \
     ByteString(reinterpret_cast<const uint8_t*>(a), sizeof(a) - 1), \
     ByteString(reinterpret_cast<const uint8_t*>(b), sizeof(b) - 1), \
+    Success, \
     false \
+  }
+
+#define DNS_ID_BAD_DER(a, b) \
+  { \
+    ByteString(reinterpret_cast<const uint8_t*>(a), sizeof(a) - 1), \
+    ByteString(reinterpret_cast<const uint8_t*>(b), sizeof(b) - 1), \
+    Result::ERROR_BAD_DER \
   }
 
 static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
 {
-  DNS_ID_MISMATCH("", "a"),
+  DNS_ID_BAD_DER("", "a"),
 
   DNS_ID_MATCH("a", "a"),
   DNS_ID_MISMATCH("b", "a"),
@@ -91,16 +104,14 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   // A DNS-ID must not end in an all-numeric label. We don't consider
   // underscores to be numeric.
   DNS_ID_MATCH("_1", "_1"),
-  // We require that the reference ID be valid, so we can't test this.
-  // DNS_ID_MISMATCH("example.1", "example.1"),
   DNS_ID_MATCH("example._1", "example._1"),
   DNS_ID_MATCH("example.1_", "example.1_"),
 
   // Wildcard not in leftmost label
   DNS_ID_MATCH("d.c.b.a", "d.c.b.a"),
-  DNS_ID_MISMATCH("d.*.b.a", "d.c.b.a"),
-  DNS_ID_MISMATCH("d.c*.b.a", "d.c.b.a"),
-  DNS_ID_MISMATCH("d.c*.b.a", "d.cc.b.a"),
+  DNS_ID_BAD_DER("d.*.b.a", "d.c.b.a"),
+  DNS_ID_BAD_DER("d.c*.b.a", "d.c.b.a"),
+  DNS_ID_BAD_DER("d.c*.b.a", "d.cc.b.a"),
 
   // case sensitivity
   DNS_ID_MATCH("abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
@@ -110,42 +121,41 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   // digits
   DNS_ID_MATCH("a1", "a1"),
 
-  // A trailing dot indicates an absolute name, and absolute names can match
-  // relative names, and vice-versa.
+  // A trailing dot indicates an absolute name. Absolute presented names are
+  // not allowed, but absolute reference names are allowed.
   DNS_ID_MATCH("example", "example"),
-  DNS_ID_MATCH("example.", "example."),
+  DNS_ID_BAD_DER("example.", "example."),
   DNS_ID_MATCH("example", "example."),
-  DNS_ID_MATCH("example.", "example"),
+  DNS_ID_BAD_DER("example.", "example"),
   DNS_ID_MATCH("example.com", "example.com"),
-  DNS_ID_MATCH("example.com.", "example.com."),
+  DNS_ID_BAD_DER("example.com.", "example.com."),
   DNS_ID_MATCH("example.com", "example.com."),
-  DNS_ID_MATCH("example.com.", "example.com"),
-  DNS_ID_MISMATCH("example.com..", "example.com."),
-  DNS_ID_MISMATCH("example.com..", "example.com"),
-  DNS_ID_MISMATCH("example.com...", "example.com."),
+  DNS_ID_BAD_DER("example.com.", "example.com"),
+  DNS_ID_BAD_DER("example.com..", "example.com."),
+  DNS_ID_BAD_DER("example.com..", "example.com"),
+  DNS_ID_BAD_DER("example.com...", "example.com."),
 
   // xn-- IDN prefix
-  DNS_ID_MATCH("x*.b.a", "xa.b.a"),
-  DNS_ID_MATCH("x*.b.a", "xna.b.a"),
-  DNS_ID_MATCH("x*.b.a", "xn-a.b.a"),
-  DNS_ID_MISMATCH("x*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn-*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn--*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn-*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn--*.b.a", "xn--a.b.a"),
-  DNS_ID_MISMATCH("xn---*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("x*.b.a", "xa.b.a"),
+  DNS_ID_BAD_DER("x*.b.a", "xna.b.a"),
+  DNS_ID_BAD_DER("x*.b.a", "xn-a.b.a"),
+  DNS_ID_BAD_DER("x*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn-*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn--*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn-*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn--*.b.a", "xn--a.b.a"),
+  DNS_ID_BAD_DER("xn---*.b.a", "xn--a.b.a"),
 
   // "*" cannot expand to nothing.
-  DNS_ID_MISMATCH("c*.b.a", "c.b.a"),
+  DNS_ID_BAD_DER("c*.b.a", "c.b.a"),
 
-  // --------------------------------------------------------------------------
-  // The rest of these are test cases adapted from Chromium's
-  // x509_certificate_unittest.cc. The parameter order is the opposite in
-  // Chromium's tests. Also, they some tests were modified to fit into this
-  // framework or due to intentional differences between mozilla::pkix and
-  // Chromium.
+  /////////////////////////////////////////////////////////////////////////////
+  // These are test cases adapted from Chromium's x509_certificate_unittest.cc.
+  // The parameter order is the opposite in Chromium's tests. Also, some tests
+  // were modified to fit into this framework or due to intentional differences
+  // between mozilla::pkix and Chromium.
 
   DNS_ID_MATCH("foo.com", "foo.com"),
   DNS_ID_MATCH("f", "f"),
@@ -153,29 +163,30 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   DNS_ID_MATCH("*.foo.com", "bar.foo.com"),
   DNS_ID_MATCH("*.test.fr", "www.test.fr"),
   DNS_ID_MATCH("*.test.FR", "wwW.tESt.fr"),
-  DNS_ID_MISMATCH(".uk", "f.uk"),
-  DNS_ID_MISMATCH("?.bar.foo.com", "w.bar.foo.com"),
-  DNS_ID_MISMATCH("(www|ftp).foo.com", "www.foo.com"), // regex!
-  DNS_ID_MISMATCH("www.foo.com\0", "www.foo.com"),
-  DNS_ID_MISMATCH("www.foo.com\0*.foo.com", "www.foo.com"),
+  DNS_ID_BAD_DER(".uk", "f.uk"),
+  DNS_ID_BAD_DER("?.bar.foo.com", "w.bar.foo.com"),
+  DNS_ID_BAD_DER("(www|ftp).foo.com", "www.foo.com"), // regex!
+  DNS_ID_BAD_DER("www.foo.com\0", "www.foo.com"),
+  DNS_ID_BAD_DER("www.foo.com\0*.foo.com", "www.foo.com"),
   DNS_ID_MISMATCH("ww.house.example", "www.house.example"),
   DNS_ID_MISMATCH("www.test.org", "test.org"),
   DNS_ID_MISMATCH("*.test.org", "test.org"),
-  DNS_ID_MISMATCH("*.org", "test.org"),
-  DNS_ID_MISMATCH("w*.bar.foo.com", "w.bar.foo.com"),
-  DNS_ID_MISMATCH("ww*ww.bar.foo.com", "www.bar.foo.com"),
-  DNS_ID_MISMATCH("ww*ww.bar.foo.com", "wwww.bar.foo.com"),
+  DNS_ID_BAD_DER("*.org", "test.org"),
+  DNS_ID_BAD_DER("w*.bar.foo.com", "w.bar.foo.com"),
+  DNS_ID_BAD_DER("ww*ww.bar.foo.com", "www.bar.foo.com"),
+  DNS_ID_BAD_DER("ww*ww.bar.foo.com", "wwww.bar.foo.com"),
 
   // Different than Chromium, matches NSS.
-  DNS_ID_MISMATCH("w*w.bar.foo.com", "wwww.bar.foo.com"),
+  DNS_ID_BAD_DER("w*w.bar.foo.com", "wwww.bar.foo.com"),
 
-  DNS_ID_MISMATCH("w*w.bar.foo.c0m", "wwww.bar.foo.com"),
+  DNS_ID_BAD_DER("w*w.bar.foo.c0m", "wwww.bar.foo.com"),
 
-  DNS_ID_MATCH("wa*.bar.foo.com", "WALLY.bar.foo.com"),
+  // '*' must be the only character in the wildcard label
+  DNS_ID_BAD_DER("wa*.bar.foo.com", "WALLY.bar.foo.com"),
 
   // We require "*" to be the last character in a wildcard label, but
   // Chromium does not.
-  DNS_ID_MISMATCH("*Ly.bar.foo.com", "wally.bar.foo.com"),
+  DNS_ID_BAD_DER("*Ly.bar.foo.com", "wally.bar.foo.com"),
 
   // Chromium does URL decoding of the reference ID, but we don't, and we also
   // require that the reference ID is valid, so we can't test these two.
@@ -183,33 +194,33 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   // DNS_ID_MATCH("www&.foo.com", "www%26.foo.com"),
 
   DNS_ID_MISMATCH("*.test.de", "www.test.co.jp"),
-  DNS_ID_MISMATCH("*.jp", "www.test.co.jp"),
+  DNS_ID_BAD_DER("*.jp", "www.test.co.jp"),
   DNS_ID_MISMATCH("www.test.co.uk", "www.test.co.jp"),
-  DNS_ID_MISMATCH("www.*.co.jp", "www.test.co.jp"),
+  DNS_ID_BAD_DER("www.*.co.jp", "www.test.co.jp"),
   DNS_ID_MATCH("www.bar.foo.com", "www.bar.foo.com"),
   DNS_ID_MISMATCH("*.foo.com", "www.bar.foo.com"),
-  DNS_ID_MISMATCH("*.*.foo.com", "www.bar.foo.com"),
-  DNS_ID_MISMATCH("*.*.foo.com", "www.bar.foo.com"),
+  DNS_ID_BAD_DER("*.*.foo.com", "www.bar.foo.com"),
+  DNS_ID_BAD_DER("*.*.foo.com", "www.bar.foo.com"),
 
   // Our matcher requires the reference ID to be a valid DNS name, so we cannot
   // test this case.
-  // DNS_ID_MISMATCH("*.*.bar.foo.com", "*..bar.foo.com"),
+  //DNS_ID_BAD_DER("*.*.bar.foo.com", "*..bar.foo.com"),
 
   DNS_ID_MATCH("www.bath.org", "www.bath.org"),
 
   // Our matcher requires the reference ID to be a valid DNS name, so we cannot
   // test these cases.
-  // DNS_ID_MISMATCH("www.bath.org", ""),
-  // DNS_ID_MISMATCH("www.bath.org", "20.30.40.50"),
-  // DNS_ID_MISMATCH("www.bath.org", "66.77.88.99"),
+  // DNS_ID_BAD_DER("www.bath.org", ""),
+  // DNS_ID_BAD_DER("www.bath.org", "20.30.40.50"),
+  // DNS_ID_BAD_DER("www.bath.org", "66.77.88.99"),
 
   // IDN tests
   DNS_ID_MATCH("xn--poema-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
   DNS_ID_MATCH("*.xn--poema-9qae5a.com.br", "www.xn--poema-9qae5a.com.br"),
   DNS_ID_MISMATCH("*.xn--poema-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
-  DNS_ID_MISMATCH("xn--poema-*.com.br", "xn--poema-9qae5a.com.br"),
-  DNS_ID_MISMATCH("xn--*-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
-  DNS_ID_MISMATCH("*--poema-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
+  DNS_ID_BAD_DER("xn--poema-*.com.br", "xn--poema-9qae5a.com.br"),
+  DNS_ID_BAD_DER("xn--*-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
+  DNS_ID_BAD_DER("*--poema-9qae5a.com.br", "xn--poema-9qae5a.com.br"),
 
   // The following are adapted from the examples quoted from
   //   http://tools.ietf.org/html/rfc6125#section-6.4.3
@@ -220,13 +231,14 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   DNS_ID_MISMATCH("*.example.com", "example.com"),
   // (e.g., baz*.example.net and *baz.example.net and b*z.example.net would
   // be taken to match baz1.example.net and foobaz.example.net and
-  // buzz.example.net, respectively
-  DNS_ID_MATCH("baz*.example.net", "baz1.example.net"),
+  // buzz.example.net, respectively. However, we don't allow any characters
+  // other than '*' in the wildcard label.
+  DNS_ID_BAD_DER("baz*.example.net", "baz1.example.net"),
 
   // Both of these are different from Chromium, but match NSS, becaues the
   // wildcard character "*" is not the last character of the label.
-  DNS_ID_MISMATCH("*baz.example.net", "foobaz.example.net"),
-  DNS_ID_MISMATCH("b*z.example.net", "buzz.example.net"),
+  DNS_ID_BAD_DER("*baz.example.net", "foobaz.example.net"),
+  DNS_ID_BAD_DER("b*z.example.net", "buzz.example.net"),
 
   // Wildcards should not be valid for public registry controlled domains,
   // and unknown/unrecognized domains, at least three domain components must
@@ -234,16 +246,16 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   // labels after the wildcard label.
   DNS_ID_MATCH("*.test.example", "www.test.example"),
   DNS_ID_MATCH("*.example.co.uk", "test.example.co.uk"),
-  DNS_ID_MISMATCH("*.exmaple", "test.example"),
+  DNS_ID_BAD_DER("*.exmaple", "test.example"),
 
   // The result is different than Chromium, because Chromium takes into account
   // the additional knowledge it has that "co.uk" is a TLD. mozilla::pkix does
   // not know that.
   DNS_ID_MATCH("*.co.uk", "example.co.uk"),
 
-  DNS_ID_MISMATCH("*.com", "foo.com"),
-  DNS_ID_MISMATCH("*.us", "foo.us"),
-  DNS_ID_MISMATCH("*", "foo"),
+  DNS_ID_BAD_DER("*.com", "foo.com"),
+  DNS_ID_BAD_DER("*.us", "foo.us"),
+  DNS_ID_BAD_DER("*", "foo"),
 
   // IDN variants of wildcards and registry controlled domains.
   DNS_ID_MATCH("*.xn--poema-9qae5a.com.br", "www.xn--poema-9qae5a.com.br"),
@@ -253,7 +265,7 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   // TODO: File bug against Chromium.
   DNS_ID_MATCH("*.com.br", "xn--poema-9qae5a.com.br"),
 
-  DNS_ID_MISMATCH("*.xn--mgbaam7a8h", "example.xn--mgbaam7a8h"),
+  DNS_ID_BAD_DER("*.xn--mgbaam7a8h", "example.xn--mgbaam7a8h"),
   // Wildcards should be permissible for 'private' registry-controlled
   // domains. (In mozilla::pkix, we do not know if it is a private registry-
   // controlled domain or not.)
@@ -261,37 +273,44 @@ static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
   DNS_ID_MATCH("*.s3.amazonaws.com", "foo.s3.amazonaws.com"),
 
   // Multiple wildcards are not valid.
-  DNS_ID_MISMATCH("*.*.com", "foo.example.com"),
-  DNS_ID_MISMATCH("*.bar.*.com", "foo.bar.example.com"),
+  DNS_ID_BAD_DER("*.*.com", "foo.example.com"),
+  DNS_ID_BAD_DER("*.bar.*.com", "foo.bar.example.com"),
 
   // Absolute vs relative DNS name tests. Although not explicitly specified
   // in RFC 6125, absolute reference names (those ending in a .) should
-  // match either absolute or relative presented names.
+  // match either absolute or relative presented names. We don't allow
+  // absolute presented names.
   // TODO: File errata against RFC 6125 about this.
-  DNS_ID_MATCH("foo.com.", "foo.com"),
+  DNS_ID_BAD_DER("foo.com.", "foo.com"),
   DNS_ID_MATCH("foo.com", "foo.com."),
-  DNS_ID_MATCH("foo.com.", "foo.com."),
-  DNS_ID_MATCH("f.", "f"),
+  DNS_ID_BAD_DER("foo.com.", "foo.com."),
+  DNS_ID_BAD_DER("f.", "f"),
   DNS_ID_MATCH("f", "f."),
-  DNS_ID_MATCH("f.", "f."),
-  DNS_ID_MATCH("*.bar.foo.com.", "www-3.bar.foo.com"),
+  DNS_ID_BAD_DER("f.", "f."),
+  DNS_ID_BAD_DER("*.bar.foo.com.", "www-3.bar.foo.com"),
   DNS_ID_MATCH("*.bar.foo.com", "www-3.bar.foo.com."),
-  DNS_ID_MATCH("*.bar.foo.com.", "www-3.bar.foo.com."),
+  DNS_ID_BAD_DER("*.bar.foo.com.", "www-3.bar.foo.com."),
 
   // We require the reference ID to be a valid DNS name, so we cannot test this
   // case.
   // DNS_ID_MISMATCH(".", "."),
 
-  DNS_ID_MISMATCH("*.com.", "example.com"),
-  DNS_ID_MISMATCH("*.com", "example.com."),
-  DNS_ID_MISMATCH("*.com.", "example.com."),
-  DNS_ID_MISMATCH("*.", "foo."),
-  DNS_ID_MISMATCH("*.", "foo"),
+  DNS_ID_BAD_DER("*.com.", "example.com"),
+  DNS_ID_BAD_DER("*.com", "example.com."),
+  DNS_ID_BAD_DER("*.com.", "example.com."),
+  DNS_ID_BAD_DER("*.", "foo."),
+  DNS_ID_BAD_DER("*.", "foo"),
 
   // The result is different than Chromium because we don't know that co.uk is
   // a TLD.
-  DNS_ID_MATCH("*.co.uk.", "foo.co.uk"),
-  DNS_ID_MATCH("*.co.uk.", "foo.co.uk."),
+  DNS_ID_MATCH("*.co.uk", "foo.co.uk"),
+  DNS_ID_MATCH("*.co.uk", "foo.co.uk."),
+  DNS_ID_BAD_DER("*.co.uk.", "foo.co.uk"),
+  DNS_ID_BAD_DER("*.co.uk.", "foo.co.uk."),
+
+  DNS_ID_MISMATCH("*.example.com", "localhost"),
+  DNS_ID_MISMATCH("*.example.com", "localhost."),
+  // Note that we already have the testcase DNS_ID_BAD_DER("*", "foo") above
 };
 
 struct InputValidity
@@ -321,8 +340,8 @@ static const InputValidity DNSNAMES_VALIDITY[] =
   I("", false, false),
   I(".", false, false),
   I("a", true, true),
-  I(".a", false, false), // PresentedDNSIDMatchesReferenceDNSID depends on this
-  I(".a.b", false, false), // PresentedDNSIDMatchesReferenceDNSID depends on this
+  I(".a", false, false),
+  I(".a.b", false, false),
   I("..a", false, false),
   I("a..b", false, false),
   I("a...b", false, false),
@@ -330,10 +349,10 @@ static const InputValidity DNSNAMES_VALIDITY[] =
   I("a.b..c", false, false),
   I(".a.b.c.", false, false),
 
-  // absolute names
-  I("a.", true, true),
-  I("a.b.", true, true),
-  I("a.b.c.", true, true),
+  // absolute names (only allowed for reference names)
+  I("a.", true, false),
+  I("a.b.", true, false),
+  I("a.b.c.", true, false),
 
   // absolute names with empty label at end
   I("a..", false, false),
@@ -463,17 +482,18 @@ static const InputValidity DNSNAMES_VALIDITY[] =
   I("a-----------------b", true, true),
 
   // Wildcard specifications are not valid reference names, but are valid
-  // presented names if there are enough labels
+  // presented names if there are enough labels and if '*' is the only
+  // character in the wildcard label.
   I("*.a", false, false),
   I("a*", false, false),
   I("a*.", false, false),
   I("a*.a", false, false),
   I("a*.a.", false, false),
   I("*.a.b", false, true),
-  I("*.a.b.", false, true),
-  I("a*.b.c", false, true),
+  I("*.a.b.", false, false),
+  I("a*.b.c", false, false),
   I("*.a.b.c", false, true),
-  I("a*.b.c.d", false, true),
+  I("a*.b.c.d", false, false),
 
   // Multiple wildcards are not allowed.
   I("a**.b.c", false, false),
@@ -494,9 +514,9 @@ static const InputValidity DNSNAMES_VALIDITY[] =
   I("a*b.c.d", false, false),
 
   // Wildcards not allowed with IDNA prefix
-  I("x*.a.b", false, true),
-  I("xn*.a.b", false, true),
-  I("xn-*.a.b", false, true),
+  I("x*.a.b", false, false),
+  I("xn*.a.b", false, false),
+  I("xn-*.a.b", false, false),
   I("xn--*.a.b", false, false),
   I("xn--w*.a.b", false, false),
 
@@ -879,14 +899,14 @@ static const IPAddressParams<16> IPV6_ADDRESSES[] =
   IPV6_INVALID("::1.2\02.3.4"),
 };
 
-class pkixnames_PresentedDNSIDMatchesReferenceDNSID
+class pkixnames_MatchPresentedDNSIDWithReferenceDNSID
   : public ::testing::Test
   , public ::testing::WithParamInterface<PresentedMatchesReference>
 {
 };
 
-TEST_P(pkixnames_PresentedDNSIDMatchesReferenceDNSID,
-       PresentedDNSIDMatchesReferenceDNSID)
+TEST_P(pkixnames_MatchPresentedDNSIDWithReferenceDNSID,
+       MatchPresentedDNSIDWithReferenceDNSID)
 {
   const PresentedMatchesReference& param(GetParam());
   SCOPED_TRACE(param.presentedDNSID.c_str());
@@ -901,12 +921,17 @@ TEST_P(pkixnames_PresentedDNSIDMatchesReferenceDNSID,
   // sanity check that test makes sense
   ASSERT_TRUE(IsValidReferenceDNSID(reference));
 
-  ASSERT_EQ(param.matches,
-            PresentedDNSIDMatchesReferenceDNSID(presented, reference));
+  bool matches;
+  ASSERT_EQ(param.expectedResult,
+            MatchPresentedDNSIDWithReferenceDNSID(presented, reference,
+                                                  matches));
+  if (param.expectedResult == Success) {
+    ASSERT_EQ(param.expectedMatches, matches);
+  }
 }
 
-INSTANTIATE_TEST_CASE_P(pkixnames_PresentedDNSIDMatchesReferenceDNSID,
-                        pkixnames_PresentedDNSIDMatchesReferenceDNSID,
+INSTANTIATE_TEST_CASE_P(pkixnames_MatchPresentedDNSIDWithReferenceDNSID,
+                        pkixnames_MatchPresentedDNSIDWithReferenceDNSID,
                         testing::ValuesIn(DNSID_MATCH_PARAMS));
 
 class pkixnames_Turkish_I_Comparison
@@ -915,7 +940,7 @@ class pkixnames_Turkish_I_Comparison
 {
 };
 
-TEST_P(pkixnames_Turkish_I_Comparison, PresentedDNSIDMatchesReferenceDNSID)
+TEST_P(pkixnames_Turkish_I_Comparison, MatchPresentedDNSIDWithReferenceDNSID)
 {
   // Make sure we don't have the similar problems that strcasecmp and others
   // have with the other kinds of "i" and "I" commonly used in Turkish locales.
@@ -925,10 +950,29 @@ TEST_P(pkixnames_Turkish_I_Comparison, PresentedDNSIDMatchesReferenceDNSID)
   Input input;
   ASSERT_EQ(Success, input.Init(inputValidity.input.data(),
                                 inputValidity.input.length()));
+
   bool isASCII = InputsAreEqual(LOWERCASE_I, input) ||
                  InputsAreEqual(UPPERCASE_I, input);
-  ASSERT_EQ(isASCII, PresentedDNSIDMatchesReferenceDNSID(input, LOWERCASE_I));
-  ASSERT_EQ(isASCII, PresentedDNSIDMatchesReferenceDNSID(input, UPPERCASE_I));
+  {
+    bool matches;
+    ASSERT_EQ(inputValidity.isValidPresentedID ? Success
+                                               : Result::ERROR_BAD_DER,
+              MatchPresentedDNSIDWithReferenceDNSID(input, LOWERCASE_I,
+                                                    matches));
+    if (inputValidity.isValidPresentedID) {
+      ASSERT_EQ(isASCII, matches);
+    }
+  }
+  {
+    bool matches;
+    ASSERT_EQ(inputValidity.isValidPresentedID ? Success
+                                               : Result::ERROR_BAD_DER,
+              MatchPresentedDNSIDWithReferenceDNSID(input, UPPERCASE_I,
+                                                    matches));
+    if (inputValidity.isValidPresentedID) {
+      ASSERT_EQ(isASCII, matches);
+    }
+  }
 }
 
 INSTANTIATE_TEST_CASE_P(pkixnames_Turkish_I_Comparison,
@@ -1060,6 +1104,9 @@ static const uint8_t ipv4_addr_bytes[] = {
 };
 static const uint8_t ipv4_addr_bytes_as_str[] = "\x01\x02\x03\x04";
 static const uint8_t ipv4_addr_str[] = "1.2.3.4";
+static const uint8_t ipv4_addr_bytes_FFFFFFFF[8] = {
+  1, 2, 3, 4, 0xff, 0xff, 0xff, 0xff
+};
 
 static const uint8_t ipv4_compatible_ipv6_addr_bytes[] = {
   0, 0, 0, 0,
@@ -1091,6 +1138,125 @@ static const uint8_t ipv6_addr_bytes_as_str[] =
 
 static const uint8_t ipv6_addr_str[] =
   "1122:3344:5566:7788:99aa:bbcc:ddee:ff11";
+
+static const uint8_t ipv6_other_addr_bytes[] = {
+  0xff, 0xee, 0xdd, 0xcc,
+  0xbb, 0xaa, 0x99, 0x88,
+  0x77, 0x66, 0x55, 0x44,
+  0x33, 0x22, 0x11, 0x00,
+};
+
+static const uint8_t ipv4_other_addr_bytes[] = {
+  5, 6, 7, 8
+};
+static const uint8_t ipv4_other_addr_bytes_FFFFFFFF[] = {
+  5, 6, 7, 8, 0xff, 0xff, 0xff, 0xff
+};
+
+static const uint8_t ipv4_addr_00000000_bytes[] = {
+  0, 0, 0, 0
+};
+static const uint8_t ipv4_addr_FFFFFFFF_bytes[] = {
+  0, 0, 0, 0
+};
+
+static const uint8_t ipv4_constraint_all_zeros_bytes[] = {
+  0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const uint8_t ipv6_addr_all_zeros_bytes[] = {
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+};
+
+static const uint8_t ipv6_constraint_all_zeros_bytes[] = {
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0,
+  0, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const uint8_t ipv4_constraint_CIDR_16_bytes[] = {
+  1, 2, 0, 0, 0xff, 0xff, 0, 0
+};
+static const uint8_t ipv4_constraint_CIDR_17_bytes[] = {
+  1, 2, 0, 0, 0xff, 0xff, 0x80, 0
+};
+
+// The subnet is 1.2.0.0/16 but it is specified as 1.2.3.0/16
+static const uint8_t ipv4_constraint_CIDR_16_bad_addr_bytes[] = {
+  1, 2, 3, 0, 0xff, 0xff, 0, 0
+};
+
+// Masks are supposed to be of the form <ones><zeros>, but this one is of the
+// form <ones><zeros><ones><zeros>.
+static const uint8_t ipv4_constraint_bad_mask_bytes[] = {
+  1, 2, 3, 0, 0xff, 0, 0xff, 0
+};
+
+static const uint8_t ipv6_constraint_CIDR_16_bytes[] = {
+  0x11, 0x22, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0, 0,
+  0xff, 0xff, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0, 0
+};
+
+// The subnet is 1122::/16 but it is specified as 1122:3344::/16
+static const uint8_t ipv6_constraint_CIDR_16_bad_addr_bytes[] = {
+  0x11, 0x22, 0x33, 0x44, 0, 0, 0, 0,
+     0,    0,    0,    0, 0, 0, 0, 0,
+  0xff, 0xff,    0,    0, 0, 0, 0, 0,
+     0,    0,    0,    0, 0, 0, 0, 0
+};
+
+// Masks are supposed to be of the form <ones><zeros>, but this one is of the
+// form <ones><zeros><ones><zeros>.
+static const uint8_t ipv6_constraint_bad_mask_bytes[] = {
+  0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0, 0,
+     0,    0,    0,    0,    0,    0, 0, 0,
+  0xff, 0xff,    0,    0, 0xff, 0xff, 0, 0,
+     0,    0,    0,    0,    0,    0, 0, 0,
+};
+
+static const uint8_t ipv4_addr_truncated_bytes[] = {
+  1, 2, 3
+};
+static const uint8_t ipv4_addr_overlong_bytes[] = {
+  1, 2, 3, 4, 5
+};
+static const uint8_t ipv4_constraint_truncated_bytes[] = {
+  0, 0, 0, 0,
+  0, 0, 0,
+};
+static const uint8_t ipv4_constraint_overlong_bytes[] = {
+  0, 0, 0, 0,
+  0, 0, 0, 0, 0
+};
+
+static const uint8_t ipv6_addr_truncated_bytes[] = {
+  0x11, 0x22, 0x33, 0x44,
+  0x55, 0x66, 0x77, 0x88,
+  0x99, 0xaa, 0xbb, 0xcc,
+  0xdd, 0xee, 0xff
+};
+static const uint8_t ipv6_addr_overlong_bytes[] = {
+  0x11, 0x22, 0x33, 0x44,
+  0x55, 0x66, 0x77, 0x88,
+  0x99, 0xaa, 0xbb, 0xcc,
+  0xdd, 0xee, 0xff, 0x11, 0x00
+};
+static const uint8_t ipv6_constraint_truncated_bytes[] = {
+  0x11, 0x22, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0, 0,
+  0xff, 0xff, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0
+};
+static const uint8_t ipv6_constraint_overlong_bytes[] = {
+  0x11, 0x22, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0, 0,
+  0xff, 0xff, 0, 0, 0, 0, 0, 0,
+     0,    0, 0, 0, 0, 0, 0, 0, 0
+};
 
 // Note that, for DNSNames, these test cases in CHECK_CERT_HOSTNAME_PARAMS are
 // mostly about testing different scenerios regarding the structure of entries
@@ -1148,7 +1314,7 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
   // Do not match a CN-ID when there is a valid DNSName SAN Entry.
   WITH_SAN("a", RDN(CN("a")), DNSName("b"), Result::ERROR_BAD_CERT_DOMAIN),
   // Do not match a CN-ID when there is a malformed DNSName SAN Entry.
-  WITH_SAN("a", RDN(CN("a")), DNSName("!"), Result::ERROR_BAD_CERT_DOMAIN),
+  WITH_SAN("a", RDN(CN("a")), DNSName("!"), Result::ERROR_BAD_DER),
   // Do not match a matching CN-ID when there is a valid IPAddress SAN entry.
   WITH_SAN("a", RDN(CN("a")), IPAddress(ipv4_addr_bytes),
            Result::ERROR_BAD_CERT_DOMAIN),
@@ -1184,7 +1350,8 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
   // Duplicate DNSName.
   WITH_SAN("a", RDN(CN("foo")), DNSName("a") + DNSName("a"), Success),
   // After an invalid DNSName.
-  WITH_SAN("b", RDN(CN("foo")), DNSName("!") + DNSName("b"), Success),
+  WITH_SAN("b", RDN(CN("foo")), DNSName("!") + DNSName("b"),
+           Result::ERROR_BAD_DER),
 
   // http://tools.ietf.org/html/rfc5280#section-4.2.1.6: "If the subjectAltName
   // extension is present, the sequence MUST contain at least one entry."
@@ -1272,9 +1439,8 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
   WITH_SAN("example.org", RDN(CN("foo")),
            IPAddress(example_com) + DNSName("example.org"), Success),
 
-  // We skip over malformed DNSName entries too.
   WITH_SAN("example.com", RDN(CN("foo")),
-           DNSName("!") + DNSName("example.com"), Success),
+           DNSName("!") + DNSName("example.com"), Result::ERROR_BAD_DER),
 
   // Match a matching IPv4 address SAN entry.
   WITH_SAN(ipv4_addr_str, RDN(CN("foo")), IPAddress(ipv4_addr_bytes),
@@ -1348,6 +1514,17 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
   // SAN entry.
   WITH_SAN(ipv4_mapped_ipv6_addr_str, RDN(CN("foo")),
            IPAddress(ipv4_addr_bytes),
+           Result::ERROR_BAD_CERT_DOMAIN),
+
+  // Test that the presence of an otherName entry is handled appropriately.
+  // (The actual value of the otherName entry isn't important - that's not what
+  // we're testing here.)
+  WITH_SAN("example.com", ByteString(),
+           // The tag for otherName is CONTEXT_SPECIFIC | CONSTRUCTED | 0
+           TLV((2 << 6) | (1 << 5) | 0, ByteString()) + DNSName("example.com"),
+           Success),
+  WITH_SAN("example.com", ByteString(),
+           TLV((2 << 6) | (1 << 5) | 0, ByteString()),
            Result::ERROR_BAD_CERT_DOMAIN),
 };
 
@@ -1443,7 +1620,7 @@ TEST_P(pkixnames_CheckCertHostname_PresentedMatchesReference, CN_NoSAN)
   ASSERT_EQ(Success, hostnameInput.Init(param.referenceDNSID.data(),
                                         param.referenceDNSID.length()));
 
-  ASSERT_EQ(param.matches ? Success : Result::ERROR_BAD_CERT_DOMAIN,
+  ASSERT_EQ(param.expectedMatches ? Success : Result::ERROR_BAD_CERT_DOMAIN,
             CheckCertHostname(certInput, hostnameInput));
 }
 
@@ -1464,9 +1641,11 @@ TEST_P(pkixnames_CheckCertHostname_PresentedMatchesReference,
   Input hostnameInput;
   ASSERT_EQ(Success, hostnameInput.Init(param.referenceDNSID.data(),
                                         param.referenceDNSID.length()));
-
-  ASSERT_EQ(param.matches ? Success : Result::ERROR_BAD_CERT_DOMAIN,
-            CheckCertHostname(certInput, hostnameInput));
+  Result expectedResult
+    = param.expectedResult != Success ? param.expectedResult
+    : param.expectedMatches ? Success
+    : Result::ERROR_BAD_CERT_DOMAIN;
+  ASSERT_EQ(expectedResult, CheckCertHostname(certInput, hostnameInput));
 }
 
 INSTANTIATE_TEST_CASE_P(pkixnames_CheckCertHostname_DNSID_MATCH_PARAMS,
@@ -1516,10 +1695,11 @@ TEST_P(pkixnames_Turkish_I_Comparison, CheckCertHostname_SAN)
   Input certInput;
   ASSERT_EQ(Success, certInput.Init(cert.data(), cert.length()));
 
-  Result expectedResult = (InputsAreEqual(LOWERCASE_I, input) ||
-                           InputsAreEqual(UPPERCASE_I, input))
-                        ? Success
-                        : Result::ERROR_BAD_CERT_DOMAIN;
+  Result expectedResult
+    = (!param.isValidPresentedID) ? Result::ERROR_BAD_DER
+    : (InputsAreEqual(LOWERCASE_I, input) ||
+       InputsAreEqual(UPPERCASE_I, input)) ? Success
+    : Result::ERROR_BAD_CERT_DOMAIN;
 
   ASSERT_EQ(expectedResult, CheckCertHostname(certInput, UPPERCASE_I));
   ASSERT_EQ(expectedResult, CheckCertHostname(certInput, LOWERCASE_I));
@@ -1583,3 +1763,698 @@ TEST_P(pkixnames_CheckCertHostname_IPV4_Addresses,
 INSTANTIATE_TEST_CASE_P(pkixnames_CheckCertHostname_IPV4_ADDRESSES,
                         pkixnames_CheckCertHostname_IPV4_Addresses,
                         testing::ValuesIn(IPV4_ADDRESSES));
+
+struct NameConstraintParams
+{
+  ByteString subject;
+  ByteString subjectAltName;
+  ByteString subtrees;
+  Result expectedPermittedSubtreesResult;
+  Result expectedExcludedSubtreesResult;
+};
+
+static ByteString
+PermittedSubtrees(const ByteString& generalSubtrees)
+{
+  return TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 0,
+             generalSubtrees);
+}
+
+static ByteString
+ExcludedSubtrees(const ByteString& generalSubtrees)
+{
+  return TLV(der::CONTEXT_SPECIFIC | der::CONSTRUCTED | 1,
+             generalSubtrees);
+}
+
+// Does not encode min or max.
+static ByteString
+GeneralSubtree(const ByteString& base)
+{
+  return TLV(der::SEQUENCE, base);
+}
+
+static const NameConstraintParams NAME_CONSTRAINT_PARAMS[] =
+{
+  /////////////////////////////////////////////////////////////////////////////
+  // XXX: Malformed name constraints for supported types of names are ignored
+  // when there are no names of that type to constrain.
+  { ByteString(), NO_SAN,
+    GeneralSubtree(DNSName("!")),
+    Success, Success
+  },
+  { // DirectoryName constraints are an exception, because *every* certificate
+    // has at least one DirectoryName (tbsCertificate.subject).
+    ByteString(), NO_SAN,
+    GeneralSubtree(Name(ByteString(reinterpret_cast<const uint8_t*>("!"), 1))),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { ByteString(), NO_SAN,
+    GeneralSubtree(IPAddress(ipv4_constraint_truncated_bytes)),
+    Success, Success
+  },
+  { ByteString(), NO_SAN,
+    GeneralSubtree(IPAddress(ipv4_constraint_overlong_bytes)),
+    Success, Success
+  },
+  { ByteString(), NO_SAN,
+  GeneralSubtree(IPAddress(ipv6_constraint_truncated_bytes)),
+  Success, Success
+  },
+  { ByteString(), NO_SAN,
+  GeneralSubtree(IPAddress(ipv6_constraint_overlong_bytes)),
+  Success, Success
+  },
+  { ByteString(), NO_SAN,
+    GeneralSubtree(RFC822Name("!")),
+    Success, Success
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Edge cases of name constraint absolute vs. relative and subdomain matching
+  // that are not clearly explained in RFC 5280. (See the long comment above
+  // MatchPresentedDNSIDWithReferenceDNSID.)
+
+  // Q: Does a presented identifier equal (case insensitive) to the name
+  //    constraint match the constraint? For example, does the presented
+  //    ID "host.example.com" match a "host.example.com" constraint?
+  { ByteString(), DNSName("host.example.com"),
+    GeneralSubtree(DNSName("host.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // This test case is an example from RFC 5280.
+    ByteString(), DNSName("host1.example.com"),
+    GeneralSubtree(DNSName("host.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { ByteString(), RFC822Name("a@host.example.com"),
+    GeneralSubtree(RFC822Name("host.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // This test case is an example from RFC 5280.
+    ByteString(), RFC822Name("a@host1.example.com"),
+    GeneralSubtree(RFC822Name("host.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // Q: When the name constraint does not start with ".", do subdomain
+  //    presented identifiers match it? For example, does the presented
+  //    ID "www.host.example.com" match a "host.example.com" constraint?
+  { // This test case is an example from RFC 5280.
+    ByteString(),  DNSName("www.host.example.com"),
+    GeneralSubtree(DNSName(    "host.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The subdomain matching rule for host names that do not start with "." is
+    // different for RFC822Names than for DNSNames!
+    ByteString(),  RFC822Name("a@www.host.example.com"),
+    GeneralSubtree(RFC822Name(      "host.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE,
+    Success
+  },
+
+  // Q: When the name constraint does not start with ".", does a
+  //    non-subdomain prefix match it? For example, does "bigfoo.bar.com"
+  //    match "foo.bar.com"?
+  { ByteString(), DNSName("bigfoo.bar.com"),
+    GeneralSubtree(DNSName(  "foo.bar.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { ByteString(), RFC822Name("a@bigfoo.bar.com"),
+    GeneralSubtree(RFC822Name(    "foo.bar.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // Q: Is a name constraint that starts with "." valid, and if so, what
+  //    semantics does it have? For example, does a presented ID of
+  //    "www.example.com" match a constraint of ".example.com"? Does a
+  //    presented ID of "example.com" match a constraint of ".example.com"?
+  { ByteString(), DNSName("www.example.com"),
+    GeneralSubtree(DNSName(  ".example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // When there is no Local-part, an RFC822 name constraint's domain may
+    // start with '.', and the semantics are the same as for DNSNames.
+    ByteString(), RFC822Name("a@www.example.com"),
+    GeneralSubtree(RFC822Name(    ".example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // When there is a Local-part, an RFC822 name constraint's domain must not
+    // start with '.'.
+    ByteString(), RFC822Name("a@www.example.com"),
+    GeneralSubtree(RFC822Name(  "a@.example.com")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // Check that we only allow subdomains to match.
+    ByteString(), DNSName(  "example.com"),
+    GeneralSubtree(DNSName(".example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Check that we only allow subdomains to match.
+    ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name(".example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Check that we don't get confused and consider "b" == "."
+    ByteString(), DNSName("bexample.com"),
+    GeneralSubtree(DNSName(".example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Check that we don't get confused and consider "b" == "."
+    ByteString(), RFC822Name("a@bexample.com"),
+    GeneralSubtree(RFC822Name( ".example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // Q: Is there a way to prevent subdomain matches?
+  // (This is tested in a different set of tests because it requires a
+  // combination of permittedSubtrees and excludedSubtrees.)
+
+  // Q: Are name constraints allowed to be specified as absolute names?
+  //    For example, does a presented ID of "example.com" match a name
+  //    constraint of "example.com." and vice versa?
+  //
+  { // The DNSName in the constraint is not valid because constraint DNS IDs
+    // are not allowed to be absolute.
+    ByteString(), DNSName("example.com"),
+    GeneralSubtree(DNSName("example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name( "example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { // The DNSName in the SAN is not valid because presented DNS IDs are not
+    // allowed to be absolute.
+    ByteString(), DNSName("example.com."),
+    GeneralSubtree(DNSName("example.com")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { ByteString(), RFC822Name("a@example.com."),
+    GeneralSubtree(RFC822Name( "example.com")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { // The presented DNSName is the same length as the constraint, because the
+    // subdomain is only one character long and because the constraint both
+    // begins and ends with ".". But, it doesn't matter because absolute names
+    // are not allowed for DNSName constraints.
+    ByteString(), DNSName("p.example.com"),
+    GeneralSubtree(DNSName(".example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { // The presented DNSName is the same length as the constraint, because the
+    // subdomain is only one character long and because the constraint both
+    // begins and ends with ".".
+    ByteString(), RFC822Name("a@p.example.com"),
+    GeneralSubtree(RFC822Name(  ".example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { // Same as previous test case, but using a wildcard presented ID.
+    ByteString(), DNSName("*.example.com"),
+    GeneralSubtree(DNSName(".example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // Same as previous test case, but using a wildcard presented ID, which is
+    // invalid in an RFC822Name.
+    ByteString(), RFC822Name("a@*.example.com"),
+    GeneralSubtree(RFC822Name(  ".example.com.")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+
+  // Q: Are "" and "." valid DNSName constraints? If so, what do they mean?
+  { ByteString(), DNSName("example.com"),
+    GeneralSubtree(DNSName("")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name("")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The malformed (absolute) presented ID does not match.
+    ByteString(), DNSName("example.com."),
+    GeneralSubtree(DNSName("")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("a@example.com."),
+    GeneralSubtree(RFC822Name("")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // Invalid syntax in name constraint
+    ByteString(), DNSName("example.com"),
+    GeneralSubtree(DNSName(".")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { // Invalid syntax in name constraint
+    ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name(".")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER,
+  },
+  { ByteString(), DNSName("example.com."),
+    GeneralSubtree(DNSName(".")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("a@example.com."),
+    GeneralSubtree(RFC822Name(".")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Basic IP Address constraints (non-CN-ID)
+
+  // The Mozilla CA Policy says this means "no IPv4 addresses allowed."
+  { ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv4_addr_00000000_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv4_addr_FFFFFFFF_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  // The Mozilla CA Policy says this means "no IPv6 addresses allowed."
+  { ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv6_addr_all_zeros_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  // RFC 5280 doesn't partition IP address constraints into separate IPv4 and
+  // IPv6 categories, so a IPv4 permittedSubtrees constraint excludes all IPv6
+  // addresses, and vice versa.
+  { ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // IPv4 Subnets
+  { ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_CIDR_16_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_CIDR_17_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv4_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_CIDR_16_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // XXX(bug 1089430): We don't reject this even though it is weird.
+    ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_CIDR_16_bad_addr_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // XXX(bug 1089430): We don't reject this even though it is weird.
+    ByteString(), IPAddress(ipv4_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_bad_mask_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // IPv6 Subnets
+  { ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_CIDR_16_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), IPAddress(ipv6_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_CIDR_16_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // XXX(bug 1089430): We don't reject this even though it is weird.
+    ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_CIDR_16_bad_addr_bytes)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // XXX(bug 1089430): We don't reject this even though it is weird.
+    ByteString(), IPAddress(ipv6_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_bad_mask_bytes)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+
+  // Malformed presented IP addresses and constraints
+
+  { // The presented IPv4 address is empty
+    ByteString(), IPAddress(),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv4 address is truncated
+    ByteString(), IPAddress(ipv4_addr_truncated_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv4 address is too long
+    ByteString(), IPAddress(ipv4_addr_overlong_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv4 constraint is empty
+    ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress()),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv4 constraint is truncated
+    ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_truncated_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv4 constraint is too long
+    ByteString(), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_constraint_overlong_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 address is empty
+    ByteString(), IPAddress(),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 address is truncated
+    ByteString(), IPAddress(ipv6_addr_truncated_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 address is too long
+    ByteString(), IPAddress(ipv6_addr_overlong_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_all_zeros_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 constraint is empty
+    ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress()),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 constraint is truncated
+    ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_truncated_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // The presented IPv6 constraint is too long
+    ByteString(), IPAddress(ipv6_addr_bytes),
+    GeneralSubtree(IPAddress(ipv6_constraint_overlong_bytes)),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // XXX: We don't reject malformed name constraints when there are no names of
+  // that type.
+  { ByteString(), NO_SAN, GeneralSubtree(DNSName("!")),
+    Success, Success
+  },
+  { ByteString(), NO_SAN, GeneralSubtree(IPAddress(ipv4_addr_overlong_bytes)),
+    Success, Success
+  },
+  { ByteString(), NO_SAN, GeneralSubtree(IPAddress(ipv6_addr_overlong_bytes)),
+    Success, Success
+  },
+  { ByteString(), NO_SAN, GeneralSubtree(RFC822Name("\0")),
+    Success, Success
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Basic CN-ID DNSName constraint tests.
+
+  { // Empty Name is ignored for DNSName constraints.
+    ByteString(), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // Empty CN is ignored for DNSName constraints because it isn't a
+    // syntactically-valid DNSName.
+    //
+    // NSS gives different results.
+    RDN(CN("")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // IP Address is ignored for DNSName constraints.
+    //
+    // NSS gives different results.
+    RDN(CN("1.2.3.4")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // OU has something that looks like a dNSName that matches.
+    RDN(OU("a.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // OU has something that looks like a dNSName that does not match.
+    RDN(OU("b.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // NSS gives different results.
+    RDN(CN("Not a DNSName")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { RDN(CN("a.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { RDN(CN("b.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Empty SAN is rejected
+    RDN(CN("a.example.com")), ByteString(),
+    GeneralSubtree(DNSName("a.example.com")),
+    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
+  },
+  { // DNSName CN-ID match is detected when there is a SAN w/o any DNSName or
+    // IPAddress
+    RDN(CN("a.example.com")), RFC822Name("foo@example.com"),
+    GeneralSubtree(DNSName("a.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // DNSName CN-ID mismatch is detected when there is a SAN w/o any DNSName
+    // or IPAddress
+    RDN(CN("a.example.com")), RFC822Name("foo@example.com"),
+    GeneralSubtree(DNSName("b.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // DNSName CN-ID match not reported when there is a DNSName SAN
+    RDN(CN("a.example.com")), DNSName("b.example.com"),
+    GeneralSubtree(DNSName("a.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // DNSName CN-ID mismatch not reported when there is a DNSName SAN
+    RDN(CN("a.example.com")), DNSName("b.example.com"),
+    GeneralSubtree(DNSName("b.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE,
+  },
+  { // DNSName CN-ID match not reported when there is an IPAddress SAN
+    RDN(CN("a.example.com")), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(DNSName("a.example.com")),
+    Success, Success
+  },
+  { // DNSName CN-ID mismatch not reported when there is an IPAddress SAN
+    RDN(CN("a.example.com")), IPAddress(ipv4_addr_bytes),
+    GeneralSubtree(DNSName("b.example.com")),
+    Success, Success
+  },
+
+  { // IPAddress CN-ID match is detected when there is a SAN w/o any DNSName or
+    // IPAddress
+    RDN(CN(ipv4_addr_str)), RFC822Name("foo@example.com"),
+    GeneralSubtree(IPAddress(ipv4_addr_bytes_FFFFFFFF)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // IPAddress CN-ID mismatch is detected when there is a SAN w/o any DNSName
+    // or IPAddress
+    RDN(CN(ipv4_addr_str)), RFC822Name("foo@example.com"),
+    GeneralSubtree(IPAddress(ipv4_other_addr_bytes_FFFFFFFF)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // IPAddress CN-ID match not reported when there is a DNSName SAN
+    RDN(CN(ipv4_addr_str)), DNSName("b.example.com"),
+    GeneralSubtree(IPAddress(ipv4_addr_bytes_FFFFFFFF)),
+    Success, Success
+  },
+  { // IPAddress CN-ID mismatch not reported when there is a DNSName SAN
+    RDN(CN(ipv4_addr_str)), DNSName("b.example.com"),
+    GeneralSubtree(IPAddress(ipv4_addr_bytes_FFFFFFFF)),
+    Success, Success
+  },
+  { // IPAddress CN-ID match not reported when there is an IPAddress SAN
+    RDN(CN(ipv4_addr_str)), IPAddress(ipv4_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_addr_bytes_FFFFFFFF)),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // IPAddress CN-ID mismatch not reported when there is an IPAddress SAN
+    RDN(CN(ipv4_addr_str)), IPAddress(ipv4_other_addr_bytes),
+    GeneralSubtree(IPAddress(ipv4_other_addr_bytes_FFFFFFFF)),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Test that constraints are applied to the most specific (last) CN, and only
+  // that CN-ID.
+
+  { // Name constraint only matches a.example.com, but the most specific CN
+    // (i.e. the CN-ID) is b.example.com. (Two CNs in one RDN.)
+    RDN(CN("a.example.com") + CN("b.example.com")), NO_SAN,
+    GeneralSubtree(DNSName("a.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Name constraint only matches a.example.com, but the most specific CN
+    // (i.e. the CN-ID) is b.example.com. (Two CNs in separate RDNs.)
+    RDN(CN("a.example.com")) + RDN(CN("b.example.com")), NO_SAN,
+    GeneralSubtree(DNSName("a.example.com")),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
+  },
+  { // Name constraint only permits b.example.com, and the most specific CN
+    // (i.e. the CN-ID) is b.example.com. (Two CNs in one RDN.)
+    RDN(CN("a.example.com") + CN("b.example.com")), NO_SAN,
+    GeneralSubtree(DNSName("b.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Name constraint only permits b.example.com, and the most specific CN
+    // (i.e. the CN-ID) is b.example.com. (Two CNs in separate RDNs.)
+    RDN(CN("a.example.com")) + RDN(CN("b.example.com")), NO_SAN,
+    GeneralSubtree(DNSName("b.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Additional RFC822 name constraint tests. There are more tests regarding
+  // the DNSName part of the constraint mixed into the DNSName constraint
+  // tests.
+
+  { ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name("a@example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  // Bug 1056773: name constraints that omit Local-part but include '@' are
+  // invalid.
+  { ByteString(), RFC822Name("a@example.com"),
+    GeneralSubtree(RFC822Name("@example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("@example.com"),
+    GeneralSubtree(RFC822Name("@example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("example.com"),
+    GeneralSubtree(RFC822Name("@example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("a@mail.example.com"),
+    GeneralSubtree(RFC822Name("a@*.example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("a@*.example.com"),
+    GeneralSubtree(RFC822Name(".example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("@example.com"),
+    GeneralSubtree(RFC822Name(".example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+  { ByteString(), RFC822Name("@a.example.com"),
+    GeneralSubtree(RFC822Name(".example.com")),
+    Result::ERROR_BAD_DER,
+    Result::ERROR_BAD_DER
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Test name constraints with underscores.
+  //
+  { ByteString(), DNSName("uses_underscore.example.com"),
+    GeneralSubtree(DNSName("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), DNSName("uses_underscore.example.com"),
+    GeneralSubtree(DNSName("example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), DNSName("a.uses_underscore.example.com"),
+    GeneralSubtree(DNSName("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("a@uses_underscore.example.com"),
+    GeneralSubtree(RFC822Name("uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("uses_underscore@example.com"),
+    GeneralSubtree(RFC822Name("example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { ByteString(), RFC822Name("a@a.uses_underscore.example.com"),
+    GeneralSubtree(RFC822Name(".uses_underscore.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+};
+
+class pkixnames_CheckNameConstraints
+  : public ::testing::Test
+  , public ::testing::WithParamInterface<NameConstraintParams>
+{
+};
+
+TEST_P(pkixnames_CheckNameConstraints,
+       NameConstraintsEnforcedforDirectlyIssuedEndEntity)
+{
+  // Test that name constraints are enforced on a certificate directly issued by
+  // this certificate.
+
+  const NameConstraintParams& param(GetParam());
+
+  ByteString certDER(CreateCert(param.subject, param.subjectAltName));
+  ASSERT_FALSE(ENCODING_FAILED(certDER));
+  Input certInput;
+  ASSERT_EQ(Success, certInput.Init(certDER.data(), certDER.length()));
+  BackCert cert(certInput, EndEntityOrCA::MustBeEndEntity, nullptr);
+  ASSERT_EQ(Success, cert.Init());
+
+  {
+    ByteString nameConstraintsDER(TLV(der::SEQUENCE,
+                                      PermittedSubtrees(param.subtrees)));
+    Input nameConstraints;
+    ASSERT_EQ(Success,
+              nameConstraints.Init(nameConstraintsDER.data(),
+                                   nameConstraintsDER.length()));
+    ASSERT_EQ(param.expectedPermittedSubtreesResult,
+              CheckNameConstraints(nameConstraints, cert,
+                                   KeyPurposeId::id_kp_serverAuth));
+  }
+  {
+    ByteString nameConstraintsDER(TLV(der::SEQUENCE,
+                                      ExcludedSubtrees(param.subtrees)));
+    Input nameConstraints;
+    ASSERT_EQ(Success,
+              nameConstraints.Init(nameConstraintsDER.data(),
+                                   nameConstraintsDER.length()));
+    ASSERT_EQ(param.expectedExcludedSubtreesResult,
+              CheckNameConstraints(nameConstraints, cert,
+                                   KeyPurposeId::id_kp_serverAuth));
+  }
+  {
+    ByteString nameConstraintsDER(TLV(der::SEQUENCE,
+                                      PermittedSubtrees(param.subtrees) +
+                                      ExcludedSubtrees(param.subtrees)));
+    Input nameConstraints;
+    ASSERT_EQ(Success,
+              nameConstraints.Init(nameConstraintsDER.data(),
+                                   nameConstraintsDER.length()));
+    ASSERT_EQ((param.expectedPermittedSubtreesResult ==
+               param.expectedExcludedSubtreesResult)
+                ? param.expectedExcludedSubtreesResult
+                : Result::ERROR_CERT_NOT_IN_NAME_SPACE,
+              CheckNameConstraints(nameConstraints, cert,
+                                   KeyPurposeId::id_kp_serverAuth));
+  }
+}
+
+INSTANTIATE_TEST_CASE_P(pkixnames_CheckNameConstraints,
+                        pkixnames_CheckNameConstraints,
+                        testing::ValuesIn(NAME_CONSTRAINT_PARAMS));

@@ -27,8 +27,7 @@ namespace layers {
 class BasicColorLayer : public ColorLayer, public BasicImplData {
 public:
   explicit BasicColorLayer(BasicLayerManager* aLayerManager) :
-    ColorLayer(aLayerManager,
-               static_cast<BasicImplData*>(MOZ_THIS_IN_INITIALIZER_LIST()))
+    ColorLayer(aLayerManager, static_cast<BasicImplData*>(this))
   {
     MOZ_COUNT_CTOR(BasicColorLayer);
   }
@@ -40,7 +39,7 @@ protected:
   }
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion)
+  virtual void SetVisibleRegion(const nsIntRegion& aRegion) MOZ_OVERRIDE
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");

@@ -654,17 +654,6 @@ nsHttpConnection::InitSSLParams(bool connectingToProxy, bool proxyStartSSL)
         mNPNComplete = false;
     }
 
-    // transaction caps apply only to origin. we don't track
-    // proxy history.
-    if (!connectingToProxy &&
-        (mTransactionCaps & NS_HTTP_ALLOW_RSA_FALSESTART)) {
-        LOG(("nsHttpConnection::InitSSLParams %p "
-             ">= RSA Key Exchange Expected\n", this));
-        ssl->SetKEAExpected(ssl_kea_rsa);
-    } else {
-        ssl->SetKEAExpected(nsISSLSocketControl::KEY_EXCHANGE_UNKNOWN);
-    }
-
     return NS_OK;
 }
 
@@ -1131,9 +1120,9 @@ nsHttpConnection::TakeTransport(nsISocketTransport  **aTransport,
     // via https) that filter needs to take direct control of the
     // streams
     if (mTLSFilter) {
-        nsCOMPtr<nsISupports> ref1(mSocketIn);
-        nsCOMPtr<nsISupports> ref2(mSocketOut);
-        mTLSFilter->newIODriver(mSocketIn, mSocketOut,
+        nsCOMPtr<nsIAsyncInputStream>  ref1(mSocketIn);
+        nsCOMPtr<nsIAsyncOutputStream> ref2(mSocketOut);
+        mTLSFilter->newIODriver(ref1, ref2,
                                 getter_AddRefs(mSocketIn),
                                 getter_AddRefs(mSocketOut));
         mTLSFilter = nullptr;

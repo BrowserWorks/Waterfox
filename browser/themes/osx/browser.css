@@ -351,8 +351,7 @@ toolbarbutton.bookmark-item > menupopup {
 }
 
 .bookmark-item > .toolbarbutton-icon[label]:not([label=""]),
-.bookmark-item > .toolbarbutton-icon[type="menu"],
-#personal-bookmarks[cui-areatype="toolbar"]:not([overflowedItem=true]) > #bookmarks-toolbar-placeholder > .toolbarbutton-icon[label]:not([label=""]) {
+.bookmark-item > .toolbarbutton-icon[type="menu"] {
   -moz-margin-end: 5px;
 }
 
@@ -575,6 +574,7 @@ toolbar .toolbarbutton-1:not([type="menu-button"]),
   border: 0;
 }
 
+.findbar-button,
 toolbar .toolbarbutton-1:not(:-moz-any([type="menu-button"],#back-button,#forward-button)),
 toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button,
 toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
@@ -584,10 +584,16 @@ toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
   transition-duration: 250ms;
 }
 
+.findbar-button {
+  background: none;
+  box-shadow: none;
+}
+
 toolbar .toolbarbutton-1:not(:-moz-any([type="menu-button"],#back-button,#forward-button)) {
   padding: 0 4px;
 }
 
+.findbar-button:not(:-moz-any([checked="true"],[disabled="true"])):hover,
 toolbar .toolbarbutton-1:not(:-moz-any([type="menu-button"],[disabled],[open],#back-button,#forward-button)):hover,
 toolbar .toolbarbutton-1[type="menu-button"]:not([disabled]) > .toolbarbutton-menubutton-button[open] + .toolbarbutton-menubutton-dropmarker,
 toolbar .toolbarbutton-1[type="menu-button"]:not([disabled]):-moz-any(:hover,[open]) > .toolbarbutton-menubutton-button,
@@ -597,12 +603,14 @@ toolbar .toolbaritem-combined-buttons:hover > .toolbarbutton-combined {
   box-shadow: var(--toolbarbutton-hover-boxshadow);
 }
 
+.findbar-button:not(:-moz-any([checked="true"],[disabled="true"])):hover,
 toolbar .toolbarbutton-1:not(:-moz-any([type="menu-button"],[disabled],[open],#back-button,#forward-button)):hover,
 toolbar .toolbarbutton-1[type="menu-button"]:not(:-moz-any([disabled],[open]))[buttonover] > .toolbarbutton-menubutton-button,
 toolbar .toolbarbutton-1[type="menu-button"]:not(:-moz-any([disabled],[open],[buttonover])):hover > .toolbarbutton-menubutton-dropmarker {
   background: var(--toolbarbutton-hover-background);
 }
 
+.findbar-button:not([disabled=true]):-moz-any([checked="true"],:hover:active),
 toolbar .toolbarbutton-1:not(:-moz-any([type="menu-button"],[disabled],#back-button,#forward-button)):-moz-any(:hover:active,[open],[checked]),
 toolbar .toolbarbutton-1[type="menu-button"]:not([disabled]) > .toolbarbutton-menubutton-button[open],
 toolbar .toolbarbutton-1[type="menu-button"]:not(:-moz-any([disabled],[open]))[buttonover]:active > .toolbarbutton-menubutton-button,
@@ -614,6 +622,7 @@ toolbar .toolbarbutton-1[type="menu-button"][open]:not([disabled]) > .toolbarbut
   transition-duration: 10ms;
 }
 
+.findbar-button[checked="true"]:not(:active):hover,
 toolbar .toolbarbutton-1[checked]:not(:active):hover {
   background-color: var(--toolbarbutton-checkedhover-backgroundcolor);
   transition: background-color 250ms;
@@ -2511,46 +2520,55 @@ richlistitem[type~="action"][actiontype="switchtab"][selected="true"] > .ac-url-
 
 /* social share panel */
 .social-share-frame {
-  background: linear-gradient(to bottom, rgba(242,242,242,.99), rgba(242,242,242,.95));
-  border-left: 1px solid #f8f8f8;
-  width: 330px;
+  border-top: 1px solid #f8f8f8;
+  min-width: 756px;
   height: 150px;
   /* we resize our panels dynamically, make it look nice */
-  transition: height 100ms ease-out, width 100ms ease-out;
+}
+
+#share-container {
+  min-width: 756px;
+  background-color: white;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+#share-container[loading] {
+  background-image: url(chrome://browser/skin/tabbrowser/pendingpaint.png);
+}
+#share-container > browser {
+  transition: opacity 150ms ease-in-out;
+  opacity: 1;
+}
+#share-container[loading] > browser {
+  opacity: 0;
+}
+
+#manage-share-providers,
+#social-sidebar-button:hover,
+#social-sidebar-button:hover:active {
+  -moz-image-region: rect(18px, 468px, 36px, 450px);
 }
 
 .social-share-toolbar {
-  border-right: 1px solid #dedede;
-  background: linear-gradient(to bottom, rgba(247,247,247,.99), rgba(247,247,247,.95));
+  border-bottom: 1px solid #dedede;
+  padding: 2px;
 }
 
 #social-share-provider-buttons {
-  border-right: 1px solid #fbfbfb;
-  padding: 6px;
-}
-
-#social-share-provider-buttons > .share-provider-button {
-  padding: 6px;
+  padding: 0;
   margin: 0;
-  border: none;
-  border-radius: 2px;
 }
 
-#social-share-provider-buttons > .share-provider-button[checked],
-#social-share-provider-buttons > .share-provider-button:active {
+.share-provider-button {
   padding: 5px;
-  border: 1px solid #b5b5b8;
-  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+  margin: 2px;
 }
 
-#social-share-provider-buttons > .share-provider-button[checked] {
-  background: linear-gradient(to bottom, #d9d9d9, #e3e3e3);
-}
-
-#social-share-provider-buttons > .share-provider-button > .toolbarbutton-text {
+.share-provider-button > .toolbarbutton-text {
   display: none;
 }
-#social-share-provider-buttons > .share-provider-button > .toolbarbutton-icon {
+
+.share-provider-button > .toolbarbutton-icon {
   width: 16px;
   min-height: 16px;
   max-height: 16px;
@@ -4497,44 +4515,27 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 }
 
 #social-share-panel {
-  max-height: 600px;
   min-height: 100px;
-  max-width: 800px;
   min-width: 300px;
+  transition: height .3s ease-in-out, width .3s ease-in-out;
 }
 
-.social-share-frame:-moz-locale-dir(ltr) {
+#share-container,
+.social-share-frame {
   border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-  border-top-right-radius: inherit;
-  border-bottom-right-radius: inherit;
-}
-
-.social-share-frame:-moz-locale-dir(rtl) {
-  border-top-left-radius: inherit;
   border-bottom-left-radius: inherit;
   border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-#social-share-panel > .social-share-toolbar:-moz-locale-dir(ltr) {
-  border-top-left-radius: inherit;
-  border-bottom-left-radius: inherit;
-}
-
-#social-share-panel > .social-share-toolbar:-moz-locale-dir(rtl) {
-  border-top-right-radius: inherit;
   border-bottom-right-radius: inherit;
 }
 
-#social-share-provider-buttons:-moz-locale-dir(ltr) {
+#social-share-panel > .social-share-toolbar {
   border-top-left-radius: inherit;
-  border-bottom-left-radius: inherit;
+  border-top-right-radius: inherit;
 }
 
-#social-share-provider-buttons:-moz-locale-dir(rtl) {
+#social-share-provider-buttons {
+  border-top-left-radius: inherit;
   border-top-right-radius: inherit;
-  border-bottom-right-radius: inherit;
 }
 
 /* === end of social toolbar provider menu === */
@@ -4576,6 +4577,17 @@ window > chatbox {
   border-top-right-radius: @toolbarbuttonCornerRadius@;
   border-bottom-left-radius: @toolbarbuttonCornerRadius@;
   border-bottom-right-radius: @toolbarbuttonCornerRadius@;
+}
+
+/* EME notifications */
+
+.popup-notification-icon[popupid="drmContentPlaying"],
+#eme-notification-icon {
+  list-style-image: url("chrome://browser/skin/drm-icon.svg#chains");
+}
+
+#eme-notification-icon:hover:active {
+  list-style-image: url("chrome://browser/skin/drm-icon.svg#chains-pressed");
 }
 
 /* Customization mode */

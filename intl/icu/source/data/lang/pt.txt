@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/pt.xml
- */
 pt{
     Keys{
         calendar{"Calendário"}
@@ -88,7 +85,7 @@ pt{
         bs{"bósnio"}
         bss{"akoose"}
         bua{"buriat"}
-        bug{"buguinês"}
+        bug{"buginês"}
         bum{"bulu"}
         byn{"blin"}
         byv{"medumba"}
@@ -133,7 +130,7 @@ pt{
         din{"dinka"}
         dje{"zarma"}
         doi{"dogri"}
-        dsb{"sérvio baixo"}
+        dsb{"sorábio baixo"}
         dua{"duala"}
         dum{"holandês médio"}
         dv{"divehi"}
@@ -212,7 +209,7 @@ pt{
         hmn{"hmong"}
         ho{"hiri motu"}
         hr{"croata"}
-        hsb{"sorábio superior"}
+        hsb{"sorábio alto"}
         ht{"haitiano"}
         hu{"húngaro"}
         hup{"hupa"}
@@ -351,7 +348,7 @@ pt{
         naq{"nama"}
         nb{"bokmål norueguês"}
         nd{"ndebele do norte"}
-        nds{"baixo-alemão"}
+        nds{"baixo alemão"}
         ne{"nepali"}
         new{"newari"}
         ng{"dongo"}
@@ -412,7 +409,7 @@ pt{
         rom{"romani"}
         ru{"russo"}
         rup{"aromeno"}
-        rw{"ruanda"}
+        rw{"kinyarwanda"}
         rwk{"rwa"}
         sa{"sânscrito"}
         sad{"sandawe"}
@@ -499,8 +496,8 @@ pt{
         tw{"twi"}
         twq{"tasawaq"}
         ty{"taitiano"}
-        tyv{"tuvinian"}
-        tzm{"tamazight"}
+        tyv{"tuviniano"}
+        tzm{"tamazight do Atlas Central"}
         udm{"udmurt"}
         ug{"uigur"}
         uga{"ugarítico"}
@@ -544,13 +541,13 @@ pt{
         zxx{"sem conteúdo linguístico"}
         zza{"zaza"}
     }
-    Languages%variant{
-        ps{"pushto"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"azeri"}
         en_GB{"inglês do Reino Unido"}
         en_US{"inglês dos Estados Unidos"}
+    }
+    Languages%variant{
+        ps{"pushto"}
     }
     Scripts{
         Arab{"árabe"}
@@ -618,8 +615,8 @@ pt{
         Latn{"latim"}
         Lepc{"lepcha"}
         Limb{"limbu"}
-        Lina{"A linear"}
-        Linb{"B linear"}
+        Lina{"linear A"}
+        Linb{"linear B"}
         Lisu{"lisu"}
         Lyci{"lício"}
         Lydi{"lídio"}
@@ -700,7 +697,7 @@ pt{
             chinese{"Calendário Chinês"}
             coptic{"Calendário Coptic"}
             dangi{"Calendário Dangi"}
-            ethiopic{"Calendário etiopiano"}
+            ethiopic{"Calendário etiópico"}
             ethiopic-amete-alem{"Calendário Amete Alem da Etiópia"}
             gregorian{"Calendário Gregoriano"}
             hebrew{"Calendário Hebraico"}
@@ -835,7 +832,7 @@ pt{
         PINYIN{"romanização Pinyin"}
         POLYTON{"politônico"}
         POSIX{"computador"}
-        REVISED{"Ortografia Revisada"}
+        REVISED{"ortografia revisada"}
         ROZAJ{"resiano"}
         SAAHO{"saho"}
         SCOTLAND{"inglês padrão escocês"}
@@ -847,7 +844,7 @@ pt{
         VALENCIA{"valenciano"}
         WADEGILE{"romanização Wade-Giles"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Idioma: {0}"}
         script{"Alfabeto: {0}"}

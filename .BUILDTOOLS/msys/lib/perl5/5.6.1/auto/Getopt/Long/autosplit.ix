@@ -1,9 +1,0 @@
-# Index created by AutoSplit for lib/Getopt/Long.pm
-#    (file acts as timestamp)
-package Getopt::Long;
-sub GetOptions  ;
-sub FindOption  ($$$$$$$);
-sub Configure  (@);
-sub config  (@);
-sub Croak  (@);
-1;

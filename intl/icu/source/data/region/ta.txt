@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ta.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ta.xml
- */
 ta{
     Countries{
         001{"உலகம்"}
@@ -302,6 +299,13 @@ ta{
         ZW{"ஜிம்பாப்வே"}
         ZZ{"அறியப்படாத பிரதேசம்"}
     }
+    Countries%short{
+        GB{"யூ.கே."}
+        HK{"ஹாங்காங்"}
+        MO{"மகாவோ"}
+        PS{"பாலஸ்தீனம்"}
+        US{"யூஎஸ்"}
+    }
     Countries%variant{
         CD{"காங்கோ (டிஆர்சி)"}
         CG{"காங்கோ (குடியரசு)"}
@@ -310,12 +314,5 @@ ta{
         MK{"மாசிடோனியா (ஃபைரோம்)"}
         TL{"கிழக்கு தைமோர்"}
     }
-    CountriesShort{
-        GB{"யூ.கே."}
-        HK{"ஹாங்காங்"}
-        MO{"மகாவோ"}
-        PS{"பாலஸ்தீனம்"}
-        US{"யூஎஸ்"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

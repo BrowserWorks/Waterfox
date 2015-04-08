@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt_PT.xml
 // *
 // ***************************************************************************
 pt_PT{
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
     zoneStrings{
         "Africa:Djibouti"{
             ec{"Jibuti"}
@@ -184,9 +184,9 @@ pt_PT{
             ec{"Tarawa"}
         }
         "meta:Acre"{
-            ld{"Hora de Verão do Acre"}
+            ld{"Hora de verão do Acre"}
             lg{"Hora do Acre"}
-            ls{"Hora Padrão do Acre"}
+            ls{"Hora padrão do Acre"}
             sd{"∅∅∅"}
             sg{"∅∅∅"}
             ss{"∅∅∅"}
@@ -204,125 +204,125 @@ pt_PT{
             ls{"Hora da África do Sul"}
         }
         "meta:Africa_Western"{
-            ld{"Hora de Verão da África Ocidental"}
+            ld{"Hora de verão da África Ocidental"}
             lg{"Hora da África Ocidental"}
-            ls{"Hora Padrão da África Ocidental"}
+            ls{"Hora padrão da África Ocidental"}
         }
         "meta:Alaska"{
-            ld{"Hora de Verão do Alasca"}
+            ld{"Hora de verão do Alasca"}
             lg{"Hora do Alasca"}
-            ls{"Hora Padrão do Alasca"}
+            ls{"Hora padrão do Alasca"}
         }
         "meta:Almaty"{
-            ld{"Hora de Verão de Almaty"}
+            ld{"Hora de verão de Almaty"}
             lg{"Hora de Almaty"}
-            ls{"Hora Padrão de Almaty"}
+            ls{"Hora padrão de Almaty"}
         }
         "meta:Amazon"{
-            ld{"Hora de Verão do Amazonas"}
+            ld{"Hora de verão do Amazonas"}
             lg{"Hora do Amazonas"}
-            ls{"Hora Padrão do Amazonas"}
+            ls{"Hora padrão do Amazonas"}
             sd{"∅∅∅"}
             sg{"∅∅∅"}
             ss{"∅∅∅"}
         }
         "meta:America_Central"{
-            ld{"Hora de Verão Central"}
+            ld{"Hora de verão Central"}
             lg{"Hora Central"}
-            ls{"Hora Padrão Central"}
+            ls{"Hora padrão Central"}
         }
         "meta:America_Eastern"{
-            ld{"Hora de Verão Oriental"}
+            ld{"Hora de verão Oriental"}
             lg{"Hora Oriental"}
-            ls{"Hora Padrão Oriental"}
+            ls{"Hora padrão Oriental"}
         }
         "meta:America_Mountain"{
-            ld{"Hora de Verão da Montanha"}
+            ld{"Hora de verão da Montanha"}
             lg{"Hora da Montanha"}
-            ls{"Hora Padrão da Montanha"}
+            ls{"Hora padrão da Montanha"}
         }
         "meta:America_Pacific"{
-            ld{"Hora de Verão do Pacífico"}
+            ld{"Hora de verão do Pacífico"}
             lg{"Hora do Pacífico"}
-            ls{"Hora Padrão do Pacífico"}
+            ls{"Hora padrão do Pacífico"}
         }
         "meta:Anadyr"{
-            ld{"Hora de Verão de Anadyr"}
+            ld{"Hora de verão de Anadyr"}
             lg{"Hora de Anadyr"}
-            ls{"Hora Padrão de Anadyr"}
+            ls{"Hora padrão de Anadyr"}
         }
         "meta:Aqtau"{
-            ld{"Hora de Verão de Aqtau"}
+            ld{"Hora de verão de Aqtau"}
             lg{"Hora de Aqtau"}
-            ls{"Hora Padrão de Aqtau"}
+            ls{"Hora padrão de Aqtau"}
         }
         "meta:Aqtobe"{
-            ld{"Hora de Verão de Aqtobe"}
+            ld{"Hora de verão de Aqtobe"}
             lg{"Hora de Aqtobe"}
-            ls{"Hora Padrão de Aqtobe"}
+            ls{"Hora padrão de Aqtobe"}
         }
         "meta:Arabian"{
-            ld{"Hora de Verão da Arábia"}
+            ld{"Hora de verão da Arábia"}
             lg{"Hora da Arábia"}
-            ls{"Hora Padrão da Arábia"}
+            ls{"Hora padrão da Arábia"}
         }
         "meta:Argentina"{
-            ld{"Hora de Verão da Argentina"}
+            ld{"Hora de verão da Argentina"}
             lg{"Hora da Argentina"}
-            ls{"Hora Padrão da Argentina"}
+            ls{"Hora padrão da Argentina"}
         }
         "meta:Argentina_Western"{
-            ld{"Hora de Verão da Argentina Ocidental"}
+            ld{"Hora de verão da Argentina Ocidental"}
             lg{"Hora da Argentina Ocidental"}
-            ls{"Hora Padrão da Argentina Ocidental"}
+            ls{"Hora padrão da Argentina Ocidental"}
         }
         "meta:Armenia"{
-            ld{"Hora de Verão da Arménia"}
+            ld{"Hora de verão da Arménia"}
             lg{"Hora da Arménia"}
-            ls{"Hora Padrão da Arménia"}
+            ls{"Hora padrão da Arménia"}
         }
         "meta:Atlantic"{
-            ld{"Hora de Verão do Atlântico"}
+            ld{"Hora de verão do Atlântico"}
             lg{"Hora do Atlântico"}
-            ls{"Hora Padrão do Atlântico"}
+            ls{"Hora padrão do Atlântico"}
         }
         "meta:Australia_Central"{
-            ld{"Hora de Verão da Austrália Central"}
+            ld{"Hora de verão da Austrália Central"}
             lg{"Hora da Austrália Central"}
-            ls{"Hora Padrão da Austrália Central"}
+            ls{"Hora padrão da Austrália Central"}
         }
         "meta:Australia_CentralWestern"{
-            ld{"Hora de Verão da Austrália Central Ocidental"}
+            ld{"Hora de verão da Austrália Central Ocidental"}
             lg{"Hora da Austrália Central Ocidental"}
-            ls{"Hora Padrão da Austrália Central Ocidental"}
+            ls{"Hora padrão da Austrália Central Ocidental"}
         }
         "meta:Australia_Eastern"{
-            ld{"Hora de Verão da Austrália Oriental"}
+            ld{"Hora de verão da Austrália Oriental"}
             lg{"Hora da Austrália Oriental"}
-            ls{"Hora Padrão da Austrália Oriental"}
+            ls{"Hora padrão da Austrália Oriental"}
         }
         "meta:Australia_Western"{
-            ld{"Hora de Verão da Austrália Ocidental"}
+            ld{"Hora de verão da Austrália Ocidental"}
             lg{"Hora da Austrália Ocidental"}
-            ls{"Hora Padrão da Austrália Ocidental"}
+            ls{"Hora padrão da Austrália Ocidental"}
         }
         "meta:Azerbaijan"{
-            ld{"Hora de Verão do Azerbaijão"}
+            ld{"Hora de verão do Azerbaijão"}
             lg{"Hora do Azerbaijão"}
-            ls{"Hora Padrão do Azerbaijão"}
+            ls{"Hora padrão do Azerbaijão"}
         }
         "meta:Azores"{
-            ld{"Hora de Verão dos Açores"}
+            ld{"Hora de verão dos Açores"}
             lg{"Hora dos Açores"}
-            ls{"Hora Padrão dos Açores"}
+            ls{"Hora padrão dos Açores"}
             sd{"AZOST"}
             sg{"AZOT"}
             ss{"AZOT"}
         }
         "meta:Bangladesh"{
-            ld{"Hora de Verão do Bangladesh"}
+            ld{"Hora de verão do Bangladesh"}
             lg{"Hora do Bangladesh"}
-            ls{"Hora Padrão do Bangladesh"}
+            ls{"Hora padrão do Bangladesh"}
         }
         "meta:Bhutan"{
             ls{"Hora do Butão"}
@@ -331,9 +331,9 @@ pt_PT{
             ls{"Hora da Bolívia"}
         }
         "meta:Brasilia"{
-            ld{"Hora de Verão de Brasília"}
+            ld{"Hora de verão de Brasília"}
             lg{"Hora de Brasília"}
-            ls{"Hora Padrão de Brasília"}
+            ls{"Hora padrão de Brasília"}
             sd{"∅∅∅"}
             sg{"∅∅∅"}
             ss{"∅∅∅"}
@@ -342,32 +342,32 @@ pt_PT{
             ls{"Hora do Brunei Darussalam"}
         }
         "meta:Cape_Verde"{
-            ld{"Hora de Verão de Cabo Verde"}
+            ld{"Hora de verão de Cabo Verde"}
             lg{"Hora de Cabo Verde"}
-            ls{"Hora Padrão de Cabo Verde"}
+            ls{"Hora padrão de Cabo Verde"}
         }
         "meta:Chamorro"{
-            ls{"Hora Padrão do Chamorro"}
+            ls{"Hora padrão do Chamorro"}
         }
         "meta:Chatham"{
-            ld{"Hora de Verão do Chatham"}
+            ld{"Hora de verão do Chatham"}
             lg{"Hora do Chatham"}
-            ls{"Hora Padrão do Chatham"}
+            ls{"Hora padrão do Chatham"}
         }
         "meta:Chile"{
-            ld{"Hora de Verão do Chile"}
+            ld{"Hora de verão do Chile"}
             lg{"Hora do Chile"}
-            ls{"Hora Padrão do Chile"}
+            ls{"Hora padrão do Chile"}
         }
         "meta:China"{
-            ld{"Hora de Verão da China"}
+            ld{"Hora de verão da China"}
             lg{"Hora da China"}
-            ls{"Hora Padrão da China"}
+            ls{"Hora padrão da China"}
         }
         "meta:Choibalsan"{
-            ld{"Hora de Verão de Choibalsan"}
+            ld{"Hora de verão de Choibalsan"}
             lg{"Hora de Choibalsan"}
-            ls{"Hora Padrão de Choibalsan"}
+            ls{"Hora padrão de Choibalsan"}
         }
         "meta:Christmas"{
             ls{"Hora da Ilha do Natal"}
@@ -376,19 +376,19 @@ pt_PT{
             ls{"Hora das Ilhas Cocos"}
         }
         "meta:Colombia"{
-            ld{"Hora de Verão da Colômbia"}
+            ld{"Hora de verão da Colômbia"}
             lg{"Hora da Colômbia"}
-            ls{"Hora Padrão da Colômbia"}
+            ls{"Hora padrão da Colômbia"}
         }
         "meta:Cook"{
-            ld{"Hora de Verão das Ilhas Cook"}
+            ld{"Hora de verão das Ilhas Cook"}
             lg{"Hora das Ilhas Cook"}
-            ls{"Hora Padrão das Ilhas Cook"}
+            ls{"Hora padrão das Ilhas Cook"}
         }
         "meta:Cuba"{
-            ld{"Hora de Verão de Cuba"}
+            ld{"Hora de verão de Cuba"}
             lg{"Hora de Cuba"}
-            ls{"Hora Padrão de Cuba"}
+            ls{"Hora padrão de Cuba"}
         }
         "meta:Davis"{
             ls{"Hora de Davis"}
@@ -400,25 +400,25 @@ pt_PT{
             ls{"Hora de Timor Leste"}
         }
         "meta:Easter"{
-            ld{"Hora de Verão da Ilha da Páscoa"}
+            ld{"Hora de verão da Ilha da Páscoa"}
             lg{"Hora da Ilha da Páscoa"}
-            ls{"Hora Padrão da Ilha da Páscoa"}
+            ls{"Hora padrão da Ilha da Páscoa"}
         }
         "meta:Ecuador"{
             ls{"Hora do Equador"}
         }
         "meta:Europe_Central"{
-            ld{"Hora de Verão da Europa Central"}
+            ld{"Hora de verão da Europa Central"}
             lg{"Hora da Europa Central"}
-            ls{"Hora Padrão da Europa Central"}
+            ls{"Hora padrão da Europa Central"}
             sd{"CEST"}
             sg{"CET"}
             ss{"CET"}
         }
         "meta:Europe_Eastern"{
-            ld{"Hora de Verão da Europa Oriental"}
+            ld{"Hora de verão da Europa Oriental"}
             lg{"Hora da Europa Oriental"}
-            ls{"Hora Padrão da Europa Oriental"}
+            ls{"Hora padrão da Europa Oriental"}
             sd{"EEST"}
             sg{"EET"}
             ss{"EET"}
@@ -427,22 +427,22 @@ pt_PT{
             ls{"Hora do Extremo Leste da Europa"}
         }
         "meta:Europe_Western"{
-            ld{"Hora de Verão da Europa Ocidental"}
+            ld{"Hora de verão da Europa Ocidental"}
             lg{"Hora da Europa Ocidental"}
-            ls{"Hora Padrão da Europa Ocidental"}
+            ls{"Hora padrão da Europa Ocidental"}
             sd{"WEST"}
             sg{"WET"}
             ss{"WET"}
         }
         "meta:Falkland"{
-            ld{"Hora de Verão das Ilhas Falkland"}
+            ld{"Hora de verão das Ilhas Falkland"}
             lg{"Hora das Ilhas Falkland"}
-            ls{"Hora Padrão das Ilhas Falkland"}
+            ls{"Hora padrão das Ilhas Falkland"}
         }
         "meta:Fiji"{
-            ld{"Hora de Verão de Fiji"}
+            ld{"Hora de verão de Fiji"}
             lg{"Hora de Fiji"}
-            ls{"Hora Padrão de Fiji"}
+            ls{"Hora padrão de Fiji"}
         }
         "meta:French_Guiana"{
             ls{"Hora da Guiana Francesa"}
@@ -460,49 +460,49 @@ pt_PT{
             ls{"Hora de Gambier"}
         }
         "meta:Georgia"{
-            ld{"Hora de Verão da Geórgia"}
+            ld{"Hora de verão da Geórgia"}
             lg{"Hora da Geórgia"}
-            ls{"Hora Padrão da Geórgia"}
+            ls{"Hora padrão da Geórgia"}
         }
         "meta:Gilbert_Islands"{
             ls{"Hora das Ilhas Gilbert"}
         }
         "meta:Greenland_Eastern"{
-            ld{"Hora de Verão da Gronelândia Oriental"}
+            ld{"Hora de verão da Gronelândia Oriental"}
             lg{"Hora da Gronelândia Oriental"}
-            ls{"Hora Padrão da Gronelândia Oriental"}
+            ls{"Hora padrão da Gronelândia Oriental"}
         }
         "meta:Greenland_Western"{
-            ld{"Hora de Verão da Gronelândia Ocidental"}
+            ld{"Hora de verão da Gronelândia Ocidental"}
             lg{"Hora da Gronelândia Ocidental"}
-            ls{"Hora Padrão da Gronelândia Ocidental"}
+            ls{"Hora padrão da Gronelândia Ocidental"}
         }
         "meta:Guam"{
-            ls{"Hora Padrão de Guam"}
+            ls{"Hora padrão de Guam"}
         }
         "meta:Gulf"{
-            ls{"Hora Padrão do Golfo"}
+            ls{"Hora padrão do Golfo"}
         }
         "meta:Guyana"{
             ls{"Hora da Guiana"}
         }
         "meta:Hawaii_Aleutian"{
-            ld{"Hora de Verão do Havai e Aleutas"}
+            ld{"Hora de verão do Havai e Aleutas"}
             lg{"Hora do Havai e Aleutas"}
-            ls{"Hora Padrão do Havai e Aleutas"}
+            ls{"Hora padrão do Havai e Aleutas"}
         }
         "meta:Hong_Kong"{
-            ld{"Hora de Verão de Hong Kong"}
+            ld{"Hora de verão de Hong Kong"}
             lg{"Hora de Hong Kong"}
-            ls{"Hora Padrão de Hong Kong"}
+            ls{"Hora padrão de Hong Kong"}
         }
         "meta:Hovd"{
-            ld{"Hora de Verão de Hovd"}
+            ld{"Hora de verão de Hovd"}
             lg{"Hora de Hovd"}
-            ls{"Hora Padrão de Hovd"}
+            ls{"Hora padrão de Hovd"}
         }
         "meta:India"{
-            ls{"Hora Padrão da Índia"}
+            ls{"Hora padrão da Índia"}
         }
         "meta:Indian_Ocean"{
             ls{"Hora do Oceano Índico"}
@@ -520,29 +520,29 @@ pt_PT{
             ls{"Hora da Indonésia Ocidental"}
         }
         "meta:Iran"{
-            ld{"Hora de Verão do Irão"}
+            ld{"Hora de verão do Irão"}
             lg{"Hora do Irão"}
-            ls{"Hora Padrão do Irão"}
+            ls{"Hora padrão do Irão"}
         }
         "meta:Irkutsk"{
-            ld{"Hora de Verão de Irkutsk"}
+            ld{"Hora de verão de Irkutsk"}
             lg{"Hora de Irkutsk"}
-            ls{"Hora Padrão de Irkutsk"}
+            ls{"Hora padrão de Irkutsk"}
         }
         "meta:Israel"{
-            ld{"Hora de Verão de Israel"}
+            ld{"Hora de verão de Israel"}
             lg{"Hora de Israel"}
-            ls{"Hora Padrão de Israel"}
+            ls{"Hora padrão de Israel"}
         }
         "meta:Japan"{
-            ld{"Hora de Verão do Japão"}
+            ld{"Hora de verão do Japão"}
             lg{"Hora do Japão"}
-            ls{"Hora Padrão do Japão"}
+            ls{"Hora padrão do Japão"}
         }
         "meta:Kamchatka"{
-            ld{"Hora de Verão de Petropavlovsk-Kamchatski"}
+            ld{"Hora de verão de Petropavlovsk-Kamchatski"}
             lg{"Hora de Petropavlovsk-Kamchatski"}
-            ls{"Hora Padrão de Petropavlovsk-Kamchatski"}
+            ls{"Hora padrão de Petropavlovsk-Kamchatski"}
         }
         "meta:Kazakhstan_Eastern"{
             ls{"Hora do Cazaquistão Oriental"}
@@ -551,17 +551,17 @@ pt_PT{
             ls{"Hora do Cazaquistão Ocidental"}
         }
         "meta:Korea"{
-            ld{"Hora de Verão da Coreia"}
+            ld{"Hora de verão da Coreia"}
             lg{"Hora da Coreia"}
-            ls{"Hora Padrão da Coreia"}
+            ls{"Hora padrão da Coreia"}
         }
         "meta:Kosrae"{
             ls{"Hora de Kosrae"}
         }
         "meta:Krasnoyarsk"{
-            ld{"Hora de Verão de Krasnoyarsk"}
+            ld{"Hora de verão de Krasnoyarsk"}
             lg{"Hora de Krasnoyarsk"}
-            ls{"Hora Padrão de Krasnoyarsk"}
+            ls{"Hora padrão de Krasnoyarsk"}
         }
         "meta:Kyrgystan"{
             ls{"Hora do Quirguistão"}
@@ -573,22 +573,22 @@ pt_PT{
             ls{"Hora das Ilhas Line"}
         }
         "meta:Lord_Howe"{
-            ld{"Hora de Verão de Lord Howe"}
+            ld{"Hora de verão de Lord Howe"}
             lg{"Hora de Lord Howe"}
-            ls{"Hora Padrão de Lord Howe"}
+            ls{"Hora padrão de Lord Howe"}
         }
         "meta:Macau"{
-            ld{"Hora de Verão de Macau"}
+            ld{"Hora de verão de Macau"}
             lg{"Hora de Macau"}
-            ls{"Hora Padrão de Macau"}
+            ls{"Hora padrão de Macau"}
         }
         "meta:Macquarie"{
             ls{"Hora da Ilha Macquarie"}
         }
         "meta:Magadan"{
-            ld{"Hora de Verão de Magadan"}
+            ld{"Hora de verão de Magadan"}
             lg{"Hora de Magadan"}
-            ls{"Hora Padrão de Magadan"}
+            ls{"Hora padrão de Magadan"}
         }
         "meta:Malaysia"{
             ls{"Hora da Malásia"}
@@ -603,32 +603,32 @@ pt_PT{
             ls{"Hora das Ilhas Marshall"}
         }
         "meta:Mauritius"{
-            ld{"Hora de Verão da Maurícia"}
+            ld{"Hora de verão da Maurícia"}
             lg{"Hora da Maurícia"}
-            ls{"Hora Padrão da Maurícia"}
+            ls{"Hora padrão da Maurícia"}
         }
         "meta:Mawson"{
             ls{"Hora de Mawson"}
         }
         "meta:Mexico_Northwest"{
-            ld{"Hora de Verão do Noroeste do México"}
+            ld{"Hora de verão do Noroeste do México"}
             lg{"Hora do Noroeste do México"}
-            ls{"Hora Padrão do Noroeste do México"}
+            ls{"Hora padrão do Noroeste do México"}
         }
         "meta:Mexico_Pacific"{
-            ld{"Hora de Verão do Pacífico Mexicano"}
+            ld{"Hora de verão do Pacífico Mexicano"}
             lg{"Hora do Pacífico Mexicano"}
-            ls{"Hora Padrão do Pacífico Mexicano"}
+            ls{"Hora padrão do Pacífico Mexicano"}
         }
         "meta:Mongolia"{
-            ld{"Hora de Verão de Ulan Bator"}
+            ld{"Hora de verão de Ulan Bator"}
             lg{"Hora de Ulan Bator"}
-            ls{"Hora Padrão de Ulan Bator"}
+            ls{"Hora padrão de Ulan Bator"}
         }
         "meta:Moscow"{
-            ld{"Hora de Verão de Moscovo"}
+            ld{"Hora de verão de Moscovo"}
             lg{"Hora de Moscovo"}
-            ls{"Hora Padrão de Moscovo"}
+            ls{"Hora padrão de Moscovo"}
         }
         "meta:Myanmar"{
             ls{"Hora de Mianmar"}
@@ -640,19 +640,19 @@ pt_PT{
             ls{"Hora do Nepal"}
         }
         "meta:New_Caledonia"{
-            ld{"Hora de Verão da Nova Caledónia"}
+            ld{"Hora de verão da Nova Caledónia"}
             lg{"Hora da Nova Caledónia"}
-            ls{"Hora Padrão da Nova Caledónia"}
+            ls{"Hora padrão da Nova Caledónia"}
         }
         "meta:New_Zealand"{
-            ld{"Hora de Verão da Nova Zelândia"}
+            ld{"Hora de verão da Nova Zelândia"}
             lg{"Hora da Nova Zelândia"}
-            ls{"Hora Padrão da Nova Zelândia"}
+            ls{"Hora padrão da Nova Zelândia"}
         }
         "meta:Newfoundland"{
-            ld{"Hora de Verão da Terra Nova"}
+            ld{"Hora de verão da Terra Nova"}
             lg{"Hora da Terra Nova"}
-            ls{"Hora Padrão da Terra Nova"}
+            ls{"Hora padrão da Terra Nova"}
         }
         "meta:Niue"{
             ls{"Hora de Niue"}
@@ -661,27 +661,27 @@ pt_PT{
             ls{"Hora da Ilha Norfolk"}
         }
         "meta:Noronha"{
-            ld{"Hora de Verão de Fernando de Noronha"}
+            ld{"Hora de verão de Fernando de Noronha"}
             lg{"Hora de Fernando de Noronha"}
-            ls{"Hora Padrão de Fernando de Noronha"}
+            ls{"Hora padrão de Fernando de Noronha"}
         }
         "meta:North_Mariana"{
             ls{"Hora das Ilhas Mariana do Norte"}
         }
         "meta:Novosibirsk"{
-            ld{"Hora de Verão de Novosibirsk"}
+            ld{"Hora de verão de Novosibirsk"}
             lg{"Hora de Novosibirsk"}
-            ls{"Hora Padrão de Novosibirsk"}
+            ls{"Hora padrão de Novosibirsk"}
         }
         "meta:Omsk"{
-            ld{"Hora de Verão de Omsk"}
+            ld{"Hora de verão de Omsk"}
             lg{"Hora de Omsk"}
-            ls{"Hora Padrão de Omsk"}
+            ls{"Hora padrão de Omsk"}
         }
         "meta:Pakistan"{
-            ld{"Hora de Verão do Paquistão"}
+            ld{"Hora de verão do Paquistão"}
             lg{"Hora do Paquistão"}
-            ls{"Hora Padrão do Paquistão"}
+            ls{"Hora padrão do Paquistão"}
         }
         "meta:Palau"{
             ls{"Hora de Palau"}
@@ -690,27 +690,27 @@ pt_PT{
             ls{"Hora de Papua Nova Guiné"}
         }
         "meta:Paraguay"{
-            ld{"Hora de Verão do Paraguai"}
+            ld{"Hora de verão do Paraguai"}
             lg{"Hora do Paraguai"}
-            ls{"Hora Padrão do Paraguai"}
+            ls{"Hora padrão do Paraguai"}
         }
         "meta:Peru"{
-            ld{"Hora de Verão do Peru"}
+            ld{"Hora de verão do Peru"}
             lg{"Hora do Peru"}
-            ls{"Hora Padrão do Peru"}
+            ls{"Hora padrão do Peru"}
         }
         "meta:Philippines"{
-            ld{"Hora de Verão das Filipinas"}
+            ld{"Hora de verão das Filipinas"}
             lg{"Hora das Filipinas"}
-            ls{"Hora Padrão das Filipinas"}
+            ls{"Hora padrão das Filipinas"}
         }
         "meta:Phoenix_Islands"{
             ls{"Hora das Ilhas Fénix"}
         }
         "meta:Pierre_Miquelon"{
-            ld{"Hora de Verão de São Pedro e Miquelão"}
+            ld{"Hora de verão de São Pedro e Miquelão"}
             lg{"Hora de São Pedro e Miquelão"}
-            ls{"Hora Padrão de São Pedro e Miquelão"}
+            ls{"Hora padrão de São Pedro e Miquelão"}
         }
         "meta:Pitcairn"{
             ls{"Hora de Pitcairn"}
@@ -719,9 +719,9 @@ pt_PT{
             ls{"Hora de Ponape"}
         }
         "meta:Qyzylorda"{
-            ld{"Hora de Verão de Qyzylorda"}
+            ld{"Hora de verão de Qyzylorda"}
             lg{"Hora de Qyzylorda"}
-            ls{"Hora Padrão de Qyzylorda"}
+            ls{"Hora padrão de Qyzylorda"}
         }
         "meta:Reunion"{
             ls{"Hora de Reunião"}
@@ -730,25 +730,25 @@ pt_PT{
             ls{"Hora de Rothera"}
         }
         "meta:Sakhalin"{
-            ld{"Hora de Verão de Sacalina"}
+            ld{"Hora de verão de Sacalina"}
             lg{"Hora de Sacalina"}
-            ls{"Hora Padrão de Sacalina"}
+            ls{"Hora padrão de Sacalina"}
         }
         "meta:Samara"{
-            ld{"Hora de Verão de Samara"}
+            ld{"Hora de verão de Samara"}
             lg{"Hora de Samara"}
-            ls{"Hora Padrão de Samara"}
+            ls{"Hora padrão de Samara"}
         }
         "meta:Samoa"{
-            ld{"Hora de Verão de Samoa"}
+            ld{"Hora de verão de Samoa"}
             lg{"Hora de Samoa"}
-            ls{"Hora Padrão de Samoa"}
+            ls{"Hora padrão de Samoa"}
         }
         "meta:Seychelles"{
             ls{"Hora das Seicheles"}
         }
         "meta:Singapore"{
-            ls{"Hora Padrão de Singapura"}
+            ls{"Hora padrão de Singapura"}
         }
         "meta:Solomon"{
             ls{"Hora das Ilhas Salomão"}
@@ -766,9 +766,9 @@ pt_PT{
             ls{"Hora do Taiti"}
         }
         "meta:Taipei"{
-            ld{"Hora de Verão de Taipé"}
+            ld{"Hora de verão de Taipé"}
             lg{"Hora de Taipé"}
-            ls{"Hora Padrão de Taipé"}
+            ls{"Hora padrão de Taipé"}
         }
         "meta:Tajikistan"{
             ls{"Hora do Tajiquistão"}
@@ -777,48 +777,48 @@ pt_PT{
             ls{"Hora de Tokelau"}
         }
         "meta:Tonga"{
-            ld{"Hora de Verão de Tonga"}
+            ld{"Hora de verão de Tonga"}
             lg{"Hora de Tonga"}
-            ls{"Hora Padrão de Tonga"}
+            ls{"Hora padrão de Tonga"}
         }
         "meta:Truk"{
             ls{"Hora de Chuuk"}
         }
         "meta:Turkmenistan"{
-            ld{"Hora de Verão do Turquemenistão"}
+            ld{"Hora de verão do Turquemenistão"}
             lg{"Hora do Turquemenistão"}
-            ls{"Hora Padrão do Turquemenistão"}
+            ls{"Hora padrão do Turquemenistão"}
         }
         "meta:Tuvalu"{
             ls{"Hora de Tuvalu"}
         }
         "meta:Uruguay"{
-            ld{"Hora de Verão do Uruguai"}
+            ld{"Hora de verão do Uruguai"}
             lg{"Hora do Uruguai"}
-            ls{"Hora Padrão do Uruguai"}
+            ls{"Hora padrão do Uruguai"}
         }
         "meta:Uzbekistan"{
-            ld{"Hora de Verão do Uzbequistão"}
+            ld{"Hora de verão do Uzbequistão"}
             lg{"Hora do Uzbequistão"}
-            ls{"Hora Padrão do Uzbequistão"}
+            ls{"Hora padrão do Uzbequistão"}
         }
         "meta:Vanuatu"{
-            ld{"Hora de Verão do Vanuatu"}
+            ld{"Hora de verão do Vanuatu"}
             lg{"Hora do Vanuatu"}
-            ls{"Hora Padrão do Vanuatu"}
+            ls{"Hora padrão do Vanuatu"}
         }
         "meta:Venezuela"{
             ls{"Hora da Venezuela"}
         }
         "meta:Vladivostok"{
-            ld{"Hora de Verão de Vladivostok"}
+            ld{"Hora de verão de Vladivostok"}
             lg{"Hora de Vladivostok"}
-            ls{"Hora Padrão de Vladivostok"}
+            ls{"Hora padrão de Vladivostok"}
         }
         "meta:Volgograd"{
-            ld{"Hora de Verão de Volgogrado"}
+            ld{"Hora de verão de Volgogrado"}
             lg{"Hora de Volgogrado"}
-            ls{"Hora Padrão de Volgogrado"}
+            ls{"Hora padrão de Volgogrado"}
         }
         "meta:Vostok"{
             ls{"Hora de Vostok"}
@@ -830,17 +830,17 @@ pt_PT{
             ls{"Hora de Wallis e Futuna"}
         }
         "meta:Yakutsk"{
-            ld{"Hora de Verão de Yakutsk"}
+            ld{"Hora de verão de Yakutsk"}
             lg{"Hora de Yakutsk"}
-            ls{"Hora Padrão de Yakutsk"}
+            ls{"Hora padrão de Yakutsk"}
         }
         "meta:Yekaterinburg"{
-            ld{"Hora de Verão de Ecaterimburgo"}
+            ld{"Hora de verão de Ecaterimburgo"}
             lg{"Hora de Ecaterimburgo"}
-            ls{"Hora Padrão de Ecaterimburgo"}
+            ls{"Hora padrão de Ecaterimburgo"}
         }
         regionFormat{"Hora de {0}"}
-        regionFormatDaylight{"Hora de Verão de {0}"}
+        regionFormatDaylight{"Hora padrão de {0}"}
         regionFormatStandard{"Hora padrão de {0}"}
     }
 }

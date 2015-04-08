@@ -12,6 +12,10 @@ endif
 endif
 
 include $(topsrcdir)/toolkit/mozapps/installer/package-name.mk
+include $(topsrcdir)/toolkit/mozapps/installer/upload-files.mk
+
+# Clear out DIST_FILES if it was set by upload-files.mk (for Android builds)
+DIST_FILES =
 
 # Log file from the 'make upload' step. We need this to parse out the URLs of
 # the uploaded files.
@@ -58,6 +62,7 @@ MOZ_AUTOMATION_TIERS := $(foreach sym,$(moz_automation_symbols),$(if $(filter 1,
 automation/uploadsymbols: automation/buildsymbols
 
 automation/update-packaging: automation/package
+automation/update-packaging: automation/installer
 automation/pretty-update-packaging: automation/pretty-package
 automation/pretty-update-packaging: automation/pretty-installer
 
@@ -77,6 +82,10 @@ automation/upload: automation/update-packaging
 # binaries/libs, and that's what we package/test.
 automation/pretty-package: automation/buildsymbols
 
+# The installer and packager both run stage-package, and may conflict
+# with each other.
+automation/installer: automation/package
+
 # The 'pretty' versions of targets run before the regular ones to avoid
 # conflicts in writing to the same files.
 automation/installer: automation/pretty-installer
@@ -86,7 +95,7 @@ automation/l10n-check: automation/pretty-l10n-check
 automation/update-packaging: automation/pretty-update-packaging
 
 automation/build: $(addprefix automation/,$(MOZ_AUTOMATION_TIERS))
-	$(PYTHON) $(topsrcdir)/build/gen_mach_buildprops.py --complete-mar-file $(DIST)/$(COMPLETE_MAR) $(addprefix --partial-mar-file ,$(wildcard $(DIST)/$(PARTIAL_MAR))) --upload-output $(AUTOMATION_UPLOAD_OUTPUT)
+	$(PYTHON) $(topsrcdir)/build/gen_mach_buildprops.py --complete-mar-file $(DIST)/$(COMPLETE_MAR) $(addprefix --partial-mar-file ,$(wildcard $(DIST)/$(PARTIAL_MAR))) --upload-output $(AUTOMATION_UPLOAD_OUTPUT) --upload-files $(abspath $(UPLOAD_FILES))
 
 # We need the log from make upload to grep it for urls in order to set
 # properties.

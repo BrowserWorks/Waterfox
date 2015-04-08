@@ -81,6 +81,8 @@ Volume::Volume(const nsCSubstring& aName)
     mIsSharing(false),
     mIsFormatting(false),
     mIsUnmounting(false),
+    mIsRemovable(false),
+    mIsHotSwappable(false),
     mId(sNextId++)
 {
   DBG("Volume %s: created", NameStr());
@@ -154,6 +156,78 @@ Volume::SetIsUnmounting(bool aIsUnmounting)
   LOG("Volume %s: IsUnmounting set to %d state %s",
       NameStr(), (int)mIsUnmounting, StateStr(mState));
   sEventObserverList.Broadcast(this);
+}
+
+void
+Volume::SetIsRemovable(bool aIsRemovable)
+{
+  if (aIsRemovable == mIsRemovable) {
+    return;
+  }
+  mIsRemovable = aIsRemovable;
+  if (!mIsRemovable) {
+    mIsHotSwappable = false;
+  }
+  LOG("Volume %s: IsRemovable set to %d state %s",
+      NameStr(), (int)mIsRemovable, StateStr(mState));
+  sEventObserverList.Broadcast(this);
+}
+
+void
+Volume::SetIsHotSwappable(bool aIsHotSwappable)
+{
+  if (aIsHotSwappable == mIsHotSwappable) {
+    return;
+  }
+  mIsHotSwappable = aIsHotSwappable;
+  if (mIsHotSwappable) {
+    mIsRemovable = true;
+  }
+  LOG("Volume %s: IsHotSwappable set to %d state %s",
+      NameStr(), (int)mIsHotSwappable, StateStr(mState));
+  sEventObserverList.Broadcast(this);
+}
+
+bool
+Volume::BoolConfigValue(const nsCString& aConfigValue, bool& aBoolValue)
+{
+  if (aConfigValue.EqualsLiteral("1") ||
+      aConfigValue.LowerCaseEqualsLiteral("true")) {
+    aBoolValue = true;
+    return true;
+  }
+  if (aConfigValue.EqualsLiteral("0") ||
+      aConfigValue.LowerCaseEqualsLiteral("false")) {
+    aBoolValue = false;
+    return true;
+  }
+  return false;
+}
+
+void
+Volume::SetConfig(const nsCString& aConfigName, const nsCString& aConfigValue)
+{
+  if (aConfigName.LowerCaseEqualsLiteral("removable")) {
+    bool value = false;
+    if (BoolConfigValue(aConfigValue, value)) {
+      SetIsRemovable(value);
+    } else {
+      ERR("Volume %s: invalid value '%s' for configuration '%s'",
+          NameStr(), aConfigValue.get(), aConfigName.get());
+    }
+    return;
+  }
+  if (aConfigName.LowerCaseEqualsLiteral("hotswappable")) {
+    bool value = false;
+    if (BoolConfigValue(aConfigValue, value)) {
+      SetIsHotSwappable(value);
+    } else {
+      ERR("Volume %s: invalid value '%s' for configuration '%s'",
+          NameStr(), aConfigValue.get(), aConfigName.get());
+    }
+    return;
+  }
+  ERR("Volume %s: invalid config '%s'", NameStr(), aConfigName.get());
 }
 
 void
@@ -263,11 +337,13 @@ Volume::SetState(Volume::STATE aNewState)
        break;
 
      case nsIVolume::STATE_MOUNTED:
+     case nsIVolume::STATE_MOUNT_FAIL:
        mMountRequested = false;
        mIsFormatting = false;
        mIsSharing = false;
        mIsUnmounting = false;
        break;
+
      case nsIVolume::STATE_FORMATTING:
        mFormatRequested = false;
        mIsFormatting = true;
@@ -467,7 +543,12 @@ Volume::HandleVoldResponse(int aResponseCode, nsCWhitespaceTokenizer& aTokenizer
             // then the AutoMounter will set the volume as STATE_MOUNTED.
             SetState(nsIVolume::STATE_CHECKMNT);
           } else {
-            SetState(newState);
+            if (State() == nsIVolume::STATE_CHECKING && newState == nsIVolume::STATE_IDLE) {
+              LOG("Mount of volume '%s' failed", NameStr());
+              SetState(nsIVolume::STATE_MOUNT_FAIL);
+            } else {
+              SetState(newState);
+            }
           }
           break;
         }

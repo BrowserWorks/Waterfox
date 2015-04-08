@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 1996-2014, International Business Machines
+*   Copyright (C) 1996-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -750,7 +750,7 @@ private:
     char fullNameBuffer[ULOC_FULLNAME_CAPACITY];
     // name without keywords
     char* baseName;
-    char baseNameBuffer[ULOC_FULLNAME_CAPACITY];
+    void initBaseName(UErrorCode& status);
 
     UBool fIsBogus;
 
@@ -795,7 +795,6 @@ Locale::getScript() const
 inline const char *
 Locale::getVariant() const
 {
-    getBaseName(); // lazy init
     return &baseName[variantBegin];
 }
 

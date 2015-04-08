@@ -20,37 +20,26 @@ import sys
 import tempfile
 
 # The DMD output version this script handles.
-outputVersion = 1
+outputVersion = 3
 
 # If --ignore-alloc-fns is specified, stack frames containing functions that
 # match these strings will be removed from the *start* of stack traces. (Once
 # we hit a non-matching frame, any subsequent frames won't be removed even if
 # they do match.)
 allocatorFns = [
-    'replace_malloc',
-    'replace_calloc',
-    'replace_realloc',
-    'replace_memalign',
-    'replace_posix_memalign',
-    'moz_xmalloc',
-    'moz_xcalloc',
-    'moz_xrealloc',
+    # Matches malloc, replace_malloc, moz_xmalloc, vpx_malloc, js_malloc, pod_malloc, malloc_zone_*, g_malloc.
+    'malloc',
+    # Matches calloc, replace_calloc, moz_xcalloc, vpx_calloc, js_calloc, pod_calloc, malloc_zone_calloc, pod_callocCanGC.
+    'calloc',
+    # Matches realloc, replace_realloc, moz_xrealloc, vpx_realloc, js_realloc, pod_realloc, pod_reallocCanGC.
+    'realloc',
+    # Matches memalign, posix_memalign, replace_memalign, replace_posix_memalign, moz_xmemalign, moz_xposix_memalign, vpx_memalign, malloc_zone_memalign.
+    'memalign',
     'operator new(',
     'operator new[](',
-    'g_malloc',
+    'NS_Alloc',
+    'NS_Realloc',
     'g_slice_alloc',
-    'callocCanGC',
-    'reallocCanGC',
-    'vpx_malloc',
-    'vpx_calloc',
-    'vpx_realloc',
-    'vpx_memalign',
-    'js_malloc',
-    'js_calloc',
-    'js_realloc',
-    'pod_malloc',
-    'pod_calloc',
-    'pod_realloc',
     # This one necessary to fully filter some sequences of allocation functions
     # that happen in practice. Note that ??? entries that follow non-allocation
     # functions won't be stripped, as explained above.
@@ -148,11 +137,18 @@ class Record(object):
         return cmp(abs(r1.slopSize), abs(r2.slopSize)) or \
                Record.cmpByIsSampled(r1, r2)
 
+    @staticmethod
+    def cmpByNumBlocks(r1, r2):
+        # Sort by block counts, then by usable size.
+        return cmp(abs(r1.numBlocks), abs(r2.numBlocks)) or \
+               Record.cmpByUsableSize(r1, r2)
+
 
 sortByChoices = {
-    'usable': Record.cmpByUsableSize,   # the default
-    'req':    Record.cmpByReqSize,
-    'slop':   Record.cmpBySlopSize,
+    'usable':     Record.cmpByUsableSize,   # the default
+    'req':        Record.cmpByReqSize,
+    'slop':       Record.cmpBySlopSize,
+    'num-blocks': Record.cmpByNumBlocks,
 }
 
 
@@ -184,12 +180,8 @@ variable is used to find breakpad symbols for stack fixing.
     p.add_argument('-f', '--max-frames', type=range_1_24,
                    help='maximum number of frames to consider in each trace')
 
-    p.add_argument('-r', '--ignore-reports', action='store_true',
-                   help='ignore memory reports data; useful if you just ' +
-                        'want basic heap profiling')
-
     p.add_argument('-s', '--sort-by', choices=sortByChoices.keys(),
-                   default=sortByChoices.keys()[0],
+                   default='usable',
                    help='sort the records by a particular metric')
 
     p.add_argument('-a', '--ignore-alloc-fns', action='store_true',
@@ -278,10 +270,14 @@ def getDigestFromFile(args, inputFile):
     # Extract the main parts of the JSON object.
     invocation = j['invocation']
     dmdEnvVar = invocation['dmdEnvVar']
+    mode = invocation['mode']
     sampleBelowSize = invocation['sampleBelowSize']
     blockList = j['blockList']
     traceTable = j['traceTable']
     frameTable = j['frameTable']
+
+    if not mode in ['live', 'dark-matter', 'cumulative']:
+        raise Exception("bad 'mode' property: '{:s}'".format(mode))
 
     heapIsSampled = sampleBelowSize > 1     # is sampling present?
 
@@ -336,15 +332,17 @@ def getDigestFromFile(args, inputFile):
     # Aggregate blocks into records. All sufficiently similar blocks go into a
     # single record.
 
-    if args.ignore_reports:
-        liveRecords = collections.defaultdict(Record)
-    else:
+    if mode in ['live', 'cumulative']:
+        liveOrCumulativeRecords = collections.defaultdict(Record)
+    elif mode == 'dark-matter':
         unreportedRecords    = collections.defaultdict(Record)
         onceReportedRecords  = collections.defaultdict(Record)
         twiceReportedRecords = collections.defaultdict(Record)
 
     heapUsableSize = 0
     heapBlocks = 0
+
+    recordKeyPartCache = {}
 
     for block in blockList:
         # For each block we compute a |recordKey|, and all blocks with the same
@@ -364,15 +362,25 @@ def getDigestFromFile(args, inputFile):
         # and we trim the final frame of each they should be considered
         # equivalent because the untrimmed frame descriptions (D1 and D2)
         # match.
+        #
+        # Having said all that, during a single invocation of dmd.py on a
+        # single DMD file, for a single frameKey value the record key will
+        # always be the same, and we might encounter it 1000s of times. So we
+        # cache prior results for speed.
         def makeRecordKeyPart(traceKey):
-            return str(map(lambda frameKey: frameTable[frameKey],
-                           traceTable[traceKey]))
+            if traceKey in recordKeyPartCache:
+                return recordKeyPartCache[traceKey]
+
+            recordKeyPart = str(map(lambda frameKey: frameTable[frameKey],
+                                    traceTable[traceKey]))
+            recordKeyPartCache[traceKey] = recordKeyPart
+            return recordKeyPart
 
         allocatedAtTraceKey = block['alloc']
-        if args.ignore_reports:
+        if mode in ['live', 'cumulative']:
             recordKey = makeRecordKeyPart(allocatedAtTraceKey)
-            records = liveRecords
-        else:
+            records = liveOrCumulativeRecords
+        elif mode == 'dark-matter':
             recordKey = makeRecordKeyPart(allocatedAtTraceKey)
             if 'reps' in block:
                 reportedAtTraceKeys = block['reps']
@@ -414,9 +422,9 @@ def getDigestFromFile(args, inputFile):
                 buildTraceDescription(traceTable, frameTable,
                                       allocatedAtTraceKey)
 
-        if args.ignore_reports:
+        if mode in ['live', 'cumulative']:
             pass
-        else:
+        elif mode == 'dark-matter':
             if 'reps' in block and record.reportedAtDescs == []:
                 f = lambda k: buildTraceDescription(traceTable, frameTable, k)
                 record.reportedAtDescs = map(f, reportedAtTraceKeys)
@@ -425,13 +433,14 @@ def getDigestFromFile(args, inputFile):
     # All the processed data for a single DMD file is called a "digest".
     digest = {}
     digest['dmdEnvVar'] = dmdEnvVar
+    digest['mode'] = mode
     digest['sampleBelowSize'] = sampleBelowSize
     digest['heapUsableSize'] = heapUsableSize
     digest['heapBlocks'] = heapBlocks
     digest['heapIsSampled'] = heapIsSampled
-    if args.ignore_reports:
-        digest['liveRecords'] = liveRecords
-    else:
+    if mode in ['live', 'cumulative']:
+        digest['liveOrCumulativeRecords'] = liveOrCumulativeRecords
+    elif mode == 'dark-matter':
         digest['unreportedRecords'] = unreportedRecords
         digest['onceReportedRecords'] = onceReportedRecords
         digest['twiceReportedRecords'] = twiceReportedRecords
@@ -464,16 +473,21 @@ def diffRecords(args, records1, records2):
 
 
 def diffDigests(args, d1, d2):
+    if (d1['mode'] != d2['mode']):
+        raise Exception("the input files have different 'mode' properties")
+
     d3 = {}
     d3['dmdEnvVar'] = (d1['dmdEnvVar'], d2['dmdEnvVar'])
+    d3['mode'] = d1['mode']
     d3['sampleBelowSize'] = (d1['sampleBelowSize'], d2['sampleBelowSize'])
     d3['heapUsableSize'] = d2['heapUsableSize'] - d1['heapUsableSize']
     d3['heapBlocks']     = d2['heapBlocks']     - d1['heapBlocks']
     d3['heapIsSampled']  = d2['heapIsSampled'] or d1['heapIsSampled']
-    if args.ignore_reports:
-        d3['liveRecords'] = diffRecords(args, d1['liveRecords'],
-                                              d2['liveRecords'])
-    else:
+    if d1['mode'] in ['live', 'cumulative']:
+        d3['liveOrCumulativeRecords'] = \
+            diffRecords(args, d1['liveOrCumulativeRecords'],
+                              d2['liveOrCumulativeRecords'])
+    elif d1['mode'] == 'dark-matter':
         d3['unreportedRecords']    = diffRecords(args, d1['unreportedRecords'],
                                                        d2['unreportedRecords'])
         d3['onceReportedRecords']  = diffRecords(args, d1['onceReportedRecords'],
@@ -485,13 +499,14 @@ def diffDigests(args, d1, d2):
 
 def printDigest(args, digest):
     dmdEnvVar       = digest['dmdEnvVar']
+    mode            = digest['mode']
     sampleBelowSize = digest['sampleBelowSize']
     heapUsableSize  = digest['heapUsableSize']
     heapIsSampled   = digest['heapIsSampled']
     heapBlocks      = digest['heapBlocks']
-    if args.ignore_reports:
-        liveRecords = digest['liveRecords']
-    else:
+    if mode in ['live', 'cumulative']:
+        liveOrCumulativeRecords = digest['liveOrCumulativeRecords']
+    elif mode == 'dark-matter':
         unreportedRecords    = digest['unreportedRecords']
         onceReportedRecords  = digest['onceReportedRecords']
         twiceReportedRecords = digest['twiceReportedRecords']
@@ -583,9 +598,9 @@ def printDigest(args, digest):
             out('  {:4.2f}% of the heap ({:4.2f}% cumulative)'.
                 format(perc(record.usableSize, heapUsableSize),
                        perc(kindCumulativeUsableSize, heapUsableSize)))
-            if args.ignore_reports:
+            if mode in ['live', 'cumulative']:
                 pass
-            else:
+            elif mode == 'dark-matter':
                 out('  {:4.2f}% of {:} ({:4.2f}% cumulative)'.
                     format(perc(record.usableSize, kindUsableSize),
                            recordKind,
@@ -593,9 +608,9 @@ def printDigest(args, digest):
             out('  Allocated at {')
             printStack(record.allocatedAtDesc)
             out('  }')
-            if args.ignore_reports:
+            if mode in ['live', 'cumulative']:
                 pass
-            else:
+            elif mode == 'dark-matter':
                 for n, reportedAtDesc in enumerate(record.reportedAtDescs):
                     again = 'again ' if n > 0 else ''
                     out('  Reported {:}at {{'.format(again))
@@ -606,9 +621,13 @@ def printDigest(args, digest):
         return (kindUsableSize, kindBlocks)
 
 
-    def printInvocation(n, dmdEnvVar, sampleBelowSize):
+    def printInvocation(n, dmdEnvVar, mode, sampleBelowSize):
         out('Invocation{:} {{'.format(n))
-        out('  $DMD = \'' + dmdEnvVar + '\'')
+        if dmdEnvVar == None:
+            out('  $DMD is undefined')
+        else:
+            out('  $DMD = \'' + dmdEnvVar + '\'')
+        out('  Mode = \'' + mode + '\'')
         out('  Sample-below size = ' + str(sampleBelowSize))
         out('}\n')
 
@@ -619,16 +638,16 @@ def printDigest(args, digest):
 
     # Print invocation(s).
     if type(dmdEnvVar) is not tuple:
-        printInvocation('', dmdEnvVar, sampleBelowSize)
+        printInvocation('', dmdEnvVar, mode, sampleBelowSize)
     else:
-        printInvocation(' 1', dmdEnvVar[0], sampleBelowSize[0])
-        printInvocation(' 2', dmdEnvVar[1], sampleBelowSize[1])
+        printInvocation(' 1', dmdEnvVar[0], mode, sampleBelowSize[0])
+        printInvocation(' 2', dmdEnvVar[1], mode, sampleBelowSize[1])
 
     # Print records.
-    if args.ignore_reports:
-        liveUsableSize, liveBlocks = \
-            printRecords('live', liveRecords, heapUsableSize)
-    else:
+    if mode in ['live', 'cumulative']:
+        liveOrCumulativeUsableSize, liveOrCumulativeBlocks = \
+            printRecords(mode, liveOrCumulativeRecords, heapUsableSize)
+    elif mode == 'dark-matter':
         twiceReportedUsableSize, twiceReportedBlocks = \
             printRecords('twice-reported', twiceReportedRecords, heapUsableSize)
 
@@ -641,11 +660,11 @@ def printDigest(args, digest):
     # Print summary.
     out(separator)
     out('Summary {')
-    if args.ignore_reports:
+    if mode in ['live', 'cumulative']:
         out('  Total: {:} bytes in {:} blocks'.
-            format(number(liveUsableSize, heapIsSampled),
-                   number(liveBlocks, heapIsSampled)))
-    else:
+            format(number(liveOrCumulativeUsableSize, heapIsSampled),
+                   number(liveOrCumulativeBlocks, heapIsSampled)))
+    elif mode == 'dark-matter':
         fmt = '  {:15} {:>12} bytes ({:6.2f}%) in {:>7} blocks ({:6.2f}%)'
         out(fmt.
             format('Total:',

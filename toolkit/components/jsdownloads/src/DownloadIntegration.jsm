@@ -25,6 +25,8 @@ const Cr = Components.results;
 
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "AsyncShutdown",
+                                  "resource://gre/modules/AsyncShutdown.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "DeferredTask",
                                   "resource://gre/modules/DeferredTask.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
@@ -88,23 +90,11 @@ const Timer = Components.Constructor("@mozilla.org/timer;1", "nsITimer",
 
 /**
  * Indicates the delay between a change to the downloads data and the related
- * save operation.  This value is the result of a delicate trade-off, assuming
- * the host application uses the browser history instead of the download store
- * to save completed downloads.
+ * save operation.
  *
- * If a download takes less than this interval to complete (for example, saving
- * a page that is already displayed), then no input/output is triggered by the
- * download store except for an existence check, resulting in the best possible
- * efficiency.
- *
- * Conversely, if the browser is closed before this interval has passed, the
- * download will not be saved.  This prevents it from being restored in the next
- * session, and if there is partial data associated with it, then the ".part"
- * file will not be deleted when the browser starts again.
- *
- * In all cases, for best efficiency, this value should be high enough that the
- * input/output for opening or closing the target file does not overlap with the
- * one for saving the list of downloads.
+ * For best efficiency, this value should be high enough that the input/output
+ * for opening or closing the target file does not overlap with the one for
+ * saving the list of downloads.
  */
 const kSaveDelayMs = 1500;
 
@@ -152,6 +142,7 @@ this.DownloadIntegration = {
   dontCheckApplicationReputation: true,
 #endif
   shouldBlockInTestForApplicationReputation: false,
+  shouldKeepBlockedDataInTest: false,
   dontOpenFileAndFolder: false,
   downloadDoneCalled: false,
   _deferTestOpenFile: null,
@@ -172,6 +163,30 @@ this.DownloadIntegration = {
   set testMode(mode) {
     this._downloadsDirectory = null;
     return (this._testMode = mode);
+  },
+
+  /**
+   * Returns whether data for blocked downloads should be kept on disk.
+   * Implementations which support unblocking downloads may return true to
+   * keep the blocked download on disk until its fate is decided.
+   *
+   * If a download is blocked and the partial data is kept the Download's
+   * 'hasBlockedData' property will be true. In this state Download.unblock()
+   * or Download.confirmBlock() may be used to either unblock the download or
+   * remove the downloaded data respectively.
+   *
+   * Even if shouldKeepBlockedData returns true, if the download did not use a
+   * partFile the blocked data will be removed - preventing the complete
+   * download from existing on disk with its final filename.
+   *
+   * @return boolean True if data should be kept.
+   */
+  shouldKeepBlockedData: function() {
+    if (this.shouldBlockInTestForApplicationReputation) {
+      return this.shouldKeepBlockedDataInTest;
+    }
+
+    return false;
   },
 
   /**
@@ -314,13 +329,15 @@ this.DownloadIntegration = {
     // progress, as well as stopped downloads for which we retained partially
     // downloaded data.  Stopped downloads for which we don't need to track the
     // presence of a ".part" file are only retained in the browser history.
-    // On b2g, we keep a few days of history.
+    // On b2g, we keep a few days of history. On Android we store all history.
 #ifdef MOZ_B2G
     let maxTime = Date.now() -
       Services.prefs.getIntPref("dom.downloads.max_retention_days") * 24 * 60 * 60 * 1000;
     return (aDownload.startTime > maxTime) ||
            aDownload.hasPartialData ||
            !aDownload.stopped;
+#elif defined(MOZ_WIDGET_ANDROID)
+    return true;
 #else
     return aDownload.hasPartialData || !aDownload.stopped;
 #endif
@@ -1189,6 +1206,8 @@ this.DownloadAutoSaveView = function (aList, aStore)
   this._store = aStore;
   this._downloadsMap = new Map();
   this._writer = new DeferredTask(() => this._store.save(), kSaveDelayMs);
+  AsyncShutdown.profileBeforeChange.addBlocker("DownloadAutoSaveView: writing data",
+                                               () => this._writer.finalize());
 }
 
 this.DownloadAutoSaveView.prototype = {

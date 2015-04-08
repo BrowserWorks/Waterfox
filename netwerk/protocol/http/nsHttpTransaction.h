@@ -107,13 +107,6 @@ public:
 
     bool      ProxyConnectFailed() { return mProxyConnectFailed; }
 
-    // setting mDontRouteViaWildCard to true means the transaction should only
-    // be dispatched on a specific ConnectionInfo Hash Key (as opposed to a
-    // generic wild card one). That means in the specific case of carrying this
-    // transaction on an HTTP/2 tunnel it will only be dispatched onto an
-    // existing tunnel instead of triggering creation of a new one.
-    void SetDontRouteViaWildCard(bool var) { mDontRouteViaWildCard = var; }
-    bool DontRouteViaWildCard() { return mDontRouteViaWildCard; }
     void EnableKeepAlive() { mCaps |= NS_HTTP_ALLOW_KEEPALIVE; }
     void MakeSticky() { mCaps |= NS_HTTP_STICKY_CONNECTION; }
 
@@ -132,8 +125,8 @@ public:
     bool UsesPipelining() const { return mCaps & NS_HTTP_ALLOW_PIPELINING; }
 
     // overload of nsAHttpTransaction::LoadGroupConnectionInfo()
-    nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() { return mLoadGroupCI.get(); }
-    void SetLoadGroupConnectionInfo(nsILoadGroupConnectionInfo *aLoadGroupCI) { mLoadGroupCI = aLoadGroupCI; }
+    nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() MOZ_OVERRIDE { return mLoadGroupCI.get(); }
+    void SetLoadGroupConnectionInfo(nsILoadGroupConnectionInfo *aLoadGroupCI);
     void DispatchedAsBlocking();
     void RemoveDispatchedAsBlocking();
 
@@ -279,7 +272,6 @@ private:
     bool                            mPreserveStream;
     bool                            mDispatchedAsBlocking;
     bool                            mResponseTimeoutEnabled;
-    bool                            mDontRouteViaWildCard;
     bool                            mForceRestart;
     bool                            mReuseOnRestart;
 
@@ -372,7 +364,7 @@ public:
     // token bucket submission the transaction just posts an event that causes
     // the pending transaction queue to be rerun (and TryToRunPacedRequest() to
     // be run again.
-    void OnTokenBucketAdmitted(); // ATokenBucketEvent
+    void OnTokenBucketAdmitted() MOZ_OVERRIDE; // ATokenBucketEvent
 
     // CancelPacing() can be used to tell the token bucket to remove this
     // transaction from the list of pending transactions. This is used when a
@@ -405,6 +397,26 @@ private:
         mCountSent += sentBytes;
         SaveNetworkStats(false);
     }
+public:
+    void     SetClassOfService(uint32_t cos) { mClassOfService = cos; }
+    uint32_t ClassOfService() { return mClassOfService; }
+private:
+    uint32_t mClassOfService;
+
+public:
+    // setting TunnelProvider to non-null means the transaction should only
+    // be dispatched on a specific ConnectionInfo Hash Key (as opposed to a
+    // generic wild card one). That means in the specific case of carrying this
+    // transaction on an HTTP/2 tunnel it will only be dispatched onto an
+    // existing tunnel instead of triggering creation of a new one.
+    // The tunnel provider is used for ASpdySession::MaybeReTunnel() checks.
+
+    void SetTunnelProvider(ASpdySession *provider) { mTunnelProvider = provider; }
+    ASpdySession *TunnelProvider() { return mTunnelProvider; }
+    nsIInterfaceRequestor *SecurityCallbacks() { return mCallbacks; }
+
+private:
+    nsRefPtr<ASpdySession> mTunnelProvider;
 };
 
 }} // namespace mozilla::net

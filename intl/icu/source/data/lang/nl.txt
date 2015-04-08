@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/nl.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/nl.xml
- */
 nl{
     Keys{
         calendar{"kalender"}
@@ -507,7 +504,7 @@ nl{
         sg{"Sango"}
         sga{"Oudiers"}
         sgs{"Samogitisch"}
-        sh{"Servokroatisch"}
+        sh{"Servo-Kroatisch"}
         shi{"Tashelhiyt"}
         shn{"Shan"}
         shu{"Tsjadisch Arabisch"}
@@ -634,11 +631,11 @@ nl{
         zxx{"geen linguïstische inhoud"}
         zza{"Zaza"}
     }
+    Languages%short{
+        az{"Azeri"}
+    }
     Languages%variant{
         ps{"Pashto"}
-    }
-    LanguagesShort{
-        az{"Azeri"}
     }
     Scripts{
         Afak{"Defaka"}
@@ -711,9 +708,9 @@ nl{
         Kthi{"Kaithi"}
         Lana{"Lanna"}
         Laoo{"Laotiaans"}
-        Latf{"Gotisch Latijn"}
-        Latg{"Gaelisch Latijn"}
-        Latn{"Latijn"}
+        Latf{"Gotisch Latijns"}
+        Latg{"Gaelisch Latijns"}
+        Latn{"Latijns"}
         Lepc{"Lepcha"}
         Limb{"Limbu"}
         Lina{"Lineair A"}
@@ -1023,7 +1020,7 @@ nl{
         VALLADER{"Vallader"}
         WADEGILE{"Wade-Giles-romanisering"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Taal: {0}"}
         script{"Schrift: {0}"}

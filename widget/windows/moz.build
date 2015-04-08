@@ -63,7 +63,7 @@ UNIFIED_SOURCES += [
 SOURCES += [
     'JumpListBuilder.cpp',
     'nsBidiKeyboard.cpp',
-    'nsFilePicker.cpp',
+	'nsFilePicker.cpp',
     'nsWidgetFactory.cpp',
     'WinMouseScrollHandler.cpp',
 ]

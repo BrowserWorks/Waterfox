@@ -46,7 +46,6 @@
 #include "mozilla/LazyIdleThread.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Mutex.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/unused.h"
 
@@ -390,6 +389,37 @@ BluetoothDBusService::~BluetoothDBusService()
 {
   sStopBluetoothMonitor = nullptr;
   sGetPropertyMonitor = nullptr;
+}
+
+static nsString
+GetObjectPathFromAddress(const nsAString& aAdapterPath,
+                         const nsAString& aDeviceAddress)
+{
+  // The object path would be like /org/bluez/2906/hci0/dev_00_23_7F_CB_B4_F1,
+  // and the adapter path would be the first part of the object path, according
+  // to the example above, it's /org/bluez/2906/hci0.
+  nsString devicePath(aAdapterPath);
+  devicePath.AppendLiteral("/dev_");
+  devicePath.Append(aDeviceAddress);
+  devicePath.ReplaceChar(':', '_');
+  return devicePath;
+}
+
+static nsString
+GetAddressFromObjectPath(const nsAString& aObjectPath)
+{
+  // The object path would be like /org/bluez/2906/hci0/dev_00_23_7F_CB_B4_F1,
+  // and the adapter path would be the first part of the object path, according
+  // to the example above, it's /org/bluez/2906/hci0.
+  nsString address(aObjectPath);
+  int addressHead = address.RFind("/") + 5;
+
+  MOZ_ASSERT(addressHead + BLUETOOTH_ADDRESS_LENGTH == (int)address.Length());
+
+  address.Cut(0, addressHead);
+  address.ReplaceChar('_', ':');
+
+  return address;
 }
 
 static bool
@@ -831,7 +861,7 @@ static int
 FindProperty(const InfallibleTArray<BluetoothNamedValue>& aProperties,
              const char* aPropertyType)
 {
-  for (int i = 0; i < aProperties.Length(); ++i) {
+  for (size_t i = 0; i < aProperties.Length(); ++i) {
     if (aProperties[i].name().EqualsASCII(aPropertyType)) {
       return i;
     }
@@ -4055,7 +4085,7 @@ BluetoothDBusService::SendMetaData(const nsAString& aTitle,
   a2dp->GetTitle(prevTitle);
   a2dp->GetAlbum(prevAlbum);
 
-  if (aMediaNumber != a2dp->GetMediaNumber() ||
+  if (aMediaNumber < 0 || (uint64_t)aMediaNumber != a2dp->GetMediaNumber() ||
       !aTitle.Equals(prevTitle) ||
       !aAlbum.Equals(prevAlbum)) {
     UpdateNotification(ControlEventId::EVENT_TRACK_CHANGED, aMediaNumber);

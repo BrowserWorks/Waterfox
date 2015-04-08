@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2009-2014, International Business Machines
+*   Copyright (C) 2009-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -618,12 +618,10 @@ uplug_loadPlugFromLibrary(const char *libName, const char *sym, const char *conf
 
 #endif
 
+static UPlugLevel gCurrentLevel = UPLUG_LEVEL_LOW;
+
 U_CAPI UPlugLevel U_EXPORT2 uplug_getCurrentLevel() {
-  if(cmemory_inUse()) {
-    return UPLUG_LEVEL_HIGH;
-  } else {
-    return UPLUG_LEVEL_LOW;
-  }
+  return gCurrentLevel;
 }
 
 static UBool U_CALLCONV uplug_cleanup(void)
@@ -639,6 +637,7 @@ static UBool U_CALLCONV uplug_cleanup(void)
     uplug_doUnloadPlug(pluginToRemove, &subStatus);
   }
   /* close other held libs? */
+  gCurrentLevel = UPLUG_LEVEL_LOW;
   return TRUE;
 }
 
@@ -709,6 +708,8 @@ uplug_getPluginFile() {
 #endif
 }
 
+
+//  uplug_init()  is called first thing from u_init().
 
 U_CAPI void U_EXPORT2
 uplug_init(UErrorCode *status) {
@@ -866,5 +867,6 @@ uplug_init(UErrorCode *status) {
   }
   uplug_loadWaitingPlugs(status);
 #endif /* U_ENABLE_DYLOAD */
+  gCurrentLevel = UPLUG_LEVEL_HIGH;
   ucln_registerCleanup(UCLN_UPLUG, uplug_cleanup);
 }

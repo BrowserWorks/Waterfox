@@ -47,6 +47,7 @@ namespace jit {
     _(Sqrt)                                     \
     _(Atan2)                                    \
     _(Hypot)                                    \
+    _(MathFunction)                             \
     _(StringSplit)                              \
     _(RegExpExec)                               \
     _(RegExpTest)                               \
@@ -59,6 +60,7 @@ namespace jit {
     _(NewArray)                                 \
     _(NewDerivedTypedObject)                    \
     _(CreateThisWithTemplate)                   \
+    _(Lambda)                                   \
     _(ObjectState)                              \
     _(ArrayState)
 
@@ -471,6 +473,21 @@ class RHypot MOZ_FINAL : public RInstruction
      bool recover(JSContext *cx, SnapshotIterator &iter) const;
 };
 
+class RMathFunction MOZ_FINAL : public RInstruction
+{
+  private:
+    uint8_t function_;
+
+  public:
+    RINSTRUCTION_HEADER_(MathFunction)
+
+    virtual uint32_t numOperands() const {
+        return 1;
+    }
+
+    bool recover(JSContext *cx, SnapshotIterator &iter) const;
+};
+
 class RStringSplit MOZ_FINAL : public RInstruction
 {
   public:
@@ -620,6 +637,18 @@ class RCreateThisWithTemplate MOZ_FINAL : public RInstruction
 
     virtual uint32_t numOperands() const {
         return 1;
+    }
+
+    bool recover(JSContext *cx, SnapshotIterator &iter) const;
+};
+
+class RLambda MOZ_FINAL : public RInstruction
+{
+  public:
+    RINSTRUCTION_HEADER_(Lambda)
+
+    virtual uint32_t numOperands() const {
+        return 2;
     }
 
     bool recover(JSContext *cx, SnapshotIterator &iter) const;

@@ -59,6 +59,7 @@ using struct ChromePackage from "mozilla/chrome/RegistryMessageUtils.h";
 using struct ResourceMapping from "mozilla/chrome/RegistryMessageUtils.h";
 using struct OverrideMapping from "mozilla/chrome/RegistryMessageUtils.h";
 using base::ChildPrivileges from "base/process_util.h";
+using base::ProcessId from "base/process.h";
 using struct IPC::Permission from "mozilla/net/NeckoMessageUtils.h";
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using struct mozilla::null_t from "ipc/IPCMessageUtils.h";
@@ -319,6 +320,8 @@ struct VolumeInfo {
   bool isFormatting;
   bool isFake;
   bool isUnmounting;
+  bool isRemovable;
+  bool isHotSwappable;
 };
 
 struct ClipboardCapabilities {
@@ -329,6 +332,12 @@ struct ClipboardCapabilities {
 union MaybeFileDesc {
     FileDescriptor;
     void_t;
+};
+
+union OptionalContentId
+{
+  ContentParentId;
+  void_t;
 };
 
 prio(normal upto urgent) intr protocol PContent
@@ -483,7 +492,8 @@ child:
     // VolumeInfo above.
     FileSystemUpdate(nsString fsName, nsString mountPoint, int32_t fsState,
                      int32_t mountGeneration, bool isMediaPresent,
-                     bool isSharing, bool isFormatting, bool isFake, bool isUnmounting);
+                     bool isSharing, bool isFormatting, bool isFake,
+                     bool isUnmounting, bool isRemovable, bool isHotSwappable);
 
     // Ask the Nuwa process to create a new child process.
     NuwaFork();
@@ -510,14 +520,28 @@ child:
     OnAppThemeChanged();
 
     /**
+     * Called during plugin initialization to map a plugin id to a child process
+     * id.
+     */
+    async AssociatePluginId(uint32_t aPluginId, ProcessId aProcessId);
+
+    /**
+     * This call is used by async plugin initialization to notify the
+     * PluginModuleContentParent that the PluginModuleChromeParent's async
+     * init has completed.
+     */
+    async LoadPluginResult(uint32_t aPluginId, bool aResult);
+
+    /**
      * Control the Gecko Profiler in the child process.
      */
     async StartProfiler(uint32_t aEntries, double aInterval, nsCString[] aFeatures,
                         nsCString[] aThreadNameFilters);
     async StopProfiler();
-    intr GetProfile()
+    prio(high) sync GetProfile()
       returns (nsCString aProfile);
 
+    NuwaFreeze();
 parent:
     /**
      * Tell the parent process a new accessible document has been created.
@@ -550,7 +574,7 @@ parent:
                             ProcessPriority priority,
                             TabId openerTabId)
         returns (ContentParentId cpId, bool isForApp, bool isForBrowser, TabId tabId);
-    intr BridgeToChildProcess(ContentParentId cpId);
+    sync BridgeToChildProcess(ContentParentId cpId);
 
     /**
      * This call connects the content process to a plugin process. While this
@@ -559,7 +583,7 @@ parent:
      * process. We use intr semantics here to ensure that the PluginModuleParent
      * allocation message is dispatched before LoadPlugin returns.
      */
-    intr LoadPlugin(uint32_t pluginId);
+    sync LoadPlugin(uint32_t pluginId);
 
     /**
      * This call returns the set of plugins loaded in the chrome
@@ -653,7 +677,8 @@ parent:
                           nsString bidi,
                           nsString lang,
                           nsString data,
-                          Principal principal);
+                          Principal principal,
+                          bool inPrivateBrowsing);
 
     CloseAlert(nsString name, Principal principal);
 
@@ -728,6 +753,9 @@ parent:
     async SystemMessageHandled();
 
     NuwaReady();
+    // Sent when nuwa finished its initialization process and is waiting for
+    // parent's signal to make it freeze.
+    NuwaWaitForFreeze();
 
     sync AddNewProcess(uint32_t pid, ProtocolFdMapping[] aFds);
 
@@ -787,16 +815,17 @@ parent:
      * before one is submitted. This is urgent because an extension might use
      * a CPOW to synchronously submit a keygen element.
      */
-    prio(urgent) sync FormProcessValue(nsString oldValue,
-                                       nsString challenge,
-                                       nsString keytype,
-                                       nsString keyparams)
+    prio(urgent) sync KeygenProcessValue(nsString oldValue,
+                                         nsString challenge,
+                                         nsString keytype,
+                                         nsString keyparams)
         returns (nsString newValue);
 
     /**
      * Called to provide the options for <keygen> elements.
      */
-    sync FormProvideContent() returns (nsString aAttribute, nsString[] aContent);
+    sync KeygenProvideContent()
+        returns (nsString aAttribute, nsString[] aContent);
 
     // Use only for testing!
     sync GetFileReferences(PersistenceType persistenceType,

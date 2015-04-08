@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 1997-2014, International Business Machines Corporation and
+* Copyright (C) 1997-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -1119,7 +1119,6 @@ public:
      */
     virtual const TimeZoneFormat* getTimeZoneFormat(void) const;
 
-    /* Cannot use #ifndef U_HIDE_DRAFT_API for the following draft method since it is virtual */
     /**
      * Set a particular UDisplayContext value in the formatter, such as
      * UDISPCTX_CAPITALIZATION_FOR_STANDALONE. Note: For getContext, see
@@ -1128,7 +1127,7 @@ public:
      * @param status Input/output status. If at entry this indicates a failure
      *               status, the function will do nothing; otherwise this will be
      *               updated with any new status from the function. 
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual void setContext(UDisplayContext value, UErrorCode& status);
     
@@ -1497,7 +1496,7 @@ private:
      */
     TimeZoneFormat *tzFormat() const;
 
-    const NumberFormat &getNumberFormatByIndex(UDateFormatField index) const;
+    const NumberFormat* getNumberFormatByIndex(UDateFormatField index) const;
 
     /**
      * Used to map Calendar field to field level.
@@ -1506,7 +1505,16 @@ private:
      * UCAL_MONTH level is 20.
      */
     static const int32_t fgCalendarFieldToLevel[];
-    static const int32_t fgPatternCharToLevel[];
+
+    /**
+     * Map calendar field letter into calendar field level.
+     */
+    static int32_t getLevelFromChar(UChar ch);
+
+    /**
+     * Tell if a character can be used to define a field in a format string.
+     */
+    static UBool isSyntaxChar(UChar ch);
 
     /**
      * The formatting pattern for this formatter.

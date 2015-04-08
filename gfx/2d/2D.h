@@ -162,6 +162,7 @@ public:
   virtual ~GradientStops() {}
 
   virtual BackendType GetBackendType() const = 0;
+  virtual bool IsValid() const { return true; }
 
 protected:
   GradientStops() {}
@@ -597,20 +598,6 @@ protected:
 
   UserData mUserData;
 };
-
-#ifdef MOZ_ENABLE_FREETYPE
-/**
- * Describes a font.
- * Used to pass the key informatin from a gfxFont into Azure
- * @todo Should be replaced by a more long term solution, perhaps Bug 738014
- */
-struct FontOptions
-{
-  std::string mName;
-  FontStyle mStyle;
-};
-#endif
-
 
 /** This class is designed to allow passing additional glyph rendering
  * parameters to the glyph drawing functions. This is an empty wrapper class
@@ -1089,6 +1076,11 @@ public:
    */
   static bool CheckSurfaceSize(const IntSize &sz, int32_t limit = 0);
 
+  /** Make sure the given dimension satisfies the CheckSurfaceSize and is
+   * within 8k limit.  The 8k value is chosen a bit randomly.
+   */
+  static bool ReasonableSurfaceSize(const IntSize &aSize);
+
   static TemporaryRef<DrawTarget> CreateDrawTargetForCairoSurface(cairo_surface_t* aSurface, const IntSize& aSize, SurfaceFormat* aFormat = nullptr);
 
   static TemporaryRef<DrawTarget>
@@ -1160,6 +1152,8 @@ public:
   // This is a little hacky at the moment, but we want to have this data. Bug 1068613.
   static void SetLogForwarder(LogForwarder* aLogFwd);
 
+  static uint32_t GetMaxSurfaceSize(BackendType aType);
+
   static LogForwarder* GetLogForwarder() { return mLogForwarder; }
 
 private:
@@ -1190,6 +1184,8 @@ public:
    */
   static TemporaryRef<DrawTarget> CreateTiledDrawTarget(const TileSet& aTileSet);
 
+  static bool DoesBackendSupportDataDrawtarget(BackendType aType);
+
 #ifdef XP_MACOSX
   static TemporaryRef<DrawTarget> CreateDrawTargetForCairoCGContext(CGContextRef cg, const IntSize& aSize);
   static TemporaryRef<GlyphRenderingOptions>
@@ -1205,14 +1201,12 @@ public:
 
   static void SetDirect3D10Device(ID3D10Device1 *aDevice);
   static ID3D10Device1 *GetDirect3D10Device();
-#ifdef USE_D2D1_1
   static TemporaryRef<DrawTarget> CreateDrawTargetForD3D11Texture(ID3D11Texture2D *aTexture, SurfaceFormat aFormat);
 
   static void SetDirect3D11Device(ID3D11Device *aDevice);
   static ID3D11Device *GetDirect3D11Device();
   static ID2D1Device *GetD2D1Device();
   static bool SupportsD2D1();
-#endif
 
   static TemporaryRef<GlyphRenderingOptions>
     CreateDWriteGlyphRenderingOptions(IDWriteRenderingParams *aParams);
@@ -1222,11 +1216,9 @@ public:
   static void D2DCleanup();
 
 private:
-  static ID3D10Device1 *mD3D10Device;
-#ifdef USE_D2D1_1
-  static ID3D11Device *mD3D11Device;
   static ID2D1Device *mD2D1Device;
-#endif
+  static ID3D10Device1 *mD3D10Device;
+  static ID3D11Device *mD3D11Device;
 #endif
 
   static DrawEventRecorder *mRecorder;

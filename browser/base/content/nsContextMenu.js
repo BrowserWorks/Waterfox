@@ -5,6 +5,7 @@
 
 Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
 Components.utils.import("resource://gre/modules/InlineSpellChecker.jsm");
+Components.utils.import("resource://gre/modules/BrowserUtils.jsm");
 
 var gContextMenuContentData = null;
 
@@ -23,10 +24,15 @@ nsContextMenu.prototype = {
       return;
 
     this.hasPageMenu = false;
-    // FIXME (bug 1047751) - The page menu is disabled in e10s.
-    if (!aIsShift && !this.isRemote) {
-      this.hasPageMenu = PageMenu.maybeBuildAndAttachMenu(this.target,
-                                                          aXulMenu);
+    if (!aIsShift) {
+      if (this.isRemote) {
+        this.hasPageMenu =
+          PageMenuParent.addToPopup(gContextMenuContentData.customMenuItems,
+                                    this.browser, aXulMenu);
+      }
+      else {
+        this.hasPageMenu = PageMenuParent.buildAndAddToPopup(this.target, aXulMenu);
+      }
     }
 
     this.isFrameImage = document.getElementById("isFrameImage");
@@ -212,14 +218,15 @@ nsContextMenu.prototype = {
     this.showItem("context-sendaudio", this.onAudio);
     this.setItemAttr("context-sendvideo", "disabled", !this.mediaURL);
     this.setItemAttr("context-sendaudio", "disabled", !this.mediaURL);
+    let shouldShowCast = Services.prefs.getBoolPref("browser.casting.enabled");
     // getServicesForVideo alone would be sufficient here (it depends on
-    // SimpleServiceDiscovery.services), but SimpleServiceDiscovery is garanteed
-    // to be already loaded, since we load it on startup, and CastingApps isn't,
-    // so check SimpleServiceDiscovery.services first to avoid needing to load
-    // CastingApps.jsm if we don't need to.
-    let shouldShowCast = this.mediaURL &&
-                         SimpleServiceDiscovery.services.length > 0 &&
-                         CastingApps.getServicesForVideo(this.target).length > 0;
+    // SimpleServiceDiscovery.services), but SimpleServiceDiscovery is guaranteed
+    // to be already loaded, since we load it on startup in nsBrowserGlue,
+    // and CastingApps isn't, so check SimpleServiceDiscovery.services first
+    // to avoid needing to load CastingApps.jsm if we don't need to.
+    shouldShowCast = shouldShowCast && this.mediaURL &&
+                     SimpleServiceDiscovery.services.length > 0 &&
+                     CastingApps.getServicesForVideo(this.target).length > 0;
     this.setItemAttr("context-castvideo", "disabled", !shouldShowCast);
   },
 
@@ -472,6 +479,8 @@ nsContextMenu.prototype = {
     var statsShowing = this.onVideo && this.target.mozMediaStatisticsShowing;
     this.showItem("context-video-showstats", this.onVideo && this.target.controls && !statsShowing);
     this.showItem("context-video-hidestats", this.onVideo && this.target.controls && statsShowing);
+    this.showItem("context-media-eme-learnmore", this.onDRMMedia);
+    this.showItem("context-media-eme-separator", this.onDRMMedia);
 
     // Disable them when there isn't a valid media source loaded.
     if (onMedia) {
@@ -493,7 +502,7 @@ nsContextMenu.prototype = {
       this.setItemAttr("context-media-showcontrols", "disabled", hasError);
       this.setItemAttr("context-media-hidecontrols", "disabled", hasError);
       if (this.onVideo) {
-        let canSaveSnapshot = this.target.readyState >= this.target.HAVE_CURRENT_DATA;
+        let canSaveSnapshot = !this.onDRMMedia && this.target.readyState >= this.target.HAVE_CURRENT_DATA;
         this.setItemAttr("context-video-saveimage",  "disabled", !canSaveSnapshot);
         this.setItemAttr("context-video-fullscreen", "disabled", hasError);
         this.setItemAttr("context-video-showstats", "disabled", hasError);
@@ -556,6 +565,7 @@ nsContextMenu.prototype = {
     this.onCanvas          = false;
     this.onVideo           = false;
     this.onAudio           = false;
+    this.onDRMMedia        = false;
     this.onTextInput       = false;
     this.onKeywordField    = false;
     this.mediaURL          = "";
@@ -631,6 +641,9 @@ nsContextMenu.prototype = {
         if (this.isMediaURLReusable(mediaURL)) {
           this.mediaURL = mediaURL;
         }
+        if (this.target.isEncrypted) {
+          this.onDRMMedia = true;
+        }
         // Firefox always creates a HTMLVideoElement when loading an ogg file
         // directly. If the media is actually audio, be smarter and provide a
         // context menu with audio operations.
@@ -646,6 +659,9 @@ nsContextMenu.prototype = {
         let mediaURL = this.target.currentSrc || this.target.src;
         if (this.isMediaURLReusable(mediaURL)) {
           this.mediaURL = mediaURL;
+        }
+        if (this.target.isEncrypted) {
+          this.onDRMMedia = true;
         }
       }
       else if (editFlags & (SpellCheckHelper.INPUT | SpellCheckHelper.TEXTAREA)) {
@@ -857,13 +873,20 @@ nsContextMenu.prototype = {
     return aNode.spellcheck;
   },
 
+  _openLinkInParameters : function (doc, extra) {
+    let params = { charset: doc.characterSet,
+                   referrerURI: doc.documentURIObject,
+                   noReferrer: BrowserUtils.linkHasNoReferrer(this.link) };
+    for (let p in extra)
+      params[p] = extra[p];
+    return params;
+  },
+
   // Open linked-to URL in a new window.
   openLink : function () {
     var doc = this.target.ownerDocument;
     urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
-    openLinkIn(this.linkURL, "window",
-               { charset: doc.characterSet,
-                 referrerURI: doc.documentURIObject });
+    openLinkIn(this.linkURL, "window", this._openLinkInParameters(doc));
   },
 
   // Open linked-to URL in a new private window.
@@ -871,9 +894,7 @@ nsContextMenu.prototype = {
     var doc = this.target.ownerDocument;
     urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
     openLinkIn(this.linkURL, "window",
-               { charset: doc.characterSet,
-                 referrerURI: doc.documentURIObject,
-                 private: true });
+               this._openLinkInParameters(doc, { private: true }));
   },
 
   // Open linked-to URL in a new tab.
@@ -897,19 +918,17 @@ nsContextMenu.prototype = {
       catch (e) { }
     }
 
-    openLinkIn(this.linkURL, "tab",
-               { charset: doc.characterSet,
-                 referrerURI: referrerURI,
-                 allowMixedContent: persistAllowMixedContentInChildTab });
+    let params = this._openLinkInParameters(doc, {
+      allowMixedContent: persistAllowMixedContentInChildTab,
+    });
+    openLinkIn(this.linkURL, "tab", params);
   },
 
   // open URL in current tab
   openLinkInCurrent: function() {
     var doc = this.target.ownerDocument;
     urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
-    openLinkIn(this.linkURL, "current",
-               { charset: doc.characterSet,
-                 referrerURI: doc.documentURIObject });
+    openLinkIn(this.linkURL, "current", this._openLinkInParameters(doc));
   },
 
   // Open frame in a new tab.
@@ -1063,7 +1082,7 @@ nsContextMenu.prototype = {
       mm.removeMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
       let dataURL = message.data.dataURL;
       saveImageURL(dataURL, name, "SaveImageTitle", true, false,
-                   document.documentURIObject, this.target.ownerDocument);
+                   document.documentURIObject, document);
     };
     mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
@@ -1694,6 +1713,17 @@ nsContextMenu.prototype = {
     clipboard.copyString(this.mediaURL, document);
   },
 
+  drmLearnMore: function(aEvent) {
+    let drmInfoURL = Services.urlFormatter.formatURLPref("app.support.baseURL") + "drm-content";
+    let dest = whereToOpenLink(aEvent);
+    // Don't ever want this to open in the same tab as it'll unload the
+    // DRM'd video, which is going to be a bad idea in most cases.
+    if (dest == "current") {
+      dest = "tab";
+    }
+    openUILinkIn(drmInfoURL, dest);
+  },
+
   get imageURL() {
     if (this.onImage)
       return this.mediaURL;
@@ -1762,7 +1792,7 @@ nsContextMenu.prototype = {
       }
 
       // Check if this is a page menu item:
-      if (e.target.hasAttribute(PageMenu.GENERATEDITEMID_ATTR)) {
+      if (e.target.hasAttribute(PageMenuParent.GENERATEDITEMID_ATTR)) {
         this._telemetryClickID = "custom-page-item";
       } else {
         this._telemetryClickID = (e.target.id || "unknown").replace(/^context-/i, "");

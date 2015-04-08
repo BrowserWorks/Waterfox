@@ -12,7 +12,7 @@
 #include "nsCOMPtr.h"
 #include "nsIObserverService.h"
 #include "nsIThreadPool.h"
-#include "nsProxyRelease.h"
+#include "nsThreadUtils.h"
 #include "nsXPCOMCIDInternal.h"
 #include "prsystem.h"
 
@@ -42,194 +42,123 @@ public:
    * Called by the DecodePool when it's done some significant portion of
    * decoding, so that progress can be recorded and notifications can be sent.
    */
-  static void Dispatch(RasterImage* aImage)
+  static void Dispatch(RasterImage* aImage,
+                       Progress aProgress,
+                       const nsIntRect& aInvalidRect,
+                       uint32_t aFlags)
   {
-    nsCOMPtr<nsIRunnable> worker = new NotifyProgressWorker(aImage);
+    MOZ_ASSERT(aImage);
+
+    nsCOMPtr<nsIRunnable> worker =
+      new NotifyProgressWorker(aImage, aProgress, aInvalidRect, aFlags);
     NS_DispatchToMainThread(worker);
   }
 
   NS_IMETHOD Run() MOZ_OVERRIDE
   {
     MOZ_ASSERT(NS_IsMainThread());
-    ReentrantMonitorAutoEnter lock(mImage->mDecodingMonitor);
-
-    mImage->FinishedSomeDecoding(ShutdownReason::DONE);
-
+    mImage->NotifyProgress(mProgress, mInvalidRect, mFlags);
     return NS_OK;
   }
 
 private:
-  explicit NotifyProgressWorker(RasterImage* aImage)
+  NotifyProgressWorker(RasterImage* aImage, Progress aProgress,
+                       const nsIntRect& aInvalidRect, uint32_t aFlags)
     : mImage(aImage)
+    , mProgress(aProgress)
+    , mInvalidRect(aInvalidRect)
+    , mFlags(aFlags)
   { }
 
   nsRefPtr<RasterImage> mImage;
+  const Progress mProgress;
+  const nsIntRect mInvalidRect;
+  const uint32_t mFlags;
 };
 
-class FrameNeededWorker : public nsRunnable
+class NotifyDecodeCompleteWorker : public nsRunnable
 {
 public:
   /**
-   * Called when an off-main-thread decoder needs a new frame to be allocated on
-   * the main thread.
-   *
-   * After allocating the new frame, the worker will call RequestDecode to
-   * continue decoding.
+   * Called by the DecodePool when decoding is complete, so that final cleanup
+   * can be performed.
    */
-  static void Dispatch(RasterImage* aImage)
+  static void Dispatch(Decoder* aDecoder)
   {
-    nsCOMPtr<nsIRunnable> worker = new FrameNeededWorker(aImage);
+    MOZ_ASSERT(aDecoder);
+
+    nsCOMPtr<nsIRunnable> worker = new NotifyDecodeCompleteWorker(aDecoder);
     NS_DispatchToMainThread(worker);
   }
 
   NS_IMETHOD Run() MOZ_OVERRIDE
   {
-    ReentrantMonitorAutoEnter lock(mImage->mDecodingMonitor);
-    nsresult rv = NS_OK;
-
-    // If we got a synchronous decode in the mean time, we don't need to do
-    // anything.
-    if (mImage->mDecoder && mImage->mDecoder->NeedsNewFrame()) {
-      rv = mImage->mDecoder->AllocateFrame();
-    }
-
-    if (NS_SUCCEEDED(rv) && mImage->mDecoder) {
-      // By definition, we're not done decoding, so enqueue us for more decoding.
-      DecodePool::Singleton()->RequestDecode(mImage);
-    }
-
+    MOZ_ASSERT(NS_IsMainThread());
+    mDecoder->Finish();
+    mDecoder->GetImage()->FinalizeDecoder(mDecoder);
     return NS_OK;
   }
 
 private:
-  explicit FrameNeededWorker(RasterImage* aImage)
-    : mImage(aImage)
+  explicit NotifyDecodeCompleteWorker(Decoder* aDecoder)
+    : mDecoder(aDecoder)
   { }
 
-  nsRefPtr<RasterImage> mImage;
+  nsRefPtr<Decoder> mDecoder;
 };
 
 class DecodeWorker : public nsRunnable
 {
 public:
-  DecodeWorker(RasterImage* aImage)
-    : mImage(aImage)
-  { }
+  explicit DecodeWorker(Decoder* aDecoder)
+    : mDecoder(aDecoder)
+  {
+    MOZ_ASSERT(mDecoder);
+  }
 
   NS_IMETHOD Run() MOZ_OVERRIDE
   {
-    ReentrantMonitorAutoEnter lock(mImage->mDecodingMonitor);
-
-    // If we were interrupted, we shouldn't do any work.
-    if (mImage->mDecodeStatus == DecodeStatus::STOPPED) {
-      NotifyProgressWorker::Dispatch(mImage);
-      return NS_OK;
-    }
-
-    // If someone came along and synchronously decoded us, there's nothing for us to do.
-    if (!mImage->mDecoder || mImage->IsDecodeFinished()) {
-      NotifyProgressWorker::Dispatch(mImage);
-      return NS_OK;
-    }
-
-    // If we're a decode job that's been enqueued since a previous decode that
-    // still needs a new frame, we can't do anything. Wait until the
-    // FrameNeededWorker enqueues another frame.
-    if (mImage->mDecoder->NeedsNewFrame()) {
-      return NS_OK;
-    }
-
-    mImage->mDecodeStatus = DecodeStatus::ACTIVE;
-
-    size_t oldByteCount = mImage->mDecoder->BytesDecoded();
-
-    // Multithreaded decoding can be disabled. If we've done so, we don't want
-    // to monopolize the main thread, and will allow a timeout.
-    DecodeUntil type = NS_IsMainThread() ? DecodeUntil::TIME
-                                         : DecodeUntil::DONE_BYTES;
-
-    size_t maxBytes = mImage->mSourceData.Length() -
-                      mImage->mDecoder->BytesDecoded();
-    DecodePool::Singleton()->DecodeSomeOfImage(mImage, DecodeStrategy::ASYNC,
-                                               type, maxBytes);
-
-    size_t bytesDecoded = mImage->mDecoder->BytesDecoded() - oldByteCount;
-
-    mImage->mDecodeStatus = DecodeStatus::WORK_DONE;
-
-    if (mImage->mDecoder && mImage->mDecoder->NeedsNewFrame()) {
-      // The decoder needs a new frame. Enqueue an event to get it; that event
-      // will enqueue another decode request when it's done.
-      FrameNeededWorker::Dispatch(mImage);
-    } else if (mImage->mDecoder &&
-               !mImage->mError &&
-               !mImage->mPendingError &&
-               !mImage->IsDecodeFinished() &&
-               bytesDecoded < maxBytes &&
-               bytesDecoded > 0) {
-      // We aren't finished decoding, and we have more data, so add this request
-      // to the back of the list.
-      DecodePool::Singleton()->RequestDecode(mImage);
-    } else {
-      // Nothing more for us to do - let everyone know what happened.
-      NotifyProgressWorker::Dispatch(mImage);
-    }
-
+    MOZ_ASSERT(!NS_IsMainThread());
+    DecodePool::Singleton()->Decode(mDecoder);
     return NS_OK;
   }
 
-protected:
-  virtual ~DecodeWorker()
-  {
-    if (gfxPrefs::ImageMTDecodingEnabled()) {
-      // Dispatch mImage to main thread to prevent mImage from being destructed by decode thread.
-      nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
-      NS_WARN_IF_FALSE(mainThread, "Couldn't get the main thread!");
-      if (mainThread) {
-        // Handle ambiguous nsISupports inheritance
-        RasterImage* rawImg = nullptr;
-        mImage.swap(rawImg);
-        DebugOnly<nsresult> rv = NS_ProxyRelease(mainThread, NS_ISUPPORTS_CAST(ImageResource*, rawImg));
-        MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to proxy release to main thread");
-      }
-    }
-  }
-
 private:
-  nsRefPtr<RasterImage> mImage;
+  nsRefPtr<Decoder> mDecoder;
 };
 
 #ifdef MOZ_NUWA_PROCESS
 
-class RIDThreadPoolListener MOZ_FINAL : public nsIThreadPoolListener
+class DecodePoolNuwaListener MOZ_FINAL : public nsIThreadPoolListener
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSITHREADPOOLLISTENER
-  
-  RIDThreadPoolListener() { }
 
-private:
-  ~RIDThreadPoolListener() { }
-};
-
-NS_IMPL_ISUPPORTS(RIDThreadPoolListener, nsIThreadPoolListener)
-
-NS_IMETHODIMP
-RIDThreadPoolListener::OnThreadCreated()
-{
+  NS_IMETHODIMP OnThreadCreated()
+  {
     if (IsNuwaProcess()) {
-        NuwaMarkCurrentThread(static_cast<void(*)(void*)>(nullptr), nullptr);
+      NuwaMarkCurrentThread(static_cast<void(*)(void*)>(nullptr), nullptr);
     }
     return NS_OK;
-}
+  }
 
-NS_IMETHODIMP
-RIDThreadPoolListener::OnThreadShuttingDown()
+  NS_IMETHODIMP OnThreadShuttingDown() { return NS_OK; }
+
+private:
+  ~DecodePoolNuwaListener() { }
+};
+
+NS_IMPL_ISUPPORTS(DecodePoolNuwaListener, nsIThreadPoolListener)
+
+class RegisterDecodeIOThreadWithNuwaRunnable : public nsRunnable
 {
+public:
+  NS_IMETHOD Run()
+  {
+    NuwaMarkCurrentThread(static_cast<void(*)(void*)>(nullptr), nullptr);
     return NS_OK;
-}
-
+  }
+};
 #endif // MOZ_NUWA_PROCESS
 
 
@@ -240,6 +169,13 @@ RIDThreadPoolListener::OnThreadShuttingDown()
 /* static */ StaticRefPtr<DecodePool> DecodePool::sSingleton;
 
 NS_IMPL_ISUPPORTS(DecodePool, nsIObserver)
+
+/* static */ void
+DecodePool::Initialize()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  DecodePool::Singleton();
+}
 
 /* static */ DecodePool*
 DecodePool::Singleton()
@@ -253,42 +189,47 @@ DecodePool::Singleton()
   return sSingleton;
 }
 
-already_AddRefed<nsIEventTarget>
-DecodePool::GetEventTarget()
-{
-  nsCOMPtr<nsIEventTarget> target = do_QueryInterface(mThreadPool);
-  return target.forget();
-}
-
 DecodePool::DecodePool()
-  : mThreadPoolMutex("Thread Pool")
+  : mMutex("image::DecodePool")
 {
-  if (gfxPrefs::ImageMTDecodingEnabled()) {
-    mThreadPool = do_CreateInstance(NS_THREADPOOL_CONTRACTID);
-    if (mThreadPool) {
-      mThreadPool->SetName(NS_LITERAL_CSTRING("ImageDecoder"));
-      int32_t prefLimit = gfxPrefs::ImageMTDecodingLimit();
-      uint32_t limit;
-      if (prefLimit <= 0) {
-        limit = max(PR_GetNumberOfProcessors(), 2) - 1;
-      } else {
-        limit = static_cast<uint32_t>(prefLimit);
-      }
+  // Initialize the thread pool.
+  mThreadPool = do_CreateInstance(NS_THREADPOOL_CONTRACTID);
+  MOZ_RELEASE_ASSERT(mThreadPool,
+                     "Should succeed in creating image decoding thread pool");
 
-      mThreadPool->SetThreadLimit(limit);
-      mThreadPool->SetIdleThreadLimit(limit);
+  mThreadPool->SetName(NS_LITERAL_CSTRING("ImageDecoder"));
+  int32_t prefLimit = gfxPrefs::ImageMTDecodingLimit();
+  uint32_t limit;
+  if (prefLimit <= 0) {
+    limit = max(PR_GetNumberOfProcessors(), 2) - 1;
+  } else {
+    limit = static_cast<uint32_t>(prefLimit);
+  }
+
+  mThreadPool->SetThreadLimit(limit);
+  mThreadPool->SetIdleThreadLimit(limit);
 
 #ifdef MOZ_NUWA_PROCESS
-      if (IsNuwaProcess()) {
-        mThreadPool->SetListener(new RIDThreadPoolListener());
-      }
+  if (IsNuwaProcess()) {
+    mThreadPool->SetListener(new DecodePoolNuwaListener());
+  }
 #endif
 
-      nsCOMPtr<nsIObserverService> obsSvc = services::GetObserverService();
-      if (obsSvc) {
-        obsSvc->AddObserver(this, "xpcom-shutdown-threads", false);
-      }
-    }
+  // Initialize the I/O thread.
+  nsresult rv = NS_NewNamedThread("ImageIO", getter_AddRefs(mIOThread));
+  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv) && mIOThread,
+                     "Should successfully create image I/O thread");
+
+#ifdef MOZ_NUWA_PROCESS
+  nsCOMPtr<nsIRunnable> worker = new RegisterDecodeIOThreadWithNuwaRunnable();
+  rv = mIOThread->Dispatch(worker, NS_DISPATCH_NORMAL);
+  MOZ_RELEASE_ASSERT(NS_SUCCEEDED(rv),
+                     "Should register decode IO thread with Nuwa process");
+#endif
+
+  nsCOMPtr<nsIObserverService> obsSvc = services::GetObserverService();
+  if (obsSvc) {
+    obsSvc->AddObserver(this, "xpcom-shutdown-threads", false);
   }
 }
 
@@ -303,210 +244,135 @@ DecodePool::Observe(nsISupports*, const char* aTopic, const char16_t*)
   MOZ_ASSERT(strcmp(aTopic, "xpcom-shutdown-threads") == 0, "Unexpected topic");
 
   nsCOMPtr<nsIThreadPool> threadPool;
+  nsCOMPtr<nsIThread> ioThread;
 
   {
-    MutexAutoLock threadPoolLock(mThreadPoolMutex);
-    threadPool = mThreadPool;
-    mThreadPool = nullptr;
+    MutexAutoLock lock(mMutex);
+    threadPool.swap(mThreadPool);
+    ioThread.swap(mIOThread);
   }
 
   if (threadPool) {
     threadPool->Shutdown();
   }
 
+  if (ioThread) {
+    ioThread->Shutdown();
+  }
+
   return NS_OK;
 }
 
 void
-DecodePool::RequestDecode(RasterImage* aImage)
+DecodePool::AsyncDecode(Decoder* aDecoder)
 {
-  MOZ_ASSERT(aImage->mDecoder);
-  aImage->mDecodingMonitor.AssertCurrentThreadIn();
+  MOZ_ASSERT(aDecoder);
 
-  // If we're currently waiting on a new frame for this image, we can't do any
-  // decoding.
-  if (!aImage->mDecoder->NeedsNewFrame()) {
-    if (aImage->mDecodeStatus == DecodeStatus::PENDING ||
-        aImage->mDecodeStatus == DecodeStatus::ACTIVE) {
-      // The image is already in our list of images to decode, or currently being
-      // decoded, so we don't have to do anything else.
-      return;
-    }
+  nsCOMPtr<nsIRunnable> worker = new DecodeWorker(aDecoder);
 
-    aImage->mDecodeStatus = DecodeStatus::PENDING;
-    nsCOMPtr<nsIRunnable> worker = new DecodeWorker(aImage);
-
-    MutexAutoLock threadPoolLock(mThreadPoolMutex);
-    if (!gfxPrefs::ImageMTDecodingEnabled() || !mThreadPool) {
-      NS_DispatchToMainThread(worker);
-    } else {
-      mThreadPool->Dispatch(worker, nsIEventTarget::DISPATCH_NORMAL);
-    }
+  // Dispatch to the thread pool if it exists. If it doesn't, we're currently
+  // shutting down, so it's OK to just drop the job on the floor.
+  MutexAutoLock threadPoolLock(mMutex);
+  if (mThreadPool) {
+    mThreadPool->Dispatch(worker, nsIEventTarget::DISPATCH_NORMAL);
   }
 }
 
 void
-DecodePool::DecodeABitOf(RasterImage* aImage, DecodeStrategy aStrategy)
+DecodePool::SyncDecodeIfSmall(Decoder* aDecoder)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  aImage->mDecodingMonitor.AssertCurrentThreadIn();
+  MOZ_ASSERT(aDecoder);
 
-  // If the image is waiting for decode work to be notified, go ahead and do that.
-  if (aImage->mDecodeStatus == DecodeStatus::WORK_DONE) {
-    aImage->FinishedSomeDecoding();
+  if (aDecoder->ShouldSyncDecode(gfxPrefs::ImageMemDecodeBytesAtATime())) {
+    Decode(aDecoder);
+    return;
   }
 
-  DecodeSomeOfImage(aImage, aStrategy);
-
-  aImage->FinishedSomeDecoding();
-
-  // If the decoder needs a new frame, enqueue an event to get it; that event
-  // will enqueue another decode request when it's done.
-  if (aImage->mDecoder && aImage->mDecoder->NeedsNewFrame()) {
-    FrameNeededWorker::Dispatch(aImage);
-  } else {
-    // If we aren't yet finished decoding and we have more data in hand, add
-    // this request to the back of the priority list.
-    if (aImage->mDecoder &&
-        !aImage->mError &&
-        !aImage->IsDecodeFinished() &&
-        aImage->mSourceData.Length() > aImage->mDecoder->BytesDecoded()) {
-      RequestDecode(aImage);
-    }
-  }
+  AsyncDecode(aDecoder);
 }
 
-/* static */ void
-DecodePool::StopDecoding(RasterImage* aImage)
-{
-  aImage->mDecodingMonitor.AssertCurrentThreadIn();
-
-  // If we haven't got a decode request, we're not currently decoding. (Having
-  // a decode request doesn't imply we *are* decoding, though.)
-  aImage->mDecodeStatus = DecodeStatus::STOPPED;
-}
-
-nsresult
-DecodePool::DecodeUntilSizeAvailable(RasterImage* aImage)
+void
+DecodePool::SyncDecodeIfPossible(Decoder* aDecoder)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  ReentrantMonitorAutoEnter lock(aImage->mDecodingMonitor);
-
-  // If the image is waiting for decode work to be notified, go ahead and do that.
-  if (aImage->mDecodeStatus == DecodeStatus::WORK_DONE) {
-    nsresult rv = aImage->FinishedSomeDecoding();
-    if (NS_FAILED(rv)) {
-      aImage->DoError();
-      return rv;
-    }
-  }
-
-  // We use DecodeStrategy::ASYNC here because we just want to get the size
-  // information here and defer the rest of the work.
-  nsresult rv =
-    DecodeSomeOfImage(aImage, DecodeStrategy::ASYNC, DecodeUntil::SIZE);
-  if (NS_FAILED(rv)) {
-    return rv;
-  }
-
-  // If the decoder needs a new frame, enqueue an event to get it; that event
-  // will enqueue another decode request when it's done.
-  if (aImage->mDecoder && aImage->mDecoder->NeedsNewFrame()) {
-    FrameNeededWorker::Dispatch(aImage);
-  } else {
-    rv = aImage->FinishedSomeDecoding();
-  }
-
-  return rv;
+  Decode(aDecoder);
 }
 
-nsresult
-DecodePool::DecodeSomeOfImage(RasterImage* aImage,
-                              DecodeStrategy aStrategy,
-                              DecodeUntil aDecodeUntil /* = DecodeUntil::TIME */,
-                              uint32_t bytesToDecode /* = 0 */)
+already_AddRefed<nsIEventTarget>
+DecodePool::GetEventTarget()
 {
-  MOZ_ASSERT(aImage->mInitialized, "Worker active for uninitialized container");
-  aImage->mDecodingMonitor.AssertCurrentThreadIn();
+  MutexAutoLock threadPoolLock(mMutex);
+  nsCOMPtr<nsIEventTarget> target = do_QueryInterface(mThreadPool);
+  return target.forget();
+}
 
-  // If an error is flagged, it probably happened while we were waiting
-  // in the event queue.
-  if (aImage->mError) {
-    return NS_OK;
-  }
+already_AddRefed<nsIEventTarget>
+DecodePool::GetIOEventTarget()
+{
+  MutexAutoLock threadPoolLock(mMutex);
+  nsCOMPtr<nsIEventTarget> target = do_QueryInterface(mIOThread);
+  return target.forget();
+}
 
-  // If there is an error worker pending (say because the main thread has enqueued
-  // another decode request for us before processing the error worker) then bail out.
-  if (aImage->mPendingError) {
-    return NS_OK;
-  }
+already_AddRefed<nsIRunnable>
+DecodePool::CreateDecodeWorker(Decoder* aDecoder)
+{
+  MOZ_ASSERT(aDecoder);
+  nsCOMPtr<nsIRunnable> worker = new DecodeWorker(aDecoder);
+  return worker.forget();
+}
 
-  // If mDecoded or we don't have a decoder, we must have finished already (for
-  // example, a synchronous decode request came while the worker was pending).
-  if (!aImage->mDecoder || aImage->mDecoded) {
-    return NS_OK;
-  }
+void
+DecodePool::Decode(Decoder* aDecoder)
+{
+  MOZ_ASSERT(aDecoder);
 
-  if (aImage->mDecoder->NeedsNewFrame()) {
-    if (aStrategy == DecodeStrategy::SYNC) {
-      MOZ_ASSERT(NS_IsMainThread());
-      aImage->mDecoder->AllocateFrame();
-    } else {
-      return NS_OK;
+  nsresult rv = aDecoder->Decode();
+
+  if (NS_SUCCEEDED(rv) && !aDecoder->GetDecodeDone()) {
+    if (aDecoder->HasProgress()) {
+      NotifyProgress(aDecoder);
     }
-  }
-
-  nsRefPtr<Decoder> decoderKungFuDeathGrip = aImage->mDecoder;
-
-  uint32_t maxBytes;
-  if (aImage->mDecoder->IsSizeDecode()) {
-    // Decode all available data if we're a size decode; they're cheap, and we
-    // want them to be more or less synchronous.
-    maxBytes = aImage->mSourceData.Length();
+    // The decoder will ensure that a new worker gets enqueued to continue
+    // decoding when more data is available.
   } else {
-    // We're only guaranteed to decode this many bytes, so in particular,
-    // gfxPrefs::ImageMemDecodeBytesAtATime should be set high enough for us
-    // to read the size from most images.
-    maxBytes = gfxPrefs::ImageMemDecodeBytesAtATime();
+    NotifyDecodeComplete(aDecoder);
+  }
+}
+
+void
+DecodePool::NotifyProgress(Decoder* aDecoder)
+{
+  MOZ_ASSERT(aDecoder);
+
+  if (!NS_IsMainThread() ||
+      (aDecoder->GetFlags() & imgIContainer::FLAG_ASYNC_NOTIFY)) {
+    NotifyProgressWorker::Dispatch(aDecoder->GetImage(),
+                                   aDecoder->TakeProgress(),
+                                   aDecoder->TakeInvalidRect(),
+                                   aDecoder->GetDecodeFlags());
+    return;
   }
 
-  if (bytesToDecode == 0) {
-    bytesToDecode = aImage->mSourceData.Length() - aImage->mDecoder->BytesDecoded();
+  aDecoder->GetImage()->NotifyProgress(aDecoder->TakeProgress(),
+                                       aDecoder->TakeInvalidRect(),
+                                       aDecoder->GetDecodeFlags());
+}
+
+void
+DecodePool::NotifyDecodeComplete(Decoder* aDecoder)
+{
+  MOZ_ASSERT(aDecoder);
+
+  if (!NS_IsMainThread() ||
+      (aDecoder->GetFlags() & imgIContainer::FLAG_ASYNC_NOTIFY)) {
+    NotifyDecodeCompleteWorker::Dispatch(aDecoder);
+    return;
   }
 
-  TimeStamp deadline = TimeStamp::Now() +
-                       TimeDuration::FromMilliseconds(gfxPrefs::ImageMemMaxMSBeforeYield());
-
-  // We keep decoding chunks until:
-  //  * we don't have any data left to decode,
-  //  * the decode completes,
-  //  * we're an DecodeUntil::SIZE decode and we get the size, or
-  //  * we run out of time.
-  // We also try to decode at least one "chunk" if we've allocated a new frame,
-  // even if we have no more data to send to the decoder.
-  while ((aImage->mSourceData.Length() > aImage->mDecoder->BytesDecoded() &&
-          bytesToDecode > 0 &&
-          !aImage->IsDecodeFinished() &&
-          !(aDecodeUntil == DecodeUntil::SIZE && aImage->mHasSize) &&
-          !aImage->mDecoder->NeedsNewFrame()) ||
-         aImage->mDecoder->NeedsToFlushData()) {
-    uint32_t chunkSize = min(bytesToDecode, maxBytes);
-    nsresult rv = aImage->DecodeSomeData(chunkSize, aStrategy);
-    if (NS_FAILED(rv)) {
-      aImage->DoError();
-      return rv;
-    }
-
-    bytesToDecode -= chunkSize;
-
-    // Yield if we've been decoding for too long. We check this _after_ decoding
-    // a chunk to ensure that we don't yield without doing any decoding.
-    if (aDecodeUntil == DecodeUntil::TIME && TimeStamp::Now() >= deadline) {
-      break;
-    }
-  }
-
-  return NS_OK;
+  aDecoder->Finish();
+  aDecoder->GetImage()->FinalizeDecoder(aDecoder);
 }
 
 } // namespace image

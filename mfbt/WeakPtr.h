@@ -69,7 +69,7 @@
 
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
-#include "mozilla/NullPtr.h"
+#include "mozilla/Attributes.h"
 #include "mozilla/RefPtr.h"
 #include "mozilla/TypeTraits.h"
 
@@ -122,7 +122,7 @@ private:
 
   void detach() { mPtr = nullptr; }
 
-  T* mPtr;
+  T* MOZ_NON_OWNING_REF mPtr;
 };
 
 } // namespace detail
@@ -194,7 +194,7 @@ public:
   operator T*() const { return mRef->get(); }
   T& operator*() const { return *mRef->get(); }
 
-  T* operator->() const { return mRef->get(); }
+  T* operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN { return mRef->get(); }
 
   T* get() const { return mRef->get(); }
 

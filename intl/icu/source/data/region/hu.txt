@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/hu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/hu.xml
- */
 hu{
     Countries{
         001{"Világ"}
@@ -302,18 +299,18 @@ hu{
         ZW{"Zimbabwe"}
         ZZ{"Ismeretlen körzet"}
     }
-    Countries%variant{
-        CD{"Kongó (KDK)"}
-        CG{"Kongó (Köztársaság)"}
-        FK{"Falkland-szigetek (Malvin-szigetek)"}
-        MK{"Macedónia (MVJK)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"UK"}
         HK{"Hongkong"}
         MO{"Makaó"}
         PS{"Palesztina"}
         US{"USA"}
     }
-    Version{"2.1.10.42"}
+    Countries%variant{
+        CD{"Kongó (KDK)"}
+        CG{"Kongó (Köztársaság)"}
+        FK{"Falkland-szigetek (Malvin-szigetek)"}
+        MK{"Macedónia (MVJK)"}
+    }
+    Version{"2.1.12.94"}
 }

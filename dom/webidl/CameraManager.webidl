@@ -15,19 +15,35 @@ dictionary CameraSize
   unsigned long height = 0;
 };
 
-/* Pre-emptive camera configuration options. */
+/* Pre-emptive camera configuration options. If 'mode' is set to "unspecified",
+   the camera will not be configured immediately. If the 'mode' is set to
+   "video" or "picture", then the camera automatically configures itself and
+   will be ready for use upon return.
+
+   The remaining parameters are optional and are considered hints by the
+   camera. The application should use the values returned in the
+   GetCameraCallback configuration because while the camera makes a best effort
+   to adhere to the requested values, it may need to change them to ensure
+   optimal behavior.
+
+   If not specified, 'pictureSize' and 'recorderProfile' default to the best or
+   highest resolutions supported by the camera hardware.
+
+   To determine 'previewSize', one should generally provide the size of the
+   element which will contain the preview rather than guess which supported
+   preview size is the best. If not specified, 'previewSize' defaults to the
+   inner window size. */
 dictionary CameraConfiguration
 {
-  CameraMode mode = "unspecified";
+  CameraMode mode = "picture";
   CameraSize previewSize = null;
-  DOMString recorderProfile = ""; // one of the profiles reported by
-                                  // CameraControl.capabilities.recorderProfiles
+  CameraSize pictureSize = null;
+
+  /* one of the profiles reported by
+     CameraControl.capabilities.recorderProfiles
+  */
+  DOMString recorderProfile = "default";
 };
-
-callback CameraErrorCallback = void (DOMString error);
-
-callback GetCameraCallback = void (CameraControl camera,
-                                   CameraConfiguration configuration);
 
 [Func="nsDOMCameraManager::HasSupport"]
 interface CameraManager
@@ -37,9 +53,7 @@ interface CameraManager
   */
   [Throws]
   Promise<CameraGetPromiseData> getCamera(DOMString camera,
-                                          optional CameraConfiguration initialConfiguration,
-                                          optional GetCameraCallback callback,
-                                          optional CameraErrorCallback errorCallback);
+                                          optional CameraConfiguration initialConfiguration);
 
   /* return an array of camera identifiers, e.g.
        [ "front", "back" ]

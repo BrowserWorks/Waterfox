@@ -94,12 +94,6 @@ StaticRefPtr<BluetoothService> sBluetoothService;
 bool sInShutdown = false;
 bool sToggleInProgress = false;
 
-bool
-IsMainProcess()
-{
-  return XRE_GetProcessType() == GeckoProcessType_Default;
-}
-
 void
 ShutdownTimeExceeded(nsITimer* aTimer, void* aClosure)
 {
@@ -145,34 +139,7 @@ BluetoothService::ToggleBtAck::ToggleBtAck(bool aEnabled)
 NS_METHOD
 BluetoothService::ToggleBtAck::Run()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
-  // This is requested in Bug 836516. With settings this property, WLAN
-  // firmware could be aware of Bluetooth has been turned on/off, so that the
-  // mecahnism of handling coexistence of WIFI and Bluetooth could be started.
-  //
-  // In the future, we may have our own way instead of setting a system
-  // property to let firmware developers be able to sense that Bluetooth has
-  // been toggled.
-#if defined(MOZ_WIDGET_GONK)
-  if (property_set(PROP_BLUETOOTH_ENABLED, mEnabled ? "true" : "false") != 0) {
-    BT_WARNING("Failed to set bluetooth enabled property");
-  }
-#endif
-
-  NS_ENSURE_TRUE(sBluetoothService, NS_OK);
-
-  if (sInShutdown) {
-    sBluetoothService = nullptr;
-    return NS_OK;
-  }
-
-  // Update mEnabled of BluetoothService object since
-  // StartInternal/StopInternal have been already done.
-  sBluetoothService->SetEnabled(mEnabled);
-  sToggleInProgress = false;
-
-  sBluetoothService->FireAdapterStateChanged(mEnabled);
+  BluetoothService::AcknowledgeToggleBt(mEnabled);
 
   return NS_OK;
 }
@@ -300,6 +267,17 @@ BluetoothService::RegisterBluetoothSignalHandler(
   }
 
   ol->AddObserver(aHandler);
+
+  // Distribute pending pairing requests when pairing listener has been added
+  // to signal observer table.
+  if (IsMainProcess() &&
+      !mPendingPairReqSignals.IsEmpty() &&
+      aNodeName.EqualsLiteral(KEY_PAIRING_LISTENER)) {
+    for (uint32_t i = 0; i < mPendingPairReqSignals.Length(); ++i) {
+      DistributeSignal(mPendingPairReqSignals[i]);
+    }
+    mPendingPairReqSignals.Clear();
+  }
 }
 
 void
@@ -358,8 +336,19 @@ BluetoothService::DistributeSignal(const BluetoothSignal& aSignal)
 
   BluetoothSignalObserverList* ol;
   if (!mBluetoothSignalObserverTable.Get(aSignal.path(), &ol)) {
-    BT_WARNING("No observer registered for path %s",
-               NS_ConvertUTF16toUTF8(aSignal.path()).get());
+    // If there is no BluetoohPairingListener in observer table, put the signal
+    // into a pending queue of pairing requests and send a system message to
+    // launch bluetooth certified app.
+    if (aSignal.path().EqualsLiteral(KEY_PAIRING_LISTENER)) {
+      mPendingPairReqSignals.AppendElement(aSignal);
+
+      BT_ENSURE_TRUE_VOID_BROADCAST_SYSMSG(
+        NS_LITERAL_STRING(SYS_MSG_BT_PAIRING_REQ),
+        BluetoothValue(EmptyString()));
+    } else {
+      BT_WARNING("No observer registered for path %s",
+                 NS_ConvertUTF16toUTF8(aSignal.path()).get());
+    }
     return;
   }
 
@@ -410,37 +399,6 @@ BluetoothService::StopBluetooth(bool aIsStartup,
 {
   MOZ_ASSERT(NS_IsMainThread());
 
-  BluetoothProfileManagerBase* profile;
-  profile = BluetoothHfpManager::Get();
-  NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
-  if (profile->IsConnected()) {
-    profile->Disconnect(nullptr);
-  } else {
-    profile->Reset();
-  }
-
-  profile = BluetoothOppManager::Get();
-  NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
-  if (profile->IsConnected()) {
-    profile->Disconnect(nullptr);
-  }
-
-  profile = BluetoothA2dpManager::Get();
-  NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
-  if (profile->IsConnected()) {
-    profile->Disconnect(nullptr);
-  } else {
-    profile->Reset();
-  }
-
-  profile = BluetoothHidManager::Get();
-  NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
-  if (profile->IsConnected()) {
-    profile->Disconnect(nullptr);
-  } else {
-    profile->Reset();
-  }
-
   /* When IsEnabled() is false, we don't switch off Bluetooth but we still
    * send ToggleBtAck task. One special case happens at startup stage. At
    * startup, the initialization of BluetoothService still has to be done
@@ -449,7 +407,7 @@ BluetoothService::StopBluetooth(bool aIsStartup,
    * Please see bug 892392 for more information.
    */
   if (aIsStartup || IsEnabled()) {
-    // Switch Bluetooth off
+    // Any connected Bluetooth profile would be disconnected.
     nsresult rv = StopInternal(aRunnable);
     if (NS_FAILED(rv)) {
       BT_WARNING("Bluetooth service failed to stop!");
@@ -541,11 +499,8 @@ BluetoothService::HandleSettingsChanged(nsISupports* aSubject)
   // The string that we're interested in will be a JSON string that looks like:
   //  {"key":"bluetooth.enabled","value":true}
 
-  AutoJSAPI jsapi;
-  jsapi.Init();
-  JSContext* cx = jsapi.cx();
-  RootedDictionary<SettingChangeNotification> setting(cx);
-  if (!WrappedJSToDictionary(cx, aSubject, setting)) {
+  RootedDictionary<SettingChangeNotification> setting(nsContentUtils::RootingCx());
+  if (!WrappedJSToDictionary(aSubject, setting)) {
     return NS_OK;
   }
   if (!setting.mKey.EqualsASCII(BLUETOOTH_DEBUGGING_SETTING)) {
@@ -708,4 +663,46 @@ BluetoothService::FireAdapterStateChanged(bool aEnable)
   BluetoothSignal signal(NS_LITERAL_STRING("PropertyChanged"),
                          NS_LITERAL_STRING(KEY_ADAPTER), value);
   DistributeSignal(signal);
+}
+
+void
+BluetoothService::AcknowledgeToggleBt(bool aEnabled)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+#if defined(MOZ_WIDGET_GONK)
+  // This is requested in Bug 836516. With settings this property, WLAN
+  // firmware could be aware of Bluetooth has been turned on/off, so that the
+  // mecahnism of handling coexistence of WIFI and Bluetooth could be started.
+  //
+  // In the future, we may have our own way instead of setting a system
+  // property to let firmware developers be able to sense that Bluetooth has
+  // been toggled.
+  if (property_set(PROP_BLUETOOTH_ENABLED, aEnabled ? "true" : "false") != 0) {
+    BT_WARNING("Failed to set bluetooth enabled property");
+  }
+#endif
+
+  if (sInShutdown) {
+    sBluetoothService = nullptr;
+    return;
+  }
+
+  NS_ENSURE_TRUE_VOID(sBluetoothService);
+
+  sBluetoothService->CompleteToggleBt(aEnabled);
+}
+
+void
+BluetoothService::CompleteToggleBt(bool aEnabled)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Update |mEnabled| of |BluetoothService| object since
+  // |StartInternal| and |StopInternal| have been already
+  // done.
+  SetEnabled(aEnabled);
+  sToggleInProgress = false;
+
+  FireAdapterStateChanged(aEnabled);
 }

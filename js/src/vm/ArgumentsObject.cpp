@@ -133,7 +133,7 @@ struct CopyScriptFrameIterArgs
 
         /* Define formals which are not part of the actuals. */
         unsigned numActuals = iter_.numActualArgs();
-        unsigned numFormals = iter_.callee()->nargs();
+        unsigned numFormals = iter_.calleeTemplate()->nargs();
         MOZ_ASSERT(numActuals <= totalArgs);
         MOZ_ASSERT(numFormals <= totalArgs);
         MOZ_ASSERT(Max(numActuals, numFormals) == totalArgs);
@@ -193,14 +193,15 @@ ArgumentsObject::create(JSContext *cx, HandleScript script, HandleFunction calle
     if (!data)
         return nullptr;
 
-    RootedNativeObject obj(cx);
-    obj = MaybeNativeObject(JSObject::create(cx, FINALIZE_KIND,
-                                             GetInitialHeap(GenericObject, clasp),
-                                             shape, type));
-    if (!obj) {
+    Rooted<ArgumentsObject *> obj(cx);
+    JSObject *base = JSObject::create(cx, FINALIZE_KIND,
+                                      GetInitialHeap(GenericObject, clasp),
+                                      shape, type);
+    if (!base) {
         js_free(data);
         return nullptr;
     }
+    obj = &base->as<ArgumentsObject>();
 
     data->numArgs = numArgs;
     data->callee.init(ObjectValue(*callee.get()));
@@ -222,12 +223,11 @@ ArgumentsObject::create(JSContext *cx, HandleScript script, HandleFunction calle
 
     obj->initFixedSlot(INITIAL_LENGTH_SLOT, Int32Value(numActuals << PACKED_BITS_COUNT));
 
-    copy.maybeForwardToCallObject(&obj->as<ArgumentsObject>(), data);
+    copy.maybeForwardToCallObject(obj, data);
 
-    ArgumentsObject &argsobj = obj->as<ArgumentsObject>();
-    MOZ_ASSERT(argsobj.initialLength() == numActuals);
-    MOZ_ASSERT(!argsobj.hasOverriddenLength());
-    return &argsobj;
+    MOZ_ASSERT(obj->initialLength() == numActuals);
+    MOZ_ASSERT(!obj->hasOverriddenLength());
+    return obj;
 }
 
 ArgumentsObject *
@@ -249,7 +249,7 @@ ArgumentsObject *
 ArgumentsObject::createUnexpected(JSContext *cx, ScriptFrameIter &iter)
 {
     RootedScript script(cx, iter.script());
-    RootedFunction callee(cx, iter.callee());
+    RootedFunction callee(cx, iter.callee(cx));
     CopyScriptFrameIterArgs copy(iter);
     return create(cx, script, callee, iter.numActualArgs(), copy);
 }
@@ -346,12 +346,11 @@ ArgSetter(JSContext *cx, HandleObject obj, HandleId id, bool strict, MutableHand
     }
 
     /*
-     * For simplicity we use delete/define to replace the property with one
-     * backed by the default Object getter and setter. Note that we rely on
-     * args_delProperty to clear the corresponding reserved slot so the GC can
-     * collect its value. Note also that we must define the property instead
-     * of setting it in case the user has changed the prototype to an object
-     * that has a setter for this id.
+     * For simplicity we use delete/define to replace the property with a
+     * simple data property. Note that we rely on args_delProperty to clear the
+     * corresponding reserved slot so the GC can collect its value. Note also
+     * that we must define the property instead of setting it in case the user
+     * has changed the prototype to an object that has a setter for this id.
      */
     bool succeeded;
     return baseops::DeleteGeneric(cx, argsobj, id, &succeeded) &&
@@ -462,10 +461,9 @@ StrictArgSetter(JSContext *cx, HandleObject obj, HandleId id, bool strict, Mutab
     }
 
     /*
-     * For simplicity we use delete/define to replace the property with one
-     * backed by the default Object getter and setter. Note that we rely on
-     * args_delProperty to clear the corresponding reserved slot so the GC can
-     * collect its value.
+     * For simplicity we use delete/define to replace the property with a
+     * simple data property. Note that we rely on args_delProperty to clear the
+     * corresponding reserved slot so the GC can collect its value.
      */
     bool succeeded;
     return baseops::DeleteGeneric(cx, argsobj, id, &succeeded) &&
@@ -570,13 +568,13 @@ const Class NormalArgumentsObject::class_ = {
     JSCLASS_IMPLEMENTS_BARRIERS |
     JSCLASS_HAS_RESERVED_SLOTS(NormalArgumentsObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object) | JSCLASS_BACKGROUND_FINALIZE,
-    JS_PropertyStub,         /* addProperty */
+    nullptr,                 /* addProperty */
     args_delProperty,
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     args_enumerate,
     args_resolve,
-    JS_ConvertStub,
+    nullptr,                 /* convert     */
     ArgumentsObject::finalize,
     nullptr,                 /* call        */
     nullptr,                 /* hasInstance */
@@ -594,13 +592,13 @@ const Class StrictArgumentsObject::class_ = {
     JSCLASS_IMPLEMENTS_BARRIERS |
     JSCLASS_HAS_RESERVED_SLOTS(StrictArgumentsObject::RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Object) | JSCLASS_BACKGROUND_FINALIZE,
-    JS_PropertyStub,         /* addProperty */
+    nullptr,                 /* addProperty */
     args_delProperty,
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
     strictargs_enumerate,
     strictargs_resolve,
-    JS_ConvertStub,
+    nullptr,                 /* convert     */
     ArgumentsObject::finalize,
     nullptr,                 /* call        */
     nullptr,                 /* hasInstance */

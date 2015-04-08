@@ -1,6 +1,6 @@
 /*
 **********************************************************************
-*   Copyright (C) 1997-2014, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 **********************************************************************
 *
@@ -704,7 +704,7 @@ DigitList::set(int64_t source)
     U_ASSERT(uprv_strlen(str) < sizeof(str));
 
     uprv_decNumberFromString(fDecNumber, str, &fContext);
-    internalSetDouble(source);
+    internalSetDouble(static_cast<double>(source));
 }
 
 /**

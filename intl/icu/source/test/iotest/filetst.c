@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 2004-2013, International Business Machines
+ *   Copyright (C) 2004-2014, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
  *   file name:  filetst.c
@@ -239,7 +239,7 @@ static void TestFileFromICU(UFILE *myFile) {
     myString[2] = '!';
     myString[3] = '!';
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "\t\n") != 0) {
+    if (strcmp(myString, "\t\n") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 
@@ -247,7 +247,7 @@ static void TestFileFromICU(UFILE *myFile) {
         log_err("u_fgets did not return myUString\n");
     }
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "Pointer to integer (Count) %n: n=1  n=1\n") != 0) {
+    if (strcmp(myString, "Pointer to integer (Count) %n: n=1  n=1\n") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 
@@ -255,7 +255,7 @@ static void TestFileFromICU(UFILE *myFile) {
         log_err("u_fgets did not return myUString\n");
     }
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "Pointer to integer Value: 37\n") != 0) {
+    if (strcmp(myString, "Pointer to integer Value: 37\n") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 
@@ -263,7 +263,7 @@ static void TestFileFromICU(UFILE *myFile) {
         log_err("u_fgets did not return myUString\n");
     }
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "This is a long test123456789012345678901234567890123456789012345678901234567890\n") != 0) {
+    if (strcmp(myString, "This is a long test123456789012345678901234567890123456789012345678901234567890\n") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 
@@ -275,7 +275,7 @@ static void TestFileFromICU(UFILE *myFile) {
         log_err("u_fgets did not return myUString\n");
     }
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "") != 0) {
+    if (strcmp(myString, "") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 
@@ -283,7 +283,7 @@ static void TestFileFromICU(UFILE *myFile) {
         log_err("u_fgets did not return myUString\n");
     }
     u_austrncpy(myString, myUString, sizeof(myUString)/sizeof(*myUString));
-    if (myString == NULL || strcmp(myString, "\t") != 0) {
+    if (strcmp(myString, "\t") != 0) {
         log_err("u_fgets got \"%s\"\n", myString);
     }
 

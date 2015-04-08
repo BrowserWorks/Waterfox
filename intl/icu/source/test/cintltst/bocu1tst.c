@@ -1,7 +1,7 @@
 /*
 ******************************************************************************
 *
-*   Copyright (C) 2002-2014, International Business Machines
+*   Copyright (C) 2002-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 ******************************************************************************
@@ -983,7 +983,7 @@ TestBOCU1(void) {
     errorCode=U_ZERO_ERROR;
     bocu1=ucnv_open("BOCU-1", &errorCode);
     if(U_FAILURE(errorCode)) {
-        log_err("error: unable to open BOCU-1 converter: %s\n", u_errorName(errorCode));
+        log_data_err("error: unable to open BOCU-1 converter: %s\n", u_errorName(errorCode));
         return;
     }
 

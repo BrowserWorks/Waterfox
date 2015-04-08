@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/vi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/vi.xml
- */
 vi{
     Countries{
         001{"Thế giới"}
@@ -302,18 +299,18 @@ vi{
         ZW{"Zimbabwe"}
         ZZ{"Vùng không xác định"}
     }
-    Countries%variant{
-        CD{"Cộng hòa Dân chủ Congo"}
-        CG{"Cộng hòa Congo"}
-        FK{"Quần đảo Falkland (Islas Malvinas)"}
-        MK{"Macedonia (FYROM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Vương quốc Anh"}
         HK{"Hồng Kông"}
         MO{"Macao"}
         PS{"Palestine"}
         US{"Hoa Kỳ"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"Cộng hòa Dân chủ Congo"}
+        CG{"Cộng hòa Congo"}
+        FK{"Quần đảo Falkland (Islas Malvinas)"}
+        MK{"Macedonia (FYROM)"}
+    }
+    Version{"2.1.12.94"}
 }

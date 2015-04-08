@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ar.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ar.xml
- */
 ar{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"أبيدجان"}
@@ -690,9 +687,6 @@ ar{
         "Asia:Choibalsan"{
             ec{"تشوبالسان"}
         }
-        "Asia:Chongqing"{
-            ec{"تشونجكينج"}
-        }
         "Asia:Colombo"{
             ec{"كولومبو"}
         }
@@ -713,9 +707,6 @@ ar{
         }
         "Asia:Gaza"{
             ec{"غزة"}
-        }
-        "Asia:Harbin"{
-            ec{"هاربين"}
         }
         "Asia:Hebron"{
             ec{"هيبرون (مدينة الخليل)"}
@@ -746,9 +737,6 @@ ar{
         }
         "Asia:Karachi"{
             ec{"كراتشي"}
-        }
-        "Asia:Kashgar"{
-            ec{"كاشجار"}
         }
         "Asia:Katmandu"{
             ec{"كاتماندو"}
@@ -1491,7 +1479,7 @@ ar{
             ls{"توقيت فيجي الرسمي"}
         }
         "meta:French_Guiana"{
-            ls{"توقيت غايانا الفرنسية"}
+            ls{"توقيت غويانا الفرنسية"}
         }
         "meta:French_Southern"{
             ls{"توقيت المقاطعات الفرنسية الجنوبية والأنتارتيكية"}

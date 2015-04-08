@@ -13,11 +13,18 @@
 #include "mozilla/dom/Animation.h" // for Animation
 #include "mozilla/dom/AnimationPlayerBinding.h" // for AnimationPlayState
 #include "mozilla/dom/AnimationTimeline.h" // for AnimationTimeline
+#include "mozilla/dom/Promise.h" // for Promise
 #include "nsCSSProperty.h" // for nsCSSProperty
 
 // X11 has a #define for CurrentTime.
 #ifdef CurrentTime
 #undef CurrentTime
+#endif
+
+// GetCurrentTime is defined in winbase.h as zero argument macro forwarding to
+// GetTickCount().
+#ifdef GetCurrentTime
+#undef GetCurrentTime
 #endif
 
 struct JSContext;
@@ -37,7 +44,8 @@ class CSSTransitionPlayer;
 
 namespace dom {
 
-class AnimationPlayer : public nsWrapperCache
+class AnimationPlayer : public nsISupports,
+                        public nsWrapperCache
 {
 protected:
   virtual ~AnimationPlayer() { }
@@ -45,14 +53,14 @@ protected:
 public:
   explicit AnimationPlayer(AnimationTimeline* aTimeline)
     : mTimeline(aTimeline)
-    , mIsPaused(false)
+    , mIsPending(false)
     , mIsRunningOnCompositor(false)
     , mIsPreviousStateFinished(false)
   {
   }
 
-  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(AnimationPlayer)
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(AnimationPlayer)
+  NS_DECL_CYCLE_COLLECTING_ISUPPORTS
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(AnimationPlayer)
 
   AnimationTimeline* GetParentObject() const { return mTimeline; }
   virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
@@ -63,9 +71,10 @@ public:
   // AnimationPlayer methods
   Animation* GetSource() const { return mSource; }
   AnimationTimeline* Timeline() const { return mTimeline; }
-  Nullable<double> GetStartTime() const;
+  Nullable<TimeDuration> GetStartTime() const { return mStartTime; }
   Nullable<TimeDuration> GetCurrentTime() const;
   AnimationPlayState PlayState() const;
+  virtual Promise* GetReady(ErrorResult& aRv);
   virtual void Play();
   virtual void Pause();
   bool IsRunningOnCompositor() const { return mIsRunningOnCompositor; }
@@ -74,6 +83,7 @@ public:
   // from script. We often use the same methods internally and from
   // script but when called from script we (or one of our subclasses) perform
   // extra steps such as flushing style or converting the return type.
+  Nullable<double> GetStartTimeAsDouble() const;
   Nullable<double> GetCurrentTimeAsDouble() const;
   virtual AnimationPlayState PlayStateFromJS() const { return PlayState(); }
   virtual void PlayFromJS() { Play(); }
@@ -85,11 +95,67 @@ public:
   void SetSource(Animation* aSource);
   void Tick();
 
+  /**
+   * Typically, when a player is played, it does not start immediately but is
+   * added to a table of pending players on the document of its source content.
+   * In the meantime it sets its hold time to the time from which playback
+   * should begin.
+   *
+   * When the document finishes painting, any pending players in its table
+   * are marked as being ready to start by calling StartOnNextTick.
+   * The moment when the paint completed is also recorded, converted to a
+   * timeline time, and passed to StartOnTick. This is so that when these
+   * players do start, they can be timed from the point when painting
+   * completed.
+   *
+   * After calling StartOnNextTick, players remain in the pending state until
+   * the next refresh driver tick. At that time they transition out of the
+   * pending state using the time passed to StartOnNextTick as the effective
+   * time at which they resumed.
+   *
+   * This approach means that any setup time required for performing the
+   * initial paint of an animation such as layerization is not deducted from
+   * the running time of the animation. Without this we can easily drop the
+   * first few frames of an animation, or, on slower devices, the whole
+   * animation.
+   *
+   * Furthermore:
+   *
+   * - Starting the player immediately when painting finishes is problematic
+   *   because the start time of the player will be ahead of its timeline
+   *   (since the timeline time is based on the refresh driver time).
+   *   That's a problem because the player is playing but its timing suggests
+   *   it starts in the future. We could update the timeline to match the start
+   *   time of the player but then we'd also have to update the timing and style
+   *   of all animations connected to that timeline or else be stuck in an
+   *   inconsistent state until the next refresh driver tick.
+   *
+   * - If we simply use the refresh driver time on its next tick, the lag
+   *   between triggering an animation and its effective start is unacceptably
+   *   long.
+   *
+   * Note that the caller of this method is responsible for removing the player
+   * from any PendingPlayerTracker it may have been added to.
+   */
+  void StartOnNextTick(const Nullable<TimeDuration>& aReadyTime);
+
+  // Testing only: Start a pending player using the current timeline time.
+  // This is used to support existing tests that expect animations to begin
+  // immediately. Ideally we would rewrite the those tests and get rid of this
+  // method, but there are a lot of them.
+  //
+  // As with StartOnNextTick, the caller of this method is responsible for
+  // removing the player from any PendingPlayerTracker it may have been added
+  // to.
+  void StartNow();
+
+  void Cancel();
+
   const nsString& Name() const {
     return mSource ? mSource->Name() : EmptyString();
   }
 
-  bool IsPaused() const { return mIsPaused; }
+  bool IsPaused() const { return PlayState() == AnimationPlayState::Paused; }
   bool IsRunning() const;
 
   bool HasCurrentSource() const {
@@ -118,15 +184,20 @@ public:
                     nsCSSPropertySet& aSetProperties,
                     bool& aNeedsRefreshes);
 
-  // The beginning of the delay period.
-  Nullable<TimeDuration> mStartTime; // Timeline timescale
-
 protected:
   void DoPlay();
   void DoPause();
+  void ResumeAt(const TimeDuration& aResumeTime);
 
+  void UpdateSourceContent();
   void FlushStyle() const;
   void PostUpdate();
+  // Remove this player from the pending player tracker and resets mIsPending
+  // as necessary. The caller is responsible for resolving or aborting the
+  // mReady promise as necessary.
+  void CancelPendingPlay();
+
+  bool IsPossiblyOrphanedPendingPlayer() const;
   StickyTimeDuration SourceContentEnd() const;
 
   nsIDocument* GetRenderedDocument() const;
@@ -136,8 +207,22 @@ protected:
 
   nsRefPtr<AnimationTimeline> mTimeline;
   nsRefPtr<Animation> mSource;
+  // The beginning of the delay period.
+  Nullable<TimeDuration> mStartTime; // Timeline timescale
   Nullable<TimeDuration> mHoldTime;  // Player timescale
-  bool mIsPaused;
+  Nullable<TimeDuration> mPendingReadyTime; // Timeline timescale
+
+  // A Promise that is replaced on each call to Play() (and in future Pause())
+  // and fulfilled when Play() is successfully completed.
+  // This object is lazily created by GetReady.
+  nsRefPtr<Promise> mReady;
+
+  // Indicates if the player is in the pending state. We use this rather
+  // than checking if this player is tracked by a PendingPlayerTracker.
+  // This is because the PendingPlayerTracker is associated with the source
+  // content's document but we need to know if we're pending even if the
+  // source content loses association with its document.
+  bool mIsPending;
   bool mIsRunningOnCompositor;
   // Indicates whether we were in the finished state during our
   // most recent unthrottled sample (our last ComposeStyle call).

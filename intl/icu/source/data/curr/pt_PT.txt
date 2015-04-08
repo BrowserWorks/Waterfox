@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt_PT.xml
@@ -222,11 +222,11 @@ pt_PT{
         }
         NIC{
             "NIC",
-            "Córdoba nicaraguano",
+            "Córdoba nicaraguano (1988–1991)",
         }
         NIO{
             "NIO",
-            "Córdoba de ouro da Nicarágua",
+            "Córdoba nicaraguano",
         }
         OMR{
             "OMR",
@@ -523,9 +523,13 @@ pt_PT{
             one{"Dólar da Namíbia"}
             other{"Dólares da Namíbia"}
         }
+        NIC{
+            one{"Córdoba nicaraguano (1988–1991)"}
+            other{"Córdobas nicaraguano (1988–1991)"}
+        }
         NIO{
-            one{"Córdoba de ouro da Nicarágua"}
-            other{"Córdobas de ouro da Nicarágua"}
+            one{"Córdoba nicaraguano"}
+            other{"Córdoba nicaraguano"}
         }
         OMR{
             one{"Rial de Omã"}
@@ -636,5 +640,5 @@ pt_PT{
             other{"Kwachas zambianos (1968–2012)"}
         }
     }
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
 }

@@ -346,6 +346,7 @@ class RemoteReftest(RefTest):
         profileDir = profile.profile
 
         prefs = {}
+        prefs["app.update.url.android"] = ""
         prefs["browser.firstrun.show.localepicker"] = False
         prefs["font.size.inflation.emPerLine"] = 0
         prefs["font.size.inflation.minTwips"] = 0
@@ -376,6 +377,8 @@ class RemoteReftest(RefTest):
         prefs["extensions.getAddons.search.url"] = "http://127.0.0.1:8888/extensions-dummy/repositorySearchURL"
         # Make sure that opening the plugins check page won't hit the network
         prefs["plugins.update.url"] = "http://127.0.0.1:8888/plugins-dummy/updateCheckURL"
+        # Make sure the GMPInstallManager won't hit the network
+        prefs["media.gmp-manager.url.override"] = "http://127.0.0.1:8888/dummy-gmp-manager.xml";
         prefs["layout.css.devPixelsPerPx"] = "1.0"
 
         # Disable skia-gl: see bug 907351

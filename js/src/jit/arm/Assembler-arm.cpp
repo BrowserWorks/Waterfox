@@ -1295,10 +1295,10 @@ Assembler::oom() const
            preBarriers_.oom();
 }
 
-bool
+void
 Assembler::addCodeLabel(CodeLabel label)
 {
-    return codeLabels_.append(label);
+    propagateOOM(codeLabels_.append(label));
 }
 
 // Size of the instruction stream, in bytes. Including pools. This function
@@ -2883,8 +2883,10 @@ void Assembler::UpdateBoundsCheck(uint32_t heapSize, Instruction *inst)
     Register index;
     cmp->extractOp1(&index);
 
+#ifdef DEBUG
     Operand2 op = cmp->extractOp2();
     MOZ_ASSERT(op.isImm8());
+#endif
 
     Imm8 imm8 = Imm8(heapSize);
     MOZ_ASSERT(!imm8.invalid);
@@ -2900,8 +2902,8 @@ InstructionIterator::InstructionIterator(Instruction *i_) : i(i_)
     // Work around pools with an artificial pool guard and around nop-fill.
     i = i->skipPool();
 }
-Assembler *Assembler::Dummy = nullptr;
 
+Assembler *Assembler::Dummy = nullptr;
 uint32_t Assembler::NopFill = 0;
 
 uint32_t

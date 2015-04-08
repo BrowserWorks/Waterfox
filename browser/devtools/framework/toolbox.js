@@ -175,6 +175,33 @@ Toolbox.prototype = {
   },
 
   /**
+   * Get the panel instance for a given tool once it is ready.
+   * If the tool is already opened, the promise will resolve immediately,
+   * otherwise it will wait until the tool has been opened before resolving.
+   *
+   * Note that this does not open the tool, use selectTool if you'd
+   * like to select the tool right away.
+   *
+   * @param  {String} id
+   *         The id of the panel, for example "jsdebugger".
+   * @returns Promise
+   *          A promise that resolves once the panel is ready.
+   */
+  getPanelWhenReady: function(id) {
+    let deferred = promise.defer();
+    let panel = this.getPanel(id);
+    if (panel) {
+      deferred.resolve(panel);
+    } else {
+      this.on(id + "-ready", (e, panel) => {
+        deferred.resolve(panel);
+      });
+    }
+
+    return deferred.promise;
+  },
+
+  /**
    * This is a shortcut for getPanel(currentToolId) because it is much more
    * likely that we're going to want to get the panel that we've just made
    * visible
@@ -1551,9 +1578,12 @@ Toolbox.prototype = {
    * @return {promise} to be resolved when the host is destroyed.
    */
   destroyHost: function() {
-    this.doc.removeEventListener("keypress",
-      this._splitConsoleOnKeypress, false);
-    this.doc.removeEventListener("focus", this._onFocus, true);
+    // The host iframe's contentDocument may already be gone.
+    if (this.doc) {
+      this.doc.removeEventListener("keypress",
+        this._splitConsoleOnKeypress, false);
+      this.doc.removeEventListener("focus", this._onFocus, true);
+    }
     return this._host.destroy();
   },
 
@@ -1618,18 +1648,17 @@ Toolbox.prototype = {
     // We need to grab a reference to win before this._host is destroyed.
     let win = this.frame.ownerGlobal;
 
-    // Remove the host UI
-    outstanding.push(this.destroyHost());
-
     if (this._requisition) {
       this._requisition.destroy();
     }
     this._telemetry.toolClosed("toolbox");
     this._telemetry.destroy();
 
-    // Finish all outstanding tasks (successfully or not) before destroying the
+    // Finish all outstanding tasks (which means finish destroying panels and
+    // then destroying the host, successfully or not) before destroying the
     // target.
-    this._destroyer = promise.all(outstanding).then(null, console.error).then(() => {
+    this._destroyer = promise.all(outstanding)
+      .then(() => this.destroyHost()).then(null, console.error).then(() => {
       // Targets need to be notified that the toolbox is being torn down.
       // This is done after other destruction tasks since it may tear down
       // fronts and the debugger transport which earlier destroy methods may

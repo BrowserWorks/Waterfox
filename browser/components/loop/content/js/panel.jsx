@@ -222,34 +222,46 @@ loop.panel = (function(_, mozL10n) {
 
       return {
         seenToS: getPref("seenToS"),
-        gettingStartedSeen: getPref("gettingStarted.seen")
+        gettingStartedSeen: getPref("gettingStarted.seen"),
+        showPartnerLogo: getPref("showPartnerLogo")
       };
+    },
+
+    renderPartnerLogo: function() {
+      if (!this.state.showPartnerLogo) {
+        return null;
+      }
+
+      var locale = mozL10n.getLanguage();
+      navigator.mozLoop.setLoopPref('showPartnerLogo', false);
+      return (
+        <p id="powered-by" className="powered-by">
+          {mozL10n.get("powered_by_beforeLogo")}
+          <img id="powered-by-logo" className={locale} />
+          {mozL10n.get("powered_by_afterLogo")}
+        </p>
+      );
     },
 
     render: function() {
       if (!this.state.gettingStartedSeen || this.state.seenToS == "unseen") {
-        var locale = mozL10n.getLanguage();
         var terms_of_use_url = navigator.mozLoop.getLoopPref('legal.ToS_url');
         var privacy_notice_url = navigator.mozLoop.getLoopPref('legal.privacy_url');
         var tosHTML = mozL10n.get("legal_text_and_links3", {
           "clientShortname": mozL10n.get("clientShortname2"),
-          "terms_of_use": React.renderComponentToStaticMarkup(
+          "terms_of_use": React.renderToStaticMarkup(
             <a href={terms_of_use_url} target="_blank">
               {mozL10n.get("legal_text_tos")}
             </a>
           ),
-          "privacy_notice": React.renderComponentToStaticMarkup(
+          "privacy_notice": React.renderToStaticMarkup(
             <a href={privacy_notice_url} target="_blank">
               {mozL10n.get("legal_text_privacy")}
             </a>
           ),
         });
         return <div id="powered-by-wrapper">
-          <p id="powered-by">
-            {mozL10n.get("powered_by_beforeLogo")}
-            <img id="powered-by-logo" className={locale} />
-            {mozL10n.get("powered_by_afterLogo")}
-          </p>
+          {this.renderPartnerLogo()}
           <p className="terms-service"
              dangerouslySetInnerHTML={{__html: tosHTML}}></p>
          </div>;
@@ -522,8 +534,11 @@ loop.panel = (function(_, mozL10n) {
    * FxA sign in/up link component.
    */
   var AuthLink = React.createClass({
+    mixins: [sharedMixins.WindowCloseMixin],
+
     handleSignUpLinkClick: function() {
       navigator.mozLoop.logInToFxA();
+      this.closeWindow();
     },
 
     render: function() {
@@ -1042,7 +1057,7 @@ loop.panel = (function(_, mozL10n) {
       notifications: notifications
     });
 
-    React.renderComponent(<PanelView
+    React.render(<PanelView
       client={client}
       notifications={notifications}
       roomStore={roomStore}

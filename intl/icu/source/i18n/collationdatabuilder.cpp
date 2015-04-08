@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2012-2014, International Business Machines
+* Copyright (C) 2012-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationdatabuilder.cpp
@@ -1213,8 +1213,10 @@ CollationDataBuilder::build(CollationData &data, UErrorCode &errorCode) {
     if(base != NULL) {
         data.numericPrimary = base->numericPrimary;
         data.compressibleBytes = base->compressibleBytes;
-        data.scripts = base->scripts;
-        data.scriptsLength = base->scriptsLength;
+        data.numScripts = base->numScripts;
+        data.scriptsIndex = base->scriptsIndex;
+        data.scriptStarts = base->scriptStarts;
+        data.scriptStartsLength = base->scriptStartsLength;
     }
     buildFastLatinTable(data, errorCode);
 }
@@ -1377,7 +1379,7 @@ CollationDataBuilder::buildContext(ConditionalCE32 *head, UErrorCode &errorCode)
             // Build the contractions trie.
             contractionBuilder.clear();
             // Entry for an empty suffix, to be stored before the trie.
-            uint32_t emptySuffixCE32;
+            uint32_t emptySuffixCE32 = 0;
             uint32_t flags = 0;
             if(firstCond->context.length() == suffixStart) {
                 // There is a mapping for the prefix and the single character c. (p|c)

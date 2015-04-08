@@ -55,7 +55,7 @@ function waitAndVerifyResult(count) {
        "verify result");
     runTests();
 	} else {
-    // We must delay to wait for scroll/keydown events
+    SimpleTest.requestFlakyTimeout("We must delay to wait for scroll/keydown events.");
     setTimeout(function () waitAndVerifyResult(count + 1), 100);
   }
 }

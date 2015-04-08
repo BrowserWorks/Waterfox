@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationfastlatinbuilder.cpp
@@ -136,42 +136,26 @@ CollationFastLatinBuilder::forData(const CollationData &data, UErrorCode &errorC
 UBool
 CollationFastLatinBuilder::loadGroups(const CollationData &data, UErrorCode &errorCode) {
     if(U_FAILURE(errorCode)) { return FALSE; }
-    result.append(0);  // reserved for version & headerLength
+    headerLength = 1 + NUM_SPECIAL_GROUPS;
+    uint32_t r0 = (CollationFastLatin::VERSION << 8) | headerLength;
+    result.append((UChar)r0);
     // The first few reordering groups should be special groups
     // (space, punct, ..., digit) followed by Latn, then Grek and other scripts.
-    for(int32_t i = 0;;) {
-        if(i >= data.scriptsLength) {
-            // no Latn script
-            errorCode = U_INTERNAL_PROGRAM_ERROR;
+    for(int32_t i = 0; i < NUM_SPECIAL_GROUPS; ++i) {
+        lastSpecialPrimaries[i] = data.getLastPrimaryForGroup(UCOL_REORDER_CODE_FIRST + i);
+        if(lastSpecialPrimaries[i] == 0) {
+            // missing data
             return FALSE;
         }
-        uint32_t head = data.scripts[i];
-        uint32_t lastByte = head & 0xff;  // last primary byte in the group
-        int32_t group = data.scripts[i + 2];
-        if(group == UCOL_REORDER_CODE_DIGIT) {
-            firstDigitPrimary = (head & 0xff00) << 16;
-            headerLength = result.length();
-            uint32_t r0 = (CollationFastLatin::VERSION << 8) | headerLength;
-            result.setCharAt(0, (UChar)r0);
-        } else if(group == USCRIPT_LATIN) {
-            if(firstDigitPrimary == 0) {
-                // no digit group
-                errorCode = U_INTERNAL_PROGRAM_ERROR;
-                return FALSE;
-            }
-            firstLatinPrimary = (head & 0xff00) << 16;
-            lastLatinPrimary = (lastByte << 24) | 0xffffff;
-            break;
-        } else if(firstDigitPrimary == 0) {
-            // a group below digits
-            if(lastByte > 0x7f) {
-                // We only use 7 bits for the last byte of a below-digits group.
-                // This does not warrant an errorCode, but we do not build a fast Latin table.
-                return FALSE;
-            }
-            result.append((UChar)lastByte);
-        }
-        i = i + 2 + data.scripts[i + 1];
+        result.append(0);  // reserve a slot for this group
+    }
+
+    firstDigitPrimary = data.getFirstPrimaryForGroup(UCOL_REORDER_CODE_DIGIT);
+    firstLatinPrimary = data.getFirstPrimaryForGroup(USCRIPT_LATIN);
+    lastLatinPrimary = data.getLastPrimaryForGroup(USCRIPT_LATIN);
+    if(firstDigitPrimary == 0 || firstLatinPrimary == 0) {
+        // missing data
+        return FALSE;
     }
     return TRUE;
 }
@@ -187,23 +171,21 @@ CollationFastLatinBuilder::inSameGroup(uint32_t p, uint32_t q) const {
     }
     // Both or neither must be potentially-variable,
     // so that we can test only one and determine if both are variable.
-    if(p >= firstDigitPrimary) {
-        return q >= firstDigitPrimary;
-    } else if(q >= firstDigitPrimary) {
+    uint32_t lastVariablePrimary = lastSpecialPrimaries[NUM_SPECIAL_GROUPS - 1];
+    if(p > lastVariablePrimary) {
+        return q > lastVariablePrimary;
+    } else if(q > lastVariablePrimary) {
         return FALSE;
     }
     // Both will be encoded with long mini primaries.
     // They must be in the same special reordering group,
     // so that we can test only one and determine if both are variable.
-    p >>= 24;  // first primary byte
-    q >>= 24;
     U_ASSERT(p != 0 && q != 0);
-    U_ASSERT(p <= result[headerLength - 1]);  // the loop will terminate
-    for(int32_t i = 1;; ++i) {
-        uint32_t lastByte = result[i];
-        if(p <= lastByte) {
-            return q <= lastByte;
-        } else if(q <= lastByte) {
+    for(int32_t i = 0;; ++i) {  // will terminate
+        uint32_t lastPrimary = lastSpecialPrimaries[i];
+        if(p <= lastPrimary) {
+            return q <= lastPrimary;
+        } else if(q <= lastPrimary) {
             return FALSE;
         }
     }
@@ -451,8 +433,8 @@ CollationFastLatinBuilder::encodeUniqueCEs(UErrorCode &errorCode) {
         errorCode = U_MEMORY_ALLOCATION_ERROR;
         return FALSE;
     }
-    int32_t group = 1;
-    uint32_t lastGroupByte = result[group];
+    int32_t group = 0;
+    uint32_t lastGroupPrimary = lastSpecialPrimaries[group];
     // The lowest unique CE must be at least a secondary CE.
     U_ASSERT(((uint32_t)uniqueCEs.elementAti(0) >> 16) != 0);
     uint32_t prevPrimary = 0;
@@ -466,16 +448,15 @@ CollationFastLatinBuilder::encodeUniqueCEs(UErrorCode &errorCode) {
         // (uniqueCEs does not store case bits.)
         uint32_t p = (uint32_t)(ce >> 32);
         if(p != prevPrimary) {
-            uint32_t p1 = p >> 24;
-            while(p1 > lastGroupByte) {
+            while(p > lastGroupPrimary) {
                 U_ASSERT(pri <= CollationFastLatin::MAX_LONG);
-                // Add the last "long primary" in or before the group
-                // into the upper 9 bits of the group entry.
-                result.setCharAt(group, (UChar)((pri << 4) | lastGroupByte));
-                if(++group < headerLength) {  // group is 1-based
-                    lastGroupByte = result[group];
+                // Set the group's header entry to the
+                // last "long primary" in or before the group.
+                result.setCharAt(1 + group, (UChar)pri);
+                if(++group < NUM_SPECIAL_GROUPS) {
+                    lastGroupPrimary = lastSpecialPrimaries[group];
                 } else {
-                    lastGroupByte = 0xff;
+                    lastGroupPrimary = 0xffffffff;
                     break;
                 }
             }

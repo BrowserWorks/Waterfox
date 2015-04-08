@@ -238,6 +238,8 @@ public:
 
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const = 0;
 
+  virtual const char* Name() const = 0;
+
 protected:
   ParentLayerCoord mPos;
   uint32_t mPosTimeMs;
@@ -259,6 +261,9 @@ protected:
   // actual overscroll amount.
   ParentLayerCoord ApplyResistance(ParentLayerCoord aOverscroll) const;
 
+  // Helper function for SampleOverscrollAnimation().
+  void StepOverscrollAnimation(double aStepDurationMilliseconds);
+
   // Convert a velocity from global inches/ms into ParentLayerCoords/ms.
   float ToLocalVelocity(float aVelocityInchesPerMs) const;
 };
@@ -270,6 +275,7 @@ public:
   virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
   virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const MOZ_OVERRIDE;
+  virtual const char* Name() const MOZ_OVERRIDE;
 };
 
 class AxisY : public Axis {
@@ -279,6 +285,7 @@ public:
   virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
   virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
   virtual ScreenPoint MakePoint(ScreenCoord aCoord) const MOZ_OVERRIDE;
+  virtual const char* Name() const MOZ_OVERRIDE;
 };
 
 }

@@ -313,7 +313,6 @@ selfhosting:: selfhosted.out.h
 
 selfhosting_srcs := \
   $(srcdir)/builtin/Utilities.js \
-  $(srcdir)/builtin/ParallelUtilities.js \
   $(srcdir)/builtin/Array.js \
   $(srcdir)/builtin/Date.js \
   $(srcdir)/builtin/Error.js \
@@ -326,6 +325,7 @@ selfhosting_srcs := \
   $(srcdir)/builtin/Object.js \
   $(srcdir)/builtin/String.js \
   $(srcdir)/builtin/Set.js \
+  $(srcdir)/builtin/TypedArray.js \
   $(srcdir)/builtin/TypedObject.js \
   $(srcdir)/builtin/WeakSet.js \
   $(NULL)
@@ -403,6 +403,64 @@ SPSProfiler.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 StringBuffer.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 Symbol.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Eval.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Eval.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BytecodeEmitter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BytecodeEmitter.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Nursery.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Nursery.$(OBJ_SUFFIX): CXXFLAGS := -O2
+RootMarking.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+RootMarking.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Zone.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Zone.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Statistics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Statistics.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineDebugModeOSR.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineDebugModeOSR.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineBailouts.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineBailouts.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineIC.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineIC.$(OBJ_SUFFIX): CXXFLAGS := -O2
+BaselineJIT.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+BaselineJIT.$(OBJ_SUFFIX): CXXFLAGS := -O2
+VMFunctions.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+VMFunctions.$(OBJ_SUFFIX): CXXFLAGS := -O2
+JitFrames.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+JitFrames.$(OBJ_SUFFIX): CXXFLAGS := -O2
+jsapi.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+jsapi.$(OBJ_SUFFIX): CXXFLAGS := -O2
+jscompartment.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+jscompartment.$(OBJ_SUFFIX): CXXFLAGS := -O2
+jsgc.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+jsgc.$(OBJ_SUFFIX): CXXFLAGS := -O2
+jsscript.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+jsscript.$(OBJ_SUFFIX): CXXFLAGS := -O2
+js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+js.$(OBJ_SUFFIX): CXXFLAGS := -O2
+DebuggerMemory.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+DebuggerMemory.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Debugger.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Debugger.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Interpreter.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Interpreter.$(OBJ_SUFFIX): CXXFLAGS := -O2
+UbiNode.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+UbiNode.$(OBJ_SUFFIX): CXXFLAGS := -O2
+HelperThreads.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+HelperThreads.$(OBJ_SUFFIX): CXXFLAGS := -O2
+NativeObject.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+NativeObject.$(OBJ_SUFFIX): CXXFLAGS := -O2
+RunTime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+RunTime.$(OBJ_SUFFIX): CXXFLAGS := -O2
+SavedStacks.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Xdr.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Runtime.$(OBJ_SUFFIX): CXXFLAGS := -O2
+Runtime.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+Xdr.$(OBJ_SUFFIX): CXXFLAGS := -O2
+js.$(OBJ_SUFFIX): CXXFLAGS := -O2
+js.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
 RegExp.$(OBJ_SUFFIX): CXXFLAGS := -O2
 jsarray.$(OBJ_SUFFIX): CXXFLAGS := -O2
 Intl.$(OBJ_SUFFIX): CXXFLAGS := -O2

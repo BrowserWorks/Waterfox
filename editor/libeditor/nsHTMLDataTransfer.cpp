@@ -135,7 +135,8 @@ static nsCOMPtr<nsIDOMNode> GetTableParent(nsIDOMNode* aNode)
 }
 
 
-NS_IMETHODIMP nsHTMLEditor::LoadHTML(const nsAString & aInputString)
+nsresult
+nsHTMLEditor::LoadHTML(const nsAString & aInputString)
 {
   NS_ENSURE_TRUE(mRules, NS_ERROR_NOT_INITIALIZED);
 
@@ -709,8 +710,10 @@ nsHTMLEditor::DoInsertHTMLWithContext(const nsAString & aInputString,
         int32_t linkOffset;
         rv = SplitNodeDeep(link, selNode, selOffset, &linkOffset, true, address_of(leftLink));
         NS_ENSURE_SUCCESS(rv, rv);
-        selNode = GetNodeLocation(leftLink, &selOffset);
-        selection->Collapse(selNode, selOffset+1);
+        if (leftLink) {
+          selNode = GetNodeLocation(leftLink, &selOffset);
+          selection->Collapse(selNode, selOffset+1);
+        }
       }
     }
   }
@@ -836,8 +839,9 @@ NS_IMETHODIMP nsHTMLEditor::PrepareTransferable(nsITransferable **transferable)
   return NS_OK;
 }
 
-NS_IMETHODIMP nsHTMLEditor::PrepareHTMLTransferable(nsITransferable **aTransferable, 
-                                                    bool aHavePrivFlavor)
+nsresult
+nsHTMLEditor::PrepareHTMLTransferable(nsITransferable **aTransferable,
+                                      bool aHavePrivFlavor)
 {
   // Create generic Transferable for getting the data
   nsresult rv = CallCreateInstance("@mozilla.org/widget/transferable;1", aTransferable);
@@ -1081,12 +1085,15 @@ nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, boo
     nsCOMPtr<nsIInputStream> imageStream;
     if (insertAsImage) {
       NS_ASSERTION(fileURI, "The file URI should be retrieved earlier");
-      rv = NS_OpenURI(getter_AddRefs(imageStream),
-                      fileURI,
-                      nsContentUtils::GetSystemPrincipal(),
-                      nsILoadInfo::SEC_NORMAL,
-                      nsIContentPolicy::TYPE_OTHER);
 
+      nsCOMPtr<nsIChannel> channel;
+      rv = NS_NewChannel(getter_AddRefs(channel),
+                         fileURI,
+                         nsContentUtils::GetSystemPrincipal(),
+                         nsILoadInfo::SEC_NORMAL,
+                         nsIContentPolicy::TYPE_OTHER);
+      NS_ENSURE_SUCCESS(rv, rv);
+      rv = channel->Open(getter_AddRefs(imageStream));
       NS_ENSURE_SUCCESS(rv, rv);
     } else {
       imageStream = do_QueryInterface(aObject);
@@ -1122,13 +1129,14 @@ nsresult nsHTMLEditor::InsertObject(const char* aType, nsISupports* aObject, boo
   return NS_OK;
 }
 
-NS_IMETHODIMP nsHTMLEditor::InsertFromTransferable(nsITransferable *transferable, 
-                                                   nsIDOMDocument *aSourceDoc,
-                                                   const nsAString & aContextStr,
-                                                   const nsAString & aInfoStr,
-                                                   nsIDOMNode *aDestinationNode,
-                                                   int32_t aDestOffset,
-                                                   bool aDoDeleteSelection)
+nsresult
+nsHTMLEditor::InsertFromTransferable(nsITransferable *transferable,
+                                     nsIDOMDocument *aSourceDoc,
+                                     const nsAString & aContextStr,
+                                     const nsAString & aInfoStr,
+                                     nsIDOMNode *aDestinationNode,
+                                     int32_t aDestOffset,
+                                     bool aDoDeleteSelection)
 {
   nsresult rv = NS_OK;
   nsXPIDLCString bestFlavor;

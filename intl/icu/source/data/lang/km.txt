@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/km.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/km.xml
- */
 km{
     Keys{
         calendar{"ប្រតិទិន"}
@@ -246,7 +243,7 @@ km{
         zu{"សូលូ"}
         zxx{"គ្មាន​ទិន្នន័យ​ភាសា"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"អាហ្សេរី"}
         en_GB{"អង់គ្លេស (ច.អ.)"}
         en_US{"អង់គ្លេស (ស.រ.អា.)"}
@@ -353,7 +350,7 @@ km{
             tibt{"លេខ​តៃប៉ិ"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.51"}
     codePatterns{
         language{"ភាសា៖ {0}"}
         script{"អក្សរ៖ {0}"}

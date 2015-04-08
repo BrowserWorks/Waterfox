@@ -126,6 +126,7 @@
 @BINPATH@/components/commandlines.xpt
 @BINPATH@/components/composer.xpt
 @BINPATH@/components/content_events.xpt
+@BINPATH@/components/content_geckomediaplugins.xpt
 @BINPATH@/components/content_html.xpt
 @BINPATH@/components/content_webrtc.xpt
 @BINPATH@/components/content_xslt.xpt
@@ -332,8 +333,6 @@
 @BINPATH@/components/jsconsole-clhandler.js
 @BINPATH@/components/nsHelperAppDlg.manifest
 @BINPATH@/components/nsHelperAppDlg.js
-@BINPATH@/components/nsDownloadManagerUI.manifest
-@BINPATH@/components/nsDownloadManagerUI.js
 @BINPATH@/components/NetworkGeolocationProvider.manifest
 @BINPATH@/components/NetworkGeolocationProvider.js
 @BINPATH@/components/nsSidebar.manifest
@@ -408,6 +407,8 @@
 @BINPATH@/components/Webapps.manifest
 @BINPATH@/components/AppsService.js
 @BINPATH@/components/AppsService.manifest
+@BINPATH@/components/htmlMenuBuilder.js
+@BINPATH@/components/htmlMenuBuilder.manifest
 
 @BINPATH@/components/Activities.manifest
 @BINPATH@/components/ActivitiesGlue.js
@@ -447,6 +448,9 @@
 
 @BINPATH@/components/nsAsyncShutdown.manifest
 @BINPATH@/components/nsAsyncShutdown.js
+
+@BINPATH@/components/Downloads.manifest
+@BINPATH@/components/DownloadLegacy.js
 
 ; Modules
 @BINPATH@/modules/*
@@ -602,7 +606,6 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/ContentDispatchChooser.js
 @BINPATH@/components/ContentPermissionPrompt.js
 @BINPATH@/components/DirectoryProvider.js
-@BINPATH@/components/DownloadManagerUI.js
 @BINPATH@/components/FilePicker.js
 @BINPATH@/components/HelperAppDialog.js
 @BINPATH@/components/LoginManagerPrompter.js

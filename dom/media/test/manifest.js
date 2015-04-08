@@ -14,7 +14,7 @@ var gSmallTests = [
   { name:"seek.webm", type:"video/webm", width:320, height:240, duration:3.966 },
   { name:"vp9.webm", type:"video/webm", width:320, height:240, duration:4 },
   { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 },
-  { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
+  { name:"gizmo.mp4", type:"video/mp4", width:560, height:320, duration:5.56 },
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
@@ -171,10 +171,6 @@ var gPlayTests = [
   // Test playback of a WebM file with non-zero start time.
   { name:"split.webm", type:"video/webm", duration:1.967 },
 
-  // Test playback of a WebM file with vp9 video
-  //{ name:"vp9.webm", type:"video/webm", duration:4 },
-  { name:"vp9cake.webm", type:"video/webm", duration:7.966 },
-
   // Test playback of a raw file
   { name:"seek.yuv", type:"video/x-raw-yuv", duration:1.833 },
 
@@ -222,7 +218,11 @@ var gPlayTests = [
   { name:"vbr-head.mp3", type:"audio/mpeg", duration:10.00 },
 
   // Invalid file
-  { name:"bogus.duh", type:"bogus/duh", duration:Number.NaN }
+  { name:"bogus.duh", type:"bogus/duh", duration:Number.NaN },
+
+  // Test playback of a WebM file with vp9 video
+  //{ name:"vp9.webm", type:"video/webm", duration:4 },
+  { name:"vp9cake.webm", type:"video/webm", duration:7.966 }
 ];
 
 // A file for each type we can support.
@@ -430,6 +430,7 @@ var gSeekTests = [
   { name:"seek.ogv", type:"video/ogg", duration:3.966 },
   { name:"320x240.ogv", type:"video/ogg", duration:0.266 },
   { name:"seek.webm", type:"video/webm", duration:3.966 },
+  { name:"sine.webm", type:"audio/webm", duration:4.001 },
   { name:"bug516323.indexed.ogv", type:"video/ogg", duration:4.208333 },
   { name:"split.webm", type:"video/webm", duration:1.967 },
   { name:"detodos.opus", type:"audio/ogg; codecs=opus", duration:2.9135 },
@@ -639,15 +640,16 @@ var gMetadataTests = [
 // Test files for Encrypted Media Extensions
 var gEMETests = [
   {
-    name:"short-cenc.mp4",
+    name:"gizmo-frag-cencinit.mp4",
+    fragments: [ "gizmo-frag-cencinit.mp4", "gizmo-frag-cenc1.m4s", "gizmo-frag-cenc2.m4s" ],
     type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
     keys: {
       // "keyid" : "key"
-      "7e571d017e571d017e571d017e571d01" : "7e5711117e5711117e5711117e571111",
-      "7e571d027e571d027e571d027e571d02" : "7e5722227e5722227e5722227e572222",
+      "7e571d037e571d037e571d037e571d03" : "7e5733337e5733337e5733337e573333",
+      "7e571d047e571d047e571d047e571d04" : "7e5744447e5744447e5744447e574444",
     },
     sessionType:"temporary",
-    duration:0.47
+    duration:2.00,
   },
   {
     name:"gizmo-frag-cencinit.mp4",
@@ -660,6 +662,15 @@ var gEMETests = [
     },
     sessionType:"temporary",
     duration:2.00,
+    crossOrigin:true,
+  },
+];
+
+var gEMENonFragmentedTests = [
+  {
+    name:"short-cenc.mp4",
+    type:"video/mp4; codecs=\"avc1.64000d,mp4a.40.2\"",
+    duration:0.47,
   },
 ];
 
@@ -674,6 +685,8 @@ function checkMetadata(msg, e, test) {
     ok(Math.abs(e.duration - test.duration) < 0.1,
        msg + " duration (" + e.duration + ") should be around " + test.duration);
   }
+  is(!!test.keys, SpecialPowers.do_lookupGetter(e, "isEncrypted").apply(e),
+     msg + " isEncrypted should be true if we have decryption keys");
 }
 
 // Returns the first test from candidates array which we can play with the
@@ -718,9 +731,7 @@ function removeNodeAndSource(n) {
   }
 }
 
-// Number of tests to run in parallel. Warning: Each media element requires
-// at least 3 threads (4 on Linux), and on Linux each thread uses 10MB of
-// virtual address space. Beware!
+// Number of tests to run in parallel.
 var PARALLEL_TESTS = 2;
 
 // When true, we'll loop forever on whatever test we run. Use this to debug
@@ -871,6 +882,8 @@ function mediaTestCleanup(callback) {
 }
 
 (function() {
+  SimpleTest.requestFlakyTimeout("untriaged");
+
   // Ensure that preload preferences are comsistent
   var prefService = SpecialPowers.wrap(SpecialPowers.Components)
                                  .classes["@mozilla.org/preferences-service;1"]

@@ -12,7 +12,6 @@
 
 #include "nsStyleConsts.h"
 
-#include "mozilla/NullPtr.h"
 #include "mozilla/Attributes.h"
 
 #include "nsCSSValue.h"
@@ -41,8 +40,8 @@ protected:
   }
 
 private:
-  CounterStyle(const CounterStyle& aOther) MOZ_DELETE;
-  void operator=(const CounterStyle& other) MOZ_DELETE;
+  CounterStyle(const CounterStyle& aOther) = delete;
+  void operator=(const CounterStyle& other) = delete;
 
 public:
   int32_t GetStyle() const { return mStyle; }
@@ -131,7 +130,7 @@ public:
   uint8_t GetSystem() const { return mSystem; }
   const nsTArray<nsString>& GetSymbols() const { return mSymbols; }
 
-  NS_INLINE_DECL_REFCOUNTING(AnonymousCounterStyle)
+  NS_INLINE_DECL_REFCOUNTING(AnonymousCounterStyle, MOZ_OVERRIDE)
 
 private:
   ~AnonymousCounterStyle() {}

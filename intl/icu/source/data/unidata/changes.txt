@@ -1,4 +1,4 @@
-﻿* Copyright (C) 2004-2014, International Business Machines
+﻿* Copyright (C) 2004-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *
 *   file name:  changes.txt
@@ -10,6 +10,38 @@
 *   created by: Markus W. Scherer
 *
 * change log for Unicode updates
+
+---------------------------------------------------------------------------- ***
+
+* New ISO 15924 script codes
+
+Starting with ICU 55, we do not add UScriptCode constants any more until their scripts
+are encoded in Unicode, or can be assumed to be encoded in the next Unicode version.
+Script enum constant names want to follow the Unicode script property value aliases,
+which are assigned only when the scripts are encoded.
+When we encode scripts early and guess wrong, then we have confusing enum constants
+and have sometimes added aliases.
+
+Exception: Script codes like Latf and Aran that are not subject to separate encoding
+can be added at any time.
+
+Script codes not yet in ICU: http://www.unicode.org/iso15924/codechanges.html
+
+Added 2014-11-15, see http://bugs.icu-project.org/trac/ticket/11561
+- Adlm  166     Adlam
+- Aran  161     Arabic (Nastaliq variant)
+- Kitl  505     Khitan large script
+- Kits  288     Khitan small script
+- Marc  332     Marchen
+- Osge  219     Osage
+
+Aran can be added as USCRIPT_ARABIC_NASTALIQ at any time.
+
+Adlam, Marchen, and Osage are expected to go into Unicode 9;
+we should assign Unicode script property value aliases for them
+soon after Unicode 8 is released, and add them in ICU 56.
+
+Khitan scripts will be encoded later.
 
 ---------------------------------------------------------------------------- ***
 

@@ -22,6 +22,8 @@
 #include "nsString.h"
 #include "nsTArray.h"
 
+#include <stack>
+
 class nsIContent;
 
 namespace mozilla {
@@ -112,6 +114,10 @@ protected:
 
   bool ShouldReplaceContainerWithPlaceholder(nsIAtom* aTag);
 
+private:
+  bool IsElementPreformatted(mozilla::dom::Element* aElement);
+  bool IsElementBlock(mozilla::dom::Element* aElement);
+
 protected:
   nsString         mCurrentLine;
   uint32_t         mHeadLevel;
@@ -159,13 +165,16 @@ protected:
                                 // line and -1 if we are in a line.
 
   bool             mInWhitespace;
-  bool             mPreFormatted;
+  bool             mPreFormattedMail; // we're dealing with special DOM
+                                      // used by Thunderbird code.
   bool             mStartedOutput; // we've produced at least a character
 
   // While handling a new tag, this variable should remind if any line break
   // is due because of a closing tag. Setting it to "TRUE" while closing the tags.
   // Hence opening tags are guaranteed to start with appropriate line breaks.
-  bool             mLineBreakDue; 
+  bool             mLineBreakDue;
+
+  bool             mPreformattedBlockBoundary;
 
   nsString         mURL;
   int32_t          mHeaderStrategy;    /* Header strategy (pref)
@@ -195,6 +204,11 @@ protected:
   // refcounted.
   nsIAtom**        mTagStack;
   uint32_t         mTagStackIndex;
+
+  // The stack indicating whether the elements we've been operating on are
+  // CSS preformatted elements, so that we can tell if the text inside them
+  // should be formatted.
+  std::stack<bool> mPreformatStack;
 
   // Content in the stack above this index should be ignored:
   uint32_t          mIgnoreAboveIndex;

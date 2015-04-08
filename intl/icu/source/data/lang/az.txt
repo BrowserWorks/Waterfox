@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/az.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/az.xml
- */
 az{
     Keys{
         calendar{"Təqvim"}
@@ -503,7 +500,7 @@ az{
         zxx{"dil məzmunu yoxdur"}
         zza{"zaza dili"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"azəri"}
         en_GB{"ingilis (B.K.)"}
         en_US{"ingilis (A.B.Ş.)"}
@@ -699,7 +696,7 @@ az{
             tibt{"Tibet Rəqəmləri"}
         }
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Dil: {0}"}
         script{"Skript: {0}"}

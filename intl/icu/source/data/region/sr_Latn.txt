@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sr_Latn.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sr_Latn.xml
- */
 sr_Latn{
     %%Parent{"root"}
     Countries{
@@ -303,18 +300,18 @@ sr_Latn{
         ZW{"Zimbabve"}
         ZZ{"Nepoznat region"}
     }
-    Countries%variant{
-        CD{"Kongo (DRK)"}
-        CG{"Kongo (Republika)"}
-        FK{"Foklandska (Malvinska) ostrva"}
-        MK{"Makedonija (BJRM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"UK"}
         HK{"Hong Kong"}
         MO{"Makao"}
         PS{"Palestina"}
         US{"SAD"}
     }
-    Version{"2.1.10.42"}
+    Countries%variant{
+        CD{"Kongo (DRK)"}
+        CG{"Kongo (Republika)"}
+        FK{"Foklandska (Malvinska) ostrva"}
+        MK{"Makedonija (BJRM)"}
+    }
+    Version{"2.1.13.24"}
 }

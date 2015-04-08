@@ -44,9 +44,15 @@ describe("loop.OTSdkDriver", function () {
       publishVideo: sinon.stub()
     }, Backbone.Events);
 
-    sdk = {
+    sdk = _.extend({
       initPublisher: sinon.stub().returns(publisher),
       initSession: sinon.stub().returns(session)
+    }, Backbone.Events);
+
+    window.OT = {
+      ExceptionCodes: {
+        UNABLE_TO_PUBLISH: 1500
+      }
     };
 
     driver = new loop.OTSdkDriver({
@@ -82,6 +88,37 @@ describe("loop.OTSdkDriver", function () {
       }));
 
       sinon.assert.calledOnce(sdk.initPublisher);
+      sinon.assert.calledWith(sdk.initPublisher, fakeLocalElement, publisherConfig);
+    });
+  });
+
+  describe("#retryPublishWithoutVideo", function() {
+    beforeEach(function() {
+      sdk.initPublisher.returns(publisher);
+
+      driver.setupStreamElements(new sharedActions.SetupStreamElements({
+        getLocalElementFunc: function() {return fakeLocalElement;},
+        getRemoteElementFunc: function() {return fakeRemoteElement;},
+        publisherConfig: publisherConfig
+      }));
+    });
+
+    it("should make MediaStreamTrack.getSources return without a video source", function(done) {
+      driver.retryPublishWithoutVideo();
+
+      window.MediaStreamTrack.getSources(function(sources) {
+        expect(sources.some(function(src) {
+          return src.kind === "video";
+        })).eql(false);
+
+        done();
+      });
+    });
+
+    it("should call initPublisher", function() {
+      driver.retryPublishWithoutVideo();
+
+      sinon.assert.calledTwice(sdk.initPublisher);
       sinon.assert.calledWith(sdk.initPublisher, fakeLocalElement, publisherConfig);
     });
   });
@@ -266,6 +303,19 @@ describe("loop.OTSdkDriver", function () {
             sinon.match.hasOwn("name", "connectionFailure"));
           sinon.assert.calledWithMatch(dispatcher.dispatch,
             sinon.match.hasOwn("reason", FAILURE_REASONS.NETWORK_DISCONNECTED));
+        });
+
+      it("should dispatch a connectionFailure action if the session was " +
+         "forcibly disconnected", function() {
+          session.trigger("sessionDisconnected", {
+            reason: "forceDisconnected"
+          });
+
+          sinon.assert.calledOnce(dispatcher.dispatch);
+          sinon.assert.calledWithMatch(dispatcher.dispatch,
+            sinon.match.hasOwn("name", "connectionFailure"));
+          sinon.assert.calledWithMatch(dispatcher.dispatch,
+            sinon.match.hasOwn("reason", FAILURE_REASONS.EXPIRED_OR_INVALID));
         });
     });
 

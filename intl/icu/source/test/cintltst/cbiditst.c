@@ -4376,7 +4376,7 @@ static const char* inverseBasic(UBiDi *pBiDi, const char *srcChars, int32_t srcL
     int32_t destLen;
     UChar src[MAXLEN], dest2[MAXLEN];
 
-    if (pBiDi == NULL || src == NULL) {
+    if (pBiDi == NULL || srcChars == NULL) {
         return NULL;
     }
     ubidi_setReorderingOptions(pBiDi, option);

@@ -5,9 +5,9 @@
 #    x.x.x.x
 #    x.x.x+
 #
-# Referenced by milestone.pl.
+# Referenced by milestone.py.
 # Hopefully I'll be able to automate replacement of *all*
 # hardcoded milestones in the tree from these two files.
 #--------------------------------------------------------
 
-36.0.4
+37.0.1

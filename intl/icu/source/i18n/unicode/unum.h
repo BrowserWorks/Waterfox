@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1997-2014, International Business Machines Corporation and others.
+* Copyright (C) 1997-2015, International Business Machines Corporation and others.
 * All Rights Reserved.
 * Modification History:
 *
@@ -202,13 +202,13 @@ typedef enum UNumberFormatStyle {
      * @stable ICU 4.8
      */
     UNUM_CURRENCY_PLURAL=11,
-#ifndef U_HIDE_DRAFT_API
     /**
      * Currency format for accounting, e.g., "($3.00)" for
      * negative currency amount instead of "-$3.00" ({@link #UNUM_CURRENCY}).
-     * @draft ICU 53
+     * @stable ICU 53
      */
     UNUM_CURRENCY_ACCOUNTING=12,
+#ifndef U_HIDE_DRAFT_API
     /**
      * Currency format with a currency symbol given CASH usage, e.g., 
      * "NT$3" instead of "NT$3.23".
@@ -1297,16 +1297,15 @@ unum_getLocaleByType(const UNumberFormat *fmt,
                      ULocDataLocaleType type,
                      UErrorCode* status); 
 
-#ifndef U_HIDE_DRAFT_API
 /**
  * Set a particular UDisplayContext value in the formatter, such as
  * UDISPCTX_CAPITALIZATION_FOR_STANDALONE.
  * @param fmt The formatter for which to set a UDisplayContext value.
  * @param value The UDisplayContext value to set.
  * @param status A pointer to an UErrorCode to receive any errors
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT void U_EXPORT2
+U_STABLE void U_EXPORT2
 unum_setContext(UNumberFormat* fmt, UDisplayContext value, UErrorCode* status);
 
 /**
@@ -1316,12 +1315,10 @@ unum_setContext(UNumberFormat* fmt, UDisplayContext value, UErrorCode* status);
  * @param type The UDisplayContextType whose value to return
  * @param status A pointer to an UErrorCode to receive any errors
  * @return The UDisplayContextValue for the specified type.
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT UDisplayContext U_EXPORT2
+U_STABLE UDisplayContext U_EXPORT2
 unum_getContext(const UNumberFormat *fmt, UDisplayContextType type, UErrorCode* status);
-
-#endif  /* U_HIDE_DRAFT_API */
 
 #endif /* #if !UCONFIG_NO_FORMATTING */
 

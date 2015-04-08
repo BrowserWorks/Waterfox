@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2014, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -808,7 +808,7 @@ public:
      * Set whether or not grouping will be used in this format.
      * @param newValue    True, grouping will be used in this format.
      * @see getGroupingUsed
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual void setGroupingUsed(UBool newValue);
 
@@ -817,11 +817,10 @@ public:
      * @param value    set True, this format will parse numbers as integers
      *                 only.
      * @see isParseIntegerOnly
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual void setParseIntegerOnly(UBool value);
 
-    /* Cannot use #ifndef U_HIDE_DRAFT_API for the following draft method since it is virtual */
     /**
      * Set a particular UDisplayContext value in the formatter, such as
      * UDISPCTX_CAPITALIZATION_FOR_STANDALONE.
@@ -829,7 +828,7 @@ public:
      * @param status Input/output status. If at entry this indicates a failure
      *               status, the function will do nothing; otherwise this will be
      *               updated with any new status from the function. 
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual void setContext(UDisplayContext value, UErrorCode& status);
 

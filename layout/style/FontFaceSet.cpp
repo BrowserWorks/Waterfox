@@ -15,7 +15,7 @@
 #include "mozilla/dom/Promise.h"
 #include "mozilla/AsyncEventDispatcher.h"
 #include "mozilla/Preferences.h"
-#include "nsCrossSiteListenerProxy.h"
+#include "nsCORSListenerProxy.h"
 #include "nsFontFaceLoader.h"
 #include "nsIConsoleService.h"
 #include "nsIContentPolicy.h"
@@ -920,6 +920,7 @@ FontFaceSet::FindOrCreateUserFontEntryFromFontFace(const nsAString& aFamilyName,
           face->mSourceType = gfxFontFaceSrc::eSourceType_URL;
           face->mURI = val.GetURLValue();
           face->mReferrer = val.GetURLStructValue()->mReferrer;
+          face->mReferrerPolicy = mDocument->GetReferrerPolicy();
           face->mOriginPrincipal = val.GetURLStructValue()->mOriginPrincipal;
           NS_ASSERTION(face->mOriginPrincipal, "null origin principal in @font-face rule");
 

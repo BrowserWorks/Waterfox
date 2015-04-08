@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/metaZones.xml
@@ -1412,6 +1412,11 @@ metaZones:table(nofallback){
             {
                 "America_Central",
                 "1998-08-02 06:00",
+                "2015-02-01 08:00",
+            }
+            {
+                "America_Eastern",
+                "2015-02-01 08:00",
                 "9999-12-31 23:59",
             }
         }

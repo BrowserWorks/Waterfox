@@ -5,7 +5,7 @@
 #ifndef mozilla_dom_Icc_h
 #define mozilla_dom_Icc_h
 
-#include "mozilla/dom/MozIccBinding.h" // For IccCardState
+#include "mozilla/dom/MozIccBinding.h"
 #include "mozilla/DOMEventTargetHelper.h"
 
 class nsIIccInfo;
@@ -16,6 +16,7 @@ namespace dom {
 
 class DOMRequest;
 class OwningMozIccInfoOrMozGsmIccInfoOrMozCdmaIccInfo;
+class Promise;
 
 class Icc MOZ_FINAL : public DOMEventTargetHelper
 {
@@ -78,30 +79,31 @@ public:
                        ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  GetCardLock(const nsAString& aLockType, ErrorResult& aRv);
+  GetCardLock(IccLockType aLockType, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  UnlockCardLock(const JSContext* aCx, JS::Handle<JS::Value> aInfo,
-                 ErrorResult& aRv);
+  UnlockCardLock(const IccUnlockCardLockOptions& aOptions, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  SetCardLock(const JSContext* aCx, JS::Handle<JS::Value> aInfo,
-              ErrorResult& aRv);
+  SetCardLock(const IccSetCardLockOptions& aOptions, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  GetCardLockRetryCount(const nsAString& aLockType, ErrorResult& aRv);
+  GetCardLockRetryCount(IccLockType aLockType, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  ReadContacts(const nsAString& aContactType, ErrorResult& aRv);
+  ReadContacts(IccContactType aContactType, ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  UpdateContact(const JSContext* aCx, const nsAString& aContactType,
+  UpdateContact(const JSContext* aCx, IccContactType aContactType,
                 JS::Handle<JS::Value> aContact, const nsAString& aPin2,
                 ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  MatchMvno(const nsAString& aMvnoType, const nsAString& aMatchData,
+  MatchMvno(IccMvnoType aMvnoType, const nsAString& aMatchData,
             ErrorResult& aRv);
+
+  already_AddRefed<Promise>
+  GetServiceState(IccService aService, ErrorResult& aRv);
 
   IMPL_EVENT_HANDLER(iccinfochange)
   IMPL_EVENT_HANDLER(cardstatechange)

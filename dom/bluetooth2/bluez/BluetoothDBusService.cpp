@@ -45,7 +45,6 @@
 #include "mozilla/ipc/RawDBusConnection.h"
 #include "mozilla/LazyIdleThread.h"
 #include "mozilla/Mutex.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/StaticMutex.h"
 #include "mozilla/unused.h"
 
@@ -141,6 +140,38 @@ public:
     if (!IsEnabled()) {
       return true;
     }
+
+    BluetoothProfileManagerBase* profile;
+    profile = BluetoothHfpManager::Get();
+    NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
+    if (profile->IsConnected()) {
+      profile->Disconnect(nullptr);
+    } else {
+      profile->Reset();
+    }
+
+    profile = BluetoothOppManager::Get();
+    NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
+    if (profile->IsConnected()) {
+      profile->Disconnect(nullptr);
+    }
+
+    profile = BluetoothA2dpManager::Get();
+    NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
+    if (profile->IsConnected()) {
+      profile->Disconnect(nullptr);
+    } else {
+      profile->Reset();
+    }
+
+    profile = BluetoothHidManager::Get();
+    NS_ENSURE_TRUE(profile, NS_ERROR_FAILURE);
+    if (profile->IsConnected()) {
+      profile->Disconnect(nullptr);
+    } else {
+      profile->Reset();
+    }
+
     // 0 == success, -1 == error
     return !m_bt_disable();
   }

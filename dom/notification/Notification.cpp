@@ -27,6 +27,7 @@
 #include "mozilla/dom/Event.h"
 #include "mozilla/Services.h"
 #include "nsContentPermissionHelper.h"
+#include "nsILoadContext.h"
 #ifdef MOZ_B2G
 #include "nsIDOMDesktopNotification.h"
 #endif
@@ -63,7 +64,7 @@ public:
                     const nsAString& aIcon,
                     const nsAString& aData,
                     const nsAString& aBehavior,
-                    JSContext* aCx)
+                    JSContext* aCx) MOZ_OVERRIDE
   {
     MOZ_ASSERT(!aID.IsEmpty());
 
@@ -98,7 +99,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Done(JSContext* aCx)
+  NS_IMETHOD Done(JSContext* aCx) MOZ_OVERRIDE
   {
     JSAutoCompartment ac(aCx, mGlobal);
     JS::Rooted<JS::Value> result(aCx, JS::ObjectValue(*mNotifications));
@@ -677,10 +678,16 @@ Notification::ShowInternal()
   // nsIObserver. Thus the cookie must be unique to differentiate observers.
   nsString uniqueCookie = NS_LITERAL_STRING("notification:");
   uniqueCookie.AppendInt(sCount++);
+  bool inPrivateBrowsing = false;
+  if (doc) {
+    nsCOMPtr<nsILoadContext> loadContext = doc->GetLoadContext();
+    inPrivateBrowsing = loadContext && loadContext->UsePrivateBrowsing();
+  }
   alertService->ShowAlertNotification(absoluteUrl, mTitle, mBody, true,
                                       uniqueCookie, observer, mAlertName,
                                       DirectionToString(mDir), mLang,
-                                      dataStr, GetPrincipal());
+                                      dataStr, GetPrincipal(),
+                                      inPrivateBrowsing);
 }
 
 void

@@ -1,11 +1,11 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*****************************************************************************
 *
-* File CU_CAPITST.C
+* File ccapitst.c
 *
 * Modification History:
 *        Name                      Description            
@@ -1149,13 +1149,11 @@ static void TestAlias() {
     const char* ISO_2022_NAMES[] = 
         {"ISO_2022,locale=ja,version=2", "ISO-2022-JP-2", "csISO2022JP2",
          "Iso-2022jP2", "isO-2022_Jp_2", "iSo--2022,locale=ja,version=2"};
-    int32_t ISO_2022_NAMES_LENGTH =
-        sizeof(ISO_2022_NAMES) / sizeof(ISO_2022_NAMES[0]);
+    int32_t ISO_2022_NAMES_LENGTH = UPRV_LENGTHOF(ISO_2022_NAMES);
     const char *UTF8_NAMES[] =
         { "UTF-8", "utf-8", "utf8", "ibm-1208",
           "utf_8", "ibm1208", "cp1208" };
-    int32_t UTF8_NAMES_LENGTH =
-        sizeof(UTF8_NAMES) / sizeof(UTF8_NAMES[0]);
+    int32_t UTF8_NAMES_LENGTH = UPRV_LENGTHOF(UTF8_NAMES);
 
     struct {
         const char *name;
@@ -1196,7 +1194,7 @@ static void TestAlias() {
             if (strcmp(ucnv_getName(cnv, &status), name) != 0 
                 && (strstr(name, "PlatformEndian") == 0 && strstr(name, "OppositeEndian") == 0)) {
                 log_err("FAIL: Converter \"%s\" returned \"%s\" for getName. "
-                        "The should be the same\n",
+                        "They should be the same\n",
                         name, ucnv_getName(cnv, &status));
             }
         }
@@ -2002,6 +2000,7 @@ static void bug2()
 {
     /* US-ASCII "1234567890" */
     static const char source[]={ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39 };
+#if !UCONFIG_ONLY_HTML_CONVERSION
     static const char sourceUTF8[]={ 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, (char)0xef, (char)0x80, (char)0x80 };
     static const char sourceUTF32[]={ 0x00, 0x00, 0x00, 0x30,
                                       0x00, 0x00, 0x00, 0x31,
@@ -2013,6 +2012,8 @@ static void bug2()
                                       0x00, 0x00, 0x00, 0x37,
                                       0x00, 0x00, 0x00, 0x38,
                                       0x00, 0x00, (char)0xf0, 0x00};
+#endif
+
     static char target[5];
 
     UErrorCode err = U_ZERO_ERROR;
@@ -2032,6 +2033,7 @@ static void bug2()
         log_data_err("error j932 bug 2 us-ascii->iso-8859-1: got preflighting size %d instead of 10\n", size);
     }
 
+#if !UCONFIG_ONLY_HTML_CONVERSION
     err = U_ZERO_ERROR;
     /* do the conversion */
     size = ucnv_convert("UTF-32BE", /* out */
@@ -2061,6 +2063,7 @@ static void bug2()
         /* bug2: size is 5, should be 12 */
         log_err("error j932 bug 2 UTF-32BE->UTF-8: got preflighting size %d instead of 12\n", size);
     }
+#endif
 }
 
 /*
@@ -2069,7 +2072,7 @@ static void bug2()
  */
 static void bug3()
 {
-#if !UCONFIG_NO_LEGACY_CONVERSION
+#if !UCONFIG_NO_LEGACY_CONVERSION && !UCONFIG_ONLY_HTML_CONVERSION
     char char_in[CHUNK_SIZE*4];
     char target[5];
     UErrorCode err = U_ZERO_ERROR;
@@ -2753,10 +2756,12 @@ TestConvertAlgorithmic() {
   /*},*/
     utf16[]={
         0xfe, 0xff /* BOM only, no text */
-    },
-    utf32[]={
+    };
+#if !UCONFIG_ONLY_HTML_CONVERSION
+    static const uint8_t utf32[]={
         0xff, 0xfe, 0, 0 /* BOM only, no text */
     };
+#endif
 
     char target[100], utf8NUL[100], shiftJISNUL[100];
 
@@ -2826,6 +2831,7 @@ TestConvertAlgorithmic() {
                 u_errorName(errorCode), length);
     }
 
+#if !UCONFIG_ONLY_HTML_CONVERSION
     errorCode=U_ZERO_ERROR;
     length=ucnv_fromAlgorithmic(cnv, UCNV_UTF32, target, 0, (const char *)utf32, 4, &errorCode);
     if( errorCode!=U_STRING_NOT_TERMINATED_WARNING ||
@@ -2834,6 +2840,7 @@ TestConvertAlgorithmic() {
         log_err("ucnv_fromAlgorithmic(UTF-32 only BOM -> Shift-JIS) fails (%s expect U_STRING_NOT_TERMINATED_WARNING), returns %d expect 0\n",
                 u_errorName(errorCode), length);
     }
+#endif
 
     /* bad arguments */
     errorCode=U_MESSAGE_PARSE_ERROR;
@@ -3428,7 +3435,7 @@ static void TestDefaultName(void) {
     TestOneDefaultNameChange("ISCII,version=2", "UTF-8");
     TestOneDefaultNameChange("ISO-8859-1", "UTF-8");
 #else
-# if !UCONFIG_NO_LEGACY_CONVERSION
+# if !UCONFIG_NO_LEGACY_CONVERSION && !UCONFIG_ONLY_HTML_CONVERSION
     TestOneDefaultNameChange("ISCII,version=1", "ISCII,version=1");
     TestOneDefaultNameChange("ISCII,version=2", "ISCII,version=2");
 # endif

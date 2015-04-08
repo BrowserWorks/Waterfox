@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ee.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ee.xml
- */
 ee{
     Countries{
         001{"xexeme"}
@@ -296,6 +293,10 @@ ee{
         ZW{"Zimbabwe nutome"}
         ZZ{"nutome manya"}
     }
+    Countries%short{
+        HK{"Hɔng Kɔng nutome"}
+        MO{"Macau nutome"}
+    }
     Countries%variant{
         CD{"Kongo demokratik repɔblik nutome"}
         CG{"Kongo repɔblik nutome"}
@@ -304,9 +305,5 @@ ee{
         MK{"Makedonia (FYROM) nutome"}
         TL{"Ɣedzeƒe Timɔ nutome"}
     }
-    CountriesShort{
-        HK{"Hɔng Kɔng nutome"}
-        MO{"Macau nutome"}
-    }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
 }

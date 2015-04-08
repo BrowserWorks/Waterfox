@@ -16,7 +16,7 @@
 #include "nsCOMPtr.h"
 
 #include "nsContentUtils.h"
-#include "nsCrossSiteListenerProxy.h"
+#include "nsCORSListenerProxy.h"
 #include "nsNetUtil.h"
 #include "nsMimeTypes.h"
 #include "nsStreamUtils.h"
@@ -59,7 +59,7 @@ public:
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize)
+                            nsISupports* aData, bool aAnonymize) MOZ_OVERRIDE
   {
     nsresult rv;
     nsTArray<ImageMemoryCounter> chrome;
@@ -403,7 +403,7 @@ private:
                                       nsTArray<ImageMemoryCounter>* aArray,
                                       bool aIsUsed)
   {
-    auto image = static_cast<Image*>(aRequest->mImage.get());
+    nsRefPtr<Image> image = aRequest->GetImage();
     if (!image) {
       return;
     }
@@ -433,7 +433,7 @@ private:
     }
 
     nsRefPtr<imgRequest> req = aEntry->GetRequest();
-    auto image = static_cast<Image*>(req->mImage.get());
+    nsRefPtr<Image> image = req->GetImage();
     if (!image) {
       return PL_DHASH_NEXT;
     }
@@ -1031,7 +1031,7 @@ imgLoader::imgLoader()
 already_AddRefed<imgLoader>
 imgLoader::GetInstance()
 {
-  static StaticRefPtr<imgLoader> singleton;
+  static nsRefPtr<imgLoader> singleton;
   if (!singleton) {
     singleton = imgLoader::Create();
     if (!singleton)
@@ -2304,10 +2304,19 @@ nsresult imgLoader::LoadImageWithChannel(nsIChannel *channel, imgINotificationOb
   return rv;
 }
 
-bool imgLoader::SupportImageWithMimeType(const char* aMimeType)
+bool
+imgLoader::SupportImageWithMimeType(const char* aMimeType,
+                                    AcceptedMimeTypes aAccept
+                                      /* = AcceptedMimeTypes::IMAGES */)
 {
   nsAutoCString mimeType(aMimeType);
   ToLowerCase(mimeType);
+
+  if (aAccept == AcceptedMimeTypes::IMAGES_AND_DOCUMENTS &&
+      mimeType.EqualsLiteral("image/svg+xml")) {
+    return true;
+  }
+
   return Image::GetDecoderType(mimeType.get()) != Image::eDecoderType_unknown;
 }
 
@@ -2422,6 +2431,16 @@ NS_IMETHODIMP ProxyListener::OnStartRequest(nsIRequest *aRequest, nsISupports *c
 
   nsCOMPtr<nsIChannel> channel(do_QueryInterface(aRequest));
   if (channel) {
+    // We need to set the initiator type for the image load
+    nsCOMPtr<nsITimedChannel> timedChannel = do_QueryInterface(channel);
+    if (timedChannel) {
+      nsAutoString type;
+      timedChannel->GetInitiatorType(type);
+      if (type.IsEmpty()) {
+        timedChannel->SetInitiatorType(NS_LITERAL_STRING("img"));
+      }
+    }
+
     nsAutoCString contentType;
     nsresult rv = channel->GetContentType(contentType);
 

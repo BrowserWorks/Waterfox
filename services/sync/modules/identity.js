@@ -447,6 +447,22 @@ IdentityManager.prototype = {
   },
 
   /**
+   * Pre-fetches any information that might help with migration away from this
+   * identity.  Called after every sync and is really just an optimization that
+   * allows us to avoid a network request for when we actually need the
+   * migration info.
+   */
+  prefetchMigrationSentinel: function(service) {
+    // Try and fetch the migration sentinel - it will end up in the recordManager
+    // cache.
+    try {
+      service.recordManager.get(service.storageURL + "meta/fxa_credentials");
+    } catch (ex) {
+      this._log.warn("Failed to pre-fetch the migration sentinel", ex);
+    }
+  },
+
+  /**
    * Obtains the array of basic logins from nsiPasswordManager.
    */
   _getLogins: function _getLogins(realm) {
@@ -485,10 +501,17 @@ IdentityManager.prototype = {
   },
 
   /**
+    * Return credentials hosts for this identity only.
+    */
+  _getSyncCredentialsHosts: function() {
+    return Utils.getSyncCredentialsHostsLegacy();
+  },
+
+  /**
    * Deletes Sync credentials from the password manager.
    */
   deleteSyncCredentials: function deleteSyncCredentials() {
-    for (let host of Utils.getSyncCredentialsHosts()) {
+    for (let host of this._getSyncCredentialsHosts()) {
       let logins = Services.logins.findLogins({}, host, "", "");
       for each (let login in logins) {
         Services.logins.removeLogin(login);

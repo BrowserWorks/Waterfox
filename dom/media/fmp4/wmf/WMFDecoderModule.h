@@ -26,16 +26,23 @@ public:
   CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
                      layers::LayersBackend aLayersBackend,
                      layers::ImageContainer* aImageContainer,
-                     MediaTaskQueue* aVideoTaskQueue,
+                     FlushableMediaTaskQueue* aVideoTaskQueue,
                      MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
 
   virtual already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
-                     MediaTaskQueue* aAudioTaskQueue,
+                     FlushableMediaTaskQueue* aAudioTaskQueue,
                      MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
 
   bool SupportsVideoMimeType(const char* aMimeType) MOZ_OVERRIDE;
   bool SupportsAudioMimeType(const char* aMimeType) MOZ_OVERRIDE;
+
+  virtual void DisableHardwareAcceleration() MOZ_OVERRIDE
+  {
+    sDXVAEnabled = false;
+  }
+
+  virtual bool SupportsSharedDecoders(const mp4_demuxer::VideoDecoderConfig& aConfig) const MOZ_OVERRIDE;
 
   // Accessors that report whether we have the required MFTs available
   // on the system to play various codecs. Windows Vista doesn't have the
@@ -47,6 +54,8 @@ public:
   // Called on main thread.
   static void Init();
 private:
+  bool ShouldUseDXVA(const mp4_demuxer::VideoDecoderConfig& aConfig) const;
+
   static bool sIsWMFEnabled;
   static bool sDXVAEnabled;
 };

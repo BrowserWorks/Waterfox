@@ -3,7 +3,7 @@
 ac_add_options --enable-application=browser
 mk_add_options MOZ_MAKE_FLAGS=-j4
 
-mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/../objdir
+mk_add_options MOZ_OBJDIR=objdir
 #mk_add_options MOZ_CO_MODULE="mozilla/tools/update-packaging"
 
 # for 64-bit build
@@ -19,7 +19,7 @@ ac_add_options --disable-ipdl-tests
 ac_add_options --enable-gamepad
 
 # Use to use profiling
-ac_add_options --enable-optimize="-D_ATL_XP_TARGETING -O3 -Qip- -Qparallel -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
+ac_add_options --enable-optimize="-Qstd=c++11 -D_ATL_XP_TARGETING -O3 -Qip- -Qparallel -fp:precise -arch:SSE3 -QaxCORE-AVX2,CORE-AVX-I,AVX,SSE4.2,SSE4.1,SSSE3,SSE3,SSE2 -w"
 
 ac_add_options --with-app-name=waterfox
 ac_add_options --with-branding=browser/branding/waterfox
@@ -29,7 +29,6 @@ ac_add_options --enable-update-channel=release
 ac_add_options --enable-updater
 ac_add_options --enable-update-packaging
 ac_add_options --enable-release
-ac_add_options --enable-signmar
 
 # diasble crashreporter
 ac_add_options --enable-crashreporter
@@ -45,4 +44,4 @@ ac_add_options --disable-mochitest
 ac_add_options --disable-mochitests
 
 # for X64
-WIN32_REDIST_DIR=$VCINSTALLDIR/redist/x64/Microsoft.VC100.CRT
+WIN32_REDIST_DIR=$VCINSTALLDIR/redist/x64/Microsoft.VC120.CRT

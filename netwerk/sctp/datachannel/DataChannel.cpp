@@ -41,6 +41,7 @@
 #include "nsAutoPtr.h"
 #include "nsNetUtil.h"
 #include "mozilla/StaticPtr.h"
+#include "mozilla/unused.h"
 #ifdef MOZ_PEERCONNECTION
 #include "mtransport/runnable_utils.h"
 #endif
@@ -1765,12 +1766,12 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
                         channel->mState == DataChannel::WAITING_TO_OPEN);
           if (channel->mState == DataChannel::OPEN ||
               channel->mState == DataChannel::WAITING_TO_OPEN) {
+            // Mark the stream for reset (the reset is sent below)
             ResetOutgoingStream(channel->mStream);
-            SendOutgoingStreamReset();
-            NS_DispatchToMainThread(new DataChannelOnMessageAvailable(
-                                      DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
-                                      channel));
           }
+          NS_DispatchToMainThread(new DataChannelOnMessageAvailable(
+                                    DataChannelOnMessageAvailable::ON_CHANNEL_CLOSED, this,
+                                    channel));
           mStreams[channel->mStream] = nullptr;
 
           LOG(("Disconnected DataChannel %p from connection %p",
@@ -1784,7 +1785,7 @@ DataChannelConnection::HandleStreamResetEvent(const struct sctp_stream_reset_eve
     }
   }
 
-  // In case we failed to send a RESET due to having one outstanding, process any pending resets now:
+  // Process any pending resets now:
   if (!mStreamsResetting.IsEmpty()) {
     LOG(("Sending %d pending resets", mStreamsResetting.Length()));
     SendOutgoingStreamReset();
@@ -2105,8 +2106,10 @@ DataChannelConnection::OpenFinish(already_AddRefed<DataChannel>&& aChannel)
     LOG(("Queuing channel %p (%u) to finish open", channel.get(), stream));
     // Also serves to mark we told the app
     channel->mFlags |= DATA_CHANNEL_FLAGS_FINISH_OPEN;
-    channel->AddRef(); // we need a ref for the nsDeQue and one to return
-    mPending.Push(channel);
+    // we need a ref for the nsDeQue and one to return
+    DataChannel* rawChannel = channel;
+    rawChannel->AddRef();
+    mPending.Push(rawChannel);
     return channel.forget();
   }
 
@@ -2308,7 +2311,7 @@ public:
     mConnection(aConnection),
     mStream(aStream),
     mBlob(aBlob)
-  { }
+  {}
 
   NS_IMETHODIMP Run() {
     // ReadBlob() is responsible to releasing the reference
@@ -2347,6 +2350,42 @@ DataChannelConnection::SendBlob(uint16_t stream, nsIInputStream *aBlob)
   return 0;
 }
 
+class DataChannelBlobSendRunnable : public nsRunnable
+{
+public:
+  DataChannelBlobSendRunnable(already_AddRefed<DataChannelConnection>& aConnection,
+                              uint16_t aStream)
+    : mConnection(aConnection)
+    , mStream(aStream) {}
+
+  ~DataChannelBlobSendRunnable()
+  {
+    if (!NS_IsMainThread() && mConnection) {
+      MOZ_ASSERT(false);
+      // explicitly leak the connection if destroyed off mainthread
+      unused << mConnection.forget().take();
+    }
+  }
+
+  NS_IMETHODIMP Run()
+  {
+    ASSERT_WEBRTC(NS_IsMainThread());
+
+    mConnection->SendBinaryMsg(mStream, mData);
+    mConnection = nullptr;
+    return NS_OK;
+  }
+
+  // explicitly public so we can avoid allocating twice and copying
+  nsCString mData;
+
+private:
+  // Note: we can be destroyed off the target thread, so be careful not to let this
+  // get Released()ed on the temp thread!
+  nsRefPtr<DataChannelConnection> mConnection;
+  uint16_t mStream;
+};
+
 void
 DataChannelConnection::ReadBlob(already_AddRefed<DataChannelConnection> aThis,
                                 uint16_t aStream, nsIInputStream* aBlob)
@@ -2356,30 +2395,34 @@ DataChannelConnection::ReadBlob(already_AddRefed<DataChannelConnection> aThis,
   // ~DataChannelConnection() to run on MainThread
 
   // XXX to do this safely, we must enqueue these atomically onto the
-  // output socket.  We need a sender thread(s?) to enque data into the
+  // output socket.  We need a sender thread(s?) to enqueue data into the
   // socket and to avoid main-thread IO that might block.  Even on a
   // background thread, we may not want to block on one stream's data.
   // I.e. run non-blocking and service multiple channels.
 
   // For now as a hack, send as a single blast of queued packets which may
   // be deferred until buffer space is available.
-  nsCString temp;
   uint64_t len;
   nsCOMPtr<nsIThread> mainThread;
   NS_GetMainThread(getter_AddRefs(mainThread));
 
+  // Must not let Dispatching it cause the DataChannelConnection to get
+  // released on the wrong thread.  Using WrapRunnable(nsRefPtr<DataChannelConnection>(aThis),...
+  // will occasionally cause aThis to get released on this thread.  Also, an explicit Runnable
+  // lets us avoid copying the blob data an extra time.
+  nsRefPtr<DataChannelBlobSendRunnable> runnable = new DataChannelBlobSendRunnable(aThis,
+                                                                                   aStream);
+  // avoid copying the blob data by passing the mData from the runnable
   if (NS_FAILED(aBlob->Available(&len)) ||
-      NS_FAILED(NS_ReadInputStreamToString(aBlob, temp, len))) {
+      NS_FAILED(NS_ReadInputStreamToString(aBlob, runnable->mData, len))) {
     // Bug 966602:  Doesn't return an error to the caller via onerror.
     // We must release DataChannelConnection on MainThread to avoid issues (bug 876167)
-    NS_ProxyRelease(mainThread, aThis.take());
+    // aThis is now owned by the runnable; release it there
+    NS_ProxyRelease(mainThread, runnable);
     return;
   }
   aBlob->Close();
-  RUN_ON_THREAD(mainThread, WrapRunnable(nsRefPtr<DataChannelConnection>(aThis),
-                               &DataChannelConnection::SendBinaryMsg,
-                               aStream, temp),
-                NS_DISPATCH_NORMAL);
+  NS_DispatchToMainThread(runnable, NS_DISPATCH_NORMAL);
 }
 
 void

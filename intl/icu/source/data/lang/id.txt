@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/id.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/id.xml
- */
 id{
     Keys{
         calendar{"Kalender"}
@@ -574,14 +571,14 @@ id{
         zxx{"Tidak ada konten linguistik"}
         zza{"Zaza"}
     }
-    Languages%variant{
-        ps{"Pushto"}
-        ug{"Uighur"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"Azeri"}
         en_GB{"Inggris U.K."}
         en_US{"Inggris A.S."}
+    }
+    Languages%variant{
+        ps{"Pushto"}
+        ug{"Uighur"}
     }
     Scripts{
         Afak{"Afaka"}
@@ -941,7 +938,7 @@ id{
         VALLADER{"VALLADER"}
         WADEGILE{"Wade-Giles Latin"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Bahasa: {0}"}
         script{"Skrip: {0}"}

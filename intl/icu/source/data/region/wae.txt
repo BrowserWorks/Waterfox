@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/wae.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/wae.xml
- */
 wae{
     Countries{
         001{"Wäld"}
@@ -297,6 +294,10 @@ wae{
         ZW{"Simbabwe"}
         ZZ{"Unbekannti Regio"}
     }
+    Countries%short{
+        HK{"Hongkong"}
+        MO{"Makau"}
+    }
     Countries%variant{
         CD{"Kongo (Demokratiši Rebublik)"}
         CG{"Kongo (Rebublik)"}
@@ -305,9 +306,5 @@ wae{
         MK{"Mazedonie (EJR)"}
         TL{"Wešttimor"}
     }
-    CountriesShort{
-        HK{"Hongkong"}
-        MO{"Makau"}
-    }
-    Version{"2.1.7.53"}
+    Version{"2.1.10.93"}
 }

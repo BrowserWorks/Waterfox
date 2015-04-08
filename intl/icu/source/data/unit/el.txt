@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/el.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/el.xml
- */
 el{
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -789,9 +786,9 @@ el{
                 other{"{0} γρ."}
             }
             kilogram{
-                dnam{"χγρ."}
-                one{"{0} χγρ."}
-                other{"{0} χγρ."}
+                dnam{"kg"}
+                one{"{0} kg"}
+                other{"{0} kg"}
             }
             ounce{
                 one{"{0} oz"}
@@ -1254,9 +1251,9 @@ el{
                 other{"{0} γρ."}
             }
             kilogram{
-                dnam{"χιλιόγραμμα"}
-                one{"{0} χλγρ."}
-                other{"{0} χλγρ."}
+                dnam{"κιλά"}
+                one{"{0} κιλό"}
+                other{"{0} κιλά"}
             }
             metric-ton{
                 dnam{"mt"}

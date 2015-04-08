@@ -1,0 +1,156 @@
+***************
+*** 20,35 ****
+        MOZ_ASSERT(driverComparator == DRIVER_BETWEEN_EXCLUSIVE || \
+                   driverComparator == DRIVER_BETWEEN_INCLUSIVE || \
+                   driverComparator == DRIVER_BETWEEN_INCLUSIVE_START); \
+        GfxDriverInfo info(os, vendor, devices, feature, featureStatus, driverComparator, driverVersion, suggestedVersion); \
+        info.mDriverVersionMax = driverVersionMax; \
+        mDriverInfo->AppendElement(info); \
+      } while (false)
+  
+  namespace mozilla {
+  namespace widget {
+  
+  enum OperatingSystem {
+    DRIVER_OS_UNKNOWN = 0,
+    DRIVER_OS_WINDOWS_XP,
+    DRIVER_OS_WINDOWS_SERVER_2003,
+    DRIVER_OS_WINDOWS_VISTA,
+--- 20,46 ----
+        MOZ_ASSERT(driverComparator == DRIVER_BETWEEN_EXCLUSIVE || \
+                   driverComparator == DRIVER_BETWEEN_INCLUSIVE || \
+                   driverComparator == DRIVER_BETWEEN_INCLUSIVE_START); \
+        GfxDriverInfo info(os, vendor, devices, feature, featureStatus, driverComparator, driverVersion, suggestedVersion); \
+        info.mDriverVersionMax = driverVersionMax; \
+        mDriverInfo->AppendElement(info); \
+      } while (false)
+  
++ #define APPEND_TO_DRIVER_BLOCKLIST_RANGE_GPU2(os, vendor, devices, feature, featureStatus, driverComparator, driverVersion, driverVersionMax, suggestedVersion) \
++     do { \
++       MOZ_ASSERT(driverComparator == DRIVER_BETWEEN_EXCLUSIVE || \
++                  driverComparator == DRIVER_BETWEEN_INCLUSIVE || \
++                  driverComparator == DRIVER_BETWEEN_INCLUSIVE_START); \
++       GfxDriverInfo info(os, vendor, devices, feature, featureStatus, driverComparator, driverVersion, suggestedVersion, false, true); \
++       info.mDriverVersionMax = driverVersionMax; \
++       mDriverInfo->AppendElement(info); \
++     } while (false)
++ 
++ 
+  namespace mozilla {
+  namespace widget {
+  
+  enum OperatingSystem {
+    DRIVER_OS_UNKNOWN = 0,
+    DRIVER_OS_WINDOWS_XP,
+    DRIVER_OS_WINDOWS_SERVER_2003,
+    DRIVER_OS_WINDOWS_VISTA,
+***************
+*** 70,85 ****
+    IntelGMAX4500HD,
+    IntelHD3000,
+    IntelMobileHDGraphics,
+    NvidiaBlockD3D9Layers,
+    RadeonX1000,
+    Geforce7300GT,
+    Nvidia310M,
+    AMDRadeonHD5800,
+    DeviceFamilyMax
+  };
+  
+  enum DeviceVendor {
+    VendorAll,
+    VendorIntel,
+    VendorNVIDIA,
+    VendorAMD,
+--- 81,97 ----
+    IntelGMAX4500HD,
+    IntelHD3000,
+    IntelMobileHDGraphics,
+    NvidiaBlockD3D9Layers,
+    RadeonX1000,
+    Geforce7300GT,
+    Nvidia310M,
+    AMDRadeonHD5800,
++   Bug1137716,
+    DeviceFamilyMax
+  };
+  
+  enum DeviceVendor {
+    VendorAll,
+    VendorIntel,
+    VendorNVIDIA,
+    VendorAMD,
+***************
+*** 93,109 ****
+  
+  struct GfxDriverInfo
+  {
+    // If |ownDevices| is true, you are transferring ownership of the devices
+    // array, and it will be deleted when this GfxDriverInfo is destroyed.
+    GfxDriverInfo(OperatingSystem os, nsAString& vendor, GfxDeviceFamily* devices,
+                  int32_t feature, int32_t featureStatus, VersionComparisonOp op,
+                  uint64_t driverVersion, const char *suggestedVersion = nullptr,
+-                 bool ownDevices = false);
+  
+    GfxDriverInfo();
+    GfxDriverInfo(const GfxDriverInfo&);
+    ~GfxDriverInfo();
+  
+    OperatingSystem mOperatingSystem;
+    uint32_t mOperatingSystemVersion;
+  
+--- 105,121 ----
+  
+  struct GfxDriverInfo
+  {
+    // If |ownDevices| is true, you are transferring ownership of the devices
+    // array, and it will be deleted when this GfxDriverInfo is destroyed.
+    GfxDriverInfo(OperatingSystem os, nsAString& vendor, GfxDeviceFamily* devices,
+                  int32_t feature, int32_t featureStatus, VersionComparisonOp op,
+                  uint64_t driverVersion, const char *suggestedVersion = nullptr,
++                 bool ownDevices = false, bool gpu2 = false);
+  
+    GfxDriverInfo();
+    GfxDriverInfo(const GfxDriverInfo&);
+    ~GfxDriverInfo();
+  
+    OperatingSystem mOperatingSystem;
+    uint32_t mOperatingSystemVersion;
+  
+***************
+*** 134,149 ****
+  
+    static const GfxDeviceFamily* GetDeviceFamily(DeviceFamily id);
+    static GfxDeviceFamily* mDeviceFamilies[DeviceFamilyMax];
+  
+    static const nsAString& GetDeviceVendor(DeviceVendor id);
+    static nsAString* mDeviceVendors[DeviceVendorMax];
+  
+    nsString mModel, mHardware, mProduct, mManufacturer;
+  };
+  
+  #define GFX_DRIVER_VERSION(a,b,c,d) \
+    ((uint64_t(a)<<48) | (uint64_t(b)<<32) | (uint64_t(c)<<16) | uint64_t(d))
+  
+  inline uint64_t
+  V(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+  {
+--- 146,163 ----
+  
+    static const GfxDeviceFamily* GetDeviceFamily(DeviceFamily id);
+    static GfxDeviceFamily* mDeviceFamilies[DeviceFamilyMax];
+  
+    static const nsAString& GetDeviceVendor(DeviceVendor id);
+    static nsAString* mDeviceVendors[DeviceVendorMax];
+  
+    nsString mModel, mHardware, mProduct, mManufacturer;
++ 
++   bool mGpu2;
+  };
+  
+  #define GFX_DRIVER_VERSION(a,b,c,d) \
+    ((uint64_t(a)<<48) | (uint64_t(b)<<32) | (uint64_t(c)<<16) | uint64_t(d))
+  
+  inline uint64_t
+  V(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+  {

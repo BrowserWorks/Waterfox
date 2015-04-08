@@ -11,7 +11,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/Compiler.h"
 #include "mozilla/Move.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/Scoped.h"
 #include "mozilla/TemplateLib.h"
 #include "mozilla/UniquePtr.h"
@@ -88,9 +87,18 @@ static MOZ_NEVER_INLINE void js_failedAllocBreakpoint() { asm(""); }
             return nullptr; \
         } \
     } while (0)
+#  define JS_OOM_POSSIBLY_FAIL_BOOL() \
+    do \
+    { \
+        if (++OOM_counter > OOM_maxAllocations) { \
+            JS_OOM_CALL_BP_FUNC();\
+            return false; \
+        } \
+    } while (0)
 
 # else
 #  define JS_OOM_POSSIBLY_FAIL() do {} while(0)
+#  define JS_OOM_POSSIBLY_FAIL_BOOL() do {} while(0)
 # endif /* DEBUG || JS_OOM_BREAKPOINT */
 
 static inline void* js_malloc(size_t bytes)

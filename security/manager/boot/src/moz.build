@@ -9,6 +9,7 @@ EXPORTS.mozilla += [
 ]
 
 UNIFIED_SOURCES += [
+    'CertBlocklist.cpp',
     'DataStorage.cpp',
     'nsBOOTModule.cpp',
     'nsEntropyCollector.cpp',
@@ -22,6 +23,10 @@ UNIFIED_SOURCES += [
 
 LOCAL_INCLUDES += [
     '../../../pkix/include',
+]
+
+GENERATED_INCLUDES += [
+    '/dist/public/nss',
 ]
 
 FAIL_ON_WARNINGS = True

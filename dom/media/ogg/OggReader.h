@@ -65,11 +65,8 @@ public:
                                   int64_t aTimeThreshold) MOZ_OVERRIDE;
 
   virtual bool HasAudio() MOZ_OVERRIDE {
-    return (mVorbisState != 0 && mVorbisState->mActive)
-#ifdef MOZ_OPUS
-      || (mOpusState != 0 && mOpusState->mActive)
-#endif /* MOZ_OPUS */
-      ;
+    return (mVorbisState != 0 && mVorbisState->mActive) ||
+           (mOpusState != 0 && mOpusState->mActive);
   }
 
   virtual bool HasVideo() MOZ_OVERRIDE {
@@ -286,7 +283,6 @@ private:
   // Decode state of the Vorbis bitstream we're decoding, if we have audio.
   VorbisState* mVorbisState;
 
-#ifdef MOZ_OPUS
   // Decode state of the Opus bitstream we're decoding, if we have one.
   OpusState *mOpusState;
 
@@ -294,7 +290,6 @@ private:
   // contructor was called. We can't check it dynamically because
   // we're not on the main thread;
   bool mOpusEnabled;
-#endif /* MOZ_OPUS */
 
   // Decode state of the Skeleton bitstream.
   SkeletonState* mSkeletonState;

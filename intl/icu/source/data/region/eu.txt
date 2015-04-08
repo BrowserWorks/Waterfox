@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/eu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/eu.xml
- */
 eu{
     Countries{
         001{"Mundua"}
@@ -43,7 +40,7 @@ eu{
         419{"Latinoamerika"}
         AC{"Ascension uhartea"}
         AD{"Andorra"}
-        AE{"Arabiar Emirrerri Batuak"}
+        AE{"Arabiar Emirerri Batuak"}
         AF{"Afganistan"}
         AG{"Antigua eta Barbuda"}
         AI{"Angila"}
@@ -68,7 +65,7 @@ eu{
         BH{"Bahrain"}
         BI{"Burundi"}
         BJ{"Benin"}
-        BL{"San Bartolome"}
+        BL{"Saint Barthélemy"}
         BM{"Bermuda"}
         BN{"Brunei"}
         BO{"Bolivia"}
@@ -81,7 +78,7 @@ eu{
         BY{"Bielorrusia"}
         BZ{"Belize"}
         CA{"Kanada"}
-        CC{"Cocos (Keeling) uharteak"}
+        CC{"Cocos uharteak"}
         CD{"Kongoko Errepublika Demokratikoa"}
         CF{"Afrika Erdiko Errepublika"}
         CG{"Kongo (Brazzaville)"}
@@ -127,7 +124,7 @@ eu{
         GD{"Grenada"}
         GE{"Georgia"}
         GF{"Guyana Frantsesa"}
-        GG{"Guernsey"}
+        GG{"Guernesey"}
         GH{"Ghana"}
         GI{"Gibraltar"}
         GL{"Groenlandia"}
@@ -268,7 +265,7 @@ eu{
         TF{"Hegoaldeko lurralde frantsesak"}
         TG{"Togo"}
         TH{"Thailandia"}
-        TJ{"Tadjikistan"}
+        TJ{"Tajikistan"}
         TK{"Tokelau"}
         TL{"Ekialdeko Timor"}
         TM{"Turkmenistan"}
@@ -302,6 +299,13 @@ eu{
         ZW{"Zimbabwe"}
         ZZ{"Eskualde ezezaguna"}
     }
+    Countries%short{
+        GB{"EB"}
+        HK{"Hong Kong"}
+        MO{"Macau"}
+        PS{"Palestina"}
+        US{"AEB"}
+    }
     Countries%variant{
         CD{"Kongo (KED)"}
         CG{"Kongo (errepublika)"}
@@ -309,12 +313,5 @@ eu{
         MK{"Mazedonia (Mazedoniako Yugoslaviar Errepublika ohia)"}
         TL{"Timor ekialdea"}
     }
-    CountriesShort{
-        GB{"EB"}
-        HK{"Hong Kong"}
-        MO{"Macau"}
-        PS{"Palestina"}
-        US{"AEB"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

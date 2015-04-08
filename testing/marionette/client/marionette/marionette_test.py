@@ -82,10 +82,10 @@ def expectedFailure(func):
 
 def skip_if_b2g(target):
     def wrapper(self, *args, **kwargs):
-        if not self.marionette.session_capabilities['device'] == 'qemu':
-            return target(self, *args, **kwargs)
-        else:
+        if self.marionette.session_capabilities.get('b2g') == True:
             raise SkipTest('skipping due to b2g')
+        return target(self, *args, **kwargs)
+
     return wrapper
 
 def parameterized(func_suffix, *args, **kwargs):
@@ -192,6 +192,7 @@ class CommonTestCase(unittest.TestCase):
         self.duration = 0
         self.start_time = 0
         self.expected = kwargs.pop('expected', 'pass')
+        self.logger = get_default_logger()
 
     def _addSkip(self, result, reason):
         addSkip = getattr(result, 'addSkip', None)
@@ -609,22 +610,21 @@ class MarionetteJSTestCase(CommonTestCase):
                 self.assertTrue(len(results['failures']) > 0,
                                 "expected test failures didn't occur")
             else:
-                logger = get_default_logger()
                 for failure in results['failures']:
                     diag = "" if failure.get('diag') is None else failure['diag']
                     name = "got false, expected true" if failure.get('name') is None else failure['name']
-                    logger.test_status(self.test_name, name, 'FAIL',
-                                       message=diag)
+                    self.logger.test_status(self.test_name, name, 'FAIL',
+                                            message=diag)
                 for failure in results['expectedFailures']:
                     diag = "" if failure.get('diag') is None else failure['diag']
                     name = "got false, expected false" if failure.get('name') is None else failure['name']
-                    logger.test_status(self.test_name, name, 'FAIL',
-                                       expected='FAIL', message=diag)
+                    self.logger.test_status(self.test_name, name, 'FAIL',
+                                            expected='FAIL', message=diag)
                 for failure in results['unexpectedSuccesses']:
                     diag = "" if failure.get('diag') is None else failure['diag']
                     name = "got true, expected false" if failure.get('name') is None else failure['name']
-                    logger.test_status(self.test_name, name, 'PASS',
-                                       expected='FAIL', message=diag)
+                    self.logger.test_status(self.test_name, name, 'PASS',
+                                            expected='FAIL', message=diag)
                 self.assertEqual(0, len(results['failures']),
                                  '%d tests failed' % len(results['failures']))
                 if len(results['unexpectedSuccesses']) > 0:
@@ -648,3 +648,14 @@ class MarionetteJSTestCase(CommonTestCase):
 
         self.marionette.execute_script("log('TEST-END: %s');" % self.jsFile.replace('\\', '\\\\'))
         self.marionette.test_name = None
+
+    def get_test_class_name(self):
+        # returns a dot separated folders as class name
+        dirname = os.path.dirname(self.jsFile).replace('\\', '/')
+        if dirname.startswith('/'):
+            dirname = dirname[1:]
+        return '.'.join(dirname.split('/'))
+
+    def get_test_method_name(self):
+        # returns the js filename without extension as method name
+        return os.path.splitext(os.path.basename(self.jsFile))[0]

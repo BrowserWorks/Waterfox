@@ -266,7 +266,7 @@ MediaOmxCommonDecoder::CreateStateMachine()
   if (mReader != nullptr) {
     mReader->SetAudioChannel(GetAudioChannel());
   }
-  return CreateStateMachine(mReader);
+  return CreateStateMachineFromReader(mReader);
 }
 
 } // namespace mozilla

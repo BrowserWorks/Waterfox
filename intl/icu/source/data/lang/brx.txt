@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/brx.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/brx.xml
- */
 brx{
     Keys{
         calendar{"पंचाग"}
@@ -618,7 +615,7 @@ brx{
         SOLBA{"श्टोलविज़्ज़ा या सोलबीका डायलेक्ट"}
         TARASK{"तारास्कीएवीचा वर्तनी"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         script{"देवनागरी: {0}"}
         territory{"क्षेत्र:भारत {0}"}

@@ -7,6 +7,7 @@
 const {Cu} = require("chrome");
 
 Cu.import("resource://gre/modules/Services.jsm");
+Cu.import("resource://gre/modules/Task.jsm");
 
 var {Promise: promise} = require("resource://gre/modules/Promise.jsm");
 var EventEmitter = require("devtools/toolkit/event-emitter");
@@ -118,10 +119,15 @@ ToolSidebar.prototype = {
   /**
    * Remove an existing tab.
    */
-  removeTab: function(id) {
+  removeTab: Task.async(function*(id) {
     let tab = this._tabbox.tabs.querySelector("tab#sidebar-tab-" + id);
     if (!tab) {
       return;
+    }
+
+    let win = this.getWindowForTab(id);
+    if ("destroy" in win) {
+      yield win.destroy();
     }
 
     tab.remove();
@@ -134,7 +140,7 @@ ToolSidebar.prototype = {
     this._tabs.delete(id);
 
     this.emit("tab-unregistered", id);
-  },
+  }),
 
   /**
    * Select a specific tab.
@@ -241,7 +247,7 @@ ToolSidebar.prototype = {
   /**
    * Clean-up.
    */
-  destroy: function ToolSidebar_destroy() {
+  destroy: Task.async(function*() {
     if (this._destroyed) {
       return promise.resolve(null);
     }
@@ -251,11 +257,19 @@ ToolSidebar.prototype = {
 
     this._tabbox.tabpanels.removeEventListener("select", this, true);
 
-    while (this._tabbox.tabpanels.hasChildNodes()) {
-      this._tabbox.tabpanels.removeChild(this._tabbox.tabpanels.firstChild);
+    // Note that we check for the existence of this._tabbox.tabpanels at each
+    // step as the container window may have been closed by the time one of the
+    // panel's destroy promise resolves.
+    while (this._tabbox.tabpanels && this._tabbox.tabpanels.hasChildNodes()) {
+      let panel = this._tabbox.tabpanels.firstChild;
+      let win = panel.firstChild.contentWindow;
+      if ("destroy" in win) {
+        yield win.destroy();
+      }
+      panel.remove();
     }
 
-    while (this._tabbox.tabs.hasChildNodes()) {
+    while (this._tabbox.tabs && this._tabbox.tabs.hasChildNodes()) {
       this._tabbox.tabs.removeChild(this._tabbox.tabs.firstChild);
     }
 
@@ -271,5 +285,5 @@ ToolSidebar.prototype = {
     this._toolPanel = null;
 
     return promise.resolve(null);
-  },
+  }),
 }

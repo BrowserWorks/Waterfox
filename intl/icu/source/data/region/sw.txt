@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sw.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sw.xml
- */
 sw{
     Countries{
         001{"Dunia"}
@@ -302,18 +299,18 @@ sw{
         ZW{"Zimbabwe"}
         ZZ{"Eneo lisilojulikana"}
     }
-    Countries%variant{
-        CG{"Jamhuri ya Kongo"}
-        CI{"Ivory Coast"}
-        FK{"Visiwa vya Falkland (Islas Malvinas)"}
-        MK{"Masedonia (FYROM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Uingereza"}
         HK{"Hong Kong"}
         MO{"Macau"}
         PS{"Palestina"}
         US{"US"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CG{"Jamhuri ya Kongo"}
+        CI{"Ivory Coast"}
+        FK{"Visiwa vya Falkland (Islas Malvinas)"}
+        MK{"Masedonia (FYROM)"}
+    }
+    Version{"2.1.12.94"}
 }

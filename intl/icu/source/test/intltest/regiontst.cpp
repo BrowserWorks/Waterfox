@@ -1,6 +1,6 @@
 /***********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 2013-2014, International Business Machines Corporation
+ * Copyright (c) 2013-2015, International Business Machines Corporation
  * and others. All Rights Reserved.
  ***********************************************************************/
  
@@ -499,7 +499,11 @@ void RegionTest::TestGetContainedRegions() {
             if (r->getType() == URGN_GROUPING) {
                 continue;
             }
-            StringEnumeration *containedRegions = r->getContainedRegions();
+            StringEnumeration *containedRegions = r->getContainedRegions(status);
+            if (U_FAILURE(status)) {
+              errln("%s->getContainedRegions(status) failed: %s", r->getRegionCode(), u_errorName(status));
+              continue;
+            }
             for ( int32_t i = 0 ; i < containedRegions->count(status); i++ ) {
                 const char *crID = containedRegions->next(NULL,status);
                 const Region *cr = Region::getInstance(crID,status);
@@ -526,7 +530,11 @@ void RegionTest::TestGetContainedRegionsWithType() {
             if (r->getType() != URGN_CONTINENT) {
                 continue;
             }
-            StringEnumeration *containedRegions = r->getContainedRegions(URGN_TERRITORY);
+            StringEnumeration *containedRegions = r->getContainedRegions(URGN_TERRITORY, status);
+            if (U_FAILURE(status)) {
+              errln("%s->getContainedRegions(URGN_TERRITORY, status) failed: %s", r->getRegionCode(), u_errorName(status));
+              continue;
+            }
             for ( int32_t j = 0 ; j < containedRegions->count(status); j++ ) {
                 const char *crID = containedRegions->next(NULL,status);
                 const Region *cr = Region::getInstance(crID,status);
@@ -608,7 +616,11 @@ void RegionTest::TestGetPreferredValues() {
         UErrorCode status = U_ZERO_ERROR;
         const Region *r = Region::getInstance(data[0],status);
         if (r) {
-            StringEnumeration *preferredValues = r->getPreferredValues();
+            StringEnumeration *preferredValues = r->getPreferredValues(status);
+            if (U_FAILURE(status)) {
+              errln("%s->getPreferredValues(status) failed: %s", r->getRegionCode(), u_errorName(status));
+              continue;
+            }
             for ( int i = 1 ; data[i] ; i++ ) {
                 UBool found = FALSE;
                 preferredValues->reset(status);
@@ -653,13 +665,21 @@ void RegionTest::TestAvailableTerritories() {
     // Test to make sure that the set of territories contained in World and the set of all available
     // territories are one and the same.
     UErrorCode status = U_ZERO_ERROR;
-    StringEnumeration *availableTerritories = Region::getAvailable(URGN_TERRITORY);
+    StringEnumeration *availableTerritories = Region::getAvailable(URGN_TERRITORY, status);
+    if (U_FAILURE(status)) {
+        dataerrln("Region::getAvailable(URGN_TERRITORY,status) failed: %s", u_errorName(status));
+        return;
+    }
     const Region *world = Region::getInstance("001",status);
     if (U_FAILURE(status)) {
         dataerrln("Region::getInstance(\"001\",status) failed: %s", u_errorName(status));
         return;
     }
-    StringEnumeration *containedInWorld = world->getContainedRegions(URGN_TERRITORY);
+    StringEnumeration *containedInWorld = world->getContainedRegions(URGN_TERRITORY, status);
+    if (U_FAILURE(status)) {
+        errln("world->getContainedRegions(URGN_TERRITORY, status) failed: %s", u_errorName(status));
+        return;
+    }
     if ( !availableTerritories || !containedInWorld || *availableTerritories != *containedInWorld ) {
         char availableTerritoriesString[1024] = "";
         char containedInWorldString[1024] = "";
@@ -697,7 +717,11 @@ void RegionTest::TestNoContainedRegions(void) {
       dataerrln("Fail called to Region::getInstance(\"BM\", status) - %s", u_errorName(status));
       return;
   }
-  StringEnumeration *containedRegions = region->getContainedRegions();
+  StringEnumeration *containedRegions = region->getContainedRegions(status);
+  if (U_FAILURE(status)) {
+      errln("%s->getContainedRegions(status) failed: %s", region->getRegionCode(), u_errorName(status));
+      return;
+  }
   const char *emptyStr = containedRegions->next(NULL, status);
   if (U_FAILURE(status)||(emptyStr!=NULL)) {
     errln("Error, 'BM' should have no subregions, but returned str=%p, err=%s\n", emptyStr, u_errorName(status));

@@ -67,6 +67,7 @@ interface PeerConnectionImpl  {
   boolean pluginCrash(unsigned long long pluginId, DOMString name, DOMString pluginDumpID);
 
   /* Attributes */
+  [Constant]
   readonly attribute DOMString fingerprint;
   readonly attribute DOMString localDescription;
   readonly attribute DOMString remoteDescription;
@@ -74,7 +75,6 @@ interface PeerConnectionImpl  {
   readonly attribute PCImplIceConnectionState iceConnectionState;
   readonly attribute PCImplIceGatheringState iceGatheringState;
   readonly attribute PCImplSignalingState signalingState;
-  readonly attribute PCImplSipccState sipccState;
   attribute DOMString id;
 
   attribute DOMString peerIdentity;
@@ -86,7 +86,4 @@ interface PeerConnectionImpl  {
     unsigned short type, boolean outOfOrderAllowed,
     unsigned short maxTime, unsigned short maxNum,
     boolean externalNegotiated, unsigned short stream);
-  [Throws]
-  void connectDataConnection(unsigned short localport,
-    unsigned short remoteport, unsigned short numstreams);
 };

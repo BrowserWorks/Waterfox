@@ -36,6 +36,16 @@ registerCleanupFunction(() => {
   Services.prefs.setBoolPref("devtools.timeline.enabled", gToolEnabled);
 });
 
+// Close the toolbox and all opened tabs automatically.
+registerCleanupFunction(function*() {
+  let target = TargetFactory.forTab(gBrowser.selectedTab);
+  yield gDevTools.closeToolbox(target);
+
+  while (gBrowser.tabs.length > 1) {
+    gBrowser.removeCurrentTab();
+  }
+});
+
 function addTab(url) {
   info("Adding tab: " + url);
 
@@ -49,22 +59,6 @@ function addTab(url) {
     deferred.resolve(tab);
   }, true);
 
-  return deferred.promise;
-}
-
-function removeTab(tab) {
-  info("Removing tab.");
-
-  let deferred = promise.defer();
-  let tabContainer = gBrowser.tabContainer;
-
-  tabContainer.addEventListener("TabClose", function onClose(aEvent) {
-    tabContainer.removeEventListener("TabClose", onClose, false);
-    info("Tab removed and finished closing.");
-    deferred.resolve();
-  }, false);
-
-  gBrowser.removeTab(tab);
   return deferred.promise;
 }
 
@@ -94,25 +88,6 @@ function* initTimelinePanel(url) {
 }
 
 /**
- * Closes a tab and destroys the toolbox holding a timeline panel.
- *
- * Must be used within a task.
- *
- * @param object panel
- *        The timeline panel, created by the toolbox.
- * @return object
- *         A promise resolved once the timeline, toolbox and debuggee tab
- *         are destroyed.
- */
-function* teardown(panel) {
-  info("Destroying the specified timeline.");
-
-  let tab = panel.target.tab;
-  yield panel._toolbox.destroy();
-  yield removeTab(tab);
-}
-
-/**
  * Waits until a predicate returns true.
  *
  * @param function predicate
@@ -128,5 +103,46 @@ function waitUntil(predicate, interval = 10) {
   setTimeout(function() {
     waitUntil(predicate).then(() => deferred.resolve(true));
   }, interval);
+  return deferred.promise;
+
+}
+
+/**
+ * Wait until next tick.
+ */
+function nextTick() {
+  let def = promise.defer();
+  executeSoon(() => def.resolve())
+  return def.promise;
+}
+
+/**
+ * Wait for eventName on target.
+ * @param {Object} target An observable object that either supports on/off or
+ * addEventListener/removeEventListener
+ * @param {String} eventName
+ * @param {Boolean} useCapture Optional, for addEventListener/removeEventListener
+ * @return A promise that resolves when the event has been handled
+ */
+function once(target, eventName, useCapture=false) {
+  info("Waiting for event: '" + eventName + "' on " + target + ".");
+
+  let deferred = promise.defer();
+
+  for (let [add, remove] of [
+    ["addEventListener", "removeEventListener"],
+    ["addListener", "removeListener"],
+    ["on", "off"]
+  ]) {
+    if ((add in target) && (remove in target)) {
+      target[add](eventName, function onEvent(...aArgs) {
+        info("Got event: '" + eventName + "' on " + target + ".");
+        target[remove](eventName, onEvent, useCapture);
+        deferred.resolve.apply(deferred, aArgs);
+      }, useCapture);
+      break;
+    }
+  }
+
   return deferred.promise;
 }

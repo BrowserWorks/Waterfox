@@ -7,6 +7,7 @@
 #include "AudioBufferSourceNode.h"
 #include "mozilla/dom/AudioBufferSourceNodeBinding.h"
 #include "mozilla/dom/AudioParam.h"
+#include "mozilla/FloatingPoint.h"
 #include "nsMathUtils.h"
 #include "AudioNodeEngine.h"
 #include "AudioNodeStream.h"
@@ -91,7 +92,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine TimelineParameter");
     }
   }
-  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam)
+  virtual void SetStreamTimeParameter(uint32_t aIndex, StreamTime aParam) MOZ_OVERRIDE
   {
     switch (aIndex) {
     case AudioBufferSourceNode::STOP: mStop = aParam; break;
@@ -99,7 +100,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine StreamTimeParameter");
     }
   }
-  virtual void SetDoubleParameter(uint32_t aIndex, double aParam)
+  virtual void SetDoubleParameter(uint32_t aIndex, double aParam) MOZ_OVERRIDE
   {
     switch (aIndex) {
     case AudioBufferSourceNode::START:
@@ -110,13 +111,13 @@ public:
       mBeginProcessing = mStart + 0.5;
       break;
     case AudioBufferSourceNode::DOPPLERSHIFT:
-      mDopplerShift = aParam > 0 && aParam == aParam ? aParam : 1.0;
+      mDopplerShift = (aParam <= 0 || mozilla::IsNaN(aParam)) ? 1.0 : aParam;
       break;
     default:
       NS_ERROR("Bad AudioBufferSourceNodeEngine double parameter.");
     };
   }
-  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam)
+  virtual void SetInt32Parameter(uint32_t aIndex, int32_t aParam) MOZ_OVERRIDE
   {
     switch (aIndex) {
     case AudioBufferSourceNode::SAMPLE_RATE: mBufferSampleRate = aParam; break;
@@ -133,7 +134,7 @@ public:
       NS_ERROR("Bad AudioBufferSourceNodeEngine Int32Parameter");
     }
   }
-  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer)
+  virtual void SetBuffer(already_AddRefed<ThreadSharedFloatArrayBufferList> aBuffer) MOZ_OVERRIDE
   {
     mBuffer = aBuffer;
   }
@@ -415,7 +416,7 @@ public:
     } else {
       playbackRate = mPlaybackRateTimeline.GetValueAtTime(mSource->GetCurrentPosition());
     }
-    if (playbackRate <= 0 || playbackRate != playbackRate) {
+    if (playbackRate <= 0 || mozilla::IsNaN(playbackRate)) {
       playbackRate = 1.0f;
     }
 
@@ -426,7 +427,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished)
+                            bool* aFinished) MOZ_OVERRIDE
   {
     if (!mBuffer || !mBufferEnd) {
       aOutput->SetNull(WEBAUDIO_BLOCK_SIZE);
@@ -540,8 +541,7 @@ AudioBufferSourceNode::AudioBufferSourceNode(AudioContext* aContext)
   , mLoopStart(0.0)
   , mLoopEnd(0.0)
   // mOffset and mDuration are initialized in Start().
-  , mPlaybackRate(new AudioParam(MOZ_THIS_IN_INITIALIZER_LIST(),
-                  SendPlaybackRateToStream, 1.0f))
+  , mPlaybackRate(new AudioParam(this, SendPlaybackRateToStream, 1.0f))
   , mLoop(false)
   , mStartCalled(false)
   , mStopped(false)

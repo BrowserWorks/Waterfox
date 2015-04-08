@@ -27,8 +27,10 @@
 #include "xpcprivate.h"
 #include "XPCWrapper.h"
 #include "XrayWrapper.h"
+#include "Crypto.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/BlobBinding.h"
+#include "mozilla/dom/CryptoBinding.h"
 #include "mozilla/dom/CSSBinding.h"
 #include "mozilla/dom/indexedDB/IndexedDatabaseManager.h"
 #include "mozilla/dom/FileBinding.h"
@@ -206,7 +208,7 @@ SandboxCreateXMLHttpRequest(JSContext *cx, unsigned argc, jsval *vp)
 
     nsCOMPtr<nsIXMLHttpRequest> xhr = new nsXMLHttpRequest();
     nsresult rv = xhr->Init(nsContentUtils::SubjectPrincipal(), nullptr,
-                            iglobal, nullptr);
+                            iglobal, nullptr, nullptr);
     if (NS_FAILED(rv))
         return false;
 
@@ -215,6 +217,20 @@ SandboxCreateXMLHttpRequest(JSContext *cx, unsigned argc, jsval *vp)
         return false;
 
     return true;
+}
+
+static bool
+SandboxCreateCrypto(JSContext *cx, JS::HandleObject obj)
+{
+    MOZ_ASSERT(JS_IsGlobalObject(obj));
+
+    nsIGlobalObject* native = xpc::NativeGlobal(obj);
+    MOZ_ASSERT(native);
+
+    dom::Crypto* crypto = new dom::Crypto();
+    crypto->Init(native);
+    JS::RootedObject wrapped(cx, dom::CryptoBinding::Wrap(cx, crypto));
+    return JS_DefineProperty(cx, obj, "crypto", wrapped, JSPROP_ENUMERATE);
 }
 
 static bool
@@ -343,7 +359,7 @@ sandbox_convert(JSContext *cx, HandleObject obj, JSType type, MutableHandleValue
         return true;
     }
 
-    return JS_ConvertStub(cx, obj, type, vp);
+    return JS::OrdinaryToPrimitive(cx, obj, type, vp);
 }
 
 static bool
@@ -446,7 +462,7 @@ sandbox_addProperty(JSContext *cx, HandleObject obj, HandleId id, MutableHandleV
         return false;
     unsigned attrs = pd.attributes() & ~(JSPROP_GETTER | JSPROP_SETTER);
     if (!JS_DefinePropertyById(cx, obj, id, vp,
-                               attrs | JSPROP_PROPOP_ACCESSORS,
+                               attrs | JSPROP_PROPOP_ACCESSORS | JSPROP_REDEFINE_NONCONFIGURABLE,
                                JS_PROPERTYOP_GETTER(writeToProto_getProperty),
                                JS_PROPERTYOP_SETTER(writeToProto_setProperty)))
         return false;
@@ -459,7 +475,7 @@ sandbox_addProperty(JSContext *cx, HandleObject obj, HandleId id, MutableHandleV
 static const js::Class SandboxClass = {
     "Sandbox",
     XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
-    JS_PropertyStub,   JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
+    nullptr, nullptr, nullptr, nullptr,
     sandbox_enumerate, sandbox_resolve, sandbox_convert,  sandbox_finalize,
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
@@ -478,7 +494,7 @@ static const js::Class SandboxClass = {
 static const js::Class SandboxWriteToProtoClass = {
     "Sandbox",
     XPCONNECT_GLOBAL_FLAGS_WITH_EXTRA_SLOTS(1),
-    sandbox_addProperty,   JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
+    sandbox_addProperty, nullptr, nullptr, nullptr,
     sandbox_enumerate, sandbox_resolve, sandbox_convert,  sandbox_finalize,
     nullptr, nullptr, nullptr, JS_GlobalObjectTraceHook,
     JS_NULL_CLASS_SPEC,
@@ -737,10 +753,10 @@ xpc::SandboxProxyHandler::getOwnEnumerablePropertyKeys(JSContext *cx,
 }
 
 bool
-xpc::SandboxProxyHandler::iterate(JSContext *cx, JS::Handle<JSObject*> proxy,
-                                  unsigned flags, JS::MutableHandle<JSObject*> objp) const
+xpc::SandboxProxyHandler::enumerate(JSContext *cx, JS::Handle<JSObject*> proxy,
+                                    JS::MutableHandle<JSObject*> objp) const
 {
-    return BaseProxyHandler::iterate(cx, proxy, flags, objp);
+    return BaseProxyHandler::enumerate(cx, proxy, objp);
 }
 
 bool
@@ -761,9 +777,7 @@ xpc::GlobalProperties::Parse(JSContext *cx, JS::HandleObject obj)
         }
         JSAutoByteString name(cx, nameValue.toString());
         NS_ENSURE_TRUE(name, false);
-        if (Promise && !strcmp(name.ptr(), "-Promise")) {
-            Promise = false;
-        } else if (!strcmp(name.ptr(), "CSS")) {
+        if (!strcmp(name.ptr(), "CSS")) {
             CSS = true;
         } else if (!strcmp(name.ptr(), "indexedDB")) {
             indexedDB = true;
@@ -785,6 +799,8 @@ xpc::GlobalProperties::Parse(JSContext *cx, JS::HandleObject obj)
             Blob = true;
         } else if (!strcmp(name.ptr(), "File")) {
             File = true;
+        } else if (!strcmp(name.ptr(), "crypto")) {
+            crypto = true;
         } else {
             JS_ReportError(cx, "Unknown property name: %s", name.ptr());
             return false;
@@ -797,9 +813,6 @@ bool
 xpc::GlobalProperties::Define(JSContext *cx, JS::HandleObject obj)
 {
     if (CSS && !dom::CSSBinding::GetConstructorObject(cx, obj))
-        return false;
-
-    if (Promise && !dom::PromiseBinding::GetConstructorObject(cx, obj))
         return false;
 
     if (indexedDB && AccessCheck::isChrome(obj) &&
@@ -840,6 +853,9 @@ xpc::GlobalProperties::Define(JSContext *cx, JS::HandleObject obj)
 
     if (File &&
         !dom::FileBinding::GetConstructorObject(cx, obj))
+        return false;
+
+    if (crypto && !SandboxCreateCrypto(cx, obj))
         return false;
 
     return true;
@@ -969,6 +985,11 @@ xpc::CreateSandboxObject(JSContext *cx, MutableHandleValue vp, nsISupports *prin
             return NS_ERROR_XPC_UNEXPECTED;
 
         if (!options.globalProperties.Define(cx, sandbox))
+            return NS_ERROR_XPC_UNEXPECTED;
+
+        // Promise is supposed to be part of ES, and therefore should appear on
+        // every global.
+        if (!dom::PromiseBinding::GetConstructorObject(cx, sandbox))
             return NS_ERROR_XPC_UNEXPECTED;
 
         // Resolve standard classes eagerly to avoid triggering mirroring hooks for them.
@@ -1415,6 +1436,10 @@ nsXPCComponents_utils_Sandbox::CallOrConstruct(nsIXPConnectWrappedNative *wrappe
         } else {
             ok = GetPrincipalOrSOP(cx, obj, getter_AddRefs(prinOrSop));
         }
+    } else if (args[0].isNull()) {
+        // Null means that we just pass prinOrSop = nullptr, and get an
+        // nsNullPrincipal.
+        ok = true;
     }
 
     if (!ok)

@@ -150,9 +150,9 @@ public:
                                         bool* aIsForApp,
                                         bool* aIsForBrowser,
                                         TabId* aTabId) MOZ_OVERRIDE;
-    virtual bool AnswerBridgeToChildProcess(const ContentParentId& aCpId) MOZ_OVERRIDE;
+    virtual bool RecvBridgeToChildProcess(const ContentParentId& aCpId) MOZ_OVERRIDE;
 
-    virtual bool AnswerLoadPlugin(const uint32_t& aPluginId) MOZ_OVERRIDE;
+    virtual bool RecvLoadPlugin(const uint32_t& aPluginId) MOZ_OVERRIDE;
     virtual bool RecvFindPlugins(const uint32_t& aPluginEpoch,
                                  nsTArray<PluginTag>* aPlugins,
                                  uint32_t* aNewPluginEpoch) MOZ_OVERRIDE;
@@ -206,7 +206,7 @@ public:
       return mIsForBrowser;
     }
 #ifdef MOZ_NUWA_PROCESS
-    bool IsNuwaProcess();
+    bool IsNuwaProcess() const;
 #endif
 
     GeckoChildProcessHost* Process() {
@@ -220,7 +220,11 @@ public:
     }
 
     bool NeedsPermissionsUpdate() const {
+#ifdef MOZ_NUWA_PROCESS
+        return !IsNuwaProcess() && mSendPermissionUpdates;
+#else
         return mSendPermissionUpdates;
+#endif
     }
 
     bool NeedsDataStoreInfos() const {
@@ -248,6 +252,8 @@ public:
     void FriendlyName(nsAString& aName, bool aAnonymize = false);
 
     virtual void OnChannelError() MOZ_OVERRIDE;
+
+    virtual void OnBeginSyncTransaction() MOZ_OVERRIDE;
 
     virtual PCrashReporterParent*
     AllocPCrashReporterParent(const NativeThreadId& tid,
@@ -496,8 +502,8 @@ private:
     virtual bool RecvGetRandomValues(const uint32_t& length,
                                      InfallibleTArray<uint8_t>* randomValues) MOZ_OVERRIDE;
 
-    virtual bool RecvIsSecureURI(const uint32_t& type, const URIParams& uri,
-                                 const uint32_t& flags, bool* isSecureURI);
+    virtual bool RecvIsSecureURI(const uint32_t& aType, const URIParams& aURI,
+                                 const uint32_t& aFlags, bool* aIsSecureURI) MOZ_OVERRIDE;
 
     virtual bool DeallocPHalParent(PHalParent*) MOZ_OVERRIDE;
 
@@ -602,7 +608,8 @@ private:
                                            const nsString& aCookie, const nsString& aName,
                                            const nsString& aBidi, const nsString& aLang,
                                            const nsString& aData,
-                                           const IPC::Principal& aPrincipal) MOZ_OVERRIDE;
+                                           const IPC::Principal& aPrincipal,
+                                           const bool& aInPrivateBrowsing) MOZ_OVERRIDE;
 
     virtual bool RecvCloseAlert(const nsString& aName,
                                 const IPC::Principal& aPrincipal) MOZ_OVERRIDE;
@@ -679,6 +686,8 @@ private:
 
     virtual bool RecvNuwaReady() MOZ_OVERRIDE;
 
+    virtual bool RecvNuwaWaitForFreeze() MOZ_OVERRIDE;
+
     virtual bool RecvAddNewProcess(const uint32_t& aPid,
                                    const InfallibleTArray<ProtocolFdMapping>& aFds) MOZ_OVERRIDE;
 
@@ -715,13 +724,13 @@ private:
     RecvOpenAnonymousTemporaryFile(FileDescriptor* aFD) MOZ_OVERRIDE;
 
     virtual bool
-    RecvFormProcessValue(const nsString& oldValue, const nsString& challenge,
-                         const nsString& keytype, const nsString& keyparams,
-                         nsString* newValue) MOZ_OVERRIDE;
+    RecvKeygenProcessValue(const nsString& oldValue, const nsString& challenge,
+                           const nsString& keytype, const nsString& keyparams,
+                           nsString* newValue) MOZ_OVERRIDE;
 
     virtual bool
-    RecvFormProvideContent(nsString* aAttribute,
-                           nsTArray<nsString>* aContent) MOZ_OVERRIDE;
+    RecvKeygenProvideContent(nsString* aAttribute,
+                             nsTArray<nsString>* aContent) MOZ_OVERRIDE;
 
     virtual PFileDescriptorSetParent*
     AllocPFileDescriptorSetParent(const mozilla::ipc::FileDescriptor&) MOZ_OVERRIDE;
@@ -788,6 +797,7 @@ private:
     bool mCalledClose;
     bool mCalledCloseWithError;
     bool mCalledKillHard;
+    bool mCreatedPairedMinidumps;
 
     friend class CrashReporterParent;
 

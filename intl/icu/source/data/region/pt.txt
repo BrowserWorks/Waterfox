@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/pt.xml
- */
 pt{
     Countries{
         001{"Mundo"}
@@ -136,10 +133,10 @@ pt{
         GP{"Guadalupe"}
         GQ{"Guiné Equatorial"}
         GR{"Grécia"}
-        GS{"Geórgia do Sul e Ilhas Sandwich do Sul"}
+        GS{"Ilhas Geórgia do Sul e Sandwich do Sul"}
         GT{"Guatemala"}
         GU{"Guam"}
-        GW{"Guiné Bissau"}
+        GW{"Guiné-Bissau"}
         GY{"Guiana"}
         HK{"Hong Kong, RAE da China"}
         HM{"Ilhas Heard e McDonald"}
@@ -171,7 +168,7 @@ pt{
         KP{"Coreia do Norte"}
         KR{"Coreia do Sul"}
         KW{"Kuwait"}
-        KY{"Ilhas Caiman"}
+        KY{"Ilhas Cayman"}
         KZ{"Cazaquistão"}
         LA{"Laos"}
         LB{"Líbano"}
@@ -281,7 +278,7 @@ pt{
         TZ{"Tanzânia"}
         UA{"Ucrânia"}
         UG{"Uganda"}
-        UM{"Ilhas Distantes dos EUA"}
+        UM{"Ilhas Menores Distantes dos EUA"}
         US{"Estados Unidos"}
         UY{"Uruguai"}
         UZ{"Uzbequistão"}
@@ -302,6 +299,13 @@ pt{
         ZW{"Zimbábue"}
         ZZ{"Região desconhecida"}
     }
+    Countries%short{
+        GB{"Reino Unido"}
+        HK{"Hong Kong"}
+        MO{"Macau"}
+        PS{"Palestina"}
+        US{"EUA"}
+    }
     Countries%variant{
         CD{"República Democrática do Congo"}
         CG{"Congo"}
@@ -309,12 +313,5 @@ pt{
         MK{"Macedônia (Antiga República Iugoslava da Macedônia - ARIM)"}
         TL{"República Democrática de Timor-Leste"}
     }
-    CountriesShort{
-        GB{"Reino Unido"}
-        HK{"Hong Kong"}
-        MO{"Macau"}
-        PS{"Palestina"}
-        US{"EUA"}
-    }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
 }

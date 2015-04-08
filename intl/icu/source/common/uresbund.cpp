@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 1997-2014, International Business Machines Corporation and
+* Copyright (C) 1997-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 ******************************************************************************
 *
@@ -54,7 +54,7 @@ static int32_t U_CALLCONV hashEntry(const UHashTok parm) {
     UHashTok namekey, pathkey;
     namekey.pointer = b->fName;
     pathkey.pointer = b->fPath;
-    return uhash_hashChars(namekey)+37*uhash_hashChars(pathkey);
+    return uhash_hashChars(namekey)+37u*uhash_hashChars(pathkey);
 }
 
 /* INTERNAL: compares two entries */

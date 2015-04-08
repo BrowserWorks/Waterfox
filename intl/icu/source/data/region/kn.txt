@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/kn.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/kn.xml
- */
 kn{
     Countries{
         001{"ಪ್ರಪಂಚ"}
@@ -302,6 +299,13 @@ kn{
         ZW{"ಜಿಂಬಾಬ್ವೆ"}
         ZZ{"ಅಜ್ಞಾತ ಪ್ರದೇಶ"}
     }
+    Countries%short{
+        GB{"ಯು.ಕೆ."}
+        HK{"ಹಾಂಗ್ ಕಾಂಗ್"}
+        MO{"ಮಖಾವ್"}
+        PS{"ಪ್ಯಾಲೆಸ್ಟೇನ್"}
+        US{"ಯು.ಎಸ್"}
+    }
     Countries%variant{
         CD{"ಕಾಂಗೋ (DRC)"}
         CG{"ಕಾಂಗೋ (ಗಣರಾಜ್ಯ)"}
@@ -310,12 +314,5 @@ kn{
         MK{"ಮ್ಯಾಸಿಡೋನಿಯ (FYROM)"}
         TL{"ಈಸ್ಟ್ ಟಿಮೋರ್"}
     }
-    CountriesShort{
-        GB{"ಯು.ಕೆ."}
-        HK{"ಹಾಂಗ್ ಕಾಂಗ್"}
-        MO{"ಮಖಾವ್"}
-        PS{"ಪ್ಯಾಲೆಸ್ಟೇನ್"}
-        US{"ಯು.ಎಸ್"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.51"}
 }

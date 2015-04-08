@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/hi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/hi.xml
- */
 hi{
     Keys{
         calendar{"कैलेंडर"}
@@ -197,7 +194,7 @@ hi{
         hai{"हैडा"}
         haw{"हवाई"}
         he{"हिब्रू"}
-        hi{"हिंदी"}
+        hi{"हिन्दी"}
         hil{"हिलिगेनन"}
         hit{"हिताइत"}
         hmn{"ह्मॉंग"}
@@ -519,13 +516,13 @@ hi{
         zxx{"कोई भाषा सामग्री नहीं"}
         zza{"ज़ाज़ा"}
     }
-    Languages%variant{
-        ps{"पुश्तो"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"अज़ेरी"}
         en_GB{"यू.के. अंग्रेज़ी"}
         en_US{"अमेरिकी अंग्रेज़ी"}
+    }
+    Languages%variant{
+        ps{"पुश्तो"}
     }
     Scripts{
         Arab{"अरबी"}
@@ -790,7 +787,7 @@ hi{
         POSIX{"कम्प्यूटर"}
         REVISED{"संशोधित वर्तनी"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"भाषा: {0}"}
         script{"लिपि: {0}"}

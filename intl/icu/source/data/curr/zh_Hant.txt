@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/zh_Hant.xml
- */
 zh_Hant{
     %%Parent{"root"}
     Currencies{
@@ -454,7 +451,7 @@ zh_Hant{
         }
         GYD{
             "GYD",
-            "圭亞那元",
+            "蓋亞那元",
         }
         HKD{
             "HK$",
@@ -774,7 +771,7 @@ zh_Hant{
         }
         OMR{
             "OMR",
-            "阿曼里奧",
+            "阿曼里亞爾",
         }
         PAB{
             "PAB",
@@ -822,7 +819,7 @@ zh_Hant{
         }
         QAR{
             "QAR",
-            "卡達爾里亞爾",
+            "卡達里亞爾",
         }
         RHD{
             "RHD",
@@ -854,7 +851,7 @@ zh_Hant{
         }
         SAR{
             "SAR",
-            "沙烏地里雅",
+            "沙烏地里亞爾",
         }
         SBD{
             "SBD",
@@ -1146,7 +1143,7 @@ zh_Hant{
         }
         YER{
             "YER",
-            "葉門里雅",
+            "葉門里亞爾",
         }
         YUD{
             "YUD",
@@ -1585,7 +1582,7 @@ zh_Hant{
             other{"幾內亞比索披索"}
         }
         GYD{
-            other{"圭亞那元"}
+            other{"蓋亞那元"}
         }
         HKD{
             other{"港幣"}
@@ -1825,7 +1822,7 @@ zh_Hant{
             other{"紐西蘭幣"}
         }
         OMR{
-            other{"阿曼里奧"}
+            other{"阿曼里亞爾"}
         }
         PAB{
             other{"巴拿馬巴波亞"}
@@ -1861,7 +1858,7 @@ zh_Hant{
             other{"巴拉圭瓜拉尼"}
         }
         QAR{
-            other{"卡達爾里亞爾"}
+            other{"卡達里亞爾"}
         }
         RHD{
             other{"羅德西亞元"}
@@ -1885,7 +1882,7 @@ zh_Hant{
             other{"盧安達法郎"}
         }
         SAR{
-            other{"沙烏地里雅"}
+            other{"沙烏地里亞爾"}
         }
         SBD{
             other{"索羅門群島元"}
@@ -2104,7 +2101,7 @@ zh_Hant{
             other{"葉門第納爾"}
         }
         YER{
-            other{"葉門里雅"}
+            other{"葉門里亞爾"}
         }
         YUD{
             other{"南斯拉夫第納爾硬幣"}
@@ -2149,5 +2146,5 @@ zh_Hant{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
 }

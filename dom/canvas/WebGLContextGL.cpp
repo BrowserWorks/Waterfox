@@ -1105,13 +1105,11 @@ WebGLContext::GetBufferParameter(GLenum target, GLenum pname)
     if (IsContextLost())
         return JS::NullValue();
 
-
-    WebGLRefPtr<WebGLBuffer>* slot = GetBufferSlotByTarget(target,
-                                                           "getBufferParameter");
-    if (!slot)
+    if (!ValidateBufferTarget(target, "getBufferParameter"))
         return JS::NullValue();
 
-    if (!*slot) {
+    WebGLRefPtr<WebGLBuffer>& slot = GetBufferSlotByTarget(target);
+    if (!slot) {
         ErrorInvalidOperation("No buffer bound to `target` (0x%4x).", target);
         return JS::NullValue();
     }
@@ -4006,7 +4004,7 @@ WebGLContext::TexImage2D(GLenum rawTarget, GLint level,
     if (pixels.IsNull()) {
         data = nullptr;
         length = 0;
-        jsArrayType = js::Scalar::TypeMax;
+        jsArrayType = js::Scalar::MaxTypedArrayViewType;
     } else {
         const ArrayBufferView& view = pixels.Value();
         view.ComputeLengthAndData();
@@ -4050,7 +4048,7 @@ WebGLContext::TexImage2D(GLenum rawTarget, GLint level,
 
     return TexImage2D_base(rawTarget, level, internalformat, pixels->Width(),
                            pixels->Height(), 4*pixels->Width(), 0,
-                           format, type, pixelData, pixelDataLength, js::Scalar::TypeMax,
+                           format, type, pixelData, pixelDataLength, js::Scalar::MaxTypedArrayViewType,
                            WebGLTexelFormat::RGBA8, false);
 }
 
@@ -4233,7 +4231,7 @@ WebGLContext::TexSubImage2D(GLenum target, GLint level,
                               pixels->Width(), pixels->Height(),
                               4*pixels->Width(), format, type,
                               arr.Data(), arr.Length(),
-                              js::Scalar::TypeMax,
+                              js::Scalar::MaxTypedArrayViewType,
                               WebGLTexelFormat::RGBA8, false);
 }
 

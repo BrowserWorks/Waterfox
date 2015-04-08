@@ -165,7 +165,6 @@ http://tracking.example.org:80
 
 # Bug 483437, 484111
 https://www.bank1.com:443           privileged,cert=escapeattack1
-https://www.bank2.com:443           privileged,cert=escapeattack2
 
 #
 # CONNECT for redirproxy results in a 302 redirect to
@@ -238,3 +237,8 @@ https://fail-handshake.example.com:443                            privileged,fai
 # Hosts for sha1 console warning tests
 https://sha1ee.example.com:443                                    privileged,cert=sha1_end_entity
 https://sha256ee.example.com:443                                  privileged,cert=sha256_end_entity
+
+# Hosts for ssl3/rc4 console warning tests
+https://ssl3.example.com:443        privileged,ssl3
+https://rc4.example.com:443         privileged,rc4
+https://ssl3rc4.example.com:443     privileged,ssl3,rc4

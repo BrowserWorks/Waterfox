@@ -121,7 +121,6 @@ nsLayoutDebugger::GetStyleSize(nsIPresShell* aPresentation,
 }
 #endif
 
-#ifdef MOZ_DUMP_PAINTING
 std::ostream& operator<<(std::ostream& os, const nsPrintfCString& rhs) {
   os << rhs.get();
   return os;
@@ -149,22 +148,28 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
 #endif
   bool snap;
   nsRect rect = aItem->GetBounds(aBuilder, &snap);
+  nsRect layerRect = rect -
+    nsLayoutUtils::GetAnimatedGeometryRootFor(aItem, aBuilder, nullptr)->
+      GetOffsetToCrossDoc(aItem->ReferenceFrame());
   nscolor color;
   nsRect vis = aItem->GetVisibleRect();
   nsRect component = aItem->GetComponentAlphaBounds(aBuilder);
   nsDisplayList* list = aItem->GetChildren();
   const DisplayItemClip& clip = aItem->GetClip();
   nsRegion opaque = aItem->GetOpaqueRegion(aBuilder, &snap);
+#ifdef MOZ_DUMP_PAINTING
   if (aDumpHtml && aItem->Painted()) {
     nsCString string(aItem->Name());
     string.Append('-');
     string.AppendInt((uint64_t)aItem);
     aStream << nsPrintfCString("<a href=\"javascript:ViewImage('%s')\">", string.BeginReading());
   }
-  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) %s",
+#endif
+  aStream << nsPrintfCString("%s p=0x%p f=0x%p(%s) %sbounds(%d,%d,%d,%d) layerBounds(%d,%d,%d,%d) visible(%d,%d,%d,%d) componentAlpha(%d,%d,%d,%d) clip(%s) %s",
           aItem->Name(), aItem, (void*)f, NS_ConvertUTF16toUTF8(fName).get(),
           (aItem->ZIndex() ? nsPrintfCString("z=%d ", aItem->ZIndex()).get() : ""),
           rect.x, rect.y, rect.width, rect.height,
+          layerRect.x, layerRect.y, layerRect.width, layerRect.height,
           vis.x, vis.y, vis.width, vis.height,
           component.x, component.y, component.width, component.height,
           clip.ToString().get(),
@@ -193,9 +198,11 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
   // Display item specific debug info
   aItem->WriteDebugInfo(aStream);
 
+#ifdef MOZ_DUMP_PAINTING
   if (aDumpHtml && aItem->Painted()) {
     aStream << "</a>";
   }
+#endif
   uint32_t key = aItem->GetPerFrameKey();
   Layer* layer = mozilla::FrameLayerBuilder::GetDebugOldLayerFor(f, key);
   if (layer) {
@@ -205,11 +212,13 @@ PrintDisplayItemTo(nsDisplayListBuilder* aBuilder, nsDisplayItem* aItem,
       aStream << nsPrintfCString(" layer=0x%p", layer);
     }
   }
+#ifdef MOZ_DUMP_PAINTING
   if (aItem->GetType() == nsDisplayItem::TYPE_SVG_EFFECTS) {
     nsCString str;
     (static_cast<nsDisplaySVGEffects*>(aItem))->PrintEffects(str);
     aStream << str.get();
   }
+#endif
   aStream << "\n";
 
   if (aDumpSublist && list) {
@@ -259,6 +268,7 @@ nsFrame::PrintDisplayList(nsDisplayListBuilder* aBuilder,
   PrintDisplayListTo(aBuilder, aList, aStream, 0, aDumpHtml);
 }
 
+#ifdef MOZ_DUMP_PAINTING
 static void
 PrintDisplayListSetItem(nsDisplayListBuilder* aBuilder,
                         const char* aItemName,

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sr_Latn.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sr_Latn.xml
- */
 sr_Latn{
     %%Parent{"root"}
     Keys{
@@ -509,13 +506,13 @@ sr_Latn{
         zxx{"bez lingvističkog sadržaja"}
         zza{"Zaza"}
     }
-    Languages%variant{
-        ps{"pašto"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"azerski"}
         en_GB{"engleski (UK)"}
         en_US{"engleski (SAD)"}
+    }
+    Languages%variant{
+        ps{"pašto"}
     }
     Scripts{
         Arab{"arapsko pismo"}
@@ -798,7 +795,7 @@ sr_Latn{
         TARASK{"Taraskijevička ortografija"}
         VALENCIA{"Valencijska"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.24"}
     codePatterns{
         language{"Jezik: {0}"}
         script{"pismo: {0}"}

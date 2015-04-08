@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/supplementalData.xml
@@ -8,15 +8,6 @@
 // ***************************************************************************
 supplementalData:table(nofallback){
     CurrencyMap{
-        150{
-            {
-                from:intvector{
-                    213,
-                    320765952,
-                }
-                id{"EUR"}
-            }
-        }
         AC{
             {
                 from:intvector{
@@ -2447,10 +2438,21 @@ supplementalData:table(nofallback){
         LT{
             {
                 from:intvector{
+                    330,
+                    -1563774976,
+                }
+                id{"EUR"}
+            }
+            {
+                from:intvector{
                     172,
                     -2062942208,
                 }
                 id{"LTL"}
+                to:intvector{
+                    330,
+                    -1563774977,
+                }
             }
             {
                 from:intvector{

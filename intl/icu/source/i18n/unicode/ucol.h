@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (c) 1996-2014, International Business Machines Corporation and others.
+* Copyright (c) 1996-2015, International Business Machines Corporation and others.
 * All Rights Reserved.
 *******************************************************************************
 */
@@ -685,7 +685,7 @@ ucol_setStrength(UCollator *coll,
  * @param coll The UCollator to query.
  * @param dest The array to fill with the script ordering.
  * @param destCapacity The length of dest. If it is 0, then dest may be NULL and the function 
- * will only return the length of the result without writing any of the result string (pre-flighting).
+ * will only return the length of the result without writing any codes (pre-flighting).
  * @param pErrorCode Must be a valid pointer to an error code value, which must not indicate a 
  * failure before the function call.
  * @return The number of reordering codes written to the dest array.
@@ -702,27 +702,32 @@ ucol_getReorderCodes(const UCollator* coll,
                     UErrorCode *pErrorCode);
 /** 
  * Sets the reordering codes for this collator.
- * Collation reordering allows scripts and some other defined blocks of characters 
- * to be moved relative to each other as a block. This reordering is done on top of 
+ * Collation reordering allows scripts and some other groups of characters
+ * to be moved relative to each other. This reordering is done on top of
  * the DUCET/CLDR standard collation order. Reordering can specify groups to be placed 
  * at the start and/or the end of the collation order. These groups are specified using
  * UScript codes and UColReorderCode entries.
+ *
  * <p>By default, reordering codes specified for the start of the order are placed in the 
- * order given after a group of "special" non-script blocks. These special groups of characters 
+ * order given after several special non-script blocks. These special groups of characters
  * are space, punctuation, symbol, currency, and digit. These special groups are represented with
  * UColReorderCode entries. Script groups can be intermingled with 
- * these special non-script blocks if those special blocks are explicitly specified in the reordering.
+ * these special non-script groups if those special groups are explicitly specified in the reordering.
+ *
  * <p>The special code OTHERS stands for any script that is not explicitly 
  * mentioned in the list of reordering codes given. Anything that is after OTHERS
  * will go at the very end of the reordering in the order given.
+ *
  * <p>The special reorder code DEFAULT will reset the reordering for this collator
  * to the default for this collator. The default reordering may be the DUCET/CLDR order or may be a reordering that
  * was specified when this collator was created from resource data or from rules. The 
- * DEFAULT code <b>must</b> be the sole code supplied when it used. If not
- * that will result in a U_ILLEGAL_ARGUMENT_ERROR being set.
+ * DEFAULT code <b>must</b> be the sole code supplied when it is used.
+ * If not, then U_ILLEGAL_ARGUMENT_ERROR will be set.
+ *
  * <p>The special reorder code NONE will remove any reordering for this collator.
  * The result of setting no reordering will be to have the DUCET/CLDR ordering used. The 
- * NONE code <b>must</b> be the sole code supplied when it used.
+ * NONE code <b>must</b> be the sole code supplied when it is used.
+ *
  * @param coll The UCollator to set.
  * @param reorderCodes An array of script codes in the new order. This can be NULL if the 
  * length is also set to 0. An empty array will clear any reordering codes on the collator.
@@ -744,10 +749,13 @@ ucol_setReorderCodes(UCollator* coll,
 /**
  * Retrieves the reorder codes that are grouped with the given reorder code. Some reorder
  * codes will be grouped and must reorder together.
+ * Beginning with ICU 55, scripts only reorder together if they are primary-equal,
+ * for example Hiragana and Katakana.
+ *
  * @param reorderCode The reorder code to determine equivalence for.
  * @param dest The array to fill with the script ordering.
  * @param destCapacity The length of dest. If it is 0, then dest may be NULL and the function
- * will only return the length of the result without writing any of the result string (pre-flighting).
+ * will only return the length of the result without writing any codes (pre-flighting).
  * @param pErrorCode Must be a valid pointer to an error code value, which must not indicate 
  * a failure before the function call.
  * @return The number of reordering codes written to the dest array.
@@ -1192,8 +1200,6 @@ ucol_setAttribute(UCollator *coll, UColAttribute attr, UColAttributeValue value,
 U_STABLE UColAttributeValue  U_EXPORT2 
 ucol_getAttribute(const UCollator *coll, UColAttribute attr, UErrorCode *status);
 
-#ifndef U_HIDE_DRAFT_API
-
 /**
  * Sets the variable top to the top of the specified reordering group.
  * The variable top determines the highest-sorting character
@@ -1208,9 +1214,9 @@ ucol_getAttribute(const UCollator *coll, UColAttribute attr, UErrorCode *status)
  *                   immediately. Check for U_FAILURE() on output or use with
  *                   function chaining. (See User Guide for details.)
  * @see ucol_getMaxVariable
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT void U_EXPORT2
+U_STABLE void U_EXPORT2
 ucol_setMaxVariable(UCollator *coll, UColReorderCode group, UErrorCode *pErrorCode);
 
 /**
@@ -1218,12 +1224,10 @@ ucol_setMaxVariable(UCollator *coll, UColReorderCode group, UErrorCode *pErrorCo
  * @param coll the collator
  * @return the maximum variable reordering group.
  * @see ucol_setMaxVariable
- * @draft ICU 53
+ * @stable ICU 53
  */
-U_DRAFT UColReorderCode U_EXPORT2
+U_STABLE UColReorderCode U_EXPORT2
 ucol_getMaxVariable(const UCollator *coll);
-
-#endif  /* U_HIDE_DRAFT_API */
 
 #ifndef U_HIDE_DEPRECATED_API
 /**

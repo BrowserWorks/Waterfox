@@ -12,6 +12,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.os.Build;
+
 import org.json.JSONObject;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.AppConstants.Versions;
@@ -27,7 +28,7 @@ import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.GuestSession;
 import org.mozilla.gecko.LocaleManager;
-import org.mozilla.gecko.NewTabletUI;
+import org.mozilla.gecko.Locales;
 import org.mozilla.gecko.PrefsHelper;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.RestrictedProfiles;
@@ -37,6 +38,7 @@ import org.mozilla.gecko.TelemetryContract.Method;
 import org.mozilla.gecko.background.common.GlobalConstants;
 import org.mozilla.gecko.background.healthreport.HealthReportConstants;
 import org.mozilla.gecko.db.BrowserContract.SuggestedSites;
+import org.mozilla.gecko.updater.UpdateService;
 import org.mozilla.gecko.updater.UpdateServiceHelper;
 import org.mozilla.gecko.util.GeckoEventListener;
 import org.mozilla.gecko.util.HardwareUtils;
@@ -114,6 +116,7 @@ OnSharedPreferenceChangeListener
     private static final String PREFS_MENU_CHAR_ENCODING = "browser.menu.showCharacterEncoding";
     private static final String PREFS_MP_ENABLED = "privacy.masterpassword.enabled";
     private static final String PREFS_UPDATER_AUTODOWNLOAD = "app.update.autodownload";
+    private static final String PREFS_UPDATER_URL = "app.update.url.android";
     private static final String PREFS_GEO_REPORTING = NON_PREF_PREFIX + "app.geo.reportdata";
     private static final String PREFS_GEO_LEARN_MORE = NON_PREF_PREFIX + "geo.learn_more";
     private static final String PREFS_HEALTHREPORT_LINK = NON_PREF_PREFIX + "healthreport.link";
@@ -121,6 +124,8 @@ OnSharedPreferenceChangeListener
     private static final String PREFS_DISPLAY_REFLOW_ON_ZOOM = "browser.zoom.reflowOnZoom";
     private static final String PREFS_DISPLAY_TITLEBAR_MODE = "browser.chrome.titlebarMode";
     private static final String PREFS_SYNC = NON_PREF_PREFIX + "sync";
+    private static final String PREFS_TRACKING_PROTECTION = "privacy.trackingprotection.enabled";
+    private static final String PREFS_TRACKING_PROTECTION_LEARN_MORE = NON_PREF_PREFIX + "trackingprotection.learn_more";
 
     private static final String ACTION_STUMBLER_UPLOAD_PREF = AppConstants.ANDROID_PACKAGE_NAME + ".STUMBLER_PREF";
 
@@ -669,6 +674,13 @@ OnSharedPreferenceChangeListener
                     preferences.removePreference(pref);
                     i--;
                     continue;
+                } else if (!AppConstants.NIGHTLY_BUILD &&
+                           (PREFS_TRACKING_PROTECTION.equals(key) ||
+                            PREFS_TRACKING_PROTECTION_LEARN_MORE.equals(key))) {
+                    // Remove UI for tracking protection preference on non-Nightly builds.
+                    preferences.removePreference(pref);
+                    i--;
+                    continue;
                 } else if (!AppConstants.MOZ_TELEMETRY_REPORTING &&
                            PREFS_TELEMETRY_ENABLED.equals(key)) {
                     preferences.removePreference(pref);
@@ -723,7 +735,7 @@ OnSharedPreferenceChangeListener
                         }
                     });
                 } else if (PREFS_DISPLAY_TITLEBAR_MODE.equals(key) &&
-                           NewTabletUI.isEnabled(this)) {
+                           HardwareUtils.isTablet()) {
                     // New tablet always shows URLS, not titles.
                     preferences.removePreference(pref);
                     i--;
@@ -1003,7 +1015,7 @@ OnSharedPreferenceChangeListener
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (PREFS_BROWSER_LOCALE.equals(key)) {
-            onLocaleSelected(BrowserLocaleManager.getLanguageTag(lastLocale),
+            onLocaleSelected(Locales.getLanguageTag(lastLocale),
                              sharedPreferences.getString(key, null));
         } else if (PREFS_SUGGESTED_SITES.equals(key)) {
             refreshSuggestedSites();
@@ -1041,13 +1053,15 @@ OnSharedPreferenceChangeListener
         if (PREFS_BROWSER_LOCALE.equals(prefName)) {
             // Even though this is a list preference, we don't want to handle it
             // below, so we return here.
-            return onLocaleSelected(BrowserLocaleManager.getLanguageTag(lastLocale), (String) newValue);
+            return onLocaleSelected(Locales.getLanguageTag(lastLocale), (String) newValue);
         }
 
         if (PREFS_MENU_CHAR_ENCODING.equals(prefName)) {
             setCharEncodingState(((String) newValue).equals("true"));
         } else if (PREFS_UPDATER_AUTODOWNLOAD.equals(prefName)) {
-            UpdateServiceHelper.registerForUpdates(this, (String) newValue);
+            UpdateServiceHelper.setAutoDownloadPolicy(this, UpdateService.AutoDownloadPolicy.get((String) newValue));
+        } else if (PREFS_UPDATER_URL.equals(prefName)) {
+            UpdateServiceHelper.setUpdateUrl(this, (String) newValue);
         } else if (PREFS_HEALTHREPORT_UPLOAD_ENABLED.equals(prefName)) {
             // The healthreport pref only lives in Android, so we do not persist
             // to Gecko, but we do broadcast intent to the health report

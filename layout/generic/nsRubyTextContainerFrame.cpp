@@ -10,6 +10,7 @@
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
 #include "WritingModes.h"
+#include "RubyReflowState.h"
 #include "mozilla/UniquePtr.h"
 
 using namespace mozilla;
@@ -62,6 +63,60 @@ nsRubyTextContainerFrame::IsFrameOfType(uint32_t aFlags) const
 }
 
 /* virtual */ void
+nsRubyTextContainerFrame::SetInitialChildList(ChildListID aListID,
+                                              nsFrameList& aChildList)
+{
+  nsRubyTextContainerFrameSuper::SetInitialChildList(aListID, aChildList);
+  UpdateSpanFlag();
+}
+
+/* virtual */ void
+nsRubyTextContainerFrame::AppendFrames(ChildListID aListID,
+                                       nsFrameList& aFrameList)
+{
+  nsRubyTextContainerFrameSuper::AppendFrames(aListID, aFrameList);
+  UpdateSpanFlag();
+}
+
+/* virtual */ void
+nsRubyTextContainerFrame::InsertFrames(ChildListID aListID,
+                                       nsIFrame* aPrevFrame,
+                                       nsFrameList& aFrameList)
+{
+  nsRubyTextContainerFrameSuper::InsertFrames(aListID, aPrevFrame, aFrameList);
+  UpdateSpanFlag();
+}
+
+/* virtual */ void
+nsRubyTextContainerFrame::RemoveFrame(ChildListID aListID,
+                                      nsIFrame* aOldFrame)
+{
+  nsRubyTextContainerFrameSuper::RemoveFrame(aListID, aOldFrame);
+  UpdateSpanFlag();
+}
+
+void
+nsRubyTextContainerFrame::UpdateSpanFlag()
+{
+  bool isSpan = false;
+  // The continuation checks are safe here because spans never break.
+  if (!GetPrevContinuation() && !GetNextContinuation()) {
+    nsIFrame* onlyChild = mFrames.OnlyChild();
+    if (onlyChild && onlyChild->IsPseudoFrame(GetContent())) {
+      // Per CSS Ruby spec, if the only child of an rtc frame is
+      // a pseudo rt frame, it spans all bases in the segment.
+      isSpan = true;
+    }
+  }
+
+  if (isSpan) {
+    AddStateBits(NS_RUBY_TEXT_CONTAINER_IS_SPAN);
+  } else {
+    RemoveStateBits(NS_RUBY_TEXT_CONTAINER_IS_SPAN);
+  }
+}
+
+/* virtual */ void
 nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
                                  nsHTMLReflowMetrics& aDesiredSize,
                                  const nsHTMLReflowState& aReflowState,
@@ -70,8 +125,11 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   DO_GLOBAL_REFLOW_COUNT("nsRubyTextContainerFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
+  MOZ_ASSERT(aReflowState.mRubyReflowState, "No ruby reflow state provided");
+
   // All rt children have already been reflowed. All we need to do is
-  // to report complete and return the desired size.
+  // to report complete and return the desired size provided by the
+  // ruby base container.
 
   // Although a ruby text container may have continuations, returning
   // NS_FRAME_COMPLETE here is still safe, since its parent, ruby frame,
@@ -79,12 +137,7 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   // will take care of our continuations.
   aStatus = NS_FRAME_COMPLETE;
   WritingMode lineWM = aReflowState.mLineLayout->GetWritingMode();
-  WritingMode frameWM = aReflowState.GetWritingMode();
-  LogicalMargin borderPadding = aReflowState.ComputedLogicalBorderPadding();
-
-  // ISize is provided by the ruby base container
-  // during reflow of that container.
-  aDesiredSize.ISize(lineWM) = mISize;
-  nsLayoutUtils::SetBSizeFromFontMetrics(this, aDesiredSize, aReflowState,
-                                         borderPadding, lineWM, frameWM);
+  const RubyReflowState::TextContainerInfo& info =
+    aReflowState.mRubyReflowState->GetCurrentTextContainerInfo(this);
+  aDesiredSize.SetSize(lineWM, info.mLineSize);
 }

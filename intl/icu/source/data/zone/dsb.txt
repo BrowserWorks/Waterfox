@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/dsb.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/dsb.xml
- */
 dsb{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Accra"{
             ec{"Akkra"}
@@ -182,9 +179,6 @@ dsb{
         }
         "Asia:Kamchatka"{
             ec{"Kamčatka"}
-        }
-        "Asia:Kashgar"{
-            ec{"Kaxgar"}
         }
         "Asia:Katmandu"{
             ec{"Kathmandu"}
@@ -582,6 +576,9 @@ dsb{
             sd{"OESZ"}
             sg{"OEZ"}
             ss{"OEZ"}
+        }
+        "meta:Europe_Further_Eastern"{
+            ls{"Kaliningradski cas"}
         }
         "meta:Europe_Western"{
             ld{"Pódwjacornoeuropski lěśojski cas"}

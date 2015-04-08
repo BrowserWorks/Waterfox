@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fo.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fo.xml
- */
 fo{
     Countries{
         001{"heimur"}
@@ -299,15 +296,15 @@ fo{
         ZW{"Simbabvi"}
         ZZ{"(ukendt område)"}
     }
-    Countries%variant{
-        CG{"Kongo-Brazzaville"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Stóra Bretland"}
         HK{"Hongkong"}
         MO{"Makao"}
         PS{"Palestina"}
         US{"USA"}
     }
-    Version{"2.1.7.53"}
+    Countries%variant{
+        CG{"Kongo-Brazzaville"}
+    }
+    Version{"2.1.12.27"}
 }

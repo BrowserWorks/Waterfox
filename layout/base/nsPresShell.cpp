@@ -1152,7 +1152,7 @@ PresShell::Destroy()
 
   mUpdateImageVisibilityEvent.Revoke();
 
-  ClearVisibleImagesList();
+  ClearVisibleImagesList(nsIImageLoadingContent::ON_NONVISIBLE_REQUEST_DISCARD);
 
   if (mCaret) {
     mCaret->Terminate();
@@ -3422,10 +3422,9 @@ AccumulateFrameBounds(nsIFrame* aContainerFrame,
           nsIFrame *trash1;
           int32_t trash2;
           nsRect lineBounds;
-          uint32_t trash3;
 
           if (NS_SUCCEEDED(aLines->GetLine(index, &trash1, &trash2,
-                                           lineBounds, &trash3))) {
+                                           lineBounds))) {
             frameBounds += frame->GetOffsetTo(f);
             frame = f;
             if (lineBounds.y < frameBounds.y) {
@@ -5546,7 +5545,7 @@ void PresShell::SetIgnoreViewportScrolling(bool aIgnore)
   SetRenderingState(state);
 }
 
-nsresult PresShell::SetResolution(float aXResolution, float aYResolution)
+nsresult PresShell::SetResolutionImpl(float aXResolution, float aYResolution, bool aScaleToResolution)
 {
   if (!(aXResolution > 0.0 && aYResolution > 0.0)) {
     return NS_ERROR_ILLEGAL_VALUE;
@@ -5558,7 +5557,14 @@ nsresult PresShell::SetResolution(float aXResolution, float aYResolution)
   state.mXResolution = aXResolution;
   state.mYResolution = aYResolution;
   SetRenderingState(state);
+  mScaleToResolution = aScaleToResolution;
+
   return NS_OK;
+}
+
+bool PresShell::ScaleToResolution() const
+{
+  return mScaleToResolution;
 }
 
 gfxSize PresShell::GetCumulativeResolution()
@@ -5831,7 +5837,8 @@ PresShell::RebuildImageVisibilityDisplayList(const nsDisplayList& aList)
   mVisibleImages.EnumerateEntries(RemoveAndStore, &beforeImageList);
   MarkImagesInListVisible(aList);
   for (size_t i = 0; i < beforeImageList.Length(); ++i) {
-    beforeImageList[i]->DecrementVisibleCount();
+    beforeImageList[i]->DecrementVisibleCount(
+      nsIImageLoadingContent::ON_NONVISIBLE_NO_ACTION);
   }
 }
 
@@ -5842,7 +5849,8 @@ PresShell::ClearImageVisibilityVisited(nsView* aView, bool aClear)
   if (aClear) {
     PresShell* presShell = static_cast<PresShell*>(vm->GetPresShell());
     if (!presShell->mImageVisibilityVisited) {
-      presShell->ClearVisibleImagesList();
+      presShell->ClearVisibleImagesList(
+        nsIImageLoadingContent::ON_NONVISIBLE_NO_ACTION);
     }
     presShell->mImageVisibilityVisited = false;
   }
@@ -5854,14 +5862,27 @@ PresShell::ClearImageVisibilityVisited(nsView* aView, bool aClear)
 static PLDHashOperator
 DecrementVisibleCount(nsRefPtrHashKey<nsIImageLoadingContent>* aEntry, void* userArg)
 {
-  aEntry->GetKey()->DecrementVisibleCount();
+  aEntry->GetKey()->DecrementVisibleCount(
+    nsIImageLoadingContent::ON_NONVISIBLE_NO_ACTION);
+  return PL_DHASH_NEXT;
+}
+
+static PLDHashOperator
+DecrementVisibleCountAndDiscard(nsRefPtrHashKey<nsIImageLoadingContent>* aEntry, void* userArg)
+{
+  aEntry->GetKey()->DecrementVisibleCount(
+    nsIImageLoadingContent::ON_NONVISIBLE_REQUEST_DISCARD);
   return PL_DHASH_NEXT;
 }
 
 void
-PresShell::ClearVisibleImagesList()
+PresShell::ClearVisibleImagesList(uint32_t aNonvisibleAction)
 {
-  mVisibleImages.EnumerateEntries(DecrementVisibleCount, nullptr);
+  auto enumerator
+    = aNonvisibleAction == nsIImageLoadingContent::ON_NONVISIBLE_REQUEST_DISCARD
+    ? DecrementVisibleCountAndDiscard
+    : DecrementVisibleCount;
+  mVisibleImages.EnumerateEntries(enumerator, nullptr);
   mVisibleImages.Clear();
 }
 
@@ -5975,7 +5996,8 @@ PresShell::RebuildImageVisibility(nsRect* aRect)
   MarkImagesInSubtreeVisible(rootFrame, vis);
 
   for (size_t i = 0; i < beforeImageList.Length(); ++i) {
-    beforeImageList[i]->DecrementVisibleCount();
+    beforeImageList[i]->DecrementVisibleCount(
+      nsIImageLoadingContent::ON_NONVISIBLE_NO_ACTION);
   }
 }
 
@@ -5994,7 +6016,8 @@ PresShell::UpdateImageVisibility()
   // call update on that frame
   nsIFrame* rootFrame = GetRootFrame();
   if (!rootFrame) {
-    ClearVisibleImagesList();
+    ClearVisibleImagesList(
+      nsIImageLoadingContent::ON_NONVISIBLE_REQUEST_DISCARD);
     return;
   }
 
@@ -6153,7 +6176,8 @@ PresShell::RemoveImageFromVisibleList(nsIImageLoadingContent* aImage)
   mVisibleImages.RemoveEntry(aImage);
   if (mVisibleImages.Count() < count) {
     // aImage was in the hashtable, so we need to decrement its visible count
-    aImage->DecrementVisibleCount();
+    aImage->DecrementVisibleCount(
+      nsIImageLoadingContent::ON_NONVISIBLE_NO_ACTION);
   }
 }
 
@@ -9120,6 +9144,8 @@ PresShell::DidDoReflow(bool aInterruptible, bool aWasInterrupted)
     mTouchCaret->UpdatePositionIfNeeded();
   }
 
+  mPresContext->NotifyMissingFonts();
+
   if (!aWasInterrupted) {
     ClearReflowOnZoomPending();
   }
@@ -9270,7 +9296,7 @@ PresShell::DoReflow(nsIFrame* target, bool aInterruptible)
     bool hasUnconstrainedBSize = size.BSize(wm) == NS_UNCONSTRAINEDSIZE;
 
     if (hasUnconstrainedBSize || mLastRootReflowHadUnconstrainedBSize) {
-      reflowState.mFlags.mVResize = true;
+      reflowState.SetVResize(true);
     }
 
     mLastRootReflowHadUnconstrainedBSize = hasUnconstrainedBSize;

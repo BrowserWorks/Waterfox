@@ -11,27 +11,37 @@
 
 namespace mozilla {
 
-WebGLTransformFeedback::WebGLTransformFeedback(WebGLContext* webgl)
-    : WebGLBindableName<GLenum>(0)
+WebGLTransformFeedback::WebGLTransformFeedback(WebGLContext* webgl,
+                                               GLuint tf)
+    : WebGLBindableName<GLenum>(tf)
     , WebGLContextBoundObject(webgl)
+    , mMode(LOCAL_GL_NONE)
+    , mIsActive(false)
+    , mIsPaused(false)
 {
-    MOZ_CRASH("Not Implemented.");
+    mContext->mTransformFeedbacks.insertBack(this);
 }
 
 WebGLTransformFeedback::~WebGLTransformFeedback()
-{}
+{
+    mMode = LOCAL_GL_NONE;
+    mIsActive = false;
+    mIsPaused = false;
+    DeleteOnce();
+}
 
 void
 WebGLTransformFeedback::Delete()
 {
-    MOZ_CRASH("Not Implemented.");
+    mContext->MakeContextCurrent();
+    mContext->gl->fDeleteTransformFeedbacks(1, &mGLName);
+    removeFrom(mContext->mTransformFeedbacks);
 }
 
 WebGLContext*
 WebGLTransformFeedback::GetParentObject() const
 {
-    MOZ_CRASH("Not Implemented.");
-    return nullptr;
+    return Context();
 }
 
 JSObject*

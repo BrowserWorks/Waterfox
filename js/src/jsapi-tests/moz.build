@@ -30,15 +30,17 @@ UNIFIED_SOURCES += [
     'testExternalStrings.cpp',
     'testFindSCCs.cpp',
     'testForOfIterator.cpp',
+    'testForwardSetProperty.cpp',
     'testFreshGlobalEvalRedefinition.cpp',
-    'testFuncCallback.cpp',
     'testFunctionProperties.cpp',
     'testGCAllocator.cpp',
+    'testGCCellPtr.cpp',
     'testGCChunkPool.cpp',
     'testGCExactRooting.cpp',
     'testGCFinalizeCallback.cpp',
     'testGCHeapPostBarriers.cpp',
     'testGCMarking.cpp',
+    'testGCNursery.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
     'testHashTable.cpp',
@@ -109,3 +111,6 @@ USE_LIBS += [
 ]
 
 OS_LIBS += CONFIG['MOZ_ZLIB_LIBS']
+
+if CONFIG['GNU_CXX']:
+    FAIL_ON_WARNINGS = True

@@ -52,6 +52,7 @@
 #include "nsIPermissionManager.h"
 #include "nsISHistory.h"
 #include "nsNullPrincipal.h"
+#include "nsIScriptError.h"
 
 #include "nsLayoutUtils.h"
 #include "nsView.h"
@@ -153,6 +154,7 @@ nsFrameLoader::nsFrameLoader(Element* aOwner, bool aNetworkCreated)
   : mOwnerContent(aOwner)
   , mAppIdSentToPermissionManager(nsIScriptSecurityManager::NO_APP_ID)
   , mDetachedSubdocViews(nullptr)
+  , mIsPrerendered(false)
   , mDepthTooGreat(false)
   , mIsTopLevelContent(false)
   , mDestroyCalled(false)
@@ -292,6 +294,15 @@ nsFrameLoader::LoadURI(nsIURI* aURI)
     mURIToLoad = nullptr;
   }
   return rv;
+}
+
+NS_IMETHODIMP
+nsFrameLoader::SetIsPrerendered()
+{
+  MOZ_ASSERT(!mDocShell, "Please call SetIsPrerendered before docShell is created");
+  mIsPrerendered = true;
+
+  return NS_OK;
 }
 
 nsresult
@@ -909,7 +920,8 @@ nsFrameLoader::ShowRemoteFrame(const nsIntSize& size,
 
     // Don't show remote iframe if we are waiting for the completion of reflow.
     if (!aFrame || !(aFrame->GetStateBits() & NS_FRAME_FIRST_REFLOW)) {
-      mRemoteBrowser->UpdateDimensions(dimensions, size);
+      nsIntPoint chromeDisp = aFrame->GetChromeDisplacement();
+      mRemoteBrowser->UpdateDimensions(dimensions, size, chromeDisp);
     }
   }
 
@@ -1611,6 +1623,11 @@ nsFrameLoader::MaybeCreateDocShell()
   mDocShell = do_CreateInstance("@mozilla.org/docshell;1");
   NS_ENSURE_TRUE(mDocShell, NS_ERROR_FAILURE);
 
+  if (mIsPrerendered) {
+    nsresult rv = mDocShell->SetIsPrerendered(true);
+    NS_ENSURE_SUCCESS(rv,rv);
+  }
+
   // Apply sandbox flags even if our owner is not an iframe, as this copies
   // flags from our owning content's owning document.
   uint32_t sandboxFlags = 0;
@@ -1762,6 +1779,30 @@ nsFrameLoader::MaybeCreateDocShell()
       NS_LITERAL_STRING("chrome://global/content/BrowserElementChild.js"),
       /* allowDelayedLoad = */ true,
       /* aRunInGlobalScope */ true);
+    // For inproc frames, set the docshell properties.
+    nsCOMPtr<nsIDocShellTreeItem> item = do_GetInterface(docShell);
+    nsAutoString name;
+    if (mOwnerContent->GetAttr(kNameSpaceID_None, nsGkAtoms::name, name)) {
+      item->SetName(name);
+    }
+    mDocShell->SetFullscreenAllowed(
+      mOwnerContent->HasAttr(kNameSpaceID_None, nsGkAtoms::allowfullscreen) ||
+      mOwnerContent->HasAttr(kNameSpaceID_None, nsGkAtoms::mozallowfullscreen));
+    bool isPrivate = mOwnerContent->HasAttr(kNameSpaceID_None, nsGkAtoms::mozprivatebrowsing);
+    if (isPrivate) {
+      bool nonBlank;
+      mDocShell->GetHasLoadedNonBlankURI(&nonBlank);
+      if (nonBlank) {
+        nsContentUtils::ReportToConsoleNonLocalized(
+          NS_LITERAL_STRING("We should not switch to Private Browsing after loading a document."),
+          nsIScriptError::warningFlag,
+          NS_LITERAL_CSTRING("mozprivatebrowsing"),
+          nullptr);
+      } else {
+        nsCOMPtr<nsILoadContext> context = do_GetInterface(mDocShell);
+        context->SetUsePrivateBrowsing(true);
+      }
+    }
   }
 
   return NS_OK;
@@ -1917,7 +1958,8 @@ nsFrameLoader::UpdatePositionAndSize(nsSubDocumentFrame *aIFrame)
       nsIntSize size = aIFrame->GetSubdocumentSize();
       nsIntRect dimensions;
       NS_ENSURE_SUCCESS(GetWindowDimensions(dimensions), NS_ERROR_FAILURE);
-      mRemoteBrowser->UpdateDimensions(dimensions, size);
+      nsIntPoint chromeDisp = aIFrame->GetChromeDisplacement();
+      mRemoteBrowser->UpdateDimensions(dimensions, size, chromeDisp);
     }
     return NS_OK;
   }
@@ -2174,6 +2216,20 @@ nsFrameLoader::DeactivateRemoteFrame() {
     return NS_OK;
   }
   return NS_ERROR_UNEXPECTED;
+}
+
+void
+nsFrameLoader::ActivateUpdateHitRegion() {
+  if (mRemoteBrowser) {
+    unused << mRemoteBrowser->SendSetUpdateHitRegion(true);
+  }
+}
+
+void
+nsFrameLoader::DeactivateUpdateHitRegion() {
+  if (mRemoteBrowser) {
+    unused << mRemoteBrowser->SendSetUpdateHitRegion(false);
+  }
 }
 
 NS_IMETHODIMP

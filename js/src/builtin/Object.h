@@ -16,11 +16,6 @@ class Value;
 
 namespace js {
 
-extern const JSFunctionSpec object_methods[];
-extern const JSPropertySpec object_properties[];
-extern const JSFunctionSpec object_static_methods[];
-extern const JSFunctionSpec object_static_selfhosted_methods[];
-
 // Object constructor native. Exposed only so the JIT can know its address.
 bool
 obj_construct(JSContext *cx, unsigned argc, JS::Value *vp);
@@ -31,6 +26,9 @@ obj_valueOf(JSContext *cx, unsigned argc, JS::Value *vp);
 // Object methods exposed so they can be installed in the self-hosting global.
 bool
 obj_create(JSContext *cx, unsigned argc, JS::Value *vp);
+
+bool
+obj_defineProperty(JSContext *cx, unsigned argc, JS::Value *vp);
 
 bool
 obj_getOwnPropertyNames(JSContext *cx, unsigned argc, JS::Value *vp);

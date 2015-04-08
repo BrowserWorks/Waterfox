@@ -226,7 +226,7 @@ nsViewManager::FlushDelayedResize(bool aDoReflow)
     if (aDoReflow) {
       DoSetWindowDimensions(mDelayedResize.width, mDelayedResize.height);
       mDelayedResize.SizeTo(NSCOORD_NONE, NSCOORD_NONE);
-    } else if (mPresShell) {
+    } else if (mPresShell && !mPresShell->GetIsViewportOverridden()) {
       nsPresContext* presContext = mPresShell->GetPresContext();
       if (presContext) {
         presContext->SetVisibleArea(nsRect(nsPoint(0, 0), mDelayedResize));
@@ -755,8 +755,7 @@ nsViewManager::DispatchEvent(WidgetGUIEvent *aEvent,
       (dispatchUsingCoordinates || aEvent->HasKeyEventMessage() ||
        aEvent->IsIMERelatedEvent() ||
        aEvent->IsNonRetargetedNativeEventDelivererForPlugin() ||
-       aEvent->HasPluginActivationEventMessage() ||
-       aEvent->message == NS_PLUGIN_RESOLUTION_CHANGED)) {
+       aEvent->HasPluginActivationEventMessage())) {
     while (view && !view->GetFrame()) {
       view = view->GetParent();
     }

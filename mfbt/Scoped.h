@@ -58,7 +58,6 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/GuardObjects.h"
 #include "mozilla/Move.h"
-#include "mozilla/NullPtr.h"
 
 namespace mozilla {
 
@@ -170,8 +169,8 @@ public:
   }
 
 private:
-  explicit Scoped(const Scoped& aValue) MOZ_DELETE;
-  Scoped& operator=(const Scoped& aValue) MOZ_DELETE;
+  explicit Scoped(const Scoped& aValue) = delete;
+  Scoped& operator=(const Scoped& aValue) = delete;
 
 private:
   Resource mValue;
@@ -216,8 +215,8 @@ struct name : public mozilla::Scoped<Traits<Type> >                           \
             MOZ_GUARD_OBJECT_NOTIFIER_PARAM_TO_PARENT)                        \
   {}                                                                          \
 private:                                                                      \
-  explicit name(name&) MOZ_DELETE;                                            \
-  name& operator=(name&) MOZ_DELETE;                                          \
+  explicit name(name&) = delete;                                              \
+  name& operator=(name&) = delete;                                            \
 };
 
 /*

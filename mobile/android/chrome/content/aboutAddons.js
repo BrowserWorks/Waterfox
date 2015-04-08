@@ -238,13 +238,13 @@ var Addons = {
 
   _getElementForAddon: function(aKey) {
     let list = document.getElementById("addons-list");
-    let element = list.querySelector("div[addonID=" + aKey.quote() + "]");
+    let element = list.querySelector("div[addonID=\"" + CSS.escape(aKey) + "\"]");
     return element;
   },
 
   init: function init() {
     let self = this;
-    AddonManager.getAddonsByTypes(["extension", "theme", "locale"], function(aAddons) {
+    AddonManager.getAllAddons(function(aAddons) {
       // Clear all content before filling the addons
       let list = document.getElementById("addons-list");
       list.innerHTML = "";
@@ -348,15 +348,15 @@ var Addons = {
             let event = document.createEvent("Events");
             event.initEvent("AddonOptionsLoad", true, false);
             window.dispatchEvent(event);
-  
-            // Also send a notification to match the behavior of desktop Firefox
-            let id = aListItem.getAttribute("addonID");
-            Services.obs.notifyObservers(document, AddonManager.OPTIONS_NOTIFICATION_DISPLAYED, id);
           } else {
-            // No options, so hide the header and reset the list item
+            // Reset the options URL to hide the options header if there are no
+            // valid settings to show.
             detailItem.setAttribute("optionsURL", "");
-            aListItem.setAttribute("optionsURL", "");
           }
+
+          // Also send a notification to match the behavior of desktop Firefox
+          let id = aListItem.getAttribute("addonID");
+          Services.obs.notifyObservers(document, AddonManager.OPTIONS_NOTIFICATION_DISPLAYED, id);
         }
       }
       xhr.send(null);

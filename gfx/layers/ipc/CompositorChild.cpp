@@ -36,13 +36,12 @@ Atomic<int32_t> CompositableForwarder::sSerialCounter(0);
 
 CompositorChild::CompositorChild(ClientLayerManager *aLayerManager)
   : mLayerManager(aLayerManager)
+  , mCanSend(true)
 {
-  MOZ_COUNT_CTOR(CompositorChild);
 }
 
 CompositorChild::~CompositorChild()
 {
-  MOZ_COUNT_DTOR(CompositorChild);
 }
 
 void
@@ -57,6 +56,7 @@ CompositorChild::Destroy()
       static_cast<LayerTransactionChild*>(ManagedPLayerTransactionChild()[i]);
     layers->Destroy();
   }
+  MOZ_ASSERT(!mCanSend);
   SendStop();
 }
 
@@ -98,7 +98,6 @@ CompositorChild::Create(Transport* aTransport, ProcessId aOtherProcess)
   sCompositor->SendGetTileSize(&width, &height);
   gfxPlatform::GetPlatform()->SetTileSize(width, height);
 
-  // We release this ref in ActorDestroy().
   return sCompositor;
 }
 
@@ -116,6 +115,7 @@ CompositorChild::AllocPLayerTransactionChild(const nsTArray<LayersBackend>& aBac
                                              TextureFactoryIdentifier*,
                                              bool*)
 {
+  MOZ_ASSERT(mCanSend);
   LayerTransactionChild* c = new LayerTransactionChild();
   c->AddIPDLReference();
   return c;
@@ -183,17 +183,24 @@ CompositorChild::ActorDestroy(ActorDestroyReason aWhy)
     NS_RUNTIMEABORT("ActorDestroy by IPC channel failure at CompositorChild");
   }
 #endif
-  if (sCompositor) {
-    sCompositor->Release();
-    sCompositor = nullptr;
-  }
+
   // We don't want to release the ref to sCompositor here, during
   // cleanup, because that will cause it to be deleted while it's
   // still being used.  So defer the deletion to after it's not in
   // use.
+  sCompositor = nullptr;
+
   MessageLoop::current()->PostTask(
     FROM_HERE,
     NewRunnableMethod(this, &CompositorChild::Release));
+}
+
+void
+CompositorChild::ShutDown()
+{
+  if (sCompositor) {
+    sCompositor->ActorDestroy(NormalShutdown);
+  }
 }
 
 bool
@@ -315,6 +322,126 @@ CompositorChild::CancelNotifyAfterRemotePaint(TabChild* aTabChild)
     mWeakTabChild = nullptr;
   }
 }
+
+bool
+CompositorChild::SendWillStop()
+{
+  MOZ_ASSERT(mCanSend);
+  // From now on the only two messages we can send are WillStop and Stop.
+  mCanSend = false;
+  return PCompositorChild::SendWillStop();
+}
+
+bool
+CompositorChild::SendPause()
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendPause();
+}
+
+bool
+CompositorChild::SendResume()
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendResume();
+}
+
+bool
+CompositorChild::SendNotifyChildCreated(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyChildCreated(id);
+}
+
+bool
+CompositorChild::SendAdoptChild(const uint64_t& id)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendAdoptChild(id);
+}
+
+bool
+CompositorChild::SendMakeSnapshot(const SurfaceDescriptor& inSnapshot, const nsIntRect& dirtyRect)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendMakeSnapshot(inSnapshot, dirtyRect);
+}
+
+bool
+CompositorChild::SendFlushRendering()
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendFlushRendering();
+}
+
+bool
+CompositorChild::SendGetTileSize(int32_t* tileWidth, int32_t* tileHeight)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendGetTileSize(tileWidth, tileHeight);
+}
+
+bool
+CompositorChild::SendStartFrameTimeRecording(const int32_t& bufferSize, uint32_t* startIndex)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendStartFrameTimeRecording(bufferSize, startIndex);
+}
+
+bool
+CompositorChild::SendStopFrameTimeRecording(const uint32_t& startIndex, nsTArray<float>* intervals)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendStopFrameTimeRecording(startIndex, intervals);
+}
+
+bool
+CompositorChild::SendNotifyRegionInvalidated(const nsIntRegion& region)
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendNotifyRegionInvalidated(region);
+}
+
+bool
+CompositorChild::SendRequestNotifyAfterRemotePaint()
+{
+  MOZ_ASSERT(mCanSend);
+  if (!mCanSend) {
+    return true;
+  }
+  return PCompositorChild::SendRequestNotifyAfterRemotePaint();
+}
+
 
 } // namespace layers
 } // namespace mozilla

@@ -43,7 +43,7 @@ public:
   explicit ImageHost(const TextureInfo& aTextureInfo);
   ~ImageHost();
 
-  virtual CompositableType GetType() { return mTextureInfo.mCompositableType; }
+  virtual CompositableType GetType() MOZ_OVERRIDE { return mTextureInfo.mCompositableType; }
 
   virtual void Composite(EffectChain& aEffectChain,
                          float aOpacity,
@@ -66,19 +66,17 @@ public:
     mHasPictureRect = true;
   }
 
-  gfx::IntSize GetImageSize() const;
+  gfx::IntSize GetImageSize() const MOZ_OVERRIDE;
 
   virtual LayerRenderState GetRenderState() MOZ_OVERRIDE;
 
-  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix) MOZ_OVERRIDE;
 
-#ifdef MOZ_DUMP_PAINTING
   virtual void Dump(std::stringstream& aStream,
                     const char* aPrefix = "",
                     bool aDumpHtml = false) MOZ_OVERRIDE;
 
   virtual TemporaryRef<gfx::DataSourceSurface> GetAsSurface() MOZ_OVERRIDE;
-#endif
 
   virtual bool Lock() MOZ_OVERRIDE;
 

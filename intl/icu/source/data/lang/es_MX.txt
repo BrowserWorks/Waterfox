@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_MX.xml
@@ -10,61 +10,21 @@ es_MX{
     %%Parent{"es_419"}
     Keys{
         calendar{"Calendario"}
-        collation{"Intercalación"}
+        collation{"Orden"}
         currency{"Moneda"}
     }
     Languages{
-        arn{"araucano"}
         ba{"bashkir"}
-        chr{"cheroki"}
-        ckb{"sorani"}
-        de_CH{"alto alemán suizo"}
-        dsb{"bajo sorbio"}
-        es_419{"español latinoamericano"}
-        gsw{"alemán suizo"}
-        gv{"manés"}
-        hsb{"alto sorbio"}
-        kab{"cabilio"}
-        kln{"halenjin"}
-        luo{"luo"}
-        nd{"sindebele"}
-        nqo{"N’Ko"}
-        pa{"panyabí"}
-        rm{"romanche"}
-        rn{"rundi"}
-        smj{"sami de Lule"}
-        smn{"sami de Inari"}
-        su{"sondanés"}
-        vai{"vai"}
-        vun{"vunjo"}
-        zgh{"tamazight estándar marroquí"}
     }
     Languages%variant{
-        ps{"pashto"}
         ug{"uyghur"}
     }
-    LanguagesShort{
-        en_GB{"inglés (R.U.)"}
-    }
     Scripts{
-        Hans{"han simplificado"}
-        Hant{"han tradicional"}
-        Laoo{"lao"}
-        Sinh{"cingalés"}
         Telu{"telugú"}
-    }
-    Scripts%stand-alone{
-        Hans{"han simplificado"}
-        Hant{"han tradicional"}
-    }
-    Scripts%variant{
-        Arab{"perso-árabe"}
     }
     Types{
         calendar{
-            ethiopic{"calendario etíope"}
             gregorian{"Calendario gregoriano"}
-            persian{"calendario persa"}
             roc{"calendario minguo"}
         }
         collation{
@@ -96,8 +56,5 @@ es_MX{
             tibt{"Dígitos en tibetano"}
         }
     }
-    Version{"2.1.10.42"}
-    codePatterns{
-        script{"Dialecto: {0}"}
-    }
+    Version{"2.1.13.23"}
 }

@@ -554,6 +554,40 @@ function storeCountryCode(cc) {
   if (cc != "US" && isTimezoneUS) {
     Services.telemetry.getHistogramById("SEARCH_SERVICE_US_TIMEZONE_MISMATCHED_COUNTRY").add(1);
   }
+  // telemetry to compare our geoip response with platform-specific country data.
+  // On Mac and Windows, we can get a country code via nsIGfxInfo2
+  let gfxInfo2;
+  try {
+    gfxInfo2 = Cc["@mozilla.org/gfx/info;1"].getService(Ci.nsIGfxInfo2);
+  } catch (ex) {
+    // not available on this platform.
+  }
+  if (gfxInfo2) {
+    let probeUSMismatched, probeNonUSMismatched;
+    switch (Services.appinfo.OS) {
+      case "Darwin":
+        probeUSMismatched = "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_OSX";
+        probeNonUSMismatched = "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_OSX";
+        break;
+      case "WINNT":
+        probeUSMismatched = "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_WIN";
+        probeNonUSMismatched = "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_WIN";
+        break;
+      default:
+        Cu.reportError("Platform " + Services.appinfo.OS + " has nsIGfxInfo2 but no search service telemetry probes");
+        break;
+    }
+    if (probeUSMismatched && probeNonUSMismatched) {
+      let platformCC = gfxInfo2.countryCode;
+      if (cc == "US" || platformCC == "US") {
+        // one of the 2 said US, so record if they are the same.
+        Services.telemetry.getHistogramById(probeUSMismatched).add(cc != platformCC);
+      } else {
+        // different country - record if they are the same
+        Services.telemetry.getHistogramById(probeNonUSMismatched).add(cc != platformCC);
+      }
+    }
+  }
 }
 
 // Get the country we are in via a XHR geoip request.
@@ -877,11 +911,9 @@ function setLocalizedPref(aPrefName, aValue) {
  * @returns aDefault if the requested pref doesn't exist.
  */
 function getBoolPref(aName, aDefault) {
-  try {
-    return Services.prefs.getBoolPref(aName);
-  } catch (ex) {
+  if (Services.prefs.getPrefType(aName) != Ci.nsIPrefBranch.PREF_BOOL)
     return aDefault;
-  }
+  return Services.prefs.getBoolPref(aName);
 }
 
 /**

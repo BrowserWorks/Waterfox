@@ -570,8 +570,14 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   list-style-image: url(chrome://browser/skin/sync-horizontalbar.png);
 }
 
-#PanelUI-fxa-status[status="active"] {
+#PanelUI-fxa-status[syncstatus="active"] {
   list-style-image: url(chrome://browser/skin/syncProgress-horizontalbar.png);
+}
+
+#PanelUI-fxa-status[fxastatus="migrate-signup"],
+#PanelUI-fxa-status[fxastatus="migrate-verify"] {
+  list-style-image: url(chrome://browser/skin/warning16.png);
+  -moz-image-region: rect(0, 32px, 16px, 16px);
 }
 
 #PanelUI-customize {
@@ -641,30 +647,32 @@ toolbarpaletteitem[place="palette"] > toolbaritem > toolbarbutton {
   outline: none;
 }
 
+#PanelUI-update-status {
+  color: black;
+}
+
 #PanelUI-update-status[update-status="succeeded"] {
-  background-color: hsla(96, 65%, 75%, 0.1);
+  background-color: hsla(96, 65%, 75%, 0.5);
 }
 
 #PanelUI-update-status[update-status="succeeded"]:not([disabled]):hover {
-  background-color: hsla(96, 65%, 75%, 0.4);
+  background-color: hsla(96, 65%, 75%, 0.8);
 }
 
 #PanelUI-update-status[update-status="succeeded"]:not([disabled]):hover:active {
-  background-color: hsla(96, 65%, 75%, 0.6);
-  box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
+  background-color: hsl(96, 65%, 75%);
 }
 
 #PanelUI-update-status[update-status="failed"] {
-  background-color: hsla(359, 69%, 84%, 0.1);
+  background-color: hsla(359, 69%, 84%, 0.5);
 }
 
 #PanelUI-update-status[update-status="failed"]:not([disabled]):hover {
-  background-color: hsla(359, 69%, 84%, 0.4);
+  background-color: hsla(359, 69%, 84%, 0.8);
 }
 
 #PanelUI-update-status[update-status="failed"]:not([disabled]):hover:active {
-  background-color: hsla(359, 69%, 84%, 0.6);
-  box-shadow: 0 1px 0 hsla(210,4%,10%,.05) inset;
+  background-color: hsl(359, 69%, 84%);
 }
 
 #PanelUI-quit:not([disabled]):hover {
@@ -702,6 +710,7 @@ panelview .toolbarbutton-1,
 .subviewbutton,
 .widget-overflow-list .toolbarbutton-1,
 .panelUI-grid .toolbarbutton-1 > .toolbarbutton-menubutton-button,
+.share-provider-button,
 .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton {
   -moz-appearance: none;
   padding: 0 6px;
@@ -714,6 +723,7 @@ panelview .toolbarbutton-1,
 panelview .toolbarbutton-1,
 .subviewbutton,
 .widget-overflow-list .toolbarbutton-1,
+.share-provider-button,
 .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton {
   border-width: 1px;
 }
@@ -786,6 +796,7 @@ panelview .toolbarbutton-1@buttonStateHover@,
 toolbarbutton.subviewbutton@buttonStateHover@,
 menu.subviewbutton@menuStateHover@,
 menuitem.subviewbutton@menuStateHover@,
+.share-provider-button@buttonStateHover@,
 .widget-overflow-list .toolbarbutton-1@buttonStateHover@,
 .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton@buttonStateHover@ {
   background-color: hsla(210,4%,10%,.08);
@@ -800,6 +811,7 @@ panelview .toolbarbutton-1:-moz-any(@buttonStateActive@,[checked=true]),
 toolbarbutton.subviewbutton@buttonStateActive@,
 menu.subviewbutton@menuStateActive@,
 menuitem.subviewbutton@menuStateActive@,
+.share-provider-button:-moz-any(@buttonStateActive@,[checked=true]),
 .widget-overflow-list .toolbarbutton-1@buttonStateActive@,
 .toolbaritem-combined-buttons@inAnyPanel@ > toolbarbutton@buttonStateActive@ {
   background-color: hsla(210,4%,10%,.12);

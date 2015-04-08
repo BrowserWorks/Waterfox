@@ -7,7 +7,8 @@
 #ifndef nsRefPtr_h
 #define nsRefPtr_h
 
-#include "AlreadyAddRefed.h"
+#include "mozilla/AlreadyAddRefed.h"
+#include "mozilla/Attributes.h"
 #include "nsDebug.h"
 #include "nsISupportsUtils.h"
 
@@ -48,7 +49,7 @@ private:
   }
 
 private:
-  T* mRawPtr;
+  T* MOZ_OWNING_REF mRawPtr;
 
 public:
   typedef T element_type;
@@ -104,6 +105,13 @@ public:
   nsRefPtr(already_AddRefed<I>&& aSmartPtr)
     : mRawPtr(aSmartPtr.take())
     // construct from |otherRefPtr.forget()|
+  {
+  }
+
+  template <typename I>
+  nsRefPtr(nsRefPtr<I>&& aSmartPtr)
+    : mRawPtr(aSmartPtr.forget().take())
+    // construct from |Move(nsRefPtr<SomeSubclassOfT>)|.
   {
   }
 
@@ -222,7 +230,7 @@ public:
   }
 
   T*
-  operator->() const
+  operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN
   {
     NS_PRECONDITION(mRawPtr != 0,
                     "You can't dereference a NULL nsRefPtr with operator->().");

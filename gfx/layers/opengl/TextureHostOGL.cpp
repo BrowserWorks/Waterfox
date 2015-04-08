@@ -14,6 +14,7 @@
 #include "gfxReusableSurfaceWrapper.h"  // for gfxReusableSurfaceWrapper
 #include "mozilla/gfx/2D.h"             // for DataSourceSurface
 #include "mozilla/gfx/BaseSize.h"       // for BaseSize
+#include "mozilla/gfx/Logging.h"        // for gfxCriticalError
 #ifdef MOZ_WIDGET_GONK
 # include "GrallocImages.h"  // for GrallocImage
 # include "EGLImageHelpers.h"
@@ -102,8 +103,8 @@ FlagsToGLFlags(TextureFlags aFlags)
 
   if (aFlags & TextureFlags::USE_NEAREST_FILTER)
     result |= TextureImage::UseNearestFilter;
-  if (aFlags & TextureFlags::NEEDS_Y_FLIP)
-    result |= TextureImage::NeedsYFlip;
+  if (aFlags & TextureFlags::ORIGIN_BOTTOM_LEFT)
+    result |= TextureImage::OriginBottomLeft;
   if (aFlags & TextureFlags::DISALLOW_BIGIMAGE)
     result |= TextureImage::DisallowBigImage;
 
@@ -214,6 +215,10 @@ TextureImageTextureSourceOGL::Update(gfx::DataSourceSurface* aSurface,
   MOZ_ASSERT(gl);
   if (!gl) {
     NS_WARNING("trying to update TextureImageTextureSourceOGL without a GLContext");
+    return false;
+  }
+  if (!aSurface) {
+    gfxCriticalError() << "Invalid surface for OGL update";
     return false;
   }
   MOZ_ASSERT(aSurface);

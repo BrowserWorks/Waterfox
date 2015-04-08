@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sq.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sq.xml
- */
 sq{
     Countries{
         001{"Bota"}
@@ -301,18 +298,18 @@ sq{
         ZW{"Zimbabve"}
         ZZ{"I panjohur"}
     }
-    Countries%variant{
-        CD{"Kongo (RDK)"}
-        CG{"Kongo (Republika)"}
-        FK{"Ishujt Folklandë (Ishujt Malvine)"}
-        MK{"Maqedoni (IRJM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Mbretëria e Bashkuar"}
         HK{"Hong Kong"}
         MO{"Makao"}
         PS{"Palestinë"}
         US{"SHBA"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"Kongo (RDK)"}
+        CG{"Kongo (Republika)"}
+        FK{"Ishujt Folklandë (Ishujt Malvine)"}
+        MK{"Maqedoni (IRJM)"}
+    }
+    Version{"2.1.12.94"}
 }

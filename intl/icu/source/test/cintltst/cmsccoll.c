@@ -1,7 +1,7 @@
 
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 2001-2014, International Business Machines Corporation and
+ * Copyright (c) 2001-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*******************************************************************************
@@ -4693,7 +4693,7 @@ static void TestReorderingAPI(void)
     UErrorCode status = U_ZERO_ERROR;
     UCollator  *myCollation;
     int32_t reorderCodes[3] = {USCRIPT_GREEK, USCRIPT_HAN, UCOL_REORDER_CODE_PUNCTUATION};
-    int32_t duplicateReorderCodes[] = {USCRIPT_CUNEIFORM, USCRIPT_GREEK, UCOL_REORDER_CODE_CURRENCY, USCRIPT_EGYPTIAN_HIEROGLYPHS};
+    int32_t duplicateReorderCodes[] = {USCRIPT_HIRAGANA, USCRIPT_GREEK, UCOL_REORDER_CODE_CURRENCY, USCRIPT_KATAKANA};
     int32_t reorderCodesStartingWithDefault[] = {UCOL_REORDER_CODE_DEFAULT, USCRIPT_GREEK, USCRIPT_HAN, UCOL_REORDER_CODE_PUNCTUATION};
     int32_t reorderCodeNone = UCOL_REORDER_CODE_NONE;
     UCollationResult collResult;
@@ -4952,85 +4952,116 @@ static UBool containsExpectedScript(const int32_t scripts[], int32_t length, int
 }
 
 static void TestEquivalentReorderingScripts(void) {
+    // Beginning with ICU 55, collation reordering moves single scripts
+    // rather than groups of scripts,
+    // except where scripts share a range and sort primary-equal.
     UErrorCode status = U_ZERO_ERROR;
     int32_t equivalentScripts[100];
     int32_t length;
     int i;
     int32_t prevScript;
-    /* At least these scripts are expected to be equivalent. There may be more. */
+    /* These scripts are expected to be equivalent. */
     static const int32_t expectedScripts[] = {
-        USCRIPT_BOPOMOFO,
-        USCRIPT_LISU,
-        USCRIPT_LYCIAN,
-        USCRIPT_CARIAN,
-        USCRIPT_LYDIAN,
-        USCRIPT_YI,
-        USCRIPT_OLD_ITALIC,
-        USCRIPT_GOTHIC,
-        USCRIPT_DESERET,
-        USCRIPT_SHAVIAN,
-        USCRIPT_OSMANYA,
-        USCRIPT_LINEAR_B,
-        USCRIPT_CYPRIOT,
-        USCRIPT_OLD_SOUTH_ARABIAN,
-        USCRIPT_AVESTAN,
-        USCRIPT_IMPERIAL_ARAMAIC,
-        USCRIPT_INSCRIPTIONAL_PARTHIAN,
-        USCRIPT_INSCRIPTIONAL_PAHLAVI,
-        USCRIPT_UGARITIC,
-        USCRIPT_OLD_PERSIAN,
-        USCRIPT_CUNEIFORM,
-        USCRIPT_EGYPTIAN_HIEROGLYPHS,
-        USCRIPT_PHONETIC_POLLARD,
-        USCRIPT_SORA_SOMPENG,
-        USCRIPT_MEROITIC_CURSIVE,
-        USCRIPT_MEROITIC_HIEROGLYPHS
+        USCRIPT_HIRAGANA,
+        USCRIPT_KATAKANA,
+        USCRIPT_KATAKANA_OR_HIRAGANA
     };
 
-    /* UScript.GOTHIC */
+    equivalentScripts[0] = 0;
     length = ucol_getEquivalentReorderCodes(
             USCRIPT_GOTHIC, equivalentScripts, LEN(equivalentScripts), &status);
     if (U_FAILURE(status)) {
         log_err_status(status, "ERROR/Gothic: retrieving equivalent reorder codes: %s\n", myErrorName(status));
         return;
     }
-    if (length < LEN(expectedScripts)) {
-        log_err("ERROR/Gothic: retrieved equivalent script length wrong: "
-                "expected at least %d, was = %d\n",
+    if (length != 1 || equivalentScripts[0] != USCRIPT_GOTHIC) {
+        log_err("ERROR/Gothic: retrieved equivalent scripts wrong: "
+                "length expected 1, was = %d; expected [%d] was [%d]\n",
+                length, USCRIPT_GOTHIC, equivalentScripts[0]);
+    }
+
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_HIRAGANA, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status)) {
+        log_err_status(status, "ERROR/Hiragana: retrieving equivalent reorder codes: %s\n", myErrorName(status));
+        return;
+    }
+    if (length != LEN(expectedScripts)) {
+        log_err("ERROR/Hiragana: retrieved equivalent script length wrong: "
+                "expected %d, was = %d\n",
                 LEN(expectedScripts), length);
     }
     prevScript = -1;
     for (i = 0; i < length; ++i) {
         int32_t script = equivalentScripts[i];
         if (script <= prevScript) {
-            log_err("ERROR/Gothic: equivalent scripts out of order at index %d\n", i);
+            log_err("ERROR/Hiragana: equivalent scripts out of order at index %d\n", i);
         }
         prevScript = script;
     }
     for (i = 0; i < LEN(expectedScripts); i++) {
         if (!containsExpectedScript(equivalentScripts, length, expectedScripts[i])) {
-            log_err("ERROR/Gothic: equivalent scripts do not contain %d\n",
+            log_err("ERROR/Hiragana: equivalent scripts do not contain %d\n",
                     expectedScripts[i]);
         }
     }
 
-    /* UScript.SHAVIAN */
     length = ucol_getEquivalentReorderCodes(
-            USCRIPT_SHAVIAN, equivalentScripts, LEN(equivalentScripts), &status);
+            USCRIPT_KATAKANA, equivalentScripts, LEN(equivalentScripts), &status);
     if (U_FAILURE(status)) {
-        log_err_status(status, "ERROR/Shavian: retrieving equivalent reorder codes: %s\n", myErrorName(status));
+        log_err_status(status, "ERROR/Katakana: retrieving equivalent reorder codes: %s\n", myErrorName(status));
         return;
     }
-    if (length < LEN(expectedScripts)) {
-        log_err("ERROR/Shavian: retrieved equivalent script length wrong: "
-                "expected at least %d, was = %d\n",
+    if (length != LEN(expectedScripts)) {
+        log_err("ERROR/Katakana: retrieved equivalent script length wrong: "
+                "expected %d, was = %d\n",
                 LEN(expectedScripts), length);
     }
     for (i = 0; i < LEN(expectedScripts); i++) {
         if (!containsExpectedScript(equivalentScripts, length, expectedScripts[i])) {
-            log_err("ERROR/Shavian: equivalent scripts do not contain %d\n",
+            log_err("ERROR/Katakana: equivalent scripts do not contain %d\n",
                     expectedScripts[i]);
         }
+    }
+
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_KATAKANA_OR_HIRAGANA, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != LEN(expectedScripts)) {
+        log_err("ERROR/Hrkt: retrieved equivalent script length wrong: "
+                "expected %d, was = %d\n",
+                LEN(expectedScripts), length);
+    }
+
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_HAN, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != 3) {
+        log_err("ERROR/Hani: retrieved equivalent script length wrong: "
+                "expected 3, was = %d\n", length);
+    }
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_SIMPLIFIED_HAN, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != 3) {
+        log_err("ERROR/Hans: retrieved equivalent script length wrong: "
+                "expected 3, was = %d\n", length);
+    }
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_TRADITIONAL_HAN, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != 3) {
+        log_err("ERROR/Hant: retrieved equivalent script length wrong: "
+                "expected 3, was = %d\n", length);
+    }
+
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_MEROITIC_CURSIVE, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != 2) {
+        log_err("ERROR/Merc: retrieved equivalent script length wrong: "
+                "expected 2, was = %d\n", length);
+    }
+    length = ucol_getEquivalentReorderCodes(
+            USCRIPT_MEROITIC_HIEROGLYPHS, equivalentScripts, LEN(equivalentScripts), &status);
+    if (U_FAILURE(status) || length != 2) {
+        log_err("ERROR/Mero: retrieved equivalent script length wrong: "
+                "expected 2, was = %d\n", length);
     }
 }
 

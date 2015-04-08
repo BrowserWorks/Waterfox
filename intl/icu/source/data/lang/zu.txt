@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/zu.xml
- */
 zu{
     Keys{
         calendar{"Ikhalenda"}
@@ -277,13 +274,13 @@ zu{
         zu{"isiZulu"}
         zxx{"Akukho okuqukethwe kolimi"}
     }
-    Languages%variant{
-        ps{"isi-Pushto"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"isi-Azeria"}
         en_GB{"i-U.K Englishi"}
         en_US{"i-English (US)"}
+    }
+    Languages%variant{
+        ps{"isi-Pushto"}
     }
     Scripts{
         Arab{"i-Arab"}
@@ -446,7 +443,7 @@ zu{
             vaii{"Izinhlazu Zezinombolo ze-Vai"}
         }
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.10.93"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

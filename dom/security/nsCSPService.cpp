@@ -47,6 +47,56 @@ CSPService::~CSPService()
 
 NS_IMPL_ISUPPORTS(CSPService, nsIContentPolicy, nsIChannelEventSink)
 
+// Helper function to identify protocols not subject to CSP.
+bool
+subjectToCSP(nsIURI* aURI) {
+  // The three protocols: data:, blob: and filesystem: share the same
+  // protocol flag (URI_IS_LOCAL_RESOURCE) with other protocols, like
+  // chrome:, resource:, moz-icon:, but those three protocols get
+  // special attention in CSP and are subject to CSP, hence we have
+  // to make sure those protocols are subject to CSP, see:
+  // http://www.w3.org/TR/CSP2/#source-list-guid-matching
+  bool match = false;
+  nsresult rv = aURI->SchemeIs("data", &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return true;
+  }
+  rv = aURI->SchemeIs("blob", &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return true;
+  }
+  rv = aURI->SchemeIs("filesystem", &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return true;
+  }
+  // finally we have to whitelist "about:" which does not fall in
+  // any of the two categories underneath but is not subject to CSP.
+  rv = aURI->SchemeIs("about", &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return false;
+  }
+
+  // Other protocols are not subject to CSP and can be whitelisted:
+  // * URI_IS_LOCAL_RESOURCE
+  //   e.g. chrome:, data:, blob:, resource:, moz-icon:
+  // * URI_INHERITS_SECURITY_CONTEXT
+  //   e.g. javascript:
+  //
+  // Please note that it should be possible for websites to
+  // whitelist their own protocol handlers with respect to CSP,
+  // hence we use protocol flags to accomplish that.
+  rv = NS_URIChainHasFlags(aURI, nsIProtocolHandler::URI_IS_LOCAL_RESOURCE, &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return false;
+  }
+  rv = NS_URIChainHasFlags(aURI, nsIProtocolHandler::URI_INHERITS_SECURITY_CONTEXT, &match);
+  if (NS_SUCCEEDED(rv) && match) {
+    return false;
+  }
+  // all other protocols are subject To CSP.
+  return true;
+}
+
 /* nsIContentPolicy implementation */
 NS_IMETHODIMP
 CSPService::ShouldLoad(uint32_t aContentType,
@@ -58,8 +108,9 @@ CSPService::ShouldLoad(uint32_t aContentType,
                        nsIPrincipal *aRequestPrincipal,
                        int16_t *aDecision)
 {
-  if (!aContentLocation)
+  if (!aContentLocation) {
     return NS_ERROR_FAILURE;
+  }
 
 #ifdef PR_LOGGING
   {
@@ -73,26 +124,14 @@ CSPService::ShouldLoad(uint32_t aContentType,
   // default decision, CSP can revise it if there's a policy to enforce
   *aDecision = nsIContentPolicy::ACCEPT;
 
-  // No need to continue processing if CSP is disabled
-  if (!sCSPEnabled)
+  // No need to continue processing if CSP is disabled or if the protocol
+  // is *not* subject to CSP.
+  // Please note, the correct way to opt-out of CSP using a custom
+  // protocolHandler is to set one of the nsIProtocolHandler flags
+  // that are whitelistet in subjectToCSP()
+  if (!sCSPEnabled || !subjectToCSP(aContentLocation)) {
     return NS_OK;
-
-  // shortcut for about: chrome: and resource: and javascript: uris since
-  // they're not subject to CSP content policy checks.
-  bool schemeMatch = false;
-  NS_ENSURE_SUCCESS(aContentLocation->SchemeIs("about", &schemeMatch), NS_OK);
-  if (schemeMatch)
-    return NS_OK;
-  NS_ENSURE_SUCCESS(aContentLocation->SchemeIs("chrome", &schemeMatch), NS_OK);
-  if (schemeMatch)
-    return NS_OK;
-  NS_ENSURE_SUCCESS(aContentLocation->SchemeIs("resource", &schemeMatch), NS_OK);
-  if (schemeMatch)
-    return NS_OK;
-  NS_ENSURE_SUCCESS(aContentLocation->SchemeIs("javascript", &schemeMatch), NS_OK);
-  if (schemeMatch)
-    return NS_OK;
-
+  }
 
   // These content types are not subject to CSP content policy checks:
   // TYPE_CSP_REPORT -- csp can't block csp reports
@@ -232,26 +271,30 @@ CSPService::AsyncOnChannelRedirect(nsIChannel *oldChannel,
 {
   nsAsyncRedirectAutoCallback autoCallback(callback);
 
+  nsCOMPtr<nsIURI> newUri;
+  nsresult rv = newChannel->GetURI(getter_AddRefs(newUri));
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  // No need to continue processing if CSP is disabled or if the protocol
+  // is *not* subject to CSP.
+  // Please note, the correct way to opt-out of CSP using a custom
+  // protocolHandler is to set one of the nsIProtocolHandler flags
+  // that are whitelistet in subjectToCSP()
+  if (!sCSPEnabled || !subjectToCSP(newUri)) {
+    return NS_OK;
+  }
+
   nsCOMPtr<nsILoadInfo> loadInfo;
-  nsresult rv = oldChannel->GetLoadInfo(getter_AddRefs(loadInfo));
+  rv = oldChannel->GetLoadInfo(getter_AddRefs(loadInfo));
 
   // if no loadInfo on the channel, nothing for us to do
   if (!loadInfo) {
     return NS_OK;
   }
 
-  // The loadInfo must not necessarily contain a Node, hence we try to query
-  // the CSP in the following order:
-  //   a) Get the Node, the Principal of that Node, and the CSP of that Principal
-  //   b) Get the Principal and the CSP of that Principal
-
-  nsCOMPtr<nsINode> loadingNode = loadInfo->LoadingNode();
-  nsCOMPtr<nsIPrincipal> principal = loadingNode ?
-                                     loadingNode->NodePrincipal() :
-                                     loadInfo->LoadingPrincipal();
-  NS_ASSERTION(principal, "Can not evaluate CSP without a principal");
+  // Get the LoadingPrincipal and CSP from the loadInfo
   nsCOMPtr<nsIContentSecurityPolicy> csp;
-  rv = principal->GetCsp(getter_AddRefs(csp));
+  rv = loadInfo->LoadingPrincipal()->GetCsp(getter_AddRefs(csp));
   NS_ENSURE_SUCCESS(rv, rv);
 
   // if there is no CSP, nothing for us to do
@@ -266,10 +309,6 @@ CSPService::AsyncOnChannelRedirect(nsIChannel *oldChannel,
    * We check if the CSP permits this host for this type of load, if not,
    * we cancel the load now.
    */
-
-  nsCOMPtr<nsIURI> newUri;
-  rv = newChannel->GetURI(getter_AddRefs(newUri));
-  NS_ENSURE_SUCCESS(rv, rv);
   nsCOMPtr<nsIURI> originalUri;
   rv = oldChannel->GetOriginalURI(getter_AddRefs(originalUri));
   NS_ENSURE_SUCCESS(rv, rv);
@@ -292,12 +331,14 @@ CSPService::AsyncOnChannelRedirect(nsIChannel *oldChannel,
            ("CSPService::AsyncOnChannelRedirect called for %s",
             newUriSpec.get()));
   }
-  if (aDecision == 1)
+  if (aDecision == 1) {
     PR_LOG(gCspPRLog, PR_LOG_DEBUG,
            ("CSPService::AsyncOnChannelRedirect ALLOWING request."));
-  else
+  }
+  else {
     PR_LOG(gCspPRLog, PR_LOG_DEBUG,
            ("CSPService::AsyncOnChannelRedirect CANCELLING request."));
+  }
 #endif
 
   // if ShouldLoad doesn't accept the load, cancel the request

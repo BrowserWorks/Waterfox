@@ -46,6 +46,11 @@ let gNumberOfThreadsLaunched = 0;
 const PREF_BRANCH = "toolkit.telemetry.";
 const PREF_ENABLED = PREF_BRANCH + "enabled";
 const PREF_FHR_UPLOAD_ENABLED = "datareporting.healthreport.uploadEnabled";
+const PREF_FHR_SERVICE_ENABLED = "datareporting.healthreport.service.enabled";
+
+const HAS_DATAREPORTINGSERVICE = "@mozilla.org/datareporting/service;1" in Cc;
+const SESSION_RECORDER_EXPECTED = HAS_DATAREPORTINGSERVICE &&
+                                  Preferences.get(PREF_FHR_SERVICE_ENABLED, true);
 
 const Telemetry = Cc["@mozilla.org/base/telemetry;1"].getService(Ci.nsITelemetry);
 
@@ -220,6 +225,9 @@ function checkPayload(request, reason, successfulPings) {
   do_check_eq(payload.simpleMeasurements.savedPings, 1);
   do_check_true("maximalNumberOfConcurrentThreads" in payload.simpleMeasurements);
   do_check_true(payload.simpleMeasurements.maximalNumberOfConcurrentThreads >= gNumberOfThreadsLaunched);
+
+  let activeTicks = payload.simpleMeasurements.activeTicks;
+  do_check_true(SESSION_RECORDER_EXPECTED ? activeTicks >= 0 : activeTicks == -1);
 
   do_check_eq(payload.simpleMeasurements.failedProfileLockCount,
               FAILED_PROFILE_LOCK_ATTEMPTS);
@@ -442,7 +450,7 @@ function run_test() {
 
   // Send the needed startup notifications to the datareporting service
   // to ensure that it has been initialized.
-  if ("@mozilla.org/datareporting/service;1" in Cc) {
+  if (HAS_DATAREPORTINGSERVICE) {
     gDatareportingService.observe(null, "app-startup", null);
     gDatareportingService.observe(null, "profile-after-change", null);
   }
@@ -496,7 +504,18 @@ function actualTest() {
 add_task(function* asyncSetup() {
   yield TelemetryPing.setup();
 
-  if ("@mozilla.org/datareporting/service;1" in Cc) {
+  if (HAS_DATAREPORTINGSERVICE) {
+    // force getSessionRecorder()==undefined to check the payload's activeTicks
+    gDatareportingService.simulateNoSessionRecorder();
+  }
+
+  // When no DRS or no DRS.getSessionRecorder(), activeTicks should be -1.
+  do_check_eq(TelemetryPing.getPayload().simpleMeasurements.activeTicks, -1);
+
+  if (HAS_DATAREPORTINGSERVICE) {
+    // Restore normal behavior for getSessionRecorder()
+    gDatareportingService.simulateRestoreSessionRecorder();
+
     gDataReportingClientID = yield gDatareportingService.getClientID();
 
     // We should have cached the client id now. Lets confirm that by

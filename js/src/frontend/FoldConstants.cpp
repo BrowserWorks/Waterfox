@@ -13,7 +13,7 @@
 
 #include "frontend/ParseNode.h"
 #include "frontend/Parser.h"
-#include "vm/NumericConversions.h"
+#include "js/Conversions.h"
 
 #include "jscntxtinlines.h"
 #include "jsinferinlines.h"
@@ -27,6 +27,8 @@ using mozilla::IsNegative;
 using mozilla::NegativeInfinity;
 using mozilla::PositiveInfinity;
 using JS::GenericNaN;
+using JS::ToInt32;
+using JS::ToUint32;
 
 static bool
 ContainsVarOrConst(ExclusiveContext *cx, ParseNode *pn, ParseNode **resultp)
@@ -363,8 +365,11 @@ Fold(ExclusiveContext *cx, ParseNode **pnp,
                 if (!Fold(cx, &pn->pn_left, handler, options, inGenexpLambda, condIf(pn, PNK_WHILE)))
                     return false;
             }
-            if (!Fold(cx, &pn->pn_right, handler, options, inGenexpLambda, condIf(pn, PNK_DOWHILE)))
-                return false;
+            /* Second kid may be null (for return in non-generator). */
+            if (pn->pn_right) {
+                if (!Fold(cx, &pn->pn_right, handler, options, inGenexpLambda, condIf(pn, PNK_DOWHILE)))
+                    return false;
+            }
         }
         pn1 = pn->pn_left;
         pn2 = pn->pn_right;

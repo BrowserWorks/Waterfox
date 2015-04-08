@@ -744,7 +744,9 @@ EventStateManager::PreHandleEvent(nsPresContext* aPresContext,
     break;
   case NS_QUERY_EDITOR_RECT:
     {
-      // XXX remote event
+      if (RemoteQueryContentEvent(aEvent)) {
+        break;
+      }
       ContentEventHandler handler(mPresContext);
       handler.OnQueryEditorRect(aEvent->AsQueryContentEvent());
     }
@@ -2029,6 +2031,7 @@ EventStateManager::DoScrollZoom(nsIFrame* aTargetFrame,
       } else {
         ChangeTextSize(change);
       }
+      EnsureDocument(mPresContext);
       nsContentUtils::DispatchChromeEvent(mDocument, static_cast<nsIDocument*>(mDocument),
                                           NS_LITERAL_STRING("ZoomChangeUsingMouseWheel"),
                                           true, true);
@@ -4407,6 +4410,14 @@ EventStateManager::CheckForAndDispatchClick(nsPresContext* aPresContext,
     nsCOMPtr<nsIPresShell> presShell = mPresContext->GetPresShell();
     if (presShell) {
       nsCOMPtr<nsIContent> mouseContent = GetEventTargetContent(aEvent);
+      // Click events apply to *elements* not nodes. At this point the target
+      // content may have been reset to some non-element content, and so we need
+      // to walk up the closest ancestor element, just like we do in
+      // nsPresShell::HandlePositionedEvent.
+      while (mouseContent && !mouseContent->IsElement()) {
+        mouseContent = mouseContent->GetParent();
+      }
+
       if (!mouseContent && !mCurrentTarget) {
         return NS_OK;
       }
@@ -5488,10 +5499,18 @@ int32_t EventStateManager::Prefs::sContentAccessModifierMask = 0;
 void
 EventStateManager::Prefs::Init()
 {
-  DebugOnly<nsresult> rv =
-    Preferences::AddBoolVarCache(&sKeyCausesActivation,
-                                 "accessibility.accesskeycausesactivation",
-                                 sKeyCausesActivation);
+  DebugOnly<nsresult> rv = Preferences::RegisterCallback(OnChange, "dom.popup_allowed_events");
+  MOZ_ASSERT(NS_SUCCEEDED(rv),
+             "Failed to observe \"dom.popup_allowed_events\"");
+
+  static bool sPrefsAlreadyCached = false;
+  if (sPrefsAlreadyCached) {
+    return;
+  }
+
+  rv = Preferences::AddBoolVarCache(&sKeyCausesActivation,
+                                    "accessibility.accesskeycausesactivation",
+                                    sKeyCausesActivation);
   MOZ_ASSERT(NS_SUCCEEDED(rv),
              "Failed to observe \"accessibility.accesskeycausesactivation\"");
   rv = Preferences::AddBoolVarCache(&sClickHoldContextMenu,
@@ -5514,10 +5533,7 @@ EventStateManager::Prefs::Init()
                                    sContentAccessModifierMask);
   MOZ_ASSERT(NS_SUCCEEDED(rv),
              "Failed to observe \"ui.key.contentAccess\"");
-
-  rv = Preferences::RegisterCallback(OnChange, "dom.popup_allowed_events");
-  MOZ_ASSERT(NS_SUCCEEDED(rv),
-             "Failed to observe \"dom.popup_allowed_events\"");
+  sPrefsAlreadyCached = true;
 }
 
 // static

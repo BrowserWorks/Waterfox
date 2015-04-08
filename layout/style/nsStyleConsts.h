@@ -574,10 +574,9 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_FONT_FIELD                     16
 
 // grid-auto-flow keywords
-#define NS_STYLE_GRID_AUTO_FLOW_STACK           (1 << 0)
-#define NS_STYLE_GRID_AUTO_FLOW_ROW             (1 << 1)
-#define NS_STYLE_GRID_AUTO_FLOW_COLUMN          (1 << 2)
-#define NS_STYLE_GRID_AUTO_FLOW_DENSE           (1 << 3)
+#define NS_STYLE_GRID_AUTO_FLOW_ROW             (1 << 0)
+#define NS_STYLE_GRID_AUTO_FLOW_COLUMN          (1 << 1)
+#define NS_STYLE_GRID_AUTO_FLOW_DENSE           (1 << 2)
 
 // 'subgrid' keyword in grid-template-{columns,rows}
 #define NS_STYLE_GRID_TEMPLATE_SUBGRID          0
@@ -843,6 +842,15 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_HYPHENS_MANUAL                 1
 #define NS_STYLE_HYPHENS_AUTO                   2
 
+// ruby-position, see nsStyleText
+#define NS_STYLE_RUBY_POSITION_OVER             0x01
+#define NS_STYLE_RUBY_POSITION_UNDER            0x02
+#define NS_STYLE_RUBY_POSITION_INTER_CHARACTER  0x04 // placeholder, not yet parsed
+#define NS_STYLE_RUBY_POSITION_RIGHT            0x08
+#define NS_STYLE_RUBY_POSITION_LEFT             0x10
+#define NS_STYLE_RUBY_POSITION_INITIAL \
+  (NS_STYLE_RUBY_POSITION_OVER | NS_STYLE_RUBY_POSITION_RIGHT)
+
 // See nsStyleText
 #define NS_STYLE_TEXT_SIZE_ADJUST_NONE          0
 #define NS_STYLE_TEXT_SIZE_ADJUST_AUTO          1
@@ -877,7 +885,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 
 #define NS_STYLE_TABLE_EMPTY_CELLS_HIDE            0
 #define NS_STYLE_TABLE_EMPTY_CELLS_SHOW            1
-#define NS_STYLE_TABLE_EMPTY_CELLS_SHOW_BACKGROUND 2
 
 #define NS_STYLE_CAPTION_SIDE_TOP               0
 #define NS_STYLE_CAPTION_SIDE_RIGHT             1

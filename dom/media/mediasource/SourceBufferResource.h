@@ -20,15 +20,6 @@
 #include "nscore.h"
 #include "prlog.h"
 
-#ifdef PR_LOGGING
-extern PRLogModuleInfo* GetMediaSourceLog();
-extern PRLogModuleInfo* GetMediaSourceAPILog();
-
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#else
-#define MSE_DEBUG(...)
-#endif
-
 #define UNIMPLEMENTED() { /* Logging this is too spammy to do by default */ }
 
 class nsIStreamListener;
@@ -114,6 +105,11 @@ public:
   // Used by SourceBuffer.
   void AppendData(LargeDataBuffer* aData);
   void Ended();
+  bool IsEnded()
+  {
+    ReentrantMonitorAutoEnter mon(mMonitor);
+    return mEnded;
+  }
   // Remove data from resource if it holds more than the threshold
   // number of bytes. Returns amount evicted.
   uint32_t EvictData(uint64_t aPlaybackOffset, uint32_t aThreshold);

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/nb.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/nb.xml
- */
 nb{
     Countries{
         001{"verden"}
@@ -153,7 +150,7 @@ nb{
         IL{"Israel"}
         IM{"Man"}
         IN{"India"}
-        IO{"Britiske territorier i Indiahavet"}
+        IO{"Det britiske territoriet i Indiahavet"}
         IQ{"Irak"}
         IR{"Iran"}
         IS{"Island"}
@@ -167,7 +164,7 @@ nb{
         KH{"Kambodsja"}
         KI{"Kiribati"}
         KM{"Komorene"}
-        KN{"St. Kitts og Nevis"}
+        KN{"Saint Kitts og Nevis"}
         KP{"Nord-Korea"}
         KR{"Sør-Korea"}
         KW{"Kuwait"}
@@ -302,18 +299,18 @@ nb{
         ZW{"Zimbabwe"}
         ZZ{"ukjent område"}
     }
-    Countries%variant{
-        CD{"Den demokratiske republikken Kongo"}
-        CG{"Republikken Kongo"}
-        FK{"Falklandsøyene (Islas Malvinas)"}
-        MK{"Makedonia (FYROM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Storbritannia"}
         HK{"Hongkong"}
         MO{"Macao"}
         PS{"Palestina"}
         US{"USA"}
     }
-    Version{"2.1.10.42"}
+    Countries%variant{
+        CD{"Den demokratiske republikken Kongo"}
+        CG{"Republikken Kongo"}
+        FK{"Falklandsøyene (Islas Malvinas)"}
+        MK{"Makedonia (FYROM)"}
+    }
+    Version{"2.1.12.94"}
 }

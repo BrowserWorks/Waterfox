@@ -10,6 +10,8 @@
 #include "prenv.h"
 #include "gfxPrefs.h"
 #include "gfxVR.h"
+#include "nsString.h"
+#include "mozilla/Preferences.h"
 
 #include "ovr_capi_dynamic.h"
 
@@ -76,12 +78,19 @@ InitializeOculusCAPI()
   if (!ovrlib) {
     const char *libName = OVR_LIB_NAME;
 
+    // If the pref is present, we override libName
+    nsAdoptingCString prefLibName = mozilla::Preferences::GetCString("dom.vr.ovr_lib_path");
+    if (prefLibName && prefLibName.get()) {
+      libName = prefLibName.get();
+    }
+
+    // If the env var is present, we override libName
     if (PR_GetEnv("OVR_LIB_NAME")) {
       libName = PR_GetEnv("OVR_LIB_NAME");
     }
 
     if (!libName) {
-      printf_stderr("Don't know how to find Oculus VR library; missing OVR_LIB_NAME\n");
+      printf_stderr("Don't know how to find Oculus VR library; missing dom.vr.ovr_lib_path or OVR_LIB_NAME\n");
       return false;
     }
 
@@ -180,41 +189,41 @@ using namespace mozilla::gfx;
 class FakeScreen : public nsIScreen
 {
 public:
-  FakeScreen(const IntRect& aScreenRect)
+  explicit FakeScreen(const IntRect& aScreenRect)
     : mScreenRect(aScreenRect)
   { }
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHOD GetRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) {
+  NS_IMETHOD GetRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) MOZ_OVERRIDE {
     *l = mScreenRect.x;
     *t = mScreenRect.y;
     *w = mScreenRect.width;
     *h = mScreenRect.height;
     return NS_OK;
   }
-  NS_IMETHOD GetAvailRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) {
+  NS_IMETHOD GetAvailRect(int32_t *l, int32_t *t, int32_t *w, int32_t *h) MOZ_OVERRIDE {
     return GetRect(l, t, w, h);
   }
-  NS_IMETHOD GetRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) {
+  NS_IMETHOD GetRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) MOZ_OVERRIDE {
     return GetRect(l, t, w, h);
   }
-  NS_IMETHOD GetAvailRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) {
+  NS_IMETHOD GetAvailRectDisplayPix(int32_t *l, int32_t *t, int32_t *w, int32_t *h) MOZ_OVERRIDE {
     return GetAvailRect(l, t, w, h);
   }
 
-  NS_IMETHOD GetId(uint32_t* aId) { *aId = (uint32_t)-1; return NS_OK; }
-  NS_IMETHOD GetPixelDepth(int32_t* aPixelDepth) { *aPixelDepth = 24; return NS_OK; }
-  NS_IMETHOD GetColorDepth(int32_t* aColorDepth) { *aColorDepth = 24; return NS_OK; }
+  NS_IMETHOD GetId(uint32_t* aId) MOZ_OVERRIDE { *aId = (uint32_t)-1; return NS_OK; }
+  NS_IMETHOD GetPixelDepth(int32_t* aPixelDepth) MOZ_OVERRIDE { *aPixelDepth = 24; return NS_OK; }
+  NS_IMETHOD GetColorDepth(int32_t* aColorDepth) MOZ_OVERRIDE { *aColorDepth = 24; return NS_OK; }
 
-  NS_IMETHOD LockMinimumBrightness(uint32_t aBrightness) { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD UnlockMinimumBrightness(uint32_t aBrightness) { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD GetRotation(uint32_t* aRotation) {
+  NS_IMETHOD LockMinimumBrightness(uint32_t aBrightness) MOZ_OVERRIDE { return NS_ERROR_NOT_AVAILABLE; }
+  NS_IMETHOD UnlockMinimumBrightness(uint32_t aBrightness) MOZ_OVERRIDE { return NS_ERROR_NOT_AVAILABLE; }
+  NS_IMETHOD GetRotation(uint32_t* aRotation) MOZ_OVERRIDE {
     *aRotation = nsIScreen::ROTATION_0_DEG;
     return NS_OK;
   }
-  NS_IMETHOD SetRotation(uint32_t aRotation) { return NS_ERROR_NOT_AVAILABLE; }
-  NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) {
+  NS_IMETHOD SetRotation(uint32_t aRotation) MOZ_OVERRIDE { return NS_ERROR_NOT_AVAILABLE; }
+  NS_IMETHOD GetContentsScaleFactor(double* aContentsScaleFactor) MOZ_OVERRIDE {
     *aContentsScaleFactor = 1.0;
     return NS_OK;
   }
@@ -230,7 +239,7 @@ NS_IMPL_ISUPPORTS(FakeScreen, nsIScreen)
 class HMDInfoOculus : public VRHMDInfo {
   friend class VRHMDManagerOculusImpl;
 public:
-  HMDInfoOculus(ovrHmd aHMD);
+  explicit HMDInfoOculus(ovrHmd aHMD);
 
   bool SetFOV(const VRFieldOfView& aFOVLeft, const VRFieldOfView& aFOVRight,
               double zNear, double zFar) MOZ_OVERRIDE;

@@ -216,7 +216,7 @@ public:
 
     MemoryReportRequestChild(uint32_t aGeneration, bool aAnonymize,
                              const MaybeFileDesc& aDMDFile);
-    NS_IMETHOD Run();
+    NS_IMETHOD Run() MOZ_OVERRIDE;
 private:
     virtual ~MemoryReportRequestChild();
 
@@ -510,6 +510,12 @@ NS_IMPL_ISUPPORTS(BackgroundChildPrimer, nsIIPCBackgroundChildCreateCallback)
 
 ContentChild* ContentChild::sSingleton;
 
+static void
+PostForkPreload()
+{
+    TabChild::PostForkPreload();
+}
+
 // Performs initialization that is not fork-safe, i.e. that must be done after
 // forking from the Nuwa process.
 static void
@@ -520,6 +526,7 @@ InitOnContentProcessCreated()
     if (IsNuwaProcess()) {
         return;
     }
+    PostForkPreload();
 #endif
 
     // This will register cross-process observer.
@@ -799,10 +806,10 @@ public:
     {
     }
 
-    NS_IMETHOD Callback(const nsACString &aProcess, const nsACString &aPath,
+    NS_IMETHOD Callback(const nsACString& aProcess, const nsACString &aPath,
                         int32_t aKind, int32_t aUnits, int64_t aAmount,
-                        const nsACString &aDescription,
-                        nsISupports *aiWrappedReports)
+                        const nsACString& aDescription,
+                        nsISupports* aiWrappedReports) MOZ_OVERRIDE
     {
         MemoryReportsWrapper *wrappedReports =
             static_cast<MemoryReportsWrapper *>(aiWrappedReports);
@@ -944,7 +951,7 @@ mozilla::plugins::PPluginModuleParent*
 ContentChild::AllocPPluginModuleParent(mozilla::ipc::Transport* aTransport,
                                        base::ProcessId aOtherProcess)
 {
-    return plugins::PluginModuleContentParent::Create(aTransport, aOtherProcess);
+    return plugins::PluginModuleContentParent::Initialize(aTransport, aOtherProcess);
 }
 
 PContentBridgeChild*
@@ -1035,6 +1042,11 @@ SetUpSandboxEnvironment()
 void
 ContentChild::CleanUpSandboxEnvironment()
 {
+    // Sandbox environment is only currently set up with the more strict sandbox.
+    if (!Preferences::GetBool("security.sandbox.windows.content.moreStrict")) {
+        return;
+    }
+
     nsresult rv;
     nsCOMPtr<nsIProperties> directoryService =
         do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv);
@@ -1144,11 +1156,8 @@ ContentChild::RecvSetProcessSandbox()
 #endif
     SetContentProcessSandbox();
 #elif defined(XP_WIN)
-    nsAdoptingString contentSandboxPref =
-        Preferences::GetString("browser.tabs.remote.sandbox");
-    if (contentSandboxPref.EqualsLiteral("on")
-        || contentSandboxPref.EqualsLiteral("warn")) {
-        mozilla::SandboxTarget::Instance()->StartSandbox();
+    mozilla::SandboxTarget::Instance()->StartSandbox();
+    if (Preferences::GetBool("security.sandbox.windows.content.moreStrict")) {
         SetUpSandboxEnvironment();
     }
 #elif defined(XP_MACOSX)
@@ -1241,7 +1250,6 @@ ContentChild::RecvPBrowserConstructor(PBrowserChild* aActor,
 {
     // This runs after AllocPBrowserChild() returns and the IPC machinery for this
     // PBrowserChild has been set up.
-
     nsCOMPtr<nsIObserverService> os = services::GetObserverService();
     if (os) {
         nsITabChild* tc =
@@ -1989,8 +1997,11 @@ bool
 ContentChild::RecvFlushMemory(const nsString& reason)
 {
 #ifdef MOZ_NUWA_PROCESS
-    if (IsNuwaProcess()) {
+    if (IsNuwaProcess() || ManagedPBrowserChild().Length() == 0) {
         // Don't flush memory in the nuwa process: the GC thread could be frozen.
+        // If there's no PBrowser child, don't flush memory, either. GC writes
+        // to copy-on-write pages and makes preallocated process take more memory
+        // before it actually becomes an app.
         return true;
     }
 #endif
@@ -2078,12 +2089,28 @@ ContentChild::RecvAppInfo(const nsCString& version, const nsCString& buildID,
     // BrowserElementChild.js.
     if ((mIsForApp || mIsForBrowser)
 #ifdef MOZ_NUWA_PROCESS
-        && !IsNuwaProcess()
+        && IsNuwaProcess()
 #endif
        ) {
         PreloadSlowThings();
+#ifndef MOZ_NUWA_PROCESS
+        PostForkPreload();
+#endif
     }
 
+#ifdef MOZ_NUWA_PROCESS
+    // Some modules are initialized in preloading. We need to wait until the
+    // tasks they dispatched to chrome process are done.
+    if (IsNuwaProcess()) {
+        SendNuwaWaitForFreeze();
+    }
+#endif
+    return true;
+}
+
+bool
+ContentChild::RecvNuwaFreeze()
+{
 #ifdef MOZ_NUWA_PROCESS
     if (IsNuwaProcess()) {
         ContentChild::GetSingleton()->RecvGarbageCollect();
@@ -2091,7 +2118,6 @@ ContentChild::RecvAppInfo(const nsCString& version, const nsCString& buildID,
             FROM_HERE, NewRunnableFunction(OnFinishNuwaPreparation));
     }
 #endif
-
     return true;
 }
 
@@ -2127,13 +2153,15 @@ ContentChild::RecvFileSystemUpdate(const nsString& aFsName,
                                    const bool& aIsSharing,
                                    const bool& aIsFormatting,
                                    const bool& aIsFake,
-                                   const bool& aIsUnmounting)
+                                   const bool& aIsUnmounting,
+                                   const bool& aIsRemovable,
+                                   const bool& aIsHotSwappable)
 {
 #ifdef MOZ_WIDGET_GONK
     nsRefPtr<nsVolume> volume = new nsVolume(aFsName, aVolumeName, aState,
                                              aMountGeneration, aIsMediaPresent,
                                              aIsSharing, aIsFormatting, aIsFake,
-                                             aIsUnmounting);
+                                             aIsUnmounting, aIsRemovable, aIsHotSwappable);
 
     nsRefPtr<nsVolumeService> vs = nsVolumeService::GetSingleton();
     if (vs) {
@@ -2150,6 +2178,8 @@ ContentChild::RecvFileSystemUpdate(const nsString& aFsName,
     unused << aIsFormatting;
     unused << aIsFake;
     unused << aIsUnmounting;
+    unused << aIsRemovable;
+    unused << aIsHotSwappable;
 #endif
     return true;
 }
@@ -2319,8 +2349,6 @@ public:
 static void
 DoNuwaFork()
 {
-    NS_ASSERTION(NuwaSpawnPrepare != nullptr,
-                 "NuwaSpawnPrepare() is not available!");
     NuwaSpawnPrepare();       // NuwaSpawn will be blocked.
 
     {
@@ -2329,8 +2357,6 @@ DoNuwaFork()
     }
 
     // IOThread should be blocked here for waiting NuwaSpawn().
-    NS_ASSERTION(NuwaSpawnWait != nullptr,
-                 "NuwaSpawnWait() is not available!");
     NuwaSpawnWait();        // Now! NuwaSpawn can go.
     // Here, we can make sure the spawning was finished.
 }
@@ -2346,6 +2372,36 @@ RunNuwaFork()
       DoNuwaFork();
     }
 }
+
+class NuwaForkCaller: public nsRunnable
+{
+public:
+    NS_IMETHODIMP
+    Run() {
+        // We want to ensure that the PBackground actor gets cloned in the Nuwa
+        // process before we freeze. Also, we have to do this to avoid deadlock.
+        // Protocols that are "opened" (e.g. PBackground, PCompositor) block the
+        // main thread to wait for the IPC thread during the open operation.
+        // NuwaSpawnWait() blocks the IPC thread to wait for the main thread when
+        // the Nuwa process is forked. Unless we ensure that the two cannot happen
+        // at the same time then we risk deadlock. Spinning the event loop here
+        // guarantees the ordering is safe for PBackground.
+        if (!BackgroundChild::GetForCurrentThread()) {
+            // Dispatch ourself again.
+            NS_DispatchToMainThread(this, NS_DISPATCH_NORMAL);
+        } else {
+            MessageLoop* ioloop = XRE_GetIOMessageLoop();
+            ioloop->PostTask(FROM_HERE, NewRunnableFunction(RunNuwaFork));
+        }
+        return NS_OK;
+    }
+private:
+    virtual
+    ~NuwaForkCaller()
+    {
+    }
+};
+
 #endif
 
 bool
@@ -2357,22 +2413,9 @@ ContentChild::RecvNuwaFork()
     }
     sNuwaForking = true;
 
-    // We want to ensure that the PBackground actor gets cloned in the Nuwa
-    // process before we freeze. Also, we have to do this to avoid deadlock.
-    // Protocols that are "opened" (e.g. PBackground, PCompositor) block the
-    // main thread to wait for the IPC thread during the open operation.
-    // NuwaSpawnWait() blocks the IPC thread to wait for the main thread when
-    // the Nuwa process is forked. Unless we ensure that the two cannot happen
-    // at the same time then we risk deadlock. Spinning the event loop here
-    // guarantees the ordering is safe for PBackground.
-    while (!BackgroundChild::GetForCurrentThread()) {
-        if (NS_WARN_IF(!NS_ProcessNextEvent())) {
-            return false;
-        }
-    }
+    nsRefPtr<NuwaForkCaller> runnable = new NuwaForkCaller();
+    NS_DispatchToMainThread(runnable, NS_DISPATCH_NORMAL);
 
-    MessageLoop* ioloop = XRE_GetIOMessageLoop();
-    ioloop->PostTask(FROM_HERE, NewRunnableFunction(RunNuwaFork));
     return true;
 #else
     return false; // Makes the underlying IPC channel abort.
@@ -2419,7 +2462,7 @@ ContentChild::RecvStopProfiler()
 }
 
 bool
-ContentChild::AnswerGetProfile(nsCString* aProfile)
+ContentChild::RecvGetProfile(nsCString* aProfile)
 {
     char* profile = profiler_get_profile();
     if (profile) {
@@ -2428,6 +2471,21 @@ ContentChild::AnswerGetProfile(nsCString* aProfile)
     } else {
         *aProfile = EmptyCString();
     }
+    return true;
+}
+
+bool
+ContentChild::RecvLoadPluginResult(const uint32_t& aPluginId, const bool& aResult)
+{
+    plugins::PluginModuleContentParent::OnLoadPluginResult(aPluginId, aResult);
+    return true;
+}
+
+bool
+ContentChild::RecvAssociatePluginId(const uint32_t& aPluginId,
+                                    const base::ProcessId& aProcessId)
+{
+    plugins::PluginModuleContentParent::AssociatePluginId(aPluginId, aProcessId);
     return true;
 }
 

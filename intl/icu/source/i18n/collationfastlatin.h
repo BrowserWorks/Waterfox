@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationfastlatin.h
@@ -31,7 +31,7 @@ public:
      * When the major version number of the main data format changes,
      * we can reset this fast Latin version to 1.
      */
-    static const uint16_t VERSION = 1;
+    static const uint16_t VERSION = 2;
 
     static const int32_t LATIN_MAX = 0x17f;
     static const int32_t LATIN_LIMIT = LATIN_MAX + 1;
@@ -252,7 +252,7 @@ private:
 
 /*
  * Format of the CollationFastLatin data table.
- * CollationFastLatin::VERSION = 1.
+ * CollationFastLatin::VERSION = 2.
  *
  * This table contains data for a Latin-text collation fastpath.
  * The data is stored as an array of uint16_t which contains the following parts.
@@ -262,6 +262,12 @@ private:
  *         7..0: length of the header
  *
  * uint16_t varTops[header length - 1]
+ *   Version 2:
+ *   varTops[m] is the highest CollationFastLatin long-primary weight
+ *   of supported maxVariable group m
+ *   (special reorder group space, punct, symbol, currency).
+ *
+ *   Version 1:
  *   Each of these values maps the variable top lead byte of a supported maxVariable group
  *   to the highest CollationFastLatin long-primary weight.
  *   The values are stored in ascending order.
@@ -293,6 +299,16 @@ private:
  *   Each list is terminated by an entry with CONTR_CHAR_MASK.
  *   Each list starts with such an entry which also contains the default result
  *   for when there is no contraction match.
+ *
+ * -----------------
+ * Changes for version 2 (ICU 55)
+ *
+ * Special reorder groups do not necessarily start on whole primary lead bytes any more.
+ * Therefore, the varTops data has a new format:
+ * Version 1 stored the lead bytes of the highest root primaries for
+ * the maxVariable-supported special reorder groups.
+ * Now the top 16 bits would need to be stored,
+ * and it is simpler to store only the fast-Latin weights.
  */
 
 U_NAMESPACE_END

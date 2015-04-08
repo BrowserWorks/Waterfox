@@ -46,6 +46,7 @@
     <dimen name="new_tablet_browser_toolbar_menu_item_inset_horizontal">3dp</dimen>
     <dimen name="new_tablet_browser_toolbar_menu_item_corner_radius">5dp</dimen>
     <dimen name="new_tablet_tab_strip_button_inset">5dp</dimen>
+    <dimen name="new_tablet_private_tabs_panel_empty_width">300dp</dimen>
     <dimen name="forward_default_offset">-13dip</dimen>
 
     <!-- Dimensions used by Favicons and FaviconView -->
@@ -70,6 +71,9 @@
     <!-- Regular page row on about:home -->
     <dimen name="page_row_height">64dp</dimen>
 
+    <!-- Group/heading page row on about:home -->
+    <dimen name="page_group_height">56dp</dimen>
+
     <!-- Reading list row on about:home -->
     <dimen name="reading_list_row_height">128dp</dimen>
     <dimen name="reading_list_row_padding_left">15dp</dimen>
@@ -79,7 +83,7 @@
     <dimen name="home_remote_tabs_top_padding">48dp</dimen>
 
     <!-- Remote Tabs Hidden devices row height -->
-    <dimen name="home_remote_tabs_hidden_footer_height">48dp</dimen>
+    <dimen name="home_remote_tabs_hidden_footer_height">40dp</dimen>
 
     <!-- Search Engine Row height -->
     <dimen name="search_row_height">48dp</dimen>
@@ -148,6 +152,9 @@
 
     <!-- Banner -->
     <dimen name="home_banner_height">72dp</dimen>
+    <dimen name="home_banner_close_width">42dp</dimen>
+    <dimen name="home_banner_icon_height">48dip</dimen>
+    <dimen name="home_banner_icon_width">48dip</dimen>
 
     <!-- Icon Grid -->
     <dimen name="icongrid_columnwidth">128dp</dimen>
@@ -190,8 +197,8 @@
     <dimen name="find_in_page_text_margin_right">12dip</dimen>
     <dimen name="find_in_page_text_padding_left">10dip</dimen>
     <dimen name="find_in_page_text_padding_right">10dip</dimen>
-    <dimen name="find_in_page_status_margin_right">15dip</dimen>
-    <dimen name="find_in_page_matchcase_margin_right">10dip</dimen>
+    <dimen name="find_in_page_status_margin_right">10dip</dimen>
+    <dimen name="find_in_page_matchcase_padding">10dip</dimen>
     <dimen name="find_in_page_control_margin_top">2dip</dimen>
 
 </resources>

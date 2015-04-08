@@ -52,7 +52,7 @@ const VARIABLES_VIEW_URL = "chrome://browser/content/devtools/widgets/VariablesV
 
 const CONSOLE_DIR_VIEW_HEIGHT = 0.6;
 
-const IGNORED_SOURCE_URLS = ["debugger eval code", "self-hosted"];
+const IGNORED_SOURCE_URLS = ["debugger eval code"];
 
 // The amount of time in milliseconds that we wait before performing a live
 // search.
@@ -690,6 +690,9 @@ WebConsoleFrame.prototype = {
     let categories = this.document
                      .querySelectorAll(".webconsole-filter-button[category]");
     Array.forEach(categories, function(aButton) {
+      aButton.addEventListener("contextmenu", (aEvent) => {
+        aButton.open = true;
+      }, false);
       aButton.addEventListener("click", this._toggleFilter, false);
 
       let someChecked = false;
@@ -811,7 +814,9 @@ WebConsoleFrame.prototype = {
   {
     let target = aEvent.target;
     let tagName = target.tagName;
-    if (tagName != aEvent.currentTarget.tagName) {
+    // Prevent toggle if generated from a contextmenu event (right click)
+    let isRightClick = (aEvent.button === 2); // right click is button 2;
+    if (tagName != aEvent.currentTarget.tagName || isRightClick) {
       return;
     }
 
@@ -3313,9 +3318,20 @@ JSTerm.prototype = {
    *        user input is used - taken from |this.inputNode.value|.
    * @param function [aCallback]
    *        Optional function to invoke when the result is displayed.
+   *        This is deprecated - please use the promise return value instead.
+   * @returns Promise
+   *          Resolves with the message once the result is displayed.
    */
   execute: function JST_execute(aExecuteString, aCallback)
   {
+    let deferred = promise.defer();
+    let callback = function(msg) {
+      deferred.resolve(msg);
+      if (aCallback) {
+        aCallback(msg);
+      }
+    }
+
     // attempt to execute the content of the inputNode
     aExecuteString = aExecuteString || this.inputNode.value;
     if (!aExecuteString) {
@@ -3333,7 +3349,7 @@ JSTerm.prototype = {
       severity: "log",
     });
     this.hud.output.addMessage(message);
-    let onResult = this._executeResultCallback.bind(this, message, aCallback);
+    let onResult = this._executeResultCallback.bind(this, message, callback);
 
     let options = {
       frame: this.SELECTED_FRAME,
@@ -3350,6 +3366,7 @@ JSTerm.prototype = {
     WebConsoleUtils.usageCount++;
     this.setInputValue("");
     this.clearCompletion();
+    return deferred.promise;
   },
 
   /**
@@ -3400,7 +3417,7 @@ JSTerm.prototype = {
       selectedNodeActor: aOptions.selectedNodeActor,
     };
 
-    this.webConsoleClient.evaluateJS(aString, onResult, evalOptions);
+    this.webConsoleClient.evaluateJSAsync(aString, onResult, evalOptions);
     return deferred.promise;
   },
 
@@ -5395,4 +5412,3 @@ ConsoleContextMenu.prototype = {
     this.lastClickedMessage = null;
   },
 };
-

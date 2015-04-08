@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (C) 1996-2014, International Business Machines Corporation and
+ * Copyright (C) 1996-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  *******************************************************************************
  */
@@ -422,7 +422,7 @@ enum UCalendarDateFields {
    * an example of this.
    */
   UCAL_IS_LEAP_MONTH,
-  
+
   /**
    * Field count
    * @stable ICU 2.6

@@ -202,37 +202,6 @@ MIRGraph::unmarkBlocks()
         i->unmark();
 }
 
-MDefinition *
-MIRGraph::forkJoinContext()
-{
-    // Search the entry block to find a ForkJoinContext instruction. If we do
-    // not find one, add one after the Start instruction.
-    //
-    // Note: the original design used a field in MIRGraph to cache the
-    // forkJoinContext rather than searching for it again.  However, this
-    // could become out of date due to DCE.  Given that we do not generally
-    // have to search very far to find the ForkJoinContext instruction if it
-    // exists, and that we don't look for it that often, I opted to simply
-    // eliminate the cache and search anew each time, so that it is that much
-    // easier to keep the IR coherent. - nmatsakis
-
-    MBasicBlock *entry = entryBlock();
-    MOZ_ASSERT(entry->info().executionMode() == ParallelExecution);
-
-    MInstruction *start = nullptr;
-    for (MInstructionIterator ins(entry->begin()); ins != entry->end(); ins++) {
-        if (ins->isForkJoinContext())
-            return *ins;
-        else if (ins->isStart())
-            start = *ins;
-    }
-    MOZ_ASSERT(start);
-
-    MForkJoinContext *cx = MForkJoinContext::New(alloc());
-    entry->insertAfter(start, cx);
-    return cx;
-}
-
 MBasicBlock *
 MBasicBlock::New(MIRGraph &graph, BytecodeAnalysis *analysis, CompileInfo &info,
                  MBasicBlock *pred, const BytecodeSite *site, Kind kind)
@@ -439,7 +408,8 @@ MBasicBlock::inherit(TempAllocator &alloc, BytecodeAnalysis *analysis, MBasicBlo
     MResumePoint *callerResumePoint = pred ? pred->callerResumePoint() : nullptr;
 
     // Create a resume point using our initial stack state.
-    entryResumePoint_ = new(alloc) MResumePoint(this, pc(), callerResumePoint, MResumePoint::ResumeAt);
+    entryResumePoint_ = new(alloc) MResumePoint(this, pc(), callerResumePoint,
+                                                MResumePoint::ResumeAt);
     if (!entryResumePoint_->init(alloc))
         return false;
 
@@ -496,7 +466,7 @@ bool
 MBasicBlock::inheritResumePoint(MBasicBlock *pred)
 {
     // Copy slots from the resume point.
-    stackPosition_ = entryResumePoint_->numOperands();
+    stackPosition_ = entryResumePoint_->stackDepth();
     for (uint32_t i = 0; i < stackPosition_; i++)
         slots_[i] = entryResumePoint_->getOperand(i);
 
@@ -806,7 +776,6 @@ MBasicBlock::safeInsertTop(MDefinition *ins, IgnoreTop ignore)
                                     : begin(ins->toInstruction());
     while (insertIter->isBeta() ||
            insertIter->isInterruptCheck() ||
-           insertIter->isInterruptCheckPar() ||
            insertIter->isConstant() ||
            (!(ignore & IgnoreRecover) && insertIter->isRecoveredOnBailout()))
     {
@@ -1404,7 +1373,7 @@ void
 MBasicBlock::inheritPhis(MBasicBlock *header)
 {
     MResumePoint *headerRp = header->entryResumePoint();
-    size_t stackDepth = headerRp->numOperands();
+    size_t stackDepth = headerRp->stackDepth();
     for (size_t slot = 0; slot < stackDepth; slot++) {
         MDefinition *exitDef = getSlot(slot);
         MDefinition *loopDef = headerRp->getOperand(slot);
@@ -1437,7 +1406,7 @@ MBasicBlock::inheritPhisFromBackedge(MBasicBlock *backedge, bool *hadTypeChange)
     // We must be a pending loop header
     MOZ_ASSERT(kind_ == PENDING_LOOP_HEADER);
 
-    size_t stackDepth = entryResumePoint()->numOperands();
+    size_t stackDepth = entryResumePoint()->stackDepth();
     for (size_t slot = 0; slot < stackDepth; slot++) {
         // Get the value stack-slot of the back edge.
         MDefinition *exitDef = backedge->getSlot(slot);

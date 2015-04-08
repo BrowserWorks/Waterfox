@@ -1,5 +1,5 @@
 /*
- * (C) Copyright IBM Corp. 1998 - 2013 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1998 - 2015 - All Rights Reserved
  *
  */
 
@@ -20,7 +20,10 @@ le_uint32 CursiveAttachmentSubtable::process(const LEReferenceTo<CursiveAttachme
     le_int32  coverageIndex = getGlyphCoverage(base, glyphID, success);
     le_uint16 eeCount       = SWAPW(entryExitCount);
 
-    if (coverageIndex < 0 || coverageIndex >= eeCount) {
+    LEReferenceToArrayOf<EntryExitRecord>
+        entryExitRecordsArrayRef(base, success, entryExitRecords, coverageIndex);
+
+    if (coverageIndex < 0 || coverageIndex >= eeCount || LE_FAILURE(success)) {
         glyphIterator->setCursiveGlyph();
         return 0;
     }

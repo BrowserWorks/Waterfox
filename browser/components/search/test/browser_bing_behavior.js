@@ -16,8 +16,9 @@ function test() {
 
   let previouslySelectedEngine = Services.search.currentEngine;
   Services.search.currentEngine = engine;
-
-  let base = "http://www.bing.com/search?q=foo&pc=MOZI";
+  engine.alias = "b";
+  
+  let base = "https://www.bing.com/search?q=foo&pc=MOZI";
   let url;
 
   // Test search URLs (including purposes).
@@ -42,6 +43,15 @@ function test() {
       searchURL: base + "&form=MOZLBR",
       run: function () {
         gURLBar.value = "? foo";
+        gURLBar.focus();
+        EventUtils.synthesizeKey("VK_RETURN", {});
+      }
+    },
+    {
+      name: "keyword search with alias",
+      searchURL: base + "&form=MOZLBR",
+      run: function () {
+        gURLBar.value = "b foo";
         gURLBar.focus();
         EventUtils.synthesizeKey("VK_RETURN", {});
       }
@@ -139,6 +149,7 @@ function test() {
   }
 
   registerCleanupFunction(function () {
+    engine.alias = undefined;
     gBrowser.removeProgressListener(listener);
     gBrowser.removeTab(tab);
     Services.search.currentEngine = previouslySelectedEngine;

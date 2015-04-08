@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/windowsZones.xml
@@ -145,6 +145,7 @@ windowsZones:table(nofallback){
             AU{"Antarctica/Macquarie"}
             FM{"Pacific/Ponape Pacific/Kosrae"}
             NC{"Pacific/Noumea"}
+            PG{"Pacific/Bougainville"}
             SB{"Pacific/Guadalcanal"}
             VU{"Pacific/Efate"}
             ZZ{"Etc/GMT-11"}
@@ -152,8 +153,8 @@ windowsZones:table(nofallback){
         "Central Standard Time (Mexico)"{
             001{"America/Mexico_City"}
             MX{
-                "America/Mexico_City America/Bahia_Banderas America/Cancun America/Me"
-                "rida America/Monterrey"
+                "America/Mexico_City America/Bahia_Banderas America/Merida America/Mo"
+                "nterrey"
             }
         }
         "Central Standard Time"{
@@ -204,6 +205,10 @@ windowsZones:table(nofallback){
         "E. South America Standard Time"{
             001{"America/Sao_Paulo"}
             BR{"America/Sao_Paulo"}
+        }
+        "Eastern Standard Time (Mexico)"{
+            001{"America/Cancun"}
+            MX{"America/Cancun"}
         }
         "Eastern Standard Time"{
             001{"America/New_York"}
@@ -686,7 +691,7 @@ windowsZones:table(nofallback){
             FM{"Pacific/Truk"}
             GU{"Pacific/Guam"}
             MP{"Pacific/Saipan"}
-            PG{"Pacific/Port_Moresby Pacific/Bougainville"}
+            PG{"Pacific/Port_Moresby"}
             ZZ{"Etc/GMT-10"}
         }
         "Yakutsk Standard Time"{

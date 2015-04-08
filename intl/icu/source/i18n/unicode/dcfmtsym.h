@@ -1,6 +1,6 @@
 /*
 ********************************************************************************
-*   Copyright (C) 1997-2014, International Business Machines
+*   Copyright (C) 1997-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 ********************************************************************************
 *
@@ -163,12 +163,14 @@ public:
          * @stable ICU 4.6
          */
         kNineDigitSymbol,
+#ifndef U_HIDE_DRAFT_API
         /** Multiplication sign.
          * @draft ICU 54
          */
         kExponentMultiplicationSymbol,
+#endif  /* U_HIDE_DRAFT_API */
         /** count symbol constants */
-        kFormatSymbolCount
+        kFormatSymbolCount = kNineDigitSymbol + 2
     };
 
     /**

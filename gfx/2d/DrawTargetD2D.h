@@ -142,14 +142,16 @@ public:
   TemporaryRef<ID2D1Layer> GetCachedLayer();
   void PopCachedLayer(ID2D1RenderTarget *aRT);
 
-#ifdef USE_D2D1_1
   TemporaryRef<ID2D1Image> GetImageForSurface(SourceSurface *aSurface);
-#endif
 
   static ID2D1Factory *factory();
   static void CleanupD2D();
   static IDWriteFactory *GetDWriteFactory();
   ID2D1RenderTarget *GetRT() { return mRT; }
+
+  static uint32_t GetMaxSurfaceSize() {
+    return D3D10_REQ_TEXTURE2D_U_OR_V_DIMENSION;
+  }
 
   operator std::string() const {
     std::stringstream stream;

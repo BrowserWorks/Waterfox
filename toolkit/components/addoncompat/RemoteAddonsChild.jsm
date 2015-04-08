@@ -14,6 +14,8 @@ Cu.import("resource://gre/modules/Services.jsm");
 
 XPCOMUtils.defineLazyModuleGetter(this, "BrowserUtils",
                                   "resource://gre/modules/BrowserUtils.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "Prefetcher",
+                                  "resource://gre/modules/Prefetcher.jsm");
 
 XPCOMUtils.defineLazyServiceGetter(this, "SystemPrincipal",
                                    "@mozilla.org/systemprincipal;1", "nsIPrincipal");
@@ -80,14 +82,17 @@ let NotificationTracker = {
     }
   },
 
-  watch: function(component1, watcher) {
-    setDefault(this._watchers, component1, []).push(watcher);
-    this._registered.set(watcher, new Set());
+  findPaths: function(prefix) {
+    let tracked = this._paths;
+    for (let component of prefix) {
+      tracked = setDefault(tracked, component, {});
+    }
 
+    let result = [];
     let enumerate = (tracked, curPath) => {
       for (let component in tracked) {
         if (component == "_count") {
-          this.runCallback(watcher, curPath, tracked._count);
+          result.push([curPath, tracked._count]);
         } else {
           let path = curPath.slice();
           if (component === "true") {
@@ -100,7 +105,24 @@ let NotificationTracker = {
         }
       }
     }
-    enumerate(this._paths[component1] || {}, [component1]);
+    enumerate(tracked, prefix);
+
+    return result;
+  },
+
+  findSuffixes: function(prefix) {
+    let paths = this.findPaths(prefix);
+    return paths.map(([path, count]) => path[path.length - 1]);
+  },
+
+  watch: function(component1, watcher) {
+    setDefault(this._watchers, component1, []).push(watcher);
+    this._registered.set(watcher, new Set());
+
+    let paths = this.findPaths([component1]);
+    for (let [path, count] of paths) {
+      this.runCallback(watcher, path, count);
+    }
   },
 
   unwatch: function(component1, watcher) {
@@ -145,6 +167,11 @@ let ContentPolicyChild = {
 
   shouldLoad: function(contentType, contentLocation, requestOrigin,
                        node, mimeTypeGuess, extra, requestPrincipal) {
+    let addons = NotificationTracker.findSuffixes(["content-policy"]);
+    let [prefetched, cpows] = Prefetcher.prefetch("ContentPolicy.shouldLoad",
+                                                  addons, {InitNode: node});
+    cpows.node = node;
+
     let cpmm = Cc["@mozilla.org/childprocessmessagemanager;1"]
                .getService(Ci.nsISyncMessageSender);
     let rval = cpmm.sendRpcMessage("Addons:ContentPolicy:Run", {
@@ -153,9 +180,8 @@ let ContentPolicyChild = {
       requestOrigin: requestOrigin ? requestOrigin.spec : null,
       mimeTypeGuess: mimeTypeGuess,
       requestPrincipal: requestPrincipal,
-    }, {
-      node: node, // Sent as a CPOW.
-    });
+      prefetched: prefetched,
+    }, cpows);
     if (rval.length != 1) {
       return Ci.nsIContentPolicy.ACCEPT;
     }
@@ -204,7 +230,7 @@ AboutProtocolChannel.prototype = {
       contractID: this._contractID
     }, {
       notificationCallbacks: this.notificationCallbacks,
-      loadGroupNotificationCallbacks: this.loadGroup.notificationCallbacks
+      loadGroupNotificationCallbacks: this.loadGroup ? this.loadGroup.notificationCallbacks : null,
     });
 
     if (rval.length != 1) {
@@ -310,10 +336,12 @@ AboutProtocolInstance.prototype = {
 
 let AboutProtocolChild = {
   _classDescription: "Addon shim about: protocol handler",
-  _classID: Components.ID("8d56a310-0c80-11e4-9191-0800200c9a66"),
 
   init: function() {
-    this._instances = {};
+    // Maps contractIDs to instances
+    this._instances = new Map();
+    // Maps contractIDs to classIDs
+    this._classIDs = new Map();
     NotificationTracker.watch("about-protocol", this);
   },
 
@@ -322,11 +350,19 @@ let AboutProtocolChild = {
     let registrar = Components.manager.QueryInterface(Ci.nsIComponentRegistrar);
     if (register) {
       let instance = new AboutProtocolInstance(contractID);
-      this._instances[contractID] = instance;
-      registrar.registerFactory(this._classID, this._classDescription, contractID, instance);
+      let classID = Cc["@mozilla.org/uuid-generator;1"]
+                      .getService(Ci.nsIUUIDGenerator)
+                      .generateUUID();
+
+      this._instances.set(contractID, instance);
+      this._classIDs.set(contractID, classID);
+      registrar.registerFactory(classID, this._classDescription, contractID, instance);
     } else {
-      registrar.unregisterFactory(this._classID, this._instances[contractID]);
-      delete this._instances[contractID];
+      let instance = this._instances.get(contractID);
+      let classID = this._classIDs.get(contractID);
+      registrar.unregisterFactory(classID, instance);
+      this._instances.delete(contractID);
+      this._classIDs.delete(contractID);
     }
   },
 };
@@ -386,11 +422,20 @@ EventTargetChild.prototype = {
   },
 
   handleEvent: function(capturing, event) {
+    let addons = NotificationTracker.findSuffixes(["event", event.type, capturing]);
+    let [prefetched, cpows] = Prefetcher.prefetch("EventTarget.handleEvent",
+                                                  addons,
+                                                  {Event: event,
+                                                   Window: this._childGlobal.content});
+    cpows.event = event;
+    cpows.eventTarget = event.target;
+
     this._childGlobal.sendRpcMessage("Addons:Event:Run",
                                      {type: event.type,
                                       capturing: capturing,
-                                      isTrusted: event.isTrusted},
-                                     {event: event});
+                                      isTrusted: event.isTrusted,
+                                      prefetched: prefetched},
+                                     cpows);
   }
 };
 
@@ -451,6 +496,7 @@ let RemoteAddonsChild = {
   _ready: false,
 
   makeReady: function() {
+    Prefetcher.init();
     NotificationTracker.init();
     ContentPolicyChild.init();
     AboutProtocolChild.init();

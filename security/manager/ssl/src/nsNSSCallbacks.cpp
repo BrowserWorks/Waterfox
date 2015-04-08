@@ -1132,7 +1132,8 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                            infoObject->GetPort(),
                                            versions.max);
 
-  bool weakEncryption = false;
+  bool usesWeakProtocol = false;
+  bool usesWeakCipher = false;
   SSLChannelInfo channelInfo;
   rv = SSL_GetChannelInfo(fd, &channelInfo, sizeof(channelInfo));
   MOZ_ASSERT(rv == SECSuccess);
@@ -1151,9 +1152,9 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
                                 sizeof cipherInfo);
     MOZ_ASSERT(rv == SECSuccess);
     if (rv == SECSuccess) {
-      weakEncryption =
-        (channelInfo.protocolVersion <= SSL_LIBRARY_VERSION_3_0) ||
-        (cipherInfo.symCipher == ssl_calg_rc4);
+      usesWeakProtocol =
+        channelInfo.protocolVersion <= SSL_LIBRARY_VERSION_3_0;
+      usesWeakCipher = cipherInfo.symCipher == ssl_calg_rc4;
 
       // keyExchange null=0, rsa=1, dh=2, fortezza=3, ecdh=4
       Telemetry::Accumulate(
@@ -1225,15 +1226,23 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   if (rv != SECSuccess) {
     siteSupportsSafeRenego = false;
   }
+  bool renegotiationUnsafe = !siteSupportsSafeRenego &&
+                             ioLayerHelpers.treatUnsafeNegotiationAsBroken();
 
-  if (!weakEncryption &&
-      (siteSupportsSafeRenego ||
-       !ioLayerHelpers.treatUnsafeNegotiationAsBroken())) {
-    infoObject->SetSecurityState(nsIWebProgressListener::STATE_IS_SECURE |
-                                 nsIWebProgressListener::STATE_SECURE_HIGH);
+  uint32_t state;
+  if (usesWeakProtocol || usesWeakCipher || renegotiationUnsafe) {
+    state = nsIWebProgressListener::STATE_IS_BROKEN;
+    if (usesWeakProtocol) {
+      state |= nsIWebProgressListener::STATE_USES_SSL_3;
+    }
+    if (usesWeakCipher) {
+      state |= nsIWebProgressListener::STATE_USES_WEAK_CRYPTO;
+    }
   } else {
-    infoObject->SetSecurityState(nsIWebProgressListener::STATE_IS_BROKEN);
+    state = nsIWebProgressListener::STATE_IS_SECURE |
+            nsIWebProgressListener::STATE_SECURE_HIGH;
   }
+  infoObject->SetSecurityState(state);
 
   // XXX Bug 883674: We shouldn't be formatting messages here in PSM; instead,
   // we should set a flag on the channel that higher (UI) level code can check
@@ -1279,17 +1288,17 @@ void HandshakeCallback(PRFileDesc* fd, void* client_data) {
   if (equals_previous) {
     PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
             ("HandshakeCallback using PREV cert %p\n", prevcert.get()));
-    status->mServerCert = prevcert;
+    status->SetServerCert(prevcert, nsNSSCertificate::ev_status_unknown);
   }
   else {
-    if (status->mServerCert) {
+    if (status->HasServerCert()) {
       PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
-              ("HandshakeCallback KEEPING cert %p\n", status->mServerCert.get()));
+              ("HandshakeCallback KEEPING existing cert\n"));
     }
     else {
       PR_LOG(gPIPNSSLog, PR_LOG_DEBUG,
               ("HandshakeCallback using NEW cert %p\n", nssc.get()));
-      status->mServerCert = nssc;
+      status->SetServerCert(nssc, nsNSSCertificate::ev_status_unknown);
     }
   }
 

@@ -14,6 +14,7 @@
 #include "mozilla/Preferences.h"
 #include "nsString.h"
 #include "mozilla/dom/ipc/BlobChild.h"
+#include "mozilla/unused.h"
 
 using namespace mozilla::dom;
 using namespace mozilla::dom::mobilemessage;
@@ -70,7 +71,8 @@ SendCursorRequest(const IPCMobileMessageCursor& aRequest,
 
   // Add an extra ref for IPDL. Will be released in
   // SmsChild::DeallocPMobileMessageCursor().
-  actor->AddRef();
+  nsRefPtr<MobileMessageCursorChild> actorCopy(actor);
+  mozilla::unused << actorCopy.forget().take();
 
   smsChild->SendPMobileMessageCursorConstructor(actor, aRequest);
 
@@ -191,14 +193,6 @@ SmsIPCService::Send(uint32_t aServiceId,
                                                               nsString(aMessage),
                                                               aSilent)),
                      aRequest);
-}
-
-NS_IMETHODIMP
-SmsIPCService::IsSilentNumber(const nsAString& aNumber,
-                              bool*            aIsSilent)
-{
-  NS_ERROR("We should not be here!");
-  return NS_ERROR_FAILURE;
 }
 
 NS_IMETHODIMP

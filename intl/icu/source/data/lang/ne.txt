@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ne.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ne.xml
- */
 ne{
     Keys{
         calendar{"पात्रो"}
@@ -231,7 +228,7 @@ ne{
         zu{"जुलु"}
         zxx{"भाषिक सामग्री छैन"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"अजेरी"}
         en_US{"अंग्रेजी (अमेरिका)"}
     }
@@ -435,7 +432,7 @@ ne{
         AREVELA{"पूर्वी आर्मेनियाली"}
         POSIX{"कम्प्युटर"}
     }
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"{0}"}
         script{"{0}"}

@@ -82,6 +82,13 @@
     "kind": "boolean",
     "description": "blocklist.xml has been loaded synchronously"
   },
+  "COMPOSITE_TIME" : {
+    "expires_in_version": "never",
+    "description": "Composite times in milliseconds",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 50
+  },
   "CYCLE_COLLECTOR": {
     "expires_in_version": "never",
     "kind": "exponential",
@@ -202,6 +209,12 @@
     "high": "10000",
     "n_buckets": 50,
     "description": "Time spent on one asynchronous SnowWhite freeing (ms)"
+  },
+  "DEVICE_RESET_REASON": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 10,
+    "description": "GPU Device Reset Reason (ok, hung, removed, reset, internal error, invalid call)"
   },
   "FORGET_SKIPPABLE_MAX": {
     "expires_in_version": "never",
@@ -2167,6 +2180,27 @@
     "high": 21,
     "n_buckets": 20,
     "description": "The number of unusable addresses reported for each record"
+  },
+  "REFRESH_DRIVER_TICK" : {
+    "expires_in_version": "never",
+    "description": "Total time spent ticking the refresh driver in milliseconds",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 50
+  },
+  "PAINT_BUILD_DISPLAYLIST_TIME" : {
+    "expires_in_version": "never",
+    "description": "Time spent in building displaylists in milliseconds",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 50
+  },
+  "PAINT_RASTERIZE_TIME" : {
+    "expires_in_version": "never",
+    "description": "Time spent rasterizing each frame in milliseconds",
+    "kind": "exponential",
+    "high": "1000",
+    "n_buckets": 50
   },
   "PREDICTOR_PREDICT_ATTEMPTS": {
     "expires_in_version": "never",
@@ -4509,6 +4543,12 @@
     "n_values": 100,
     "description": "Security UI Telemetry"
   },
+  "JS_TELEMETRY_ADDON_EXCEPTIONS" : {
+    "expires_in_version" : "never",
+    "kind": "count",
+    "keyed" : true,
+    "description" : "Exceptions thrown by add-ons"
+  },
   "SEARCH_COUNTS": {
     "expires_in_version": "never",
     "kind": "count",
@@ -4581,6 +4621,30 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "Set if the time-zone heuristic indicates US but the fetched country code doesn't"
+  },
+  "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_OSX": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "If we are on OSX and either the OSX countryCode or the geoip countryCode indicates we are in the US, set to false if they both do or true otherwise"
+  },
+  "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_OSX": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "If we are on OSX and neither the OSX countryCode nor the geoip countryCode indicates we are in the US, set to false if they both agree on the value or true otherwise"
+  },
+  "SEARCH_SERVICE_US_COUNTRY_MISMATCHED_PLATFORM_WIN": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "If we are on Windows and either the Windows countryCode or the geoip countryCode indicates we are in the US, set to false if they both do or true otherwise"
+  },
+  "SEARCH_SERVICE_NONUS_COUNTRY_MISMATCHED_PLATFORM_WIN": {
+    "alert_emails": ["mhammond@mozilla.com", "gavin@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "If we are on Windows and neither the Windows countryCode nor the geoip countryCode indicates we are in the US, set to false if they both agree on the value or true otherwise"
   },
   "SOCIAL_ENABLED_ON_SESSION": {
     "expires_in_version": "never",
@@ -5358,6 +5422,48 @@
     "n_buckets": "1000",
     "description": "The time (in milliseconds) that it took a 'reconfigure thread' request to go round trip."
   },
+  "VIDEO_CANPLAYTYPE_H264_CONSTRAINT_SET_FLAG": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 128,
+    "description": "The H.264 constraint set flag as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType, with the addition of 0 for unknown values."
+  },
+  "VIDEO_CANPLAYTYPE_H264_LEVEL": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 51,
+    "description": "The H.264 level (level_idc) as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType, from levels 1 (10) to 5.2 (51), with the addition of 0 for unknown values."
+  },
+  "VIDEO_CANPLAYTYPE_H264_PROFILE": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 244,
+    "description": "The H.264 profile number (profile_idc) as extracted from the codecs parameter passed to HTMLMediaElement.canPlayType."
+  },
+  "VIDEO_DECODED_H264_SPS_CONSTRAINT_SET_FLAG": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 128,
+    "description": "A bit pattern to collect H.264 constraint set flag from the decoded SPS. Bits 0 through 5 represent constraint_set0_flag through constraint_set5_flag, respectively."
+  },
+  "VIDEO_DECODED_H264_SPS_LEVEL": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 51,
+    "description": "The H.264 level (level_idc) as extracted from the decoded SPS, from levels 1 (10) to 5.2 (51), with the addition of 0 for unknown values."
+  },
+  "VIDEO_DECODED_H264_SPS_PROFILE": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 244,
+    "description": "The H.264 profile number (profile_idc) as extracted from the decoded SPS."
+  },
+  "VIDEO_H264_SPS_MAX_NUM_REF_FRAMES": {
+    "expires_in_version": "40",
+    "kind": "enumerated",
+    "n_values": 17,
+    "description": "SPS.max_num_ref_frames indicates how deep the H.264 queue is going to be, and as such the minimum memory usage by the decoder, from 0 to 16. 17 indicates an invalid value."
+  },
   "WEBRTC_ICE_FINAL_CONNECTION_STATE": {
     "expires_in_version": "never",
     "kind": "enumerated",
@@ -5862,6 +5968,11 @@
     "kind": "boolean",
     "description": "How many times has the devtool's Font Inspector been opened?"
   },
+  "DEVTOOLS_ANIMATIONINSPECTOR_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the devtool's Animation Inspector been opened?"
+  },
   "DEVTOOLS_JSDEBUGGER_OPENED_BOOLEAN": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -5927,6 +6038,21 @@
     "kind": "boolean",
     "description": "How many times has the devtool's Responsive View been opened via the toolbox button?"
   },
+  "DEVTOOLS_EYEDROPPER_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the devtool's Eyedropper tool been opened?"
+  },
+  "DEVTOOLS_MENU_EYEDROPPER_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the devtool's eyedropper been opened via the devtools menu?"
+  },
+  "DEVTOOLS_PICKER_EYEDROPPER_OPENED_BOOLEAN": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "How many times has the devtool's eyedropper been opened via the color picker?"
+  },
   "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_BOOLEAN": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -5986,6 +6112,11 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "How many users have opened the devtool's Font Inspector?"
+  },
+  "DEVTOOLS_ANIMATIONINSPECTOR_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the devtool's Animation Inspector?"
   },
   "DEVTOOLS_JSDEBUGGER_OPENED_PER_USER_FLAG": {
     "expires_in_version": "never",
@@ -6051,6 +6182,21 @@
     "expires_in_version": "never",
     "kind": "flag",
     "description": "How many users have opened the devtool's Responsive View been opened via the toolbox button?"
+  },
+  "DEVTOOLS_EYEDROPPER_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the devtool's Eyedropper via the toolbox button?"
+  },
+  "DEVTOOLS_MENU_EYEDROPPER_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the devtool's Eyedropper via the devtools menu?"
+  },
+  "DEVTOOLS_PICKER_EYEDROPPER_OPENED_PER_USER_FLAG": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "description": "How many users have opened the devtool's Eyedropper via the color picker?"
   },
   "DEVTOOLS_DEVELOPERTOOLBAR_OPENED_PER_USER_FLAG": {
     "expires_in_version": "never",
@@ -6129,6 +6275,13 @@
     "high": "10000000",
     "n_buckets": 100,
     "description": "How long has the font inspector been active (seconds)"
+  },
+  "DEVTOOLS_ANIMATIONINSPECTOR_TIME_ACTIVE_SECONDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "10000000",
+    "n_buckets": 100,
+    "description": "How long has the animation inspector been active (seconds)"
   },
   "DEVTOOLS_JSDEBUGGER_TIME_ACTIVE_SECONDS": {
     "expires_in_version": "never",
@@ -6966,6 +7119,15 @@
     "keyed": true,
     "description": "Time (ms) that the main thread has been blocked on NPP_NewStream in an IPC plugin"
   },
+  "BLOCKED_ON_PLUGINASYNCSURROGATE_WAITFORINIT_MS": {
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "10000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "keyed": true,
+    "description": "Time (ms) that the main thread has been blocked on PluginAsyncSurrogate::WaitForInit in an IPC plugin"
+  },
   "BLOCKED_ON_PLUGIN_INSTANCE_DESTROY_MS": {
     "expires_in_version": "40",
     "kind": "exponential",
@@ -6997,5 +7159,160 @@
     "kind": "count",
     "keyed": true,
     "description": "Counts of plugin and content process crashes which are reported with a crash dump."
+  },
+  "STUMBLER_TIME_BETWEEN_UPLOADS_SEC": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 259200,
+    "description": "Stumbler: The time in seconds between uploads."
+  },
+  "STUMBLER_VOLUME_BYTES_UPLOADED_PER_SEC": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 1000000,
+    "description": "Stumbler: Volume measurement of bytes uploaded, normalized to per-second."
+  },
+  "STUMBLER_TIME_BETWEEN_START_SEC": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 259200,
+    "description": "Stumbler: The time between the service starts."
+  },
+  "STUMBLER_UPLOAD_BYTES": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 1000000,
+    "description": "Stumbler: The bytes per upload."
+  },
+  "STUMBLER_UPLOAD_OBSERVATION_COUNT": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 10000,
+    "description": "Stumbler: The observations per upload."
+  },
+  "STUMBLER_UPLOAD_CELL_COUNT": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 10000,
+    "description": "Stumbler: The cells per upload."
+  },
+  "STUMBLER_UPLOAD_WIFI_AP_COUNT": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 10000,
+    "description": "Stumbler: The Wi-Fi APs per upload."
+  },
+  "STUMBLER_OBSERVATIONS_PER_DAY": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 10000,
+    "description": "Stumbler: The number of observations between upload events, normalized to per day."
+  },
+  "STUMBLER_TIME_BETWEEN_RECEIVED_LOCATIONS_SEC": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "n_buckets": 50,
+    "high": 86400,
+    "description": "Stumbler: The time between receiving passive locations."
+  },
+  "DATA_STORAGE_ENTRIES": {
+    "expires_in_version": "default",
+    "kind": "linear",
+    "high": "1024",
+    "n_buckets": 16,
+    "description": "The number of entries in persistent DataStorage (HSTS and HPKP data, basically)"
+  },
+  "VIDEO_MSE_UNLOAD_STATE": {
+    "expires_in_version": "45",
+    "kind": "enumerated",
+    "n_values": 5,
+    "description": "MSE video state when unloading. ended = 0, paused = 1, stalled = 2, seeking = 3, other = 4"
+  },
+  "PWMGR_BLOCKLIST_NUM_SITES": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 100,
+    "n_buckets" : 10,
+    "extended_statistics_ok": true,
+    "description": "The number of sites for which the user has explicitly rejected saving logins"
+  },
+  "PWMGR_FORM_ACTION_EFFECT": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values" : 5,
+    "description": "The effect of the form action on signon autofill. (0=No effect, 1=Fewer logins after considering the form action, 2=No logins match form origin and action."
+  },
+  "PWMGR_FORM_AUTOFILL_RESULT": {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values" : 20,
+    "description": "The result of auto-filling a login form. See http://mzl.la/1Mbs6jL for bucket descriptions."
+  },
+  "PWMGR_NUM_PASSWORDS_PER_HOSTNAME": {
+    "expires_in_version": "never",
+    "kind": "linear",
+    "high": 21,
+    "n_buckets" : 20,
+    "description": "The number of passwords per hostname"
+  },
+  "PWMGR_NUM_SAVED_PASSWORDS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 750,
+    "n_buckets" : 50,
+    "extended_statistics_ok": true,
+    "description": "Total number of saved logins, including those that cannot be decrypted"
+  },
+  "PWMGR_LOGIN_LAST_USED_DAYS": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": 750,
+    "n_buckets" : 40,
+    "description": "Time in days each saved login was last used"
+  },
+  "PWMGR_SAVING_ENABLED": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Number of users who have password saving on globally"
+  },
+  "PWMGR_USERNAME_PRESENT": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether a saved login has a username"
+  },
+  "FENNEC_SYNC11_MIGRATION_SENTINELS_SEEN": {
+    "expires_in_version": "45",
+    "kind": "count",
+    "description": "The number of Sync 1.1 -> Sync 1.5 migration sentinels seen by Android Sync."
+  },
+  "FENNEC_SYNC11_MIGRATIONS_FAILED": {
+    "expires_in_version": "45",
+    "kind": "count",
+    "description": "The number of Sync 1.1 -> Sync 1.5 migrations that failed during Android Sync."
+  },
+  "FENNEC_SYNC11_MIGRATIONS_SUCCEEDED": {
+    "expires_in_version": "45",
+    "kind": "count",
+    "description": "The number of Sync 1.1 -> Sync 1.5 migrations that succeeded during Android Sync."
+  },
+  "FENNEC_SYNC11_MIGRATION_NOTIFICATIONS_OFFERED": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "high": 500,
+    "n_buckets": 5,
+    "description": "The number of Sync 1.5 'complete upgrade/migration' notifications offered by Android Sync."
+  },
+  "FENNEC_SYNC11_MIGRATIONS_COMPLETED": {
+    "expires_in_version": "45",
+    "kind": "count",
+    "description": "The number of Sync 1.5 migrations completed by Android Sync."
   }
 }

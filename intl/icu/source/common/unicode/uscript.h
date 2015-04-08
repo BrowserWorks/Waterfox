@@ -1,6 +1,6 @@
 /*
  **********************************************************************
- *   Copyright (C) 1997-2014, International Business Machines
+ *   Copyright (C) 1997-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  **********************************************************************
  *
@@ -21,25 +21,31 @@
  * \file
  * \brief C API: Unicode Script Information
  */
- 
+
 /**
  * Constants for ISO 15924 script codes.
  *
- * Many of these script codes - those from Unicode's ScriptNames.txt -
- * are character property values for Unicode's Script property.
- * See UAX #24 Script Names (http://www.unicode.org/reports/tr24/).
+ * The current set of script code constants supports at least all scripts
+ * that are encoded in the version of Unicode which ICU currently supports.
+ * The names of the constants are usually derived from the
+ * Unicode script property value aliases.
+ * See UAX #24 Unicode Script Property (http://www.unicode.org/reports/tr24/)
+ * and http://www.unicode.org/Public/UCD/latest/ucd/PropertyValueAliases.txt .
  *
  * Starting with ICU 3.6, constants for most ISO 15924 script codes
- * are included (currently excluding private-use codes Qaaa..Qabx).
- * For scripts for which there are codes in ISO 15924 but which are not
- * used in the Unicode Character Database (UCD), there are no Unicode characters
- * associated with those scripts.
+ * are included, for use with language tags, CLDR data, and similar.
+ * Some of those codes are not used in the Unicode Character Database (UCD).
+ * For example, there are no characters that have a UCD script property value of
+ * Hans or Hant. All Han ideographs have the Hani script property value in Unicode.
  *
- * For example, there are no characters that have a UCD script code of
- * Hans or Hant. All Han ideographs have the Hani script code.
- * The Hans and Hant script codes are used with CLDR data.
+ * Private-use codes Qaaa..Qabx are not included.
  *
- * ISO 15924 script codes are included for use with CLDR and similar.
+ * Starting with ICU 55, script codes are only added when their scripts
+ * have been or will certainly be encoded in Unicode,
+ * and have been assigned Unicode script property value aliases,
+ * to ensure that their script names are stable and match the names of the constants.
+ * Script codes like Latf and Aran that are not subject to separate encoding
+ * may be added at any time.
  *
  * @stable ICU 2.2
  */
@@ -418,9 +424,17 @@ typedef enum UScriptCode {
       /** @stable ICU 54 */
       USCRIPT_SIDDHAM                       = 166,/* Sidd */
 
-      /* Private use codes from Qaaa - Qabx are not supported */
-
-      /** @stable ICU 2.2 */
+      /**
+       * One higher than the last script code constant.
+       * This value increases as constants for script codes are added.
+       *
+       * There are constants for Unicode 7 script property values.
+       * There are constants for ISO 15924 script codes assigned on or before 2013-10-12.
+       * There are no constants for private use codes from Qaaa - Qabx
+       * except as used in the UCD.
+       *
+       * @stable ICU 2.2
+       */
       USCRIPT_CODE_LIMIT    = 167
 } UScriptCode;
 

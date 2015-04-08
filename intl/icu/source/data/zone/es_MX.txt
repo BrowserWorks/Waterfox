@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_MX.xml
@@ -8,7 +8,7 @@
 // ***************************************************************************
 es_MX{
     %%Parent{"es_419"}
-    Version{"2.1.10.42"}
+    Version{"2.1.13.23"}
     zoneStrings{
         "Africa:Accra"{
             ec{"Acra"}
@@ -27,9 +27,6 @@ es_MX{
         }
         "America:Belem"{
             ec{"Belém"}
-        }
-        "America:North_Dakota:Center"{
-            ec{"Center, Dakota del Norte"}
         }
         "America:Rio_Branco"{
             ec{"Rio Branco"}
@@ -55,9 +52,6 @@ es_MX{
         "Asia:Dushanbe"{
             ec{"Dusambé"}
         }
-        "Asia:Kashgar"{
-            ec{"Kasgar"}
-        }
         "Asia:Pyongyang"{
             ec{"Piongyang"}
         }
@@ -72,9 +66,6 @@ es_MX{
         }
         "Asia:Yekaterinburg"{
             ec{"Ekaterinburgo"}
-        }
-        "Etc:Unknown"{
-            ec{"Ciudad desconocida"}
         }
         "Europe:Busingen"{
             ec{"Büsingen"}
@@ -689,8 +680,5 @@ es_MX{
             lg{"Hora de Ekaterimburgo"}
             ls{"Hora estándar de Ekaterimburgo"}
         }
-        regionFormat{"Hora de {0}"}
-        regionFormatDaylight{"(horario de verano de {0})"}
-        regionFormatStandard{"(horario estándar de {0})"}
     }
 }

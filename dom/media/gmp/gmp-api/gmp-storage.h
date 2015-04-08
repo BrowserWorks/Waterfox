@@ -20,11 +20,11 @@
 #include "gmp-errors.h"
 #include <stdint.h>
 
-// Maximum size of a record, in bytes.
-#define GMP_MAX_RECORD_SIZE (1024 * 1024 * 1024)
+// Maximum size of a record, in bytes; 10 megabytes.
+#define GMP_MAX_RECORD_SIZE (10 * 1024 * 1024)
 
-// Maximum length of a record name.
-#define GMP_MAX_RECORD_NAME_SIZE 200
+// Maximum length of a record name in bytes.
+#define GMP_MAX_RECORD_NAME_SIZE 2000
 
 // Provides basic per-origin storage for CDMs. GMPRecord instances can be
 // retrieved by calling GMPPlatformAPI->openstorage. Multiple GMPRecords
@@ -118,6 +118,7 @@ class GMPRecordClient {
 class GMPRecordIterator {
 public:
   // Retrieve the name for the current record.
+  // aOutName is null terminated at character  at index (*aOutNameLength).
   // Returns GMPNoErr if successful, or GMPEndOfEnumeration if iteration has
   // reached the end.
   virtual GMPErr GetName(const char ** aOutName, uint32_t * aOutNameLength) = 0;

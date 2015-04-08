@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fa.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fa.xml
- */
 fa{
     Currencies{
         ADP{
@@ -793,7 +790,7 @@ fa{
         }
         XAF{
             "FCFA",
-            "فرانک CFA مرکز آفریقا",
+            "فرانک CFA مرکز افریقا",
         }
         XAG{
             "XAG",
@@ -813,7 +810,7 @@ fa{
         }
         XOF{
             "CFA",
-            "فرانک CFA غرب آفریقا",
+            "فرانک CFA غرب افریقا",
         }
         XPD{
             "XPD",
@@ -925,12 +922,12 @@ fa{
             other{"دلار امریکا"}
         }
         XAF{
-            one{"فرانک CFA مرکز آفریقا"}
-            other{"فرانک CFA مرکز آفریقا"}
+            one{"فرانک CFA مرکز افریقا"}
+            other{"فرانک CFA مرکز افریقا"}
         }
         XOF{
-            one{"فرانک CFA غرب آفریقا"}
-            other{"فرانک CFA غرب آفریقا"}
+            one{"فرانک CFA غرب افریقا"}
+            other{"فرانک CFA غرب افریقا"}
         }
         XPF{
             one{"فرانک CFP"}
@@ -941,5 +938,5 @@ fa{
             other{"(ارز نامشخص)"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

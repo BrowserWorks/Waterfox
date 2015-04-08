@@ -34,7 +34,7 @@ protected:
   }
 
 public:
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() MOZ_OVERRIDE
   {
     MonitorAutoLock mon(mMonitor);
     if (mStop)
@@ -98,7 +98,6 @@ ThreadResponsiveness::~ThreadResponsiveness()
 void
 ThreadResponsiveness::Update()
 {
-  return;
   if (!mActiveTracerEvent) {
     if (mThreadProfile->GetThreadInfo()->IsMainThread()) {
       mActiveTracerEvent = new CheckResponsivenessTask();

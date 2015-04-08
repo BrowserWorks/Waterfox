@@ -15,6 +15,7 @@ pref("browser.chromeURL", "chrome://b2g/content/");
 // so that it can't be set a just a string.
 // data: url is a workaround this.
 pref("browser.startup.homepage", "data:text/plain,browser.startup.homepage=chrome://b2g/content/shell.html");
+pref("b2g.is_mulet", true);
 // Prevent having the firstrun page
 pref("startup.homepage_welcome_url", "");
 pref("browser.shell.checkDefaultBrowser", false);
@@ -98,6 +99,7 @@ pref("network.predictor.preserve", 50); // percentage of predictor data to keep 
 /* session history */
 pref("browser.sessionhistory.max_total_viewers", 1);
 pref("browser.sessionhistory.max_entries", 50);
+pref("browser.sessionhistory.contentViewerTimeout", 360);
 
 /* session store */
 pref("browser.sessionstore.resume_session_once", false);
@@ -159,16 +161,8 @@ pref("accessibility.typeaheadfind.casesensitive", 0);
 pref("browser.ssl_override_behavior", 2);
 pref("browser.xul.error_pages.expert_bad_cert", false);
 
-// disable logging for the search service by default
-pref("browser.search.log", false);
-
 // disable updating
 pref("browser.search.update", false);
-pref("browser.search.update.log", false);
-pref("browser.search.updateinterval", 6);
-
-// enable search suggestions by default
-pref("browser.search.suggest.enabled", true);
 
 // tell the search service that we don't really expose the "current engine"
 pref("browser.search.noCurrentEngine", true);
@@ -327,7 +321,7 @@ pref("media.fragmented-mp4.gonk.enabled", true);
 pref("media.video-queue.default-size", 3);
 
 // optimize images' memory usage
-pref("image.mem.decodeondraw", true);
+pref("image.mem.decodeondraw", false);
 pref("image.mem.allow_locking_in_content_processes", false); /* don't allow image locking */
 // Limit the surface cache to 1/8 of main memory or 128MB, whichever is smaller.
 // Almost everything that was factored into 'max_decoded_image_kb' is now stored
@@ -608,6 +602,9 @@ pref("app.update.log", true);
 pref("shutdown.watchdog.timeoutSecs", -1);
 #endif
 
+// Allow webapps update checking
+pref("webapps.update.enabled", true);
+
 // Check daily for apps updates.
 pref("webapps.update.interval", 86400);
 
@@ -672,11 +669,7 @@ pref("javascript.options.mem.gc_low_frequency_heap_growth", 120);
 pref("javascript.options.mem.high_water_mark", 6);
 pref("javascript.options.mem.gc_allocation_threshold_mb", 1);
 pref("javascript.options.mem.gc_decommit_threshold_mb", 1);
-#ifdef JSGC_GENERATIONAL
 pref("javascript.options.mem.gc_min_empty_chunk_count", 1);
-#else
-pref("javascript.options.mem.gc_min_empty_chunk_count", 0);
-#endif
 pref("javascript.options.mem.gc_max_empty_chunk_count", 2);
 
 // Show/Hide scrollbars when active/inactive
@@ -702,50 +695,57 @@ pref("dom.ipc.processPriorityManager.backgroundLRUPoolLevels", 5);
 // Kernel parameters for process priorities.  These affect how processes are
 // killed on low-memory and their relative CPU priorities.
 //
-// Note: The maximum nice value on Linux is 19, but the max value you should
-// use here is 18.  NSPR adds 1 to some threads' nice values, to mark
-// low-priority threads.  If the process priority manager were to renice a
-// process (and all its threads) to 19, all threads would have the same
-// niceness.  Then when we reniced the process to (say) 10, all threads would
-// /still/ have the same niceness; we'd effectively have erased NSPR's thread
-// priorities.
-
 // The kernel can only accept 6 (OomScoreAdjust, KillUnderKB) pairs. But it is
 // okay, kernel will still kill processes with larger OomScoreAdjust first even
 // its OomScoreAdjust don't have a corresponding KillUnderKB.
 
 pref("hal.processPriorityManager.gonk.MASTER.OomScoreAdjust", 0);
 pref("hal.processPriorityManager.gonk.MASTER.KillUnderKB", 4096);
-pref("hal.processPriorityManager.gonk.MASTER.Nice", 0);
+pref("hal.processPriorityManager.gonk.MASTER.cgroup", "");
 
 pref("hal.processPriorityManager.gonk.PREALLOC.OomScoreAdjust", 67);
-pref("hal.processPriorityManager.gonk.PREALLOC.Nice", 18);
+pref("hal.processPriorityManager.gonk.PREALLOC.cgroup", "apps/bg_non_interactive");
 
 pref("hal.processPriorityManager.gonk.FOREGROUND_HIGH.OomScoreAdjust", 67);
 pref("hal.processPriorityManager.gonk.FOREGROUND_HIGH.KillUnderKB", 5120);
-pref("hal.processPriorityManager.gonk.FOREGROUND_HIGH.Nice", 0);
+pref("hal.processPriorityManager.gonk.FOREGROUND_HIGH.cgroup", "apps/critical");
 
 pref("hal.processPriorityManager.gonk.FOREGROUND.OomScoreAdjust", 134);
 pref("hal.processPriorityManager.gonk.FOREGROUND.KillUnderKB", 6144);
-pref("hal.processPriorityManager.gonk.FOREGROUND.Nice", 1);
+pref("hal.processPriorityManager.gonk.FOREGROUND.cgroup", "apps");
 
 pref("hal.processPriorityManager.gonk.FOREGROUND_KEYBOARD.OomScoreAdjust", 200);
-pref("hal.processPriorityManager.gonk.FOREGROUND_KEYBOARD.Nice", 1);
+pref("hal.processPriorityManager.gonk.FOREGROUND_KEYBOARD.cgroup", "apps");
 
 pref("hal.processPriorityManager.gonk.BACKGROUND_PERCEIVABLE.OomScoreAdjust", 400);
 pref("hal.processPriorityManager.gonk.BACKGROUND_PERCEIVABLE.KillUnderKB", 7168);
-pref("hal.processPriorityManager.gonk.BACKGROUND_PERCEIVABLE.Nice", 7);
+pref("hal.processPriorityManager.gonk.BACKGROUND_PERCEIVABLE.cgroup", "apps/bg_perceivable");
 
 pref("hal.processPriorityManager.gonk.BACKGROUND_HOMESCREEN.OomScoreAdjust", 534);
 pref("hal.processPriorityManager.gonk.BACKGROUND_HOMESCREEN.KillUnderKB", 8192);
-pref("hal.processPriorityManager.gonk.BACKGROUND_HOMESCREEN.Nice", 18);
+pref("hal.processPriorityManager.gonk.BACKGROUND_HOMESCREEN.cgroup", "apps/bg_non_interactive");
 
 pref("hal.processPriorityManager.gonk.BACKGROUND.OomScoreAdjust", 667);
 pref("hal.processPriorityManager.gonk.BACKGROUND.KillUnderKB", 20480);
-pref("hal.processPriorityManager.gonk.BACKGROUND.Nice", 18);
+pref("hal.processPriorityManager.gonk.BACKGROUND.cgroup", "apps/bg_non_interactive");
 
-// Processes get this niceness when they have low CPU priority.
-pref("hal.processPriorityManager.gonk.LowCPUNice", 18);
+// Control group definitions (i.e., CPU priority groups) for B2G processes.
+
+// Foreground apps
+pref("hal.processPriorityManager.gonk.cgroups.apps.cpu_shares", 1024);
+pref("hal.processPriorityManager.gonk.cgroups.apps.cpu_notify_on_migrate", 1);
+
+// Foreground apps with high priority, 16x more CPU than foreground ones
+pref("hal.processPriorityManager.gonk.cgroups.apps/critical.cpu_shares", 16384);
+pref("hal.processPriorityManager.gonk.cgroups.apps/critical.cpu_notify_on_migrate", 1);
+
+// Background perceivable apps, ~10x less CPU than foreground ones
+pref("hal.processPriorityManager.gonk.cgroups.apps/bg_perceivable.cpu_shares", 103);
+pref("hal.processPriorityManager.gonk.cgroups.apps/bg_perceivable.cpu_notify_on_migrate", 0);
+
+// Background apps, ~20x less CPU than foreground ones and ~2x less than perceivable ones
+pref("hal.processPriorityManager.gonk.cgroups.apps/bg_non_interactive.cpu_shares", 52);
+pref("hal.processPriorityManager.gonk.cgroups.apps/bg_non_interactive.cpu_notify_on_migrate", 0);
 
 // By default the compositor thread on gonk runs without real-time priority.  RT
 // priority can be enabled by setting this pref to a value between 1 and 99.
@@ -994,10 +994,10 @@ pref("apz.pan_repaint_interval", 16);
 // APZ physics settings, tuned by UX designers
 pref("apz.fling_curve_function_x1", "0.41");
 pref("apz.fling_curve_function_y1", "0.0");
-pref("apz.fling_curve_function_x2", "0.76");
+pref("apz.fling_curve_function_x2", "0.80");
 pref("apz.fling_curve_function_y2", "1.0");
 pref("apz.fling_curve_threshold_inches_per_ms", "0.01");
-pref("apz.fling_friction", "0.0024");
+pref("apz.fling_friction", "0.00238");
 pref("apz.max_velocity_inches_per_ms", "0.07");
 
 // Tweak default displayport values to reduce the risk of running out of
@@ -1019,6 +1019,9 @@ pref("apz.overscroll.spring_friction", "0.02");
 pref("apz.overscroll.stop_distance_threshold", "5.0");
 pref("apz.overscroll.stop_velocity_threshold", "0.01");
 
+// For event-regions based hit-testing
+pref("layout.event-regions.enabled", true);
+
 // This preference allows FirefoxOS apps (and content, I think) to force
 // the use of software (instead of hardware accelerated) 2D canvases by
 // creating a context like this:
@@ -1035,6 +1038,9 @@ pref("browser.autofocus", false);
 
 // Enable wakelock
 pref("dom.wakelock.enabled", true);
+
+// Enable webapps add-ons
+pref("dom.apps.customization.enabled", true);
 
 // Enable touch caret by default
 pref("touchcaret.enabled", true);
@@ -1059,3 +1065,18 @@ pref("dom.udpsocket.enabled", true);
 
 // Enable TV Manager API
 pref("dom.tv.enabled", true);
+
+pref("dom.mozSettings.SettingsDB.debug.enabled", true);
+pref("dom.mozSettings.SettingsManager.debug.enabled", true);
+pref("dom.mozSettings.SettingsRequestManager.debug.enabled", true);
+pref("dom.mozSettings.SettingsService.debug.enabled", true);
+
+pref("dom.mozSettings.SettingsDB.verbose.enabled", false);
+pref("dom.mozSettings.SettingsManager.verbose.enabled", false);
+pref("dom.mozSettings.SettingsRequestManager.verbose.enabled", false);
+pref("dom.mozSettings.SettingsService.verbose.enabled", false);
+
+// Controlling whether we want to allow forcing some Settings
+// IndexedDB transactions to be opened as readonly or keep everything as
+// readwrite.
+pref("dom.mozSettings.allowForceReadOnly", false);

@@ -4,6 +4,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+#include "nsHTMLEditRules.h"
+
 #include <stdlib.h>
 
 #include "mozilla/Assertions.h"
@@ -25,7 +27,6 @@
 #include "nsError.h"
 #include "nsGkAtoms.h"
 #include "nsHTMLCSSUtils.h"
-#include "nsHTMLEditRules.h"
 #include "nsHTMLEditUtils.h"
 #include "nsHTMLEditor.h"
 #include "nsIAtom.h"
@@ -2225,6 +2226,7 @@ nsHTMLEditRules::WillDeleteSelection(Selection* aSelection,
 
       if (bDeletedBR) {
         // Put selection at edge of block and we are done.
+        NS_ENSURE_STATE(leafNode);
         ::DOMPoint newSel = GetGoodSelPointForNode(*leafNode, aAction);
         NS_ENSURE_STATE(newSel.node);
         aSelection->Collapse(newSel.node, newSel.offset);

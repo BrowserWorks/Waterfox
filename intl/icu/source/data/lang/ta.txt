@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ta.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ta.xml
- */
 ta{
     Keys{
         calendar{"நாள்காட்டி"}
@@ -526,12 +523,12 @@ ta{
         zxx{"மொழி உள்ளடக்கம் ஏதுமில்லை"}
         zza{"ஜாஜா"}
     }
-    Languages%variant{
-        ps{"புஷ்தோ"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"அஸேரி"}
         en_GB{"ஆங்கிலம் (யூகே)"}
+    }
+    Languages%variant{
+        ps{"புஷ்தோ"}
     }
     Scripts{
         Arab{"அரபிக்"}
@@ -789,7 +786,7 @@ ta{
         PINYIN{"பின்யின் ரோமானைசெஷன்"}
         WADEGILE{"வேட்-கைல்ஸ் ரோமனைஷேசன்"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"மொழி: {0}"}
         script{"எழுத்து: {0}"}

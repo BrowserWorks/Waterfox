@@ -27,3 +27,8 @@ if CONFIG['OS_ARCH'] == 'WINNT':
         '/security/sandbox',
         '/security/sandbox/chromium',
     ]
+	
+if CONFIG['OS_ARCH'] == 'WINNT':
+	CXXFLAGS += [
+        '-O2',
+    ]

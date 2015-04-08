@@ -4,9 +4,6 @@
 
 "use strict";
 
-const DEBUG = false;
-function debug(s) { dump("-*- SettingsManager: " + s + "\n"); }
-
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cu = Components.utils;
@@ -14,6 +11,20 @@ const Cu = Components.utils;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/DOMRequestHelper.jsm");
+
+let DEBUG = false;
+let VERBOSE = false;
+
+try {
+  DEBUG   =
+    Services.prefs.getBoolPref("dom.mozSettings.SettingsManager.debug.enabled");
+  VERBOSE =
+    Services.prefs.getBoolPref("dom.mozSettings.SettingsManager.verbose.enabled");
+} catch (ex) { }
+
+function debug(s) {
+  dump("-*- SettingsManager: " + s + "\n");
+}
 
 XPCOMUtils.defineLazyServiceGetter(Services, "DOMRequest",
                                    "@mozilla.org/dom/dom-request-service;1",
@@ -45,7 +56,7 @@ XPCOMUtils.defineLazyServiceGetter(this, "uuidgen",
  */
 
 function SettingsLock(aSettingsManager) {
-  if (DEBUG) debug("settings lock init");
+  if (VERBOSE) debug("settings lock init");
   this._open = true;
   this._settingsManager = aSettingsManager;
   this._id = uuidgen.generateUUID().toString();
@@ -58,7 +69,8 @@ function SettingsLock(aSettingsManager) {
   let createLockPayload = {
     lockID: this._id,
     isServiceLock: false,
-    windowID: this._settingsManager.innerWindowID
+    windowID: this._settingsManager.innerWindowID,
+    lockStack: (new Error).stack
   };
   this.sendMessage("Settings:CreateLock", createLockPayload);
   Services.tm.currentThread.dispatch(this._closeHelper.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
@@ -90,15 +102,15 @@ SettingsLock.prototype = {
   },
 
   _closeHelper: function() {
-    if (DEBUG) debug("closing lock " + this._id);
+    if (VERBOSE) debug("closing lock " + this._id);
     this._open = false;
     this._closeCalled = false;
     if (!this._requests || Object.keys(this._requests).length == 0) {
-      if (DEBUG) debug("Requests exhausted, finalizing " + this._id);
+      if (VERBOSE) debug("Requests exhausted, finalizing " + this._id);
       this._settingsManager.unregisterLock(this._id);
       this.sendMessage("Settings:Finalize", {lockID: this._id});
     } else {
-      if (DEBUG) debug("Requests left: " + Object.keys(this._requests).length);
+      if (VERBOSE) debug("Requests left: " + Object.keys(this._requests).length);
       this.sendMessage("Settings:Run", {lockID: this._id});
     }
   },
@@ -135,7 +147,7 @@ SettingsLock.prototype = {
     if (msg.lockID != this._id) {
       return;
               }
-    if (DEBUG) debug("receiveMessage (" + this._id + "): " + aMessage.name);
+    if (VERBOSE) debug("receiveMessage (" + this._id + "): " + aMessage.name);
 
     // Finalizing a transaction does not return a request ID since we are
     // supposed to fire callbacks.
@@ -148,7 +160,7 @@ SettingsLock.prototype = {
       let event;
       switch (aMessage.name) {
         case "Settings:Finalize:OK":
-          if (DEBUG) debug("Lock finalize ok: " + this._id);
+          if (VERBOSE) debug("Lock finalize ok: " + this._id);
           event = new this._window.MozSettingsTransactionEvent("settingstransactionsuccess", {});
           this.__DOM_IMPL__.dispatchEvent(event);
           this.destroyDOMRequestHelper();
@@ -183,7 +195,7 @@ SettingsLock.prototype = {
       Services.tm.currentThread.dispatch(this._closeHelper.bind(this), Ci.nsIThread.DISPATCH_NORMAL);
       this._closeCalled = true;
     }
-    if (DEBUG) debug("receiveMessage: " + aMessage.name);
+    if (VERBOSE) debug("receiveMessage: " + aMessage.name);
     switch (aMessage.name) {
       case "Settings:Get:OK":
         for (let i in msg.settings) {
@@ -211,7 +223,7 @@ SettingsLock.prototype = {
   },
 
   get: function get(aName) {
-    if (DEBUG) debug("get (" + this._id + "): " + aName);
+    if (VERBOSE) debug("get (" + this._id + "): " + aName);
     if (!this._open) {
       dump("Settings lock not open!\n");
       throw Components.results.NS_ERROR_ABORT;
@@ -225,7 +237,7 @@ SettingsLock.prototype = {
   },
 
   set: function set(aSettings) {
-    if (DEBUG) debug("send: " + JSON.stringify(aSettings));
+    if (VERBOSE) debug("send: " + JSON.stringify(aSettings));
     if (!this._open) {
       throw "Settings lock not open";
     }
@@ -238,7 +250,7 @@ SettingsLock.prototype = {
   },
 
   clear: function clear() {
-    if (DEBUG) if (DEBUG) debug("clear");
+    if (VERBOSE) debug("clear");
     if (!this._open) {
       throw "Settings lock not open";
     }
@@ -260,6 +272,8 @@ function SettingsManager() {
   this._callbacks = null;
   this._isRegistered = false;
   this._locks = [];
+  this._createdLocks = 0;
+  this._unregisteredLocks = 0;
 }
 
 SettingsManager.prototype = {
@@ -278,26 +292,28 @@ SettingsManager.prototype = {
 
   createLock: function() {
     let lock = new SettingsLock(this);
-    if (DEBUG) debug("creating lock " + lock._id);
+    if (VERBOSE) debug("creating lock " + lock._id);
     this._locks.push(lock._id);
+    this._createdLocks++;
     return lock;
   },
 
   unregisterLock: function(aLockID) {
     let lock_index = this._locks.indexOf(aLockID);
     if (lock_index != -1) {
-      if (DEBUG) debug("Unregistering lock " + aLockID);
+      if (VERBOSE) debug("Unregistering lock " + aLockID);
       this._locks.splice(lock_index, 1);
+      this._unregisteredLocks++;
     }
   },
-  
+
   receiveMessage: function(aMessage) {
-    if (DEBUG) debug("Settings::receiveMessage: " + aMessage.name);
+    if (VERBOSE) debug("Settings::receiveMessage: " + aMessage.name);
     let msg = aMessage.json;
 
     switch (aMessage.name) {
       case "Settings:Change:Return:OK":
-        if (DEBUG) debug('data:' + msg.key + ':' + msg.value + '\n');
+        if (VERBOSE) debug('data:' + msg.key + ':' + msg.value + '\n');
 
         let event = new this._window.MozSettingsEvent("settingchange", this._wrap({
           settingName: msg.key,
@@ -306,12 +322,12 @@ SettingsManager.prototype = {
         this.__DOM_IMPL__.dispatchEvent(event);
 
         if (this._callbacks && this._callbacks[msg.key]) {
-          if (DEBUG) debug("observe callback called! " + msg.key + " " + this._callbacks[msg.key].length);
+          if (VERBOSE) debug("observe callback called! " + msg.key + " " + this._callbacks[msg.key].length);
           this._callbacks[msg.key].forEach(function(cb) {
             cb(this._wrap({settingName: msg.key, settingValue: msg.value}));
           }.bind(this));
         } else {
-          if (DEBUG) debug("no observers stored!");
+          if (VERBOSE) debug("no observers stored!");
         }
         break;
       default:
@@ -325,7 +341,7 @@ SettingsManager.prototype = {
   checkMessageRegistration: function checkRegistration() {
     let handler = this.__DOM_IMPL__.getEventHandler("onsettingchange");
     if (!this._isRegistered) {
-      if (DEBUG) debug("Registering for messages");
+      if (VERBOSE) debug("Registering for messages");
       cpmm.sendAsyncMessage("Settings:RegisterForMessages",
                             undefined,
                             undefined,
@@ -334,7 +350,7 @@ SettingsManager.prototype = {
     } else {
       if ((!this._callbacks || Object.keys(this._callbacks).length == 0)  &&
           !handler) {
-        if (DEBUG) debug("Unregistering for messages");
+        if (VERBOSE) debug("Unregistering for messages");
         cpmm.sendAsyncMessage("Settings:UnregisterForMessages",
                               undefined,
                               undefined,
@@ -344,9 +360,9 @@ SettingsManager.prototype = {
       }
     }
   },
-  
+
   addObserver: function addObserver(aName, aCallback) {
-    if (DEBUG) debug("addObserver " + aName);
+    if (VERBOSE) debug("addObserver " + aName);
     if (!this._callbacks) {
       this._callbacks = {};
     }
@@ -359,7 +375,7 @@ SettingsManager.prototype = {
   },
 
   removeObserver: function removeObserver(aName, aCallback) {
-    if (DEBUG) debug("deleteObserver " + aName);
+    if (VERBOSE) debug("deleteObserver " + aName);
     if (this._callbacks && this._callbacks[aName]) {
       let index = this._callbacks[aName].indexOf(aCallback);
       if (index != -1) {
@@ -368,16 +384,16 @@ SettingsManager.prototype = {
           delete this._callbacks[aName];
         }
       } else {
-        if (DEBUG) debug("Callback not found for: " + aName);
+        if (VERBOSE) debug("Callback not found for: " + aName);
       }
     } else {
-      if (DEBUG) debug("No observers stored for " + aName);
+      if (VERBOSE) debug("No observers stored for " + aName);
     }
     this.checkMessageRegistration();
   },
 
   init: function(aWindow) {
-    if (DEBUG) debug("SettingsManager init");
+    if (VERBOSE) debug("SettingsManager init");
     mrm.registerStrongReporter(this);
     cpmm.addMessageListener("Settings:Change:Return:OK", this);
     Services.obs.addObserver(this, "inner-window-destroyed", false);
@@ -387,7 +403,7 @@ SettingsManager.prototype = {
   },
 
   observe: function(aSubject, aTopic, aData) {
-    if (DEBUG) debug("Topic: " + aTopic);
+    if (VERBOSE) debug("Topic: " + aTopic);
     if (aTopic === "inner-window-destroyed") {
       let wId = aSubject.QueryInterface(Ci.nsISupportsPRUint64).data;
       if (wId === this.innerWindowID) {
@@ -415,14 +431,49 @@ SettingsManager.prototype = {
       aCallback.callback("", path,
                          Ci.nsIMemoryReporter.KIND_OTHER,
                          Ci.nsIMemoryReporter.UNITS_COUNT,
-                         this._callbacks[topic].length,
+                         length,
                          "The number of settings observers for this topic.",
                          aData);
     }
+
+    aCallback.callback("",
+                       "settings-locks/alive",
+                       Ci.nsIMemoryReporter.KIND_OTHER,
+                       Ci.nsIMemoryReporter.UNITS_COUNT,
+                       this._locks.length,
+                       "The number of locks that are currently alives.",
+                       aData);
+
+    aCallback.callback("",
+                       "settings-locks/created",
+                       Ci.nsIMemoryReporter.KIND_OTHER,
+                       Ci.nsIMemoryReporter.UNITS_COUNT,
+                       this._createdLocks,
+                       "The number of locks that were created.",
+                       aData);
+
+    aCallback.callback("",
+                       "settings-locks/deleted",
+                       Ci.nsIMemoryReporter.KIND_OTHER,
+                       Ci.nsIMemoryReporter.UNITS_COUNT,
+                       this._unregisteredLocks,
+                       "The number of locks that were deleted.",
+                       aData);
   },
 
   cleanup: function() {
     Services.obs.removeObserver(this, "inner-window-destroyed");
+    // At this point, the window is dying, so there's nothing left	
+    // that we could do with our lock. Go ahead and run finalize on	
+    // it to make sure changes are commited.	
+    for (let i = 0; i < this._locks.length; ++i) {	
+      if (DEBUG) debug("Lock alive at destroy, finalizing: " + this._locks[i]);
+      // Due to bug 1105511 we should be able to send this without
+      // cached principals. However, this is scary because any iframe
+      // in the process could run this?
+      cpmm.sendAsyncMessage("Settings:Finalize",	
+                            {lockID: this._locks[i]});	
+    }
     cpmm.removeMessageListener("Settings:Change:Return:OK", this);
     mrm.unregisterStrongReporter(this);
     this.innerWindowID = null;

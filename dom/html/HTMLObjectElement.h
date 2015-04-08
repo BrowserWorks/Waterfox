@@ -30,6 +30,18 @@ public:
 
   virtual int32_t TabIndexDefault() MOZ_OVERRIDE;
 
+#ifdef XP_MACOSX
+  // nsIDOMEventTarget
+  NS_IMETHOD PostHandleEvent(EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
+  // Helper methods
+  static void OnFocusBlurPlugin(Element* aElement, bool aFocus);
+  static void HandleFocusBlurPlugin(Element* aElement, WidgetEvent* aEvent);
+  static void HandlePluginCrashed(Element* aElement);
+  static void HandlePluginInstantiated(Element* aElement);
+  // Weak pointer. Null if last action was blur.
+  static Element* sLastFocused;
+#endif
+
   // nsIDOMHTMLObjectElement
   NS_DECL_NSIDOMHTMLOBJECTELEMENT
 

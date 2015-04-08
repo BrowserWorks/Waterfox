@@ -19,6 +19,8 @@
 #define HOVER    "hover"
 #define FOCUS    "focus"
 
+using namespace mozilla::image;
+
 nsButtonFrameRenderer::nsButtonFrameRenderer()
 {
   MOZ_COUNT_CTOR(nsButtonFrameRenderer);
@@ -27,6 +29,15 @@ nsButtonFrameRenderer::nsButtonFrameRenderer()
 nsButtonFrameRenderer::~nsButtonFrameRenderer()
 {
   MOZ_COUNT_DTOR(nsButtonFrameRenderer);
+
+#ifdef DEBUG
+  if (mInnerFocusStyle) {
+    mInnerFocusStyle->FrameRelease();
+  }
+  if (mOuterFocusStyle) {
+    mOuterFocusStyle->FrameRelease();
+  }
+#endif
 }
 
 void
@@ -121,6 +132,7 @@ public:
                      nsRenderingContext* aCtx) MOZ_OVERRIDE;
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
                            bool* aSnap) MOZ_OVERRIDE;
+  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE;
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
                                          nsRegion *aInvalidRegion) MOZ_OVERRIDE;
@@ -156,12 +168,25 @@ private:
   nsButtonFrameRenderer* mBFR;
 };
 
+nsDisplayItemGeometry*
+nsDisplayButtonBorderBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
+{
+  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+}
+
 void
 nsDisplayButtonBorderBackground::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                                            const nsDisplayItemGeometry* aGeometry,
                                                            nsRegion *aInvalidRegion)
 {
-  AddInvalidRegionForSyncDecodeBackgroundImages(aBuilder, aGeometry, aInvalidRegion);
+  auto geometry =
+    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
+
+  if (aBuilder->ShouldSyncDecodeImages() &&
+      geometry->ShouldInvalidateToSyncDecodeImages()) {
+    bool snap;
+    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
+  }
 
   nsDisplayItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
 }
@@ -174,8 +199,11 @@ void nsDisplayButtonBorderBackground::Paint(nsDisplayListBuilder* aBuilder,
   nsRect r = nsRect(ToReferenceFrame(), mFrame->GetSize());
   
   // draw the border and background inside the focus and outline borders
-  mBFR->PaintBorderAndBackground(pc, *aCtx, mVisibleRect, r,
-                                 aBuilder->GetBackgroundPaintFlags());
+  DrawResult result =
+    mBFR->PaintBorderAndBackground(pc, *aCtx, mVisibleRect, r,
+                                   aBuilder->GetBackgroundPaintFlags());
+
+  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
 }
 
 void nsDisplayButtonForeground::Paint(nsDisplayListBuilder* aBuilder,
@@ -251,7 +279,7 @@ nsButtonFrameRenderer::PaintOutlineAndFocusBorders(nsPresContext* aPresContext,
 }
 
 
-void
+DrawResult
 nsButtonFrameRenderer::PaintBorderAndBackground(nsPresContext* aPresContext,
           nsRenderingContext& aRenderingContext,
           const nsRect& aDirtyRect,
@@ -265,12 +293,15 @@ nsButtonFrameRenderer::PaintBorderAndBackground(nsPresContext* aPresContext,
 
   nsStyleContext* context = mFrame->StyleContext();
 
-  nsCSSRendering::PaintBackground(aPresContext, aRenderingContext, mFrame,
-                                  aDirtyRect, buttonRect, aBGFlags);
+  DrawResult result =
+    nsCSSRendering::PaintBackground(aPresContext, aRenderingContext, mFrame,
+                                    aDirtyRect, buttonRect, aBGFlags);
   nsCSSRendering::PaintBoxShadowInner(aPresContext, aRenderingContext,
                                       mFrame, buttonRect, aDirtyRect);
   nsCSSRendering::PaintBorder(aPresContext, aRenderingContext, mFrame,
                               aDirtyRect, buttonRect, context);
+
+  return result;
 }
 
 
@@ -368,6 +399,15 @@ nsButtonFrameRenderer::ReResolveStyles(nsPresContext* aPresContext)
   nsStyleContext* context = mFrame->StyleContext();
   nsStyleSet *styleSet = aPresContext->StyleSet();
 
+#ifdef DEBUG
+  if (mInnerFocusStyle) {
+    mInnerFocusStyle->FrameRelease();
+  }
+  if (mOuterFocusStyle) {
+    mOuterFocusStyle->FrameRelease();
+  }
+#endif
+
   // style for the inner such as a dotted line (Windows)
   mInnerFocusStyle =
     styleSet->ProbePseudoElementStyle(mFrame->GetContent()->AsElement(),
@@ -379,6 +419,15 @@ nsButtonFrameRenderer::ReResolveStyles(nsPresContext* aPresContext)
     styleSet->ProbePseudoElementStyle(mFrame->GetContent()->AsElement(),
                                       nsCSSPseudoElements::ePseudo_mozFocusOuter,
                                       context);
+
+#ifdef DEBUG
+  if (mInnerFocusStyle) {
+    mInnerFocusStyle->FrameAddRef();
+  }
+  if (mOuterFocusStyle) {
+    mOuterFocusStyle->FrameAddRef();
+  }
+#endif
 }
 
 nsStyleContext*
@@ -399,10 +448,23 @@ nsButtonFrameRenderer::SetStyleContext(int32_t aIndex, nsStyleContext* aStyleCon
 {
   switch (aIndex) {
   case NS_BUTTON_RENDERER_FOCUS_INNER_CONTEXT_INDEX:
+#ifdef DEBUG
+    if (mInnerFocusStyle) {
+      mInnerFocusStyle->FrameRelease();
+    }
+#endif
     mInnerFocusStyle = aStyleContext;
     break;
   case NS_BUTTON_RENDERER_FOCUS_OUTER_CONTEXT_INDEX:
+#ifdef DEBUG
+    if (mOuterFocusStyle) {
+      mOuterFocusStyle->FrameRelease();
+    }
+#endif
     mOuterFocusStyle = aStyleContext;
     break;
   }
+#ifdef DEBUG
+  aStyleContext->FrameAddRef();
+#endif
 }

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationinfo.h
@@ -18,12 +18,15 @@
 
 U_NAMESPACE_BEGIN
 
+struct CollationData;
+
 /**
  * Collation-related code for tools & demos.
  */
 class U_TOOLUTIL_API CollationInfo /* all static */ {
 public:
     static void printSizes(int32_t sizeWithHeader, const int32_t indexes[]);
+    static void printReorderRanges(const CollationData &data, const int32_t *codes, int32_t length);
 
 private:
     CollationInfo();  // no constructor

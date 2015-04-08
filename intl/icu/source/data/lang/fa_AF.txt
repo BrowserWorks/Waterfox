@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fa_AF.xml
@@ -9,7 +9,6 @@
 fa_AF{
     Languages{
         es{"هسپانوی"}
-        fa{"دری"}
         fi{"فنلندی"}
         ga{"آیرلندی"}
         hr{"کروشیایی"}
@@ -31,5 +30,5 @@ fa_AF{
     Scripts{
         Mong{"مغلی"}
     }
-    Version{"2.1.6.69"}
+    Version{"2.1.12.17"}
 }

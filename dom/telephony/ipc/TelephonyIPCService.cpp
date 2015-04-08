@@ -9,6 +9,8 @@
 #include "mozilla/dom/telephony/TelephonyChild.h"
 #include "mozilla/Preferences.h"
 
+#include "nsITelephonyCallInfo.h"
+
 USING_TELEPHONY_NAMESPACE
 using namespace mozilla::dom;
 
@@ -171,63 +173,63 @@ TelephonyIPCService::Dial(uint32_t aClientId, const nsAString& aNumber,
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::HangUp(uint32_t aClientId, uint32_t aCallIndex)
+TelephonyIPCService::AnswerCall(uint32_t aClientId, uint32_t aCallIndex,
+                                nsITelephonyCallback *aCallback)
 {
   if (!mPTelephonyChild) {
     NS_WARNING("TelephonyService used after shutdown has begun!");
     return NS_ERROR_FAILURE;
   }
 
-  mPTelephonyChild->SendHangUpCall(aClientId, aCallIndex);
-  return NS_OK;
+  return SendRequest(nullptr, aCallback, AnswerCallRequest(aClientId, aCallIndex));
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::AnswerCall(uint32_t aClientId, uint32_t aCallIndex)
+TelephonyIPCService::HangUpCall(uint32_t aClientId, uint32_t aCallIndex,
+                                nsITelephonyCallback *aCallback)
 {
   if (!mPTelephonyChild) {
     NS_WARNING("TelephonyService used after shutdown has begun!");
     return NS_ERROR_FAILURE;
   }
 
-  mPTelephonyChild->SendAnswerCall(aClientId, aCallIndex);
-  return NS_OK;
+  return SendRequest(nullptr, aCallback, HangUpCallRequest(aClientId, aCallIndex));
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::RejectCall(uint32_t aClientId, uint32_t aCallIndex)
+TelephonyIPCService::RejectCall(uint32_t aClientId, uint32_t aCallIndex,
+                                nsITelephonyCallback *aCallback)
 {
   if (!mPTelephonyChild) {
     NS_WARNING("TelephonyService used after shutdown has begun!");
     return NS_ERROR_FAILURE;
   }
 
-  mPTelephonyChild->SendRejectCall(aClientId, aCallIndex);
-  return NS_OK;
+  return SendRequest(nullptr, aCallback, RejectCallRequest(aClientId, aCallIndex));
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::HoldCall(uint32_t aClientId, uint32_t aCallIndex)
+TelephonyIPCService::HoldCall(uint32_t aClientId, uint32_t aCallIndex,
+                              nsITelephonyCallback *aCallback)
 {
   if (!mPTelephonyChild) {
     NS_WARNING("TelephonyService used after shutdown has begun!");
     return NS_ERROR_FAILURE;
   }
 
-  mPTelephonyChild->SendHoldCall(aClientId, aCallIndex);
-  return NS_OK;
+  return SendRequest(nullptr, aCallback, HoldCallRequest(aClientId, aCallIndex));
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::ResumeCall(uint32_t aClientId, uint32_t aCallIndex)
+TelephonyIPCService::ResumeCall(uint32_t aClientId, uint32_t aCallIndex,
+                                nsITelephonyCallback *aCallback)
 {
   if (!mPTelephonyChild) {
     NS_WARNING("TelephonyService used after shutdown has begun!");
     return NS_ERROR_FAILURE;
   }
 
-  mPTelephonyChild->SendResumeCall(aClientId, aCallIndex);
-  return NS_OK;
+  return SendRequest(nullptr, aCallback, ResumeCallRequest(aClientId, aCallIndex));
 }
 
 NS_IMETHODIMP
@@ -286,6 +288,15 @@ TelephonyIPCService::ResumeConference(uint32_t aClientId)
 }
 
 NS_IMETHODIMP
+TelephonyIPCService::SendTones(uint32_t aClientId, const nsAString& aDtmfChars,
+                               uint32_t aPauseDuration, uint32_t aToneDuration,
+                               nsITelephonyCallback *aCallback)
+{
+  return SendRequest(nullptr, aCallback, SendTonesRequest(aClientId,
+                     nsString(aDtmfChars), aPauseDuration, aToneDuration));
+}
+
+NS_IMETHODIMP
 TelephonyIPCService::StartTone(uint32_t aClientId, const nsAString& aDtmfChar)
 {
   if (!mPTelephonyChild) {
@@ -314,7 +325,14 @@ TelephonyIPCService::SendUSSD(uint32_t aClientId, const nsAString& aUssd,
                               nsITelephonyCallback *aCallback)
 {
   return SendRequest(nullptr, aCallback,
-                     USSDRequest(aClientId, nsString(aUssd)));
+                     SendUSSDRequest(aClientId, nsString(aUssd)));
+}
+
+NS_IMETHODIMP
+TelephonyIPCService::CancelUSSD(uint32_t aClientId,
+                                nsITelephonyCallback *aCallback)
+{
+  return SendRequest(nullptr, aCallback, CancelUSSDRequest(aClientId));
 }
 
 NS_IMETHODIMP
@@ -368,24 +386,10 @@ TelephonyIPCService::SetSpeakerEnabled(bool aEnabled)
 // nsITelephonyListener
 
 NS_IMETHODIMP
-TelephonyIPCService::CallStateChanged(uint32_t aClientId,
-                                       uint32_t aCallIndex,
-                                       uint16_t aCallState,
-                                       const nsAString& aNumber,
-                                       uint16_t aNumberPresentation,
-                                       const nsAString& aName,
-                                       uint16_t aNamePresentation,
-                                       bool aIsOutgoing,
-                                       bool aIsEmergency,
-                                       bool aIsConference,
-                                       bool aIsSwitchable,
-                                       bool aIsMergeable)
+TelephonyIPCService::CallStateChanged(nsITelephonyCallInfo* aInfo)
 {
   for (uint32_t i = 0; i < mListeners.Length(); i++) {
-    mListeners[i]->CallStateChanged(aClientId, aCallIndex, aCallState, aNumber,
-                                    aNumberPresentation, aName, aNamePresentation,
-                                    aIsOutgoing, aIsEmergency, aIsConference,
-                                    aIsSwitchable, aIsMergeable);
+    mListeners[i]->CallStateChanged(aInfo);
   }
   return NS_OK;
 }
@@ -406,18 +410,7 @@ TelephonyIPCService::EnumerateCallStateComplete()
 }
 
 NS_IMETHODIMP
-TelephonyIPCService::EnumerateCallState(uint32_t aClientId,
-                                         uint32_t aCallIndex,
-                                         uint16_t aCallState,
-                                         const nsAString& aNumber,
-                                         uint16_t aNumberPresentation,
-                                         const nsAString& aName,
-                                         uint16_t aNamePresentation,
-                                         bool aIsOutgoing,
-                                         bool aIsEmergency,
-                                         bool aIsConference,
-                                         bool aIsSwitchable,
-                                         bool aIsMergeable)
+TelephonyIPCService::EnumerateCallState(nsITelephonyCallInfo* aInfo)
 {
   MOZ_CRASH("Not a EnumerateCalls request!");
 }

@@ -169,35 +169,35 @@ AppendToString(std::stringstream& aStream, const FrameMetrics& m,
                const char* pfx, const char* sfx, bool detailed)
 {
   aStream << pfx;
-  AppendToString(aStream, m.mCompositionBounds, "{ cb=");
-  AppendToString(aStream, m.mScrollableRect, " sr=");
-  AppendToString(aStream, m.GetScrollOffset(), " s=");
+  AppendToString(aStream, m.mCompositionBounds, "{ [cb=");
+  AppendToString(aStream, m.GetScrollableRect(), "] [sr=");
+  AppendToString(aStream, m.GetScrollOffset(), "] [s=");
   if (m.GetDoSmoothScroll()) {
-    AppendToString(aStream, m.GetSmoothScrollOffset(), " ss=");
+    AppendToString(aStream, m.GetSmoothScrollOffset(), "] [ss=");
   }
-  AppendToString(aStream, m.mDisplayPort, " dp=");
-  AppendToString(aStream, m.mCriticalDisplayPort, " cdp=");
-  AppendToString(aStream, m.GetBackgroundColor(), " color=");
+  AppendToString(aStream, m.GetDisplayPort(), "] [dp=");
+  AppendToString(aStream, m.GetCriticalDisplayPort(), "] [cdp=");
+  AppendToString(aStream, m.GetBackgroundColor(), "] [color=");
   if (!detailed) {
-    AppendToString(aStream, m.GetScrollId(), " scrollId=");
+    AppendToString(aStream, m.GetScrollId(), "] [scrollId=");
     if (m.GetScrollParentId() != FrameMetrics::NULL_SCROLL_ID) {
-      AppendToString(aStream, m.GetScrollParentId(), " scrollParent=");
+      AppendToString(aStream, m.GetScrollParentId(), "] [scrollParent=");
     }
-    aStream << nsPrintfCString(" z=%.3f }", m.GetZoom().scale).get();
+    aStream << nsPrintfCString("] [z=%.3f] }", m.GetZoom().scale).get();
   } else {
-    AppendToString(aStream, m.GetDisplayPortMargins(), " dpm=");
-    aStream << nsPrintfCString(" um=%d", m.GetUseDisplayPortMargins()).get();
-    AppendToString(aStream, m.GetRootCompositionSize(), " rcs=");
-    AppendToString(aStream, m.GetViewport(), " v=");
-    aStream << nsPrintfCString(" z=(ld=%.3f r=%.3f cr=%.3f z=%.3f er=%.3f)",
-            m.mDevPixelsPerCSSPixel.scale, m.mPresShellResolution,
-            m.mCumulativeResolution.scale, m.GetZoom().scale,
+    AppendToString(aStream, m.GetDisplayPortMargins(), " [dpm=");
+    aStream << nsPrintfCString("] um=%d", m.GetUseDisplayPortMargins()).get();
+    AppendToString(aStream, m.GetRootCompositionSize(), "] [rcs=");
+    AppendToString(aStream, m.GetViewport(), "] [v=");
+    aStream << nsPrintfCString("] [z=(ld=%.3f r=%.3f cr=%.3f z=%.3f er=%.3f)",
+            m.GetDevPixelsPerCSSPixel().scale, m.mPresShellResolution,
+            m.GetCumulativeResolution().scale, m.GetZoom().scale,
             m.GetExtraResolution().scale).get();
-    aStream << nsPrintfCString(" u=(%d %d %lu)",
+    aStream << nsPrintfCString("] [u=(%d %d %lu)",
             m.GetScrollOffsetUpdated(), m.GetDoSmoothScroll(),
             m.GetScrollGeneration()).get();
-    AppendToString(aStream, m.GetScrollParentId(), " p=");
-    aStream << nsPrintfCString(" i=(%ld %lld) }",
+    AppendToString(aStream, m.GetScrollParentId(), "] [p=");
+    aStream << nsPrintfCString("] [i=(%ld %lld)] }",
             m.GetPresShellId(), m.GetScrollId()).get();
   }
   aStream << sfx;
@@ -289,7 +289,7 @@ AppendToString(std::stringstream& aStream, TextureFlags flags,
 }
     bool previous = false;
     AppendFlag(TextureFlags::USE_NEAREST_FILTER);
-    AppendFlag(TextureFlags::NEEDS_Y_FLIP);
+    AppendFlag(TextureFlags::ORIGIN_BOTTOM_LEFT);
     AppendFlag(TextureFlags::DISALLOW_BIGIMAGE);
 
 #undef AppendFlag
@@ -327,17 +327,9 @@ print_stderr(std::stringstream& aStr)
   // we usually use std::stringstream to build up giant multi-line gobs
   // of output. So to avoid the truncation we find the newlines and
   // print the lines individually.
-  char line[1024];
-  while (!aStr.eof()) {
-    aStr.getline(line, sizeof(line));
-    if (!aStr.eof() || strlen(line) > 0) {
-      printf_stderr("%s\n", line);
-    }
-    if (aStr.fail()) {
-      // line was too long, skip to next newline
-      aStr.clear();
-      aStr.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-    }
+  std::string line;
+  while (std::getline(aStr, line)) {
+    printf_stderr("%s\n", line.c_str());
   }
 #else
   printf_stderr("%s", aStr.str().c_str());

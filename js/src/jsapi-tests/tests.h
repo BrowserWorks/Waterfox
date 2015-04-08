@@ -68,9 +68,9 @@ class JSAPITest
     }
 
     virtual ~JSAPITest() {
-        MOZ_ASSERT(!rt);
-        MOZ_ASSERT(!cx);
-        MOZ_ASSERT(!global);
+        MOZ_RELEASE_ASSERT(!rt);
+        MOZ_RELEASE_ASSERT(!cx);
+        MOZ_RELEASE_ASSERT(!global);
     }
 
     virtual bool init();
@@ -228,8 +228,8 @@ class JSAPITest
     static const JSClass * basicGlobalClass() {
         static const JSClass c = {
             "global", JSCLASS_GLOBAL_FLAGS,
-            JS_PropertyStub, JS_DeletePropertyStub, JS_PropertyStub, JS_StrictPropertyStub,
-            JS_EnumerateStub, JS_ResolveStub, JS_ConvertStub, nullptr,
+            nullptr, nullptr, nullptr, nullptr,
+            nullptr, nullptr, nullptr, nullptr,
             nullptr, nullptr, nullptr,
             JS_GlobalObjectTraceHook
         };
@@ -290,9 +290,10 @@ class JSAPITest
     }
 
     virtual void destroyRuntime() {
-        MOZ_ASSERT(!cx);
-        MOZ_ASSERT(rt);
+        MOZ_RELEASE_ASSERT(!cx);
+        MOZ_RELEASE_ASSERT(rt);
         JS_DestroyRuntime(rt);
+        rt = nullptr;
     }
 
     static void reportError(JSContext *cx, const char *message, JSErrorReport *report) {
@@ -410,5 +411,30 @@ class TestJSPrincipals : public JSPrincipals
         refcount = rc;
     }
 };
+
+#ifdef JS_GC_ZEAL
+/*
+ * Temporarily disable the GC zeal setting. This is only useful in tests that
+ * need very explicit GC behavior and should not be used elsewhere.
+ */
+class AutoLeaveZeal
+{
+    JSContext *cx_;
+    uint8_t zeal_;
+    uint32_t frequency_;
+
+  public:
+    explicit AutoLeaveZeal(JSContext *cx) : cx_(cx) {
+        uint32_t dummy;
+        JS_GetGCZeal(cx_, &zeal_, &frequency_, &dummy);
+        JS_SetGCZeal(cx_, 0, 0);
+        JS::PrepareForFullGC(JS_GetRuntime(cx_));
+        JS::GCForReason(JS_GetRuntime(cx_), GC_SHRINK, JS::gcreason::DEBUG_GC);
+    }
+    ~AutoLeaveZeal() {
+        JS_SetGCZeal(cx_, zeal_, frequency_);
+    }
+};
+#endif /* JS_GC_ZEAL */
 
 #endif /* jsapi_tests_tests_h */

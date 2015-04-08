@@ -2,6 +2,9 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+#include "mozilla/Maybe.h"
+
 #include "nsTableRowFrame.h"
 #include "nsTableRowGroupFrame.h"
 #include "nsIPresShell.h"
@@ -22,6 +25,7 @@
 #include <algorithm>
 
 using namespace mozilla;
+using namespace mozilla::image;
 
 struct nsTableCellReflowState : public nsHTMLReflowState
 {
@@ -395,7 +399,7 @@ nscoord nsTableRowFrame::GetRowBaseline(WritingMode aWritingMode)
    while (childFrame) {
     if (IS_TABLE_CELL(childFrame->GetType())) {
       nsIFrame* firstKid = childFrame->GetFirstPrincipalChild();
-      ascent = std::max(ascent, firstKid->GetRect().YMost());
+      ascent = std::max(ascent, firstKid->GetNormalRect().YMost());
     }
     // Get the next child
     childFrame = iter.Next();
@@ -532,6 +536,7 @@ public:
   }
 #endif
 
+  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE;
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
                                          nsRegion *aInvalidRegion) MOZ_OVERRIDE;
@@ -540,16 +545,24 @@ public:
   NS_DISPLAY_DECL_NAME("TableRowBackground", TYPE_TABLE_ROW_BACKGROUND)
 };
 
+nsDisplayItemGeometry*
+nsDisplayTableRowBackground::AllocateGeometry(nsDisplayListBuilder* aBuilder)
+{
+  return new nsDisplayItemGenericImageGeometry(this, aBuilder);
+}
+
 void
 nsDisplayTableRowBackground::ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                                        const nsDisplayItemGeometry* aGeometry,
                                                        nsRegion *aInvalidRegion)
 {
-  if (aBuilder->ShouldSyncDecodeImages()) {
-    if (nsTableFrame::AnyTablePartHasUndecodedBackgroundImage(mFrame, mFrame->GetNextSibling())) {
-      bool snap;
-      aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
-    }
+  auto geometry =
+    static_cast<const nsDisplayItemGenericImageGeometry*>(aGeometry);
+
+  if (aBuilder->ShouldSyncDecodeImages() &&
+      geometry->ShouldInvalidateToSyncDecodeImages()) {
+    bool snap;
+    aInvalidRegion->Or(*aInvalidRegion, GetBounds(aBuilder, &snap));
   }
 
   nsDisplayTableItem::ComputeInvalidationRegion(aBuilder, aGeometry, aInvalidRegion);
@@ -565,7 +578,11 @@ nsDisplayTableRowBackground::Paint(nsDisplayListBuilder* aBuilder,
                                  mFrame->PresContext(), *aCtx,
                                  mVisibleRect, ToReferenceFrame(),
                                  aBuilder->GetBackgroundPaintFlags());
-  painter.PaintRow(static_cast<nsTableRowFrame*>(mFrame));
+
+  DrawResult result =
+    painter.PaintRow(static_cast<nsTableRowFrame*>(mFrame));
+
+  nsDisplayItemGenericImageGeometry::UpdateDrawResult(this, result);
 }
 
 void
@@ -861,7 +878,10 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
 
     // Reflow the child frame
     nsRect kidRect = kidFrame->GetRect();
+    nsPoint origKidNormalPosition = kidFrame->GetNormalPosition();
+    MOZ_ASSERT(origKidNormalPosition.y == 0);
     nsRect kidVisualOverflow = kidFrame->GetVisualOverflowRect();
+    nsPoint kidPosition(x, 0);
     bool firstReflow =
       (kidFrame->GetStateBits() & NS_FRAME_FIRST_REFLOW) != 0;
 
@@ -870,6 +890,7 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
       nscoord availCellWidth =
         CalcAvailWidth(aTableFrame, *cellFrame);
 
+      Maybe<nsTableCellReflowState> kidReflowState;
       nsHTMLReflowMetrics desiredSize(aReflowState);
 
       // If the avail width is not the same as last time we reflowed the cell or
@@ -890,19 +911,19 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
           HasPctHeight()) {
         // Reflow the cell to fit the available width, height
         // XXX The old IR_ChildIsDirty code used availCellWidth here.
-        nsSize  kidAvailSize(availCellWidth, aReflowState.AvailableHeight());
+        nsSize kidAvailSize(availCellWidth, aReflowState.AvailableHeight());
 
         // Reflow the child
-        nsTableCellReflowState
-          kidReflowState(aPresContext, aReflowState, kidFrame,
-                         LogicalSize(kidFrame->GetWritingMode(),
-                                     kidAvailSize),
-                         nsHTMLReflowState::CALLER_WILL_INIT);
+        kidReflowState.emplace(aPresContext, aReflowState, kidFrame,
+                               LogicalSize(kidFrame->GetWritingMode(),
+                                           kidAvailSize),
+                               // Cast needed for gcc 4.4.
+                               uint32_t(nsHTMLReflowState::CALLER_WILL_INIT));
         InitChildReflowState(*aPresContext, kidAvailSize, borderCollapse,
-                             kidReflowState);
+                             *kidReflowState);
 
         nsReflowStatus status;
-        ReflowChild(kidFrame, aPresContext, desiredSize, kidReflowState,
+        ReflowChild(kidFrame, aPresContext, desiredSize, *kidReflowState,
                     x, 0, 0, status);
 
         // allow the table to determine if/how the table needs to be rebalanced
@@ -912,7 +933,7 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
         }
       }
       else {
-        if (x != kidRect.x) {
+        if (x != origKidNormalPosition.x) {
           kidFrame->InvalidateFrameSubtree();
         }
         
@@ -956,7 +977,20 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
       // Place the child
       desiredSize.ISize(rowWM) = availCellWidth;
 
-      FinishReflowChild(kidFrame, aPresContext, desiredSize, nullptr, x, 0, 0);
+      if (kidReflowState) {
+        // We reflowed. Apply relative positioning in the normal way.
+        kidReflowState->ApplyRelativePositioning(&kidPosition);
+      } else if (kidFrame->IsRelativelyPositioned()) {
+        // We didn't reflow.  Do the positioning part of what
+        // MovePositionBy does internally.  (This codepath should really
+        // be merged into the else below if we can.)
+        const nsMargin* computedOffsets = static_cast<nsMargin*>
+          (kidFrame->Properties().Get(nsIFrame::ComputedOffsetProperty()));
+        nsHTMLReflowState::ApplyRelativePositioning(kidFrame, *computedOffsets,
+                                                    &kidPosition);
+      }
+      FinishReflowChild(kidFrame, aPresContext, desiredSize, nullptr,
+                        kidPosition.x, kidPosition.y, 0);
 
       nsTableFrame::InvalidateTableFrame(kidFrame, kidRect, kidVisualOverflow,
                                          firstReflow);
@@ -964,11 +998,12 @@ nsTableRowFrame::ReflowChildren(nsPresContext*          aPresContext,
       x += desiredSize.Width();  
     }
     else {
-      if (kidRect.x != x) {
+      if (x != origKidNormalPosition.x) {
         // Invalidate the old position
         kidFrame->InvalidateFrameSubtree();
-        // move to the new position
-        kidFrame->SetPosition(nsPoint(x, kidRect.y));
+        // Move to the new position. As above, we need to account for relative
+        // positioning.
+        kidFrame->MovePositionBy(nsPoint(x - origKidNormalPosition.x, 0));
         nsTableFrame::RePositionViews(kidFrame);
         // invalidate the new position
         kidFrame->InvalidateFrameSubtree();
@@ -1263,14 +1298,16 @@ nsTableRowFrame::CollapseRowIfNecessary(nscoord aRowOffset,
         }
 
         nsRect oldCellRect = cellFrame->GetRect();
+        nsPoint oldCellNormalPos = cellFrame->GetNormalPosition();
         nsRect oldCellVisualOverflow = cellFrame->GetVisualOverflowRect();
 
-        if (aRowOffset == 0 && cRect.TopLeft() != oldCellRect.TopLeft()) {
+        if (aRowOffset == 0 && cRect.TopLeft() != oldCellNormalPos) {
           // We're moving the cell.  Invalidate the old overflow area
           cellFrame->InvalidateFrameSubtree();
         }
         
-        cellFrame->SetRect(cRect);
+        cellFrame->MovePositionBy(cRect.TopLeft() - oldCellNormalPos);
+        cellFrame->SetSize(cRect.Size());
 
         // XXXbz This looks completely bogus in the cases when we didn't
         // collapse the cell!

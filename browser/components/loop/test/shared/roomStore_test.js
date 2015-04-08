@@ -171,7 +171,7 @@ describe("loop.store.RoomStore", function () {
 
           expect(store.getStoreState().rooms).to.have.length.of(0);
         });
-      })
+      });
     });
 
     describe("#findNextAvailableRoomNumber", function() {

@@ -25,7 +25,7 @@
 #    endif
 #  endif
 #elif defined(_MSC_VER)
-   // The minimum supported MSVC (10, _MSC_VER 1600) supports nullptr.
+   // The minimum supported MSVC (12, _MSC_VER 1800) supports nullptr.
 #  define MOZ_HAVE_CXX11_NULLPTR
 #endif
 
@@ -55,7 +55,7 @@ namespace mozilla {
  *   template<typename U>
  *   void foo(U,
  *            typename EnableIf<!IsNullPointer<U>::value, int>::Type dummy = 0)
- *   MOZ_DELETE;
+ *   = delete;
  *
  * The exact details of how set up the SFINAE bits vary on a case-by-case basis.
  * If you need help with this (and unless you've internalized way more sadmaking

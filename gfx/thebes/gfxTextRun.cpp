@@ -28,6 +28,7 @@
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::unicode;
+using mozilla::services::GetObserverService;
 
 static const char16_t kEllipsisChar[] = { 0x2026, 0x0 };
 static const char16_t kASCIIPeriodsChar[] = { '.', '.', '.', 0x0 };
@@ -778,7 +779,7 @@ uint32_t
 gfxTextRun::BreakAndMeasureText(uint32_t aStart, uint32_t aMaxLength,
                                 bool aLineBreakBefore, gfxFloat aWidth,
                                 PropertyProvider *aProvider,
-                                bool aSuppressInitialBreak,
+                                SuppressBreak aSuppressBreak,
                                 gfxFloat *aTrimWhitespace,
                                 Metrics *aMetrics,
                                 gfxFont::BoundingBoxType aBoundingBoxType,
@@ -847,7 +848,8 @@ gfxTextRun::BreakAndMeasureText(uint32_t aStart, uint32_t aMaxLength,
         // line: if the width is too small for even one character to fit, it 
         // could be the first and last break opportunity on the line, and that
         // would trigger an infinite loop.
-        if (!aSuppressInitialBreak || i > aStart) {
+        if (aSuppressBreak != eSuppressAllBreaks &&
+            (aSuppressBreak != eSuppressInitialBreak || i > aStart)) {
             bool atNaturalBreak = mCharacterGlyphs[i].CanBreakBefore() == 1;
             bool atHyphenationBreak =
                 !atNaturalBreak && haveHyphenation && hyphenBuffer[i - bufferStart];
@@ -2040,12 +2042,12 @@ gfxFontGroup::MakeHyphenTextRun(gfxContext *aCtx, uint32_t aAppUnitsPerDevUnit)
     gfxFont *font = GetFirstValidFont(uint32_t(hyphen));
     if (font->HasCharacter(hyphen)) {
         return MakeTextRun(&hyphen, 1, aCtx, aAppUnitsPerDevUnit,
-                           gfxFontGroup::TEXT_IS_PERSISTENT);
+                           gfxFontGroup::TEXT_IS_PERSISTENT, nullptr);
     }
 
     static const uint8_t dash = '-';
     return MakeTextRun(&dash, 1, aCtx, aAppUnitsPerDevUnit,
-                       gfxFontGroup::TEXT_IS_PERSISTENT);
+                       gfxFontGroup::TEXT_IS_PERSISTENT, nullptr);
 }
 
 gfxFloat
@@ -2066,7 +2068,8 @@ gfxFontGroup::GetHyphenWidth(gfxTextRun::PropertyProvider *aProvider)
 
 gfxTextRun *
 gfxFontGroup::MakeTextRun(const uint8_t *aString, uint32_t aLength,
-                          const Parameters *aParams, uint32_t aFlags)
+                          const Parameters *aParams, uint32_t aFlags,
+                          gfxMissingFontRecorder *aMFR)
 {
     if (aLength == 0) {
         return MakeEmptyTextRun(aParams, aFlags);
@@ -2090,7 +2093,7 @@ gfxFontGroup::MakeTextRun(const uint8_t *aString, uint32_t aLength,
         return nullptr;
     }
 
-    InitTextRun(aParams->mContext, textRun, aString, aLength);
+    InitTextRun(aParams->mContext, textRun, aString, aLength, aMFR);
 
     textRun->FetchGlyphExtents(aParams->mContext);
 
@@ -2099,7 +2102,8 @@ gfxFontGroup::MakeTextRun(const uint8_t *aString, uint32_t aLength,
 
 gfxTextRun *
 gfxFontGroup::MakeTextRun(const char16_t *aString, uint32_t aLength,
-                          const Parameters *aParams, uint32_t aFlags)
+                          const Parameters *aParams, uint32_t aFlags,
+                          gfxMissingFontRecorder *aMFR)
 {
     if (aLength == 0) {
         return MakeEmptyTextRun(aParams, aFlags);
@@ -2117,7 +2121,7 @@ gfxFontGroup::MakeTextRun(const char16_t *aString, uint32_t aLength,
         return nullptr;
     }
 
-    InitTextRun(aParams->mContext, textRun, aString, aLength);
+    InitTextRun(aParams->mContext, textRun, aString, aLength, aMFR);
 
     textRun->FetchGlyphExtents(aParams->mContext);
 
@@ -2129,7 +2133,8 @@ void
 gfxFontGroup::InitTextRun(gfxContext *aContext,
                           gfxTextRun *aTextRun,
                           const T *aString,
-                          uint32_t aLength)
+                          uint32_t aLength,
+                          gfxMissingFontRecorder *aMFR)
 {
     NS_ASSERTION(aLength > 0, "don't call InitTextRun for a zero-length run");
 
@@ -2209,7 +2214,7 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
             // the text is still purely 8-bit; bypass the script-run itemizer
             // and treat it as a single Latin run
             InitScriptRun(aContext, aTextRun, aString,
-                          0, aLength, MOZ_SCRIPT_LATIN);
+                          0, aLength, MOZ_SCRIPT_LATIN, aMFR);
         } else {
             const char16_t *textPtr;
             if (transformedString) {
@@ -2257,7 +2262,7 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
     #endif
 
                 InitScriptRun(aContext, aTextRun, textPtr + runStart,
-                              runStart, runLimit - runStart, runScript);
+                              runStart, runLimit - runStart, runScript, aMFR);
             }
         }
 
@@ -2293,6 +2298,14 @@ gfxFontGroup::InitTextRun(gfxContext *aContext,
     aTextRun->SortGlyphRuns();
 }
 
+static inline bool
+IsPUA(uint32_t aUSV)
+{
+    // We could look up the General Category of the codepoint here,
+    // but it's simpler to check PUA codepoint ranges.
+    return (aUSV >= 0xE000 && aUSV <= 0xF8FF) || (aUSV >= 0xF0000);
+}
+
 template<typename T>
 void
 gfxFontGroup::InitScriptRun(gfxContext *aContext,
@@ -2302,7 +2315,8 @@ gfxFontGroup::InitScriptRun(gfxContext *aContext,
                             uint32_t aOffset, // position of the script run
                                               // within the textrun
                             uint32_t aLength, // length of the script run
-                            int32_t aRunScript)
+                            int32_t aRunScript,
+                            gfxMissingFontRecorder *aMFR)
 {
     NS_ASSERTION(aLength > 0, "don't call InitScriptRun for a 0-length run");
     NS_ASSERTION(aTextRun->GetShapingState() != gfxTextRun::eShapingState_Aborted,
@@ -2323,6 +2337,7 @@ gfxFontGroup::InitScriptRun(gfxContext *aContext,
     ComputeRanges(fontRanges, aString, aLength, aRunScript,
                   aTextRun->GetFlags() & gfxTextRunFactory::TEXT_ORIENT_MASK);
     uint32_t numRanges = fontRanges.Length();
+    bool missingChars = false;
 
     for (uint32_t r = 0; r < numRanges; r++) {
         const gfxTextRange& range = fontRanges[r];
@@ -2469,11 +2484,15 @@ gfxFontGroup::InitScriptRun(gfxContext *aContext,
                         index + 1 < aLength &&
                         NS_IS_LOW_SURROGATE(aString[index + 1]))
                     {
+                        uint32_t usv =
+                            SURROGATE_TO_UCS4(ch, aString[index + 1]);
                         aTextRun->SetMissingGlyph(aOffset + index,
-                                                  SURROGATE_TO_UCS4(ch,
-                                                                    aString[index + 1]),
+                                                  usv,
                                                   mainFont);
                         index++;
+                        if (!mSkipDrawing && !IsPUA(usv)) {
+                            missingChars = true;
+                        }
                         continue;
                     }
 
@@ -2508,10 +2527,17 @@ gfxFontGroup::InitScriptRun(gfxContext *aContext,
 
                 // record char code so we can draw a box with the Unicode value
                 aTextRun->SetMissingGlyph(aOffset + index, ch, mainFont);
+                if (!mSkipDrawing && !IsPUA(ch)) {
+                    missingChars = true;
+                }
             }
         }
 
         runStart += matchedLength;
+    }
+
+    if (aMFR && missingChars) {
+        aMFR->RecordScript(aRunScript);
     }
 }
 
@@ -2538,7 +2564,8 @@ gfxFontGroup::GetEllipsisTextRun(int32_t aAppUnitsPerDevPixel,
         refCtx, nullptr, nullptr, nullptr, 0, aAppUnitsPerDevPixel
     };
     gfxTextRun* textRun =
-        MakeTextRun(ellipsis.get(), ellipsis.Length(), &params, TEXT_IS_PERSISTENT);
+        MakeTextRun(ellipsis.get(), ellipsis.Length(), &params,
+                    TEXT_IS_PERSISTENT, nullptr);
     if (!textRun) {
         return nullptr;
     }
@@ -3110,3 +3137,41 @@ gfxFontGroup::Shutdown()
 }
 
 nsILanguageAtomService* gfxFontGroup::gLangService = nullptr;
+
+void
+gfxMissingFontRecorder::Flush()
+{
+    static bool mNotifiedFontsInitialized = false;
+    static uint32_t mNotifiedFonts[gfxMissingFontRecorder::kNumScriptBitsWords];
+    if (!mNotifiedFontsInitialized) {
+        memset(&mNotifiedFonts, 0, sizeof(mNotifiedFonts));
+        mNotifiedFontsInitialized = true;
+    }
+
+    nsAutoString fontNeeded;
+    for (uint32_t i = 0; i < kNumScriptBitsWords; ++i) {
+        mMissingFonts[i] &= ~mNotifiedFonts[i];
+        if (!mMissingFonts[i]) {
+            continue;
+        }
+        for (uint32_t j = 0; j < 32; ++j) {
+            if (!(mMissingFonts[i] & (1 << j))) {
+                continue;
+            }
+            mNotifiedFonts[i] |= (1 << j);
+            if (!fontNeeded.IsEmpty()) {
+                fontNeeded.Append(PRUnichar(','));
+            }
+            uint32_t tag = GetScriptTagForCode(i * 32 + j);
+            fontNeeded.Append(char16_t(tag >> 24));
+            fontNeeded.Append(char16_t((tag >> 16) & 0xff));
+            fontNeeded.Append(char16_t((tag >> 8) & 0xff));
+            fontNeeded.Append(char16_t(tag & 0xff));
+        }
+        mMissingFonts[i] = 0;
+    }
+    if (!fontNeeded.IsEmpty()) {
+        nsCOMPtr<nsIObserverService> service = GetObserverService();
+        service->NotifyObservers(nullptr, "font-needed", fontNeeded.get());
+    }
+}

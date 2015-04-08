@@ -32,6 +32,7 @@ namespace android {
   class GonkCameraHardware;
   class MediaProfiles;
   class GonkRecorder;
+  class GonkCameraSource;
 }
 
 namespace mozilla {
@@ -105,10 +106,12 @@ protected:
 
   nsresult Initialize();
 
+  nsresult ValidateConfiguration(const Configuration& aConfig, Configuration& aValidatedConfig);
   nsresult SetConfigurationInternal(const Configuration& aConfig);
   nsresult SetPictureConfiguration(const Configuration& aConfig);
   nsresult SetVideoConfiguration(const Configuration& aConfig);
   nsresult StartInternal(const Configuration* aInitialConfig);
+  nsresult StartPreviewInternal();
   nsresult StopInternal();
 
   template<class T> nsresult SetAndPush(uint32_t aKey, const T& aValue);
@@ -133,8 +136,8 @@ protected:
   nsresult SetupRecording(int aFd, int aRotation, uint64_t aMaxFileSizeBytes,
                           uint64_t aMaxVideoLengthMs);
   nsresult SetupRecordingFlash(bool aAutoEnableLowLightTorch);
-  nsresult SelectVideoAndPreviewSize(const Configuration& aConfig, const Size& aVideoSize);
-  nsresult SetVideoAndPreviewSize(const Size& aPreviewSize, const Size& aVideoSize);
+  nsresult SelectCaptureAndPreviewSize(const Size& aPreviewSize, const Size& aCaptureSize,
+                                       const Size& aMaxSize, uint32_t aCaptureSizeKey);
   nsresult MaybeAdjustVideoSize();
   nsresult PausePreview();
   nsresult GetSupportedSize(const Size& aSize, const nsTArray<Size>& supportedSizes, Size& best);
@@ -152,11 +155,15 @@ protected:
   nsresult UpdateThumbnailSize();
   nsresult SetThumbnailSizeImpl(const Size& aSize);
 
+  friend class android::GonkCameraSource;
+  android::sp<android::GonkCameraHardware> GetCameraHw();
+
   int32_t RationalizeRotation(int32_t aRotation);
+
+  uint32_t                  mCameraId;
 
   android::sp<android::GonkCameraHardware> mCameraHw;
 
-  Size                      mLastPictureSize;
   Size                      mLastThumbnailSize;
   Size                      mLastRecorderSize;
   uint32_t                  mPreviewFps;
@@ -186,8 +193,8 @@ protected:
   ReentrantMonitor          mReentrantMonitor;
 
 private:
-  nsGonkCameraControl(const nsGonkCameraControl&) MOZ_DELETE;
-  nsGonkCameraControl& operator=(const nsGonkCameraControl&) MOZ_DELETE;
+  nsGonkCameraControl(const nsGonkCameraControl&) = delete;
+  nsGonkCameraControl& operator=(const nsGonkCameraControl&) = delete;
 };
 
 // camera driver callbacks

@@ -1,5 +1,5 @@
 /*
- * (C) Copyright IBM Corp. 1998-2013 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1998-2015 - All Rights Reserved
  *
  */
 
@@ -466,6 +466,12 @@ le_uint32 ChainingContextualSubstitutionFormat2Subtable::process(const LookupPro
                 const ChainSubClassRuleTable *chainSubClassRuleTable =
                     (const ChainSubClassRuleTable *) ((char *) chainSubClassSetTable + chainSubClassRuleTableOffset);
                 le_uint16 backtrackGlyphCount = SWAPW(chainSubClassRuleTable->backtrackGlyphCount);
+
+                // TODO: Ticket #11557 - enable this check, originally from ticket #11525.
+                //       Depends on other, more extensive, changes.
+                // LEReferenceToArrayOf<le_uint16>   backtrackClassArray(base, success, chainSubClassRuleTable->backtrackClassArray, backtrackGlyphCount);
+                if( LE_FAILURE(success) ) { return 0; }
+
                 le_uint16 inputGlyphCount = SWAPW(chainSubClassRuleTable->backtrackClassArray[backtrackGlyphCount]) - 1;
                 const le_uint16 *inputClassArray = &chainSubClassRuleTable->backtrackClassArray[backtrackGlyphCount + 1];
                 le_uint16 lookaheadGlyphCount = SWAPW(inputClassArray[inputGlyphCount]);

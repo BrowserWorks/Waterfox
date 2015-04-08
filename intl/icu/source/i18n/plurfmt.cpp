@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2009-2014, International Business Machines Corporation and
+* Copyright (C) 2009-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -533,7 +533,7 @@ void PluralFormat::parseType(const UnicodeString& source, const NFRule *rbnfLeni
             currMatchIndex = rbnfLenientScanner->findTextLenient(source, currArg, startingAt, &length);
         }
         else {
-            currMatchIndex = source.indexOf(currArg);
+            currMatchIndex = source.indexOf(currArg, startingAt);
         }
         if (currMatchIndex >= 0 && currMatchIndex >= matchedIndex && currArg.length() > matchedWord.length()) {
             matchedIndex = currMatchIndex;

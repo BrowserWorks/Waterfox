@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2012-2014, International Business Machines
+* Copyright (C) 2012-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationtest.cpp
@@ -97,7 +97,7 @@ private:
         return i;
     }
 
-    UBool readLine(UCHARBUF *f, IcuTestErrorCode &errorCode);
+    UBool readNonEmptyLine(UCHARBUF *f, IcuTestErrorCode &errorCode);
     void parseString(int32_t &start, UnicodeString &prefix, UnicodeString &s, UErrorCode &errorCode);
     Collation::Level parseRelationAndString(UnicodeString &s, IcuTestErrorCode &errorCode);
     void parseAndSetAttribute(IcuTestErrorCode &errorCode);
@@ -190,7 +190,7 @@ void CollationTest::TestImplicits() {
     IcuTestErrorCode errorCode(*this, "TestImplicits");
 
     const CollationData *cd = CollationRoot::getData(errorCode);
-    if(errorCode.logDataIfFailureAndReset("CollationRoot::getBaseData()")) {
+    if(errorCode.logDataIfFailureAndReset("CollationRoot::getData()")) {
         return;
     }
 
@@ -723,7 +723,26 @@ public:
         // Simple primary CE.
         ++index;
         pri = p;
-        secTer = Collation::COMMON_SEC_AND_TER_CE;
+        // Does this have an explicit below-common sec/ter unit,
+        // or does it imply a common one?
+        if(index == length) {
+            secTer = Collation::COMMON_SEC_AND_TER_CE;
+        } else {
+            secTer = elements[index];
+            if((secTer & CollationRootElements::SEC_TER_DELTA_FLAG) == 0) {
+                // No sec/ter delta.
+                secTer = Collation::COMMON_SEC_AND_TER_CE;
+            } else {
+                secTer &= ~CollationRootElements::SEC_TER_DELTA_FLAG;
+                if(secTer > Collation::COMMON_SEC_AND_TER_CE) {
+                    // Implied sec/ter.
+                    secTer = Collation::COMMON_SEC_AND_TER_CE;
+                } else {
+                    // Explicit sec/ter below common/common.
+                    ++index;
+                }
+            }
+        }
         return TRUE;
     }
 
@@ -950,24 +969,29 @@ UnicodeString CollationTest::printCollationKey(const CollationKey &key) {
     return printSortKey(p, length);
 }
 
-UBool CollationTest::readLine(UCHARBUF *f, IcuTestErrorCode &errorCode) {
-    int32_t lineLength;
-    const UChar *line = ucbuf_readline(f, &lineLength, errorCode);
-    if(line == NULL || errorCode.isFailure()) {
-        fileLine.remove();
-        return FALSE;
+UBool CollationTest::readNonEmptyLine(UCHARBUF *f, IcuTestErrorCode &errorCode) {
+    for(;;) {
+        int32_t lineLength;
+        const UChar *line = ucbuf_readline(f, &lineLength, errorCode);
+        if(line == NULL || errorCode.isFailure()) {
+            fileLine.remove();
+            return FALSE;
+        }
+        ++fileLineNumber;
+        // Strip trailing CR/LF, comments, and spaces.
+        const UChar *comment = u_memchr(line, 0x23, lineLength);  // '#'
+        if(comment != NULL) {
+            lineLength = (int32_t)(comment - line);
+        } else {
+            while(lineLength > 0 && isCROrLF(line[lineLength - 1])) { --lineLength; }
+        }
+        while(lineLength > 0 && isSpace(line[lineLength - 1])) { --lineLength; }
+        if(lineLength != 0) {
+            fileLine.setTo(FALSE, line, lineLength);
+            return TRUE;
+        }
+        // Empty line, continue.
     }
-    ++fileLineNumber;
-    // Strip trailing CR/LF, comments, and spaces.
-    const UChar *comment = u_memchr(line, 0x23, lineLength);  // '#'
-    if(comment != NULL) {
-        lineLength = (int32_t)(comment - line);
-    } else {
-        while(lineLength > 0 && isCROrLF(line[lineLength - 1])) { --lineLength; }
-    }
-    while(lineLength > 0 && isSpace(line[lineLength - 1])) { --lineLength; }
-    fileLine.setTo(FALSE, line, lineLength);
-    return TRUE;
 }
 
 void CollationTest::parseString(int32_t &start, UnicodeString &prefix, UnicodeString &s,
@@ -1091,6 +1115,8 @@ static const struct {
 };
 
 void CollationTest::parseAndSetAttribute(IcuTestErrorCode &errorCode) {
+    // Parse attributes even if the Collator could not be created,
+    // in order to report syntax errors.
     int32_t start = skipSpaces(1);
     int32_t equalPos = fileLine.indexOf(0x3d);
     if(equalPos < 0) {
@@ -1122,12 +1148,14 @@ void CollationTest::parseAndSetAttribute(IcuTestErrorCode &errorCode) {
             errorCode.set(U_PARSE_ERROR);
             return;
         }
-        coll->setMaxVariable(max, errorCode);
-        if(errorCode.isFailure()) {
-            errln("setMaxVariable() failed on line %d: %s",
-                  (int)fileLineNumber, errorCode.errorName());
-            infoln(fileLine);
-            return;
+        if(coll != NULL) {
+            coll->setMaxVariable(max, errorCode);
+            if(errorCode.isFailure()) {
+                errln("setMaxVariable() failed on line %d: %s",
+                      (int)fileLineNumber, errorCode.errorName());
+                infoln(fileLine);
+                return;
+            }
         }
         fileLine.remove();
         return;
@@ -1161,12 +1189,14 @@ void CollationTest::parseAndSetAttribute(IcuTestErrorCode &errorCode) {
         }
     }
 
-    coll->setAttribute(attr, value, errorCode);
-    if(errorCode.isFailure()) {
-        errln("illegal attribute=value combination on line %d: %s",
-              (int)fileLineNumber, errorCode.errorName());
-        infoln(fileLine);
-        return;
+    if(coll != NULL) {
+        coll->setAttribute(attr, value, errorCode);
+        if(errorCode.isFailure()) {
+            errln("illegal attribute=value combination on line %d: %s",
+                  (int)fileLineNumber, errorCode.errorName());
+            infoln(fileLine);
+            return;
+        }
     }
     fileLine.remove();
 }
@@ -1193,20 +1223,21 @@ void CollationTest::parseAndSetReorderCodes(int32_t start, IcuTestErrorCode &err
         reorderCodes.addElement(code, errorCode);
         start = limit;
     }
-    coll->setReorderCodes(reorderCodes.getBuffer(), reorderCodes.size(), errorCode);
-    if(errorCode.isFailure()) {
-        errln("setReorderCodes() failed on line %d: %s", (int)fileLineNumber, errorCode.errorName());
-        infoln(fileLine);
-        return;
+    if(coll != NULL) {
+        coll->setReorderCodes(reorderCodes.getBuffer(), reorderCodes.size(), errorCode);
+        if(errorCode.isFailure()) {
+            errln("setReorderCodes() failed on line %d: %s",
+                  (int)fileLineNumber, errorCode.errorName());
+            infoln(fileLine);
+            return;
+        }
     }
     fileLine.remove();
 }
 
 void CollationTest::buildTailoring(UCHARBUF *f, IcuTestErrorCode &errorCode) {
     UnicodeString rules;
-    while(readLine(f, errorCode)) {
-        if(fileLine.isEmpty()) { continue; }
-        if(isSectionStarter(fileLine[0])) { break; }
+    while(readNonEmptyLine(f, errorCode) && !isSectionStarter(fileLine[0])) {
         rules.append(fileLine.unescape());
     }
     if(errorCode.isFailure()) { return; }
@@ -1229,6 +1260,9 @@ void CollationTest::buildTailoring(UCHARBUF *f, IcuTestErrorCode &errorCode) {
             infoln(UnicodeString("  snippet: ...") +
                 parseError.preContext + "(!)" + parseError.postContext + "...");
         }
+        delete coll;
+        coll = NULL;
+        errorCode.reset();
     } else {
         assertEquals("no error reason when RuleBasedCollator(rules) succeeds",
                      UnicodeString(), reason);
@@ -1247,6 +1281,8 @@ void CollationTest::setRootCollator(IcuTestErrorCode &errorCode) {
 
 void CollationTest::setLocaleCollator(IcuTestErrorCode &errorCode) {
     if(errorCode.isFailure()) { return; }
+    delete coll;
+    coll = NULL;
     int32_t at = fileLine.indexOf((UChar)0x40, 9);  // @ is not invariant
     if(at >= 0) {
         fileLine.setCharAt(at, (UChar)0x2a);  // *
@@ -1265,15 +1301,15 @@ void CollationTest::setLocaleCollator(IcuTestErrorCode &errorCode) {
     }
 
     logln("creating a collator for locale ID %s", locale.getName());
-    Collator *newColl = Collator::createInstance(locale, errorCode);
+    coll = Collator::createInstance(locale, errorCode);
     if(errorCode.isFailure()) {
         dataerrln("unable to create a collator for locale %s on line %d",
                   locale.getName(), (int)fileLineNumber);
         infoln(fileLine);
-        return;
+        delete coll;
+        coll = NULL;
+        errorCode.reset();
     }
-    delete coll;
-    coll = newColl;
 }
 
 UBool CollationTest::needsNormalization(const UnicodeString &s, UErrorCode &errorCode) const {
@@ -1728,13 +1764,19 @@ void CollationTest::checkCompareStrings(UCHARBUF *f, IcuTestErrorCode &errorCode
     UnicodeString prevFileLine = UNICODE_STRING("(none)", 6);
     UnicodeString prevString, s;
     prevString.getTerminatedBuffer();  // Ensure NUL-termination.
-    while(readLine(f, errorCode)) {
-        if(fileLine.isEmpty()) { continue; }
-        if(isSectionStarter(fileLine[0])) { break; }
+    while(readNonEmptyLine(f, errorCode) && !isSectionStarter(fileLine[0])) {
+        // Parse the line even if it will be ignored (when we do not have a Collator)
+        // in order to report syntax issues.
         Collation::Level relation = parseRelationAndString(s, errorCode);
         if(errorCode.isFailure()) {
             errorCode.reset();
             break;
+        }
+        if(coll == NULL) {
+            // We were unable to create the Collator but continue with tests.
+            // Ignore test data for this Collator.
+            // The next Collator creation might work.
+            continue;
         }
         UCollationResult expectedOrder = (relation == Collation::ZERO_LEVEL) ? UCOL_EQUAL : UCOL_LESS;
         Collation::Level expectedLevel = relation;
@@ -1784,13 +1826,9 @@ void CollationTest::TestDataDriven() {
     if(errorCode.logIfFailureAndReset("ucbuf_open(collationtest.txt)")) {
         return;
     }
-    while(errorCode.isSuccess()) {
-        // Read a new line if necessary.
-        // Sub-parsers leave the first line set that they do not handle.
-        if(fileLine.isEmpty()) {
-            if(!readLine(f.getAlias(), errorCode)) { break; }
-            continue;
-        }
+    // Read a new line if necessary.
+    // Sub-parsers leave the first line set that they do not handle.
+    while(errorCode.isSuccess() && (!fileLine.isEmpty() || readNonEmptyLine(f.getAlias(), errorCode))) {
         if(!isSectionStarter(fileLine[0])) {
             errln("syntax error on line %d", (int)fileLineNumber);
             infoln(fileLine);

@@ -87,7 +87,7 @@ class FullParseHandler
     const Token &currentToken() { return tokenStream.currentToken(); }
 
     ParseNode *newName(PropertyName *name, uint32_t blockid, const TokenPos &pos) {
-        return new_<NameNode>(PNK_NAME, JSOP_NAME, name, blockid, pos);
+        return new_<NameNode>(PNK_NAME, JSOP_GETNAME, name, blockid, pos);
     }
 
     ParseNode *newComputedName(ParseNode *expr, uint32_t begin, uint32_t end) {
@@ -371,7 +371,7 @@ class FullParseHandler
         if (!makeGen)
             return false;
 
-        MOZ_ASSERT(genName->getOp() == JSOP_NAME);
+        MOZ_ASSERT(genName->getOp() == JSOP_GETNAME);
         genName->setOp(JSOP_SETNAME);
         genName->markAsAssigned();
         ParseNode *genInit = newBinary(PNK_ASSIGN, genName, makeGen);
@@ -478,9 +478,9 @@ class FullParseHandler
         return new_<BreakStatement>(label, pos);
     }
 
-    ParseNode *newReturnStatement(ParseNode *expr, const TokenPos &pos) {
+    ParseNode *newReturnStatement(ParseNode *expr, ParseNode *genrval, const TokenPos &pos) {
         MOZ_ASSERT_IF(expr, pos.encloses(expr->pn_pos));
-        return new_<UnaryNode>(PNK_RETURN, JSOP_RETURN, pos, expr);
+        return new_<BinaryNode>(PNK_RETURN, JSOP_RETURN, pos, expr, genrval);
     }
 
     ParseNode *newWithStatement(uint32_t begin, ParseNode *expr, ParseNode *body,

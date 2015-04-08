@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/es.xml
- */
 es{
-    Version{"2.1.10.42"}
+    Version{"2.1.13.21"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -647,8 +644,8 @@ es{
     unitsNarrow{
         acceleration{
             g-force{
-                one{"{0} G"}
-                other{"{0} G"}
+                one{"{0}G"}
+                other{"{0}G"}
             }
         }
         angle{
@@ -667,28 +664,28 @@ es{
         }
         area{
             acre{
-                one{"{0} ac"}
-                other{"{0} ac"}
+                one{"{0}ac"}
+                other{"{0}ac"}
             }
             hectare{
-                one{"{0} ha"}
-                other{"{0} ha"}
+                one{"{0}ha"}
+                other{"{0}ha"}
             }
             square-foot{
-                one{"{0} ft²"}
-                other{"{0} ft²"}
+                one{"{0}ft²"}
+                other{"{0}ft²"}
             }
             square-kilometer{
-                one{"{0} km²"}
-                other{"{0} km²"}
+                one{"{0}km²"}
+                other{"{0}km²"}
             }
             square-meter{
-                one{"{0} m²"}
-                other{"{0} m²"}
+                one{"{0}m²"}
+                other{"{0}m²"}
             }
             square-mile{
-                one{"{0} mi²"}
-                other{"{0} mi²"}
+                one{"{0}mi²"}
+                other{"{0}mi²"}
             }
         }
         compound{
@@ -697,178 +694,178 @@ es{
         duration{
             day{
                 dnam{"d"}
-                one{"{0} d"}
-                other{"{0} d"}
+                one{"{0}d"}
+                other{"{0}d"}
             }
             hour{
                 dnam{"h"}
-                one{"{0} h"}
-                other{"{0} h"}
+                one{"{0}h"}
+                other{"{0}h"}
             }
             millisecond{
                 dnam{"ms"}
-                one{"{0} ms"}
-                other{"{0} ms"}
+                one{"{0}ms"}
+                other{"{0}ms"}
             }
             minute{
                 dnam{"min"}
-                one{"{0} min"}
-                other{"{0} min"}
+                one{"{0}min"}
+                other{"{0}min"}
             }
             month{
                 dnam{"m"}
-                one{"{0} m"}
-                other{"{0} m"}
+                one{"{0}m"}
+                other{"{0}m"}
             }
             second{
                 dnam{"s"}
-                one{"{0} s"}
-                other{"{0} s"}
+                one{"{0}s"}
+                other{"{0}s"}
             }
             week{
                 dnam{"sem"}
-                one{"{0} sem"}
-                other{"{0} sem"}
+                one{"{0}sem"}
+                other{"{0}sem"}
             }
             year{
                 dnam{"a"}
-                one{"{0} a"}
-                other{"{0} a"}
+                one{"{0}a"}
+                other{"{0}a"}
             }
         }
         length{
             centimeter{
                 dnam{"cm"}
-                one{"{0} cm"}
-                other{"{0} cm"}
+                one{"{0}cm"}
+                other{"{0}cm"}
             }
             foot{
-                one{"{0} ft"}
-                other{"{0} ft"}
+                one{"{0}ft"}
+                other{"{0}ft"}
             }
             inch{
-                one{"{0} in"}
-                other{"{0} in"}
+                one{"{0}in"}
+                other{"{0}in"}
             }
             kilometer{
                 dnam{"km"}
-                one{"{0} km"}
-                other{"{0} km"}
+                one{"{0}km"}
+                other{"{0}km"}
             }
             light-year{
-                one{"{0} a. l."}
-                other{"{0} a. l."}
+                one{"{0}a.l."}
+                other{"{0}a.l."}
             }
             meter{
                 dnam{"m"}
-                one{"{0} m"}
-                other{"{0} m"}
+                one{"{0}m"}
+                other{"{0}m"}
             }
             mile{
-                one{"{0} mi"}
-                other{"{0} mi"}
+                one{"{0}mi"}
+                other{"{0}mi"}
             }
             millimeter{
                 dnam{"mm"}
-                one{"{0} mm"}
-                other{"{0} mm"}
+                one{"{0}mm"}
+                other{"{0}mm"}
             }
             picometer{
-                one{"{0} pm"}
-                other{"{0} pm"}
+                one{"{0}pm"}
+                other{"{0}pm"}
             }
             yard{
-                one{"{0} yd"}
-                other{"{0} yd"}
+                one{"{0}yd"}
+                other{"{0}yd"}
             }
         }
         mass{
             gram{
                 dnam{"g"}
-                one{"{0} g"}
-                other{"{0} g"}
+                one{"{0}g"}
+                other{"{0}g"}
             }
             kilogram{
                 dnam{"kg"}
-                one{"{0} kg"}
-                other{"{0} kg"}
+                one{"{0}kg"}
+                other{"{0}kg"}
             }
             ounce{
-                one{"{0} oz"}
-                other{"{0} oz"}
+                one{"{0}oz"}
+                other{"{0}oz"}
             }
             pound{
-                one{"{0} lb"}
-                other{"{0} lb"}
+                one{"{0}lb"}
+                other{"{0}lb"}
             }
         }
         power{
             horsepower{
-                one{"{0} hp"}
-                other{"{0} hp"}
+                one{"{0}hp"}
+                other{"{0}hp"}
             }
             kilowatt{
-                one{"{0} kW"}
-                other{"{0} kW"}
+                one{"{0}kW"}
+                other{"{0}kW"}
             }
             watt{
-                one{"{0} W"}
-                other{"{0} W"}
+                one{"{0}W"}
+                other{"{0}W"}
             }
         }
         pressure{
             hectopascal{
-                one{"{0} hPa"}
-                other{"{0} hPa"}
+                one{"{0}hPa"}
+                other{"{0}hPa"}
             }
             inch-hg{
-                one{"{0} inHg"}
-                other{"{0} inHg"}
+                one{"{0}inHg"}
+                other{"{0}inHg"}
             }
             millibar{
-                one{"{0} mbar"}
-                other{"{0} mbar"}
+                one{"{0}mbar"}
+                other{"{0}mbar"}
             }
         }
         speed{
             kilometer-per-hour{
                 dnam{"km/h"}
-                one{"{0} km/h"}
-                other{"{0} km/h"}
+                one{"{0}km/h"}
+                other{"{0}km/h"}
             }
             meter-per-second{
-                one{"{0} m/s"}
-                other{"{0} m/s"}
+                one{"{0}m/s"}
+                other{"{0}m/s"}
             }
             mile-per-hour{
-                one{"{0} mi/h"}
-                other{"{0} mi/h"}
+                one{"{0}mi/h"}
+                other{"{0}mi/h"}
             }
         }
         temperature{
             celsius{
                 dnam{"°C"}
-                one{"{0} °C"}
-                other{"{0} °C"}
+                one{"{0}°C"}
+                other{"{0}°C"}
             }
             fahrenheit{
-                one{"{0} °F"}
-                other{"{0} °F"}
+                one{"{0}°F"}
+                other{"{0}°F"}
             }
         }
         volume{
             cubic-kilometer{
-                one{"{0} km³"}
-                other{"{0} km³"}
+                one{"{0}km³"}
+                other{"{0}km³"}
             }
             cubic-mile{
-                one{"{0} mi³"}
-                other{"{0} mi³"}
+                one{"{0}mi³"}
+                other{"{0}mi³"}
             }
             liter{
                 dnam{"l"}
-                one{"{0} l"}
-                other{"{0} l"}
+                one{"{0}l"}
+                other{"{0}l"}
             }
         }
     }
@@ -1218,7 +1215,7 @@ es{
                 other{"{0} M"}
             }
             parsec{
-                dnam{"pc"}
+                dnam{"parsecs"}
                 one{"{0} pc"}
                 other{"{0} pc"}
             }
@@ -1228,7 +1225,7 @@ es{
                 other{"{0} pm"}
             }
             yard{
-                dnam{"yd"}
+                dnam{"yardas"}
                 one{"{0} yd"}
                 other{"{0} yd"}
             }
@@ -1277,9 +1274,9 @@ es{
                 other{"{0} oz"}
             }
             ounce-troy{
-                dnam{"oz tr"}
-                one{"{0} oz tr"}
-                other{"{0} oz tr"}
+                dnam{"oz t"}
+                one{"{0} oz t"}
+                other{"{0} oz t"}
             }
             pound{
                 dnam{"lb"}
@@ -1439,7 +1436,7 @@ es{
                 other{"{0} yd³"}
             }
             cup{
-                dnam{"tza."}
+                dnam{"tazas"}
                 one{"{0} tza."}
                 other{"{0} tza."}
             }
@@ -1479,7 +1476,7 @@ es{
                 other{"{0} ml"}
             }
             pint{
-                dnam{"pt"}
+                dnam{"pintas"}
                 one{"{0} pt"}
                 other{"{0} pt"}
             }
@@ -1489,14 +1486,14 @@ es{
                 other{"{0} qt"}
             }
             tablespoon{
-                dnam{"cd."}
+                dnam{"cdas."}
                 one{"{0} cd."}
-                other{"{0} cda."}
+                other{"{0} cdas."}
             }
             teaspoon{
-                dnam{"cdta."}
+                dnam{"cdtas."}
                 one{"{0} cdta."}
-                other{"{0} cdta."}
+                other{"{0} cdtas."}
             }
         }
     }

@@ -96,6 +96,20 @@ public:
     return mRefCnt;
   }
 
+#ifdef DEBUG
+  void FrameAddRef() {
+    ++mFrameRefCnt;
+  }
+
+  void FrameRelease() {
+    --mFrameRefCnt;
+  }
+
+  uint32_t FrameRefCnt() const {
+    return mFrameRefCnt;
+  }
+#endif
+
   bool HasSingleReference() const {
     NS_ASSERTION(mRefCnt != 0,
                  "do not call HasSingleReference on a newly created "
@@ -129,6 +143,12 @@ public:
   // decoration lines?
   bool HasTextDecorationLines() const
     { return !!(mBits & NS_STYLE_HAS_TEXT_DECORATION_LINES); }
+
+  // Whether this style context or any of its inline-level ancestors
+  // is directly contained by a ruby box? It is used to inlinize
+  // block-level descendants and suppress line breaks inside ruby.
+  bool IsInlineDescendantOfRuby() const
+    { return !!(mBits & NS_STYLE_IS_INLINE_DESCENDANT_OF_RUBY); }
 
   // Does this style context represent the style for a pseudo-element or
   // inherit data from such a style context?  Whether this returns true
@@ -511,6 +531,11 @@ private:
   uint64_t                mBits; // Which structs are inherited from the
                                  // parent context or owned by mRuleNode.
   uint32_t                mRefCnt;
+
+#ifdef DEBUG
+  uint32_t                mFrameRefCnt; // number of frames that use this
+                                        // as their style context
+#endif
 };
 
 already_AddRefed<nsStyleContext>

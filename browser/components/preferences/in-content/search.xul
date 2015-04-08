@@ -1,4 +1,4 @@
-    <preferences id="searchPreferences">
+    <preferences id="searchPreferences" hidden="true" data-category="paneSearch">
 
       <!-- Suggest -->
       <preference id="browser.search.suggest.enabled"
@@ -8,7 +8,7 @@
       <!-- One off providers -->
       <preference id="browser.search.hiddenOneOffs"
                   name="browser.search.hiddenOneOffs"
-                  type="string"/>
+                  type="unichar"/>
 
     </preferences>
 

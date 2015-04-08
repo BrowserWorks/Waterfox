@@ -51,10 +51,10 @@
 namespace js {
 
 class PerThreadData;
-struct ThreadSafeContext;
+class ExclusiveContext;
 class AutoKeepAtoms;
 #ifdef JS_TRACE_LOGGING
-class TraceLogger;
+class TraceLoggerThread;
 #endif
 
 /* Thread Local Storage slot for storing the runtime for a thread. */
@@ -65,13 +65,13 @@ extern mozilla::ThreadLocal<PerThreadData*> TlsPerThreadData;
 struct DtoaState;
 
 extern void
-js_ReportOutOfMemory(js::ThreadSafeContext *cx);
+js_ReportOutOfMemory(js::ExclusiveContext *cx);
 
 extern void
-js_ReportAllocationOverflow(js::ThreadSafeContext *cx);
+js_ReportAllocationOverflow(js::ExclusiveContext *maybecx);
 
 extern void
-js_ReportOverRecursed(js::ThreadSafeContext *cx);
+js_ReportOverRecursed(js::ExclusiveContext *cx);
 
 namespace js {
 
@@ -347,10 +347,8 @@ class NewObjectCache
 
     static void copyCachedToObject(JSObject *dst, JSObject *src, gc::AllocKind kind) {
         js_memcpy(dst, src, gc::Arena::thingSize(kind));
-#ifdef JSGC_GENERATIONAL
         Shape::writeBarrierPost(dst->shape_, &dst->shape_);
         types::TypeObject::writeBarrierPost(dst->type_, &dst->type_);
-#endif
     }
 };
 
@@ -432,13 +430,13 @@ struct WellKnownSymbols
 {
     js::ImmutableSymbolPtr iterator;
 
-    ImmutableSymbolPtr &get(size_t u) {
+    const ImmutableSymbolPtr &get(size_t u) const {
         MOZ_ASSERT(u < JS::WellKnownSymbolLimit);
-        ImmutableSymbolPtr *symbols = reinterpret_cast<ImmutableSymbolPtr *>(this);
+        const ImmutableSymbolPtr *symbols = reinterpret_cast<const ImmutableSymbolPtr *>(this);
         return symbols[u];
     }
 
-    ImmutableSymbolPtr &get(JS::SymbolCode code) {
+    const ImmutableSymbolPtr &get(JS::SymbolCode code) const {
         return get(size_t(code));
     }
 };
@@ -479,8 +477,7 @@ void DisableExtraThreads();
  * Encapsulates portions of the runtime/context that are tied to a
  * single active thread.  Instances of this structure can occur for
  * the main thread as |JSRuntime::mainThread|, for select operations
- * performed off thread, such as parsing, and for Parallel JS worker
- * threads.
+ * performed off thread, such as parsing.
  */
 class PerThreadData : public PerThreadDataFriendFields
 {
@@ -542,7 +539,7 @@ class PerThreadData : public PerThreadDataFriendFields
     irregexp::RegExpStack regexpStack;
 
 #ifdef JS_TRACE_LOGGING
-    TraceLogger         *traceLogger;
+    TraceLoggerThread   *traceLogger;
 #endif
 
   private:
@@ -707,7 +704,16 @@ struct JSRuntime : public JS::shadow::Runtime,
   private:
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interrupt_;
     mozilla::Atomic<uint32_t, mozilla::Relaxed> interruptPar_;
+
+    /* Call this to accumulate telemetry data. */
+    JSAccumulateTelemetryDataCallback telemetryCallback;
   public:
+    // Accumulates data for Firefox telemetry. |id| is the ID of a JS_TELEMETRY_*
+    // histogram. |key| provides an additional key to identify the histogram.
+    // |sample| is the data to add to the histogram.
+    void addTelemetry(int id, uint32_t sample, const char *key = nullptr);
+
+    void setTelemetryCallback(JSRuntime *rt, JSAccumulateTelemetryDataCallback callback);
 
     enum InterruptMode {
         RequestInterruptUrgent,
@@ -801,7 +807,7 @@ struct JSRuntime : public JS::shadow::Runtime,
     size_t              numCompartments;
 
     /* Locale-specific callbacks for string conversion. */
-    JSLocaleCallbacks *localeCallbacks;
+    const JSLocaleCallbacks *localeCallbacks;
 
     /* Default locale for Internationalization API */
     char *defaultLocale;
@@ -840,6 +846,9 @@ struct JSRuntime : public JS::shadow::Runtime,
      * runtime if there is one.
      */
     js::NativeObject *selfHostingGlobal_;
+
+    static js::GlobalObject *
+    createSelfHostingGlobal(JSContext *cx);
 
     /* Space for interpreter frames. */
     js::InterpreterStack interpreterStack_;
@@ -962,8 +971,6 @@ struct JSRuntime : public JS::shadow::Runtime,
     bool isHeapMinorCollecting() { return gc.isHeapMinorCollecting(); }
     bool isHeapCollecting() { return gc.isHeapCollecting(); }
     bool isHeapCompacting() { return gc.isHeapCompacting(); }
-
-    bool isFJMinorCollecting() { return gc.isFJMinorCollecting(); }
 
     int gcZeal() { return gc.zeal(); }
 
@@ -1089,9 +1096,6 @@ struct JSRuntime : public JS::shadow::Runtime,
 
     /* Structured data callbacks are runtime-wide. */
     const JSStructuredCloneCallbacks *structuredCloneCallbacks;
-
-    /* Call this to accumulate telemetry data. */
-    JSAccumulateTelemetryDataCallback telemetryCallback;
 
     /* Optional error reporter. */
     JSErrorReporter     errorReporter;
@@ -1535,8 +1539,8 @@ class MOZ_STACK_CLASS AutoLockGC
     mozilla::DebugOnly<bool> wasUnlocked_;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
-    AutoLockGC(const AutoLockGC&) MOZ_DELETE;
-    AutoLockGC& operator=(const AutoLockGC&) MOZ_DELETE;
+    AutoLockGC(const AutoLockGC&) = delete;
+    AutoLockGC& operator=(const AutoLockGC&) = delete;
 };
 
 class MOZ_STACK_CLASS AutoUnlockGC
@@ -1558,8 +1562,8 @@ class MOZ_STACK_CLASS AutoUnlockGC
     AutoLockGC& lock;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
-    AutoUnlockGC(const AutoUnlockGC&) MOZ_DELETE;
-    AutoUnlockGC& operator=(const AutoUnlockGC&) MOZ_DELETE;
+    AutoUnlockGC(const AutoUnlockGC&) = delete;
+    AutoUnlockGC& operator=(const AutoUnlockGC&) = delete;
 };
 
 class MOZ_STACK_CLASS AutoKeepAtoms

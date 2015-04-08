@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/th.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/th.xml
- */
 th{
     Countries{
         001{"โลก"}
@@ -302,6 +299,13 @@ th{
         ZW{"ซิมบับเว"}
         ZZ{"ภูมิภาคที่ไม่รู้จัก"}
     }
+    Countries%short{
+        GB{"อังกฤษ"}
+        HK{"ฮ่องกง"}
+        MO{"มาเก๊า"}
+        PS{"ปาเลสไตน์"}
+        US{"สหรัฐฯ"}
+    }
     Countries%variant{
         CD{"คองโก (สาธารณรัฐประชาธิปไตย)"}
         CG{"คองโก (สาธารณรัฐ)"}
@@ -309,12 +313,5 @@ th{
         MK{"มาซิโดเนีย (FYROM)"}
         TL{"ติมอร์ตะวันออก"}
     }
-    CountriesShort{
-        GB{"อังกฤษ"}
-        HK{"ฮ่องกง"}
-        MO{"มาเก๊า"}
-        PS{"ปาเลสไตน์"}
-        US{"สหรัฐฯ"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

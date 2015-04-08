@@ -4,7 +4,9 @@
 
 pref("security.tls.version.min", 1);
 pref("security.tls.version.max", 3);
-pref("security.tls.version.fallback-limit", 1);
+pref("security.tls.version.fallback-limit", 3);
+pref("security.tls.insecure_fallback_hosts", "");
+pref("security.tls.insecure_fallback_hosts.use_static_list", true);
 
 pref("security.ssl.allow_unrestricted_renego_everywhere__temporarily_available_pref", false);
 pref("security.ssl.renego_unrestricted_hosts", "");
@@ -13,8 +15,7 @@ pref("security.ssl.require_safe_negotiation",  false);
 pref("security.ssl.warn_missing_rfc5746",  1);
 pref("security.ssl.enable_ocsp_stapling", true);
 pref("security.ssl.enable_false_start", true);
-pref("security.ssl.false_start.require-npn", true);
-pref("security.ssl.false_start.require-forward-secrecy", true);
+pref("security.ssl.false_start.require-npn", false);
 pref("security.ssl.enable_npn", true);
 pref("security.ssl.enable_alpn", true);
 
@@ -24,20 +25,12 @@ pref("security.ssl3.ecdhe_rsa_aes_128_sha", true);
 pref("security.ssl3.ecdhe_ecdsa_aes_128_sha", true);
 pref("security.ssl3.ecdhe_rsa_aes_256_sha", true);
 pref("security.ssl3.ecdhe_ecdsa_aes_256_sha", true);
-pref("security.ssl3.ecdhe_rsa_des_ede3_sha", false);
 pref("security.ssl3.dhe_rsa_aes_128_sha", true);
-pref("security.ssl3.dhe_rsa_camellia_128_sha", false);
 pref("security.ssl3.dhe_rsa_aes_256_sha", true);
-pref("security.ssl3.dhe_rsa_camellia_256_sha", false);
-pref("security.ssl3.dhe_rsa_des_ede3_sha", false);
-pref("security.ssl3.dhe_dss_aes_128_sha", true);
-pref("security.ssl3.dhe_dss_aes_256_sha", false);
 pref("security.ssl3.ecdhe_rsa_rc4_128_sha", true);
 pref("security.ssl3.ecdhe_ecdsa_rc4_128_sha", true);
 pref("security.ssl3.rsa_aes_128_sha", true);
-pref("security.ssl3.rsa_camellia_128_sha", false);
 pref("security.ssl3.rsa_aes_256_sha", true);
-pref("security.ssl3.rsa_camellia_256_sha", false);
 pref("security.ssl3.rsa_des_ede3_sha", true);
 pref("security.ssl3.rsa_rc4_128_sha", true);
 pref("security.ssl3.rsa_rc4_128_md5", true);

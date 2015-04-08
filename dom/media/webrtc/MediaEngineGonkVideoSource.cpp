@@ -3,22 +3,28 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 #include "MediaEngineGonkVideoSource.h"
 
+#undef LOG_TAG
 #define LOG_TAG "MediaEngineGonkVideoSource"
 
 #include <utils/Log.h>
 
 #include "GrallocImages.h"
+#include "mozilla/layers/GrallocTextureClient.h"
+#include "mozilla/layers/ImageBridgeChild.h"
 #include "VideoUtils.h"
 #include "ScreenOrientation.h"
 
 #include "libyuv.h"
 #include "mtransport/runnable_utils.h"
+#include "GonkCameraImage.h"
 
 namespace mozilla {
 
 using namespace mozilla::dom;
 using namespace mozilla::gfx;
+using namespace android;
 
+#undef LOG
 #ifdef PR_LOGGING
 extern PRLogModuleInfo* GetMediaManagerLog();
 #define LOG(msg) PR_LOG(GetMediaManagerLog(), PR_LOG_DEBUG, msg)
@@ -27,6 +33,31 @@ extern PRLogModuleInfo* GetMediaManagerLog();
 #define LOG(msg)
 #define LOGFRAME(msg)
 #endif
+
+class MediaBufferListener : public GonkCameraSource::DirectBufferListener {
+public:
+  MediaBufferListener(MediaEngineGonkVideoSource* aMediaEngine)
+    : mMediaEngine(aMediaEngine)
+  {
+  }
+
+  status_t BufferAvailable(MediaBuffer* aBuffer)
+  {
+    nsresult rv = mMediaEngine->OnNewMediaBufferFrame(aBuffer);
+    if (NS_SUCCEEDED(rv)) {
+      return OK;
+    }
+    return UNKNOWN_ERROR;
+  }
+
+  ~MediaBufferListener()
+  {
+  }
+
+  nsRefPtr<MediaEngineGonkVideoSource> mMediaEngine;
+};
+
+#define WEBRTC_GONK_VIDEO_SOURCE_POOL_BUFFERS 10
 
 // We are subclassed from CameraControlListener, which implements a
 // threadsafe reference-count for us.
@@ -169,6 +200,46 @@ MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
     return NS_ERROR_FAILURE;
   }
 
+  if (NS_FAILED(InitDirectMediaBuffer())) {
+    return NS_ERROR_FAILURE;
+  }
+
+  return NS_OK;
+}
+
+nsresult
+MediaEngineGonkVideoSource::InitDirectMediaBuffer()
+{
+  // Check available buffer resolution.
+  nsTArray<ICameraControl::Size> videoSizes;
+  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_VIDEOSIZES, videoSizes);
+  if (!videoSizes.Length()) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // TODO: MediaEgnine should use supported recording frame sizes as the size
+  //       range in MediaTrackConstraintSet and find the best match.
+  //       Here we use the first one as the default size (largest supported size).
+  android::Size videoSize;
+  videoSize.width = videoSizes[0].width;
+  videoSize.height = videoSizes[0].height;
+
+  LOG(("Intial size, width: %d, height: %d", videoSize.width, videoSize.height));
+  mCameraSource = GonkCameraSource::Create(mCameraControl,
+                                           videoSize,
+                                           MediaEngine::DEFAULT_VIDEO_FPS);
+
+  status_t rv;
+  rv = mCameraSource->AddDirectBufferListener(new MediaBufferListener(this));
+  if (rv != OK) {
+    return NS_ERROR_FAILURE;
+  }
+
+  rv = mCameraSource->start(nullptr);
+  if (rv != OK) {
+    return NS_ERROR_FAILURE;
+  }
+
   return NS_OK;
 }
 
@@ -274,6 +345,9 @@ MediaEngineGonkVideoSource::AllocImpl() {
     // to explicitly remove this--destroying the CameraControl object
     // in DeallocImpl() will do that for us.
     mCameraControl->AddListener(this);
+    mTextureClientAllocator =
+      new layers::TextureClientRecycleAllocator(layers::ImageBridgeChild::GetSingleton());
+    mTextureClientAllocator->SetMaxPoolSize(WEBRTC_GONK_VIDEO_SOURCE_POOL_BUFFERS);
   }
   mCallbackMonitor.Notify();
 }
@@ -283,6 +357,7 @@ MediaEngineGonkVideoSource::DeallocImpl() {
   MOZ_ASSERT(NS_IsMainThread());
 
   mCameraControl = nullptr;
+  mTextureClientAllocator = nullptr;
 }
 
 // The same algorithm from bug 840244
@@ -349,12 +424,24 @@ MediaEngineGonkVideoSource::StartImpl(webrtc::CaptureCapability aCapability) {
   mCameraControl->Start(&config);
   mCameraControl->Set(CAMERA_PARAM_PICTURE_SIZE, config.mPreviewSize);
 
+  nsTArray<nsString> focusModes;
+  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_FOCUSMODES, focusModes);
+  for (nsTArray<nsString>::index_type i = 0; i < focusModes.Length(); ++i) {
+    if (focusModes[i].EqualsASCII("continuous-video")) {
+      mCameraControl->Set(CAMERA_PARAM_FOCUSMODE, focusModes[i]);
+      break;
+    }
+  }
+
   hal::RegisterScreenConfigurationObserver(this);
 }
 
 void
 MediaEngineGonkVideoSource::StopImpl() {
   MOZ_ASSERT(NS_IsMainThread());
+
+  mCameraSource->stop();
+  mCameraSource = nullptr;
 
   hal::UnregisterScreenConfigurationObserver(this);
   mCameraControl->Stop();
@@ -365,21 +452,26 @@ MediaEngineGonkVideoSource::OnHardwareStateChange(HardwareState aState,
                                                   nsresult aReason)
 {
   ReentrantMonitorAutoEnter sync(mCallbackMonitor);
-  if (aState == CameraControlListener::kHardwareClosed) {
-    // When the first CameraControl listener is added, it gets pushed
-    // the current state of the camera--normally 'closed'. We only
-    // pay attention to that state if we've progressed out of the
-    // allocated state.
-    if (mState != kAllocated) {
+  switch (aState) {
+    case CameraControlListener::kHardwareClosed:
+    case CameraControlListener::kHardwareOpenFailed:
       mState = kReleased;
       mCallbackMonitor.Notify();
-    }
-  } else {
-    // Can't read this except on MainThread (ugh)
-    NS_DispatchToMainThread(WrapRunnable(nsRefPtr<MediaEngineGonkVideoSource>(this),
-                                         &MediaEngineGonkVideoSource::GetRotation));
-    mState = kStarted;
-    mCallbackMonitor.Notify();
+      break;
+    case CameraControlListener::kHardwareOpen:
+      // Can't read this except on MainThread (ugh)
+      NS_DispatchToMainThread(WrapRunnable(nsRefPtr<MediaEngineGonkVideoSource>(this),
+                                           &MediaEngineGonkVideoSource::GetRotation));
+      mState = kStarted;
+      mCallbackMonitor.Notify();
+      break;
+    case CameraControlListener::kHardwareUninitialized:
+      // When the first CameraControl listener is added, it gets pushed
+      // the current state of the camera--normally 'uninitialized'.
+      break;
+    default:
+      MOZ_ASSERT_UNREACHABLE("Unanticipated camera hardware state");
+      break;
   }
 }
 
@@ -587,16 +679,18 @@ MediaEngineGonkVideoSource::ConvertPixelFormatToFOURCC(int aFormat)
 void
 MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, uint32_t aHeight) {
   layers::GrallocImage *nativeImage = static_cast<layers::GrallocImage*>(aImage);
-  android::sp<android::GraphicBuffer> graphicBuffer = nativeImage->GetGraphicBuffer();
+  android::sp<GraphicBuffer> graphicBuffer = nativeImage->GetGraphicBuffer();
   void *pMem = nullptr;
+  // Bug 1109957 size will be wrong if width or height are odd
   uint32_t size = aWidth * aHeight * 3 / 2;
+  MOZ_ASSERT(!(aWidth & 1) && !(aHeight & 1));
 
-  graphicBuffer->lock(android::GraphicBuffer::USAGE_SW_READ_MASK, &pMem);
+  graphicBuffer->lock(GraphicBuffer::USAGE_SW_READ_MASK, &pMem);
 
   uint8_t* srcPtr = static_cast<uint8_t*>(pMem);
   // Create a video frame and append it to the track.
-  nsRefPtr<layers::Image> image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
-  layers::PlanarYCbCrImage* videoImage = static_cast<layers::PlanarYCbCrImage*>(image.get());
+  ImageFormat format = ImageFormat::GONK_CAMERA_IMAGE;
+  nsRefPtr<layers::Image> image = mImageContainer->CreateImage(format);
 
   uint32_t dstWidth;
   uint32_t dstHeight;
@@ -610,53 +704,83 @@ MediaEngineGonkVideoSource::RotateImage(layers::Image* aImage, uint32_t aWidth, 
   }
 
   uint32_t half_width = dstWidth / 2;
-  uint8_t* dstPtr = videoImage->AllocateAndGetNewBuffer(size);
-  libyuv::ConvertToI420(srcPtr, size,
-                        dstPtr, dstWidth,
-                        dstPtr + (dstWidth * dstHeight), half_width,
-                        dstPtr + (dstWidth * dstHeight * 5 / 4), half_width,
-                        0, 0,
-                        aWidth, aHeight,
-                        aWidth, aHeight,
-                        static_cast<libyuv::RotationMode>(mRotation),
-                        ConvertPixelFormatToFOURCC(graphicBuffer->getPixelFormat()));
+
+  layers::GrallocImage* videoImage = static_cast<layers::GrallocImage*>(image.get());
+  MOZ_ASSERT(mTextureClientAllocator);
+  RefPtr<layers::TextureClient> textureClient
+    = mTextureClientAllocator->CreateOrRecycleForDrawing(gfx::SurfaceFormat::YUV,
+                                                         gfx::IntSize(dstWidth, dstHeight),
+                                                         gfx::BackendType::NONE,
+                                                         layers::TextureFlags::DEFAULT,
+                                                         layers::ALLOC_DISALLOW_BUFFERTEXTURECLIENT);
+  if (textureClient) {
+    RefPtr<layers::GrallocTextureClientOGL> grallocTextureClient =
+      static_cast<layers::GrallocTextureClientOGL*>(textureClient.get());
+
+    android::sp<android::GraphicBuffer> destBuffer = grallocTextureClient->GetGraphicBuffer();
+
+    void* destMem = nullptr;
+    destBuffer->lock(android::GraphicBuffer::USAGE_SW_WRITE_OFTEN, &destMem);
+    uint8_t* dstPtr = static_cast<uint8_t*>(destMem);
+
+    int32_t yStride = destBuffer->getStride();
+    // Align to 16 bytes boundary
+    int32_t uvStride = ((yStride / 2) + 15) & ~0x0F;
+
+    libyuv::ConvertToI420(srcPtr, size,
+                          dstPtr, yStride,
+                          dstPtr + (yStride * dstHeight + (uvStride * dstHeight / 2)), uvStride,
+                          dstPtr + (yStride * dstHeight), uvStride,
+                          0, 0,
+                          aWidth, aHeight,
+                          aWidth, aHeight,
+                          static_cast<libyuv::RotationMode>(mRotation),
+                          libyuv::FOURCC_NV21);
+    destBuffer->unlock();
+
+    layers::GrallocImage::GrallocData data;
+
+    data.mPicSize = gfx::IntSize(dstWidth, dstHeight);
+    data.mGraphicBuffer = textureClient;
+    videoImage->SetData(data);
+  } else {
+    // Handle out of gralloc case.
+    image = mImageContainer->CreateImage(ImageFormat::PLANAR_YCBCR);
+    layers::PlanarYCbCrImage* videoImage = static_cast<layers::PlanarYCbCrImage*>(image.get());
+    uint8_t* dstPtr = videoImage->AllocateAndGetNewBuffer(size);
+
+    libyuv::ConvertToI420(srcPtr, size,
+                          dstPtr, dstWidth,
+                          dstPtr + (dstWidth * dstHeight), half_width,
+                          dstPtr + (dstWidth * dstHeight * 5 / 4), half_width,
+                          0, 0,
+                          aWidth, aHeight,
+                          aWidth, aHeight,
+                          static_cast<libyuv::RotationMode>(mRotation),
+                          ConvertPixelFormatToFOURCC(graphicBuffer->getPixelFormat()));
+
+    const uint8_t lumaBpp = 8;
+    const uint8_t chromaBpp = 4;
+
+    layers::PlanarYCbCrData data;
+    data.mYChannel = dstPtr;
+    data.mYSize = IntSize(dstWidth, dstHeight);
+    data.mYStride = dstWidth * lumaBpp / 8;
+    data.mCbCrStride = dstWidth * chromaBpp / 8;
+    data.mCbChannel = dstPtr + dstHeight * data.mYStride;
+    data.mCrChannel = data.mCbChannel + data.mCbCrStride * (dstHeight / 2);
+    data.mCbCrSize = IntSize(dstWidth / 2, dstHeight / 2);
+    data.mPicX = 0;
+    data.mPicY = 0;
+    data.mPicSize = IntSize(dstWidth, dstHeight);
+    data.mStereoMode = StereoMode::MONO;
+
+    videoImage->SetDataNoCopy(data);
+  }
   graphicBuffer->unlock();
 
-  const uint8_t lumaBpp = 8;
-  const uint8_t chromaBpp = 4;
-
-  layers::PlanarYCbCrData data;
-  data.mYChannel = dstPtr;
-  data.mYSize = IntSize(dstWidth, dstHeight);
-  data.mYStride = dstWidth * lumaBpp / 8;
-  data.mCbCrStride = dstWidth * chromaBpp / 8;
-  data.mCbChannel = dstPtr + dstHeight * data.mYStride;
-  data.mCrChannel = data.mCbChannel +( dstHeight * data.mCbCrStride / 2);
-  data.mCbCrSize = IntSize(dstWidth / 2, dstHeight / 2);
-  data.mPicX = 0;
-  data.mPicY = 0;
-  data.mPicSize = IntSize(dstWidth, dstHeight);
-  data.mStereoMode = StereoMode::MONO;
-
-  videoImage->SetDataNoCopy(data);
-
-  // implicitly releases last image
+  // Implicitly releases last preview image.
   mImage = image.forget();
-
-  // Push the frame into the MSG with a minimal duration.  This will likely
-  // mean we'll still get NotifyPull calls which will then return the same
-  // frame again with a longer duration.  However, this means we won't
-  // fail to get the frame in and drop frames.
-
-  // XXX The timestamp for the frame should be base on the Capture time,
-  // not the MSG time, and MSG should never, ever block on a (realtime)
-  // video frame (or even really for streaming - audio yes, video probably no).
-  uint32_t len = mSources.Length();
-  for (uint32_t i = 0; i < len; i++) {
-    if (mSources[i]) {
-      AppendToTrack(mSources[i], mImage, mTrackID, 1); // shortest possible duration
-    }
-  }
 }
 
 bool
@@ -683,6 +807,50 @@ MediaEngineGonkVideoSource::OnNewPreviewFrame(layers::Image* aImage, uint32_t aW
   }
 
   return true; // return true because we're accepting the frame
+}
+
+nsresult
+MediaEngineGonkVideoSource::OnNewMediaBufferFrame(MediaBuffer* aBuffer)
+{
+  {
+    ReentrantMonitorAutoEnter sync(mCallbackMonitor);
+    if (mState == kStopped) {
+      return NS_OK;
+    }
+  }
+
+  MonitorAutoLock enter(mMonitor);
+  if (mImage) {
+    if (mImage->AsGrallocImage()) {
+      // MediaEngineGonkVideoSource expects that GrallocImage is GonkCameraImage.
+      // See Bug 938034.
+      GonkCameraImage* cameraImage = static_cast<GonkCameraImage*>(mImage.get());
+      cameraImage->SetMediaBuffer(aBuffer);
+    } else {
+      LOG(("mImage is non-GrallocImage"));
+    }
+
+    uint32_t len = mSources.Length();
+    for (uint32_t i = 0; i < len; i++) {
+      if (mSources[i]) {
+        // Duration is 1 here.
+        // Ideally, it should be camera timestamp here and the MSG will have
+        // enough sample duration without calling NotifyPull() anymore.
+        // Unfortunately, clock in gonk camera looks like is a different one
+        // comparing to MSG. As result, it causes time inaccurate. (frames be
+        // queued in MSG longer and longer as time going by in device like Frame)
+        AppendToTrack(mSources[i], mImage, mTrackID, 1);
+      }
+    }
+    if (mImage->AsGrallocImage()) {
+      GonkCameraImage* cameraImage = static_cast<GonkCameraImage*>(mImage.get());
+      // Clear MediaBuffer immediately, it prevents MediaBuffer is kept in
+      // MediaStreamGraph thread.
+      cameraImage->ClearMediaBuffer();
+    }
+  }
+
+  return NS_OK;
 }
 
 } // namespace mozilla

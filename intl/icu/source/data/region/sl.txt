@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sl.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sl.xml
- */
 sl{
     Countries{
         001{"Svet"}
@@ -123,7 +120,7 @@ sl{
         FO{"Ferski otoki"}
         FR{"Francija"}
         GA{"Gabon"}
-        GB{"Velika Britanija"}
+        GB{"Združeno kraljestvo"}
         GD{"Grenada"}
         GE{"Gruzija"}
         GF{"Francoska Gvajana"}
@@ -302,18 +299,18 @@ sl{
         ZW{"Zimbabve"}
         ZZ{"Neznano ali neveljavno območje"}
     }
-    Countries%variant{
-        CD{"Kongo (Demokratična republika Kongo)"}
-        CG{"Kongo (Republika)"}
-        FK{"Falklandski otoki (Malvinski otoki)"}
-        MK{"Makedonija (FYROM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"ZK"}
         HK{"Hongkong"}
         MO{"Macao"}
         PS{"Palestina"}
         US{"ZDA"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"Kongo (Demokratična republika Kongo)"}
+        CG{"Kongo (Republika)"}
+        FK{"Falklandski otoki (Malvinski otoki)"}
+        MK{"Makedonija (FYROM)"}
+    }
+    Version{"2.1.12.94"}
 }

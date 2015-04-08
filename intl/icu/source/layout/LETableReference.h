@@ -1,7 +1,7 @@
 /*
  * -*- c++ -*-
  *
- * (C) Copyright IBM Corp. and others 2013 - All Rights Reserved
+ * (C) Copyright IBM Corp. and others 2015 - All Rights Reserved
  *
  * Range checking
  *
@@ -313,7 +313,12 @@ LE_TRACE_TR("INFO: new RTAO")
   const T *getAliasRAW() const { LE_DEBUG_TR("getAliasRAW<>"); return (const T*)fStart; }
 
   const T& getObject(le_uint32 i, LEErrorCode &success) const {
-    return *getAlias(i,success);
+      const T *ret = getAlias(i, success);
+      if (LE_FAILURE(success) || ret==NULL) {
+          return *(new T(0));
+      } else {
+          return *ret;
+     }
   }
   
   const T& operator()(le_uint32 i, LEErrorCode &success) const {

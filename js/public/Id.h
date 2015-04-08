@@ -20,8 +20,6 @@
 // A jsid is not implicitly convertible to or from a jsval; JS_ValueToId or
 // JS_IdToValue must be used instead.
 
-#include "mozilla/NullPtr.h"
-
 #include "jstypes.h"
 
 #include "js/HeapAPI.h"
@@ -127,7 +125,7 @@ SYMBOL_TO_JSID(JS::Symbol *sym)
     jsid id;
     MOZ_ASSERT(sym != nullptr);
     MOZ_ASSERT((size_t(sym) & JSID_TYPE_MASK) == 0);
-    MOZ_ASSERT(!js::gc::IsInsideNursery(JS::AsCell(sym)));
+    MOZ_ASSERT(!js::gc::IsInsideNursery(reinterpret_cast<js::gc::Cell *>(sym)));
     MOZ_ASSERT(!JS::IsPoisonedPtr(sym));
     JSID_BITS(id) = (size_t(sym) | JSID_TYPE_SYMBOL);
     return id;
@@ -139,10 +137,14 @@ JSID_IS_GCTHING(jsid id)
     return JSID_IS_STRING(id) || JSID_IS_SYMBOL(id);
 }
 
-static MOZ_ALWAYS_INLINE void *
+static MOZ_ALWAYS_INLINE JS::GCCellPtr
 JSID_TO_GCTHING(jsid id)
 {
-    return (void *)(JSID_BITS(id) & ~(size_t)JSID_TYPE_MASK);
+    void *thing = (void *)(JSID_BITS(id) & ~(size_t)JSID_TYPE_MASK);
+    if (JSID_IS_STRING(id))
+        return JS::GCCellPtr(thing, JSTRACE_STRING);
+    MOZ_ASSERT(JSID_IS_SYMBOL(id));
+    return JS::GCCellPtr(thing, JSTRACE_SYMBOL);
 }
 
 static MOZ_ALWAYS_INLINE bool
@@ -182,10 +184,8 @@ template <> struct GCMethods<jsid>
     static jsid initial() { return JSID_VOID; }
     static bool poisoned(jsid id) { return IsPoisonedId(id); }
     static bool needsPostBarrier(jsid id) { return false; }
-#ifdef JSGC_GENERATIONAL
     static void postBarrier(jsid *idp) {}
     static void relocate(jsid *idp) {}
-#endif
 };
 
 #undef id

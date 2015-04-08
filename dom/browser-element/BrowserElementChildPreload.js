@@ -94,6 +94,7 @@ function BrowserElementChild() {
 
   this._isContentWindowCreated = false;
   this._pendingSetInputMethodActive = [];
+  this._selectionStateChangedTarget = null;
 
   this._init();
 };
@@ -161,19 +162,19 @@ BrowserElementChild.prototype = {
                      /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
-    addEventListener('mozselectionchange',
-                     this._selectionChangeHandler.bind(this),
-                     /* useCapture = */ false,
+    addEventListener('mozselectionstatechanged',
+                     this._selectionStateChangedHandler.bind(this),
+                     /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
     addEventListener('scrollviewchange',
                      this._ScrollViewChangeHandler.bind(this),
-                     /* useCapture = */ false,
+                     /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
     addEventListener('touchcarettap',
                      this._touchCaretTapHandler.bind(this),
-                     /* useCapture = */ false,
+                     /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
 
 
@@ -591,23 +592,66 @@ BrowserElementChild.prototype = {
     sendAsyncMsg('scrollviewchange', detail);
   },
 
-  _selectionChangeHandler: function(e) {
+  _selectionStateChangedHandler: function(e) {
     e.stopPropagation();
-    let boundingClientRect = e.boundingClientRect;
-    if (!boundingClientRect) {
+
+    if (!this._isContentWindowCreated) {
       return;
+    }
+
+    let boundingClientRect = e.boundingClientRect;
+
+    let isCollapsed = (e.selectedText.length == 0);
+    let isMouseUp = (e.states.indexOf('mouseup') == 0);
+    let canPaste = this._isCommandEnabled("paste");
+
+    if (this._selectionStateChangedTarget != e.target) {
+      // SelectionStateChanged events with the following states are not
+      // necessary to trigger the text dialog, bypass these events
+      // by default.
+      //
+      if(e.states.length == 0 ||
+         e.states.indexOf('drag') == 0 ||
+         e.states.indexOf('keypress') == 0 ||
+         e.states.indexOf('mousedown') == 0) {
+        return;
+      }
+
+      // The collapsed SelectionStateChanged event is unnecessary to dispatch,
+      // bypass this event by default, but here comes some exceptional cases
+      if (isCollapsed) {
+        if (isMouseUp && canPaste) {
+          // Always dispatch to support shortcut mode which can paste previous
+          // copied content easily
+        } else if (e.states.indexOf('blur') == 0) {
+          // Always dispatch to notify the blur for the focus content
+        } else {
+          return;
+        }
+      }
+    }
+
+    // If we select something and selection range is visible, we cache current
+    // event's target to selectionStateChangedTarget.
+    // And dispatch the next SelectionStateChagne event if target is matched, so
+    // that the parent side can hide the text dialog.
+    // We clear selectionStateChangedTarget if selection carets are invisible.
+    if (e.visible && !isCollapsed) {
+      this._selectionStateChangedTarget = e.target;
+    } else {
+      this._selectionStateChangedTarget = null;
     }
 
     let zoomFactor = content.screen.width / content.innerWidth;
 
     let detail = {
       rect: {
-        width: boundingClientRect.width,
-        height: boundingClientRect.height,
-        top: boundingClientRect.top,
-        bottom: boundingClientRect.bottom,
-        left: boundingClientRect.left,
-        right: boundingClientRect.right,
+        width: boundingClientRect ? boundingClientRect.width : 0,
+        height: boundingClientRect ? boundingClientRect.height : 0,
+        top: boundingClientRect ? boundingClientRect.top : 0,
+        bottom: boundingClientRect ? boundingClientRect.bottom : 0,
+        left: boundingClientRect ? boundingClientRect.left : 0,
+        right: boundingClientRect ? boundingClientRect.right : 0,
       },
       commands: {
         canSelectAll: this._isCommandEnabled("selectall"),
@@ -616,22 +660,23 @@ BrowserElementChild.prototype = {
         canPaste: this._isCommandEnabled("paste"),
       },
       zoomFactor: zoomFactor,
-      reasons: e.reasons,
+      states: e.states,
       isCollapsed: (e.selectedText.length == 0),
+      visible: e.visible,
     };
 
     // Get correct geometry information if we have nested iframe.
     let currentWindow = e.target.defaultView;
-    while (currentWindow.top != currentWindow) {
-      let currentRect = currentWindow.frameElement.getBoundingClientRect();
+    while (currentWindow.realFrameElement) {
+      let currentRect = currentWindow.realFrameElement.getBoundingClientRect();
       detail.rect.top += currentRect.top;
       detail.rect.bottom += currentRect.top;
       detail.rect.left += currentRect.left;
       detail.rect.right += currentRect.left;
-      currentWindow = currentWindow.parent;
+      currentWindow = currentWindow.realFrameElement.ownerDocument.defaultView;
     }
 
-    sendAsyncMsg('selectionchange', detail);
+    sendAsyncMsg('selectionstatechanged', detail);
   },
 
   _themeColorChangedHandler: function(eventType, target) {
@@ -1172,39 +1217,114 @@ BrowserElementChild.prototype = {
         } catch (e) {}
         sendAsyncMsg('loadend', {backgroundColor: bgColor});
 
-        // Ignoring NS_BINDING_ABORTED, which is set when loading page is
-        // stopped.
-        if (status == Cr.NS_OK ||
-            status == Cr.NS_BINDING_ABORTED) {
-          return;
-        }
+        switch (status) {
+          case Cr.NS_OK :
+          case Cr.NS_BINDING_ABORTED :
+            // Ignoring NS_BINDING_ABORTED, which is set when loading page is
+            // stopped.
+            return;
 
-        // getErrorClass() will throw if the error code passed in is not a NSS
-        // error code.
-        try {
-          let nssErrorsService = Cc['@mozilla.org/nss_errors_service;1']
-                                   .getService(Ci.nsINSSErrorsService);
-          if (nssErrorsService.getErrorClass(status)
-                == Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT) {
-            // XXX Is there a point firing the event if the error page is not
-            // certerror? If yes, maybe we should add a property to the
-            // event to to indicate whether there is a custom page. That would
-            // let the embedder have more control over the desired behavior.
-            let errorPage = null;
+          // TODO See nsDocShell::DisplayLoadError to see what extra
+          // information we should be annotating this first block of errors
+          // with. Bug 1107091.
+          case Cr.NS_ERROR_UNKNOWN_PROTOCOL :
+            sendAsyncMsg('error', { type: 'unknownProtocolFound' });
+            return;
+          case Cr.NS_ERROR_FILE_NOT_FOUND :
+            sendAsyncMsg('error', { type: 'fileNotFound' });
+            return;
+          case Cr.NS_ERROR_UNKNOWN_HOST :
+            sendAsyncMsg('error', { type: 'dnsNotFound' });
+            return;
+          case Cr.NS_ERROR_CONNECTION_REFUSED :
+            sendAsyncMsg('error', { type: 'connectionFailure' });
+            return;
+          case Cr.NS_ERROR_NET_INTERRUPT :
+            sendAsyncMsg('error', { type: 'netInterrupt' });
+            return;
+          case Cr.NS_ERROR_NET_TIMEOUT :
+            sendAsyncMsg('error', { type: 'netTimeout' });
+            return;
+          case Cr.NS_ERROR_CSP_FRAME_ANCESTOR_VIOLATION :
+            sendAsyncMsg('error', { type: 'cspBlocked' });
+            return;
+          case Cr.NS_ERROR_PHISHING_URI :
+            sendAsyncMsg('error', { type: 'phishingBlocked' });
+            return;
+          case Cr.NS_ERROR_MALWARE_URI :
+            sendAsyncMsg('error', { type: 'malwareBlocked' });
+            return;
+
+          case Cr.NS_ERROR_OFFLINE :
+            sendAsyncMsg('error', { type: 'offline' });
+            return;
+          case Cr.NS_ERROR_MALFORMED_URI :
+            sendAsyncMsg('error', { type: 'malformedURI' });
+            return;
+          case Cr.NS_ERROR_REDIRECT_LOOP :
+            sendAsyncMsg('error', { type: 'redirectLoop' });
+            return;
+          case Cr.NS_ERROR_UNKNOWN_SOCKET_TYPE :
+            sendAsyncMsg('error', { type: 'unknownSocketType' });
+            return;
+          case Cr.NS_ERROR_NET_RESET :
+            sendAsyncMsg('error', { type: 'netReset' });
+            return;
+          case Cr.NS_ERROR_DOCUMENT_NOT_CACHED :
+            sendAsyncMsg('error', { type: 'notCached' });
+            return;
+          case Cr.NS_ERROR_DOCUMENT_IS_PRINTMODE :
+            sendAsyncMsg('error', { type: 'isprinting' });
+            return;
+          case Cr.NS_ERROR_PORT_ACCESS_NOT_ALLOWED :
+            sendAsyncMsg('error', { type: 'deniedPortAccess' });
+            return;
+          case Cr.NS_ERROR_UNKNOWN_PROXY_HOST :
+            sendAsyncMsg('error', { type: 'proxyResolveFailure' });
+            return;
+          case Cr.NS_ERROR_PROXY_CONNECTION_REFUSED :
+            sendAsyncMsg('error', { type: 'proxyConnectFailure' });
+            return;
+          case Cr.NS_ERROR_INVALID_CONTENT_ENCODING :
+            sendAsyncMsg('error', { type: 'contentEncodingFailure' });
+            return;
+          case Cr.NS_ERROR_REMOTE_XUL :
+            sendAsyncMsg('error', { type: 'remoteXUL' });
+            return;
+          case Cr.NS_ERROR_UNSAFE_CONTENT_TYPE :
+            sendAsyncMsg('error', { type: 'unsafeContentType' });
+            return;
+          case Cr.NS_ERROR_CORRUPTED_CONTENT :
+            sendAsyncMsg('error', { type: 'corruptedContentError' });
+            return;
+
+          default:
+            // getErrorClass() will throw if the error code passed in is not a NSS
+            // error code.
             try {
-              errorPage = Services.prefs.getCharPref(CERTIFICATE_ERROR_PAGE_PREF);
+              let nssErrorsService = Cc['@mozilla.org/nss_errors_service;1']
+                                       .getService(Ci.nsINSSErrorsService);
+              if (nssErrorsService.getErrorClass(status)
+                    == Ci.nsINSSErrorsService.ERROR_CLASS_BAD_CERT) {
+                // XXX Is there a point firing the event if the error page is not
+                // certerror? If yes, maybe we should add a property to the
+                // event to to indicate whether there is a custom page. That would
+                // let the embedder have more control over the desired behavior.
+                let errorPage = null;
+                try {
+                  errorPage = Services.prefs.getCharPref(CERTIFICATE_ERROR_PAGE_PREF);
+                } catch (e) {}
+
+                if (errorPage == 'certerror') {
+                  sendAsyncMsg('error', { type: 'certerror' });
+                  return;
+                }
+              }
             } catch (e) {}
 
-            if (errorPage == 'certerror') {
-              sendAsyncMsg('error', { type: 'certerror' });
-              return;
-            }
-          }
-        } catch (e) {}
-
-        // TODO See nsDocShell::DisplayLoadError for a list of all the error
-        // codes (the status param) we should eventually handle here.
-        sendAsyncMsg('error', { type: 'other' });
+            sendAsyncMsg('error', { type: 'other' });
+            return;
+        }
       }
     },
 
@@ -1228,7 +1348,6 @@ BrowserElementChild.prototype = {
         stateDesc = '???';
       }
 
-      // XXX Until bug 764496 is fixed, this will always return false.
       var isEV = !!(state & Ci.nsIWebProgressListener.STATE_IDENTITY_EV_TOPLEVEL);
 
       sendAsyncMsg('securitychange', { state: stateDesc, extendedValidation: isEV });

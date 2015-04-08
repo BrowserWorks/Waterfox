@@ -18,6 +18,12 @@ let gIsWindows = ("@mozilla.org/windows-registry-key;1" in Cc);
 const isDebugBuild = Cc["@mozilla.org/xpcom/debug;1"]
                        .getService(Ci.nsIDebug2).isDebugBuild;
 
+// The test EV roots are only enabled in debug builds as a security measure.
+//
+// Bug 1008316: B2G doesn't have EV enabled, so EV is not expected even in debug
+// builds.
+const gEVExpected = isDebugBuild && !("@mozilla.org/b2g-process-global;1" in Cc);
+
 const SSS_STATE_FILE_NAME = "SiteSecurityServiceState.txt";
 
 const SEC_ERROR_BASE = Ci.nsINSSErrorsService.NSS_SEC_ERROR_BASE;
@@ -246,6 +252,9 @@ function add_connection_test(aHost, aExpectedResult,
     let sts = Cc["@mozilla.org/network/socket-transport-service;1"]
                 .getService(Ci.nsISocketTransportService);
     this.transport = sts.createTransport(["ssl"], 1, aHost, REMOTE_PORT, null);
+    // See bug 1129771 - attempting to connect to [::1] when the server is
+    // listening on 127.0.0.1 causes frequent failures on OS X 10.10.
+    this.transport.connectionFlags |= Ci.nsISocketTransport.DISABLE_IPV6;
     this.transport.setEventSink(this, this.thread);
     this.inputStream = null;
     this.outputStream = null;
@@ -363,7 +372,9 @@ function _setupTLSServerTest(serverBinName)
                  .getService(Ci.nsIEnvironment);
   let greBinDir = directoryService.get("GreBinD", Ci.nsIFile);
   envSvc.set("DYLD_LIBRARY_PATH", greBinDir.path);
-  envSvc.set("LD_LIBRARY_PATH", greBinDir.path);
+  // Android libraries are in /data/local/xpcb, but "GreBinD" does not return
+  // this path on Android, so hard code it here.
+  envSvc.set("LD_LIBRARY_PATH", greBinDir.path + ":/data/local/xpcb");
   envSvc.set("MOZ_TLS_SERVER_DEBUG_LEVEL", "3");
   envSvc.set("MOZ_TLS_SERVER_CALLBACK_PORT", CALLBACK_PORT);
 

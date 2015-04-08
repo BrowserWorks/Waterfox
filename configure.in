@@ -50,9 +50,9 @@ _SUBDIR_CONFIG_ARGS="$ac_configure_args"
 dnl Set the version number of the libs included with mozilla
 dnl ========================================================
 MOZJPEG=62
-MOZPNG=10614
+MOZPNG=10616
 NSPR_VERSION=4
-NSPR_MINVER=4.10.3
+NSPR_MINVER=4.10.8
 NSS_VERSION=3
 
 dnl Set the minimum version of toolkit libs used by mozilla
@@ -229,15 +229,6 @@ if test -n "$gonkdir" ; then
     fi
     STLPORT_CPPFLAGS="-I$_topsrcdir/build/stlport/stlport -I$gonkdir/ndk/sources/cxx-stl/system/include"
 
-    case "$target_cpu" in
-    arm)
-        ARCH_DIR=arch-arm
-        ;;
-    i?86)
-        ARCH_DIR=arch-x86
-        ;;
-    esac
-
     case "$ANDROID_VERSION" in
     15)
         GONK_INCLUDES="-I$gonkdir/frameworks/base/opengl/include -I$gonkdir/frameworks/base/native/include -I$gonkdir/frameworks/base/include -I$gonkdir/frameworks/base/services/camera -I$gonkdir/frameworks/base/include/media/ -I$gonkdir/frameworks/base/include/media/stagefright -I$gonkdir/frameworks/base/include/media/stagefright/openmax -I$gonkdir/frameworks/base/media/libstagefright/rtsp -I$gonkdir/frameworks/base/media/libstagefright/include -I$gonkdir/external/dbus -I$gonkdir/external/bluetooth/bluez/lib -I$gonkdir/dalvik/libnativehelper/include/nativehelper"
@@ -248,6 +239,7 @@ if test -n "$gonkdir" ; then
         MOZ_OMX_DECODER=1
         AC_SUBST(MOZ_OMX_DECODER)
         MOZ_RTSP=1
+        MOZ_FMP4=1
         ;;
     17|18)
         GONK_INCLUDES="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include"
@@ -289,13 +281,27 @@ if test -n "$gonkdir" ; then
         MOZ_AUDIO_OFFLOAD=1
         AC_SUBST(MOZ_AUDIO_OFFLOAD)
         AC_DEFINE(MOZ_AUDIO_OFFLOAD)
-	MOZ_FMP4=1
+        MOZ_FMP4=1
+        ;;
+    21)
+        GONK_INCLUDES="-I$gonkdir/frameworks/native/include -I$gonkdir/frameworks/av/include -I$gonkdir/frameworks/av/include/media -I$gonkdir/frameworks/av/include/camera -I$gonkdir/frameworks/native/include/media/openmax -I$gonkdir/frameworks/av/media/libstagefright/include"
+        MOZ_AUDIO_OFFLOAD=1
+        MOZ_OMX_DECODER=1
+        AC_SUBST(MOZ_AUDIO_OFFLOAD)
+        AC_DEFINE(MOZ_AUDIO_OFFLOAD)
+        MOZ_FMP4=
+        MOZ_B2G_CAMERA=1
+        MOZ_B2G_BT=1
+        MOZ_B2G_BT_BLUEDROID=1
+        if test -d "$gonkdir/system/bluetoothd"; then
+            MOZ_B2G_BT_DAEMON=1
+        fi
         ;;
     *)
         AC_MSG_ERROR([Unsupported platform version: $ANDROID_VERSION])
         ;;
     esac
-    CPPFLAGS="-DANDROID -isystem $gonkdir/bionic/libc/$ARCH_DIR/include -isystem $gonkdir/bionic/libc/include/ -isystem $gonkdir/bionic/libc/kernel/common -isystem $gonkdir/bionic/libc/kernel/$ARCH_DIR -isystem $gonkdir/bionic/libm/include -I$gonkdir/system -I$gonkdir/system/core/include -isystem $gonkdir/bionic -I$gonkdir/hardware/libhardware/include -I$gonkdir/external/valgrind/fxos-include $GONK_INCLUDES $CPPFLAGS"
+    CPPFLAGS="-DANDROID $TARGET_C_INCLUDES -I$gonkdir/system -I$gonkdir/system/core/include -isystem $gonkdir/bionic -I$gonkdir/hardware/libhardware/include -I$gonkdir/external/valgrind/fxos-include $GONK_INCLUDES $CPPFLAGS"
     CFLAGS="-mandroid -fno-short-enums -fno-exceptions $CFLAGS"
     CXXFLAGS="-mandroid -fno-short-enums -fno-exceptions -Wno-psabi $CXXFLAGS $STLPORT_CPPFLAGS"
     dnl Add -llog by default, since we use it all over the place.
@@ -405,13 +411,6 @@ MOZ_TOOL_VARIABLES
 
 MOZ_CHECK_COMPILER_WRAPPER
 
-if test -n "$GNU_CC" -a -z "$CLANG_CC" ; then
-    if test "$GCC_MAJOR_VERSION" -eq 4 -a "$GCC_MINOR_VERSION" -lt 4 ||
-       test "$GCC_MAJOR_VERSION" -lt 4; then
-        AC_MSG_ERROR([Only GCC 4.4 or newer supported])
-    fi
-fi
-
 dnl ========================================================
 dnl Special win32 checks
 dnl ========================================================
@@ -422,30 +421,27 @@ MOZ_ARG_ENABLE_BOOL(metro,
     MOZ_METRO=)
 if test -n "$MOZ_METRO"; then
     AC_DEFINE(MOZ_METRO)
-    # Target the Windows 8 Kit
-    WINSDK_TARGETVER=602
-    WINVER=502
     # toolkit/library/makefile.in needs these, see nsDllMain.
     CRTDLLVERSION=110
     CRTEXPDLLVERSION=1-1-0
-else
-    # Target the Windows 7 SDK by default
-    WINSDK_TARGETVER=601
-    WINVER=502
 fi
 
 AC_SUBST(CRTDLLVERSION)
 AC_SUBST(CRTEXPDLLVERSION)
 
+# Target the Windows 8.1 SDK by default
+WINSDK_TARGETVER=603
+WINVER=502
+
 MOZ_ARG_WITH_STRING(windows-version,
 [  --with-windows-version=WINSDK_TARGETVER
-                          Windows SDK version to target. Lowest version
-                          currently allowed is 601 (Win7), highest is 602 (Win8)],
+                          Windows SDK version to target. Win8.1 (603) is
+                          currently the minimum supported version.],
   WINSDK_TARGETVER=$withval)
 
-# Currently only two sdk versions allowed, 601 and 602
+# Currently only version 603 is allowed
 case "$WINSDK_TARGETVER" in
-601|602)
+603)
     MOZ_WINSDK_TARGETVER=0${WINSDK_TARGETVER}0000
     ;;
 
@@ -481,8 +477,9 @@ case "$target" in
         changequote([,])
 
         # Determine compiler version
-        _CC_MAJOR_VERSION=`echo ${CC_VERSION} | cut -c 1-2`
-        _CC_MINOR_VERSION=`echo ${CC_VERSION} | cut -c 3-4`
+        _CC_MAJOR_VERSION=`echo ${MSVC_VERSION_FULL} | cut -c 1-2`
+        _CC_MINOR_VERSION=`echo ${MSVC_VERSION_FULL} | cut -c 3-4`
+        _CC_BUILD_VERSION=`echo ${MSVC_VERSION_FULL} | cut -c 5-`
         _MSC_VER=${CC_VERSION}
 
         _CXX_MAJOR_VERSION=`echo ${CXX_VERSION} | cut -c 1-2`
@@ -510,7 +507,9 @@ case "$target" in
             MSVC_C_RUNTIME_DLL=msvcr120.dll
             MSVC_CXX_RUNTIME_DLL=msvcp120.dll
         else
-            AC_MSG_ERROR([This version ($CC_VERSION) of the MSVC compiler is unsupported. See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
+            AC_MSG_ERROR([This version (${_CC_MAJOR_VERSION}.${_CC_MINOR_VERSION}.${_CC_BUILD_VERSION}) of the MSVC compiler is unsupported.
+You must install Visual C++ 2013 Update 3 or newer in order to build.
+See https://developer.mozilla.org/en/Windows_Build_Prerequisites.])
         fi
         AC_SUBST(MSVS_VERSION)
         AC_SUBST(MSVC_C_RUNTIME_DLL)
@@ -702,7 +701,7 @@ case "$target" in
         # causing problems with local implementations with the same name.
         AC_DEFINE(STRSAFE_NO_DEPRECATE)
 
-        MOZ_WINSDK_MAXVER=0x06020000
+        MOZ_WINSDK_MAXVER=0x06030000
     fi # !GNU_CC
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
@@ -766,7 +765,6 @@ dnl ========================================================
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
-if test -z "$TINDERBOX_SKIP_PERL_VERSION_CHECK"; then
 AC_MSG_CHECKING([for minimum required perl version >= $PERL_VERSION])
 _perl_version=`PERL_VERSION=$PERL_VERSION $PERL -e 'print "$]"; if ($] >= $ENV{PERL_VERSION}) { exit(0); } else { exit(1); }' 2>&5`
 _perl_res=$?
@@ -774,7 +772,6 @@ AC_MSG_RESULT([$_perl_version])
 
 if test "$_perl_res" != 0; then
     AC_MSG_ERROR([Perl $PERL_VERSION or higher is required.])
-fi
 fi
 
 AC_MSG_CHECKING([for full perl installation])
@@ -1259,11 +1256,11 @@ MOZ_ANDROID_STLPORT
 dnl ========================================================
 dnl Suppress Clang Argument Warnings
 dnl ========================================================
-if test -n "$CLANG_CC"; then
+if test -n "${CLANG_CC}${CLANG_CL}"; then
     _WARNINGS_CFLAGS="-Qunused-arguments ${_WARNINGS_CFLAGS}"
     CPPFLAGS="-Qunused-arguments ${CPPFLAGS}"
 fi
-if test -n "$CLANG_CXX"; then
+if test -n "${CLANG_CXX}${CLANG_CL}"; then
     _WARNINGS_CXXFLAGS="-Qunused-arguments ${_WARNINGS_CXXFLAGS}"
 fi
 
@@ -1304,6 +1301,20 @@ if test -n "$MOZ_MSAN"; then
     MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
 fi
 AC_SUBST(MOZ_MSAN)
+
+dnl ========================================================
+dnl = Use Thread Sanitizer
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(thread-sanitizer,
+[  --enable-thread-sanitizer       Enable Thread Sanitizer (default=no)],
+   MOZ_TSAN=1,
+   MOZ_TSAN= )
+if test -n "$MOZ_TSAN"; then
+    MOZ_LLVM_HACKS=1
+    AC_DEFINE(MOZ_TSAN)
+    MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
+fi
+AC_SUBST(MOZ_TSAN)
 
 # The LLVM symbolizer is used by all sanitizers
 AC_SUBST(LLVM_SYMBOLIZER)
@@ -1887,20 +1898,12 @@ case "$host" in
     ;;
 esac
 
-dnl Check for using a custom <inttypes.h> implementation
-dnl ========================================================
-AC_MSG_CHECKING(for custom <inttypes.h> implementation)
-if test "$MOZ_CUSTOM_INTTYPES_H"; then
-  AC_DEFINE_UNQUOTED(MOZ_CUSTOM_INTTYPES_H, "$MOZ_CUSTOM_INTTYPES_H")
-  AC_MSG_RESULT(using $MOZ_CUSTOM_INTTYPES_H)
-else
-  AC_MSG_RESULT(none specified)
-fi
-
+dnl ==============================================================
 dnl Get mozilla version from central milestone file
-MOZILLA_VERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir`
-MOZILLA_UAVERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir -uaversion`
-MOZILLA_SYMBOLVERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir -symbolversion`
+dnl ==============================================================
+MOZILLA_VERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir`
+MOZILLA_UAVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --uaversion`
+MOZILLA_SYMBOLVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --symbolversion`
 
 dnl Get version of various core apps from the version files.
 FIREFOX_VERSION=`cat $_topsrcdir/browser/config/version.txt`
@@ -2164,7 +2167,7 @@ ia64*-hpux*)
         MKCSHLIB='$(CC) $(DSO_LDOPTS) -o $@'
         RC='$(WINDRES)'
         # Use static libgcc and libstdc++
-        LDFLAGS="$LDFLAGS -static-libgcc -static-libstdc++"
+        LDFLAGS="$LDFLAGS -static"
         NSPR_LDFLAGS="$NSPR_LDFLAGS -static-libgcc"
         # Use temp file for windres (bug 213281)
         RCFLAGS='-O coff --use-temp-file'
@@ -2664,12 +2667,7 @@ AC_SUBST(WRAP_SYSTEM_INCLUDES)
 AC_SUBST(VISIBILITY_FLAGS)
 
 MOZ_GCC_PR49911
-MOZ_GCC_PR39608
-if test "$OS_TARGET" != WINNT; then
-    # Only run this test with clang on non-Windows platforms, because clang
-    # cannot do enough code gen for now to make this test work correctly.
-    MOZ_LLVM_PR8927
-fi
+MOZ_LLVM_PR8927
 
 dnl Check for __force_align_arg_pointer__ for SSE2 on gcc
 dnl ========================================================
@@ -3289,20 +3287,6 @@ if test "$ac_cv_cpp_dynamic_cast_void_ptr" = yes ; then
    AC_DEFINE(HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR)
 fi
 
-dnl note that this one is reversed - if the test fails, then
-dnl we require implementations of unused virtual methods. Which
-dnl really blows because it means we'll have useless vtable
-dnl bloat.
-AC_CACHE_CHECK(whether C++ requires implementation of unused virtual methods,
-               ac_cv_cpp_unused_required,
-               [AC_TRY_LINK(class X {private: virtual void never_called();};,
-                               X x;,
-                               ac_cv_cpp_unused_required=no,
-                               ac_cv_cpp_unused_required=yes)])
-if test "$ac_cv_cpp_unused_required" = yes ; then
-   AC_DEFINE(NEED_CPP_UNUSED_IMPLEMENTATIONS)
-fi
-
 
 # try harder, when checking for __thread support, see bug 521750 comment #33 and below
 # We pass MOZ_OPTIMIZE_LDFLAGS to the linker because if dead_strip is
@@ -3407,9 +3391,38 @@ for file in $MALLOC_HEADERS; do
   fi
 done
 
-AC_CHECK_FUNCS(strndup posix_memalign memalign valloc)
+MOZ_CHECK_HEADERS(alloca.h)
+
+AC_CHECK_FUNCS(strndup posix_memalign memalign)
 
 AC_CHECK_FUNCS(malloc_usable_size)
+MALLOC_USABLE_SIZE_CONST_PTR=const
+MOZ_CHECK_HEADERS([malloc.h], [
+  AC_MSG_CHECKING([whether malloc_usable_size definition can use const argument])
+  AC_TRY_COMPILE([#include <malloc.h>
+                  #include <stddef.h>
+                  size_t malloc_usable_size(const void *ptr);],
+                  [return malloc_usable_size(0);],
+                  AC_MSG_RESULT([yes]),
+                  AC_MSG_RESULT([no])
+                  MALLOC_USABLE_SIZE_CONST_PTR=)
+])
+AC_DEFINE_UNQUOTED([MALLOC_USABLE_SIZE_CONST_PTR],[$MALLOC_USABLE_SIZE_CONST_PTR])
+
+
+dnl In newer bionic headers, valloc is built but not defined,
+dnl so we check more carefully here.
+AC_MSG_CHECKING([for valloc in malloc.h])
+AC_EGREP_HEADER(valloc, malloc.h,
+                AC_DEFINE(HAVE_VALLOC)
+                AC_MSG_RESULT([yes]),
+                AC_MSG_RESULT([no]))
+
+AC_MSG_CHECKING([for valloc in unistd.h])
+AC_EGREP_HEADER(valloc, unistd.h,
+                AC_DEFINE(HAVE_VALLOC)
+                AC_MSG_RESULT([yes]),
+                AC_MSG_RESULT([no]))
 
 dnl See if compiler supports some gcc-style attributes
 
@@ -3861,7 +3874,6 @@ MOZ_TREMOR=
 MOZ_WAVE=1
 MOZ_SAMPLE_TYPE_FLOAT32=
 MOZ_SAMPLE_TYPE_S16=
-MOZ_OPUS=1
 MOZ_WEBM=1
 MOZ_GSTREAMER=
 MOZ_DIRECTSHOW=
@@ -3871,7 +3883,6 @@ if test -n "$MOZ_FMP4"; then
 else
   MOZ_FMP4=
 fi
-MOZ_EME=1
 MOZ_FFMPEG=
 MOZ_WEBRTC=1
 MOZ_PEERCONNECTION=
@@ -4407,7 +4418,7 @@ fi
 
 if test "$COMPILE_ENVIRONMENT"; then
   if test "$MOZ_ENABLE_GTK3"; then
-    PKG_CHECK_MODULES(MOZ_GTK3, gtk+-3.0 >= $GTK3_VERSION gtk+-unix-print-3.0 glib-2.0 gobject-2.0 $GDK_PACKAGES)
+    PKG_CHECK_MODULES(MOZ_GTK3, gtk+-3.0 >= $GTK3_VERSION gtk+-unix-print-3.0 glib-2.0 gobject-2.0 atk-bridge-2.0 $GDK_PACKAGES)
     MOZ_GTK3_CFLAGS="-I${_topsrcdir}/widget/gtk/compat-gtk3 $MOZ_GTK3_CFLAGS"
     dnl Contrary to MOZ_GTK2_LIBS, MOZ_GTK3_LIBS needs to be literally added to TK_LIBS instead
     dnl of a make reference because of how TK_LIBS is mangled in toolkit/library/moz.build
@@ -5096,6 +5107,11 @@ if test -n "$MOZ_WEBRTC"; then
     esac
 fi
 
+dnl Temporary until webrtc works on gonk-L
+if test -n "$gonkdir" -a "$ANDROID_VERSION" -ge 21; then
+    MOZ_WEBRTC=
+fi
+
 AC_TRY_COMPILE([#include <linux/ethtool.h>],
                [ struct ethtool_cmd cmd; cmd.speed_hi = 0; ],
                MOZ_WEBRTC_HAVE_ETHTOOL_SPEED_HI=1)
@@ -5234,14 +5250,6 @@ if test "${ac_cv_c_attribute_aligned}" != "0"; then
 fi
 
 dnl ========================================================
-dnl = Disable Opus audio codec support
-dnl ========================================================
-MOZ_ARG_DISABLE_BOOL(opus,
-[  --disable-opus          Disable support for Opus audio],
-    MOZ_OPUS=,
-    MOZ_OPUS=1)
-
-dnl ========================================================
 dnl = Disable VP8 decoder support
 dnl ========================================================
 MOZ_ARG_DISABLE_BOOL(webm,
@@ -5332,7 +5340,7 @@ dnl ========================================================
 dnl = Built-in fragmented MP4 support.
 dnl ========================================================
 
-if test "$OS_TARGET" = Android; then
+if test "$OS_TARGET" = Android -a -z "$gonkdir"; then
     MOZ_FMP4=1
 fi
 
@@ -5350,6 +5358,7 @@ MOZ_ARG_DISABLE_BOOL(fmp4,
 
 if test -n "$MOZ_FMP4"; then
     AC_DEFINE(MOZ_FMP4)
+    MOZ_EME=1
 fi;
 
 dnl ========================================================
@@ -5362,6 +5371,9 @@ MOZ_ARG_DISABLE_BOOL(eme,
     MOZ_EME=1)
 
 if test -n "$MOZ_EME"; then
+    if test -z "$MOZ_FMP4"; then
+        AC_MSG_ERROR([Encrypted Media Extension support requires Fragmented MP4 support])
+    fi
     AC_DEFINE(MOZ_EME)
 fi;
 
@@ -5576,10 +5588,6 @@ if test -n "$MOZ_VORBIS" -a -n "$MOZ_TREMOR"; then
     AC_MSG_ERROR([MOZ_VORBIS and MOZ_TREMOR are mutually exclusive!  The build system should not allow them both to be set, but they are.  Please file a bug at https://bugzilla.mozilla.org/])
 fi
 
-if test -n "$MOZ_WEBRTC" -a -z "$MOZ_OPUS"; then
-    AC_MSG_ERROR([MOZ_WEBRTC requires MOZ_OPUS which is disabled.])
-fi
-
 if test -n "$MOZ_VORBIS"; then
     AC_DEFINE(MOZ_VORBIS)
 fi
@@ -5588,10 +5596,6 @@ if test -n "$MOZ_TREMOR"; then
     AC_DEFINE(MOZ_TREMOR)
     # Tremor doesn't have an encoder.
     MOZ_WEBM_ENCODER=
-fi
-
-if test -n "$MOZ_OPUS"; then
-    AC_DEFINE(MOZ_OPUS)
 fi
 
 if test -n "$MOZ_WEBM_ENCODER"; then
@@ -5897,10 +5901,6 @@ if test -n "$MOZ_ANGLE_RENDERER"; then
     MOZ_D3DCOMPILER_VISTA_DLL=d3dcompiler_47.dll
     AC_MSG_RESULT([Found D3D compiler in Windows SDK 8.1.])
   ;;
-  0x0602*)
-    MOZ_D3DCOMPILER_VISTA_DLL=d3dcompiler_46.dll
-    AC_MSG_RESULT([Found D3D compiler in Windows SDK 8.0.])
-  ;;
   esac
 
   if test -n "$MOZ_D3DCOMPILER_VISTA_DLL"; then
@@ -6049,15 +6049,6 @@ if test "$MOZ_GAMEPAD"; then
         MOZ_GAMEPAD_BACKEND=cocoa
         ;;
     WINNT)
-        case "$MOZ_WINSDK_MAXVER" in
-        # We support building with the Windows 7 SDK otherwise, but
-        # Gamepad support requires the Windows 8 SDK for some HID headers.
-        0x0601*)
-          AC_MSG_ERROR([The Windows 8 SDK or newer is required to build Gamepad support. Please install a newer Windows SDK or reconfigure with --disable-gamepad to disable gamepad support.])
-          ;;
-        *)
-          ;;
-        esac
         MOZ_GAMEPAD_BACKEND=windows
         ;;
     Linux)
@@ -6585,19 +6576,23 @@ if test -n "$gonkdir"; then
 fi
 
 case "$OS_TARGET:$NIGHTLY_BUILD" in
-WINNT:1)
+WINNT:*)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
 Darwin:1)
     MOZ_CONTENT_SANDBOX=$MOZ_SANDBOX
     ;;
-*)
-    MOZ_ARG_ENABLE_BOOL(content-sandbox,
-    [  --enable-content-sandbox        Enable sandboxing support for content-processes],
-        MOZ_CONTENT_SANDBOX=1,
-        MOZ_CONTENT_SANDBOX=)
-    ;;
 esac
+
+MOZ_ARG_ENABLE_BOOL(content-sandbox,
+[  --enable-content-sandbox Enable sandboxing support for content-processes
+  --disable-content-sandbox Disable sandboxing support for content-processes],
+    MOZ_CONTENT_SANDBOX=1,
+    MOZ_CONTENT_SANDBOX=)
+
+if test -n "$MOZ_CONTENT_SANDBOX" -a -z "$MOZ_SANDBOX"; then
+    AC_MSG_ERROR([--enable-content-sandbox and --disable-sandbox are conflicting options])
+fi
 
 if test -n "$MOZ_CONTENT_SANDBOX"; then
     AC_DEFINE(MOZ_CONTENT_SANDBOX)
@@ -6900,7 +6895,12 @@ MOZ_ARG_ENABLE_BOOL(mobile-optimize,
 AC_SUBST(MOZ_GFX_OPTIMIZE_MOBILE)
 
 if test "$MOZ_GFX_OPTIMIZE_MOBILE"; then
+    # We ignore paint will resample on mobile for performance.
+    # We may want to revisit this later.
+    MOZ_IGNORE_PAINT_WILL_RESAMPLE=1
+
     AC_DEFINE(MOZ_GFX_OPTIMIZE_MOBILE)
+    AC_DEFINE(MOZ_IGNORE_PAINT_WILL_RESAMPLE)
 fi
 
 dnl ========================================================
@@ -7071,21 +7071,6 @@ if test -n "$MOZ_DEBUG"; then
 fi
 
 dnl ========================================================
-dnl = Enable trace malloc
-dnl ========================================================
-NS_TRACE_MALLOC=${MOZ_TRACE_MALLOC}
-MOZ_ARG_ENABLE_BOOL(trace-malloc,
-[  --enable-trace-malloc   Enable malloc tracing; also disables DMD and jemalloc],
-    NS_TRACE_MALLOC=1,
-    NS_TRACE_MALLOC= )
-if test "$NS_TRACE_MALLOC"; then
-  # Please, Mr. Linker Man, don't take away our symbol names
-  MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
-  AC_DEFINE(NS_TRACE_MALLOC)
-fi
-AC_SUBST(NS_TRACE_MALLOC)
-
-dnl ========================================================
 dnl = Enable DMD
 dnl ========================================================
 
@@ -7093,11 +7078,6 @@ MOZ_ARG_ENABLE_BOOL(dmd,
 [  --enable-dmd            Enable DMD; also enables jemalloc and replace-malloc],
     MOZ_DMD=1,
     MOZ_DMD= )
-
-dnl The two options are conflicting. Fails the configure to alert the user.
-if test "$NS_TRACE_MALLOC" -a "$MOZ_DMD"; then
-    AC_MSG_ERROR([--enable-trace-malloc and --enable-dmd are conflicting options])
-fi
 
 if test "$MOZ_DMD"; then
     AC_DEFINE(MOZ_DMD)
@@ -7120,10 +7100,6 @@ MOZ_ARG_ENABLE_BOOL(jemalloc,
     MOZ_MEMORY=1,
     MOZ_MEMORY=)
 
-if test "$NS_TRACE_MALLOC"; then
-    MOZ_MEMORY=
-fi
-
 case "${OS_TARGET}" in
 Android|WINNT|Darwin)
   MOZ_GLUE_IN_PROGRAM=
@@ -7145,11 +7121,6 @@ MOZ_ARG_ENABLE_BOOL(replace-malloc,
 [  --enable-replace-malloc   Enable ability to dynamically replace the malloc implementation],
     MOZ_REPLACE_MALLOC=1,
     MOZ_REPLACE_MALLOC= )
-
-dnl The two options are conflicting. Fails the configure to alert the user.
-if test "$NS_TRACE_MALLOC" -a "$MOZ_REPLACE_MALLOC"; then
-    AC_MSG_ERROR([--enable-trace-malloc and --enable-replace-malloc are conflicting options])
-fi
 
 if test -n "$MOZ_REPLACE_MALLOC" -a -z "$MOZ_MEMORY"; then
     dnl We don't want to enable jemalloc unconditionally because it may be a
@@ -7220,7 +7191,7 @@ dnl ========================================================
 if test -z "$MOZ_MEMORY"; then
   if test -n "$MOZ_JEMALLOC3" -a -z "$MOZ_REPLACE_MALLOC"; then
     MOZ_NATIVE_JEMALLOC=1
-    AC_CHECK_FUNCS(mallctl nallocm,,
+    AC_CHECK_FUNCS(mallctl nallocx,,
       [MOZ_NATIVE_JEMALLOC=
        break])
     if test -n "$MOZ_NATIVE_JEMALLOC"; then
@@ -7301,7 +7272,7 @@ dnl our own linker.
 if test "$OS_TARGET" = Android; then
     MOZ_GLUE_WRAP_LDFLAGS="${MOZ_GLUE_WRAP_LDFLAGS} -Wl,--wrap=PR_GetEnv,--wrap=PR_SetEnv"
     if test "$MOZ_WIDGET_TOOLKIT" = gonk -a -n "$MOZ_NUWA_PROCESS"; then
-        MOZ_GLUE_WRAP_LDFLAGS="${MOZ_GLUE_WRAP_LDFLAGS} -Wl,--wrap=pthread_create,--wrap=epoll_wait,--wrap=poll,--wrap=pthread_cond_timedwait,--wrap=__pthread_cond_timedwait,--wrap=pthread_cond_wait,--wrap=epoll_create,--wrap=epoll_ctl,--wrap=close,--wrap=pthread_key_create,--wrap=pthread_key_delete,--wrap=socketpair,--wrap=pthread_self,--wrap=pthread_mutex_lock,--wrap=pthread_join,--wrap=pipe,--wrap=pipe2"
+        MOZ_GLUE_WRAP_LDFLAGS="${MOZ_GLUE_WRAP_LDFLAGS} -Wl,--wrap=pthread_create,--wrap=epoll_wait,--wrap=poll,--wrap=pthread_cond_timedwait,--wrap=pthread_cond_wait,--wrap=epoll_create,--wrap=epoll_ctl,--wrap=close,--wrap=pthread_key_create,--wrap=pthread_key_delete,--wrap=socketpair,--wrap=pthread_self,--wrap=pthread_mutex_lock,--wrap=pthread_join,--wrap=pipe,--wrap=pipe2"
     fi
     if test "$MOZ_WIDGET_TOOLKIT" = android; then
         MOZ_GLUE_WRAP_LDFLAGS="${MOZ_GLUE_WRAP_LDFLAGS} -Wl,--wrap=getaddrinfo,--wrap=freeaddrinfo,--wrap=gai_strerror"
@@ -7310,17 +7281,6 @@ fi
 
 AC_SUBST_LIST(MOZ_GLUE_WRAP_LDFLAGS)
 export MOZ_GLUE_WRAP_LDFLAGS
-
-dnl ========================================================
-dnl = Use JS Call tracing
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(trace-jscalls,
-[  --enable-trace-jscalls  Enable JS call enter/exit callback (default=no)],
-    MOZ_TRACE_JSCALLS=1,
-    MOZ_TRACE_JSCALLS= )
-if test -n "$MOZ_TRACE_JSCALLS"; then
-    AC_DEFINE(MOZ_TRACE_JSCALLS)
-fi
 
 dnl ========================================================
 dnl JS opt-mode assertions and minidump instrumentation
@@ -7503,7 +7463,6 @@ fi
 dnl ========================================================
 dnl = Offer a way to disable the startup cache
 dnl ========================================================
-MOZ_DISABLE_STARTUPCACHE=
 
 MOZ_ARG_DISABLE_BOOL(startupcache,
 [  --disable-startupcache          Disable startup cache ],
@@ -7514,7 +7473,9 @@ dnl bug 988880: disable startup cache on b2g
 if test -n "$MOZ_B2G"; then
   MOZ_DISABLE_STARTUPCACHE=1
 fi
-
+if test -n "$MOZ_DISABLE_STARTUPCACHE"; then
+  AC_DEFINE(MOZ_DISABLE_STARTUPCACHE)
+fi
 AC_SUBST(MOZ_DISABLE_STARTUPCACHE)
 
 dnl ========================================================
@@ -7635,9 +7596,9 @@ if test -z "$SKIP_LIBRARY_CHECKS"; then
     AC_LANG_RESTORE
 fi
 
-# Demangle only for debug or trace-malloc or DMD builds
+# Demangle only for debug or DMD builds
 MOZ_DEMANGLE_SYMBOLS=
-if test "$HAVE_DEMANGLE" && test "$MOZ_DEBUG" -o "$NS_TRACE_MALLOC" -o "$MOZ_DMD"; then
+if test "$HAVE_DEMANGLE" && test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_DEMANGLE_SYMBOLS=1
     AC_DEFINE(MOZ_DEMANGLE_SYMBOLS)
 fi
@@ -7995,13 +7956,6 @@ dnl ========================================================
 dnl Graphics checks.
 dnl ========================================================
 
-if test "${OS_TARGET}" = "WINNT"; then
-  if $PERL -e "exit($MOZ_WINSDK_MAXVER < 0x06020000)"; then
-    MOZ_ENABLE_DIRECT2D1_1=1
-    AC_SUBST(MOZ_ENABLE_DIRECT2D1_1)
-  fi
-fi
-
 if test "${OS_TARGET}" = "WINNT" -o \
         "${OS_ARCH}" = "Darwin" -o \
         "${MOZ_WIDGET_TOOLKIT}" = "android" -o \
@@ -8176,17 +8130,12 @@ if test "$MOZ_TREE_CAIRO"; then
         QUARTZ_FONT_FEATURE="#define CAIRO_HAS_QUARTZ_FONT 1"
         ;;
       windows)
-        WIN32_SURFACE_FEATURE="#define CAIRO_HAS_WIN32_SURFACE 1"
+        WIN32_D2D_SURFACE_FEATURE="#define CAIRO_HAS_D2D_SURFACE 1"
+        WIN32_DWRITE_FONT_FEATURE="#define CAIRO_HAS_DWRITE_FONT 1"
         WIN32_FONT_FEATURE="#define CAIRO_HAS_WIN32_FONT 1"
-        if test "$MOZ_WINSDK_TARGETVER" -ge "06010000"; then
-            WIN32_DWRITE_FONT_FEATURE="#define CAIRO_HAS_DWRITE_FONT 1"
-            WIN32_D2D_SURFACE_FEATURE="#define CAIRO_HAS_D2D_SURFACE 1"
-            MOZ_ENABLE_D2D_SURFACE=1
-            MOZ_ENABLE_DWRITE_FONT=1
-        else
-            WIN32_DWRITE_FONT_FEATURE=
-            WIN32_D2D_SURFACE_FEATURE=
-        fi
+        WIN32_SURFACE_FEATURE="#define CAIRO_HAS_WIN32_SURFACE 1"
+        MOZ_ENABLE_D2D_SURFACE=1
+        MOZ_ENABLE_DWRITE_FONT=1
 
         MOZ_CHECK_HEADER(d3d9.h, MOZ_ENABLE_D3D9_LAYER=1)
 
@@ -8344,7 +8293,7 @@ case "$OS_TARGET" in
       NECKO_WIFI=1
     fi
     ;;
-  Darwin|FreeBSD|SunOS|WINNT)
+  Darwin|DragonFly|FreeBSD|SunOS|WINNT)
     NECKO_WIFI=1
     ;;
   Linux)
@@ -8469,7 +8418,7 @@ if test -n "$MOZ_DEVICES"; then
 fi
 
 dnl ========================================================
-if test "$MOZ_DEBUG" -o "$NS_TRACE_MALLOC" -o "$MOZ_DMD"; then
+if test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
 fi
 
@@ -8880,7 +8829,6 @@ AC_SUBST(WIN32_GUI_EXE_LDFLAGS)
 AC_SUBST(MOZ_WAVE)
 AC_SUBST(MOZ_VORBIS)
 AC_SUBST(MOZ_TREMOR)
-AC_SUBST(MOZ_OPUS)
 AC_SUBST(MOZ_WEBM)
 AC_SUBST(MOZ_WMF)
 AC_SUBST(MOZ_FFMPEG)
@@ -9017,7 +8965,6 @@ CPP_THROW_NEW
 HAVE_CPP_AMBIGUITY_RESOLVING_USING
 HAVE_CPP_DYNAMIC_CAST_TO_VOID_PTR
 HAVE_CPP_PARTIAL_SPECIALIZATION
-NEED_CPP_UNUSED_IMPLEMENTATIONS
 HAVE_GETPAGESIZE
 HAVE_ICONV
 HAVE_ICONV_WITH_CONST_INPUT
@@ -9044,7 +8991,8 @@ dnl ========================================================
 #   B2G:      bug 866301
 
 if test "$MOZ_WIDGET_TOOLKIT" = "android" ||
-   test "$MOZ_BUILD_APP" = "b2g"; then
+   test "$MOZ_BUILD_APP" = "b2g" ||
+   test "$MOZ_BUILD_APP" = "b2g/dev"; then
     _INTL_API=no
 else
     _INTL_API=yes
@@ -9092,7 +9040,7 @@ esac
 # Run jemalloc configure script
 
 if test -z "$MOZ_NATIVE_JEMALLOC" -a "$MOZ_MEMORY" && test -n "$MOZ_JEMALLOC3" -o -n "$MOZ_REPLACE_MALLOC"; then
-  ac_configure_args="--build=$build --host=$target --enable-stats --with-jemalloc-prefix=je_"
+  ac_configure_args="--build=$build --host=$target --enable-stats --with-jemalloc-prefix=je_ --disable-valgrind"
   if test -n "$MOZ_REPLACE_MALLOC"; then
     # When using replace_malloc, we always want memalign and valloc exported from jemalloc.
     ac_configure_args="$ac_configure_args ac_cv_func_memalign=yes"

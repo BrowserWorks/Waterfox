@@ -882,7 +882,7 @@ static UBool compareBinaryFiles(const char* defaultTZFileName, const char* TZFil
             if (tzInfo->defaultTZBuffer == NULL) {
                 rewind(tzInfo->defaultTZFilePtr);
                 tzInfo->defaultTZBuffer = (char*)uprv_malloc(sizeof(char) * tzInfo->defaultTZFileSize);
-                fread(tzInfo->defaultTZBuffer, 1, tzInfo->defaultTZFileSize, tzInfo->defaultTZFilePtr);
+                sizeFileRead = fread(tzInfo->defaultTZBuffer, 1, tzInfo->defaultTZFileSize, tzInfo->defaultTZFilePtr);
             }
             rewind(file);
             while(sizeFileLeft > 0) {

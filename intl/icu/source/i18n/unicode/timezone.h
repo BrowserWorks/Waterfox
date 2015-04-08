@@ -1,5 +1,5 @@
 /*************************************************************************
-* Copyright (c) 1997-2014, International Business Machines Corporation
+* Copyright (c) 1997-2015, International Business Machines Corporation
 * and others. All Rights Reserved.
 **************************************************************************
 *
@@ -272,6 +272,23 @@ public:
      */
     static const UnicodeString U_EXPORT2 getEquivalentID(const UnicodeString& id,
                                                int32_t index);
+
+#ifndef U_HIDE_DRAFT_API
+    /**
+     * Creates an instance of TimeZone detected from the current host
+     * system configuration. Note that ICU4C does not change the default
+     * time zone unless TimeZone::adoptDefault(TimeZone*) or
+     * TimeZone::setDefault(const TimeZone&) is explicitly called by a
+     * user. This method does not update the current ICU's default,
+     * and may return a different TimeZone from the one returned by
+     * TimeZone::createDefault().
+     *
+     * @return  A new instance of TimeZone detected from the current host system
+     *          configuration.
+     * @draft ICU 55
+     */
+    static TimeZone* U_EXPORT2 detectHostTimeZone();
+#endif
 
     /**
      * Creates a new copy of the default TimeZone for this host. Unless the default time

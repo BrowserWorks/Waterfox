@@ -147,7 +147,7 @@ protected:
 private:
 
   void
-  DescribeGCThing(bool aIsMarked, void* aThing, JSGCTraceKind aTraceKind,
+  DescribeGCThing(bool aIsMarked, JS::GCCellPtr aThing,
                   nsCycleCollectionTraversalCallback& aCb) const;
 
   virtual bool
@@ -158,7 +158,7 @@ private:
   }
 
   void
-  NoteGCThingJSChildren(void* aThing, JSGCTraceKind aTraceKind,
+  NoteGCThingJSChildren(JS::GCCellPtr aThing,
                         nsCycleCollectionTraversalCallback& aCb) const;
 
   void
@@ -178,15 +178,14 @@ private:
   };
 
   void
-  TraverseGCThing(TraverseSelect aTs, void* aThing,
-                  JSGCTraceKind aTraceKind,
+  TraverseGCThing(TraverseSelect aTs, JS::GCCellPtr aThing,
                   nsCycleCollectionTraversalCallback& aCb);
 
   void
   TraverseZone(JS::Zone* aZone, nsCycleCollectionTraversalCallback& aCb);
 
   static void
-  TraverseObjectShim(void* aData, void* aThing);
+  TraverseObjectShim(void* aData, JS::GCCellPtr aThing);
 
   void TraverseNativeRoots(nsCycleCollectionNoteRootCallback& aCb);
 
@@ -318,6 +317,12 @@ private:
 MOZ_FINISH_NESTED_ENUM_CLASS(CycleCollectedJSRuntime::OOMState)
 
 void TraceScriptHolder(nsISupports* aHolder, JSTracer* aTracer);
+
+// Returns true if the JSGCTraceKind is one the cycle collector cares about.
+inline bool AddToCCKind(JSGCTraceKind aKind)
+{
+  return aKind == JSTRACE_OBJECT || aKind == JSTRACE_SCRIPT;
+}
 
 } // namespace mozilla
 

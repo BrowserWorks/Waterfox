@@ -210,6 +210,9 @@
     <ClCompile Include="uregiontest.c">
       <Filter>formatting</Filter>
     </ClCompile>
+    <ClCompile Include="ulistfmttest.c">
+      <Filter>formatting</Filter>
+    </ClCompile>
     <ClCompile Include="cldrtest.c">
       <Filter>locales &amp; resources</Filter>
     </ClCompile>

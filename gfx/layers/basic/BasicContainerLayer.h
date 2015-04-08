@@ -20,8 +20,7 @@ namespace layers {
 class BasicContainerLayer : public ContainerLayer, public BasicImplData {
 public:
   explicit BasicContainerLayer(BasicLayerManager* aManager) :
-    ContainerLayer(aManager,
-                   static_cast<BasicImplData*>(MOZ_THIS_IN_INITIALIZER_LIST()))
+    ContainerLayer(aManager, static_cast<BasicImplData*>(this))
   {
     MOZ_COUNT_CTOR(BasicContainerLayer);
     mSupportsComponentAlphaChildren = true;
@@ -30,13 +29,13 @@ protected:
   virtual ~BasicContainerLayer();
 
 public:
-  virtual void SetVisibleRegion(const nsIntRegion& aRegion)
+  virtual void SetVisibleRegion(const nsIntRegion& aRegion) MOZ_OVERRIDE
   {
     NS_ASSERTION(BasicManager()->InConstruction(),
                  "Can only set properties in construction phase");
     ContainerLayer::SetVisibleRegion(aRegion);
   }
-  virtual bool InsertAfter(Layer* aChild, Layer* aAfter)
+  virtual bool InsertAfter(Layer* aChild, Layer* aAfter) MOZ_OVERRIDE
   {
     if (!BasicManager()->InConstruction()) {
       NS_ERROR("Can only set properties in construction phase");
@@ -45,7 +44,7 @@ public:
     return ContainerLayer::InsertAfter(aChild, aAfter);
   }
 
-  virtual bool RemoveChild(Layer* aChild)
+  virtual bool RemoveChild(Layer* aChild) MOZ_OVERRIDE
   { 
     if (!BasicManager()->InConstruction()) {
       NS_ERROR("Can only set properties in construction phase");
@@ -54,7 +53,7 @@ public:
     return ContainerLayer::RemoveChild(aChild);
   }
 
-  virtual bool RepositionChild(Layer* aChild, Layer* aAfter)
+  virtual bool RepositionChild(Layer* aChild, Layer* aAfter) MOZ_OVERRIDE
   {
     if (!BasicManager()->InConstruction()) {
       NS_ERROR("Can only set properties in construction phase");
@@ -63,7 +62,7 @@ public:
     return ContainerLayer::RepositionChild(aChild, aAfter);
   }
 
-  virtual void ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSurface);
+  virtual void ComputeEffectiveTransforms(const gfx::Matrix4x4& aTransformToSurface) MOZ_OVERRIDE;
 
   /**
    * Returns true when:

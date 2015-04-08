@@ -28,7 +28,7 @@ public:
   NS_IMETHOD Run() {
     // It guarantees the reference will be released on main thread.
     nsCountedRef<nsMainThreadSourceSurfaceRef> surface;
-    surface.own(mImage->GetAsSourceSurface().drop());
+    surface.own(mImage->GetAsSourceSurface().take());
 
     if (surface->GetFormat() == gfx::SurfaceFormat::B8G8R8A8) {
       mDataSourceSurface = surface->GetDataSurface();
@@ -82,7 +82,7 @@ public:
     , mFailed(false)
   {}
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() MOZ_OVERRIDE
   {
     nsresult rv = NS_OK;
     MOZ_ASSERT(NS_IsMainThread());
@@ -190,7 +190,7 @@ public:
     return rv;
   }
 
-  NS_IMETHOD Run()
+  NS_IMETHOD Run() MOZ_OVERRIDE
   {
     uint64_t imgSize;
     void* imgData = nullptr;

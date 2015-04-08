@@ -189,15 +189,32 @@ public:
     /**
      * Returns the secondary weight after [p, s] where index=findPrimary(p)
      * except use index=0 for p=0.
+     *
+     * Must return a weight for every root [p, s] as well as for every weight
+     * returned by getSecondaryBefore(). If p!=0 then s can be BEFORE_WEIGHT16.
+     *
+     * Exception: [0, 0] is handled by the CollationBuilder:
+     * Both its lower and upper boundaries are special.
      */
     uint32_t getSecondaryAfter(int32_t index, uint32_t s) const;
     /**
      * Returns the tertiary weight after [p, s, t] where index=findPrimary(p)
      * except use index=0 for p=0.
+     *
+     * Must return a weight for every root [p, s, t] as well as for every weight
+     * returned by getTertiaryBefore(). If s!=0 then t can be BEFORE_WEIGHT16.
+     *
+     * Exception: [0, 0, 0] is handled by the CollationBuilder:
+     * Both its lower and upper boundaries are special.
      */
     uint32_t getTertiaryAfter(int32_t index, uint32_t s, uint32_t t) const;
 
 private:
+    /**
+     * Returns the first secondary & tertiary weights for p where index=findPrimary(p)+1.
+     */
+    uint32_t getFirstSecTerForPrimary(int32_t index) const;
+
     /**
      * Finds the largest index i where elements[i]<=p.
      * Requires first primary<=p<0xffffff00 (PRIMARY_SENTINEL).
@@ -216,15 +233,18 @@ private:
      * See the comments on the IX_ constants.
      *
      * All other elements are a compact form of the root collator CEs
-     * in collation order.
+     * in mostly collation order.
      *
-     * Primary weights have the SEC_TER_DELTA_FLAG flag not set.
-     * A primary-weight element by itself represents a root CE
-     * with Collation::COMMON_SEC_AND_TER_CE.
+     * A sequence of one or more root CEs with the same primary weight is stored as
+     * one element with the primary weight, with the SEC_TER_DELTA_FLAG flag not set,
+     * followed by elements with only the secondary/tertiary weights,
+     * each with that flag set.
+     * If the lowest secondary/tertiary combination is Collation::COMMON_SEC_AND_TER_CE,
+     * then the element for that combination is omitted.
      *
-     * If there are root CEs with the same primary but other secondary/tertiary weights,
-     * then for each such CE there is an element with those secondary and tertiary weights,
-     * and with the SEC_TER_DELTA_FLAG flag set.
+     * Note: If the first actual secondary/tertiary combination is higher than
+     * Collation::COMMON_SEC_AND_TER_CE (which is unusual),
+     * the runtime code will assume anyway that Collation::COMMON_SEC_AND_TER_CE is present.
      *
      * A range of only-primary CEs with a consistent "step" increment
      * from each primary to the next may be stored as a range.

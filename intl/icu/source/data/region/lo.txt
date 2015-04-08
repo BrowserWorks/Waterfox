@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lo.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/lo.xml
- */
 lo{
     Countries{
         001{"ໂລກ"}
@@ -301,6 +298,13 @@ lo{
         ZW{"ຊິມບັບເວ"}
         ZZ{"ຂົງເຂດທີ່ບໍ່ຮູ້ຈັກ"}
     }
+    Countries%short{
+        GB{"ສະຫະລາດຊະອະນາຈັກຯ"}
+        HK{"ຮອງກົງ"}
+        MO{"ມາເກົ້າ"}
+        PS{"ປາເລສຕິນ"}
+        US{"ສະຫະລັດຯ"}
+    }
     Countries%variant{
         CD{"ຄອງໂກ (ສາທາລະນະລັດປະຊາທິປະໄຕ)"}
         CG{"ສາທາລະນະລັດຄອງໂກ"}
@@ -309,12 +313,5 @@ lo{
         MK{"ແມຊິໂດເນຍ (FYROM)"}
         TL{"ທິມໍ ຕາເວັນອອກ"}
     }
-    CountriesShort{
-        GB{"ສະຫະລາດຊະອະນາຈັກຯ"}
-        HK{"ຮອງກົງ"}
-        MO{"ມາເກົ້າ"}
-        PS{"ປາເລສຕິນ"}
-        US{"ສະຫະລັດຯ"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

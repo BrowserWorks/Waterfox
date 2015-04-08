@@ -125,6 +125,7 @@ struct BaselineStackBuilder
         header_->valueR1 = UndefinedValue();
         header_->resumeFramePtr = nullptr;
         header_->resumeAddr = nullptr;
+        header_->resumePC = nullptr;
         header_->monitorStub = nullptr;
         header_->numFrames = 0;
         return true;
@@ -275,6 +276,10 @@ struct BaselineStackBuilder
         header_->resumeAddr = resumeAddr;
     }
 
+    void setResumePC(jsbytecode *pc) {
+        header_->resumePC = pc;
+    }
+
     void setMonitorStub(ICStub *stub) {
         header_->monitorStub = stub;
     }
@@ -415,12 +420,14 @@ class SnapshotIteratorForBailout : public SnapshotIterator
     }
 };
 
+#ifdef DEBUG
 static inline bool
 IsInlinableFallback(ICFallbackStub *icEntry)
 {
     return icEntry->isCall_Fallback() || icEntry->isGetProp_Fallback() ||
            icEntry->isSetProp_Fallback();
 }
+#endif
 
 static inline void*
 GetStubReturnAddress(JSContext *cx, jsbytecode *pc)
@@ -981,6 +988,7 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
         if (resumeAfter && !enterMonitorChain)
             pc = GetNextPc(pc);
 
+        builder.setResumePC(pc);
         builder.setResumeFramePtr(prevFramePtr);
 
         if (enterMonitorChain) {
@@ -1032,30 +1040,30 @@ InitFromBailout(JSContext *cx, HandleScript caller, jsbytecode *callerPC,
             // Note that we use the 'maybe' variant of nativeCodeForPC because
             // of exception propagation for debug mode. See note below.
             PCMappingSlotInfo slotInfo;
-            uint8_t *nativeCodeForPC = baselineScript->maybeNativeCodeForPC(script, pc, &slotInfo);
-            unsigned numUnsynced = slotInfo.numUnsynced();
+            uint8_t *nativeCodeForPC;
 
-            if (excInfo && excInfo->propagatingIonExceptionForDebugMode() && resumeAfter) {
+            if (excInfo && excInfo->propagatingIonExceptionForDebugMode()) {
                 // When propagating an exception for debug mode, set the
-                // return address as the return-from-IC for the throwing op,
-                // so that Debugger hooks report the correct pc offset of the
-                // throwing op instead of its successor.
+                // resume pc to the throwing pc, so that Debugger hooks report
+                // the correct pc offset of the throwing op instead of its
+                // successor (this pc will be used as the BaselineFrame's
+                // override pc).
                 //
-                // This should not be done if we are at a resume-at point, as
-                // might be the case when propagating an exception thrown from
-                // an interrupt handler. That interrupt could have happened to
-                // interrupt at a loop head, which would have no ICEntry at
-                // that point.
+                // Note that we never resume at this pc, it is set for the sake
+                // of frame iterators giving the correct answer.
                 //
-                // Note that we never resume into this address, it is set for
-                // the sake of frame iterators giving the correct answer.
-                ICEntry &icEntry = baselineScript->anyKindICEntryFromPCOffset(iter.pcOffset());
-                nativeCodeForPC = baselineScript->returnAddressForIC(icEntry);
+                // We also set nativeCodeForPC to nullptr as this address
+                // won't be used anywhere.
+                jsbytecode *throwPC = script->offsetToPC(iter.pcOffset());
+                builder.setResumePC(throwPC);
+                nativeCodeForPC = nullptr;
             } else {
+                nativeCodeForPC = baselineScript->nativeCodeForPC(script, pc, &slotInfo);
                 MOZ_ASSERT(nativeCodeForPC);
             }
 
-            MOZ_ASSERT(nativeCodeForPC);
+            unsigned numUnsynced = slotInfo.numUnsynced();
+
             MOZ_ASSERT(numUnsynced <= 2);
             PCMappingSlotInfo::SlotLocation loc1, loc2;
             if (numUnsynced > 0) {
@@ -1381,9 +1389,9 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, JitFrameIter
     MOZ_ASSERT(poppedLastSPSFrameOut);
     MOZ_ASSERT(!*poppedLastSPSFrameOut);
 
-    TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
-    TraceLogStopEvent(logger, TraceLogger::IonMonkey);
-    TraceLogStartEvent(logger, TraceLogger::Baseline);
+    TraceLoggerThread *logger = TraceLoggerForMainThread(cx->runtime());
+    TraceLogStopEvent(logger, TraceLogger_IonMonkey);
+    TraceLogStartEvent(logger, TraceLogger_Baseline);
 
     // The caller of the top frame must be one of the following:
     //      IonJS - Ion calling into Ion.
@@ -1494,8 +1502,12 @@ jit::BailoutIonToBaseline(JSContext *cx, JitActivation *activation, JitFrameIter
         snapIter.settleOnFrame();
 
         if (frameNo > 0) {
-            TraceLogStartEvent(logger, TraceLogCreateTextId(logger, scr));
-            TraceLogStartEvent(logger, TraceLogger::Baseline);
+            // TraceLogger doesn't create entries for inlined frames. But we
+            // see them in Baseline. Here we create the start events of those
+            // entries. So they correspond to what we will see in Baseline.
+            TraceLoggerEvent scriptEvent(logger, TraceLogger_Scripts, scr);
+            TraceLogStartEvent(logger, scriptEvent);
+            TraceLogStartEvent(logger, TraceLogger_Baseline);
         }
 
         JitSpew(JitSpew_BaselineBailouts, "    FrameNo %d", frameNo);
@@ -1679,12 +1691,12 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
 
     JitSpew(JitSpew_BaselineBailouts, "  Done restoring frames");
 
-    // Check that we can get the current script's PC.
-#ifdef DEBUG
-    jsbytecode *pc;
-    cx->currentScript(&pc);
-    JitSpew(JitSpew_BaselineBailouts, "  Got pc=%p", pc);
-#endif
+    // The current native code pc may not have a corresponding ICEntry, so we
+    // store the bytecode pc in the frame for frame iterators. This pc is
+    // cleared at the end of this function. If we return false, we don't clear
+    // it: the exception handler also needs it and will clear it for us.
+    BaselineFrame *topFrame = GetTopBaselineFrame(cx);
+    topFrame->setOverridePc(bailoutInfo->resumePC);
 
     uint32_t numFrames = bailoutInfo->numFrames;
     MOZ_ASSERT(numFrames > 0);
@@ -1697,7 +1709,6 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
     // Ensure the frame has a call object if it needs one. If the scope chain
     // is nullptr, we will enter baseline code at the prologue so no need to do
     // anything in that case.
-    BaselineFrame *topFrame = GetTopBaselineFrame(cx);
     if (topFrame->scopeChain() && !EnsureHasScopeObjects(cx, topFrame))
         return false;
 
@@ -1802,7 +1813,6 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
       case Bailout_MonitorTypes:
       case Bailout_Hole:
       case Bailout_NegativeIndex:
-      case Bailout_ObjectIdentityOrTypeGuard:
       case Bailout_NonInt32Input:
       case Bailout_NonNumericInput:
       case Bailout_NonBooleanInput:
@@ -1819,6 +1829,7 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
       case Bailout_OverflowInvalidate:
       case Bailout_NonStringInputInvalidate:
       case Bailout_DoubleOutput:
+      case Bailout_ObjectIdentityOrTypeGuard:
         if (!HandleBaselineInfoBailout(cx, outerScript, innerScript))
             return false;
         break;
@@ -1846,5 +1857,7 @@ jit::FinishBailoutToBaseline(BaselineBailoutInfo *bailoutInfo)
     if (!CheckFrequentBailouts(cx, outerScript))
         return false;
 
+    // We're returning to JIT code, so we should clear the override pc.
+    topFrame->clearOverridePc();
     return true;
 }

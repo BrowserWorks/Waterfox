@@ -35,11 +35,11 @@
 #include "jswrapper.h"
 #include "prmjtime.h"
 
+#include "js/Conversions.h"
 #include "js/Date.h"
 #include "vm/DateTime.h"
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
-#include "vm/NumericConversions.h"
 #include "vm/String.h"
 #include "vm/StringBuffer.h"
 
@@ -54,6 +54,7 @@ using mozilla::IsNaN;
 
 using JS::AutoCheckCannotGC;
 using JS::GenericNaN;
+using JS::ToInteger;
 
 /*
  * The JS 'Date' object is patterned after the Java 'Date' object.
@@ -303,7 +304,7 @@ DayFromMonth(int month, bool isLeapYear)
 
 template<typename T>
 static inline int
-DayFromMonth(T month, bool isLeapYear) MOZ_DELETE;
+DayFromMonth(T month, bool isLeapYear) = delete;
 
 /* ES5 15.9.1.12 (out of order to accommodate DaylightSavingTA). */
 static double
@@ -3011,27 +3012,27 @@ FinishDateClassInit(JSContext *cx, HandleObject ctor, HandleObject proto)
     RootedValue toUTCStringFun(cx);
     RootedId toUTCStringId(cx, NameToId(cx->names().toUTCString));
     RootedId toGMTStringId(cx, NameToId(cx->names().toGMTString));
-    return baseops::GetProperty(cx, proto.as<NativeObject>(), toUTCStringId, &toUTCStringFun) &&
-           baseops::DefineGeneric(cx, proto.as<NativeObject>(), toGMTStringId, toUTCStringFun,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0);
+    return baseops::GetProperty(cx, proto.as<DateObject>(), toUTCStringId, &toUTCStringFun) &&
+           baseops::DefineGeneric(cx, proto.as<DateObject>(), toGMTStringId, toUTCStringFun,
+                                  nullptr, nullptr, 0);
 }
 
 const Class DateObject::class_ = {
     js_Date_str,
     JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_Date),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
     date_convert,
-    nullptr,                 /* finalize */
-    nullptr,                 /* call */
-    nullptr,                 /* hasInstance */
-    nullptr,                 /* construct */
-    nullptr,                 /* trace */
+    nullptr, /* finalize */
+    nullptr, /* call */
+    nullptr, /* hasInstance */
+    nullptr, /* construct */
+    nullptr, /* trace */
     {
         GenericCreateConstructor<js_Date, MAXARGS, JSFunction::FinalizeKind>,
         GenericCreatePrototype,

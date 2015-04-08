@@ -1,17 +1,14 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/zh_Hant.xml
- */
 zh_Hant{
     %%Parent{"root"}
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"阿比讓"}
@@ -691,9 +688,6 @@ zh_Hant{
         "Asia:Choibalsan"{
             ec{"喬巴山"}
         }
-        "Asia:Chongqing"{
-            ec{"重慶"}
-        }
         "Asia:Colombo"{
             ec{"可倫坡"}
         }
@@ -714,9 +708,6 @@ zh_Hant{
         }
         "Asia:Gaza"{
             ec{"加薩"}
-        }
-        "Asia:Harbin"{
-            ec{"哈爾濱"}
         }
         "Asia:Hebron"{
             ec{"赫布隆"}
@@ -747,9 +738,6 @@ zh_Hant{
         }
         "Asia:Karachi"{
             ec{"喀拉蚩"}
-        }
-        "Asia:Kashgar"{
-            ec{"喀什米爾"}
         }
         "Asia:Katmandu"{
             ec{"加德滿都"}
@@ -1132,7 +1120,7 @@ zh_Hant{
             ec{"科科斯群島"}
         }
         "Indian:Comoro"{
-            ec{"科摩羅群島"}
+            ec{"葛摩"}
         }
         "Indian:Kerguelen"{
             ec{"凱爾蓋朗島"}

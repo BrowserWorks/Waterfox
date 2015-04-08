@@ -501,7 +501,7 @@ bool TransportLayerDtls::Setup() {
   // 1.0 for stream modes.
   SSLVersionRange version_range = {
     SSL_LIBRARY_VERSION_TLS_1_1,
-    SSL_LIBRARY_VERSION_TLS_1_1 // version intolerance; bug 1052610
+    SSL_LIBRARY_VERSION_TLS_1_2
   };
 
   rv = SSL_VersionRangeSet(ssl_fd, &version_range);
@@ -592,8 +592,6 @@ static const uint32_t EnabledCiphers[] = {
   TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA
 };
 
-// Don't remove suites; TODO(mt@mozilla.com) restore; bug 1052610
-#if 0
 // Disable all NSS suites modes without PFS or with old and rusty ciphersuites.
 // Anything outside this list is governed by the usual combination of policy
 // and user preferences.
@@ -616,19 +614,6 @@ static const uint32_t DisabledCiphers[] = {
   TLS_ECDH_ECDSA_WITH_RC4_128_SHA,
   TLS_ECDH_RSA_WITH_RC4_128_SHA,
 
-  TLS_RSA_WITH_AES_128_GCM_SHA256,
-  TLS_RSA_WITH_AES_128_CBC_SHA,
-  TLS_RSA_WITH_AES_128_CBC_SHA256,
-  TLS_RSA_WITH_CAMELLIA_128_CBC_SHA,
-  TLS_RSA_WITH_AES_256_CBC_SHA,
-  TLS_RSA_WITH_AES_256_CBC_SHA256,
-  TLS_RSA_WITH_CAMELLIA_256_CBC_SHA,
-  TLS_RSA_WITH_SEED_CBC_SHA,
-  SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA,
-  TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-  TLS_RSA_WITH_RC4_128_SHA,
-  TLS_RSA_WITH_RC4_128_MD5,
-
   TLS_DHE_RSA_WITH_DES_CBC_SHA,
   TLS_DHE_DSS_WITH_DES_CBC_SHA,
   SSL_RSA_FIPS_WITH_DES_CBC_SHA,
@@ -649,7 +634,6 @@ static const uint32_t DisabledCiphers[] = {
   TLS_RSA_WITH_NULL_SHA256,
   TLS_RSA_WITH_NULL_MD5,
 };
-#endif // bug 1052610
 
 bool TransportLayerDtls::SetupCipherSuites(PRFileDesc* ssl_fd) const {
   SECStatus rv;
@@ -675,8 +659,6 @@ bool TransportLayerDtls::SetupCipherSuites(PRFileDesc* ssl_fd) const {
     }
   }
 
-// Don't remove suites; TODO(mt@mozilla.com) restore; bug 1052610
-#if 0
   for (size_t i = 0; i < PR_ARRAY_SIZE(DisabledCiphers); ++i) {
     MOZ_MTLOG(ML_INFO, LAYER_INFO << "Disabling: " << DisabledCiphers[i]);
 
@@ -696,7 +678,7 @@ bool TransportLayerDtls::SetupCipherSuites(PRFileDesc* ssl_fd) const {
       }
     }
   }
-#endif
+
   return true;
 }
 

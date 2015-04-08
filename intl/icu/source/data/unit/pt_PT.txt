@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt_PT.xml
 // *
 // ***************************************************************************
 pt_PT{
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
     units{
         acceleration{
             g-force{
@@ -111,12 +111,6 @@ pt_PT{
                 other{"{0}′"}
             }
         }
-        temperature{
-            celsius{
-                one{"{0}°C"}
-                other{"{0}°C"}
-            }
-        }
     }
     unitsShort{
         acceleration{
@@ -168,7 +162,6 @@ pt_PT{
                 dnam{"minutos"}
             }
             second{
-                dnam{"segundos"}
                 one{"{0} s"}
                 other{"{0} s"}
             }

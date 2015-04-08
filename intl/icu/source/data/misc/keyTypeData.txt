@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/bcp47/*.xml
@@ -86,6 +86,7 @@ keyTypeData:table(nofallback){
             dictionary{"dict"}
             direct{""}
             ducet{""}
+            emoji{""}
             eor{""}
             gb2312han{"gb2312"}
             phonebook{"phonebk"}

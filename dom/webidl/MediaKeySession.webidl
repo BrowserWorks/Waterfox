@@ -10,7 +10,7 @@
  * W3C liability, trademark and document use rules apply.
  */
 
-[Pref="media.eme.enabled"]
+[Pref="media.eme.apiVisible"]
 interface MediaKeySession : EventTarget {
   // error state
   readonly attribute MediaKeyError? error;
@@ -23,22 +23,21 @@ interface MediaKeySession : EventTarget {
 
   readonly attribute Promise<void> closed;
 
-  [NewObject, Throws]
-  Promise<void> generateRequest(DOMString initDataType, (ArrayBufferView or ArrayBuffer) initData);
+  readonly attribute MediaKeyStatusMap keyStatuses;
 
-  [NewObject, Throws]
+  [NewObject]
+  Promise<void> generateRequest(DOMString initDataType, BufferSource initData);
+
+  [NewObject]
   Promise<boolean> load(DOMString sessionId);
 
   // session operations
-  [NewObject, Throws]
-  Promise<void> update((ArrayBufferView or ArrayBuffer) response);
+  [NewObject]
+  Promise<void> update(BufferSource response);
 
-  [NewObject, Throws]
+  [NewObject]
   Promise<void> close();
 
-  [NewObject, Throws]
+  [NewObject]
   Promise<void> remove();
-
-  [NewObject, Throws]
-  Promise<sequence<ArrayBuffer>> getUsableKeyIds();
 };

@@ -885,7 +885,7 @@ nsContainerFrame::DoInlineIntrinsicISize(nsRenderingContext *aRenderingContext,
 
 /* virtual */
 LogicalSize
-nsContainerFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
+nsContainerFrame::ComputeAutoSize(nsRenderingContext* aRenderingContext,
                                   WritingMode aWM,
                                   const LogicalSize& aCBSize,
                                   nscoord aAvailableISize,
@@ -907,6 +907,33 @@ nsContainerFrame::ComputeAutoSize(nsRenderingContext *aRenderingContext,
     }
   } else {
     result.ISize(aWM) = availBased;
+  }
+
+  if (IsTableCaption()) {
+    // If we're a container for font size inflation, then shrink
+    // wrapping inside of us should not apply font size inflation.
+    AutoMaybeDisableFontInflation an(this);
+
+    // XXX todo: make this aware of vertical writing modes
+    uint8_t captionSide = StyleTableBorder()->mCaptionSide;
+    if (captionSide == NS_STYLE_CAPTION_SIDE_LEFT ||
+        captionSide == NS_STYLE_CAPTION_SIDE_RIGHT) {
+      result.ISize(aWM) = GetMinISize(aRenderingContext);
+    } else if (captionSide == NS_STYLE_CAPTION_SIDE_TOP ||
+               captionSide == NS_STYLE_CAPTION_SIDE_BOTTOM) {
+      // The outer frame constrains our available width to the width of
+      // the table.  Grow if our min-width is bigger than that, but not
+      // larger than the containing block width.  (It would really be nice
+      // to transmit that information another way, so we could grow up to
+      // the table's available width, but that's harder.)
+      nscoord min = GetMinISize(aRenderingContext);
+      if (min > aCBSize.ISize(aWM)) {
+        min = aCBSize.ISize(aWM);
+      }
+      if (min > result.ISize(aWM)) {
+        result.ISize(aWM) = min;
+      }
+    }
   }
   return result;
 }
@@ -1173,11 +1200,8 @@ nsContainerFrame::ReflowOverflowContainerChildren(nsPresContext*           aPres
     }
     else {
       tracker.Skip(frame, aStatus);
-      if (aReflowState.mFloatManager) {
-        nsBlockFrame::RecoverFloatsFor(frame, *aReflowState.mFloatManager,
-                                       aReflowState.GetWritingMode(),
-                                       aReflowState.ComputedWidth());
-      }
+      if (aReflowState.mFloatManager)
+        nsBlockFrame::RecoverFloatsFor(frame, *aReflowState.mFloatManager);
     }
     ConsiderChildOverflow(aOverflowRects, frame);
   }
@@ -1305,20 +1329,17 @@ nsContainerFrame::StealFramesAfter(nsIFrame* aChild)
 
 /*
  * Create a next-in-flow for aFrame. Will return the newly created
- * frame in aNextInFlowResult <b>if and only if</b> a new frame is
- * created; otherwise nullptr is returned in aNextInFlowResult.
+ * frame <b>if and only if</b> a new frame is created; otherwise
+ * nullptr is returned.
  */
-nsresult
-nsContainerFrame::CreateNextInFlow(nsIFrame*  aFrame,
-                                   nsIFrame*& aNextInFlowResult)
+nsIFrame*
+nsContainerFrame::CreateNextInFlow(nsIFrame* aFrame)
 {
   NS_PRECONDITION(GetType() != nsGkAtoms::blockFrame,
                   "you should have called nsBlockFrame::CreateContinuationFor instead");
   NS_PRECONDITION(mFrames.ContainsFrame(aFrame), "expected an in-flow child frame");
 
   nsPresContext* pc = PresContext();
-  aNextInFlowResult = nullptr;
-
   nsIFrame* nextInFlow = aFrame->GetNextInFlow();
   if (nullptr == nextInFlow) {
     // Create a continuation frame for the child frame and insert it
@@ -1331,9 +1352,9 @@ nsContainerFrame::CreateNextInFlow(nsIFrame*  aFrame,
        ("nsContainerFrame::CreateNextInFlow: frame=%p nextInFlow=%p",
         aFrame, nextInFlow));
 
-    aNextInFlowResult = nextInFlow;
+    return nextInFlow;
   }
-  return NS_OK;
+  return nullptr;
 }
 
 /**

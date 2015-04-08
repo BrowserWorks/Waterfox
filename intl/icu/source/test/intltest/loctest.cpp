@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 
@@ -182,6 +182,7 @@ LocaleTest::~LocaleTest()
 void LocaleTest::runIndexedTest( int32_t index, UBool exec, const char* &name, char* /*par*/ )
 {
     TESTCASE_AUTO_BEGIN;
+    TESTCASE_AUTO(TestBug11421);         // Must run early in list to trigger failure.
     TESTCASE_AUTO(TestBasicGetters);
     TESTCASE_AUTO(TestSimpleResourceInfo);
     TESTCASE_AUTO(TestDisplayNames);
@@ -1757,18 +1758,33 @@ LocaleTest::TestGetBaseName(void) {
     } testCases[] = {
         { "de_DE@  C o ll A t i o n   = Phonebook   ", "de_DE" },
         { "de@currency = euro; CoLLaTion   = PHONEBOOk", "de" },
-        { "ja@calendar = buddhist", "ja" }
+        { "ja@calendar = buddhist", "ja" },
+        { "de-u-co-phonebk", "de"}
     };
 
     int32_t i = 0;
 
-    for(i = 0; i < (int32_t)(sizeof(testCases)/sizeof(testCases[0])); i++) {
+    for(i = 0; i < UPRV_LENGTHOF(testCases); i++) {
         Locale loc(testCases[i].localeID);
         if(strcmp(testCases[i].baseName, loc.getBaseName())) {
             errln("For locale \"%s\" expected baseName \"%s\", but got \"%s\"",
                 testCases[i].localeID, testCases[i].baseName, loc.getBaseName());
             return;
         }
+    }
+
+    // Verify that adding a keyword to an existing Locale doesn't change the base name.
+    UErrorCode status = U_ZERO_ERROR;
+    Locale loc2("en-US");
+    if (strcmp("en_US", loc2.getBaseName())) {
+        errln("%s:%d Expected \"en_US\", got \"%s\"", __FILE__, __LINE__, loc2.getBaseName());
+    }
+    loc2.setKeywordValue("key", "value", status);
+    if (strcmp("en_US@key=value", loc2.getName())) {
+        errln("%s:%d Expected \"en_US@key=value\", got \"%s\"", __FILE__, __LINE__, loc2.getName());
+    }
+    if (strcmp("en_US", loc2.getBaseName())) {
+        errln("%s:%d Expected \"en_US\", got \"%s\"", __FILE__, __LINE__, loc2.getBaseName());
     }
 }
 
@@ -2136,6 +2152,7 @@ void LocaleTest::checkRegisteredCollators(const char *expectExtra) {
             foundExpected = TRUE;
             logln(UnicodeString("Found expected registered collator: ","") + expectStr);
         }
+        (void)foundExpected;    // Hush unused variable compiler warning.
 
         if( oldHash.geti(*locStr) == 0 ) {
             if(expectExtra != NULL && expectStr==*locStr) {
@@ -2663,4 +2680,18 @@ void LocaleTest::TestIsRightToLeft() {
     assertTrue("ckb RTL", Locale("ckb").isRightToLeft(), FALSE, TRUE);  // Sorani Kurdish
     assertFalse("fil LTR", Locale("fil").isRightToLeft());
     assertFalse("he-Zyxw LTR", Locale("he-Zyxw").isRightToLeft());
+}
+
+void LocaleTest::TestBug11421() {
+    Locale::getDefault().getBaseName();
+    int32_t numLocales;
+    const Locale *localeList = Locale::getAvailableLocales(numLocales);
+    for (int localeIndex = 0; localeIndex < numLocales; localeIndex++) {
+        const Locale &loc = localeList[localeIndex];
+        if (strncmp(loc.getName(), loc.getBaseName(), strlen(loc.getBaseName()))) {
+            errln("%s:%d loc.getName=\"%s\"; loc.getBaseName=\"%s\"",
+                __FILE__, __LINE__, loc.getName(), loc.getBaseName());
+            break;
+        }
+    }
 }

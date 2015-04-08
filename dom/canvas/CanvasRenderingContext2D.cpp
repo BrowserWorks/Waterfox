@@ -164,7 +164,7 @@ public:
   NS_DECL_ISUPPORTS
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize)
+                            nsISupports* aData, bool aAnonymize) MOZ_OVERRIDE
   {
     return MOZ_COLLECT_REPORT(
       "canvas-2d-pixels", KIND_OTHER, UNITS_BYTES,
@@ -578,7 +578,7 @@ public:
     return mTarget;
   }
 
-  DrawTarget* operator->()
+  DrawTarget* operator->() MOZ_NO_ADDREF_RELEASE_ON_RETURN
   {
     return mTarget;
   }
@@ -695,7 +695,7 @@ NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(CanvasPattern, mContext)
 class CanvasDrawObserver
 {
 public:
-  CanvasDrawObserver(CanvasRenderingContext2D* aCanvasContext);
+  explicit CanvasDrawObserver(CanvasRenderingContext2D* aCanvasContext);
 
   // Only enumerate draw calls that could affect the heuristic
   enum DrawCallType {
@@ -3254,6 +3254,22 @@ CanvasRenderingContext2D::GetHitRegionRect(Element* aElement, nsRect& aRect)
  */
 struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcessor
 {
+  CanvasBidiProcessor()
+    : nsBidiPresUtils::BidiProcessor()
+  {
+    if (Preferences::GetBool(GFX_MISSING_FONTS_NOTIFY_PREF)) {
+      mMissingFonts = new gfxMissingFontRecorder();
+    }
+  }
+
+  ~CanvasBidiProcessor()
+  {
+    // notify front-end code if we encountered missing glyphs in any script
+    if (mMissingFonts) {
+      mMissingFonts->Flush();
+    }
+  }
+
   typedef CanvasRenderingContext2D::ContextState ContextState;
 
   virtual void SetText(const char16_t* text, int32_t length, nsBidiDirection direction)
@@ -3270,7 +3286,8 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
                                      length,
                                      mThebes,
                                      mAppUnitsPerDevPixel,
-                                     flags);
+                                     flags,
+                                     mMissingFonts);
   }
 
   virtual nscoord GetWidth()
@@ -3428,7 +3445,7 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
 
         const gfxTextRun::DetailedGlyph *d = mTextRun->GetDetailedGlyphs(i);
 
-        if (glyphs[i].IsMissing()) {
+        if (glyphs[i].IsMissing() && d->mAdvance > 0) {
           newGlyph.mIndex = 0;
           if (rtl) {
             inlinePos = baselineOriginInline - advanceSum -
@@ -3515,6 +3532,10 @@ struct MOZ_STACK_CLASS CanvasBidiProcessor : public nsBidiPresUtils::BidiProcess
 
   // current font
   gfxFontGroup* mFontgrp;
+
+  // to record any unsupported characters found in the text,
+  // and notify front-end if it is interested
+  nsAutoPtr<gfxMissingFontRecorder> mMissingFonts;
 
   // dev pixel conversion factor
   int32_t mAppUnitsPerDevPixel;
@@ -4435,13 +4456,15 @@ CanvasRenderingContext2D::DrawDirectlyToCanvas(
 
   SVGImageContext svgContext(scaledImageSize, Nothing(), CurrentState().globalAlpha);
 
-  nsresult rv = image.mImgContainer->
+  auto result = image.mImgContainer->
     Draw(context, scaledImageSize,
          ImageRegion::Create(gfxRect(src.x, src.y, src.width, src.height)),
          image.mWhichFrame, GraphicsFilter::FILTER_GOOD,
          Some(svgContext), modifiedFlags);
 
-  NS_ENSURE_SUCCESS_VOID(rv);
+  if (result != DrawResult::SUCCESS) {
+    NS_WARNING("imgIContainer::Draw failed");
+  }
 }
 
 void

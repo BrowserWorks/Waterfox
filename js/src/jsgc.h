@@ -26,10 +26,6 @@ namespace js {
 
 class AutoLockGC;
 
-namespace gc {
-class ForkJoinNursery;
-}
-
 unsigned GetCPUCount();
 
 enum HeapState {
@@ -61,10 +57,6 @@ enum State {
     COMPACT
 };
 
-/* Return a printable string for the given kind, for diagnostic purposes. */
-const char *
-TraceKindAsAscii(JSGCTraceKind kind);
-
 /* Map from C++ type to alloc kind. JSObject does not have a 1:1 mapping, so must use Arena::thingSize. */
 template <typename T> struct MapTypeToFinalizeKind {};
 template <> struct MapTypeToFinalizeKind<JSScript>          { static const AllocKind kind = FINALIZE_SCRIPT; };
@@ -79,7 +71,6 @@ template <> struct MapTypeToFinalizeKind<JSExternalString>  { static const Alloc
 template <> struct MapTypeToFinalizeKind<JS::Symbol>        { static const AllocKind kind = FINALIZE_SYMBOL; };
 template <> struct MapTypeToFinalizeKind<jit::JitCode>      { static const AllocKind kind = FINALIZE_JITCODE; };
 
-#if defined(JSGC_GENERATIONAL) || defined(DEBUG)
 static inline bool
 IsNurseryAllocable(AllocKind kind)
 {
@@ -112,45 +103,6 @@ IsNurseryAllocable(AllocKind kind)
     JS_STATIC_ASSERT(JS_ARRAY_LENGTH(map) == FINALIZE_LIMIT);
     return map[kind];
 }
-#endif
-
-#if defined(JSGC_FJGENERATIONAL)
-// This is separate from IsNurseryAllocable() so that the latter can evolve
-// without worrying about what the ForkJoinNursery's needs are, and vice
-// versa to some extent.
-static inline bool
-IsFJNurseryAllocable(AllocKind kind)
-{
-    MOZ_ASSERT(kind >= 0 && unsigned(kind) < FINALIZE_LIMIT);
-    static const bool map[] = {
-        false,     /* FINALIZE_OBJECT0 */
-        true,      /* FINALIZE_OBJECT0_BACKGROUND */
-        false,     /* FINALIZE_OBJECT2 */
-        true,      /* FINALIZE_OBJECT2_BACKGROUND */
-        false,     /* FINALIZE_OBJECT4 */
-        true,      /* FINALIZE_OBJECT4_BACKGROUND */
-        false,     /* FINALIZE_OBJECT8 */
-        true,      /* FINALIZE_OBJECT8_BACKGROUND */
-        false,     /* FINALIZE_OBJECT12 */
-        true,      /* FINALIZE_OBJECT12_BACKGROUND */
-        false,     /* FINALIZE_OBJECT16 */
-        true,      /* FINALIZE_OBJECT16_BACKGROUND */
-        false,     /* FINALIZE_SCRIPT */
-        false,     /* FINALIZE_LAZY_SCRIPT */
-        false,     /* FINALIZE_SHAPE */
-        false,     /* FINALIZE_ACCESSOR_SHAPE */
-        false,     /* FINALIZE_BASE_SHAPE */
-        false,     /* FINALIZE_TYPE_OBJECT */
-        false,     /* FINALIZE_FAT_INLINE_STRING */
-        false,     /* FINALIZE_STRING */
-        false,     /* FINALIZE_EXTERNAL_STRING */
-        false,     /* FINALIZE_SYMBOL */
-        false,     /* FINALIZE_JITCODE */
-    };
-    JS_STATIC_ASSERT(JS_ARRAY_LENGTH(map) == FINALIZE_LIMIT);
-    return map[kind];
-}
-#endif
 
 static inline bool
 IsBackgroundFinalized(AllocKind kind)
@@ -503,7 +455,6 @@ class ArenaList {
     }
 
 #ifdef JSGC_COMPACTING
-    size_t countUsedCells();
     ArenaHeader *removeRemainingArenas(ArenaHeader **arenap, const AutoLockGC &lock);
     ArenaHeader *pickArenasToRelocate(JSRuntime *runtime);
     ArenaHeader *relocateArenas(ArenaHeader *toRelocate, ArenaHeader *relocated);
@@ -645,7 +596,7 @@ class ArenaLists
     ArenaHeader *savedEmptyObjectArenas;
 
   public:
-    ArenaLists(JSRuntime *rt) : runtime_(rt) {
+    explicit ArenaLists(JSRuntime *rt) : runtime_(rt) {
         for (size_t i = 0; i != FINALIZE_LIMIT; ++i)
             freeLists[i].initAsEmpty();
         for (size_t i = 0; i != FINALIZE_LIMIT; ++i)
@@ -952,17 +903,6 @@ TraceRuntime(JSTracer *trc);
 extern void
 ReleaseAllJITCode(FreeOp *op);
 
-/*
- * Kinds of js_GC invocation.
- */
-typedef enum JSGCInvocationKind {
-    /* Normal invocation. */
-    GC_NORMAL           = 0,
-
-    /* Minimize GC triggers and release empty GC chunks right away. */
-    GC_SHRINK             = 1
-} JSGCInvocationKind;
-
 extern void
 PrepareForDebugGC(JSRuntime *rt);
 
@@ -1223,8 +1163,6 @@ namespace gc {
 void
 MergeCompartments(JSCompartment *source, JSCompartment *target);
 
-#if defined(JSGC_GENERATIONAL) || defined(JSGC_COMPACTING)
-
 /*
  * This structure overlays a Cell in the Nursery and re-purposes its memory
  * for managing the Nursery collection process.
@@ -1232,7 +1170,6 @@ MergeCompartments(JSCompartment *source, JSCompartment *target);
 class RelocationOverlay
 {
     friend class MinorCollectionTracer;
-    friend class ForkJoinNursery;
 
     /* The low bit is set so this should never equal a normal pointer. */
     static const uintptr_t Relocated = uintptr_t(0xbad0bad1);
@@ -1331,14 +1268,6 @@ MaybeForwarded(T t)
 {
     return IsForwarded(t) ? Forwarded(t) : t;
 }
-
-#else
-
-template <typename T> inline bool IsForwarded(T t) { return false; }
-template <typename T> inline T Forwarded(T t) { return t; }
-template <typename T> inline T MaybeForwarded(T t) { return t; }
-
-#endif // JSGC_GENERATIONAL || JSGC_COMPACTING
 
 #ifdef JSGC_HASH_TABLE_CHECKS
 
@@ -1466,22 +1395,21 @@ class ZoneList
 
   public:
     ZoneList();
-    explicit ZoneList(Zone *singleZone);
+    ~ZoneList();
 
     bool isEmpty() const;
     Zone *front() const;
 
     void append(Zone *zone);
-    void append(ZoneList& list);
-    Zone *removeFront();
-
     void transferFrom(ZoneList &other);
+    void removeFront();
 
   private:
+    explicit ZoneList(Zone *singleZone);
     void check() const;
 
-    ZoneList(const ZoneList &other) MOZ_DELETE;
-    ZoneList &operator=(const ZoneList &other) MOZ_DELETE;
+    ZoneList(const ZoneList &other) = delete;
+    ZoneList &operator=(const ZoneList &other) = delete;
 };
 
 } /* namespace gc */

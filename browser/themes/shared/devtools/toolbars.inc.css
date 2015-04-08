@@ -161,25 +161,25 @@
 }
 
 /* Button States */
-.theme-dark .devtools-toolbarbutton:hover,
-.theme-dark #toolbox-buttons .devtools-toolbarbutton[text-as-image]:hover,
-.theme-dark .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]):hover {
+.theme-dark .devtools-toolbarbutton:not([disabled]):hover,
+.theme-dark #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover,
+.theme-dark .devtools-toolbarbutton:not([disabled])[label]:not([text-as-image]):not([type=menu-button]):hover {
   background: rgba(0, 0, 0, .3); /* Splitters */
 }
-.theme-light .devtools-toolbarbutton:hover,
-.theme-light #toolbox-buttons .devtools-toolbarbutton[text-as-image]:hover,
-.theme-light .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]):hover {
+.theme-light .devtools-toolbarbutton:not([disabled]):hover,
+.theme-light #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover,
+.theme-light .devtools-toolbarbutton:not([disabled])[label]:not([text-as-image]):not([type=menu-button]):hover {
   background: rgba(170, 170, 170, .3); /* Splitters */
 }
 
-.theme-dark .devtools-toolbarbutton:hover:active,
-.theme-dark #toolbox-buttons .devtools-toolbarbutton[text-as-image]:hover:active,
-.theme-dark .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]):hover:active {
+.theme-dark .devtools-toolbarbutton:not([disabled]):hover:active,
+.theme-dark #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover:active,
+.theme-dark .devtools-toolbarbutton:not([disabled])[label]:not([text-as-image]):not([type=menu-button]):hover:active {
   background: rgba(0, 0, 0, .4); /* Splitters */
 }
-.theme-light .devtools-toolbarbutton:hover:active,
-.theme-light #toolbox-buttons .devtools-toolbarbutton[text-as-image]:hover:active,
-.theme-light .devtools-toolbarbutton[label]:not([text-as-image]):not([type=menu-button]):hover:active {
+.theme-light .devtools-toolbarbutton:not([disabled]):hover:active,
+.theme-light #toolbox-buttons .devtools-toolbarbutton:not([disabled])[text-as-image]:hover:active,
+.theme-light .devtools-toolbarbutton:not([disabled])[label]:not([text-as-image]):not([type=menu-button]):hover:active {
   background: rgba(170, 170, 170, .4); /* Splitters */
 }
 
@@ -242,6 +242,67 @@
 
 .devtools-separator + .devtools-toolbarbutton {
   -moz-margin-start: 1px;
+}
+
+/* HTML buttons, similar to toolbar buttons, but work in HTML documents */
+
+.devtools-button {
+  border: 0 solid var(--theme-splitter-color);
+  background: var(--theme-toolbar-background);
+  margin: 0;
+  padding: 0;
+  min-width: 32px;
+  min-height: 18px;
+  /* The icon is absolutely positioned in the button using ::before */
+  position: relative;
+}
+
+.devtools-button[standalone] {
+  min-height: 32px;
+  border-width: 1px;
+}
+
+/* Button States */
+.theme-dark .devtools-button:not([disabled]):hover {
+  background: rgba(0, 0, 0, .3); /* Splitters */
+}
+.theme-light .devtools-button:not([disabled]):hover {
+  background: rgba(170, 170, 170, .3); /* Splitters */
+}
+
+.theme-dark .devtools-button:not([disabled]):hover:active {
+  background: rgba(0, 0, 0, .4); /* Splitters */
+}
+.theme-light .devtools-button:not([disabled]):hover:active {
+  background: rgba(170, 170, 170, .4); /* Splitters */
+}
+
+/* Menu type buttons and checked states */
+.theme-dark .devtools-button[checked] {
+  background: rgba(29, 79, 115, .7) !important; /* Select highlight blue */
+  color: var(--theme-selection-color);
+}
+
+.theme-light .devtools-button[checked] {
+  background: rgba(76, 158, 217, .2) !important; /* Select highlight blue */
+}
+
+.devtools-button::before {
+  content: "";
+  display: block;
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  margin: -8px 0 0 -8px;
+  background-repeat: no-repeat;
+}
+
+@media (min-resolution: 2dppx) {
+  .devtools-button::before {
+    background-size: 32px;
+  }
 }
 
 /* Text input */
@@ -647,7 +708,7 @@
 
 .devtools-tabbar {
   -moz-appearance: none;
-  min-height: 28px;
+  min-height: 24px;
   border: 0px solid;
   border-bottom-width: 1px;
   padding: 0;
@@ -672,7 +733,7 @@
   -moz-binding: url("chrome://global/content/bindings/general.xml#control-item");
   -moz-box-align: center;
   min-width: 32px;
-  min-height: 28px;
+  min-height: 24px;
   max-width: 127px;
   margin: 0;
   padding: 0;
@@ -822,7 +883,8 @@
 .theme-light #canvas-debugging-empty-notice-button .button-icon,
 .theme-light #requests-menu-perf-notice-button .button-icon,
 .theme-light #requests-menu-network-summary-button .button-icon,
-.theme-light .event-tooltip-debugger-icon {
+.theme-light .event-tooltip-debugger-icon,
+.theme-light .devtools-button::before {
   filter: url(filters.svg#invert);
 }
 
@@ -853,3 +915,13 @@
 .devtools-invisible-splitter {
   border-color: transparent;
 }
+
+.devtools-horizontal-splitter {
+  border-bottom: 1px solid var(--theme-splitter-color);
+}
+
+.devtools-side-splitter {
+  -moz-border-end: 1px solid var(--theme-splitter-color);
+  border-color: var(--theme-splitter-color); /* Needed for responsive container at low width. */
+}
+

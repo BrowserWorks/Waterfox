@@ -9,6 +9,8 @@
 
 #include "jsapi-tests/tests.h"
 
+JSObject *keyDelegate = nullptr;
+
 BEGIN_TEST(testWeakMap_basicOperations)
 {
     JS::RootedObject map(cx, JS::NewWeakMapObject(cx));
@@ -81,8 +83,7 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     JS::RootedObject delegate(cx, newDelegate());
     CHECK(delegate);
-
-    SetKeyDelegate(key, delegate);
+    keyDelegate = delegate;
 
     /*
      * Perform an incremental GC, introducing an unmarked CCW to force the map
@@ -117,20 +118,22 @@ BEGIN_TEST(testWeakMap_keyDelegates)
 
     /* Check that when the delegate becomes unreachable the entry is removed. */
     delegate = nullptr;
+    keyDelegate = nullptr;
     JS_GC(rt);
     CHECK(checkSize(map, 0));
 
     return true;
 }
 
-static void SetKeyDelegate(JSObject *key, JSObject *delegate)
+static void DelegateObjectMoved(JSObject *obj, const JSObject *old)
 {
-    JS_SetPrivate(key, delegate);
+    MOZ_RELEASE_ASSERT(keyDelegate == old);
+    keyDelegate = obj;
 }
 
 static JSObject *GetKeyDelegate(JSObject *obj)
 {
-    return static_cast<JSObject*>(JS_GetPrivate(obj));
+    return keyDelegate;
 }
 
 JSObject *newKey()
@@ -138,18 +141,18 @@ JSObject *newKey()
     static const js::Class keyClass = {
         "keyWithDelgate",
         JSCLASS_HAS_PRIVATE | JSCLASS_HAS_RESERVED_SLOTS(1),
-        JS_PropertyStub,         /* addProperty */
-        JS_DeletePropertyStub,   /* delProperty */
-        JS_PropertyStub,         /* getProperty */
-        JS_StrictPropertyStub,   /* setProperty */
-        JS_EnumerateStub,
-        JS_ResolveStub,
-        JS_ConvertStub,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
+        nullptr, /* addProperty */
+        nullptr, /* delProperty */
+        nullptr, /* getProperty */
+        nullptr, /* setProperty */
+        nullptr, /* enumerate */
+        nullptr, /* resolve */
+        nullptr, /* convert */
+        nullptr, /* finalize */
+        nullptr, /* call */
+        nullptr, /* hasInstance */
+        nullptr, /* construct */
+        nullptr, /* trace */
         JS_NULL_CLASS_SPEC,
         {
             nullptr,
@@ -162,13 +165,11 @@ JSObject *newKey()
 
     JS::RootedObject key(cx);
     key = JS_NewObject(cx,
-                       reinterpret_cast<const JSClass *>(&keyClass),
+                       Jsvalify(&keyClass),
                        JS::NullPtr(),
                        JS::NullPtr());
     if (!key)
         return nullptr;
-
-    SetKeyDelegate(key, nullptr);
 
     return key;
 }
@@ -197,28 +198,38 @@ JSObject *newCCW(JS::HandleObject sourceZone, JS::HandleObject destZone)
 
 JSObject *newDelegate()
 {
-    static const JSClass delegateClass = {
+    static const js::Class delegateClass = {
         "delegate",
         JSCLASS_GLOBAL_FLAGS | JSCLASS_HAS_RESERVED_SLOTS(1),
-        JS_PropertyStub,
-        JS_DeletePropertyStub,
-        JS_PropertyStub,
-        JS_StrictPropertyStub,
-        JS_EnumerateStub,
-        JS_ResolveStub,
-        JS_ConvertStub,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        JS_GlobalObjectTraceHook
+        nullptr, /* addProperty */
+        nullptr, /* delProperty */
+        nullptr, /* getProperty */
+        nullptr, /* setProperty */
+        nullptr, /* enumerate */
+        nullptr, /* resolve */
+        nullptr, /* convert */
+        nullptr, /* finalize */
+        nullptr, /* call */
+        nullptr, /* hasInstance */
+        nullptr, /* construct */
+        JS_GlobalObjectTraceHook,
+        JS_NULL_CLASS_SPEC,
+        {
+            nullptr,
+            nullptr,
+            false,
+            nullptr,
+            DelegateObjectMoved
+        },
+        JS_NULL_OBJECT_OPS
     };
 
     /* Create the global object. */
     JS::CompartmentOptions options;
     options.setVersion(JSVERSION_LATEST);
     JS::RootedObject global(cx);
-    global = JS_NewGlobalObject(cx, &delegateClass, nullptr, JS::FireOnNewGlobalHook, options);
+    global = JS_NewGlobalObject(cx, Jsvalify(&delegateClass), nullptr, JS::FireOnNewGlobalHook,
+                                options);
     JS_SetReservedSlot(global, 0, JS::Int32Value(42));
 
     /*

@@ -76,7 +76,7 @@ loop.shared.views.FeedbackView = (function(l10n) {
         video_quality: l10n.get("feedback_category_video_quality"),
         disconnected : l10n.get("feedback_category_was_disconnected"),
         confusing:     l10n.get("feedback_category_confusing"),
-        other:         l10n.get("feedback_category_other")
+        other:         l10n.get("feedback_category_other2")
       };
     },
 
@@ -119,8 +119,7 @@ loop.shared.views.FeedbackView = (function(l10n) {
     handleCategoryChange: function(event) {
       var category = event.target.value;
       this.setState({
-        category: category,
-        description: category == "other" ? "" : this._getCategories()[category]
+        category: category
       });
       if (category == "other") {
         this.refs.description.getDOMNode().focus();
@@ -129,10 +128,6 @@ loop.shared.views.FeedbackView = (function(l10n) {
 
     handleDescriptionFieldChange: function(event) {
       this.setState({description: event.target.value});
-    },
-
-    handleDescriptionFieldFocus: function(event) {
-      this.setState({category: "other", description: ""});
     },
 
     handleFormSubmit: function(event) {
@@ -146,8 +141,6 @@ loop.shared.views.FeedbackView = (function(l10n) {
     },
 
     render: function() {
-      var descriptionDisplayValue = this.state.category === "other" ?
-                                    this.state.description : "";
       return (
         <FeedbackLayout title={l10n.get("feedback_what_makes_you_sad")}
                         reset={this.props.reset}>
@@ -157,8 +150,7 @@ loop.shared.views.FeedbackView = (function(l10n) {
               <input type="text" ref="description" name="description"
                 className="feedback-description"
                 onChange={this.handleDescriptionFieldChange}
-                onFocus={this.handleDescriptionFieldFocus}
-                value={descriptionDisplayValue}
+                value={this.state.description}
                 placeholder={
                   l10n.get("feedback_custom_category_text_placeholder")} />
             </p>
@@ -190,6 +182,13 @@ loop.shared.views.FeedbackView = (function(l10n) {
 
     componentDidMount: function() {
       this._timer = setInterval(function() {
+      if (this.state.countdown == 1) {
+        clearInterval(this._timer);
+        if (this.props.onAfterFeedbackReceived) {
+          this.props.onAfterFeedbackReceived();
+        }
+        return;
+      }
         this.setState({countdown: this.state.countdown - 1});
       }.bind(this), 1000);
     },
@@ -201,12 +200,6 @@ loop.shared.views.FeedbackView = (function(l10n) {
     },
 
     render: function() {
-      if (this.state.countdown < 1) {
-        clearInterval(this._timer);
-        if (this.props.onAfterFeedbackReceived) {
-          this.props.onAfterFeedbackReceived();
-        }
-      }
       return (
         <FeedbackLayout title={l10n.get("feedback_thank_you_heading")}>
           <p className="info thank-you">{

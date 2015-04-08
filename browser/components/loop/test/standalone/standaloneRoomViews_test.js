@@ -40,12 +40,13 @@ describe("loop.standaloneRoomViews", function() {
   describe("StandaloneRoomView", function() {
     function mountTestComponent() {
       return TestUtils.renderIntoDocument(
-        loop.standaloneRoomViews.StandaloneRoomView({
-          dispatcher: dispatcher,
-          activeRoomStore: activeRoomStore,
-          feedbackStore: feedbackStore,
-          helper: new loop.shared.utils.Helper()
-        }));
+        React.createElement(
+          loop.standaloneRoomViews.StandaloneRoomView, {
+            dispatcher: dispatcher,
+            activeRoomStore: activeRoomStore,
+            feedbackStore: feedbackStore,
+            helper: new loop.shared.utils.Helper()
+          }));
     }
 
     function expectActionDispatched(view) {
@@ -341,6 +342,26 @@ describe("loop.standaloneRoomViews", function() {
             expect(view.getDOMNode().querySelector(".local-stream-audio"))
               .not.eql(null);
           });
+      });
+
+      describe("Marketplace hidden iframe", function() {
+
+        it("should set src when the store state change",
+           function(done) {
+
+          var marketplace = view.getDOMNode().querySelector("#marketplace");
+          expect(marketplace.src).to.be.equal("");
+
+          activeRoomStore.setStoreState({
+            marketplaceSrc: "http://market/",
+            onMarketplaceMessage: function () {}
+          });
+
+          view.forceUpdate(function() {
+            expect(marketplace.src).to.be.equal("http://market/");
+            done();
+          });
+        });
       });
     });
   });

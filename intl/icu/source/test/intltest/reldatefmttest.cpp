@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines Corporation and    *
+* Copyright (C) 2013-2015, International Business Machines Corporation and    *
 * others. All Rights Reserved.                                                *
 *******************************************************************************
 *
@@ -462,7 +462,7 @@ static WithoutQuantityExpected kEnglishNoQuantityNarrow[] = {
 
 static WithoutQuantityExpected kSpanishNoQuantity[] = {
         {UDAT_DIRECTION_NEXT_2, UDAT_ABSOLUTE_DAY, "pasado ma\\u00F1ana"},
-        {UDAT_DIRECTION_LAST_2, UDAT_ABSOLUTE_DAY, "antes de ayer"}
+        {UDAT_DIRECTION_LAST_2, UDAT_ABSOLUTE_DAY, "anteayer"}
 };
 
 class RelativeDateTimeFormatterTest : public IntlTest {

@@ -311,7 +311,8 @@ enum ParseNodeKind
  *                                     pn_left: PNK_NAME with pn_used true and
  *                                              pn_lexdef (NOT pn_expr) set
  *                                     pn_right: initializer
- * PNK_RETURN   unary       pn_kid: return expr or null
+ * PNK_RETURN   binary      pn_left: return expr or null
+ *                          pn_right: .genrval name or null
  * PNK_SEMI     unary       pn_kid: expr or null statement
  *                          pn_prologue: true if Directive Prologue member
  *                              in original source, not introduced via
@@ -400,8 +401,8 @@ enum ParseNodeKind
  * PNK_COMPUTED_NAME unary  ES6 ComputedPropertyName.
  *                          pn_kid: the AssignmentExpression inside the square brackets
  * PNK_NAME,    name        pn_atom: name, string, or object atom
- * PNK_STRING               pn_op: JSOP_NAME, JSOP_STRING, or JSOP_OBJECT
- *                          If JSOP_NAME, pn_op may be JSOP_*ARG or JSOP_*VAR
+ * PNK_STRING               pn_op: JSOP_GETNAME, JSOP_STRING, or JSOP_OBJECT
+ *                          If JSOP_GETNAME, pn_op may be JSOP_*ARG or JSOP_*VAR
  *                          with pn_cookie telling (staticLevel, slot) (see
  *                          jsscript.h's UPVAR macros) and pn_dflags telling
  *                          const-ness and static analysis results
@@ -465,8 +466,8 @@ class ParseNode
                         pn_used   : 1,  /* name node is on a use-chain */
                         pn_defn   : 1;  /* this node is a Definition */
 
-    ParseNode(const ParseNode &other) MOZ_DELETE;
-    void operator=(const ParseNode &other) MOZ_DELETE;
+    ParseNode(const ParseNode &other) = delete;
+    void operator=(const ParseNode &other) = delete;
 
   public:
     ParseNode(ParseNodeKind kind, JSOp op, ParseNodeArity arity)

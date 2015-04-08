@@ -49,6 +49,9 @@ class IDBTransaction MOZ_FINAL
   : public IDBWrapperCache
   , public nsIRunnable
 {
+  class WorkerFeature;
+  friend class WorkerFeature;
+
 public:
   enum Mode
   {
@@ -74,6 +77,7 @@ private:
   nsTArray<nsString> mObjectStoreNames;
   nsTArray<nsRefPtr<IDBObjectStore>> mObjectStores;
   nsTArray<nsRefPtr<IDBObjectStore>> mDeletedObjectStores;
+  nsAutoPtr<WorkerFeature> mWorkerFeature;
 
   // Tagged with mMode. If mMode is VERSION_CHANGE then mBackgroundActor will be
   // a BackgroundVersionChangeTransactionChild. Otherwise it will be a
@@ -83,14 +87,11 @@ private:
     BackgroundVersionChangeTransactionChild* mVersionChangeBackgroundActor;
   } mBackgroundActor;
 
+  const int64_t mLoggingSerialNumber;
 
   // Only used for VERSION_CHANGE transactions.
   int64_t mNextObjectStoreId;
   int64_t mNextIndexId;
-
-#ifdef MOZ_ENABLE_PROFILER_SPS
-  uint64_t mSerialNumber;
-#endif
 
   nsresult mAbortCode;
   uint32_t mPendingRequestCount;
@@ -102,6 +103,7 @@ private:
   Mode mMode;
 
   bool mCreating;
+  bool mRegistered;
   bool mAbortedByScript;
 
 #ifdef DEBUG
@@ -245,14 +247,13 @@ public:
   void
   Abort(nsresult aAbortCode);
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
-  uint32_t
-  GetSerialNumber() const
+  int64_t
+  LoggingSerialNumber() const
   {
     AssertIsOnOwningThread();
-    return mSerialNumber;
+
+    return mLoggingSerialNumber;
   }
-#endif
 
   nsPIDOMWindow*
   GetParentObject() const;

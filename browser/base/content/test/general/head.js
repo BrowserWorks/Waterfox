@@ -463,28 +463,35 @@ function waitForDocLoadAndStopIt(aExpectedURL, aBrowser=gBrowser.selectedBrowser
  * @return promise
  */
 function waitForDocLoadComplete(aBrowser=gBrowser) {
-  let deferred = Promise.defer();
-  let progressListener = {
-    onStateChange: function (webProgress, req, flags, status) {
-      let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
-                    Ci.nsIWebProgressListener.STATE_STOP;
-      info("Saw state " + flags.toString(16) + " and status " + status.toString(16));
+  return new Promise(resolve => {
+    let listener = {
+      onStateChange: function (webProgress, req, flags, status) {
+        let docStop = Ci.nsIWebProgressListener.STATE_IS_NETWORK |
+                      Ci.nsIWebProgressListener.STATE_STOP;
+        info("Saw state " + flags.toString(16) + " and status " + status.toString(16));
 
-      // When a load needs to be retargetted to a new process it is cancelled
-      // with NS_BINDING_ABORTED so ignore that case
-      if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
-        aBrowser.removeProgressListener(progressListener);
-        info("Browser loaded " + aBrowser.contentWindow.location);
-        deferred.resolve();
-      }
-    },
-    QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
-                                           Ci.nsISupportsWeakReference])
-  };
-  aBrowser.addProgressListener(progressListener);
-  info("Waiting for browser load");
-  return deferred.promise;
+        // When a load needs to be retargetted to a new process it is cancelled
+        // with NS_BINDING_ABORTED so ignore that case
+        if ((flags & docStop) == docStop && status != Cr.NS_BINDING_ABORTED) {
+          aBrowser.removeProgressListener(this);
+          waitForDocLoadComplete.listeners.delete(this);
+          info("Browser loaded " + aBrowser.contentWindow.location);
+          resolve();
+        }
+      },
+      QueryInterface: XPCOMUtils.generateQI([Ci.nsIWebProgressListener,
+                                             Ci.nsISupportsWeakReference])
+    };
+    aBrowser.addProgressListener(listener);
+    waitForDocLoadComplete.listeners.add(listener);
+    info("Waiting for browser load");
+  });
 }
+
+// Keep a set of progress listeners for waitForDocLoadComplete() to make sure
+// they're not GC'ed before we saw the page load.
+waitForDocLoadComplete.listeners = new Set();
+registerCleanupFunction(() => waitForDocLoadComplete.listeners.clear());
 
 let FullZoomHelper = {
 
@@ -790,28 +797,24 @@ function promiseNotificationShown(notification) {
   return panelPromise;
 }
 
-// NOTE: If you're using this, and attempting to interact with one of the
-// autocomplete results, your test is likely to be unreliable on Linux.
-// See bug 1073339.
-let gURLBarOnSearchComplete = null;
-function promiseSearchComplete() {
-  info("Waiting for onSearchComplete");
-  return new Promise(resolve => {
-    if (!gURLBarOnSearchComplete) {
-      gURLBarOnSearchComplete = gURLBar.onSearchComplete;
-      registerCleanupFunction(() => {
-        gURLBar.onSearchComplete = gURLBarOnSearchComplete;
-      });
+function promiseSearchComplete(win = window) {
+  return promisePopupShown(win.gURLBar.popup).then(() => {
+    function searchIsComplete() {
+      return win.gURLBar.controller.searchStatus >=
+        Ci.nsIAutoCompleteController.STATUS_COMPLETE_NO_MATCH;
     }
 
-    gURLBar.onSearchComplete = function () {
-      ok(gURLBar.popupOpen, "The autocomplete popup is correctly open");
-      gURLBarOnSearchComplete.apply(gURLBar);
-      resolve();
-    }
-  }).then(() => {
-    // On Linux, the popup may or may not be open at this stage. So we need
-    // additional checks to ensure we wait long enough.
-    return promisePopupShown(gURLBar.popup);
+    // Wait until there are at least two matches.
+    return new Promise(resolve => waitForCondition(searchIsComplete, resolve));
   });
+}
+
+function promiseAutocompleteResultPopup(inputText, win = window) {
+  waitForFocus(() => {
+    win.gURLBar.focus();
+    win.gURLBar.value = inputText;
+    win.gURLBar.controller.startSearch(inputText);
+  }, win);
+
+  return promiseSearchComplete(win);
 }

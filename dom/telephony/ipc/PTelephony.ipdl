@@ -8,6 +8,8 @@ include protocol PContent;
 include protocol PTelephonyRequest;
 include TelephonyTypes;
 
+using nsTelephonyCallInfo from "mozilla/dom/telephony/TelephonyIPCSerializer.h";
+
 namespace mozilla {
 namespace dom {
 namespace telephony {
@@ -24,10 +26,15 @@ struct DialRequest
   bool isEmergency;
 };
 
-struct USSDRequest
+struct SendUSSDRequest
 {
   uint32_t clientId;
   nsString ussd;
+};
+
+struct CancelUSSDRequest
+{
+  uint32_t clientId;
 };
 
 struct HangUpConferenceRequest
@@ -35,12 +42,57 @@ struct HangUpConferenceRequest
   uint32_t clientId;
 };
 
+struct AnswerCallRequest
+{
+  uint32_t clientId;
+  uint32_t callIndex;
+};
+
+struct HangUpCallRequest
+{
+  uint32_t clientId;
+  uint32_t callIndex;
+};
+
+struct RejectCallRequest
+{
+  uint32_t clientId;
+  uint32_t callIndex;
+};
+
+struct HoldCallRequest
+{
+  uint32_t clientId;
+  uint32_t callIndex;
+};
+
+struct ResumeCallRequest
+{
+  uint32_t clientId;
+  uint32_t callIndex;
+};
+
+struct SendTonesRequest
+{
+  uint32_t clientId;
+  nsString dtmfChars;
+  uint32_t pauseDuration;
+  uint32_t toneDuration;
+};
+
 union IPCTelephonyRequest
 {
   EnumerateCallsRequest;
   DialRequest;
-  USSDRequest;
+  SendUSSDRequest;
+  CancelUSSDRequest;
   HangUpConferenceRequest;
+  AnswerCallRequest;
+  HangUpCallRequest;
+  RejectCallRequest;
+  HoldCallRequest;
+  ResumeCallRequest;
+  SendTonesRequest;
 };
 
 sync protocol PTelephony {
@@ -50,7 +102,7 @@ sync protocol PTelephony {
 child:
   NotifyCallError(uint32_t aClientId, int32_t aCallIndex, nsString aError);
 
-  NotifyCallStateChanged(uint32_t aClientId, IPCCallStateData aData);
+  NotifyCallStateChanged(nsTelephonyCallInfo aInfo);
 
   NotifyCdmaCallWaiting(uint32_t aClientId, IPCCdmaWaitingCallData aData);
 
@@ -75,16 +127,6 @@ parent:
   RegisterListener();
 
   UnregisterListener();
-
-  HangUpCall(uint32_t aClientId, uint32_t aCallIndex);
-
-  AnswerCall(uint32_t aClientId, uint32_t aCallIndex);
-
-  RejectCall(uint32_t aClientId, uint32_t aCallIndex);
-
-  HoldCall(uint32_t aClientId, uint32_t aCallIndex);
-
-  ResumeCall(uint32_t aClientId, uint32_t aCallIndex);
 
   ConferenceCall(uint32_t aClientId);
 

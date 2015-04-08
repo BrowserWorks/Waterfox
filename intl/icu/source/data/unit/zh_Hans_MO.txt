@@ -1,13 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hans_MO.xml
 // *
 // ***************************************************************************
 zh_Hans_MO{
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
     units{
         compound{
             per{"{0}/{1}"}
@@ -15,12 +15,6 @@ zh_Hans_MO{
         duration{
             second{
                 other{"{0}秒"}
-            }
-        }
-        proportion{
-            karat{
-                dnam{"开"}
-                other{"{0}开"}
             }
         }
         temperature{
@@ -31,26 +25,6 @@ zh_Hans_MO{
         }
     }
     unitsNarrow{
-        length{
-            foot{
-                other{"{0}英尺"}
-            }
-            inch{
-                other{"{0}英寸"}
-            }
-            light-year{
-                other{"{0}光年"}
-            }
-            mile{
-                other{"{0}英里"}
-            }
-            picometer{
-                other{"{0}皮米"}
-            }
-            yard{
-                other{"{0}码"}
-            }
-        }
         temperature{
             celsius{
                 other{"{0}°C"}
@@ -58,42 +32,8 @@ zh_Hans_MO{
         }
     }
     unitsShort{
-        acceleration{
-            g-force{
-                other{"{0}G力"}
-            }
-        }
-        area{
-            hectare{
-                other{"{0}公顷"}
-            }
-            square-foot{
-                other{"{0}平方英尺"}
-            }
-        }
-        length{
-            light-year{
-                other{"{0}光年"}
-            }
-            meter{
-                other{"{0}米"}
-            }
-            picometer{
-                other{"{0}皮米"}
-            }
-            yard{
-                other{"{0}码"}
-            }
-        }
-        proportion{
-            karat{
-                dnam{"开"}
-                other{"{0}开"}
-            }
-        }
         temperature{
             kelvin{
-                dnam{"开氏度"}
                 other{"{0}°K"}
             }
         }

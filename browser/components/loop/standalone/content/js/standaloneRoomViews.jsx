@@ -20,8 +20,10 @@ loop.standaloneRoomViews = (function(mozL10n) {
   var StandaloneRoomInfoArea = React.createClass({
     propTypes: {
       helper: React.PropTypes.instanceOf(loop.shared.utils.Helper).isRequired,
-      activeRoomStore:
-        React.PropTypes.instanceOf(loop.store.ActiveRoomStore).isRequired,
+      activeRoomStore: React.PropTypes.oneOfType([
+        React.PropTypes.instanceOf(loop.store.ActiveRoomStore),
+        React.PropTypes.instanceOf(loop.store.FxOSActiveRoomStore)
+      ]).isRequired,
       feedbackStore:
         React.PropTypes.instanceOf(loop.store.FeedbackStore).isRequired
     },
@@ -166,12 +168,12 @@ loop.standaloneRoomViews = (function(mozL10n) {
     _getContent: function() {
       return mozL10n.get("legal_text_and_links", {
         "clientShortname": mozL10n.get("clientShortname2"),
-        "terms_of_use_url": React.renderComponentToStaticMarkup(
+        "terms_of_use_url": React.renderToStaticMarkup(
           <a href={loop.config.legalWebsiteUrl} target="_blank">
             {mozL10n.get("terms_of_use_link_text")}
           </a>
         ),
-        "privacy_notice_url": React.renderComponentToStaticMarkup(
+        "privacy_notice_url": React.renderToStaticMarkup(
           <a href={loop.config.privacyWebsiteUrl} target="_blank">
             {mozL10n.get("privacy_notice_link_text")}
           </a>
@@ -196,8 +198,10 @@ loop.standaloneRoomViews = (function(mozL10n) {
     ],
 
     propTypes: {
-      activeRoomStore:
-        React.PropTypes.instanceOf(loop.store.ActiveRoomStore).isRequired,
+      activeRoomStore: React.PropTypes.oneOfType([
+        React.PropTypes.instanceOf(loop.store.ActiveRoomStore),
+        React.PropTypes.instanceOf(loop.store.FxOSActiveRoomStore)
+      ]).isRequired,
       feedbackStore:
         React.PropTypes.instanceOf(loop.store.FeedbackStore).isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
@@ -370,6 +374,9 @@ loop.standaloneRoomViews = (function(mozL10n) {
             <div className="conversation room-conversation">
               <h2 className="room-name">{this.state.roomName}</h2>
               <div className="media nested">
+                <span className="self-view-hidden-message">
+                  {mozL10n.get("self_view_hidden_message")}
+                </span>
                 <div className="video_wrapper remote_wrapper">
                   <div className="video_inner remote"></div>
                 </div>
@@ -386,6 +393,9 @@ loop.standaloneRoomViews = (function(mozL10n) {
                 enableHangup={this._roomIsActive()} />
             </div>
           </div>
+          <loop.fxOSMarketplaceViews.FxOSHiddenMarketplaceView
+            marketplaceSrc={this.state.marketplaceSrc}
+            onMarketplaceMessage={this.state.onMarketplaceMessage} />
           <StandaloneRoomFooter />
         </div>
       );

@@ -1,17 +1,14 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/zh_Hant.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/zh_Hant.xml
- */
 zh_Hant{
     %%Parent{"root"}
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -550,50 +547,50 @@ zh_Hant{
                 other{"{0}G"}
             }
             meter-per-second-squared{
-                other{"{0} m/s²"}
+                other{"{0}m/s²"}
             }
         }
         angle{
             arc-minute{
-                other{"{0} 分鐘"}
+                other{"{0}分鐘"}
             }
             arc-second{
-                other{"{0} 秒"}
+                other{"{0}秒"}
             }
             degree{
-                other{"{0} 度"}
+                other{"{0}度"}
             }
             radian{
-                other{"{0} 弧度"}
+                other{"{0}弧度"}
             }
         }
         area{
             acre{
-                other{"{0} 英畝"}
+                other{"{0}英畝"}
             }
             hectare{
-                other{"{0} 公頃"}
+                other{"{0}公頃"}
             }
             square-centimeter{
-                other{"{0} cm²"}
+                other{"{0}cm²"}
             }
             square-foot{
-                other{"{0} 平方英尺"}
+                other{"{0}平方英尺"}
             }
             square-inch{
-                other{"{0} in²"}
+                other{"{0}in²"}
             }
             square-kilometer{
-                other{"{0} km²"}
+                other{"{0}km²"}
             }
             square-meter{
-                other{"{0} m²"}
+                other{"{0}m²"}
             }
             square-mile{
-                other{"{0} 平方英里"}
+                other{"{0}平方英里"}
             }
             square-yard{
-                other{"{0} yd²"}
+                other{"{0}yd²"}
             }
         }
         compound{
@@ -601,289 +598,289 @@ zh_Hant{
         }
         consumption{
             liter-per-kilometer{
-                other{"{0} L/km"}
+                other{"{0}L/km"}
             }
             mile-per-gallon{
-                other{"{0} mpg"}
+                other{"{0}mpg"}
             }
         }
         digital{
             bit{
-                other{"{0} bit"}
+                other{"{0}bit"}
             }
             byte{
-                other{"{0} byte"}
+                other{"{0}byte"}
             }
             gigabit{
-                other{"{0} Gb"}
+                other{"{0}Gb"}
             }
             gigabyte{
-                other{"{0} GB"}
+                other{"{0}GB"}
             }
             kilobit{
-                other{"{0} kb"}
+                other{"{0}kb"}
             }
             kilobyte{
-                other{"{0} kB"}
+                other{"{0}kB"}
             }
             megabit{
-                other{"{0} Mb"}
+                other{"{0}Mb"}
             }
             megabyte{
-                other{"{0} MB"}
+                other{"{0}MB"}
             }
             terabit{
-                other{"{0} Tb"}
+                other{"{0}Tb"}
             }
             terabyte{
-                other{"{0} TB"}
+                other{"{0}TB"}
             }
         }
         duration{
             day{
                 dnam{"天"}
-                other{"{0} 天"}
+                other{"{0}天"}
             }
             hour{
                 dnam{"小時"}
-                other{"{0} 小時"}
+                other{"{0}時"}
             }
             microsecond{
-                other{"{0} μs"}
+                other{"{0}μs"}
             }
             millisecond{
                 dnam{"毫秒"}
-                other{"{0} 毫秒"}
+                other{"{0}毫秒"}
             }
             minute{
                 dnam{"分鐘"}
-                other{"{0} 分鐘"}
+                other{"{0}分"}
             }
             month{
                 dnam{"個月"}
-                other{"{0} 個月"}
+                other{"{0}個月"}
             }
             nanosecond{
-                other{"{0} ns"}
+                other{"{0}ns"}
             }
             second{
                 dnam{"秒"}
-                other{"{0} 秒"}
+                other{"{0}秒"}
             }
             week{
                 dnam{"週"}
-                other{"{0} 週"}
+                other{"{0}週"}
             }
             year{
                 dnam{"年"}
-                other{"{0} 年"}
+                other{"{0}年"}
             }
         }
         electric{
             ampere{
-                other{"{0} A"}
+                other{"{0}A"}
             }
             milliampere{
-                other{"{0} mA"}
+                other{"{0}mA"}
             }
             ohm{
-                other{"{0} Ω"}
+                other{"{0}Ω"}
             }
             volt{
-                other{"{0} V"}
+                other{"{0}V"}
             }
         }
         energy{
             calorie{
-                other{"{0} 卡"}
+                other{"{0}卡"}
             }
             foodcalorie{
-                other{"{0} 大卡"}
+                other{"{0}大卡"}
             }
             joule{
-                other{"{0} 焦"}
+                other{"{0}焦"}
             }
             kilocalorie{
-                other{"{0} 千卡"}
+                other{"{0}千卡"}
             }
             kilojoule{
-                other{"{0} 千焦"}
+                other{"{0}千焦"}
             }
             kilowatt-hour{
-                other{"{0} kWh"}
+                other{"{0}kWh"}
             }
         }
         frequency{
             gigahertz{
-                other{"{0} GHz"}
+                other{"{0}GHz"}
             }
             hertz{
-                other{"{0} Hz"}
+                other{"{0}Hz"}
             }
             kilohertz{
-                other{"{0} kHz"}
+                other{"{0}kHz"}
             }
             megahertz{
-                other{"{0} MHz"}
+                other{"{0}MHz"}
             }
         }
         length{
             astronomical-unit{
-                other{"{0} au"}
+                other{"{0}au"}
             }
             centimeter{
                 dnam{"公分"}
-                other{"{0} 公分"}
+                other{"{0}公分"}
             }
             decimeter{
-                other{"{0} dm"}
+                other{"{0}dm"}
             }
             fathom{
                 dnam{"英尋"}
-                other{"{0} fm"}
+                other{"{0}fm"}
             }
             foot{
-                other{"{0} 呎"}
+                other{"{0}呎"}
             }
             furlong{
                 dnam{"化朗"}
-                other{"{0} 化朗"}
+                other{"{0}化朗"}
             }
             inch{
-                other{"{0} 吋"}
+                other{"{0}吋"}
             }
             kilometer{
                 dnam{"公里"}
-                other{"{0} 公里"}
+                other{"{0}公里"}
             }
             light-year{
-                other{"{0} 光年"}
+                other{"{0}光年"}
             }
             meter{
                 dnam{"公尺"}
-                other{"{0} 公尺"}
+                other{"{0}公尺"}
             }
             micrometer{
-                other{"{0} µm"}
+                other{"{0}µm"}
             }
             mile{
-                other{"{0} 英里"}
+                other{"{0}英里"}
             }
             millimeter{
                 dnam{"公釐"}
-                other{"{0} 公釐"}
+                other{"{0}公釐"}
             }
             nanometer{
-                other{"{0} nm"}
+                other{"{0}nm"}
             }
             nautical-mile{
-                other{"{0} nmi"}
+                other{"{0}nmi"}
             }
             parsec{
-                other{"{0} pc"}
+                other{"{0}pc"}
             }
             picometer{
-                other{"{0} 皮米"}
+                other{"{0}皮米"}
             }
             yard{
-                other{"{0} 碼"}
+                other{"{0}碼"}
             }
         }
         light{
             lux{
-                other{"{0} lx"}
+                other{"{0}lx"}
             }
         }
         mass{
             carat{
-                other{"{0} CD"}
+                other{"{0}CD"}
             }
             gram{
                 dnam{"克"}
-                other{"{0} 克"}
+                other{"{0}克"}
             }
             kilogram{
                 dnam{"公斤"}
-                other{"{0} 公斤"}
+                other{"{0}公斤"}
             }
             metric-ton{
-                other{"{0} t"}
+                other{"{0}t"}
             }
             microgram{
-                other{"{0} µg"}
+                other{"{0}µg"}
             }
             milligram{
-                other{"{0} mg"}
+                other{"{0}mg"}
             }
             ounce{
-                other{"{0} 盎司"}
+                other{"{0}盎司"}
             }
             ounce-troy{
-                other{"{0} oz t"}
+                other{"{0}oz-t"}
             }
             pound{
-                other{"{0} 磅"}
+                other{"{0}磅"}
             }
             stone{
                 dnam{"英石"}
-                other{"{0} st"}
+                other{"{0}st"}
             }
             ton{
-                other{"{0} tn"}
+                other{"{0}tn"}
             }
         }
         power{
             gigawatt{
-                other{"{0} GW"}
+                other{"{0}GW"}
             }
             horsepower{
-                other{"{0} 匹"}
+                other{"{0}匹"}
             }
             kilowatt{
-                other{"{0} 千瓦"}
+                other{"{0}千瓦"}
             }
             megawatt{
-                other{"{0} MW"}
+                other{"{0}MW"}
             }
             milliwatt{
-                other{"{0} mW"}
+                other{"{0}mW"}
             }
             watt{
-                other{"{0} 瓦特"}
+                other{"{0}瓦特"}
             }
         }
         pressure{
             hectopascal{
-                other{"{0} 百帕"}
+                other{"{0}百帕"}
             }
             inch-hg{
-                other{"{0} 英吋汞柱"}
+                other{"{0}英吋汞柱"}
             }
             millibar{
-                other{"{0} 毫巴"}
+                other{"{0}毫巴"}
             }
             millimeter-of-mercury{
-                other{"{0} mm Hg"}
+                other{"{0}mmHg"}
             }
             pound-per-square-inch{
-                other{"{0} psi"}
+                other{"{0}psi"}
             }
         }
         proportion{
             karat{
-                other{"{0} kt"}
+                other{"{0}kt"}
             }
         }
         speed{
             kilometer-per-hour{
                 dnam{"公里/小時"}
-                other{"{0} km/h"}
+                other{"{0}km/h"}
             }
             meter-per-second{
-                other{"{0} 公尺/秒"}
+                other{"{0}公尺/秒"}
             }
             mile-per-hour{
-                other{"{0} 英里/小時"}
+                other{"{0}英里/小時"}
             }
         }
         temperature{
@@ -901,72 +898,72 @@ zh_Hant{
         }
         volume{
             acre-foot{
-                other{"{0} ac ft"}
+                other{"{0}ac-ft"}
             }
             bushel{
                 dnam{"蒲式耳"}
-                other{"{0} bu"}
+                other{"{0}bu"}
             }
             centiliter{
-                other{"{0} cL"}
+                other{"{0}cL"}
             }
             cubic-centimeter{
-                other{"{0} cm³"}
+                other{"{0}cm³"}
             }
             cubic-foot{
-                other{"{0} ft³"}
+                other{"{0}ft³"}
             }
             cubic-inch{
-                other{"{0} in³"}
+                other{"{0}in³"}
             }
             cubic-kilometer{
-                other{"{0} km³"}
+                other{"{0}km³"}
             }
             cubic-meter{
-                other{"{0} m³"}
+                other{"{0}m³"}
             }
             cubic-mile{
-                other{"{0} 立方英里"}
+                other{"{0}立方英里"}
             }
             cubic-yard{
-                other{"{0} yd³"}
+                other{"{0}yd³"}
             }
             cup{
-                other{"{0} c"}
+                other{"{0}c"}
             }
             deciliter{
-                other{"{0} dL"}
+                other{"{0}dL"}
             }
             fluid-ounce{
-                other{"{0} fl oz"}
+                other{"{0}fl-oz"}
             }
             gallon{
-                other{"{0} gal"}
+                other{"{0}gal"}
             }
             hectoliter{
-                other{"{0} hL"}
+                other{"{0}hL"}
             }
             liter{
                 dnam{"公升"}
-                other{"{0} 公升"}
+                other{"{0}公升"}
             }
             megaliter{
-                other{"{0} ML"}
+                other{"{0}ML"}
             }
             milliliter{
-                other{"{0} mL"}
+                other{"{0}mL"}
             }
             pint{
-                other{"{0} pt"}
+                other{"{0}pt"}
             }
             quart{
-                other{"{0} qt"}
+                other{"{0}qt"}
             }
             tablespoon{
-                other{"{0} 匙"}
+                other{"{0}匙"}
             }
             teaspoon{
-                other{"{0} tsp"}
+                other{"{0}tsp"}
             }
         }
     }

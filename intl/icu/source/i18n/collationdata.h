@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2010-2014, International Business Machines
+* Copyright (C) 2010-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationdata.h
@@ -16,6 +16,7 @@
 
 #if !UCONFIG_NO_COLLATION
 
+#include "unicode/ucol.h"
 #include "unicode/uniset.h"
 #include "collation.h"
 #include "normalizer2impl.h"
@@ -25,6 +26,8 @@ struct UDataMemory;
 
 U_NAMESPACE_BEGIN
 
+class UVector32;
+
 /**
  * Collation data container.
  * Immutable data created by a CollationDataBuilder, or loaded from a file,
@@ -33,6 +36,20 @@ U_NAMESPACE_BEGIN
  * Includes data for the collation base (root/default), aliased if this is not the base.
  */
 struct U_I18N_API CollationData : public UMemory {
+    // Note: The ucadata.icu loader could discover the reserved ranges by setting an array
+    // parallel with the ranges, and resetting ranges that are indexed.
+    // The reordering builder code could clone the resulting template array.
+    enum {
+        REORDER_RESERVED_BEFORE_LATIN = UCOL_REORDER_CODE_FIRST + 14,
+        REORDER_RESERVED_AFTER_LATIN
+    };
+
+    enum {
+        MAX_NUM_SPECIAL_REORDER_CODES = 8,
+        /** C++ only, data reader check scriptStartsLength. */
+        MAX_NUM_SCRIPT_RANGES = 256
+    };
+
     CollationData(const Normalizer2Impl &nfc)
             : trie(NULL),
               ce32s(NULL), ces(NULL), contexts(NULL), base(NULL),
@@ -43,7 +60,7 @@ struct U_I18N_API CollationData : public UMemory {
               compressibleBytes(NULL),
               unsafeBackwardSet(NULL),
               fastLatinTable(NULL), fastLatinTableLength(0),
-              scripts(NULL), scriptsLength(0),
+              numScripts(0), scriptsIndex(NULL), scriptStarts(NULL), scriptStartsLength(0),
               rootElements(NULL), rootElementsLength(0) {}
 
     uint32_t getCE32(UChar32 c) const {
@@ -137,13 +154,17 @@ struct U_I18N_API CollationData : public UMemory {
                                  int32_t dest[], int32_t capacity, UErrorCode &errorCode) const;
 
     /**
-     * Writes the permutation table for the given reordering of scripts and groups,
-     * mapping from default-order primary-weight lead bytes to reordered lead bytes.
+     * Writes the permutation of primary-weight ranges
+     * for the given reordering of scripts and groups.
      * The caller checks for illegal arguments and
      * takes care of [DEFAULT] and memory allocation.
+     *
+     * Each list element will be a (limit, offset) pair as described
+     * for the CollationSettings::reorderRanges.
+     * The list will be empty if no ranges are reordered.
      */
-    void makeReorderTable(const int32_t *reorder, int32_t length,
-                          uint8_t table[256], UErrorCode &errorCode) const;
+    void makeReorderRanges(const int32_t *reorder, int32_t length,
+                           UVector32 &ranges, UErrorCode &errorCode) const;
 
     /** @see jamoCE32s */
     static const int32_t JAMO_CE32S_LENGTH = 19 + 21 + 27;
@@ -195,22 +216,26 @@ struct U_I18N_API CollationData : public UMemory {
      * Data for scripts and reordering groups.
      * Uses include building a reordering permutation table and
      * providing script boundaries to AlphabeticIndex.
-     *
-     * This data is a sorted list of primary-weight lead byte ranges (reordering groups),
-     * each with a list of pairs sorted in base collation order;
-     * each pair contains a script/reorder code and the lowest primary weight for that script.
-     *
-     * Data structure:
-     * - Each reordering group is encoded in n+2 16-bit integers.
-     *   - First integer:
-     *     Bits 15..8: First byte of the reordering group's range.
-     *     Bits  7..0: Last byte of the reordering group's range.
-     *   - Second integer:
-     *     Length n of the list of script/reordering codes.
-     *   - Each further integer is a script or reordering code.
      */
-    const uint16_t *scripts;
-    int32_t scriptsLength;
+    int32_t numScripts;
+    /**
+     * The length of scriptsIndex is numScripts+16.
+     * It maps from a UScriptCode or a special reorder code to an entry in scriptStarts.
+     * 16 special reorder codes (not all used) are mapped starting at numScripts.
+     * Up to MAX_NUM_SPECIAL_REORDER_CODES are codes for special groups like space/punct/digit.
+     * There are special codes at the end for reorder-reserved primary ranges.
+     *
+     * Multiple scripts may share a range and index, for example Hira & Kana.
+     */
+    const uint16_t *scriptsIndex;
+    /**
+     * Start primary weight (top 16 bits only) for a group/script/reserved range
+     * indexed by scriptsIndex.
+     * The first range (separators & terminators) and the last range (trailing weights)
+     * are not reorderable, and no scriptsIndex entry points to them.
+     */
+    const uint16_t *scriptStarts;
+    int32_t scriptStartsLength;
 
     /**
      * Collation elements in the root collator.
@@ -221,7 +246,12 @@ struct U_I18N_API CollationData : public UMemory {
     int32_t rootElementsLength;
 
 private:
-    int32_t findScript(int32_t script) const;
+    int32_t getScriptIndex(int32_t script) const;
+    void makeReorderRanges(const int32_t *reorder, int32_t length,
+                           UBool latinMustMove,
+                           UVector32 &ranges, UErrorCode &errorCode) const;
+    int32_t addLowScriptRange(uint8_t table[], int32_t index, int32_t lowStart) const;
+    int32_t addHighScriptRange(uint8_t table[], int32_t index, int32_t highLimit) const;
 };
 
 U_NAMESPACE_END

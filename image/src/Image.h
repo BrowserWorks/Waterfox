@@ -33,7 +33,7 @@ public:
     eDecoderType_icon    = 5,
     eDecoderType_unknown = 6
   };
-  static eDecoderType GetDecoderType(const char *aMimeType);
+  static eDecoderType GetDecoderType(const char* aMimeType);
 
   /**
    * Flags for Image initialization.
@@ -52,11 +52,16 @@ public:
    * multipart/x-mixed-replace image parts fall into this category.) If this
    * flag is set, INIT_FLAG_DISCARDABLE and INIT_FLAG_DECODE_ON_DRAW must not be
    * set.
+   *
+   * INIT_FLAG_DOWNSCALE_DURING_DECODE: The container should attempt to
+   * downscale images during decoding instead of decoding them to their
+   * intrinsic size.
    */
-  static const uint32_t INIT_FLAG_NONE           = 0x0;
-  static const uint32_t INIT_FLAG_DISCARDABLE    = 0x1;
-  static const uint32_t INIT_FLAG_DECODE_ON_DRAW = 0x2;
-  static const uint32_t INIT_FLAG_TRANSIENT      = 0x4;
+  static const uint32_t INIT_FLAG_NONE                     = 0x0;
+  static const uint32_t INIT_FLAG_DISCARDABLE              = 0x1;
+  static const uint32_t INIT_FLAG_DECODE_ON_DRAW           = 0x2;
+  static const uint32_t INIT_FLAG_TRANSIENT                = 0x4;
+  static const uint32_t INIT_FLAG_DOWNSCALE_DURING_DECODE  = 0x8;
 
   /**
    * Creates a new image container.
@@ -71,16 +76,12 @@ public:
   virtual void SetProgressTracker(ProgressTracker* aProgressTracker) {}
 
   /**
-   * The rectangle defining the location and size of the given frame.
-   */
-  virtual nsIntRect FrameRect(uint32_t aWhichFrame) = 0;
-
-  /**
    * The size, in bytes, occupied by the compressed source data of the image.
    * If MallocSizeOf does not work on this platform, uses a fallback approach to
    * ensure that something reasonable is always returned.
    */
-  virtual size_t SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const = 0;
+  virtual size_t SizeOfSourceWithComputedFallback(
+                                          MallocSizeOf aMallocSizeOf) const = 0;
 
   /**
    * The size, in bytes, occupied by the image's decoded data.
@@ -142,12 +143,16 @@ public:
 class ImageResource : public Image
 {
 public:
-  already_AddRefed<ProgressTracker> GetProgressTracker() MOZ_OVERRIDE {
+  already_AddRefed<ProgressTracker> GetProgressTracker() MOZ_OVERRIDE
+  {
     nsRefPtr<ProgressTracker> progressTracker = mProgressTracker;
     MOZ_ASSERT(progressTracker);
     return progressTracker.forget();
   }
-  void SetProgressTracker(ProgressTracker* aProgressTracker) MOZ_OVERRIDE MOZ_FINAL {
+
+  void SetProgressTracker(
+                       ProgressTracker* aProgressTracker) MOZ_OVERRIDE MOZ_FINAL
+  {
     MOZ_ASSERT(aProgressTracker);
     MOZ_ASSERT(!mProgressTracker);
     mProgressTracker = aProgressTracker;
@@ -156,12 +161,16 @@ public:
   virtual void IncrementAnimationConsumers() MOZ_OVERRIDE;
   virtual void DecrementAnimationConsumers() MOZ_OVERRIDE;
 #ifdef DEBUG
-  virtual uint32_t GetAnimationConsumers() MOZ_OVERRIDE { return mAnimationConsumers; }
+  virtual uint32_t GetAnimationConsumers() MOZ_OVERRIDE
+  {
+    return mAnimationConsumers;
+  }
 #endif
 
   virtual void OnSurfaceDiscarded() MOZ_OVERRIDE { }
 
-  virtual void SetInnerWindowID(uint64_t aInnerWindowId) MOZ_OVERRIDE {
+  virtual void SetInnerWindowID(uint64_t aInnerWindowId) MOZ_OVERRIDE
+  {
     mInnerWindowId = aInnerWindowId;
   }
   virtual uint64_t InnerWindowID() const MOZ_OVERRIDE { return mInnerWindowId; }
@@ -180,7 +189,7 @@ protected:
 
   // Shared functionality for implementors of imgIContainer. Every
   // implementation of attribute animationMode should forward here.
-  nsresult GetAnimationModeInternal(uint16_t *aAnimationMode);
+  nsresult GetAnimationModeInternal(uint16_t* aAnimationMode);
   nsresult SetAnimationModeInternal(uint16_t aAnimationMode);
 
   /**

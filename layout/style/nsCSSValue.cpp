@@ -1264,7 +1264,7 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
 
     case eCSSProperty_grid_auto_flow:
       nsStyleUtil::AppendBitmaskCSSValue(aProperty, intValue,
-                                         NS_STYLE_GRID_AUTO_FLOW_STACK,
+                                         NS_STYLE_GRID_AUTO_FLOW_ROW,
                                          NS_STYLE_GRID_AUTO_FLOW_DENSE,
                                          aResult);
       break;
@@ -1288,6 +1288,13 @@ nsCSSValue::AppendToString(nsCSSProperty aProperty, nsAString& aResult,
       AppendASCIItoUTF16(nsCSSProps::ValueToKeyword(intValue,
                             nsCSSProps::kClipShapeSizingKTable),
                          aResult);
+      break;
+
+    case eCSSProperty_ruby_position:
+      nsStyleUtil::AppendBitmaskCSSValue(aProperty, intValue,
+                                         NS_STYLE_RUBY_POSITION_OVER,
+                                         NS_STYLE_RUBY_POSITION_LEFT,
+                                         aResult);
       break;
 
     default:

@@ -14,11 +14,18 @@
 #include "nsIMobileConnectionService.h"
 #include "nsWeakPtr.h"
 
+#ifdef MOZ_B2G_RIL
+#include "nsIIccProvider.h"
+#endif // MOZ_B2G_RIL
+
 namespace mozilla {
 namespace dom {
 
-class MobileConnection MOZ_FINAL : public DOMEventTargetHelper,
-                                   private nsIMobileConnectionListener
+class MobileConnection MOZ_FINAL : public DOMEventTargetHelper
+                                 , private nsIMobileConnectionListener
+#ifdef MOZ_B2G_RIL
+                                 , private nsIIccListener
+#endif // MOZ_B2G_RIL
 {
   /**
    * Class MobileConnection doesn't actually expose
@@ -33,6 +40,9 @@ class MobileConnection MOZ_FINAL : public DOMEventTargetHelper,
 public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSIMOBILECONNECTIONLISTENER
+#ifdef MOZ_B2G_RIL
+  NS_DECL_NSIICCLISTENER
+#endif // MOZ_B2G_RIL
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(DOMEventTargetHelper)
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(MobileConnection,
                                            DOMEventTargetHelper)
@@ -108,12 +118,6 @@ public:
   GetVoicePrivacyMode(ErrorResult& aRv);
 
   already_AddRefed<DOMRequest>
-  SendMMI(const nsAString& aMmi, ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
-  CancelMMI(ErrorResult& aRv);
-
-  already_AddRefed<DOMRequest>
   SetCallForwardingOption(const MozCallForwardingOptions& aOptions,
                           ErrorResult& aRv);
 
@@ -150,7 +154,6 @@ public:
 
   IMPL_EVENT_HANDLER(voicechange)
   IMPL_EVENT_HANDLER(datachange)
-  IMPL_EVENT_HANDLER(ussdreceived)
   IMPL_EVENT_HANDLER(dataerror)
   IMPL_EVENT_HANDLER(cfstatechange)
   IMPL_EVENT_HANDLER(emergencycbmodechange)
@@ -163,7 +166,12 @@ private:
   ~MobileConnection();
 
 private:
+  uint32_t mClientId;
+  nsString mIccId;
   nsCOMPtr<nsIMobileConnection> mMobileConnection;
+#ifdef MOZ_B2G_RIL
+  nsCOMPtr<nsIIccProvider> mIcc;
+#endif // MOZ_B2G_RIL
   nsRefPtr<Listener> mListener;
   nsRefPtr<MobileConnectionInfo> mVoice;
   nsRefPtr<MobileConnectionInfo> mData;
@@ -176,6 +184,9 @@ private:
 
   void
   UpdateData();
+
+  bool
+  UpdateIccId();
 
   nsresult
   NotifyError(nsIDOMDOMRequest* aRequest, const nsAString& aMessage);

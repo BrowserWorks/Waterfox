@@ -172,9 +172,9 @@ protected:
 
 private:
   // Hide these. User should always use creator functions to get a media codec.
-  OMXCodecWrapper() MOZ_DELETE;
-  OMXCodecWrapper(const OMXCodecWrapper&) MOZ_DELETE;
-  OMXCodecWrapper& operator=(const OMXCodecWrapper&) MOZ_DELETE;
+  OMXCodecWrapper() = delete;
+  OMXCodecWrapper(const OMXCodecWrapper&) = delete;
+  OMXCodecWrapper& operator=(const OMXCodecWrapper&) = delete;
 
   /**
    * Create a media codec of given type. It will be a AVC/H.264 video encoder if
@@ -238,9 +238,9 @@ protected:
                                        ABuffer* aData) MOZ_OVERRIDE;
 private:
   // Hide these. User should always use creator functions to get a media codec.
-  OMXAudioEncoder() MOZ_DELETE;
-  OMXAudioEncoder(const OMXAudioEncoder&) MOZ_DELETE;
-  OMXAudioEncoder& operator=(const OMXAudioEncoder&) MOZ_DELETE;
+  OMXAudioEncoder() = delete;
+  OMXAudioEncoder(const OMXAudioEncoder&) = delete;
+  OMXAudioEncoder& operator=(const OMXAudioEncoder&) = delete;
 
   /**
    * Create a audio codec. It will be a AAC encoder if aCodecType is
@@ -250,12 +250,13 @@ private:
     : OMXCodecWrapper(aCodecType)
     , mResampler(nullptr)
     , mChannels(0)
+    , mResamplingRatio(0)
     , mTimestamp(0)
-    , mSampleDuration(0)
-    , mResamplingRatio(0) {}
+    , mSampleDuration(0) {}
 
   // For creator function to access hidden constructor.
   friend class OMXCodecWrapper;
+  friend class InputBufferHelper;
 
   /**
    * If the input sample rate does not divide 48kHz evenly, the input data are
@@ -330,9 +331,9 @@ protected:
 
 private:
   // Hide these. User should always use creator functions to get a media codec.
-  OMXVideoEncoder() MOZ_DELETE;
-  OMXVideoEncoder(const OMXVideoEncoder&) MOZ_DELETE;
-  OMXVideoEncoder& operator=(const OMXVideoEncoder&) MOZ_DELETE;
+  OMXVideoEncoder() = delete;
+  OMXVideoEncoder(const OMXVideoEncoder&) = delete;
+  OMXVideoEncoder& operator=(const OMXVideoEncoder&) = delete;
 
   /**
    * Create a video codec. It will be a AVC/H.264 encoder if aCodecType is

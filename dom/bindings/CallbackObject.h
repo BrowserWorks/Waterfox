@@ -85,8 +85,8 @@ public:
     // Report any exception and don't throw it to the caller code.
     eReportExceptions,
     // Throw an exception to the caller code if the thrown exception is a
-    // binding object for a DOMError from the caller's scope, otherwise report
-    // it.
+    // binding object for a DOMError or DOMException from the caller's scope,
+    // otherwise report it.
     eRethrowContentExceptions,
     // Throw any exception to the caller code.
     eRethrowExceptions
@@ -131,8 +131,8 @@ private:
     mozilla::HoldJSObjects(this);
   }
 
-  CallbackObject(const CallbackObject&) MOZ_DELETE;
-  CallbackObject& operator =(const CallbackObject&) MOZ_DELETE;
+  CallbackObject(const CallbackObject&) = delete;
+  CallbackObject& operator =(const CallbackObject&) = delete;
 
 protected:
   void DropJSObjects()
@@ -181,7 +181,7 @@ protected:
 
   private:
     // We better not get copy-constructed
-    CallSetup(const CallSetup&) MOZ_DELETE;
+    CallSetup(const CallSetup&) = delete;
 
     bool ShouldRethrowException(JS::Handle<JS::Value> aException);
 

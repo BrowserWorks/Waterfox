@@ -1,5 +1,5 @@
 ## Makefile.in for ICU data
-## Copyright (c) 1999-2014, International Business Machines Corporation and
+## Copyright (c) 1999-2015, International Business Machines Corporation and
 ## others. All Rights Reserved.
 
 ## Source directory information
@@ -152,7 +152,7 @@ cleanfiles:
 
 cleanpackage:
 	$(RMV) $(OUTDIR)
-	$(RMV) $(LIBDIR)/$(LIB_ICUDATA_NAME)*.$(SO)* $(LIBDIR)/$(LIB_STATIC_ICUDATA_NAME).$(A)
+	$(RMV) $(LIBDIR)/*$(LIB_ICUDATA_NAME)*.$(SO)* $(LIBDIR)/$(LIB_STATIC_ICUDATA_NAME).$(A)
 
 check-local:
 

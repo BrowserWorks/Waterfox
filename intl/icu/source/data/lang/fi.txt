@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fi.xml
- */
 fi{
     Keys{
         calendar{"kalenteri"}
@@ -644,7 +641,7 @@ fi{
         kl{"grönlanti"}
         lad{"juutalaisespanja"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"azeri"}
         en_GB{"englanti (Britannia)"}
         en_US{"englanti (USA)"}
@@ -1036,7 +1033,7 @@ fi{
     Variants%secondary{
         FONUPA{"suomalais-ugrilainen tarkekirjoitus"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.33"}
     codePatterns{
         language{"kieli: {0}"}
         script{"kirjoitusjärjestelmä: {0}"}

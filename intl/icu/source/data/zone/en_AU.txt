@@ -1,18 +1,15 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en_AU.xml
 // *
 // ***************************************************************************
 en_AU{
-    %%Parent{"en_GB"}
-    Version{"2.1.10.42"}
+    %%Parent{"en_001"}
+    Version{"2.1.11.59"}
     zoneStrings{
-        "Europe:Dublin"{
-            ld{"Irish Summer Time"}
-        }
         "meta:Arabian"{
             ld{"Arabian Summer Time"}
             lg{"Arabian Time"}
@@ -42,21 +39,6 @@ en_AU{
             ld{"China Summer Time"}
             lg{"China Time"}
             ls{"China Standard Time"}
-        }
-        "meta:Europe_Central"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
-        }
-        "meta:Europe_Eastern"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
-        }
-        "meta:Europe_Western"{
-            sd{"∅∅∅"}
-            sg{"∅∅∅"}
-            ss{"∅∅∅"}
         }
         "meta:Iran"{
             ld{"Iran Summer Time"}

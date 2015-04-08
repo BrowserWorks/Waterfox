@@ -920,7 +920,7 @@ const CustomizableWidgets = [
     tooltiptext: "email-link-button.tooltiptext3",
     onCommand: function(aEvent) {
       let win = aEvent.view;
-      win.MailIntegration.sendLinkForWindow(win.content);
+      win.MailIntegration.sendLinkForBrowser(win.gBrowser.selectedBrowser)
     }
   }, {
     id: "loop-button",
@@ -928,6 +928,8 @@ const CustomizableWidgets = [
     label: "loop-call-button3.label",
     tooltiptext: "loop-call-button3.tooltiptext",
     defaultArea: CustomizableUI.AREA_NAVBAR,
+    // Not in private browsing, see bug 1108187.
+    showInPrivateBrowsing: false,
     introducedInVersion: 4,
     onBuild: function(aDocument) {
       // If we're not supposed to see the button, return zip.

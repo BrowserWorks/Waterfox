@@ -1,0 +1,58 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript;version=1.8">
+  createHTML({
+    bug: "1091898",
+    title: "PeerConnection with promises (sendonly)",
+    visible: true
+  });
+
+  var pc1 = new mozRTCPeerConnection();
+  var pc2 = new mozRTCPeerConnection();
+
+  var pc2_haveRemoteOffer = new Promise(resolve => pc2.onsignalingstatechange =
+    e => (e.target.signalingState == "have-remote-offer") && resolve());
+  var pc1_stable = new Promise(resolve => pc1.onsignalingstatechange =
+    e => (e.target.signalingState == "stable") && resolve());
+
+  pc1.onicecandidate = e => pc2_haveRemoteOffer.then(() => !e.candidate ||
+    pc2.addIceCandidate(e.candidate)).catch(generateErrorCallback());
+  pc2.onicecandidate = e => pc1_stable.then(() => !e.candidate ||
+    pc1.addIceCandidate(e.candidate)).catch(generateErrorCallback());
+
+  var v1, v2;
+  var delivered = new Promise(resolve =>
+    pc2.onaddstream = e => resolve(v2.mozSrcObject = e.stream));
+
+  runNetworkTest(function() {
+    v1 = createMediaElement('video', 'v1');
+    v2 = createMediaElement('video', 'v2');
+    var canPlayThrough = new Promise(resolve => v2.canplaythrough = e => resolve());
+
+    is(v2.currentTime, 0, "v2.currentTime is zero at outset");
+
+    navigator.mediaDevices.getUserMedia({ fake: true, video: true, audio: true })
+    .then(stream => pc1.addStream(v1.mozSrcObject = stream))
+    .then(() => pc1.createOffer())
+    .then(offer => pc1.setLocalDescription(offer))
+    .then(() => pc2.setRemoteDescription(pc1.localDescription))
+    .then(() => pc2.createAnswer())
+    .then(answer => pc2.setLocalDescription(answer))
+    .then(() => pc1.setRemoteDescription(pc2.localDescription))
+    .then(() => delivered)
+//    .then(() => canPlayThrough)    // why doesn't this fire?
+    .then(() => waitUntil(() => v2.currentTime > 0 && v2.mozSrcObject.currentTime > 0))
+    .then(() => ok(v2.currentTime > 0, "v2.currentTime is moving (" + v2.currentTime + ")"))
+    .then(() => ok(true, "Connected."))
+    .catch(reason => ok(false, "unexpected failure: " + reason))
+    .then(networkTestFinished);
+  });
+</script>
+</pre>
+</body>
+</html>

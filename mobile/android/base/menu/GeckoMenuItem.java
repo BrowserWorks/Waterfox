@@ -10,6 +10,7 @@ import org.mozilla.gecko.widget.GeckoActionProvider;
 
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.ActionProvider;
 import android.view.ContextMenu;
 import android.view.MenuItem;
@@ -51,18 +52,52 @@ public class GeckoMenuItem implements MenuItem {
     final GeckoMenu mMenu;
     OnShowAsActionChangedListener mShowAsActionChangedListener;
 
+    private volatile boolean mShouldDispatchChanges = true;
+    private volatile boolean mDidChange;
+
     public GeckoMenuItem(GeckoMenu menu, int id, int order, int titleRes) {
         mMenu = menu;
         mId = id;
         mOrder = order;
-        setTitle(titleRes);
+        mTitle = mMenu.getResources().getString(titleRes);
     }
 
     public GeckoMenuItem(GeckoMenu menu, int id, int order, CharSequence title) {
         mMenu = menu;
         mId = id;
         mOrder = order;
-        setTitle(title);
+        mTitle = title;
+    }
+
+    /**
+     * Stop dispatching item changed events to presenters until
+     * [start|resume]DispatchingItemsChanged() is called. Useful when
+     * many menu operations are going to be performed as a batch.
+     */
+    public void stopDispatchingChanges() {
+        mDidChange = false;
+        mShouldDispatchChanges = false;
+    }
+
+    /**
+     * Resume dispatching item changed events to presenters. This method
+     * will NOT call onItemChanged if any menu operations were queued.
+     * Only future menu operations will call onItemChanged. Useful for
+     * sequelching presenter updates.
+     */
+    public void resumeDispatchingChanges() {
+        mShouldDispatchChanges = true;
+    }
+
+    /**
+     * Start dispatching item changed events to presenters. This method
+     * will call onItemChanged if any menu operations were queued.
+     */
+    public void startDispatchingChanges() {
+        if (mDidChange) {
+            mMenu.onItemChanged(this);
+        }
+        mShouldDispatchChanges = true;
     }
 
     @Override
@@ -244,36 +279,66 @@ public class GeckoMenuItem implements MenuItem {
 
     @Override
     public MenuItem setCheckable(boolean checkable) {
-        mCheckable = checkable;
-        mMenu.onItemChanged(this);
+        if (mCheckable != checkable) {
+            mCheckable = checkable;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
     @Override
     public MenuItem setChecked(boolean checked) {
-        mChecked = checked;
-        mMenu.onItemChanged(this);
+        if (mChecked != checked) {
+            mChecked = checked;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
     @Override
     public MenuItem setEnabled(boolean enabled) {
-        mEnabled = enabled;
-        mMenu.onItemChanged(this);
+        if (mEnabled != enabled) {
+            mEnabled = enabled;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
     @Override
     public MenuItem setIcon(Drawable icon) {
-        mIcon = icon;
-        mMenu.onItemChanged(this);
+        if (mIcon != icon) {
+            mIcon = icon;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
     @Override
     public MenuItem setIcon(int iconRes) {
-        mIconRes = iconRes;
-        mMenu.onItemChanged(this);
+        if (mIconRes != iconRes) {
+            mIconRes = iconRes;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
@@ -354,16 +419,21 @@ public class GeckoMenuItem implements MenuItem {
 
     @Override
     public MenuItem setTitle(CharSequence title) {
-        mTitle = title;
-        mMenu.onItemChanged(this);
+        if (!TextUtils.equals(mTitle, title)) {
+            mTitle = title;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 
     @Override
     public MenuItem setTitle(int title) {
-        mTitle = mMenu.getResources().getString(title);
-        mMenu.onItemChanged(this);
-        return this;
+        CharSequence newTitle = mMenu.getResources().getString(title);
+        return setTitle(newTitle);
     }
 
     @Override
@@ -374,8 +444,16 @@ public class GeckoMenuItem implements MenuItem {
 
     @Override
     public MenuItem setVisible(boolean visible) {
-        mVisible = visible;
-        mMenu.onItemChanged(this);
+        // Action views are not normal menu items and visibility can get out
+        // of sync unless we dispatch whenever required.
+        if (isActionItem() || mVisible != visible) {
+            mVisible = visible;
+            if (mShouldDispatchChanges) {
+                mMenu.onItemChanged(this);
+            } else {
+                mDidChange = true;
+            }
+        }
         return this;
     }
 

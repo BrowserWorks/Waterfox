@@ -132,7 +132,7 @@ Navigator implements NavigatorBattery;
 [NoInterfaceObject,
  Exposed=(Window,Worker)]
 interface NavigatorDataStore {
-    [Throws, NewObject, Func="Navigator::HasDataStoreSupport"]
+    [NewObject, Func="Navigator::HasDataStoreSupport"]
     Promise<sequence<DataStore>> getDataStores(DOMString name,
                                                optional DOMString? owner = null);
 };
@@ -173,7 +173,7 @@ interface NavigatorMobileId {
     // permission is set to PROMPT_ACTION and [CheckPermissions] only checks
     // for ALLOW_ACTION.
     // XXXbz what is this promise resolved with?
-    [Throws, NewObject, Func="Navigator::HasMobileIdSupport"]
+    [NewObject, Func="Navigator::HasMobileIdSupport"]
     Promise<any> getMobileIdAssertion(optional MobileIdOptions options);
 };
 Navigator implements NavigatorMobileId;
@@ -193,7 +193,7 @@ partial interface Navigator {
   readonly attribute boolean cookieEnabled;
   [Throws]
   readonly attribute DOMString buildID;
-  [Throws, CheckPermissions="power"]
+  [Throws, CheckPermissions="power", UnsafeInPrerendering]
   readonly attribute MozPowerManager mozPower;
 
   // WebKit/Blink/Trident/Presto support this.
@@ -240,7 +240,7 @@ partial interface Navigator {
    *
    * @param aTopic resource name
    */
-  [Throws, Pref="dom.wakelock.enabled", Func="Navigator::HasWakeLockSupport"]
+  [Throws, Pref="dom.wakelock.enabled", Func="Navigator::HasWakeLockSupport", UnsafeInPrerendering]
   MozWakeLock requestWakeLock(DOMString aTopic);
 };
 
@@ -254,7 +254,7 @@ partial interface Navigator {
 
 // nsIDOMNavigatorDesktopNotification
 partial interface Navigator {
-  [Throws, Pref="notification.feature.enabled"]
+  [Throws, Pref="notification.feature.enabled", UnsafeInPrerendering]
   readonly attribute DesktopNotificationCenter mozNotification;
 };
 
@@ -273,7 +273,7 @@ partial interface Navigator {
 
 // nsIDOMNavigatorCamera
 partial interface Navigator {
-  [Throws, Func="Navigator::HasCameraSupport"]
+  [Throws, Func="Navigator::HasCameraSupport", UnsafeInPrerendering]
   readonly attribute CameraManager mozCameras;
 };
 
@@ -289,27 +289,27 @@ partial interface Navigator {
 
 #ifdef MOZ_B2G_RIL
 partial interface Navigator {
-  [Throws, Pref="dom.mobileconnection.enabled", CheckPermissions="mobileconnection mobilenetwork"]
+  [Throws, Pref="dom.mobileconnection.enabled", CheckPermissions="mobileconnection mobilenetwork", UnsafeInPrerendering]
   readonly attribute MozMobileConnectionArray mozMobileConnections;
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.cellbroadcast.enabled", CheckPermissions="cellbroadcast"]
+  [Throws, Pref="dom.cellbroadcast.enabled", CheckPermissions="cellbroadcast", UnsafeInPrerendering]
   readonly attribute MozCellBroadcast mozCellBroadcast;
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.voicemail.enabled", CheckPermissions="voicemail"]
+  [Throws, Pref="dom.voicemail.enabled", CheckPermissions="voicemail", UnsafeInPrerendering]
   readonly attribute MozVoicemail mozVoicemail;
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.icc.enabled", CheckPermissions="mobileconnection"]
+  [Throws, Pref="dom.icc.enabled", CheckPermissions="mobileconnection", UnsafeInPrerendering]
   readonly attribute MozIccManager? mozIccManager;
 };
 
 partial interface Navigator {
-  [Throws, Pref="dom.telephony.enabled", CheckPermissions="telephony"]
+  [Throws, Pref="dom.telephony.enabled", CheckPermissions="telephony", UnsafeInPrerendering]
   readonly attribute Telephony? mozTelephony;
 };
 #endif // MOZ_B2G_RIL
@@ -329,14 +329,14 @@ partial interface Navigator {
 
 #ifdef MOZ_B2G_BT
 partial interface Navigator {
-  [Throws, CheckPermissions="bluetooth"]
+  [Throws, CheckPermissions="bluetooth", UnsafeInPrerendering]
   readonly attribute BluetoothManager mozBluetooth;
 };
 #endif // MOZ_B2G_BT
 
 #ifdef MOZ_B2G_FM
 partial interface Navigator {
-  [Throws, CheckPermissions="fmradio"]
+  [Throws, CheckPermissions="fmradio", UnsafeInPrerendering]
   readonly attribute FMRadio mozFMRadio;
 };
 #endif // MOZ_B2G_FM
@@ -344,7 +344,7 @@ partial interface Navigator {
 #ifdef MOZ_TIME_MANAGER
 // nsIDOMMozNavigatorTime
 partial interface Navigator {
-  [Throws, CheckPermissions="time"]
+  [Throws, CheckPermissions="time", UnsafeInPrerendering]
   readonly attribute MozTimeManager mozTime;
 };
 #endif // MOZ_TIME_MANAGER
@@ -366,7 +366,7 @@ partial interface Navigator {
   readonly attribute MediaDevices mediaDevices;
 
   // Deprecated. Use mediaDevices.getUserMedia instead.
-  [Throws, Func="Navigator::HasUserMediaSupport"]
+  [Throws, Func="Navigator::HasUserMediaSupport", UnsafeInPrerendering]
   void mozGetUserMedia(MediaStreamConstraints constraints,
                        NavigatorUserMediaSuccessCallback successCallback,
                        NavigatorUserMediaErrorCallback errorCallback);
@@ -405,7 +405,7 @@ partial interface Navigator {
 
 #ifdef MOZ_EME
 partial interface Navigator {
-  [Pref="media.eme.enabled", Throws, NewObject]
+  [Pref="media.eme.apiVisible", NewObject]
   Promise<MediaKeySystemAccess>
   requestMediaKeySystemAccess(DOMString keySystem,
                               optional sequence<MediaKeySystemOptions> supportedConfigurations);

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pa.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/pa.xml
- */
 pa{
     Keys{
         calendar{"ਕੈਲੰਡਰ"}
@@ -258,7 +255,7 @@ pa{
         zu{"ਜ਼ੁਲੂ"}
         zxx{"ਕੋਈ ਭਾਸ਼ਾਈ ਸਮੱਗਰੀ ਨਹੀਂ"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"ਅਜ਼ੇਰੀ"}
         en_GB{"ਯੂ.ਕੇ. ਅੰਗਰੇਜ਼ੀ"}
         en_US{"ਯੂ.ਐਸ. ਅੰਗਰੇਜ਼ੀ"}
@@ -371,7 +368,7 @@ pa{
             tibt{"ਤਿੱਬਤੀ ਅੰਕ"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"ਭਾਸ਼ਾ: {0}"}
         script{"ਲਿਪੀ: {0}"}

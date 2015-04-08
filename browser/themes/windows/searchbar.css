@@ -128,8 +128,11 @@ searchbar[oneoffui] .search-go-button:-moz-locale-dir(rtl) > .toolbarbutton-icon
 
 .search-panel-current-engine {
   border-top: none !important;
-  border-bottom: 1px solid #ccc;
   -moz-box-align: center;
+}
+
+.search-panel-current-engine:not([showonlysettings]) {
+  border-bottom: 1px solid #ccc;
 }
 
 .search-panel-header {
@@ -178,7 +181,6 @@ searchbar[oneoffui] .search-go-button:-moz-locale-dir(rtl) > .toolbarbutton-icon
   background-image: none;
 }
 
-.searchbar-engine-one-off-item:hover:not(.dummy),
 .searchbar-engine-one-off-item[selected] {
   background-color: Highlight;
   background-image: none;
@@ -214,7 +216,7 @@ searchbar[oneoffui] .search-go-button:-moz-locale-dir(rtl) > .toolbarbutton-icon
   border-top: 1px solid #ccc;
 }
 
-.addengine-item:hover {
+.addengine-item[selected] {
   background-color: Highlight;
   color: HighlightText;
 }
@@ -279,7 +281,7 @@ searchbar[oneoffui] .searchbar-engine-image {
   min-height: 32px;
 }
 
-.search-setting-button:hover {
+.search-setting-button[selected] {
   background-color: #d3d3d3;
   border-top-color: #bdbebe;
 }

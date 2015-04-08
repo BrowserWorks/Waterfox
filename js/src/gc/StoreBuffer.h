@@ -7,8 +7,6 @@
 #ifndef gc_StoreBuffer_h
 #define gc_StoreBuffer_h
 
-#ifdef JSGC_GENERATIONAL
-
 #include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/ReentrancyGuard.h"
@@ -160,7 +158,7 @@ class StoreBuffer
         }
 
       private:
-        MonoTypeBuffer &operator=(const MonoTypeBuffer& other) MOZ_DELETE;
+        MonoTypeBuffer &operator=(const MonoTypeBuffer& other) = delete;
     };
 
     struct GenericBuffer
@@ -217,7 +215,7 @@ class StoreBuffer
         }
 
       private:
-        GenericBuffer &operator=(const GenericBuffer& other) MOZ_DELETE;
+        GenericBuffer &operator=(const GenericBuffer& other) = delete;
     };
 
     template <typename Edge>
@@ -309,8 +307,8 @@ class StoreBuffer
             return !(*this == other);
         }
 
-        bool maybeInRememberedSet(const Nursery &) const {
-            return !IsInsideNursery(JS::AsCell(reinterpret_cast<JSObject *>(object())));
+        bool maybeInRememberedSet(const Nursery &n) const {
+            return !IsInsideNursery(reinterpret_cast<Cell *>(object()));
         }
 
         void mark(JSTracer *trc) const;
@@ -502,7 +500,5 @@ class StoreBuffer
 
 } /* namespace gc */
 } /* namespace js */
-
-#endif /* JSGC_GENERATIONAL */
 
 #endif /* gc_StoreBuffer_h */

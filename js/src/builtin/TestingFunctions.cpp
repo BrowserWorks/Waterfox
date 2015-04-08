@@ -61,6 +61,15 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     if (!JS_SetProperty(cx, info, "exact-rooting", TrueHandleValue))
         return false;
 
+    if (!JS_SetProperty(cx, info, "trace-jscalls-api", FalseHandleValue))
+        return false;
+
+    if (!JS_SetProperty(cx, info, "incremental-gc", TrueHandleValue))
+        return false;
+
+    if (!JS_SetProperty(cx, info, "generational-gc", TrueHandleValue))
+        return false;
+
     RootedValue value(cx);
 #ifdef DEBUG
     value = BooleanValue(true);
@@ -142,30 +151,6 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     if (!JS_SetProperty(cx, info, "dtrace", value))
         return false;
 
-#ifdef MOZ_TRACE_JSCALLS
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "trace-jscalls-api", value))
-        return false;
-
-#ifdef JSGC_INCREMENTAL
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "incremental-gc", value))
-        return false;
-
-#ifdef JSGC_GENERATIONAL
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "generational-gc", value))
-        return false;
-
 #ifdef MOZ_VALGRIND
     value = BooleanValue(true);
 #else
@@ -180,14 +165,6 @@ GetBuildConfiguration(JSContext *cx, unsigned argc, jsval *vp)
     value = BooleanValue(false);
 #endif
     if (!JS_SetProperty(cx, info, "oom-backtraces", value))
-        return false;
-
-#ifdef ENABLE_PARALLEL_JS
-    value = BooleanValue(true);
-#else
-    value = BooleanValue(false);
-#endif
-    if (!JS_SetProperty(cx, info, "parallelJS", value))
         return false;
 
 #ifdef ENABLE_BINARYDATA
@@ -251,10 +228,8 @@ GC(JSContext *cx, unsigned argc, jsval *vp)
     else
         JS::PrepareForFullGC(cx->runtime());
 
-    if (shrinking)
-        JS::ShrinkingGC(cx->runtime(), JS::gcreason::API);
-    else
-        JS::GCForReason(cx->runtime(), JS::gcreason::API);
+    JSGCInvocationKind gckind = shrinking ? GC_SHRINK : GC_NORMAL;
+    JS::GCForReason(cx->runtime(), gckind, JS::gcreason::API);
 
     char buf[256] = { '\0' };
 #ifndef JS_MORE_DETERMINISTIC
@@ -272,12 +247,10 @@ static bool
 MinorGC(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-#ifdef JSGC_GENERATIONAL
     if (args.get(0) == BooleanValue(true))
         cx->runtime()->gc.storeBuffer.setAboutToOverflow();
 
     cx->minorGC(JS::gcreason::API);
-#endif
     args.rval().setUndefined();
     return true;
 }
@@ -297,7 +270,7 @@ static const struct ParamPair {
 };
 
 // Keep this in sync with above params.
-#define GC_PARAMETER_ARGS_LIST "maxBytes, maxMallocBytes, gcBytes, gcNumber, sliceTimeBudget, or markStackLimit"
+#define GC_PARAMETER_ARGS_LIST "maxBytes, maxMallocBytes, gcBytes, gcNumber, sliceTimeBudget, markStackLimit, minEmptyChunkCount or maxEmptyChunkCount"
 
 static bool
 GCParameter(JSContext *cx, unsigned argc, Value *vp)
@@ -494,13 +467,15 @@ ScheduleGC(JSContext *cx, unsigned argc, Value *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
 
-    if (args.length() != 1) {
+    if (args.length() > 1) {
         RootedObject callee(cx, &args.callee());
-        ReportUsageError(cx, callee, "Wrong number of arguments");
+        ReportUsageError(cx, callee, "Too many arguments");
         return false;
     }
 
-    if (args[0].isInt32()) {
+    if (args.length() == 0) {
+        /* Fetch next zeal trigger only. */
+    } else if (args[0].isInt32()) {
         /* Schedule a GC to happen after |arg| allocations. */
         JS_ScheduleGC(cx, args[0].toInt32());
     } else if (args[0].isObject()) {
@@ -512,7 +487,11 @@ ScheduleGC(JSContext *cx, unsigned argc, Value *vp)
         PrepareZoneForGC(args[0].toString()->zone());
     }
 
-    args.rval().setUndefined();
+    uint8_t zeal;
+    uint32_t freq;
+    uint32_t next;
+    JS_GetGCZeal(cx, &zeal, &freq, &next);
+    args.rval().setInt32(next);
     return true;
 }
 
@@ -956,14 +935,7 @@ OOMAfterAllocations(JSContext *cx, unsigned argc, jsval *vp)
 #endif
 
 static const js::Class FakePromiseClass = {
-    "Promise", JSCLASS_IS_ANONYMOUS,
-    JS_PropertyStub,       /* addProperty */
-    JS_DeletePropertyStub, /* delProperty */
-    JS_PropertyStub,       /* getProperty */
-    JS_StrictPropertyStub, /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub
+    "Promise", JSCLASS_IS_ANONYMOUS
 };
 
 static bool
@@ -1009,13 +981,13 @@ finalize_counter_finalize(JSFreeOp *fop, JSObject *obj)
 
 static const JSClass FinalizeCounterClass = {
     "FinalizeCounter", JSCLASS_IS_ANONYMOUS,
-    JS_PropertyStub,       /* addProperty */
-    JS_DeletePropertyStub, /* delProperty */
-    JS_PropertyStub,       /* getProperty */
-    JS_StrictPropertyStub, /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
+    nullptr, /* convert */
     finalize_counter_finalize
 };
 
@@ -1215,7 +1187,7 @@ js::testingFunc_inParallelSection(JSContext *cx, unsigned argc, jsval *vp)
 static bool
 ShellObjectMetadataCallback(JSContext *cx, JSObject **pmetadata)
 {
-    RootedObject obj(cx, NewBuiltinClassInstance(cx, &JSObject::class_));
+    RootedObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
     if (!obj)
         return false;
 
@@ -1244,7 +1216,7 @@ ShellObjectMetadataCallback(JSContext *cx, JSObject **pmetadata)
     for (NonBuiltinScriptFrameIter iter(cx); !iter.done(); ++iter) {
         if (iter.isFunctionFrame() && iter.compartment() == cx->compartment()) {
             id = INT_TO_JSID(stackIndex);
-            RootedObject callee(cx, iter.callee());
+            RootedObject callee(cx, iter.callee(cx));
             if (!JS_DefinePropertyById(cx, stack, id, callee, 0,
                                        JS_STUBGETTER, JS_STUBSETTER))
             {
@@ -1551,21 +1523,14 @@ class CloneBufferObject : public NativeObject {
 
 const Class CloneBufferObject::class_ = {
     "CloneBuffer", JSCLASS_HAS_RESERVED_SLOTS(CloneBufferObject::NUM_SLOTS),
-    JS_PropertyStub,       /* addProperty */
-    JS_DeletePropertyStub, /* delProperty */
-    JS_PropertyStub,       /* getProperty */
-    JS_StrictPropertyStub, /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
-    Finalize,
-    nullptr,                  /* call */
-    nullptr,                  /* hasInstance */
-    nullptr,                  /* construct */
-    nullptr,                  /* trace */
-    JS_NULL_CLASS_SPEC,
-    JS_NULL_CLASS_EXT,
-    JS_NULL_OBJECT_OPS
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
+    nullptr, /* convert */
+    Finalize
 };
 
 const JSPropertySpec CloneBufferObject::props_[] = {
@@ -1702,7 +1667,7 @@ static bool
 EnableTraceLogger(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
+    TraceLoggerThread *logger = TraceLoggerForMainThread(cx->runtime());
     args.rval().setBoolean(TraceLoggerEnable(logger, cx));
 
     return true;
@@ -1712,7 +1677,7 @@ static bool
 DisableTraceLogger(JSContext *cx, unsigned argc, jsval *vp)
 {
     CallArgs args = CallArgsFromVp(argc, vp);
-    TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
+    TraceLoggerThread *logger = TraceLoggerForMainThread(cx->runtime());
     args.rval().setBoolean(TraceLoggerDisable(logger));
 
     return true;
@@ -1753,8 +1718,9 @@ ObjectAddress(JSContext *cx, unsigned argc, jsval *vp)
 #ifdef JS_MORE_DETERMINISTIC
     args.rval().setInt32(0);
 #else
+    void *ptr = js::UncheckedUnwrap(&args[0].toObject(), true);
     char buffer[64];
-    JS_snprintf(buffer, sizeof(buffer), "%p", &args[0].toObject());
+    JS_snprintf(buffer, sizeof(buffer), "%p", ptr);
 
     JSString *str = JS_NewStringCopyZ(cx, buffer);
     if (!str)
@@ -1870,8 +1836,8 @@ class BackEdge {
 
   private:
     // No copy constructor or copying assignment.
-    BackEdge(const BackEdge &) MOZ_DELETE;
-    BackEdge &operator=(const BackEdge &) MOZ_DELETE;
+    BackEdge(const BackEdge &) = delete;
+    BackEdge &operator=(const BackEdge &) = delete;
 };
 
 // A path-finding handler class for use with JS::ubi::BreadthFirst.
@@ -2028,7 +1994,7 @@ FindPath(JSContext *cx, unsigned argc, jsval *vp)
     // array in start-to-target order.
     for (size_t i = 0; i < length; i++) {
         // Build an object describing the node and edge.
-        RootedObject obj(cx, NewBuiltinClassInstance<JSObject>(cx));
+        RootedObject obj(cx, NewBuiltinClassInstance<PlainObject>(cx));
         if (!obj)
             return false;
 
@@ -2311,9 +2277,10 @@ static const JSFunctionSpecWithHelp TestingFunctions[] = {
 gc::ZealModeHelpText),
 
     JS_FN_HELP("schedulegc", ScheduleGC, 1, 0,
-"schedulegc(num | obj)",
+"schedulegc([num | obj])",
 "  If num is given, schedule a GC after num allocations.\n"
-"  If obj is given, schedule a GC of obj's compartment."),
+"  If obj is given, schedule a GC of obj's compartment.\n"
+"  Returns the number of allocations before the next trigger."),
 
     JS_FN_HELP("selectforgc", SelectForGC, 0, 0,
 "selectforgc(obj1, obj2, ...)",

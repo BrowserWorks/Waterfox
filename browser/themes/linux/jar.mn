@@ -27,13 +27,17 @@ browser.jar:
 * skin/classic/browser/devedition.css
 * skin/classic/browser/browser-lightweightTheme.css
   skin/classic/browser/click-to-play-warning-stripes.png
-* skin/classic/browser/content-contextmenu.svg
+  skin/classic/browser/content-contextmenu.svg
   skin/classic/browser/dots.png                             (../shared/dots.png)
   skin/classic/browser/dots@2x.png                          (../shared/dots@2x.png)
+  skin/classic/browser/drm-icon.svg                         (../shared/drm-icon.svg)
 * skin/classic/browser/engineManager.css
   skin/classic/browser/fullscreen-darknoise.png
   skin/classic/browser/Geolocation-16.png
   skin/classic/browser/Geolocation-64.png
+  skin/classic/browser/heartbeat-icon.svg                   (../shared/heartbeat-icon.svg)
+  skin/classic/browser/heartbeat-star-lit.svg               (../shared/heartbeat-star-lit.svg)
+  skin/classic/browser/heartbeat-star-off.svg               (../shared/heartbeat-star-off.svg)
   skin/classic/browser/identity.png
   skin/classic/browser/identity-icons-generic.png
   skin/classic/browser/identity-icons-https.png
@@ -50,10 +54,11 @@ browser.jar:
   skin/classic/browser/menuPanel-exit.png
   skin/classic/browser/menuPanel-help.png
   skin/classic/browser/menuPanel-small.png
-  skin/classic/browser/bad-content-blocked-16.png
-  skin/classic/browser/bad-content-blocked-64.png
-  skin/classic/browser/bad-content-unblocked-16.png
-  skin/classic/browser/bad-content-unblocked-64.png
+  skin/classic/browser/bad-content-blocked-16.png           (../shared/bad-content-blocked-16.png)
+  skin/classic/browser/bad-content-blocked-16@2x.png        (../shared/bad-content-blocked-16@2x.png)
+  skin/classic/browser/bad-content-blocked-64.png           (../shared/bad-content-blocked-64.png)
+  skin/classic/browser/bad-content-unblocked-16.png         (../shared/bad-content-unblocked-16.png)
+  skin/classic/browser/bad-content-unblocked-64.png         (../shared/bad-content-unblocked-64.png)
   skin/classic/browser/monitor.png
   skin/classic/browser/monitor_16-10.png
   skin/classic/browser/notification-16.png
@@ -170,8 +175,6 @@ browser.jar:
   skin/classic/browser/preferences/in-content/icons.png       (../shared/incontentprefs/icons.png)
   skin/classic/browser/preferences/in-content/icons@2x.png    (../shared/incontentprefs/icons@2x.png)
   skin/classic/browser/preferences/in-content/search.css      (../shared/incontentprefs/search.css)
-  skin/classic/browser/preferences/in-content/check.png       (../shared/incontentprefs/check.png)
-  skin/classic/browser/preferences/in-content/check@2x.png    (../shared/incontentprefs/check@2x.png)
   skin/classic/browser/preferences/applications.css   (preferences/applications.css)
   skin/classic/browser/preferences/aboutPermissions.css (preferences/aboutPermissions.css)
   skin/classic/browser/preferences/search.css         (preferences/search.css)
@@ -223,6 +226,7 @@ browser.jar:
   skin/classic/browser/devtools/filters.svg           (../shared/devtools/filters.svg)
   skin/classic/browser/devtools/controls.png          (../shared/devtools/images/controls.png)
   skin/classic/browser/devtools/controls@2x.png       (../shared/devtools/images/controls@2x.png)
+  skin/classic/browser/devtools/performance-icons.svg  (../shared/devtools/images/performance-icons.svg)
   skin/classic/browser/devtools/newtab.png             (../shared/devtools/images/newtab.png)
   skin/classic/browser/devtools/newtab@2x.png          (../shared/devtools/images/newtab@2x.png)
   skin/classic/browser/devtools/newtab-inverted.png    (../shared/devtools/images/newtab-inverted.png)
@@ -268,6 +272,7 @@ browser.jar:
   skin/classic/browser/devtools/breadcrumbs-divider@2x.png      (../shared/devtools/images/breadcrumbs-divider@2x.png)
   skin/classic/browser/devtools/breadcrumbs-scrollbutton.png    (../shared/devtools/images/breadcrumbs-scrollbutton.png)
   skin/classic/browser/devtools/breadcrumbs-scrollbutton@2x.png (../shared/devtools/images/breadcrumbs-scrollbutton@2x.png)
+  skin/classic/browser/devtools/animationinspector.css          (../shared/devtools/animationinspector.css)
 * skin/classic/browser/devtools/canvasdebugger.css    (devtools/canvasdebugger.css)
 * skin/classic/browser/devtools/debugger.css          (devtools/debugger.css)
   skin/classic/browser/devtools/eyedropper.css        (../shared/devtools/eyedropper.css)
@@ -275,6 +280,7 @@ browser.jar:
 * skin/classic/browser/devtools/profiler.css          (devtools/profiler.css)
 * skin/classic/browser/devtools/performance.css       (devtools/performance.css)
 * skin/classic/browser/devtools/timeline.css          (devtools/timeline.css)
+  skin/classic/browser/devtools/timeline-filter.svg   (../shared/devtools/images/timeline-filter.svg)
 * skin/classic/browser/devtools/scratchpad.css        (devtools/scratchpad.css)
 * skin/classic/browser/devtools/shadereditor.css      (devtools/shadereditor.css)
 * skin/classic/browser/devtools/splitview.css         (../shared/devtools/splitview.css)
@@ -414,3 +420,5 @@ browser.jar:
 #ifdef E10S_TESTING_ONLY
   skin/classic/browser/e10s-64@2x.png (../shared/e10s-64@2x.png)
 #endif
+  skin/classic/browser/warning16.png                        (../shared/warning16.png)
+  skin/classic/browser/warning16@2x.png                     (../shared/warning16@2x.png)

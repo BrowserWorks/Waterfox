@@ -27,6 +27,7 @@
 #include "SharedSurfaceEGL.h"
 #include "SharedSurfaceGL.h"
 #include "../opengl/CompositorOGL.h"
+#include "gfxUtils.h"
 
 #ifdef MOZ_ENABLE_D3D10_LAYER
 #include "../d3d11/CompositorD3D11.h"
@@ -326,6 +327,18 @@ TextureHost::PrintInfo(std::stringstream& aStream, const char* aPrefix)
     Unlock();
   }
   AppendToString(aStream, mFlags, " [flags=", "]");
+#ifdef MOZ_DUMP_PAINTING
+  if (gfxPrefs::LayersDumpTexture() || profiler_feature_active("layersdump")) {
+    nsAutoCString pfx(aPrefix);
+    pfx += "  ";
+
+    aStream << "\n" << pfx.get() << "Surface: ";
+    RefPtr<gfx::DataSourceSurface> dSurf = GetAsSurface();
+    if (dSurf) {
+      aStream << gfxUtils::GetAsLZ4Base64Str(dSurf).get();
+    }
+  }
+#endif
 }
 
 TextureSource::TextureSource()
@@ -347,7 +360,14 @@ BufferTextureHost::BufferTextureHost(gfx::SurfaceFormat aFormat,
 , mUpdateSerial(1)
 , mLocked(false)
 , mNeedsFullUpdate(false)
-{}
+{
+  if (aFlags & TextureFlags::COMPONENT_ALPHA) {
+    // One texture of a component alpha texture pair will start out all white.
+    // This hack allows us to easily make sure that white will be uploaded.
+    // See bug 1138934
+    mNeedsFullUpdate = true;
+  }
+}
 
 void
 BufferTextureHost::InitSize()

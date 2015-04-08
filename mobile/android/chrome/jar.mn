@@ -8,8 +8,10 @@ chrome.jar:
 % content browser %content/ contentaccessible=yes
 
 * content/about.xhtml                  (content/about.xhtml)
+* content/about.js                     (content/about.js)
   content/config.xhtml                 (content/config.xhtml)
   content/config.js                    (content/config.js)
+  content/content.js                   (content/content.js)
   content/aboutAddons.xhtml            (content/aboutAddons.xhtml)
   content/aboutAddons.js               (content/aboutAddons.js)
   content/aboutCertError.xhtml         (content/aboutCertError.xhtml)
@@ -19,12 +21,7 @@ chrome.jar:
   content/aboutFeedback.js             (content/aboutFeedback.js)
   content/aboutPrivateBrowsing.xhtml   (content/aboutPrivateBrowsing.xhtml)
   content/aboutPrivateBrowsing.js      (content/aboutPrivateBrowsing.js)
-  content/aboutReader.html             (content/aboutReader.html)
-  content/aboutReader.js               (content/aboutReader.js)
-  content/Readability.js               (content/Readability.js)
   content/Reader.js                    (content/Reader.js)
-  content/JSDOMParser.js               (content/JSDOMParser.js)
-  content/readerWorker.js              (content/readerWorker.js)
   content/aboutHome.xhtml              (content/aboutHome.xhtml)
   content/aboutRights.xhtml            (content/aboutRights.xhtml)
 * content/aboutApps.xhtml              (content/aboutApps.xhtml)
@@ -35,7 +32,6 @@ chrome.jar:
 * content/browser.js                   (content/browser.js)
   content/bindings/checkbox.xml        (content/bindings/checkbox.xml)
   content/bindings/settings.xml        (content/bindings/settings.xml)
-  content/downloads.js                 (content/downloads.js)
   content/netError.xhtml               (content/netError.xhtml)
   content/SelectHelper.js              (content/SelectHelper.js)
   content/SelectionHandler.js          (content/SelectionHandler.js)
@@ -64,6 +60,8 @@ chrome.jar:
   content/aboutDevices.js              (content/aboutDevices.js)
 #endif
 #ifdef NIGHTLY_BUILD
+  content/aboutPasswords.xhtml         (content/aboutPasswords.xhtml)
+  content/aboutPasswords.js            (content/aboutPasswords.js)
   content/WebcompatReporter.js         (content/WebcompatReporter.js)
 #endif
 

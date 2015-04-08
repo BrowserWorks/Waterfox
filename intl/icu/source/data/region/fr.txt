@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fr.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fr.xml
- */
 fr{
     Countries{
         001{"Monde"}
@@ -136,7 +133,7 @@ fr{
         GP{"Guadeloupe"}
         GQ{"Guinée équatoriale"}
         GR{"Grèce"}
-        GS{"Îles Géorgie du Sud et Sandwich du Sud"}
+        GS{"Géorgie du Sud et îles Sandwich du Sud"}
         GT{"Guatemala"}
         GU{"Guam"}
         GW{"Guinée-Bissau"}
@@ -188,7 +185,7 @@ fr{
         MC{"Monaco"}
         MD{"Moldavie"}
         ME{"Monténégro"}
-        MF{"Saint-Martin (partie française)"}
+        MF{"Saint-Martin"}
         MG{"Madagascar"}
         MH{"Îles Marshall"}
         MK{"Macédoine"}
@@ -228,7 +225,7 @@ fr{
         PK{"Pakistan"}
         PL{"Pologne"}
         PM{"Saint-Pierre-et-Miquelon"}
-        PN{"Pitcairn"}
+        PN{"Îles Pitcairn"}
         PR{"Porto Rico"}
         PS{"Territoires palestiniens"}
         PT{"Portugal"}
@@ -302,6 +299,13 @@ fr{
         ZW{"Zimbabwe"}
         ZZ{"région indéterminée"}
     }
+    Countries%short{
+        GB{"R.-U."}
+        HK{"Hong Kong"}
+        MO{"Macao"}
+        PS{"Palestine"}
+        US{"É.-U."}
+    }
     Countries%variant{
         CD{"Congo (RDC)"}
         CG{"République du Congo"}
@@ -309,12 +313,5 @@ fr{
         MK{"Macédoine (ARYM)"}
         TL{"Timor-Oriental"}
     }
-    CountriesShort{
-        GB{"R.-U."}
-        HK{"Hong Kong"}
-        MO{"Macao"}
-        PS{"Palestine"}
-        US{"É.-U."}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.46"}
 }

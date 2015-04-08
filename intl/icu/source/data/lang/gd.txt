@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/gd.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/gd.xml
- */
 gd{
     Keys{
         calendar{"Mìosachan"}
@@ -335,7 +332,7 @@ gd{
         zu{"Zulu"}
         zxx{"Susbaint nach eil ‘na chànan"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"Azeri"}
         en_GB{"Beurla na RA"}
         en_US{"Beurla nan SA"}
@@ -494,7 +491,7 @@ gd{
             tibt{"Àireamhan na Tibeitise"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Cànan: {0}"}
         script{"Litreadh: {0}"}

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2014, International Business Machines Corporation and
+* Copyright (C) 2014-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 *******************************************************************************
 *
@@ -88,14 +88,15 @@ void Region::loadRegionData(UErrorCode &status) {
     LocalPointer<UVector> continents(new UVector(uprv_deleteUObject, uhash_compareUnicodeString, status), status);
     LocalPointer<UVector> groupings(new UVector(uprv_deleteUObject, uhash_compareUnicodeString, status), status);
 
-    LocalUResourceBundlePointer rb(ures_openDirect(NULL,"metadata",&status));
-    LocalUResourceBundlePointer regionCodes(ures_getByKey(rb.getAlias(),"regionCodes",NULL,&status));
-    LocalUResourceBundlePointer territoryAlias(ures_getByKey(rb.getAlias(),"territoryAlias",NULL,&status));
+    LocalUResourceBundlePointer metadata(ures_openDirect(NULL,"metadata",&status));
+    LocalUResourceBundlePointer regionCodes(ures_getByKey(metadata.getAlias(),"regionCodes",NULL,&status));
+    LocalUResourceBundlePointer metadataAlias(ures_getByKey(metadata.getAlias(),"alias",NULL,&status));
+    LocalUResourceBundlePointer territoryAlias(ures_getByKey(metadataAlias.getAlias(),"territory",NULL,&status));
 
-    LocalUResourceBundlePointer rb2(ures_openDirect(NULL,"supplementalData",&status));
-    LocalUResourceBundlePointer codeMappings(ures_getByKey(rb2.getAlias(),"codeMappings",NULL,&status));
+    LocalUResourceBundlePointer supplementalData(ures_openDirect(NULL,"supplementalData",&status));
+    LocalUResourceBundlePointer codeMappings(ures_getByKey(supplementalData.getAlias(),"codeMappings",NULL,&status));
 
-    LocalUResourceBundlePointer territoryContainment(ures_getByKey(rb2.getAlias(),"territoryContainment",NULL,&status));
+    LocalUResourceBundlePointer territoryContainment(ures_getByKey(supplementalData.getAlias(),"territoryContainment",NULL,&status));
     LocalUResourceBundlePointer worldContainment(ures_getByKey(territoryContainment.getAlias(),"001",NULL,&status));
     LocalUResourceBundlePointer groupingContainment(ures_getByKey(territoryContainment.getAlias(),"grouping",NULL,&status));
 
@@ -148,7 +149,7 @@ void Region::loadRegionData(UErrorCode &status) {
         LocalUResourceBundlePointer res(ures_getNextResource(territoryAlias.getAlias(),NULL,&status));
         const char *aliasFrom = ures_getKey(res.getAlias());
         LocalPointer<UnicodeString> aliasFromStr(new UnicodeString(aliasFrom, -1, US_INV), status);
-        UnicodeString aliasTo = ures_getUnicodeString(res.getAlias(),&status);
+        UnicodeString aliasTo = ures_getUnicodeStringByKey(res.getAlias(),"replacement",&status);
         res.adoptInstead(NULL);
 
         const Region *aliasToRegion = (Region *) uhash_get(newRegionIDMap.getAlias(),&aliasTo);
@@ -232,13 +233,13 @@ void Region::loadRegionData(UErrorCode &status) {
 
     // Now fill in the special cases for WORLD, UNKNOWN, CONTINENTS, and GROUPINGS
     Region *r;
-	UnicodeString WORLD_ID_STRING(WORLD_ID);
+    UnicodeString WORLD_ID_STRING(WORLD_ID);
     r = (Region *) uhash_get(newRegionIDMap.getAlias(),(void *)&WORLD_ID_STRING);
     if ( r ) {
         r->type = URGN_WORLD;
     }
 
-	UnicodeString UNKNOWN_REGION_ID_STRING(UNKNOWN_REGION_ID);
+    UnicodeString UNKNOWN_REGION_ID_STRING(UNKNOWN_REGION_ID);
     r = (Region *) uhash_get(newRegionIDMap.getAlias(),(void *)&UNKNOWN_REGION_ID_STRING);
     if ( r ) {
         r->type = URGN_UNKNOWN;
@@ -261,7 +262,7 @@ void Region::loadRegionData(UErrorCode &status) {
     // Special case: The region code "QO" (Outlying Oceania) is a subcontinent code added by CLDR
     // even though it looks like a territory code.  Need to handle it here.
 
-	UnicodeString OUTLYING_OCEANIA_REGION_ID_STRING(OUTLYING_OCEANIA_REGION_ID);
+    UnicodeString OUTLYING_OCEANIA_REGION_ID_STRING(OUTLYING_OCEANIA_REGION_ID);
     r = (Region *) uhash_get(newRegionIDMap.getAlias(),(void *)&OUTLYING_OCEANIA_REGION_ID_STRING);
     if ( r ) {
         r->type = URGN_SUBCONTINENT;
@@ -373,6 +374,7 @@ Region::~Region () {
 
 /**
  * Returns true if the two regions are equal.
+ * Per PMC, just use pointer compare, since we have at most one instance of each Region.
  */
 UBool
 Region::operator==(const Region &that) const {
@@ -381,6 +383,7 @@ Region::operator==(const Region &that) const {
 
 /**
  * Returns true if the two regions are NOT equal; that is, if operator ==() returns false.
+ * Per PMC, just use pointer compare, since we have at most one instance of each Region.
  */
 UBool
 Region::operator!=(const Region &that) const {
@@ -419,7 +422,7 @@ Region::getInstance(const char *region_code, UErrorCode &status) {
     }
 
     if ( r->type == URGN_DEPRECATED && r->preferredValues->size() == 1) {
-        StringEnumeration *pv = r->getPreferredValues();
+        StringEnumeration *pv = r->getPreferredValues(status);
         pv->reset(status);
         const UnicodeString *ustr = pv->snext(status);
         r = (Region *)uhash_get(regionIDMap,(void *)ustr);
@@ -468,7 +471,7 @@ Region::getInstance (int32_t code, UErrorCode &status) {
     }
 
     if ( r->type == URGN_DEPRECATED && r->preferredValues->size() == 1) {
-        StringEnumeration *pv = r->getPreferredValues();
+        StringEnumeration *pv = r->getPreferredValues(status);
         pv->reset(status);
         const UnicodeString *ustr = pv->snext(status);
         r = (Region *)uhash_get(regionIDMap,(void *)ustr);
@@ -483,9 +486,8 @@ Region::getInstance (int32_t code, UErrorCode &status) {
  * Returns an enumeration over the IDs of all known regions that match the given type.
  */
 StringEnumeration* U_EXPORT2
-Region::getAvailable(URegionType type) {
-    UErrorCode status = U_ZERO_ERROR;
-    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status);
+Region::getAvailable(URegionType type, UErrorCode &status) {
+    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status); // returns immediately if U_FAILURE(status)
     if (U_FAILURE(status)) {
         return NULL;
     }
@@ -519,11 +521,7 @@ Region::getContainingRegion(URegionType type) const {
         return NULL;
     }
 
-    if ( containingRegion->type == type ) {
-        return containingRegion;
-    } else {
-        return containingRegion->getContainingRegion(type);
-    }
+    return ( containingRegion->type == type )? containingRegion: containingRegion->getContainingRegion(type);
 }
 
 /**
@@ -535,9 +533,11 @@ Region::getContainingRegion(URegionType type) const {
  * and "155" (Western Europe).
  */
 StringEnumeration*
-Region::getContainedRegions() const {
-    UErrorCode status = U_ZERO_ERROR;
-    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status);
+Region::getContainedRegions(UErrorCode &status) const {
+    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status); // returns immediately if U_FAILURE(status)
+    if (U_FAILURE(status)) {
+        return NULL;
+    }
     return new RegionNameEnumeration(containedRegions,status);
 }
 
@@ -548,16 +548,15 @@ Region::getContainedRegions() const {
  * "URGN_TERRITORY" returns a set containing all the territories in Europe ( "FR" (France) - "IT" (Italy) - "DE" (Germany) etc. )
  */
 StringEnumeration*
-Region::getContainedRegions( URegionType type ) const {
-    UErrorCode status = U_ZERO_ERROR;
-    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status);
+Region::getContainedRegions( URegionType type, UErrorCode &status ) const {
+    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status); // returns immediately if U_FAILURE(status)
     if (U_FAILURE(status)) {
         return NULL;
     }
 
     UVector *result = new UVector(NULL, uhash_compareChars, status);
 
-    StringEnumeration *cr = getContainedRegions();
+    StringEnumeration *cr = getContainedRegions(status);
 
     for ( int32_t i = 0 ; i < cr->count(status) ; i++ ) {
         const char *id = cr->next(NULL,status);
@@ -565,7 +564,7 @@ Region::getContainedRegions( URegionType type ) const {
         if ( r->getType() == type ) {
             result->addElement((void *)&r->idStr,status);
         } else {
-            StringEnumeration *children = r->getContainedRegions(type);
+            StringEnumeration *children = r->getContainedRegions(type, status);
             for ( int32_t j = 0 ; j < children->count(status) ; j++ ) {
                 const char *id2 = children->next(NULL,status);
                 const Region *r2 = Region::getInstance(id2,status);
@@ -612,14 +611,12 @@ Region::contains(const Region &other) const {
  * "SU" (Soviet Union) would return a list of the regions containing "RU" (Russia), "AM" (Armenia), "AZ" (Azerbaijan), etc...
  */
 StringEnumeration*
-Region::getPreferredValues() const {
-    UErrorCode status = U_ZERO_ERROR;
-    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status);
-    if ( type == URGN_DEPRECATED ) {
-        return new RegionNameEnumeration(preferredValues,status);
-    } else {
+Region::getPreferredValues(UErrorCode &status) const {
+    umtx_initOnce(gRegionDataInitOnce, &loadRegionData, status); // returns immediately if U_FAILURE(status)
+    if (U_FAILURE(status) ||  type != URGN_DEPRECATED) {
         return NULL;
     }
+    return new RegionNameEnumeration(preferredValues,status);
 }
 
 

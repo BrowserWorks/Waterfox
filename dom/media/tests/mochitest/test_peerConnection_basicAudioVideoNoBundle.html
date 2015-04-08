@@ -1,0 +1,34 @@
+﻿<!DOCTYPE HTML>
+<html>
+<head>
+  <script type="application/javascript" src="pc.js"></script>
+</head>
+<body>
+<pre id="test">
+<script type="application/javascript">
+  createHTML({
+    bug: "1016476",
+    title: "Basic audio/video peer connection with no Bundle"
+  });
+
+  runNetworkTest(options => {
+    var test = new PeerConnectionTest(options);
+    test.chain.insertAfter(
+      'PC_LOCAL_CREATE_OFFER',
+      [
+        function PC_LOCAL_REMOVE_BUNDLE_FROM_OFFER(test) {
+          test.originalOffer.sdp = test.originalOffer.sdp.replace(
+              /a=group:BUNDLE .*\r\n/g,
+            ""
+          );
+          info("Updated no bundle offer: " + JSON.stringify(test.originalOffer));
+        }
+      ]);
+    test.setMediaConstraints([{audio: true}, {video: true}],
+                             [{audio: true}, {video: true}]);
+    test.run();
+  });
+</script>
+</pre>
+</body>
+</html>

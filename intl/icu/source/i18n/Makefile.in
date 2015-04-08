@@ -1,6 +1,6 @@
 #******************************************************************************
 #
-#   Copyright (C) 1998-2014, International Business Machines
+#   Copyright (C) 1998-2015, International Business Machines
 #   Corporation and others.  All Rights Reserved.
 #
 #******************************************************************************
@@ -77,7 +77,7 @@ collationdatareader.o collationdatawriter.o collationfcd.o \
 collationiterator.o utf16collationiterator.o utf8collationiterator.o uitercollationiterator.o \
 collationsets.o \
 collationcompare.o collationfastlatin.o collationkeys.o rulebasedcollator.o collationroot.o \
-collationrootelements.o collationdatabuilder.o collationbasedatabuilder.o \
+collationrootelements.o collationdatabuilder.o \
 collationweights.o collationruleparser.o collationbuilder.o collationfastlatinbuilder.o \
 strmatch.o usearch.o search.o stsearch.o \
 translit.o utrans.o esctrn.o unesctrn.o funcrepl.o strrepl.o tridpars.o \
@@ -91,7 +91,7 @@ wintzimpl.o windtfmt.o winnmfmt.o basictz.o dtrule.o rbtz.o tzrule.o tztrans.o v
 upluralrules.o plurrule.o plurfmt.o selfmt.o dtitvfmt.o dtitvinf.o udateintervalformat.o \
 tmunit.o tmutamt.o tmutfmt.o currpinf.o \
 uspoof.o uspoof_impl.o uspoof_build.o uspoof_conf.o uspoof_wsconf.o decfmtst.o smpdtfst.o \
-ztrans.o zrule.o vzone.o fphdlimp.o fpositer.o locdspnm.o \
+ztrans.o zrule.o vzone.o fphdlimp.o fpositer.o ufieldpositer.o locdspnm.o \
 decNumber.o decContext.o alphaindex.o tznames.o tznames_impl.o tzgnames.o \
 tzfmt.o compactdecimalformat.o gender.o region.o scriptset.o identifier_info.o \
 uregion.o reldatefmt.o quantityformatter.o measunit.o filteredbrk.o \

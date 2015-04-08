@@ -12,7 +12,6 @@
 #include "mozilla/Assertions.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/NullPtr.h"
 #include "mozilla/RefCountType.h"
 #include "mozilla/TypeTraits.h"
 #if defined(MOZILLA_INTERNAL_API)
@@ -161,11 +160,13 @@ private:
 };
 
 #ifdef MOZ_REFCOUNTED_LEAK_CHECKING
-#define MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(T) \
-  virtual const char* typeName() const { return #T; } \
-  virtual size_t typeSize() const { return sizeof(*this); }
+// Passing MOZ_OVERRIDE for the optional argument marks the typeName and
+// typeSize functions defined by this macro as overrides.
+#define MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(T, ...) \
+  virtual const char* typeName() const __VA_ARGS__ { return #T; } \
+  virtual size_t typeSize() const __VA_ARGS__ { return sizeof(*this); }
 #else
-#define MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(T)
+#define MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(T, ...)
 #endif
 
 // Note that this macro is expanded unconditionally because it declares only
@@ -233,7 +234,7 @@ class RefPtr
 public:
   RefPtr() : mPtr(0) {}
   RefPtr(const RefPtr& aOther) : mPtr(ref(aOther.mPtr)) {}
-  MOZ_IMPLICIT RefPtr(const TemporaryRef<T>& aOther) : mPtr(aOther.drop()) {}
+  MOZ_IMPLICIT RefPtr(const TemporaryRef<T>& aOther) : mPtr(aOther.take()) {}
   MOZ_IMPLICIT RefPtr(T* aVal) : mPtr(ref(aVal)) {}
 
   template<typename U>
@@ -248,7 +249,7 @@ public:
   }
   RefPtr& operator=(const TemporaryRef<T>& aOther)
   {
-    assign(aOther.drop());
+    assign(aOther.take());
     return *this;
   }
   RefPtr& operator=(T* aVal)
@@ -273,7 +274,7 @@ public:
 
   T* get() const { return mPtr; }
   operator T*() const { return mPtr; }
-  T* operator->() const { return mPtr; }
+  T* operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN { return mPtr; }
   T& operator*() const { return *mPtr; }
   template<typename U>
   operator TemporaryRef<U>() { return TemporaryRef<U>(mPtr); }
@@ -285,7 +286,7 @@ private:
     mPtr = aVal;
   }
 
-  T* mPtr;
+  T* MOZ_OWNING_REF mPtr;
 
   static MOZ_ALWAYS_INLINE T* ref(T* aVal)
   {
@@ -319,14 +320,14 @@ class TemporaryRef
 
 public:
   MOZ_IMPLICIT TemporaryRef(T* aVal) : mPtr(RefPtr<T>::ref(aVal)) {}
-  TemporaryRef(const TemporaryRef& aOther) : mPtr(aOther.drop()) {}
+  TemporaryRef(const TemporaryRef& aOther) : mPtr(aOther.take()) {}
 
   template<typename U>
-  TemporaryRef(const TemporaryRef<U>& aOther) : mPtr(aOther.drop()) {}
+  TemporaryRef(const TemporaryRef<U>& aOther) : mPtr(aOther.take()) {}
 
   ~TemporaryRef() { RefPtr<T>::unref(mPtr); }
 
-  T* drop() const
+  MOZ_WARN_UNUSED_RESULT T* take() const
   {
     T* tmp = mPtr;
     mPtr = nullptr;
@@ -336,10 +337,10 @@ public:
 private:
   TemporaryRef(T* aVal, const DontRef&) : mPtr(aVal) {}
 
-  mutable T* mPtr;
+  mutable T* MOZ_OWNING_REF mPtr;
 
-  TemporaryRef() MOZ_DELETE;
-  void operator=(const TemporaryRef&) MOZ_DELETE;
+  TemporaryRef() = delete;
+  void operator=(const TemporaryRef&) = delete;
 };
 
 /**
@@ -376,8 +377,8 @@ private:
   RefPtr<T>& mRefPtr;
   T* mTmp;
 
-  OutParamRef() MOZ_DELETE;
-  OutParamRef& operator=(const OutParamRef&) MOZ_DELETE;
+  OutParamRef() = delete;
+  OutParamRef& operator=(const OutParamRef&) = delete;
 };
 
 /**

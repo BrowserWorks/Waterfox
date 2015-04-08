@@ -130,5 +130,39 @@ DocAccessibleParent::RecvEvent(const uint64_t& aID, const uint32_t& aEventType)
   ProxyEvent(e->mProxy, aEventType);
   return true;
 }
+bool
+DocAccessibleParent::AddChildDoc(DocAccessibleParent* aChildDoc,
+                                 uint64_t aParentID)
+{
+  ProxyAccessible* outerDoc = mAccessibles.GetEntry(aParentID)->mProxy;
+  if (!outerDoc)
+    return false;
+
+  aChildDoc->mParent = outerDoc;
+  outerDoc->SetChildDoc(aChildDoc);
+  mChildDocs.AppendElement(aChildDoc);
+  aChildDoc->mParentDoc = this;
+  ProxyCreated(aChildDoc);
+  return true;
+}
+
+PLDHashOperator
+DocAccessibleParent::ShutdownAccessibles(ProxyEntry* entry, void*)
+{
+  ProxyDestroyed(entry->mProxy);
+  return PL_DHASH_NEXT;
+}
+
+void
+DocAccessibleParent::ActorDestroy(ActorDestroyReason aWhy)
+{
+  MOZ_ASSERT(mChildDocs.IsEmpty(),
+      "why wheren't the child docs destroyed already?");
+
+  mAccessibles.EnumerateEntries(ShutdownAccessibles, nullptr);
+  ProxyDestroyed(this);
+  mParentDoc ? mParentDoc->RemoveChildDoc(this)
+    : GetAccService()->RemoteDocShutdown(this);
+}
 }
 }

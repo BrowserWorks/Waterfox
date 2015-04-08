@@ -1,0 +1,20 @@
+apply plugin: 'com.android.library'
+
+apply from: "${topsrcdir}/mobile/android/gradle/android.gradle"
+
+android {
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFile getDefaultProguardFile('proguard-android.txt')
+        }
+    }
+}
+
+android.libraryVariants.all { variant ->
+    variant.checkManifest.dependsOn generateCodeAndResources
+}
+
+dependencies {
+    compile project(':branding')
+}

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lt.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/lt.xml
- */
 lt{
     Keys{
         calendar{"kalendorius"}
@@ -638,7 +635,7 @@ lt{
         zxx{"nėra kalbinio turinio"}
         zza{"zaza"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"azeri"}
         en_GB{"anglų (JK)"}
         en_US{"anglų (JAV)"}
@@ -993,7 +990,7 @@ lt{
         VALENCIA{"Valenciečiai"}
         WADEGILE{"Wade-Giles Romanization"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.46"}
     codePatterns{
         language{"Kalba: {0}"}
         script{"Rašmenys: {0}"}

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/gu.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/gu.xml
- */
 gu{
     Keys{
         calendar{"કેલેન્ડર"}
@@ -533,13 +530,13 @@ gu{
         zxx{"કોઇ ભાષાશાસ્ત્રીય સામગ્રી નથી"}
         zza{"ઝાઝા"}
     }
-    Languages%variant{
-        ps{"પુશ્તો"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"અઝેરી"}
         en_GB{"યુ.કે. અંગ્રેજી"}
         en_US{"યુ. એસ. અંગ્રેજી"}
+    }
+    Languages%variant{
+        ps{"પુશ્તો"}
     }
     Scripts{
         Arab{"અરબી"}
@@ -796,7 +793,7 @@ gu{
         PINYIN{"પિનયિન રોમનાઇઝેશન"}
         WADEGILE{"વેડ-ગિલ્સ રોમનાઇઝેશન"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"ભાષા: {0}"}
         script{"સ્ક્રીપ્ટ: {0}"}

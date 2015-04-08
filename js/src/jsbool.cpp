@@ -27,14 +27,7 @@ using namespace js::types;
 
 const Class BooleanObject::class_ = {
     "Boolean",
-    JSCLASS_HAS_RESERVED_SLOTS(1) | JSCLASS_HAS_CACHED_PROTO(JSProto_Boolean),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub
+    JSCLASS_HAS_RESERVED_SLOTS(1) | JSCLASS_HAS_CACHED_PROTO(JSProto_Boolean)
 };
 
 MOZ_ALWAYS_INLINE bool
@@ -141,7 +134,7 @@ js_InitBooleanClass(JSContext *cx, HandleObject obj)
 
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
 
-    RootedNativeObject booleanProto(cx, global->createBlankPrototype(cx, &BooleanObject::class_));
+    Rooted<BooleanObject*> booleanProto(cx, global->createBlankPrototype<BooleanObject>(cx));
     if (!booleanProto)
         return nullptr;
     booleanProto->setFixedSlot(BooleanObject::PRIMITIVE_VALUE_SLOT, BooleanValue(false));

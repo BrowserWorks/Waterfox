@@ -5,7 +5,7 @@
 MOZ_APP_BASENAME=Fennec
 MOZ_APP_VENDOR=Mozilla
 
-MOZ_APP_VERSION=36.0
+MOZ_APP_VERSION=37.0
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_BRANDING_DIRECTORY=mobile/android/branding/unofficial
@@ -84,9 +84,6 @@ MOZ_ANDROID_MLS_STUMBLER=1
 
 # Enable adding to the system downloads list in pre-release builds.
 MOZ_ANDROID_DOWNLOADS_INTEGRATION=1
-
-# Enable generational GC on mobile.
-export JSGC_GENERATIONAL=1
 
 # Use the low-memory GC tuning.
 export JS_GC_SMALL_CHUNK_SIZE=1

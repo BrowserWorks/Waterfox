@@ -218,7 +218,7 @@ public:
     MessageLoop::current()->PostDelayedTask(FROM_HERE, aTask, aDelayMs);
   }
 
-  virtual bool GetRootZoomConstraints(ZoomConstraints* aOutConstraints)
+  virtual bool GetRootZoomConstraints(ZoomConstraints* aOutConstraints) MOZ_OVERRIDE
   {
     if (mHaveZoomConstraints && aOutConstraints) {
       *aOutConstraints = mZoomConstraints;
@@ -226,7 +226,7 @@ public:
     return mHaveZoomConstraints;
   }
 
-  virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion)
+  virtual bool GetTouchSensitiveRegion(CSSRect* aOutRegion) MOZ_OVERRIDE
   {
     if (mTouchSensitiveRegion.IsEmpty())
       return false;
@@ -237,7 +237,7 @@ public:
 
   virtual void NotifyAPZStateChange(const ScrollableLayerGuid& aGuid,
                                     APZStateChange aChange,
-                                    int aArg)
+                                    int aArg) MOZ_OVERRIDE
   {
     if (MessageLoop::current() != mUILoop) {
       mUILoop->PostTask(
@@ -531,17 +531,17 @@ RenderFrameParent::ZoomToRect(uint32_t aPresShellId, ViewID aViewId,
 }
 
 void
-RenderFrameParent::ContentReceivedTouch(const ScrollableLayerGuid& aGuid,
-                                        uint64_t aInputBlockId,
-                                        bool aPreventDefault)
+RenderFrameParent::ContentReceivedInputBlock(const ScrollableLayerGuid& aGuid,
+                                             uint64_t aInputBlockId,
+                                             bool aPreventDefault)
 {
   if (aGuid.mLayersId != mLayersId) {
     // Guard against bad data from hijacked child processes
-    NS_ERROR("Unexpected layers id in ContentReceivedTouch; dropping message...");
+    NS_ERROR("Unexpected layers id in ContentReceivedInputBlock; dropping message...");
     return;
   }
   if (GetApzcTreeManager()) {
-    GetApzcTreeManager()->ContentReceivedTouch(aInputBlockId, aPreventDefault);
+    GetApzcTreeManager()->ContentReceivedInputBlock(aInputBlockId, aPreventDefault);
   }
 }
 

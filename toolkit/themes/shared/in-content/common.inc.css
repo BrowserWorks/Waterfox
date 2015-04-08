@@ -40,8 +40,15 @@ xul|caption > xul|label {
   margin: 0 !important;
 }
 
+xul|description {
+  -moz-margin-start: 0;
+}
+
 *|*.main-content {
-  padding: 40px 48px 48px;
+  padding-top: 40px;
+  -moz-padding-end: 44px; /* compensate the 4px margin of child elements */
+  padding-bottom: 48px;
+  -moz-padding-start: 48px;
   overflow: auto;
 }
 
@@ -54,9 +61,7 @@ xul|prefpane > xul|*.content-box {
 xul|groupbox {
   -moz-appearance: none;
   border: none;
-  margin-top: 15px;
-  margin-bottom: 15px;
-  -moz-margin-end: 0;
+  margin: 15px 0;
   -moz-padding-start: 0;
   -moz-padding-end: 0;
   font-size: 1.25rem;
@@ -166,6 +171,22 @@ xul|menulist[disabled="true"] {
   opacity: 0.5;
 }
 
+*|button.primary {
+  background-color: #0095dd;
+  border-color: transparent;
+  color: #fff;
+}
+
+html|button.primary:enabled:hover,
+xul|button.primary:not([disabled="true"]):hover {
+  background-color: #008acb;
+}
+
+html|button.primary:enabled:hover:active,
+xul|button.primary:not([disabled="true"]):hover:active {
+  background-color: #006b9d;
+}
+
 xul|colorpicker[type="button"] {
   padding: 6px;
   width: 50px;
@@ -196,7 +217,7 @@ xul|button[type="menu"] > xul|*.button-box > xul|*.button-menu-dropmarker {
 xul|*.help-button {
   min-width: 30px;
   border-radius: 2px;
-  border: 1px solid #c1c1c1;
+  border-width: 0;
   background-color: #ffcb00;
   background-image: none;
   box-shadow: none;
@@ -286,7 +307,7 @@ xul|menulist[disabled="true"]:not([editable="true"]) > xul|*.menulist-dropmarker
 xul|menulist > xul|menupopup,
 xul|button[type="menu"] > xul|menupopup {
   -moz-appearance: none;
-  border: 1px solid rgba(23,50,77,0.4);
+  border: 1px solid #c1c1c1;
   border-radius: 2px;
   background-color: #fff;
 }
@@ -323,10 +344,9 @@ xul|button[type="menu"] > xul|menupopup > xul|menuitem[selected="true"] {
 xul|menulist > xul|menupopup xul|menuseparator,
 xul|button[type="menu"] > xul|menupopup xul|menuseparator {
   -moz-appearance: none;
-  margin-top: 2px;
-  margin-bottom: 2px;
+  margin: 0;
   padding: 0;
-  border-top: 1px solid rgba(23,50,77,0.4);
+  border-top: 1px solid #c1c1c1;
   border-bottom: none;
 }
 
@@ -364,7 +384,6 @@ xul|textbox[disabled="true"] {
 html|a,
 xul|*.text-link,
 xul|*.inline-link {
-  font-size: 1.25rem;
   line-height: 22px;
   color: #0095dd;
   text-decoration: none;
@@ -398,7 +417,8 @@ xul|*.checkbox-check {
   border: 1px solid #c1c1c1;
   -moz-margin-end: 10px;
   background-color: #f1f1f1;
-  background-image: linear-gradient(#fff, rgba(255,255,255,0.8));
+  /* !important needed to override toolkit checked !important rule */
+  background-image: linear-gradient(#fff, rgba(255,255,255,0.8)) !important;
   background-position: center center;
   background-repeat: no-repeat;
   box-shadow: 0 1px 1px 0 #fff, inset 0 2px 0 0 rgba(0,0,0,0.03);
@@ -409,9 +429,7 @@ xul|checkbox:not([disabled="true"]):hover > xul|*.checkbox-check {
 }
 
 xul|*.checkbox-check[checked] {
-  background-image: url("chrome://global/skin/in-content/check.png"),
-                    /* !important needed to override toolkit !important rule */
-                    linear-gradient(#fff, rgba(255,255,255,0.8)) !important;
+  list-style-image: url("chrome://global/skin/in-content/check.svg#check");
 }
 
 xul|checkbox[disabled="true"] > xul|*.checkbox-check {
@@ -421,14 +439,6 @@ xul|checkbox[disabled="true"] > xul|*.checkbox-check {
 xul|*.checkbox-label-box {
   -moz-margin-start: -1px; /* negative margin for the transparent border */
   -moz-padding-start: 0;
-}
-
-@media (min-resolution: 2dppx) {
-  xul|*.checkbox-check[checked] {
-    background-size: 12px 12px, auto;
-    background-image: url("chrome://global/skin/in-content/check@2x.png"),
-                      linear-gradient(#fff, rgba(255,255,255,0.8)) !important;
-  }
 }
 
 xul|richlistitem > xul|*.checkbox-check {
@@ -452,10 +462,7 @@ xul|radio:not([disabled="true"]):hover > xul|*.radio-check {
 }
 
 xul|*.radio-check[selected] {
-  background-image: radial-gradient(circle, rgb(23,146,229),
-                    rgb(76,177,255) 5.5px, rgba(76,177,255,0.2) 6px,
-                    transparent 6px),
-                    linear-gradient(rgb(255,255,255), rgba(255,255,255,0.8));
+  list-style-image: url("chrome://global/skin/in-content/radio.svg#radio");
 }
 
 xul|radio[disabled="true"] > xul|*.radio-check {
@@ -475,6 +482,7 @@ xul|*#categories {
   background-color: #424f5a;
   padding-top: 39px;
   margin: 0;
+  border-width: 0;
 }
 
 xul|*.category {
@@ -520,6 +528,7 @@ xul|*#categories[keyboard-navigation="true"]:-moz-focusring > xul|*.category[cur
 
 *|*.header {
   border-bottom: 1px solid #c8c8c8;
+  -moz-margin-end: 4px; /* add the 4px end-margin of other elements */
   margin-bottom: 15px;
   padding-bottom: 15px;
 }
@@ -573,4 +582,103 @@ xul|filefield + xul|button:-moz-locale-dir(rtl) {
 xul|textbox + xul|button,
 xul|filefield + xul|button {
   -moz-border-start: none;
+}
+
+/* List boxes */
+
+xul|richlistbox,
+xul|listbox {
+  -moz-appearance: none;
+  -moz-margin-start: 0;
+  background-color: #fff;
+  border: 1px solid #c1c1c1;
+  color: #333;
+}
+
+xul|treechildren::-moz-tree-row,
+xul|listbox xul|listitem {
+  padding: 0.3em;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background-image: none;
+}
+
+xul|treechildren::-moz-tree-row(hover),
+xul|listbox xul|listitem:hover {
+  background-color: rgba(0,149,221,0.25);
+}
+
+xul|treechildren::-moz-tree-row(selected),
+xul|listbox xul|listitem[selected="true"] {
+  background-color: #0095dd;
+  color: #fff;
+}
+
+/* Trees */
+
+xul|tree {
+  -moz-appearance: none;
+  font-size: 1em;
+  border: 1px solid #c1c1c1;
+}
+
+xul|listheader,
+xul|treecols {
+  -moz-appearance: none;
+  border: none;
+  border-bottom: 1px solid #c1c1c1;
+  padding: 0;
+}
+
+xul|treecol:not([hideheader="true"]),
+xul|treecolpicker {
+  -moz-appearance: none;
+  border: none;
+  background-color: #ebebeb;
+  color: #808080;
+  padding: 5px 10px;
+}
+
+xul|treecol:not([hideheader="true"]):hover,
+xul|treecolpicker:hover {
+  background-color: #dadada;
+  color: #333;
+}
+
+xul|treecol:not([hideheader="true"]):not(:first-child),
+xul|treecolpicker {
+  -moz-border-start-width: 1px;
+  -moz-border-start-style: solid;
+  border-image: linear-gradient(transparent 0%, transparent 20%, #c1c1c1 20%, #c1c1c1 80%, transparent 80%, transparent 100%) 1 1;
+}
+
+xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection] {
+  list-style-image: url("chrome://global/skin/in-content/sorter.png");
+  width: 12px;
+  height: 8px;
+}
+
+xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection="descending"] {
+  transform: scaleY(-1);
+}
+
+@media (min-resolution: 2dppx) {
+  xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection] {
+    list-style-image: url("chrome://global/skin/in-content/sorter@2x.png");
+  }
+}
+
+/* This is the only way to increase the height of a tree row unfortunately */
+xul|treechildren::-moz-tree-row {
+  min-height: 2em;
+}
+
+/* Color needs to be set on tree cell in order to be applied */
+xul|treechildren::-moz-tree-cell-text {
+  color: #333;
+}
+
+xul|treechildren::-moz-tree-cell-text(selected) {
+  color: #fff;
 }

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ja.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ja.xml
- */
 ja{
     Keys{
         calendar{"暦法"}
@@ -630,14 +627,14 @@ ja{
         zxx{"言語的内容なし"}
         zza{"ザザ語"}
     }
-    Languages%variant{
-        ps{"パシュトゥ語"}
-        ug{"ウィグル語"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"アゼリー語"}
         en_GB{"英語(英国)"}
         en_US{"英語(米国)"}
+    }
+    Languages%variant{
+        ps{"パシュトゥ語"}
+        ug{"ウィグル語"}
     }
     Scripts{
         Afak{"アファカ文字"}
@@ -1016,7 +1013,7 @@ ja{
         VALLADER{"ヴァラダー"}
         WADEGILE{"ウェード式ローマ字表記法"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"言語: {0}"}
         script{"文字: {0}"}

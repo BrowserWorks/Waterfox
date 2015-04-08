@@ -25,8 +25,7 @@ var matchstickDevice = {
   id: "matchstick:dial",
   target: "urn:dial-multiscreen-org:service:dial:1",
   filters: {
-    server: null,
-    modelName: "Eureka Dongle"
+    manufacturer: "openflint"
   },
   factory: function(aService) {
     Cu.import("resource://gre/modules/MatchstickApp.jsm");
@@ -44,7 +43,35 @@ var mediaPlayerDevice = {
     return new MediaPlayerApp(aService);
   },
   types: ["video/mp4", "video/webm", "application/x-mpegurl"],
-  extensions: ["mp4", "webm", "m3u", "m3u8"]
+  extensions: ["mp4", "webm", "m3u", "m3u8"],
+  init: function() {
+    Services.obs.addObserver(this, "MediaPlayer:Added", false);
+    Services.obs.addObserver(this, "MediaPlayer:Changed", false);
+    Services.obs.addObserver(this, "MediaPlayer:Removed", false);
+  },
+  observe: function(subject, topic, data) {
+    if (topic === "MediaPlayer:Added") {
+      let service = this.toService(JSON.parse(data));
+      SimpleServiceDiscovery.addService(service);
+    } else if (topic === "MediaPlayer:Changed") {
+      let service = this.toService(JSON.parse(data));
+      SimpleServiceDiscovery.updateService(service);
+    } else if (topic === "MediaPlayer:Removed") {
+      SimpleServiceDiscovery.removeService(data);
+    }
+  },
+  toService: function(display) {
+    // Convert the native data into something matching what is created in _processService()
+    return {
+      location: display.location,
+      target: "media:router",
+      friendlyName: display.friendlyName,
+      uuid: display.uuid,
+      manufacturer: display.manufacturer,
+      modelName: display.modelName,
+      mirror: display.mirror
+    };
+  }
 };
 
 var CastingApps = {
@@ -60,6 +87,9 @@ var CastingApps = {
     // Register targets
     SimpleServiceDiscovery.registerDevice(rokuDevice);
     SimpleServiceDiscovery.registerDevice(matchstickDevice);
+
+    // MediaPlayerDevice will notify us any time the native device list changes.
+    mediaPlayerDevice.init();
     SimpleServiceDiscovery.registerDevice(mediaPlayerDevice);
 
     // Search for devices continuously every 120 seconds
@@ -98,7 +128,7 @@ var CastingApps = {
           let callbackFunc = function(aService) {
             let app = SimpleServiceDiscovery.findAppForService(aService);
             if (app) {
-              app.mirror(function() {}, window, BrowserApp.selectedTab.getViewport(), this._mirrorStarted.bind(this));
+              app.mirror(function() {}, window, BrowserApp.selectedTab.getViewport(), this._mirrorStarted.bind(this), window.BrowserApp.selectedBrowser.contentWindow);
             }
           }.bind(this);
 
@@ -300,8 +330,14 @@ var CastingApps = {
     } catch(e) {}
   },
 
-  _getContentTypeForURI: function(aURI, aCallback) {
-    let channel = Services.io.newChannelFromURI(aURI);
+  _getContentTypeForURI: function(aURI, aElement, aCallback) {
+    let channel = Services.io.newChannelFromURI2(aURI,
+                                                 aElement,
+                                                 null, // aLoadingPrincipal
+                                                 null, // aTriggeringPrincipal
+                                                 Ci.nsILoadInfo.SEC_NORMAL,
+                                                 Ci.nsIContentPolicy.TYPE_OTHER);
+
     let listener = {
       onStartRequest: function(request, context) {
         switch (channel.responseStatus) {
@@ -310,7 +346,7 @@ var CastingApps = {
           case 303:
             request.cancel(0);
             let location = channel.getResponseHeader("Location");
-            CastingApps._getContentTypeForURI(CastingApps.makeURI(location), aCallback);
+            CastingApps._getContentTypeForURI(CastingApps.makeURI(location), aElement, aCallback);
             break;
           default:
             aCallback(channel.contentType);
@@ -391,7 +427,7 @@ var CastingApps = {
     aCallback.fired = false;
     for (let sourceURI of asyncURIs) {
       // Do an async fetch to figure out the mimetype of the source video
-      this._getContentTypeForURI(sourceURI, (aType) => {
+      this._getContentTypeForURI(sourceURI, aElement, (aType) => {
         if (!aCallback.fired && this.allowableMimeType(aType, aTypes)) {
           aCallback.fired = true;
           aCallback({ element: aElement, source: sourceURI.spec, poster: posterURL, sourceURI: sourceURI, type: aType });
@@ -649,6 +685,10 @@ var CastingApps = {
   },
 
   _shutdown: function() {
+    if (!this.session) {
+      return;
+    }
+
     this.session.app.stop();
     let video = this.session.videoRef.get();
     if (video) {

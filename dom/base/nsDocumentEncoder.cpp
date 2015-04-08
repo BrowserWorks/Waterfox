@@ -47,10 +47,8 @@
 #include "nsStringBuffer.h"
 #include "mozilla/dom/Element.h"
 #include "mozilla/dom/ShadowRoot.h"
-#include "nsIEditor.h"
-#include "nsIHTMLEditor.h"
-#include "nsIDocShell.h"
 #include "mozilla/dom/EncodingUtils.h"
+#include "nsComputedDOMStyle.h"
 
 using namespace mozilla;
 using namespace mozilla::dom;
@@ -323,34 +321,22 @@ nsDocumentEncoder::IncludeInContext(nsINode *aNode)
 static
 bool
 IsInvisibleBreak(nsINode *aNode) {
-  // xxxehsan: we should probably figure out a way to determine
-  // if a BR node is visible without using the editor.
-  Element* elt = aNode->AsElement();
-  if (!elt->IsHTML(nsGkAtoms::br) ||
-      !aNode->IsEditable()) {
+  if (!aNode->IsElement() || !aNode->IsEditable()) {
+    return false;
+  }
+  nsIFrame* frame = aNode->AsElement()->GetPrimaryFrame();
+  if (!frame || frame->GetType() != nsGkAtoms::brFrame) {
     return false;
   }
 
-  // Grab the editor associated with the document
-  nsIDocument *doc = aNode->GetComposedDoc();
-  if (doc) {
-    nsPIDOMWindow *window = doc->GetWindow();
-    if (window) {
-      nsIDocShell *docShell = window->GetDocShell();
-      if (docShell) {
-        nsCOMPtr<nsIEditor> editor;
-        docShell->GetEditor(getter_AddRefs(editor));
-        nsCOMPtr<nsIHTMLEditor> htmlEditor = do_QueryInterface(editor);
-        if (htmlEditor) {
-          bool isVisible = false;
-          nsCOMPtr<nsIDOMNode> domNode = do_QueryInterface(aNode);
-          htmlEditor->BreakIsVisible(domNode, &isVisible);
-          return !isVisible;
-        }
-      }
-    }
-  }
-  return false;
+  // If the BRFrame has caused a visible line break, it should have a next
+  // sibling, or otherwise no siblings (or immediately after a br) and a
+  // non-zero height.
+  bool visible = frame->GetNextSibling() ||
+                 ((!frame->GetPrevSibling() ||
+                   frame->GetPrevSibling()->GetType() == nsGkAtoms::brFrame) &&
+                  frame->GetRect().Height() != 0);
+  return !visible;
 }
 
 nsresult
@@ -985,6 +971,7 @@ nsDocumentEncoder::SerializeRangeToString(nsRange *aRange,
   NS_ENSURE_TRUE(endParent, NS_ERROR_FAILURE);
   int32_t endOffset = aRange->EndOffset();
 
+  mStartDepth = mEndDepth = 0;
   mCommonAncestors.Clear();
   mStartNodes.Clear();
   mStartOffsets.Clear();
@@ -1085,6 +1072,7 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
     NS_ENSURE_SUCCESS(rv, rv);
 
     nsCOMPtr<nsIDOMNode> node, prevNode;
+    uint32_t firstRangeStartDepth = 0;
     for (i = 0; i < count; i++) {
       mSelection->GetRangeAt(i, getter_AddRefs(range));
 
@@ -1134,7 +1122,11 @@ nsDocumentEncoder::EncodeToStringWithMaxLength(uint32_t aMaxLength,
       nsRange* r = static_cast<nsRange*>(range.get());
       rv = SerializeRangeToString(r, output);
       NS_ENSURE_SUCCESS(rv, rv);
+      if (i == 0) {
+        firstRangeStartDepth = mStartDepth;
+      }
     }
+    mStartDepth = firstRangeStartDepth;
 
     if (prevNode) {
       nsCOMPtr<nsINode> p = do_QueryInterface(prevNode);
@@ -1377,6 +1369,10 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     return NS_ERROR_NULL_POINTER;
   range->GetCommonAncestorContainer(getter_AddRefs(commonParent));
 
+  // Thunderbird's msg compose code abuses the HTML copy encoder and gets
+  // confused if mIsTextWidget ends up becoming true, so for now we skip
+  // this logic in Thunderbird.
+#ifndef MOZ_THUNDERBIRD
   for (nsCOMPtr<nsIContent> selContent(do_QueryInterface(commonParent));
        selContent;
        selContent = selContent->GetParent())
@@ -1389,22 +1385,21 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
       mIsTextWidget = true;
       break;
     }
-    else if (atom == nsGkAtoms::body)
-    {
-      // check for moz prewrap style on body.  If it's there we are 
-      // in a plaintext editor.  This is pretty cheezy but I haven't 
-      // found a good way to tell if we are in a plaintext editor.
-      nsCOMPtr<nsIDOMElement> bodyElem = do_QueryInterface(selContent);
-      nsAutoString wsVal;
-      rv = bodyElem->GetAttribute(NS_LITERAL_STRING("style"), wsVal);
-      if (NS_SUCCEEDED(rv) && (kNotFound != wsVal.Find(NS_LITERAL_STRING("pre-wrap"))))
-      {
-        mIsTextWidget = true;
+    else if (selContent->IsElement()) {
+      nsRefPtr<nsStyleContext> styleContext =
+        nsComputedDOMStyle::GetStyleContextForElementNoFlush(selContent->AsElement(),
+                                                             nullptr, nullptr);
+      if (styleContext) {
+        const nsStyleText* textStyle = styleContext->StyleText();
+        if (textStyle->WhiteSpaceOrNewlineIsSignificant()) {
+          // Copy as plaintext for all preformatted elements
+          mIsTextWidget = true;
+        }
         break;
       }
     }
   }
-  
+
   // normalize selection if we are not in a widget
   if (mIsTextWidget) 
   {
@@ -1412,6 +1407,7 @@ nsHTMLCopyEncoder::SetSelection(nsISelection* aSelection)
     mMimeType.AssignLiteral("text/plain");
     return NS_OK;
   }
+#endif
 
   // also consider ourselves in a text widget if we can't find an html document
   nsCOMPtr<nsIHTMLDocument> htmlDoc = do_QueryInterface(mDocument);

@@ -840,19 +840,17 @@ function test() {
 
   Services.prefs.setBoolPref("extensions.logging.enabled", true);
   Services.prefs.setBoolPref("extensions.strictCompatibility", true);
+  Services.prefs.setBoolPref("extensions.install.requireSecureOrigin", false);
 
   Services.obs.addObserver(XPInstallObserver, "addon-install-started", false);
   Services.obs.addObserver(XPInstallObserver, "addon-install-blocked", false);
   Services.obs.addObserver(XPInstallObserver, "addon-install-failed", false);
   Services.obs.addObserver(XPInstallObserver, "addon-install-complete", false);
 
-  PopupNotifications.transitionsEnabled = false;
-
   registerCleanupFunction(function() {
     // Make sure no more test parts run in case we were timed out
     TESTS = [];
     PopupNotifications.panel.removeEventListener("popupshown", check_notification, false);
-    PopupNotifications.transitionsEnabled = true;
 
     AddonManager.getAllInstalls(function(aInstalls) {
       aInstalls.forEach(function(aInstall) {
@@ -862,6 +860,7 @@ function test() {
 
     Services.prefs.clearUserPref("extensions.logging.enabled");
     Services.prefs.clearUserPref("extensions.strictCompatibility");
+    Services.prefs.clearUserPref("extensions.install.requireSecureOrigin");
 
     Services.obs.removeObserver(XPInstallObserver, "addon-install-started");
     Services.obs.removeObserver(XPInstallObserver, "addon-install-blocked");

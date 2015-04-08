@@ -26,9 +26,9 @@ dictionary MediaKeySystemOptions {
   MediaKeysRequirement stateful = "optional";
 };
 
-[Pref="media.eme.enabled"]
+[Pref="media.eme.apiVisible"]
 interface MediaKeySystemAccess {
   readonly    attribute DOMString keySystem;
-  [NewObject, Throws]
+  [NewObject]
   Promise<MediaKeys> createMediaKeys();
 };

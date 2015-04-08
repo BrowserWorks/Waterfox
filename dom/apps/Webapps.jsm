@@ -43,6 +43,23 @@ Cu.import("resource://gre/modules/osfile.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/Promise.jsm");
 
+XPCOMUtils.defineLazyGetter(this, "UserCustomizations", function() {
+  let enabled = false;
+  try {
+    enabled = Services.prefs.getBoolPref("dom.apps.customization.enabled");
+  } catch(e) {}
+
+  if (enabled) {
+    return Cu.import("resource://gre/modules/UserCustomizations.jsm", {})
+             .UserCustomizations;
+  } else {
+    return {
+      register: function() {},
+      unregister: function() {}
+    };
+  }
+});
+
 XPCOMUtils.defineLazyModuleGetter(this, "TrustedRootCertificate",
   "resource://gre/modules/StoreTrustAnchor.jsm");
 
@@ -406,6 +423,7 @@ this.DOMApplicationRegistry = {
           app.redirects = this.sanitizeRedirects(aResult.redirects);
         }
         app.kind = this.appKind(app, aResult.manifest);
+        UserCustomizations.register(aResult.manifest, app);
       });
 
       // Nothing else to do but notifying we're ready.
@@ -487,7 +505,16 @@ this.DOMApplicationRegistry = {
   // Installs a 3rd party app.
   installPreinstalledApp: function installPreinstalledApp(aId) {
 #ifdef MOZ_WIDGET_GONK
-    let app = this.webapps[aId];
+    // In some cases, the app might be already installed under a different ID but
+    // with the same manifestURL. In that case, the only content of the webapp will
+    // be the id of the old version, which is the one we'll keep.
+    let destId  = this.webapps[aId].oldId || aId;
+    // We don't need the oldId anymore
+    if (destId !== aId) {
+      delete this.webapps[aId];
+    }
+
+    let app = this.webapps[destId];
     let baseDir, isPreinstalled = false;
     try {
       baseDir = FileUtils.getDir("coreAppsDir", ["webapps", aId], false);
@@ -527,10 +554,10 @@ this.DOMApplicationRegistry = {
     }
 
     debug("Installing 3rd party app : " + aId +
-          " from " + baseDir.path);
+          " from " + baseDir.path + " to " + destId);
 
-    // We copy this app to DIRECTORY_NAME/$aId, and set the base path as needed.
-    let destDir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", aId], true, true);
+    // We copy this app to DIRECTORY_NAME/$destId, and set the base path as needed.
+    let destDir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", destId], true, true);
 
     filesToMove.forEach(function(aFile) {
         let file = baseDir.clone();
@@ -550,7 +577,7 @@ this.DOMApplicationRegistry = {
       return isPreinstalled;
     }
 
-    app.origin = "app://" + aId;
+    app.origin = "app://" + destId;
 
     // Do this for all preinstalled apps... we can't know at this
     // point if the updates will be signed or not and it doesn't
@@ -575,7 +602,7 @@ this.DOMApplicationRegistry = {
       // If we are unable to extract the manifest, cleanup and remove this app.
       debug("Cleaning up: " + e);
       destDir.remove(true);
-      delete this.webapps[aId];
+      delete this.webapps[destId];
     } finally {
       zipReader.close();
     }
@@ -649,7 +676,13 @@ this.DOMApplicationRegistry = {
       for (let id in data) {
         // Core apps have ids matching their domain name (eg: dialer.gaiamobile.org)
         // Use that property to check if they are new or not.
-        if (!(id in this.webapps)) {
+        // Note that in some cases, the id might change, but the
+        // manifest URL wont. So consider that the app is old if
+        // the id does not exist already and if there's no other id
+        // for the manifestURL.
+        var oldId = (id in this.webapps) ? id :
+                      this._appIdForManifestURL(data[id].manifestURL);
+        if (!oldId) {
           this.webapps[id] = data[id];
           this.webapps[id].basePath = appDir.path;
 
@@ -670,10 +703,16 @@ this.DOMApplicationRegistry = {
           // we fall into this case if the app is present in /system/b2g/webapps/webapps.json
           // and in /data/local/webapps/webapps.json: this happens when updating gaia apps
           // Confere bug 989876
+          // We also should fall in this case when the app is a preinstalled third party app.
           for (let field in data[id]) {
             if (fieldsBlacklist.indexOf(field) === -1) {
-              this.webapps[id][field] = data[id][field];
+              this.webapps[oldId][field] = data[id][field];
             }
+          }
+          // If the id for the app has changed on the update, keep a pointer to the old one
+          // since we'll need this to update the app files.
+          if (id !== oldId) {
+            this.webapps[id] = {oldId: oldId};
           }
         }
       }
@@ -685,6 +724,18 @@ this.DOMApplicationRegistry = {
       let runUpdate = AppsUtils.isFirstRun(Services.prefs);
 
       yield this.loadCurrentRegistry();
+
+      // Sanity check and roll back previous incomplete app updates.
+      for (let id in this.webapps) {
+        let oldDir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", id + ".old"], false, true);
+        if (oldDir.exists()) {
+          let dir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", id], false, true);
+          if (dir.exists()) {
+            dir.remove(true);
+          }
+          oldDir.moveTo(null, id);
+        }
+      }
 
       try {
         let systemManifestURL =
@@ -1097,6 +1148,7 @@ this.DOMApplicationRegistry = {
         this._registerSystemMessages(manifest, app);
         this._registerInterAppConnections(manifest, app);
         appsToRegister.push({ manifest: manifest, app: app });
+        UserCustomizations.register(manifest, app);
       });
       this._safeToClone.resolve();
       this._registerActivitiesForApps(appsToRegister, aRunUpdate);
@@ -1814,8 +1866,6 @@ this.DOMApplicationRegistry = {
     app.readyToApplyDownload = true;
     app.updateTime = Date.now();
 
-    yield this._saveApps();
-
     this.broadcastMessage("Webapps:UpdateState", {
       app: app,
       id: app.id
@@ -1850,18 +1900,33 @@ this.DOMApplicationRegistry = {
     let appFile = tmpDir.clone();
     appFile.append("application.zip");
 
-    let dir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", id], true, true);
+    // In order to better control the potential inconsistency due to unexpected
+    // shutdown during the update process, a separate folder is used to accommodate
+    // the updated files and to replace the current one. Some sanity check and
+    // correspondent rollback logic may be necessary during the initialization
+    // of this component to recover it at next system boot-up.
+    let oldDir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", id], true, true);
+    let dir = FileUtils.getDir(DIRECTORY_NAME, ["webapps", id + ".new"], true, true);
     appFile.moveTo(dir, "application.zip");
     manFile.moveTo(dir, "manifest.webapp");
 
-    // Move the staged update manifest to a non staged one.
-    let staged = dir.clone();
+    // Copy the staged update manifest to a non staged one.
+    let staged = oldDir.clone();
     staged.append("staged-update.webapp");
 
     // If we are applying after a restarted download, we have no
     // staged update manifest.
     if (staged.exists()) {
-      staged.moveTo(dir, "update.webapp");
+      staged.copyTo(dir, "update.webapp");
+    }
+
+    oldDir.moveTo(null, id + ".old");
+    dir.moveTo(null, id);
+
+    try {
+      oldDir.remove(true);
+    } catch(e) {
+      oldDir.moveTo(tmpDir, "old." + app.updateTime);
     }
 
     try {
@@ -1991,7 +2056,8 @@ this.DOMApplicationRegistry = {
   // Updates the redirect mapping, activities and system message handlers.
   // aOldManifest can be null if we don't have any handler to unregister.
   updateAppHandlers: function(aOldManifest, aNewManifest, aApp) {
-    debug("updateAppHandlers: old=" + aOldManifest + " new=" + aNewManifest);
+    debug("updateAppHandlers: old=" + uneval(aOldManifest) +
+          " new=" + uneval(aNewManifest));
     this.notifyAppsRegistryStart();
     if (aApp.appStatus >= Ci.nsIPrincipal.APP_STATUS_PRIVILEGED) {
       aApp.redirects = this.sanitizeRedirects(aNewManifest.redirects);
@@ -2000,6 +2066,8 @@ this.DOMApplicationRegistry = {
     let manifest =
       new ManifestHelper(aNewManifest, aApp.origin, aApp.manifestURL);
     this._saveWidgetsFullPath(manifest, aApp);
+
+    aApp.role = manifest.role ? manifest.role : "";
 
     if (supportSystemMessages()) {
       if (aOldManifest) {
@@ -2012,6 +2080,12 @@ this.DOMApplicationRegistry = {
       // Nothing else to do but notifying we're ready.
       this.notifyAppsRegistryReady();
     }
+
+    // Update user customizations.
+    if (aOldManifest) {
+      UserCustomizations.unregister(aOldManifest, aApp);
+    }
+    UserCustomizations.register(aNewManifest, aApp);
   },
 
   checkForUpdate: function(aData, aMm) {
@@ -2178,7 +2252,7 @@ this.DOMApplicationRegistry = {
 
             // For hosted apps and hosted apps with appcache, use the
             // manifest "as is".
-            if (this.kTrustedHosted !== this.appKind(app, app.manifest)) {
+            if (this.kTrustedHosted !== this.appKind(app, manifest)) {
               this.updateHostedApp(aData, id, app, oldManifest, manifest);
               return;
             }
@@ -4019,6 +4093,7 @@ this.DOMApplicationRegistry = {
     if (supportSystemMessages()) {
       this._unregisterActivities(aApp.manifest, aApp);
     }
+    UserCustomizations.unregister(aApp.manifest, aApp);
 
     let dir = this._getAppDir(id);
     try {
@@ -4387,6 +4462,12 @@ this.DOMApplicationRegistry = {
         id: app.id
       });
       this.broadcastMessage("Webapps:SetEnabled:Return", app);
+    });
+
+    // Update customization.
+    this.getManifestFor(app.manifestURL).then((aManifest) => {
+      app.enabled ? UserCustomizations.register(aManifest, app)
+                  : UserCustomizations.unregister(aManifest, app);
     });
   },
 

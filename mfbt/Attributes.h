@@ -50,18 +50,7 @@
  * don't indicate support for them here, due to
  * http://stackoverflow.com/questions/20498142/visual-studio-2013-explicit-keyword-bug
  */
-#  if _MSC_VER >= 1800
-#    define MOZ_HAVE_CXX11_DELETE
-#  endif
-#  if _MSC_VER >= 1700
-#    define MOZ_HAVE_CXX11_FINAL         final
-#  else
-#    if defined(__clang__)
-#      error Please do not try to use clang-cl with MSVC10 or below emulation!
-#    endif
-     /* MSVC <= 10 used to spell "final" as "sealed". */
-#    define MOZ_HAVE_CXX11_FINAL         sealed
-#  endif
+#  define MOZ_HAVE_CXX11_FINAL         final
 #  define MOZ_HAVE_CXX11_OVERRIDE
 #  define MOZ_HAVE_NEVER_INLINE          __declspec(noinline)
 #  define MOZ_HAVE_NORETURN              __declspec(noreturn)
@@ -89,9 +78,6 @@
 #  if __has_extension(cxx_explicit_conversions)
 #    define MOZ_HAVE_EXPLICIT_CONVERSION
 #  endif
-#  if __has_extension(cxx_deleted_functions)
-#    define MOZ_HAVE_CXX11_DELETE
-#  endif
 #  if __has_extension(cxx_override_control)
 #    define MOZ_HAVE_CXX11_OVERRIDE
 #    define MOZ_HAVE_CXX11_FINAL         final
@@ -114,7 +100,6 @@
 #    if MOZ_GCC_VERSION_AT_LEAST(4, 5, 0)
 #      define MOZ_HAVE_EXPLICIT_CONVERSION
 #    endif
-#    define MOZ_HAVE_CXX11_DELETE
 #  else
      /* __final is a non-C++11 GCC synonym for 'final', per GCC r176655. */
 #    if MOZ_GCC_VERSION_AT_LEAST(4, 7, 0)
@@ -272,34 +257,6 @@
 #endif
 
 #ifdef __cplusplus
-
-/*
- * MOZ_DELETE, specified immediately prior to the ';' terminating an undefined-
- * method declaration, attempts to delete that method from the corresponding
- * class.  An attempt to use the method will always produce an error *at compile
- * time* (instead of sometimes as late as link time) when this macro can be
- * implemented.  For example, you can use MOZ_DELETE to produce classes with no
- * implicit copy constructor or assignment operator:
- *
- *   struct NonCopyable
- *   {
- *   private:
- *     NonCopyable(const NonCopyable& aOther) MOZ_DELETE;
- *     void operator=(const NonCopyable& aOther) MOZ_DELETE;
- *   };
- *
- * If MOZ_DELETE can't be implemented for the current compiler, use of the
- * annotated method will still cause an error, but the error might occur at link
- * time in some cases rather than at compile time.
- *
- * MOZ_DELETE relies on C++11 functionality not universally implemented.  As a
- * backstop, method declarations using MOZ_DELETE should be private.
- */
-#if defined(MOZ_HAVE_CXX11_DELETE)
-#  define MOZ_DELETE            = delete
-#else
-#  define MOZ_DELETE            /* no support */
-#endif
 
 /*
  * MOZ_OVERRIDE explicitly indicates that a virtual member function in a class
@@ -495,6 +452,14 @@
  *   class uses this class, or if another class inherits from this class, then
  *   it is considered to be a non-heap class as well, although this attribute
  *   need not be provided in such cases.
+ * MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS: Applies to all classes that are
+ *   intended to prevent introducing static initializers.  This attribute
+ *   currently makes it a compile-time error to instantiate these classes
+ *   anywhere other than at the global scope, or as a static member of a class.
+ * MOZ_TRIVIAL_CTOR_DTOR: Applies to all classes that must have both a trivial
+ *   constructor and a trivial destructor.  Setting this attribute on a class
+ *   makes it a compile-time error for that class to get a non-trivial
+ *   constructor or destructor for any reason.
  * MOZ_HEAP_ALLOCATOR: Applies to any function. This indicates that the return
  *   value is allocated on the heap, and will as a result check such allocations
  *   during MOZ_STACK_CLASS and MOZ_NONHEAP_CLASS annotation checking.
@@ -502,12 +467,44 @@
  *   are disallowed by default unless they are marked as MOZ_IMPLICIT. This
  *   attribute must be used for constructors which intend to provide implicit
  *   conversions.
+ * MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT: Applies to functions. Makes it a compile
+ *   time error to pass arithmetic expressions on variables to the function.
+ * MOZ_OWNING_REF: Applies to declarations of pointer types.  This attribute
+ *   tells the compiler that the raw pointer is a strong reference, and that
+ *   property is somehow enforced by the code.  This can make the compiler
+ *   ignore these pointers when validating the usage of pointers otherwise.
+ * MOZ_NON_OWNING_REF: Applies to declarations of pointer types.  This attribute
+ *   tells the compiler that the raw pointer is a weak reference, and that
+ *   property is somehow enforced by the code.  This can make the compiler
+ *   ignore these pointers when validating the usage of pointers otherwise.
+ * MOZ_UNSAFE_REF: Applies to declarations of pointer types.  This attribute
+ *   should be used for non-owning references that can be unsafe, and their
+ *   safety needs to be validated through code inspection.  The string argument
+ *   passed to this macro documents the safety conditions.
+ * MOZ_NO_ADDREF_RELEASE_ON_RETURN: Applies to function declarations.  Makes it
+ *   a compile time error to call AddRef or Release on the return value of a
+ *   function.  This is intended to be used with operator->() of our smart
+ *   pointer classes to ensure that the refcount of an object wrapped in a
+ *   smart pointer is not manipulated directly.
  */
 #ifdef MOZ_CLANG_PLUGIN
 #  define MOZ_MUST_OVERRIDE __attribute__((annotate("moz_must_override")))
 #  define MOZ_STACK_CLASS __attribute__((annotate("moz_stack_class")))
 #  define MOZ_NONHEAP_CLASS __attribute__((annotate("moz_nonheap_class")))
+#  define MOZ_TRIVIAL_CTOR_DTOR __attribute__((annotate("moz_trivial_ctor_dtor")))
+#  ifdef DEBUG
+     /* in debug builds, these classes do have non-trivial constructors. */
+#    define MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS __attribute__((annotate("moz_global_class")))
+#  else
+#    define MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS __attribute__((annotate("moz_global_class"))) \
+            MOZ_TRIVIAL_CTOR_DTOR
+#  endif
 #  define MOZ_IMPLICIT __attribute__((annotate("moz_implicit")))
+#  define MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT __attribute__((annotate("moz_no_arith_expr_in_arg")))
+#  define MOZ_OWNING_REF __attribute__((annotate("moz_strong_ref")))
+#  define MOZ_NON_OWNING_REF __attribute__((annotate("moz_weak_ref")))
+#  define MOZ_UNSAFE_REF(reason) __attribute__((annotate("moz_strong_ref")))
+#  define MOZ_NO_ADDREF_RELEASE_ON_RETURN __attribute__((annotate("moz_no_addref_release_on_return")))
 /*
  * It turns out that clang doesn't like void func() __attribute__ {} without a
  * warning, so use pragmas to disable the warning. This code won't work on GCC
@@ -522,23 +519,16 @@
 #  define MOZ_MUST_OVERRIDE /* nothing */
 #  define MOZ_STACK_CLASS /* nothing */
 #  define MOZ_NONHEAP_CLASS /* nothing */
+#  define MOZ_TRIVIAL_CTOR_DTOR /* nothing */
+#  define MOZ_ONLY_USED_TO_AVOID_STATIC_CONSTRUCTORS /* nothing */
 #  define MOZ_IMPLICIT /* nothing */
+#  define MOZ_NO_ARITHMETIC_EXPR_IN_ARGUMENT /* nothing */
 #  define MOZ_HEAP_ALLOCATOR /* nothing */
+#  define MOZ_OWNING_REF /* nothing */
+#  define MOZ_NON_OWNING_REF /* nothing */
+#  define MOZ_UNSAFE_REF(reason) /* nothing */
+#  define MOZ_NO_ADDREF_RELEASE_ON_RETURN /* nothing */
 #endif /* MOZ_CLANG_PLUGIN */
-
-/*
- * MOZ_THIS_IN_INITIALIZER_LIST is used to avoid a warning when we know that
- * it's safe to use 'this' in an initializer list.
- */
-#ifdef _MSC_VER
-#  define MOZ_THIS_IN_INITIALIZER_LIST() \
-     __pragma(warning(push)) \
-     __pragma(warning(disable:4355)) \
-     this \
-     __pragma(warning(pop))
-#else
-#  define MOZ_THIS_IN_INITIALIZER_LIST() this
-#endif
 
 #endif /* __cplusplus */
 

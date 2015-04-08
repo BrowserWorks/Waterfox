@@ -1179,7 +1179,7 @@ nsHttpConnectionMgr::ProcessPendingQForEntry(nsConnectionEntry *ent, bool consid
         }
 
         rv = TryDispatchTransaction(ent,
-                                    alreadyHalfOpen || trans->DontRouteViaWildCard(),
+                                    alreadyHalfOpen || !!trans->TunnelProvider(),
                                     trans);
         if (NS_SUCCEEDED(rv) || (rv != NS_ERROR_NOT_AVAILABLE)) {
             if (NS_SUCCEEDED(rv))
@@ -1690,10 +1690,12 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
 {
     MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread);
     LOG(("nsHttpConnectionMgr::TryDispatchTransaction without conn "
-         "[trans=%p ci=%s caps=%x wildcardok=%d onlyreused=%d]\n",
-         trans, ent->mConnInfo->HashKey().get(),
-         uint32_t(trans->Caps()), !trans->DontRouteViaWildCard(),
-         onlyReusedConnection));
+         "[trans=%p ci=%p ci=%s caps=%x tunnelprovider=%p onlyreused=%d "
+         "active=%d idle=%d]\n", trans,
+         ent->mConnInfo.get(), ent->mConnInfo->HashKey().get(),
+         uint32_t(trans->Caps()), trans->TunnelProvider(),
+         onlyReusedConnection, ent->mActiveConns.Length(),
+         ent->mIdleConns.Length()));
 
     nsHttpTransaction::Classifier classification = trans->Classification();
     uint32_t caps = trans->Caps();
@@ -1748,13 +1750,13 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
                 if (NS_SUCCEEDED(loadGroupCI->GetBlockingTransactionCount(&blockers)) &&
                     blockers) {
                     // need to wait for blockers to clear
-                    LOG(("   blocked by load group: [blockers=%d]\n", blockers));
+                    LOG(("   blocked by load group: [lgci=%p trans=%p blockers=%d]\n",
+                         loadGroupCI, trans, blockers));
                     return NS_ERROR_NOT_AVAILABLE;
                 }
             }
         }
-    }
-    else {
+    } else {
         // Mark the transaction and its load group as blocking right now to prevent
         // other transactions from being reordered in the queue due to slow syns.
         trans->DispatchedAsBlocking();
@@ -1767,6 +1769,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         if (AddToShortestPipeline(ent, trans,
                                   classification,
                                   mMaxOptimisticPipelinedRequests)) {
+            LOG(("   dispatched step 1 trans=%p\n", trans));
             return NS_OK;
         }
     }
@@ -1783,7 +1786,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         ((mNumActiveConns - mNumSpdyActiveConns) >= gHttpHandler->RequestTokenBucketMinParallelism()) &&
         !(caps & (NS_HTTP_LOAD_AS_BLOCKING | NS_HTTP_LOAD_UNBLOCKED))) {
         if (!trans->TryToRunPacedRequest()) {
-            LOG(("   blocked due to rate pacing\n"));
+            LOG(("   blocked due to rate pacing trans=%p\n", trans));
             return NS_ERROR_NOT_AVAILABLE;
         }
     }
@@ -1820,6 +1823,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
             // the transaction dispatched on it.
             AddActiveConn(conn, ent);
             DispatchTransaction(ent, trans, conn);
+            LOG(("   dispatched step 2 (idle) trans=%p\n", trans));
             return NS_OK;
         }
     }
@@ -1833,6 +1837,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         if (AddToShortestPipeline(ent, trans,
                                   classification,
                                   mMaxOptimisticPipelinedRequests)) {
+            LOG(("   dispatched step 3 (pipeline) trans=%p\n", trans));
             return NS_OK;
         }
     }
@@ -1842,14 +1847,20 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         nsresult rv = MakeNewConnection(ent, trans);
         if (NS_SUCCEEDED(rv)) {
             // this function returns NOT_AVAILABLE for asynchronous connects
+            LOG(("   dispatched step 4 (async new conn) trans=%p\n", trans));
             return NS_ERROR_NOT_AVAILABLE;
         }
 
         if (rv != NS_ERROR_NOT_AVAILABLE) {
             // not available return codes should try next step as they are
             // not hard errors. Other codes should stop now
+            LOG(("   failed step 4 (%x) trans=%p\n", rv, trans));
             return rv;
         }
+    } else if (trans->TunnelProvider() && trans->TunnelProvider()->MaybeReTunnel(trans)) {
+        LOG(("   sort of dispatched step 4a tunnel requeue trans=%p\n", trans));
+        // the tunnel provider took responsibility for making a new tunnel
+        return NS_OK;
     }
 
     // step 5
@@ -1857,6 +1868,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         if (AddToShortestPipeline(ent, trans,
                                   classification,
                                   mMaxPipelinedRequests)) {
+            LOG(("   dispatched step 5 trans=%p\n", trans));
             return NS_OK;
         }
     }
@@ -1869,6 +1881,7 @@ nsHttpConnectionMgr::TryDispatchTransaction(nsConnectionEntry *ent,
         unusedSpdyPersistentConnection->DontReuse();
     }
 
+    LOG(("   not dispatched (queued) trans=%p\n", trans));
     return NS_ERROR_NOT_AVAILABLE;                /* queue it */
 }
 
@@ -2058,7 +2071,7 @@ nsHttpConnectionMgr::ProcessNewTransaction(nsHttpTransaction *trans)
     MOZ_ASSERT(ci);
 
     nsConnectionEntry *ent =
-        GetOrCreateConnectionEntry(ci, trans->DontRouteViaWildCard());
+        GetOrCreateConnectionEntry(ci, !!trans->TunnelProvider());
 
     // SPDY coalescing of hostnames means we might redirect from this
     // connection entry onto the preferred one.
@@ -2102,7 +2115,7 @@ nsHttpConnectionMgr::ProcessNewTransaction(nsHttpTransaction *trans)
         trans->SetConnection(nullptr);
         rv = DispatchTransaction(ent, trans, conn);
     } else {
-        rv = TryDispatchTransaction(ent, trans->DontRouteViaWildCard(), trans);
+        rv = TryDispatchTransaction(ent, !!trans->TunnelProvider(), trans);
     }
 
     if (NS_SUCCEEDED(rv)) {
@@ -2378,13 +2391,15 @@ nsHttpConnectionMgr::OnMsgCancelTransaction(int32_t reason, void *param)
     LOG(("nsHttpConnectionMgr::OnMsgCancelTransaction [trans=%p]\n", param));
 
     nsresult closeCode = static_cast<nsresult>(reason);
-    nsHttpTransaction *trans = (nsHttpTransaction *) param;
+    nsRefPtr<nsHttpTransaction> trans =
+        dont_AddRef(static_cast<nsHttpTransaction *>(param));
+
     //
     // if the transaction owns a connection and the transaction is not done,
     // then ask the connection to close the transaction.  otherwise, close the
     // transaction directly (removing it from the pending queue first).
     //
-    nsAHttpConnection *conn = trans->Connection();
+    nsRefPtr<nsAHttpConnection> conn(trans->Connection());
     if (conn && !trans->IsDone()) {
         conn->CloseTransaction(trans, closeCode);
     } else {
@@ -2395,7 +2410,7 @@ nsHttpConnectionMgr::OnMsgCancelTransaction(int32_t reason, void *param)
             int32_t index = ent->mPendingQ.IndexOf(trans);
             if (index >= 0) {
                 LOG(("nsHttpConnectionMgr::OnMsgCancelTransaction [trans=%p]"
-                     " found in pending queue\n", trans));
+                     " found in pending queue\n", trans.get()));
                 ent->mPendingQ.RemoveElementAt(index);
                 nsHttpTransaction *temp = trans;
                 NS_RELEASE(temp); // b/c NS_RELEASE nulls its argument!
@@ -2430,12 +2445,11 @@ nsHttpConnectionMgr::OnMsgCancelTransaction(int32_t reason, void *param)
             if (liveTransaction && liveTransaction->IsNullTransaction()) {
                 LOG(("nsHttpConnectionMgr::OnMsgCancelTransaction [trans=%p] "
                      "also canceling Null Transaction %p on conn %p\n",
-                     trans, liveTransaction, activeConn));
+                     trans.get(), liveTransaction, activeConn));
                 activeConn->CloseTransaction(liveTransaction, closeCode);
             }
         }
     }
-    NS_RELEASE(trans);
 }
 
 void

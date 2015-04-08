@@ -136,8 +136,8 @@ mozJSSubScriptLoader::ReadScript(nsIURI *uri, JSContext *cx, JSObject *targetObj
     script.set(nullptr);
     function.set(nullptr);
 
-    // Instead of calling NS_OpenURI, we create the channel ourselves and call
-    // SetContentType, to avoid expensive MIME type lookups (bug 632490).
+    // We create a channel and call SetContentType, to avoid expensive MIME type
+    // lookups (bug 632490).
     nsCOMPtr<nsIChannel> chan;
     nsCOMPtr<nsIInputStream> instream;
     nsresult rv;
@@ -346,7 +346,7 @@ mozJSSubScriptLoader::DoLoadSubScriptWithOptions(const nsAString &url,
         return ReportError(cx, LOAD_ERROR_NOSCHEME, uri);
     }
 
-    if (!scheme.EqualsLiteral("chrome")) {
+    if (!scheme.EqualsLiteral("chrome") && !scheme.EqualsLiteral("app")) {
         // This might be a URI to a local file, though!
         nsCOMPtr<nsIURI> innerURI = NS_GetInnermostURI(uri);
         nsCOMPtr<nsIFileURL> fileURL = do_QueryInterface(innerURI);

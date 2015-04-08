@@ -1,34 +1,22 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur_IN.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ur_IN.xml
- */
 ur_IN{
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
     zoneStrings{
         "Africa:Accra"{
             ec{"اکرا"}
         }
-        "America:Barbados"{
-            ec{"بارباڈوس"}
-        }
         "America:Cambridge_Bay"{
             ec{"کیمبرج بے"}
         }
-        "America:Cayenne"{
-            ec{"کائین"}
-        }
         "America:Glace_Bay"{
             ec{"گلیس بے"}
-        }
-        "America:Godthab"{
-            ec{"نوک"}
         }
         "America:Goose_Bay"{
             ec{"گوس بے"}
@@ -36,35 +24,14 @@ ur_IN{
         "America:Grand_Turk"{
             ec{"گرینڈ ترک"}
         }
-        "America:Grenada"{
-            ec{"گریناڈا"}
-        }
-        "America:Kralendijk"{
-            ec{"کرالینڈیک"}
-        }
-        "America:Matamoros"{
-            ec{"میٹا موروس"}
-        }
-        "America:Metlakatla"{
-            ec{"میٹلاکاٹلا"}
-        }
         "America:Scoresbysund"{
             ec{"اتتوققورتورمیت"}
-        }
-        "America:Sitka"{
-            ec{"Sitka"}
-        }
-        "America:Tegucigalpa"{
-            ec{"ٹیگوسیگلپا"}
         }
         "America:Thule"{
             ec{"تھولے"}
         }
         "Asia:Dubai"{
             ec{"دبئی"}
-        }
-        "Asia:Oral"{
-            ec{"اورال"}
         }
         "Atlantic:Faeroe"{
             ec{"فارو"}

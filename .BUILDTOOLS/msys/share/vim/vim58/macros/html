@@ -1,230 +1,0 @@
-This message was posted in comp.editors.
-A few irrelevant details in the text were deleted or replaced with [...]
-
-From: ray@camco1.celestial.com (Ray A. Jones)
-Newsgroups: comp.editors
-Subject: Re: VI-like HTML-Editor
-Date: 17 Feb 1996 01:42:30 GMT
-Organization: Celestial Software
-Lines: 232
-
-: > I use vi for HTML editing and have 12 macros (one for each function key).
-: > The 12th function key is a "macro switch" macro to change to a whole
-: > different set of macros for those 12 function keys.
-
-[...]
-
-: > The href macro works like:
-: >         This is a reference
-: >                   ^- cursor
-: > [press function key 5]
-: >         This is a <A href="X$"><B>reference</B></A>
-: >                            ^- cursor
-: > with vi in the change word mode.  At that point, just type in the file name
-
-I got buried in request for those macros, so yes, I will post them here.
-
-
-Enclosed are the files
-.exrc
-.level1  same as .exrc
-.level2
-.level3
-.level4
-.level5
-Unpack the files with either the "unshar" option of your E-mail reader or save
-to a file and delete everything above and including the =====cut here=== line.
-Then give the command;
-sh filename
-
-The file will complain about control characters in the file, but that is ok.
-NOTE: you must move any current .exrc file to some other name, as this program
-will not overwrite an existing .exrc file.
-
-The macros are set up for "ansi" terminals, i.e., function keys 10 through12
-are actual function key escape sequences.  All other key use the #1 throught
-#9 formats.  If you are not using ansi terminals, let me know and I will
-tell you how to change those.
-
-You MUST move your current .exrc file to some other name prior to unpacking
-these files - the unpacking process will not overwrite an existing file.
-
-To move from one file to another (there are only 12 function keys and I
-needed about 50), press function key 12 and it will print;
-:so .level
-at this point give a number (1-5) so the screen looks like;
-:so .level2
-and press [RETURN]  to load up the .level 2 file.
-The first level (.exrc or level1) all work in the command mode and will do
-the following
-1	<H1>at begining of line with corresponding break at end </H1>
-2	same for H2
-3	same for H3
-4	same for H4
-5	href around current word, with cw (change word) active. Just type in
-	the file name or URL
-6	mark a
-7	mark b
-8	embold a <B>word</B>
-9	<P>
-10	ispell spell check the current document (needs ispell)
-11	header information at begining of file
-12	level change.
---
-INTERNET:  ray@Celestial.COM   Ray A. Jones; Celestial Systems, Inc.
-URL: http://www.celestial.com  2835 82nd Ave. SE, Suite S-100
-                               Mercer Island, WA 98040; (206) 236-1676
-The probability of one or more spelling errors in this missive approaches
-unity.  If this bothers you, run it through your spell checker!
-=================================cut here===================================
-#! /bin/sh
-# This is a shell archive.  Remove anything before this line, then unpack
-# it by saving it into a file and typing "sh file".  To overwrite existing
-# files, type "sh file -c".  You can also feed this as standard input via
-# unshar, or by typing "sh <file", e.g..  If this archive is complete, you
-# will see the following message at the end:
-#		"End of shell archive."
-# Contents:  .exrc .level1 .level2 .level3 .level4 .level5
-# Wrapped by ray@camco1 on Mon Feb 12 14:04:21 1996
-PATH=/bin:/usr/bin:/usr/ucb ; export PATH
-if test -f '.exrc' -a "${1}" != "-c" ; then
-  echo shar: Will not clobber existing file \"'.exrc'\"
-else
-echo shar: Extracting \"'.exrc'\" \(361 characters\)
-sed "s/^X//" >'.exrc' <<'END_OF_FILE'
-Xmap #1 I<H1>A</H1>
-Xmap #2 I<H2>A</H2>
-Xmap #3 I<H3>A</H3>
-Xmap #4 I<H4>A</H4>
-Xmap #5 i<A href="XX"><B>ea</B></A>k/XXcw
-Xmap #6 bma
-Xmap #7 emb
-Xmap #8 i<B>wea</B>
-Xmap #9 A<P>
-Xmap [W I<HTML><HEAD><TITLE></TITLE></HEAD><BODY><H1></H1><HR>
-Xmap [V :w! /tmp/spellchk.tmp:!ispell /tmp/spellchk.tmp1GdG:0r /tmp/spellchk.tmpdG
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 17 control characters may be missing from \"'.exrc'\"
-if test 361 -ne `wc -c <'.exrc'`; then
-    echo shar: \"'.exrc'\" unpacked with wrong size!
-fi
-# end of '.exrc'
-fi
-if test -f '.level1' -a "${1}" != "-c" ; then
-  echo shar: Will not clobber existing file \"'.level1'\"
-else
-echo shar: Extracting \"'.level1'\" \(361 characters\)
-sed "s/^X//" >'.level1' <<'END_OF_FILE'
-Xmap #1 I<H1>A</H1>
-Xmap #2 I<H2>A</H2>
-Xmap #3 I<H3>A</H3>
-Xmap #4 I<H4>A</H4>
-Xmap #5 i<A href="XX"><B>ea</B></A>k/XXcw
-Xmap #6 bma
-Xmap #7 emb
-Xmap #8 i<B>wea</B>
-Xmap #9 A<P>
-Xmap [W I<HTML><HEAD><TITLE></TITLE></HEAD><BODY><H1></H1><HR>
-Xmap [V :w! /tmp/spellchk.tmp:!ispell /tmp/spellchk.tmp1GdG:0r /tmp/spellchk.tmpdG
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 17 control characters may be missing from \"'.level1'\"
-if test 361 -ne `wc -c <'.level1'`; then
-    echo shar: \"'.level1'\" unpacked with wrong size!
-fi
-# end of '.level1'
-fi
-if test -f '.level2' -a "${1}" != "-c" ; then
-  echo shar: Will not clobber existing file \"'.level2'\"
-else
-echo shar: Extracting \"'.level2'\" \(530 characters\)
-sed "s/^X//" >'.level2' <<'END_OF_FILE'
-Xmap #1 o<FORM METHOD="POST" ACTION="XX"></FORM>O    
-Xmap #2 `ii<INPUT SIZE=5 NAME="XX">
-Xmap #3 `ii<INPUT TYPE="radio" NAME="XX" VALUE="XX">
-Xmap #4 `ii<INPUT TYPE="checkbox" NAME="XX" VALUE="XX">
-Xmap #5 `ii<INPUT TYPE="menu" NAME="XX" VALUE="XX">
-Xmap #6 `ii<INPUT TYPE="radio" NAME="XX" VALUE="Yes"> Yes <INPUT TYPE="radio" NAME="XX" VALUE="No"> No <P>
-Xmap #7 `ii<TEXTAREA NAME="XX" ROWS=3 COLS=48></TEXTAREA><P>
-Xmap #8 `ii<INPUT TYPE="submit" VALUE=" Send ">
-Xmap #9 `ii<INPUT TYPE="reset" VALUE=" Clear ">
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 5 control characters may be missing from \"'.level2'\"
-if test 530 -ne `wc -c <'.level2'`; then
-    echo shar: \"'.level2'\" unpacked with wrong size!
-fi
-# end of '.level2'
-fi
-if test -f '.level3' -a "${1}" != "-c" ; then
-  shar: Will not clobber existing file \"'.level3'\"
-else
-echo shar: Extracting \"'.level3'\" \(373 characters\)
-sed "s/^X//" >'.level3' <<'END_OF_FILE'
-Xmap #1 'aI<UL><UL>O    <LI>
-Xmap #2 'aI<DL><DL>O    <DT>
-Xmap #3 'aI<MENU><MENU>O    <LI>
-Xmap #4 'aI<DIR><DIR>O    <LI>
-Xmap #5 o<LI> 
-Xmap #6 i<IMG SRC="">hi
-Xmap #7 i<IMG ALIGN="" SRC="">hi
-Xmap #8 i<A NAME = "XX">ea</A>k/XXcw
-Xmap #9 i<A href = "XX"><B>ea</B></A>k/XXcw
-Xmap [W ieab:.w! /tmp/x:!define `cat /tmp/x`>/tmp/xy:r /tmp/xy
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 15 control characters may be missing from \"'.level3'\"
-if test 373 -ne `wc -c <'.level3'`; then
-    echo shar: \"'.level3'\" unpacked with wrong size!
-fi
-# end of '.level3'
-fi
-if test -f '.level4' -a "${1}" != "-c" ; then
-  echo shar: Will not clobber existing file \"'.level4'\"
-else
-echo shar: Extracting \"'.level4'\" \(530 characters\)
-sed "s/^X//" >'.level4' <<'END_OF_FILE'
-Xmap #1 o<FORM METHOD="POST" ACTION="XX"></FORM>O    
-Xmap #2 `ii<INPUT SIZE=5 NAME="XX">
-Xmap #3 `ii<INPUT TYPE="radio" NAME="XX" VALUE="XX">
-Xmap #4 `ii<INPUT TYPE="checkbox" NAME="XX" VALUE="XX">
-Xmap #5 `ii<INPUT TYPE="menu" NAME="XX" VALUE="XX">
-Xmap #6 `ii<INPUT TYPE="radio" NAME="XX" VALUE="Yes"> Yes <INPUT TYPE="radio" NAME="XX" VALUE="No"> No <P>
-Xmap #7 `ii<TEXTAREA NAME="XX" ROWS=3 COLS=48></TEXTAREA><P>
-Xmap #8 `ii<INPUT TYPE="submit" VALUE=" Send ">
-Xmap #9 `ii<INPUT TYPE="reset" VALUE=" Clear ">
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 5 control characters may be missing from \"'.level4'\"
-if test 530 -ne `wc -c <'.level4'`; then
-    echo shar: \"'.level4'\" unpacked with wrong size!
-fi
-# end of '.level4'
-fi
-if test -f '.level5' -a "${1}" != "-c" ; then
-  echo shar: Will not clobber existing file \"'.level5'\"
-else
-echo shar: Extracting \"'.level5'\" \(288 characters\)
-sed "s/^X//" >'.level5' <<'END_OF_FILE'
-Xmap #1 'aI<UL><UL>O    <LI>
-Xmap #2 'aI<DL><DL>O    <DT>
-Xmap #3 'aI<MENU><MENU>O    <LI>
-Xmap #4 'aI<DIR><DIR>O    <LI>
-Xmap #5 o<LI> 
-Xmap #6 i<IMG SRC="">hi
-Xmap #7 i<IMG ALIGN="" SRC="">hi
-Xmap [W ieab:.w! /tmp/x:!define `cat /tmp/x`>/tmp/xy:r /tmp/xy
-Xmap [X :so .level
-END_OF_FILE
-echo shar: 11 control characters may be missing from \"'.level5'\"
-if test 288 -ne `wc -c <'.level5'`; then
-    echo shar: \"'.level5'\" unpacked with wrong size!
-fi
-# end of '.level5'
-fi
-echo shar: End of shell archive.
-exit 0
-
-
-

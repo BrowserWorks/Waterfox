@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ka.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ka.xml
- */
 ka{
     Keys{
         calendar{"კალენდარი"}
@@ -401,7 +398,7 @@ ka{
         zxx{"ლინგვისტური შიგთავსი არ არის"}
         zza{"ზაზაკი"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"გართ. სამ. ინგლისური"}
         en_US{"აშშ ინგლისური"}
     }
@@ -621,7 +618,7 @@ ka{
             tibt{"ტიბეტური ციფრები"}
         }
     }
-    Version{"2.1.8.95"}
+    Version{"2.1.13.22"}
     codePatterns{
         language{"ენა: {0}"}
         script{"დამწერლობა: {0}"}

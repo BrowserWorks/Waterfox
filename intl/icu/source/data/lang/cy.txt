@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/cy.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/cy.xml
- */
 cy{
     Keys{
         calendar{"Calendr"}
@@ -428,7 +425,7 @@ cy{
         zxx{"Dim cynnwys ieithyddol"}
         zza{"Zazäeg"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"Saesneg (DU)"}
         en_US{"Saesneg (UDA)"}
     }
@@ -547,7 +544,7 @@ cy{
             tibt{"Digidau Tibetaidd"}
         }
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.10.93"}
     codePatterns{
         language{"Iaith: {0}"}
         script{"Sgript: {0}"}

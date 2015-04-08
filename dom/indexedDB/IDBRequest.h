@@ -58,9 +58,7 @@ protected:
   nsRefPtr<DOMError> mError;
 
   nsString mFilename;
-#ifdef MOZ_ENABLE_PROFILER_SPS
-  uint64_t mSerialNumber;
-#endif
+  uint64_t mLoggingSerialNumber;
   nsresult mErrorCode;
   uint32_t mLineNo;
   bool mHaveResultOrErrorCode;
@@ -83,6 +81,9 @@ public:
 
   static void
   CaptureCaller(nsAString& aFilename, uint32_t* aLineNo);
+
+  static uint64_t
+  NextSerialNumber();
 
   // nsIDOMEventTarget
   virtual nsresult
@@ -114,6 +115,16 @@ public:
 #endif
 
   DOMError*
+  GetErrorAfterResult() const
+#ifdef DEBUG
+  ;
+#else
+  {
+    return mError;
+  }
+#endif
+
+  DOMError*
   GetError(ErrorResult& aRv);
 
   void
@@ -125,13 +136,16 @@ public:
     return !mHaveResultOrErrorCode;
   }
 
-#ifdef MOZ_ENABLE_PROFILER_SPS
   uint64_t
-  GetSerialNumber() const
+  LoggingSerialNumber() const
   {
-    return mSerialNumber;
+    AssertIsOnOwningThread();
+
+    return mLoggingSerialNumber;
   }
-#endif
+
+  void
+  SetLoggingSerialNumber(uint64_t aLoggingSerialNumber);
 
   nsPIDOMWindow*
   GetParentObject() const
@@ -208,8 +222,12 @@ protected:
 class IDBOpenDBRequest MOZ_FINAL
   : public IDBRequest
 {
+  class WorkerFeature;
+
   // Only touched on the owning thread.
   nsRefPtr<IDBFactory> mFactory;
+
+  nsAutoPtr<WorkerFeature> mWorkerFeature;
 
 public:
   static already_AddRefed<IDBOpenDBRequest>
@@ -224,15 +242,12 @@ public:
   void
   SetTransaction(IDBTransaction* aTransaction);
 
+  void
+  NoteComplete();
+
   // nsIDOMEventTarget
   virtual nsresult
   PostHandleEvent(EventChainPostVisitor& aVisitor) MOZ_OVERRIDE;
-
-  DOMError*
-  GetError(ErrorResult& aRv)
-  {
-    return IDBRequest::GetError(aRv);
-  }
 
   IDBFactory*
   Factory() const

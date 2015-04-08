@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 1998-2014, International Business Machines
+*   Copyright (C) 1998-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -1069,6 +1069,11 @@ addCollation(ParseState* state, struct SResource  *result, const char *collation
     if(isVerbose()) {
         printf("%s~%s collation tailoring part sizes:\n", state->filename, collationType);
         icu::CollationInfo::printSizes(totalSize, indexes);
+        if(t->settings->hasReordering()) {
+            printf("%s~%s collation reordering ranges:\n", state->filename, collationType);
+            icu::CollationInfo::printReorderRanges(
+                    *t->data, t->settings->reorderCodes, t->settings->reorderCodesLength);
+        }
     }
     struct SResource *collationBin = bin_open(state->bundle, "%%CollationBin", totalSize, dest, NULL, NULL, status);
     table_add(result, collationBin, line, status);

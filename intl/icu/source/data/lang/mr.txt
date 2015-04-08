@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/mr.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/mr.xml
- */
 mr{
     Keys{
         calendar{"दिनदर्शिका"}
@@ -520,13 +517,13 @@ mr{
         zxx{"भाषावैज्ञानिक सामग्री नाही"}
         zza{"झाझा"}
     }
-    Languages%variant{
-        ps{"पुश्तो"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"अझेरी"}
         en_GB{"यू.के. इंग्रजी"}
         en_US{"यू.एस. इंग्रजी"}
+    }
+    Languages%variant{
+        ps{"पुश्तो"}
     }
     Scripts{
         Arab{"अरबी"}
@@ -784,7 +781,7 @@ mr{
         PINYIN{"पिनयिन रोमनायझेशन"}
         WADEGILE{"वादे-गिलेस रोमनायझेशन"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"भाषा: {0}"}
         script{"लिपी: {0}"}

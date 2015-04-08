@@ -39,7 +39,6 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'cocoa':
 XPIDL_MODULE = 'xpcom_base'
 
 EXPORTS += [
-    'AlreadyAddRefed.h',
     'CodeAddressService.h',
     'ErrorList.h',
     'nsAgg.h',
@@ -126,7 +125,7 @@ UNIFIED_SOURCES += [
 # new usage of NS_StackWalk it will cause a link error, which is better than having
 # NS_StackWalk silently return garbage at runtime.
 if CONFIG['MOZ_STACKWALKING']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'nsStackWalk.cpp',
     ]
 
@@ -162,3 +161,6 @@ LOCAL_INCLUDES += [
 
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
+
+if CONFIG['_MSC_VER']:
+    FAIL_ON_WARNINGS = True

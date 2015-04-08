@@ -57,7 +57,7 @@ registerCleanupFunction(() => {
  *
  * All tests should follow the following pattern:
  *
- * let test = asyncTest(function*() {
+ * add_task(function*() {
  *   yield addTab(TEST_URI);
  *   let {toolbox, inspector, view} = yield openComputedView();
  *
@@ -65,7 +65,7 @@ registerCleanupFunction(() => {
  *   yield someAsyncTestFunction(view);
  * });
  *
- * asyncTest is the way to define the testcase in the test file. It accepts
+ * add_task is the way to define the testcase in the test file. It accepts
  * a single generator-function argument.
  * The generator function should yield any async call.
  *
@@ -73,10 +73,10 @@ registerCleanupFunction(() => {
  * automatically.
  *
  * It is advised not to store any references on the global scope. There shouldn't
- * be a need to anyway. Thanks to asyncTest, test steps, even though asynchronous,
+ * be a need to anyway. Thanks to add_task, test steps, even though asynchronous,
  * can be described in a nice flat way, and if/for/while/... control flow can be
  * used as in sync code, making it possible to write the outline of the test case
- * all in asyncTest, and delegate actual processing and assertions to other
+ * all in add_task, and delegate actual processing and assertions to other
  * functions.
  */
 
@@ -84,16 +84,9 @@ registerCleanupFunction(() => {
  * UTILS
  * *********************************************
  * General test utilities.
- * Define the test case, add new tabs, open the toolbox and switch to the
- * various panels, select nodes, get node references, ...
+ * Add new tabs, open the toolbox and switch to the various panels, select
+ * nodes, get node references, ...
  */
-
-/**
- * Define an async test based on a generator function
- */
-function asyncTest(generator) {
-  return () => Task.spawn(generator).then(null, ok.bind(null, false)).then(finish);
-}
 
 /**
  * Add a new test tab in the browser and load the given url.
@@ -349,7 +342,7 @@ function wait(ms) {
 function waitForContentMessage(name) {
   info("Expecting message " + name + " from content");
 
-  let mm = gBrowser.selectedTab.linkedBrowser.messageManager;
+  let mm = gBrowser.selectedBrowser.messageManager;
 
   let def = promise.defer();
   mm.addMessageListener(name, function onMessage(msg) {
@@ -373,7 +366,7 @@ function waitForContentMessage(name) {
  */
 function executeInContent(name, data={}, objects={}, expectResponse=true) {
   info("Sending message " + name + " to content");
-  let mm = gBrowser.selectedTab.linkedBrowser.messageManager;
+  let mm = gBrowser.selectedBrowser.messageManager;
 
   mm.sendAsyncMessage(name, data, objects);
   if (expectResponse) {
@@ -513,25 +506,19 @@ function fireCopyEvent(element) {
  * polling timeouts after several tries and the promise rejects.
  * @param {String} name Optional name of the test. This is used to generate
  * the success and failure messages.
- * @param {Number} timeout Optional timeout for the validator function, in
- * milliseconds. Default is 5000.
  * @return a promise that resolves when the function returned true or rejects
  * if the timeout is reached
  */
-function waitForSuccess(validatorFn, name="untitled", timeout=5000) {
+function waitForSuccess(validatorFn, name="untitled") {
   let def = promise.defer();
   let start = Date.now();
 
   function wait(validatorFn) {
-    if ((Date.now() - start) > timeout) {
-      ok(false, "Validator function " + name + " timed out");
-      return def.reject();
-    }
     if (validatorFn()) {
       ok(true, "Validator function " + name + " returned true");
       def.resolve();
     } else {
-      setTimeout(() => wait(validatorFn), 100);
+      setTimeout(() => wait(validatorFn), 200);
     }
   }
   wait(validatorFn);
@@ -790,6 +777,23 @@ function getComputedViewProperty(view, name) {
     }
   }
   return prop;
+}
+
+/**
+ * Get an instance of PropertyView from the computed-view.
+ * @param {CssHtmlTree} view The instance of the computed view panel
+ * @param {String} name The name of the property to retrieve
+ * @return {PropertyView}
+ */
+function getComputedViewPropertyView(view, name) {
+  let propView;
+  for (let propertyView of view.propertyViews) {
+    if (propertyView._propertyInfo.name === name) {
+      propView = propertyView;
+      break;
+    }
+  }
+  return propView;
 }
 
 /**

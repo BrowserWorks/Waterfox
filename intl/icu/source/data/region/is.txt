@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/is.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/is.xml
- */
 is{
     Countries{
         001{"Heimurinn"}
@@ -302,6 +299,13 @@ is{
         ZW{"Simbabve"}
         ZZ{"Óþekkt svæði"}
     }
+    Countries%short{
+        GB{"Bretland"}
+        HK{"Hong Kong"}
+        MO{"Makaó"}
+        PS{"Palestína"}
+        US{"BNA"}
+    }
     Countries%variant{
         CD{"Kongó (Lýðstjórnarlýðveldið)"}
         CG{"Kongó (Lýðveldið)"}
@@ -309,12 +313,5 @@ is{
         MK{"Makedónía (Fyrrverandi lýðveldi Júgóslavíu)"}
         TL{"Austur-Tímor"}
     }
-    CountriesShort{
-        GB{"Bretland"}
-        HK{"Hong Kong"}
-        MO{"Makaó"}
-        PS{"Palestína"}
-        US{"BNA"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

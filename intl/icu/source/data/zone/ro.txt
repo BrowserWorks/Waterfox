@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ro.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ro.xml
- */
 ro{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"Abidjan"}
@@ -690,9 +687,6 @@ ro{
         "Asia:Choibalsan"{
             ec{"Choibalsan"}
         }
-        "Asia:Chongqing"{
-            ec{"Chongqing"}
-        }
         "Asia:Colombo"{
             ec{"Colombo"}
         }
@@ -713,9 +707,6 @@ ro{
         }
         "Asia:Gaza"{
             ec{"Gaza"}
-        }
-        "Asia:Harbin"{
-            ec{"Harbin"}
         }
         "Asia:Hebron"{
             ec{"Hebron"}
@@ -746,9 +737,6 @@ ro{
         }
         "Asia:Karachi"{
             ec{"Karachi"}
-        }
-        "Asia:Kashgar"{
-            ec{"Kaxgar"}
         }
         "Asia:Katmandu"{
             ec{"Kathmandu"}

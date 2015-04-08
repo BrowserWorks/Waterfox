@@ -50,6 +50,45 @@ struct BluetoothAddress {
   uint8_t mAddr[6];
 };
 
+struct BluetoothAvrcpAttributeTextPairs {
+  BluetoothAvrcpAttributeTextPairs(const uint8_t* aAttr,
+                                   const char** aText,
+                                   size_t aLength)
+    : mAttr(aAttr)
+    , mText(aText)
+    , mLength(aLength)
+  { }
+
+  const uint8_t* mAttr;
+  const char** mText;
+  size_t mLength;
+};
+
+struct BluetoothAvrcpAttributeValuePairs {
+  BluetoothAvrcpAttributeValuePairs(const uint8_t* aAttr,
+                                    const uint8_t* aValue,
+                                    size_t aLength)
+    : mAttr(aAttr)
+    , mValue(aValue)
+    , mLength(aLength)
+  { }
+
+  const uint8_t* mAttr;
+  const uint8_t* mValue;
+  size_t mLength;
+};
+
+struct BluetoothAvrcpEventParamPair {
+  BluetoothAvrcpEventParamPair(BluetoothAvrcpEvent aEvent,
+                               const BluetoothAvrcpNotificationParam& aParam)
+    : mEvent(aEvent)
+    , mParam(aParam)
+  { }
+
+  BluetoothAvrcpEvent mEvent;
+  const BluetoothAvrcpNotificationParam& mParam;
+};
+
 struct BluetoothConfigurationParameter {
   uint8_t mType;
   uint16_t mLength;
@@ -110,6 +149,12 @@ nsresult
 Convert(int aIn, int16_t& aOut);
 
 nsresult
+Convert(int32_t aIn, BluetoothDeviceType& aOut);
+
+nsresult
+Convert(int32_t aIn, BluetoothScanMode& aOut);
+
+nsresult
 Convert(uint8_t aIn, bool& aOut);
 
 nsresult
@@ -119,7 +164,28 @@ nsresult
 Convert(uint8_t aIn, int& aOut);
 
 nsresult
+Convert(uint8_t aIn, unsigned long& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothA2dpAudioState& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothA2dpConnectionState& aOut);
+
+nsresult
 Convert(uint8_t aIn, BluetoothAclState& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothAvrcpEvent& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothAvrcpMediaAttribute& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothAvrcpPlayerAttribute& aOut);
+
+nsresult
+Convert(uint8_t aIn, BluetoothAvrcpRemoteFeature& aOut);
 
 nsresult
 Convert(uint8_t aIn, BluetoothHandsfreeAudioState& aOut);
@@ -161,6 +227,9 @@ nsresult
 Convert(uint32_t aIn, int& aOut);
 
 nsresult
+Convert(uint32_t aIn, uint8_t& aOut);
+
+nsresult
 Convert(size_t aIn, uint16_t& aOut);
 
 nsresult
@@ -183,6 +252,15 @@ Convert(BluetoothAclState aIn, bool& aOut);
 
 nsresult
 Convert(const BluetoothAddress& aIn, nsAString& aOut);
+
+nsresult
+Convert(BluetoothAvrcpEvent aIn, uint8_t& aOut);
+
+nsresult
+Convert(BluetoothAvrcpNotification aIn, uint8_t& aOut);
+
+nsresult
+Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut);
 
 nsresult
 Convert(BluetoothHandsfreeAtResponse aIn, uint8_t& aOut);
@@ -229,6 +307,9 @@ Convert(BluetoothSspPairingVariant aIn, uint8_t& aOut);
 nsresult
 Convert(BluetoothSspPairingVariant aIn, nsAString& aOut);
 
+nsresult
+Convert(ControlPlayStatus aIn, uint8_t& aOut);
+
 //
 // Packing
 //
@@ -262,6 +343,26 @@ PackPDU(uint32_t aIn, BluetoothDaemonPDU& aPDU)
 
 nsresult
 PackPDU(const BluetoothAddress& aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(const BluetoothAvrcpAttributeTextPairs& aIn,
+        BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(const BluetoothAvrcpAttributeValuePairs& aIn,
+        BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(const BluetoothAvrcpElementAttribute& aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(BluetoothAvrcpEvent aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(const BluetoothAvrcpEventParamPair& aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(BluetoothAvrcpNotification aIn, BluetoothDaemonPDU& aPDU);
 
 nsresult
 PackPDU(const BluetoothConfigurationParameter& aIn, BluetoothDaemonPDU& aPDU);
@@ -316,6 +417,12 @@ PackPDU(BluetoothSspPairingVariant aIn, BluetoothDaemonPDU& aPDU);
 
 nsresult
 PackPDU(BluetoothScanMode aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(ControlPlayStatus aIn, BluetoothDaemonPDU& aPDU);
+
+nsresult
+PackPDU(BluetoothTransport aIn, BluetoothDaemonPDU& aPDU);
 
 /* |PackConversion| is a helper for packing converted values. Pass
  * an instance of this structure to |PackPDU| to convert a value from
@@ -514,6 +621,45 @@ PackPDU(const T1& aIn1, const T2& aIn2, const T3& aIn3,
   return PackPDU(aIn7, aPDU);
 }
 
+template <typename T1, typename T2, typename T3,
+          typename T4, typename T5, typename T6,
+          typename T7, typename T8>
+inline nsresult
+PackPDU(const T1& aIn1, const T2& aIn2, const T3& aIn3,
+        const T4& aIn4, const T5& aIn5, const T6& aIn6,
+        const T7& aIn7, const T8& aIn8, BluetoothDaemonPDU& aPDU)
+{
+  nsresult rv = PackPDU(aIn1, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn2, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn3, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn4, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn5, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn6, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  rv = PackPDU(aIn7, aPDU);
+  if (NS_FAILED(rv)) {
+    return rv;
+  }
+  return PackPDU(aIn8, aPDU);
+}
+
 //
 // Unpacking
 //
@@ -555,6 +701,12 @@ nsresult
 UnpackPDU(BluetoothDaemonPDU& aPDU, char& aOut);
 
 nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothA2dpAudioState& aOut);
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothA2dpConnectionState& aOut);
+
+nsresult
 UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAclState& aOut);
 
 inline nsresult
@@ -562,6 +714,21 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAddress& aOut)
 {
   return aPDU.Read(aOut.mAddr, sizeof(aOut.mAddr));
 }
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAvrcpEvent& aOut);
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAvrcpMediaAttribute& aOut);
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAvrcpPlayerAttribute& aOut);
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAvrcpPlayerSettings& aOut);
+
+nsresult
+UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothAvrcpRemoteFeature& aOut);
 
 nsresult
 UnpackPDU(BluetoothDaemonPDU& aPDU, BluetoothBondState& aOut);

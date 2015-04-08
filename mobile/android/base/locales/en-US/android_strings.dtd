@@ -172,6 +172,8 @@
 <!ENTITY pref_cookies_not_accept_foreign "Enabled, excluding 3rd party">
 <!ENTITY pref_cookies_disabled "Disabled">
 
+<!ENTITY pref_tracking_protection_title "Tracking protection">
+<!ENTITY pref_tracking_protection_summary "&brandShortName; will prevent sites from tracking you">
 <!ENTITY pref_donottrack_title "Do not track">
 <!ENTITY pref_donottrack_summary "&brandShortName; will tell sites that you do not want to be tracked">
 
@@ -429,6 +431,8 @@ size. -->
 <!ENTITY home_remote_tabs_empty "Your tabs from other devices show up here.">
 <!ENTITY home_remote_tabs_unable_to_connect "Unable to connect">
 <!ENTITY home_remote_tabs_need_to_sign_in "Please sign in to reconnect your Firefox Account and continue syncing.">
+<!ENTITY home_remote_tabs_need_to_finish_migrating "Your new Firefox Account is ready!">
+
 <!ENTITY home_remote_tabs_trouble_verifying "Trouble verifying your account?">
 <!ENTITY home_remote_tabs_need_to_verify "Please verify your Firefox Account to start syncing.">
 
@@ -528,12 +532,6 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 
 <!ENTITY updater_apply_title2 "Update available for &brandShortName;">
 <!ENTITY updater_apply_select2 "Touch to update">
-
-<!-- New tablet UI -->
-
-<!-- LOCALIZATION NOTE (new_tablet_restart): Notification displayed after the user toggles the new tablet UI in the settings screen.-->
-<!ENTITY new_tablet_restart "Restart the browser for the changes to take effect">
-<!ENTITY new_tablet_pref "Enable new tablet UI">
 
 <!-- Guest mode -->
 <!ENTITY new_guest_session "New Guest Session">

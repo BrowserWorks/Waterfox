@@ -437,10 +437,6 @@ class CompileInfo
         return executionMode_ == DefinitePropertiesAnalysis || executionMode_ == ArgumentsUsageAnalysis;
     }
 
-    bool isParallelExecution() const {
-        return executionMode_ == ParallelExecution;
-    }
-
     // Returns true if a slot can be observed out-side the current frame while
     // the frame is active on the stack.  This implies that these definitions
     // would have to be executed and that they cannot be removed even if they
@@ -498,8 +494,8 @@ class CompileInfo
         if (!funMaybeLazy())
             return true;
 
-        // The |this| can be recovered.
-        if (slot == thisSlot())
+        // The |this| and the |scopeChain| values can be recovered.
+        if (slot == thisSlot() || slot == scopeChainSlot())
             return true;
 
         if (isObservableFrameSlot(slot))

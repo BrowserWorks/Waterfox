@@ -49,10 +49,8 @@ OggCodecState::Create(ogg_page* aPage)
     codecState = new TheoraState(aPage);
   } else if (aPage->body_len > 6 && memcmp(aPage->body+1, "vorbis", 6) == 0) {
     codecState = new VorbisState(aPage);
-#ifdef MOZ_OPUS
   } else if (aPage->body_len > 8 && memcmp(aPage->body, "OpusHead", 8) == 0) {
     codecState = new OpusState(aPage);
-#endif
   } else if (aPage->body_len > 8 && memcmp(aPage->body, "fishead\0", 8) == 0) {
     codecState = new SkeletonState(aPage);
   } else {
@@ -795,7 +793,6 @@ nsresult VorbisState::ReconstructVorbisGranulepos()
   return NS_OK;
 }
 
-#ifdef MOZ_OPUS
 OpusState::OpusState(ogg_page* aBosPage) :
   OggCodecState(aBosPage, true),
   mParser(nullptr),
@@ -939,7 +936,7 @@ int64_t OpusState::Time(int aPreSkip, int64_t aGranulepos)
     return -1;
 
   // Ogg Opus always runs at a granule rate of 48 kHz.
-  CheckedInt64 t = CheckedInt64(aGranulepos - aPreSkip) * USECS_PER_S;
+  CheckedInt64 t = (CheckedInt64(aGranulepos) - aPreSkip) * USECS_PER_S;
   return t.isValid() ? t.value() / 48000 : -1;
 }
 
@@ -1078,7 +1075,6 @@ bool OpusState::ReconstructOpusGranulepos(void)
   mPrevPageGranulepos = last->granulepos;
   return true;
 }
-#endif /* MOZ_OPUS */
 
 SkeletonState::SkeletonState(ogg_page* aBosPage) :
   OggCodecState(aBosPage, true),
@@ -1201,7 +1197,8 @@ bool SkeletonState::DecodeIndex(ogg_packet* aPacket)
   }
 
   // Extract the start time.
-  CheckedInt64 t = CheckedInt64(LittleEndian::readInt64(p + INDEX_FIRST_NUMER_OFFSET)) * USECS_PER_S;
+  int64_t timeRawInt = LittleEndian::readInt64(p + INDEX_FIRST_NUMER_OFFSET);
+  CheckedInt64 t = CheckedInt64(timeRawInt) * USECS_PER_S;
   if (!t.isValid()) {
     return (mActive = false);
   } else {
@@ -1209,7 +1206,8 @@ bool SkeletonState::DecodeIndex(ogg_packet* aPacket)
   }
 
   // Extract the end time.
-  t = LittleEndian::readInt64(p + INDEX_LAST_NUMER_OFFSET) * USECS_PER_S;
+  timeRawInt = LittleEndian::readInt64(p + INDEX_LAST_NUMER_OFFSET);
+  t = CheckedInt64(timeRawInt) * USECS_PER_S;
   if (!t.isValid()) {
     return (mActive = false);
   } else {

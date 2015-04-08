@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/my.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/my.xml
- */
 my{
     Keys{
         calendar{"ပြက္ခဒိန်"}
@@ -270,7 +267,7 @@ my{
         zu{"ဇူလူ"}
         zxx{"ဘာသာစကား နှင့် ပတ်သက် သောအရာမရှိ"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"အဇာရီ"}
         en_GB{"အင်္ဂလိပ်(ယူကေ)"}
         en_US{"အင်္ဂလိပ်(ယူအက်စ်)"}
@@ -403,7 +400,7 @@ my{
         REVISED{"ပြန်လည်စီစစ်ထားသော ရေးထုံး"}
         SCOTLAND{"စကော့ စံ အင်္ဂလိပ်"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.21"}
     codePatterns{
         language{"ဘာသာစကား - {0}"}
         script{"စာ - {0}"}

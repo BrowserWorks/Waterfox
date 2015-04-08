@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ar.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ar.xml
- */
 ar{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     durationUnits{
         hm{"h:mm"}
         hms{"h:mm:ss"}
@@ -1338,12 +1335,12 @@ ar{
             }
             millimeter{
                 dnam{"مم"}
-                few{"{0} ملليمتر"}
-                many{"{0} ملليمتر"}
-                one{"{0} ملليمتر"}
-                other{"{0} ملليمتر"}
-                two{"{0} ملليمتر"}
-                zero{"{0} ملليمتر"}
+                few{"{0} ملم"}
+                many{"{0} ملم"}
+                one{"{0} ملم"}
+                other{"{0} ملم"}
+                two{"{0} ملم"}
+                zero{"{0} ملم"}
             }
             picometer{
                 few{"{0} بيكومتر"}

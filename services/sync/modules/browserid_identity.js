@@ -47,7 +47,7 @@ const OBSERVER_TOPICS = [
   fxAccountsCommon.ONLOGOUT_NOTIFICATION,
 ];
 
-const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync.ui.showCustomizationDialog";
+const PREF_SYNC_SHOW_CUSTOMIZATION = "services.sync-setup.ui.showCustomizationDialog";
 
 function deriveKeyBundle(kB) {
   let out = CryptoUtils.hkdf(kB, undefined,
@@ -185,7 +185,7 @@ this.BrowserIDManager.prototype = {
     // Reset the world before we do anything async.
     this.whenReadyToAuthenticate = Promise.defer();
     this.whenReadyToAuthenticate.promise.then(null, (err) => {
-      this._log.error("Could not authenticate: " + err);
+      this._log.error("Could not authenticate", err);
     });
 
     // initializeWithCurrentIdentity() can be called after the
@@ -244,11 +244,11 @@ this.BrowserIDManager.prototype = {
         this._shouldHaveSyncKeyBundle = true; // but we probably don't have one...
         this.whenReadyToAuthenticate.reject(err);
         // report what failed...
-        this._log.error("Background fetch for key bundle failed: " + err);
+        this._log.error("Background fetch for key bundle failed", err);
       });
       // and we are done - the fetch continues on in the background...
     }).then(null, err => {
-      this._log.error("Processing logged in account: " + err);
+      this._log.error("Processing logged in account", err);
     });
   },
 
@@ -400,6 +400,23 @@ this.BrowserIDManager.prototype = {
   },
 
   /**
+   * Pre-fetches any information that might help with migration away from this
+   * identity.  Called after every sync and is really just an optimization that
+   * allows us to avoid a network request for when we actually need the
+   * migration info.
+   */
+  prefetchMigrationSentinel: function(service) {
+    // nothing to do here until we decide to migrate away from FxA.
+  },
+
+  /**
+    * Return credentials hosts for this identity only.
+    */
+  _getSyncCredentialsHosts: function() {
+    return Utils.getSyncCredentialsHostsFxA();
+  },
+
+  /**
    * The current state of the auth credentials.
    *
    * This essentially validates that enough credentials are available to use
@@ -514,14 +531,13 @@ this.BrowserIDManager.prototype = {
       return null;
     }
 
-    log.info("Fetching assertion and token from: " + tokenServerURI);
-
     let maybeFetchKeys = () => {
       // This is called at login time and every time we need a new token - in
       // the latter case we already have kA and kB, so optimise that case.
       if (userData.kA && userData.kB) {
         return;
       }
+      log.info("Fetching new keys");
       return this._fxaService.getKeys().then(
         newUserData => {
           userData = newUserData;
@@ -548,7 +564,7 @@ this.BrowserIDManager.prototype = {
     }
 
     let getAssertion = () => {
-      log.debug("Getting an assertion");
+      log.info("Getting an assertion from", tokenServerURI);
       let audience = Services.io.newURI(tokenServerURI, null, null).prePath;
       return fxa.getAssertion(audience);
     };
@@ -585,13 +601,13 @@ this.BrowserIDManager.prototype = {
         // properly: auth error getting assertion, auth error getting token (invalid generation
         // and client-state error)
         if (err instanceof AuthenticationError) {
-          this._log.error("Authentication error in _fetchTokenForUser: " + err);
+          this._log.error("Authentication error in _fetchTokenForUser", err);
           // set it to the "fatal" LOGIN_FAILED_LOGIN_REJECTED reason.
           this._authFailureReason = LOGIN_FAILED_LOGIN_REJECTED;
         } else {
-          this._log.error("Non-authentication error in _fetchTokenForUser: "
-                          + (err.message || err));
-          // for now assume it is just a transient network related problem.
+          this._log.error("Non-authentication error in _fetchTokenForUser", err);
+          // for now assume it is just a transient network related problem
+          // (although sadly, it might also be a regular unhandled exception)
           this._authFailureReason = LOGIN_FAILED_NETWORK_ERROR;
         }
         // this._authFailureReason being set to be non-null in the above if clause
@@ -640,7 +656,7 @@ this.BrowserIDManager.prototype = {
     try {
       cb.wait();
     } catch (ex) {
-      this._log.error("Failed to fetch a token for authentication: " + ex);
+      this._log.error("Failed to fetch a token for authentication", ex);
       return null;
     }
     if (!this._token) {
@@ -725,6 +741,7 @@ BrowserIDClusterManager.prototype = {
       cb(null, clusterURL);
     }).then(
       null, err => {
+      log.info("Failed to fetch the cluster URL", err);
       // service.js's verifyLogin() method will attempt to fetch a cluster
       // URL when it sees a 401.  If it gets null, it treats it as a "real"
       // auth error and sets Status.login to LOGIN_FAILED_LOGIN_REJECTED, which

@@ -36,7 +36,7 @@
 #include "nsIScriptSecurityManager.h"
 #include "nsContentPolicyUtils.h"
 #include "nsIHttpChannel.h"
-#include "nsIHttpChannelInternal.h"
+#include "nsIClassOfService.h"
 #include "nsIScriptError.h"
 #include "nsMimeTypes.h"
 #include "nsIStyleSheetLinkingElement.h"
@@ -47,7 +47,7 @@
 #include "nsThreadUtils.h"
 #include "nsGkAtoms.h"
 #include "nsIThreadInternal.h"
-#include "nsCrossSiteListenerProxy.h"
+#include "nsCORSListenerProxy.h"
 #include "nsINetworkPredictor.h"
 #include "mozilla/dom/ShadowRoot.h"
 #include "mozilla/dom/URL.h"
@@ -1464,24 +1464,19 @@ Loader::LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState)
     }
 
     // Just load it
-    nsCOMPtr<nsIInputStream> stream;
     nsCOMPtr<nsIChannel> channel;
-    // Note that we are calling NS_OpenURIInternal() with both a node and a
-    // principal.  This is because of a case where the node is the document
-    // being styled and the principal is the stylesheet (perhaps from a
-    // different origin)  that is applying the styles.
+    // Note that we are calling NS_NewChannelWithTriggeringPrincipal() with both
+    // a node and a principal.
+    // This is because of a case where the node is the document being styled and
+    // the principal is the stylesheet (perhaps from a different origin) that is
+    // applying the styles.
     if (aLoadData->mRequestingNode) {
-      rv = NS_OpenURIWithTriggeringPrincipal(getter_AddRefs(stream),
-                                             aLoadData->mURI,
-                                             aLoadData->mRequestingNode,
-                                             triggeringPrincipal,
-                                             nsILoadInfo::SEC_NORMAL,
-                                             nsIContentPolicy::TYPE_OTHER,
-                                             nullptr,   // aLoadGroup
-                                             nullptr,   // aCallbacks
-                                             nsIRequest::LOAD_NORMAL,
-                                             nullptr,   // aIoService
-                                             getter_AddRefs(channel));
+      rv = NS_NewChannelWithTriggeringPrincipal(getter_AddRefs(channel),
+                                                aLoadData->mURI,
+                                                aLoadData->mRequestingNode,
+                                                triggeringPrincipal,
+                                                nsILoadInfo::SEC_NORMAL,
+                                                nsIContentPolicy::TYPE_OTHER);
     }
     else {
       // either we are loading something inside a document, in which case
@@ -1489,17 +1484,16 @@ Loader::LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState)
       // outside a document, in which case the triggeringPrincipal
       // should always be the systemPrincipal.
       MOZ_ASSERT(nsContentUtils::IsSystemPrincipal(triggeringPrincipal));
-      rv = NS_OpenURI(getter_AddRefs(stream),
-                      aLoadData->mURI,
-                      triggeringPrincipal,
-                      nsILoadInfo::SEC_NORMAL,
-                      nsIContentPolicy::TYPE_OTHER,
-                      nullptr,   // aLoadGroup
-                      nullptr,   // aCallbacks
-                      nsIRequest::LOAD_NORMAL,
-                      nullptr,   // aIoService
-                      getter_AddRefs(channel));
+      rv = NS_NewChannel(getter_AddRefs(channel),
+                         aLoadData->mURI,
+                         triggeringPrincipal,
+                         nsILoadInfo::SEC_NORMAL,
+                         nsIContentPolicy::TYPE_OTHER);
     }
+    NS_ENSURE_SUCCESS(rv, rv);
+
+    nsCOMPtr<nsIInputStream> stream;
+    rv = channel->Open(getter_AddRefs(stream));
 
     if (NS_FAILED(rv)) {
       LOG_ERROR(("  Failed to open URI synchronously"));
@@ -1507,15 +1501,13 @@ Loader::LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState)
       return rv;
     }
 
-    NS_ASSERTION(channel, "NS_OpenURI lied?");
-
     // Force UA sheets to be UTF-8.
     // XXX this is only necessary because the default in
     // SheetLoadData::OnDetermineCharset is wrong (bug 521039).
     channel->SetContentCharset(NS_LITERAL_CSTRING("UTF-8"));
 
-    // Manually feed the streamloader the contents of the stream we
-    // got from NS_OpenURI.  This will call back into OnStreamComplete
+    // Manually feed the streamloader the contents of the stream.
+    // This will call back into OnStreamComplete
     // and thence to ParseSheet.  Regardless of whether this fails,
     // SheetComplete has been called.
     return nsSyncLoadService::PushSyncStreamToListener(stream,
@@ -1623,10 +1615,12 @@ Loader::LoadSheet(SheetLoadData* aLoadData, StyleSheetState aSheetState)
     return rv;
   }
 
-  nsCOMPtr<nsIHttpChannelInternal>
-    internalHttpChannel(do_QueryInterface(channel));
-  if (internalHttpChannel)
-      internalHttpChannel->SetLoadAsBlocking(!aLoadData->mWasAlternate);
+  if (!aLoadData->mWasAlternate) {
+    nsCOMPtr<nsIClassOfService> cos(do_QueryInterface(channel));
+    if (cos) {
+      cos->AddClassFlags(nsIClassOfService::Leader);
+    }
+  }
 
   nsCOMPtr<nsIHttpChannel> httpChannel(do_QueryInterface(channel));
   if (httpChannel) {

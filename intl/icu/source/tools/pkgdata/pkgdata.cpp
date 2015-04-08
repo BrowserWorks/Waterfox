@@ -1,5 +1,5 @@
 /******************************************************************************
- *   Copyright (C) 2000-2014, International Business Machines
+ *   Copyright (C) 2000-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *******************************************************************************
  *   file name:  pkgdata.cpp
@@ -71,6 +71,11 @@ static int32_t pkg_installCommonMode(const char *installDir, const char *fileNam
 
 #ifdef BUILD_DATA_WITHOUT_ASSEMBLY
 static int32_t pkg_createWithoutAssemblyCode(UPKGOptions *o, const char *targetDir, const char mode);
+#endif
+
+#ifdef CAN_WRITE_OBJ_CODE
+static void pkg_createOptMatchArch(char *optMatchArch);
+static void pkg_destroyOptMatchArch(char *optMatchArch);
 #endif
 
 static int32_t pkg_createWithAssemblyCode(const char *targetDir, const char mode, const char *gencFilePath);
@@ -730,7 +735,11 @@ static int32_t pkg_executeOptions(UPKGOptions *o) {
 #endif
                 } else {
 #ifdef CAN_WRITE_OBJ_CODE
-                    writeObjectCode(datFileNamePath, o->tmpDir, o->entryName, NULL, NULL, gencFilePath);
+                    /* Try to detect the arch type, use NULL if unsuccessful */
+                    char optMatchArch[10] = { 0 };
+                    pkg_createOptMatchArch(optMatchArch);
+                    writeObjectCode(datFileNamePath, o->tmpDir, o->entryName, (optMatchArch[0] == 0 ? NULL : optMatchArch), NULL, gencFilePath);
+                    pkg_destroyOptMatchArch(optMatchArch);
 #if U_PLATFORM_IS_LINUX_BASED
                     result = pkg_generateLibraryFile(targetDir, mode, gencFilePath);
 #elif defined(WINDOWS_WITH_MSVC)
@@ -888,7 +897,8 @@ static void createFileNames(UPKGOptions *o, const char mode, const char *version
         }
 
 #if U_PLATFORM == U_PF_MINGW
-        sprintf(libFileNames[LIB_FILE_MINGW], "%s%s.lib", pkgDataFlags[LIBPREFIX], libName);
+        // Name the import library lib*.dll.a
+        sprintf(libFileNames[LIB_FILE_MINGW], "lib%s.dll.a", libName);
 #elif U_PLATFORM == U_PF_CYGWIN
         sprintf(libFileNames[LIB_FILE_CYGWIN], "cyg%s%s%s",
                 libName,
@@ -2146,3 +2156,45 @@ static void loadLists(UPKGOptions *o, UErrorCode *status)
     return -1;
 #endif
 }
+
+#ifdef CAN_WRITE_OBJ_CODE
+ /* Create optMatchArch for genccode architecture detection */
+static void pkg_createOptMatchArch(char *optMatchArch) {
+#if !defined(WINDOWS_WITH_MSVC) || defined(USING_CYGWIN)
+    const char* code = "void oma(){}";
+    const char* source = "oma.c";
+    const char* obj = "oma.obj";
+    FileStream* stream = NULL;
+
+    stream = T_FileStream_open(source,"w");
+    if (stream != NULL) {
+        T_FileStream_writeLine(stream, code);
+        T_FileStream_close(stream);
+
+        char cmd[SMALL_BUFFER_MAX_SIZE];
+        sprintf(cmd, "%s %s -o %s",
+            pkgDataFlags[COMPILER],
+            source,
+            obj);
+
+        if (runCommand(cmd) == 0){
+            sprintf(optMatchArch, "%s", obj);
+        }
+        else {
+            fprintf(stderr, "Failed to compile %s\n", source);
+        }
+        if(!T_FileStream_remove(source)){
+            fprintf(stderr, "T_FileStream_remove failed to delete %s\n", source);
+        }
+    }
+    else {
+        fprintf(stderr, "T_FileStream_open failed to open %s for writing\n", source);
+    }
+#endif
+}
+static void pkg_destroyOptMatchArch(char *optMatchArch) {
+    if(T_FileStream_file_exists(optMatchArch) && !T_FileStream_remove(optMatchArch)){
+        fprintf(stderr, "T_FileStream_remove failed to delete %s\n", optMatchArch);
+    }
+}
+#endif

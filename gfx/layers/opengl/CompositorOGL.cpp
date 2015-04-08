@@ -175,6 +175,8 @@ CompositorOGL::CleanupResources()
     mQuadVBO = 0;
   }
 
+  DestroyVR(ctx);
+
   mGLContext->MakeCurrent();
 
   mBlitTextureImageHelper = nullptr;
@@ -384,6 +386,13 @@ CompositorOGL::Initialize()
     console->LogStringMessage(msg.get());
   }
 
+  mVR.mInitialized = false;
+  if (gfxPrefs::VREnabled()) {
+    if (!InitializeVR()) {
+      NS_WARNING("Failed to initialize VR in CompositorOGL");
+    }
+  }
+
   reporter.SetSuccessful();
   return true;
 }
@@ -567,7 +576,7 @@ CompositorOGL::BeginFrame(const nsIntRegion& aInvalidRegion,
   PROFILER_LABEL("CompositorOGL", "BeginFrame",
     js::ProfileEntry::Category::GRAPHICS);
 
-  MOZ_ASSERT(!mFrameInProgress, "frame still in progress (should have called EndFrame or AbortFrame");
+  MOZ_ASSERT(!mFrameInProgress, "frame still in progress (should have called EndFrame");
 
   mFrameInProgress = true;
   gfx::Rect rect;
@@ -888,6 +897,11 @@ CompositorOGL::DrawQuad(const Rect& aRect,
 
   MOZ_ASSERT(mFrameInProgress, "frame not started");
   MOZ_ASSERT(mCurrentRenderTarget, "No destination");
+
+  if (aEffectChain.mPrimaryEffect->mType == EffectTypes::VR_DISTORTION) {
+    DrawVRDistortion(aRect, aClipRect, aEffectChain, aOpacity, aTransform);
+    return;
+  }
 
   Rect clipRect = aClipRect;
   // aClipRect is in destination coordinate space (after all
@@ -1303,18 +1317,6 @@ CompositorOGL::EndFrameForExternalComposition(const gfx::Matrix& aTransform)
     CopyToTarget(mTarget, mTargetBounds.TopLeft(), aTransform);
     mGLContext->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
   }
-  if (mTexturePool) {
-    mTexturePool->EndFrame();
-  }
-}
-
-void
-CompositorOGL::AbortFrame()
-{
-  mGLContext->fBindBuffer(LOCAL_GL_ARRAY_BUFFER, 0);
-  mFrameInProgress = false;
-  mCurrentRenderTarget = nullptr;
-
   if (mTexturePool) {
     mTexturePool->EndFrame();
   }

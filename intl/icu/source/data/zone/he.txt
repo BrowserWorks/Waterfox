@@ -1,16 +1,13 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/he.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/he.xml
- */
 he{
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     zoneStrings{
         "Africa:Abidjan"{
             ec{"אביג׳אן"}
@@ -690,9 +687,6 @@ he{
         "Asia:Choibalsan"{
             ec{"צ׳ואיבלסאן"}
         }
-        "Asia:Chongqing"{
-            ec{"צ׳ונגקינג"}
-        }
         "Asia:Colombo"{
             ec{"קולומבו"}
         }
@@ -713,9 +707,6 @@ he{
         }
         "Asia:Gaza"{
             ec{"עזה"}
-        }
-        "Asia:Harbin"{
-            ec{"חרבין"}
         }
         "Asia:Hebron"{
             ec{"חברון"}
@@ -746,9 +737,6 @@ he{
         }
         "Asia:Karachi"{
             ec{"קרצ׳י"}
-        }
-        "Asia:Kashgar"{
-            ec{"קשגר"}
         }
         "Asia:Katmandu"{
             ec{"קטמנדו"}
@@ -1874,7 +1862,7 @@ he{
         fallbackFormat{"{1} ({0})"}
         gmtFormat{"GMT{0}"}
         gmtZeroFormat{"GMT"}
-        hourFormat{"+HH:mm;-HH:mm"}
+        hourFormat{"+H:mm;-H:mm"}
         regionFormat{"שעון {0}"}
         regionFormatDaylight{"שעון {0} (קיץ)"}
         regionFormatStandard{"שעון {0} (חורף)"}

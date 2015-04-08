@@ -29,9 +29,9 @@ class JSObject;
 extern PRLogModuleInfo* GetMediaSourceLog();
 extern PRLogModuleInfo* GetMediaSourceAPILog();
 
-#define MSE_DEBUG(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, (__VA_ARGS__))
-#define MSE_DEBUGV(...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG+1, (__VA_ARGS__))
-#define MSE_API(...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, (__VA_ARGS__))
+#define MSE_DEBUG(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_DEBUGV(arg, ...) PR_LOG(GetMediaSourceLog(), PR_LOG_DEBUG + 1, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
+#define MSE_API(arg, ...) PR_LOG(GetMediaSourceAPILog(), PR_LOG_DEBUG, ("SourceBuffer(%p:%s)::%s: " arg, this, mType.get(), __func__, ##__VA_ARGS__))
 #else
 #define MSE_DEBUG(...)
 #define MSE_DEBUGV(...)
@@ -46,16 +46,18 @@ class AppendDataRunnable : public nsRunnable {
 public:
   AppendDataRunnable(SourceBuffer* aSourceBuffer,
                      LargeDataBuffer* aData,
-                     double aTimestampOffset)
+                     double aTimestampOffset,
+                     uint32_t aUpdateID)
   : mSourceBuffer(aSourceBuffer)
   , mData(aData)
   , mTimestampOffset(aTimestampOffset)
+  , mUpdateID(aUpdateID)
   {
   }
 
   NS_IMETHOD Run() MOZ_OVERRIDE MOZ_FINAL {
 
-    mSourceBuffer->AppendData(mData, mTimestampOffset);
+    mSourceBuffer->AppendData(mData, mTimestampOffset, mUpdateID);
 
     return NS_OK;
   }
@@ -64,13 +66,14 @@ private:
   nsRefPtr<SourceBuffer> mSourceBuffer;
   nsRefPtr<LargeDataBuffer> mData;
   double mTimestampOffset;
+  uint32_t mUpdateID;
 };
 
 class RangeRemovalRunnable : public nsRunnable {
 public:
   RangeRemovalRunnable(SourceBuffer* aSourceBuffer,
-                     double aStart,
-                     double aEnd)
+                       double aStart,
+                       double aEnd)
   : mSourceBuffer(aSourceBuffer)
   , mStart(aStart)
   , mEnd(aEnd)
@@ -78,7 +81,12 @@ public:
 
   NS_IMETHOD Run() MOZ_OVERRIDE MOZ_FINAL {
 
+    if (!mSourceBuffer->mUpdating) {
+      // abort was called in between.
+      return NS_OK;
+    }
     mSourceBuffer->DoRangeRemoval(mStart, mEnd);
+    mSourceBuffer->StopUpdating();
 
     return NS_OK;
   }
@@ -93,7 +101,7 @@ void
 SourceBuffer::SetMode(SourceBufferAppendMode aMode, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::SetMode(aMode=%d)", this, aMode);
+  MSE_API("SetMode(aMode=%d)", aMode);
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -115,7 +123,7 @@ void
 SourceBuffer::SetTimestampOffset(double aTimestampOffset, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::SetTimestampOffset(aTimestampOffset=%f)", this, aTimestampOffset);
+  MSE_API("SetTimestampOffset(aTimestampOffset=%f)", aTimestampOffset);
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -146,7 +154,7 @@ SourceBuffer::GetBuffered(ErrorResult& aRv)
     ranges->Add(ranges->GetEndTime(), highestEndTime);
     ranges->Normalize();
   }
-  MSE_DEBUGV("SourceBuffer(%p)::GetBuffered ranges=%s", this, DumpTimeRanges(ranges).get());
+  MSE_DEBUGV("ranges=%s", DumpTimeRanges(ranges).get());
   return ranges.forget();
 }
 
@@ -154,7 +162,7 @@ void
 SourceBuffer::SetAppendWindowStart(double aAppendWindowStart, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::SetAppendWindowStart(aAppendWindowStart=%f)", this, aAppendWindowStart);
+  MSE_API("SetAppendWindowStart(aAppendWindowStart=%f)", aAppendWindowStart);
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -170,7 +178,7 @@ void
 SourceBuffer::SetAppendWindowEnd(double aAppendWindowEnd, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::SetAppendWindowEnd(aAppendWindowEnd=%f)", this, aAppendWindowEnd);
+  MSE_API("SetAppendWindowEnd(aAppendWindowEnd=%f)", aAppendWindowEnd);
   if (!IsAttached() || mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -187,7 +195,7 @@ void
 SourceBuffer::AppendBuffer(const ArrayBuffer& aData, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::AppendBuffer(ArrayBuffer)", this);
+  MSE_API("AppendBuffer(ArrayBuffer)");
   aData.ComputeLengthAndData();
   AppendData(aData.Data(), aData.Length(), aRv);
 }
@@ -196,7 +204,7 @@ void
 SourceBuffer::AppendBuffer(const ArrayBufferView& aData, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::AppendBuffer(ArrayBufferView)", this);
+  MSE_API("AppendBuffer(ArrayBufferView)");
   aData.ComputeLengthAndData();
   AppendData(aData.Data(), aData.Length(), aRv);
 }
@@ -205,7 +213,7 @@ void
 SourceBuffer::Abort(ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::Abort()", this);
+  MSE_API("Abort()");
   if (!IsAttached()) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
@@ -214,20 +222,23 @@ SourceBuffer::Abort(ErrorResult& aRv)
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
-  Abort();
+  AbortBufferAppend();
   mTrackBuffer->ResetParserState();
   mAppendWindowStart = 0;
   mAppendWindowEnd = PositiveInfinity<double>();
-
-  MSE_DEBUG("SourceBuffer(%p)::Abort() Discarding decoder", this);
-  mTrackBuffer->DiscardDecoder();
+  // Discard the current decoder so no new data will be added to it.
+  MSE_DEBUG("Discarding decoder");
+  mTrackBuffer->DiscardCurrentDecoder();
 }
 
 void
-SourceBuffer::Abort()
+SourceBuffer::AbortBufferAppend()
 {
   if (mUpdating) {
-    // TODO: Abort segment parser loop, buffer append, and stream append loop algorithms.
+    mPendingAppend.DisconnectIfExists();
+    // TODO: Abort segment parser loop, and stream append loop algorithms.
+    // cancel any pending buffer append.
+    mTrackBuffer->AbortAppendData();
     AbortUpdating();
   }
 }
@@ -236,8 +247,12 @@ void
 SourceBuffer::Remove(double aStart, double aEnd, ErrorResult& aRv)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p)::Remove(aStart=%f, aEnd=%f)", this, aStart, aEnd);
+  MSE_API("Remove(aStart=%f, aEnd=%f)", aStart, aEnd);
   if (!IsAttached()) {
+    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
+    return;
+  }
+  if (mUpdating) {
     aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
@@ -247,47 +262,42 @@ SourceBuffer::Remove(double aStart, double aEnd, ErrorResult& aRv)
     aRv.Throw(NS_ERROR_DOM_INVALID_ACCESS_ERR);
     return;
   }
-  if (mUpdating) {
-    aRv.Throw(NS_ERROR_DOM_INVALID_STATE_ERR);
-    return;
-  }
   if (mMediaSource->ReadyState() == MediaSourceReadyState::Ended) {
     mMediaSource->SetReadyState(MediaSourceReadyState::Open);
   }
-  RangeRemoval(aStart, aEnd);
+
+  StartUpdating();
+  nsRefPtr<nsIRunnable> task = new RangeRemovalRunnable(this, aStart, aEnd);
+  NS_DispatchToMainThread(task);
 }
 
 void
 SourceBuffer::RangeRemoval(double aStart, double aEnd)
 {
   StartUpdating();
-
-  nsRefPtr<nsIRunnable> task = new RangeRemovalRunnable(this, aStart, aEnd);
+  DoRangeRemoval(aStart, aEnd);
+  nsRefPtr<nsIRunnable> task =
+    NS_NewRunnableMethod(this, &SourceBuffer::StopUpdating);
   NS_DispatchToMainThread(task);
 }
 
 void
 SourceBuffer::DoRangeRemoval(double aStart, double aEnd)
 {
-  if (!mUpdating) {
-    // abort was called in between.
-    return;
-  }
+  MSE_DEBUG("DoRangeRemoval(%f, %f)", aStart, aEnd);
   if (mTrackBuffer && !IsInfinite(aStart)) {
     int64_t start = aStart * USECS_PER_S;
     int64_t end = IsInfinite(aEnd) ? INT64_MAX : (int64_t)(aEnd * USECS_PER_S);
     mTrackBuffer->RangeRemoval(start, end);
   }
-
-  StopUpdating();
 }
 
 void
 SourceBuffer::Detach()
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("SourceBuffer(%p)::Detach", this);
-  Abort();
+  MSE_DEBUG("Detach");
+  AbortBufferAppend();
   if (mTrackBuffer) {
     mTrackBuffer->Detach();
   }
@@ -300,7 +310,7 @@ SourceBuffer::Ended()
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(IsAttached());
-  MSE_DEBUG("SourceBuffer(%p)::Ended", this);
+  MSE_DEBUG("Ended");
   mTrackBuffer->EndCurrentDecoder();
 }
 
@@ -312,21 +322,23 @@ SourceBuffer::SourceBuffer(MediaSource* aMediaSource, const nsACString& aType)
   , mTimestampOffset(0)
   , mAppendMode(SourceBufferAppendMode::Segments)
   , mUpdating(false)
+  , mUpdateID(0)
+  , mType(aType)
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(aMediaSource);
   mEvictionThreshold = Preferences::GetUint("media.mediasource.eviction_threshold",
                                             75 * (1 << 20));
   mTrackBuffer = new TrackBuffer(aMediaSource->GetDecoder(), aType);
-  MSE_DEBUG("SourceBuffer(%p)::SourceBuffer: Create mTrackBuffer=%p",
-            this, mTrackBuffer.get());
+  MSE_DEBUG("Create mTrackBuffer=%p",
+            mTrackBuffer.get());
 }
 
 SourceBuffer::~SourceBuffer()
 {
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mMediaSource);
-  MSE_DEBUG("SourceBuffer(%p)::~SourceBuffer", this);
+  MSE_DEBUG("");
 }
 
 MediaSource*
@@ -345,14 +357,14 @@ void
 SourceBuffer::DispatchSimpleEvent(const char* aName)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_API("SourceBuffer(%p) Dispatch event '%s'", this, aName);
+  MSE_API("Dispatch event '%s'", aName);
   DispatchTrustedEvent(NS_ConvertUTF8toUTF16(aName));
 }
 
 void
 SourceBuffer::QueueAsyncSimpleEvent(const char* aName)
 {
-  MSE_DEBUG("SourceBuffer(%p) Queuing event '%s'", this, aName);
+  MSE_DEBUG("Queuing event '%s'", aName);
   nsCOMPtr<nsIRunnable> event = new AsyncEventRunner<SourceBuffer>(this, aName);
   NS_DispatchToMainThread(event, NS_DISPATCH_NORMAL);
 }
@@ -363,6 +375,7 @@ SourceBuffer::StartUpdating()
   MOZ_ASSERT(NS_IsMainThread());
   MOZ_ASSERT(!mUpdating);
   mUpdating = true;
+  mUpdateID++;
   QueueAsyncSimpleEvent("updatestart");
 }
 
@@ -397,9 +410,11 @@ SourceBuffer::AbortUpdating()
 void
 SourceBuffer::CheckEndTime()
 {
+  MOZ_ASSERT(NS_IsMainThread());
   // Check if we need to update mMediaSource duration
   double endTime = GetBufferedEnd();
-  if (endTime > mMediaSource->Duration()) {
+  double duration = mMediaSource->Duration();
+  if (endTime > duration) {
     mMediaSource->SetDuration(endTime, MSRangeRemovalAction::SKIP);
   }
 }
@@ -407,7 +422,7 @@ SourceBuffer::CheckEndTime()
 void
 SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aRv)
 {
-  MSE_DEBUG("SourceBuffer(%p)::AppendData(aLength=%u)", this, aLength);
+  MSE_DEBUG("AppendData(aLength=%u)", aLength);
 
   nsRefPtr<LargeDataBuffer> data = PrepareAppend(aData, aLength, aRv);
   if (!data) {
@@ -418,14 +433,15 @@ SourceBuffer::AppendData(const uint8_t* aData, uint32_t aLength, ErrorResult& aR
   MOZ_ASSERT(mAppendMode == SourceBufferAppendMode::Segments,
              "We don't handle timestampOffset for sequence mode yet");
   nsRefPtr<nsIRunnable> task =
-    new AppendDataRunnable(this, data, mTimestampOffset);
+    new AppendDataRunnable(this, data, mTimestampOffset, mUpdateID);
   NS_DispatchToMainThread(task);
 }
 
 void
-SourceBuffer::AppendData(LargeDataBuffer* aData, double aTimestampOffset)
+SourceBuffer::AppendData(LargeDataBuffer* aData, double aTimestampOffset,
+                         uint32_t aUpdateID)
 {
-  if (!mUpdating) {
+  if (!mUpdating || aUpdateID != mUpdateID) {
     // The buffer append algorithm has been interrupted by abort().
     //
     // If the sequence appendBuffer(), abort(), appendBuffer() occurs before
@@ -436,22 +452,53 @@ SourceBuffer::AppendData(LargeDataBuffer* aData, double aTimestampOffset)
   }
 
   MOZ_ASSERT(mMediaSource);
+  MOZ_ASSERT(!mPendingAppend.Exists());
 
-  if (aData->Length()) {
-    if (!mTrackBuffer->AppendData(aData, aTimestampOffset * USECS_PER_S)) {
-      AppendError(true);
-      return;
-    }
+  if (!aData->Length()) {
+    StopUpdating();
+    return;
+  }
 
-    if (mTrackBuffer->HasInitSegment()) {
-      mMediaSource->QueueInitializationEvent();
-    }
+  mPendingAppend.Begin(mTrackBuffer->AppendData(aData, aTimestampOffset * USECS_PER_S)
+                       ->RefableThen(NS_GetCurrentThread(), __func__, this,
+                                     &SourceBuffer::AppendDataCompletedWithSuccess,
+                                     &SourceBuffer::AppendDataErrored));
+}
 
+void
+SourceBuffer::AppendDataCompletedWithSuccess(bool aGotMedia)
+{
+  mPendingAppend.Complete();
+  if (!mUpdating) {
+    // The buffer append algorithm has been interrupted by abort().
+    return;
+  }
+
+  if (mTrackBuffer->HasInitSegment()) {
+    mMediaSource->QueueInitializationEvent();
+  }
+
+  if (aGotMedia) {
     CheckEndTime();
   }
 
   StopUpdating();
- }
+}
+
+void
+SourceBuffer::AppendDataErrored(nsresult aError)
+{
+  mPendingAppend.Complete();
+  switch (aError) {
+    case NS_ERROR_ABORT:
+      // Nothing further to do as the trackbuffer has been shutdown.
+      // or append was aborted and abort() has handled all the events.
+      break;
+    default:
+      AppendError(true);
+      break;
+  }
+}
 
 void
 SourceBuffer::AppendError(bool aDecoderError)
@@ -504,12 +551,22 @@ SourceBuffer::PrepareAppend(const uint8_t* aData, uint32_t aLength, ErrorResult&
     mTrackBuffer->EvictData(mMediaSource->GetDecoder()->GetCurrentTime(),
                             toEvict, &newBufferStartTime);
   if (evicted) {
-    MSE_DEBUG("SourceBuffer(%p)::AppendData Evict; current buffered start=%f",
-              this, GetBufferedStart());
+    MSE_DEBUG("AppendData Evict; current buffered start=%f",
+              GetBufferedStart());
 
     // We notify that we've evicted from the time range 0 through to
     // the current start point.
     mMediaSource->NotifyEvicted(0.0, newBufferStartTime);
+  }
+
+  // See if we have enough free space to append our new data.
+  // As we can only evict once we have playable data, we must give a chance
+  // to the DASH player to provide a complete media segment.
+  if (aLength > mEvictionThreshold ||
+      ((mTrackBuffer->GetSize() > mEvictionThreshold - aLength) &&
+       !mTrackBuffer->HasOnlyIncompleteMedia())) {
+    aRv.Throw(NS_ERROR_DOM_QUOTA_EXCEEDED_ERR);
+    return nullptr;
   }
 
   nsRefPtr<LargeDataBuffer> data = new LargeDataBuffer();
@@ -543,7 +600,7 @@ void
 SourceBuffer::Evict(double aStart, double aEnd)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MSE_DEBUG("SourceBuffer(%p)::Evict(aStart=%f, aEnd=%f)", this, aStart, aEnd);
+  MSE_DEBUG("Evict(aStart=%f, aEnd=%f)", aStart, aEnd);
   double currentTime = mMediaSource->GetDecoder()->GetCurrentTime();
   double evictTime = aEnd;
   const double safety_threshold = 5;
@@ -584,6 +641,10 @@ NS_IMPL_RELEASE_INHERITED(SourceBuffer, DOMEventTargetHelper)
 
 NS_INTERFACE_MAP_BEGIN_CYCLE_COLLECTION_INHERITED(SourceBuffer)
 NS_INTERFACE_MAP_END_INHERITING(DOMEventTargetHelper)
+
+#undef MSE_DEBUG
+#undef MSE_DEBUGV
+#undef MSE_API
 
 } // namespace dom
 

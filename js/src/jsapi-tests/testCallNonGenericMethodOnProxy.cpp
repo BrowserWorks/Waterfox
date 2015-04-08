@@ -8,14 +8,7 @@ using namespace JS;
 
 static const JSClass CustomClass = {
   "CustomClass",
-  JSCLASS_HAS_RESERVED_SLOTS(1),
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub
+  JSCLASS_HAS_RESERVED_SLOTS(1)
 };
 
 static const uint32_t CUSTOM_SLOT = 0;
@@ -29,7 +22,7 @@ IsCustomClass(JS::Handle<JS::Value> v)
 static bool
 CustomMethodImpl(JSContext *cx, CallArgs args)
 {
-  MOZ_ASSERT(IsCustomClass(args.thisv()));
+  MOZ_RELEASE_ASSERT(IsCustomClass(args.thisv()));
   args.rval().set(JS_GetReservedSlot(&args.thisv().toObject(), CUSTOM_SLOT));
   return true;
 }

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/dsb.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/dsb.xml
- */
 dsb{
     Keys{
         calendar{"kalender"}
@@ -60,6 +57,8 @@ dsb{
         da{"danšćina"}
         dav{"taita"}
         de{"nimšćina"}
+        de_AT{"awstriska nimšćina"}
+        de_CH{"šwicarska wusokonimšćina"}
         dje{"zarma"}
         dsb{"dolnoserbšćina"}
         dua{"duala"}
@@ -279,7 +278,7 @@ dsb{
         zu{"zulu"}
         zxx{"žedno rěcne wopśimjeśe"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"UK-engelšćina"}
         en_US{"US-engelšćina"}
     }
@@ -385,7 +384,7 @@ dsb{
             tibt{"tibetske cyfry"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Rěc: {0}"}
         script{"Pismo: {0}"}

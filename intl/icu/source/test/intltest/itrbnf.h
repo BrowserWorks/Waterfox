@@ -1,6 +1,6 @@
 /*
  *******************************************************************************
- * Copyright (C) 1996-2014, International Business Machines Corporation and    *
+ * Copyright (C) 1996-2015, International Business Machines Corporation and    *
  * others. All Rights Reserved.                                                *
  *******************************************************************************
  */
@@ -27,6 +27,8 @@ class IntlTestRBNF : public IntlTest {
    * Perform an API test
    */
   virtual void TestAPI();
+
+  void TestMultiplePluralRules();
 
   /**
    * Perform a simple spot check on the FractionalRuleSet logic

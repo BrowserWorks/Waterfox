@@ -12,6 +12,7 @@
 #include "SharedThreadPool.h"
 #include "mozilla/Preferences.h"
 #include "mozilla/Base64.h"
+#include "mozilla/Telemetry.h"
 #include "nsIRandomGenerator.h"
 #include "nsIServiceManager.h"
 #include "MediaTaskQueue.h"
@@ -207,7 +208,8 @@ ExtractH264CodecDetails(const nsAString& aCodec,
                         int16_t& aProfile,
                         int16_t& aLevel)
 {
-  // H.264 codecs parameters have a type defined as avc1.PPCCLL, where
+  // H.264 codecs parameters have a type defined as avcN.PPCCLL, where
+  // N = avc type. avc3 is avcc with SPS & PPS implicit (within stream)
   // PP = profile_idc, CC = constraint_set flags, LL = level_idc.
   // We ignore the constraint_set flags, as it's not clear from any
   // documentation what constraints the platform decoders support.
@@ -217,19 +219,37 @@ ExtractH264CodecDetails(const nsAString& aCodec,
     return false;
   }
 
-  // Verify the codec starts with "avc1.".
+  // Verify the codec starts with "avc1." or "avc3.".
   const nsAString& sample = Substring(aCodec, 0, 5);
-  if (!sample.EqualsASCII("avc1.")) {
+  if (!sample.EqualsASCII("avc1.") && !sample.EqualsASCII("avc3.")) {
     return false;
   }
 
-  // Extract the profile_idc, constrains, and level_idc.
+  // Extract the profile_idc and level_idc.
   nsresult rv = NS_OK;
   aProfile = PromiseFlatString(Substring(aCodec, 5, 2)).ToInteger(&rv, 16);
   NS_ENSURE_SUCCESS(rv, false);
 
   aLevel = PromiseFlatString(Substring(aCodec, 9, 2)).ToInteger(&rv, 16);
   NS_ENSURE_SUCCESS(rv, false);
+
+  // Capture the constraint_set flag value for the purpose of Telemetry.
+  // We don't NS_ENSURE_SUCCESS here because ExtractH264CodecDetails doesn't
+  // care about this, but we make sure constraints is above 4 (constraint_set5_flag)
+  // otherwise collect 0 for unknown.
+  uint8_t constraints = PromiseFlatString(Substring(aCodec, 7, 2)).ToInteger(&rv, 16);
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_CONSTRAINT_SET_FLAG,
+                        constraints >= 4 ? constraints : 0);
+
+  // 244 is the highest meaningful profile value (High 4:4:4 Intra Profile)
+  // that can be represented as single hex byte, otherwise collect 0 for unknown.
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_PROFILE,
+                        aProfile <= 244 ? aProfile : 0);
+
+  // Make sure aLevel represents a value between levels 1 and 5.2,
+  // otherwise collect 0 for unknown.
+  Telemetry::Accumulate(Telemetry::VIDEO_CANPLAYTYPE_H264_LEVEL,
+                        (aLevel >= 10 && aLevel <= 52) ? aLevel : 0);
 
   return true;
 }
@@ -281,11 +301,31 @@ public:
   nsRefPtr<MediaTaskQueue> mTaskQueue;
 };
 
+class CreateFlushableTaskQueueTask : public nsRunnable {
+public:
+  NS_IMETHOD Run() {
+    MOZ_ASSERT(NS_IsMainThread());
+    mTaskQueue = new FlushableMediaTaskQueue(GetMediaDecodeThreadPool());
+    return NS_OK;
+  }
+  nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
+};
+
 already_AddRefed<MediaTaskQueue>
 CreateMediaDecodeTaskQueue()
 {
   // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
   nsRefPtr<CreateTaskQueueTask> t(new CreateTaskQueueTask());
+  nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
+  NS_ENSURE_SUCCESS(rv, nullptr);
+  return t->mTaskQueue.forget();
+}
+
+already_AddRefed<FlushableMediaTaskQueue>
+CreateFlushableMediaDecodeTaskQueue()
+{
+  // We must create the MediaTaskQueue/SharedThreadPool on the main thread.
+  nsRefPtr<CreateFlushableTaskQueueTask> t(new CreateFlushableTaskQueueTask());
   nsresult rv = NS_DispatchToMainThread(t, NS_DISPATCH_SYNC);
   NS_ENSURE_SUCCESS(rv, nullptr);
   return t->mTaskQueue.forget();

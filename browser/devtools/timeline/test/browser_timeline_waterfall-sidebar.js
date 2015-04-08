@@ -5,9 +5,9 @@
  * Tests if the sidebar is properly updated when a marker is selected.
  */
 
-let test = Task.async(function*() {
+add_task(function*() {
   let { target, panel } = yield initTimelinePanel(SIMPLE_URL);
-  let { $, $$, EVENTS, TimelineController, TimelineView } = panel.panelWin;
+  let { $, $$, EVENTS, TimelineController, TimelineView, TIMELINE_BLUEPRINT} = panel.panelWin;
   let { L10N } = devtools.require("devtools/timeline/global");
 
   yield TimelineController.toggleRecording();
@@ -39,7 +39,9 @@ let test = Task.async(function*() {
     bar.click();
     let m = markers[i];
 
-    is($("#timeline-waterfall-details .marker-details-type").getAttribute("value"), m.name,
+    let name = TIMELINE_BLUEPRINT[m.name].label;
+
+    is($("#timeline-waterfall-details .marker-details-type").getAttribute("value"), name,
       "sidebar title matches markers name");
 
     let printedStartTime = $(".marker-details-start .marker-details-labelvalue").getAttribute("value");
@@ -53,7 +55,4 @@ let test = Task.async(function*() {
     is(toMs(m.end), printedEndTime, "sidebar end time is valid");
     is(toMs(m.end - m.start), printedDuration, "sidebar duration is valid");
   }
-
-  yield teardown(panel);
-  finish();
 });

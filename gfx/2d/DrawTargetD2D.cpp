@@ -6,9 +6,7 @@
 #include <initguid.h>
 #include "DrawTargetD2D.h"
 #include "SourceSurfaceD2D.h"
-#ifdef USE_D2D1_1
 #include "SourceSurfaceD2D1.h"
-#endif
 #include "SourceSurfaceD2DTarget.h"
 #include "ShadersD2D.h"
 #include "PathD2D.h"
@@ -21,9 +19,7 @@
 #include "mozilla/Constants.h"
 #include "FilterNodeSoftware.h"
 
-#ifdef USE_D2D1_1
 #include "FilterNodeD2D1.h"
-#endif
 
 #include <dwrite.h>
 
@@ -76,7 +72,7 @@ public:
 
     HRESULT hr = mDT->mDevice->CreateTexture2D(&desc, nullptr, byRef(tmpTexture));
     if (FAILED(hr)) {
-      gfxCriticalError() << "[D2D] CreateTexture2D failure " << size << " Code: " << hexa(hr);
+      gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(size))) << "[D2D] 1 CreateTexture2D failure " << size << " Code: " << hexa(hr);
       return;
     }
     mDT->mDevice->CopyResource(tmpTexture, mDT->mTexture);
@@ -323,7 +319,6 @@ DrawTargetD2D::GetBitmapForSurface(SourceSurface *aSurface,
   return bitmap;
 }
 
-#ifdef USE_D2D1_1
 TemporaryRef<ID2D1Image>
 DrawTargetD2D::GetImageForSurface(SourceSurface *aSurface)
 {
@@ -334,7 +329,6 @@ DrawTargetD2D::GetImageForSurface(SourceSurface *aSurface)
 
   return image;
 }
-#endif
 
 void
 DrawTargetD2D::DrawSurface(SourceSurface *aSurface,
@@ -369,7 +363,6 @@ DrawTargetD2D::DrawFilter(FilterNode *aNode,
                           const Point &aDestPoint,
                           const DrawOptions &aOptions)
 {
-#ifdef USE_D2D1_1
   RefPtr<ID2D1DeviceContext> dc;
   HRESULT hr;
   
@@ -395,7 +388,6 @@ DrawTargetD2D::DrawFilter(FilterNode *aNode,
       return;
     }
   }
-#endif
 
   if (aNode->GetBackendType() != FILTER_BACKEND_SOFTWARE) {
     gfxWarning() << "Invalid filter backend passed to DrawTargetD2D!";
@@ -531,7 +523,7 @@ DrawTargetD2D::DrawSurfaceWithShadow(SourceSurface *aSurface,
     hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(mipTexture));
 
     if (FAILED(hr)) {
-      gfxCriticalError() << "[D2D] CreateTexture2D failure " << aSurface->GetSize() << " Code: " << hexa(hr);
+      gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSurface->GetSize()))) << "[D2D] 2 CreateTexture2D failure " << aSurface->GetSize() << " Code: " << hexa(hr);
       return;
     }
 
@@ -558,7 +550,7 @@ DrawTargetD2D::DrawSurfaceWithShadow(SourceSurface *aSurface,
     hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(tmpDSTexture));
 
     if (FAILED(hr)) {
-      gfxCriticalError() << "[D2D] CreateTexture2D failure " << dsSize << " Code: " << hexa(hr);
+      gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(dsSize))) << "[D2D] 3 CreateTexture2D failure " << dsSize << " Code: " << hexa(hr);
       return;
     }
 
@@ -1282,7 +1274,7 @@ DrawTargetD2D::CreatePathBuilder(FillRule aFillRule) const
     sink->SetFillMode(D2D1_FILL_MODE_WINDING);
   }
 
-  return new PathBuilderD2D(sink, path, aFillRule);
+  return new PathBuilderD2D(sink, path, aFillRule, BackendType::DIRECT2D);
 }
 
 TemporaryRef<GradientStops>
@@ -1308,20 +1300,18 @@ DrawTargetD2D::CreateGradientStops(GradientStop *rawStops, uint32_t aNumStops, E
     return nullptr;
   }
 
-  return new GradientStopsD2D(stopCollection);
+  return new GradientStopsD2D(stopCollection, Factory::GetDirect3D11Device());
 }
 
 TemporaryRef<FilterNode>
 DrawTargetD2D::CreateFilter(FilterType aType)
 {
-#ifdef USE_D2D1_1
   RefPtr<ID2D1DeviceContext> dc;
   HRESULT hr = mRT->QueryInterface((ID2D1DeviceContext**)byRef(dc));
 
   if (SUCCEEDED(hr)) {
     return FilterNodeD2D1::Create(dc, aType);
   }
-#endif
   return FilterNodeSoftware::Create(aType);
 }
 
@@ -1361,7 +1351,7 @@ DrawTargetD2D::Init(const IntSize &aSize, SurfaceFormat aFormat)
   hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(mTexture));
 
   if (FAILED(hr)) {
-    gfxCriticalError() << "Failed to init Direct2D DrawTarget. Size: " << mSize << " Code: " << hexa(hr);
+    gfxCriticalError(CriticalLog::DefaultOptions(Factory::ReasonableSurfaceSize(aSize))) << "Failed to init Direct2D DrawTarget. Size: " << mSize << " Code: " << hexa(hr);
     return false;
   }
 

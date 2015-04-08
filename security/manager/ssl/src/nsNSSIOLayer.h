@@ -96,13 +96,6 @@ public:
   void SetPreliminaryHandshakeDone() { mPreliminaryHandshakeDone = true; }
 
   void SetKEAUsed(uint16_t kea) { mKEAUsed = kea; }
-  inline int16_t GetKEAExpected() // infallible in nsISSLSocketControl
-  {
-    int16_t result;
-    mozilla::DebugOnly<nsresult> rv = GetKEAExpected(&result);
-    MOZ_ASSERT(NS_SUCCEEDED(rv));
-    return result;
-  }
 
   void SetKEAKeyBits(uint32_t keaBits) { mKEAKeyBits = keaBits; }
 
@@ -160,7 +153,6 @@ private:
   // mKEA* are used in false start and http/2 detetermination
   // Values are from nsISSLSocketControl
   int16_t mKEAUsed;
-  int16_t mKEAExpected;
   uint32_t mKEAKeyBits;
   int16_t mSSLVersionUsed;
   int16_t mMACAlgorithmUsed;
@@ -194,7 +186,7 @@ public:
   static PRIOMethods nsSSLIOLayerMethods;
   static PRIOMethods nsSSLPlaintextLayerMethods;
 
-  nsTHashtable<nsCStringHashKey>* mRenegoUnrestrictedSites;
+  nsTHashtable<nsCStringHashKey> mRenegoUnrestrictedSites;
   bool mTreatUnsafeNegotiationAsBroken;
   int32_t mWarnLevelMissingRFC5746;
 
@@ -217,9 +209,14 @@ private:
     }
   };
   nsDataHashtable<nsCStringHashKey, IntoleranceEntry> mTLSIntoleranceInfo;
+  // Sites that require insecure fallback to TLS 1.0, set by the pref
+  // security.tls.insecure_fallback_hosts, which is a comma-delimited
+  // list of domain names.
+  nsTHashtable<nsCStringHashKey> mInsecureFallbackSites;
 public:
   void rememberTolerantAtVersion(const nsACString& hostname, int16_t port,
                                  uint16_t tolerant);
+  bool fallbackLimitReached(const nsACString& hostname, uint16_t intolerant);
   bool rememberIntolerantAtVersion(const nsACString& hostname, int16_t port,
                                    uint16_t intolerant, uint16_t minVersion,
                                    PRErrorCode intoleranceReason);
@@ -233,13 +230,22 @@ public:
                                /*out*/ StrongCipherStatus& strongCipherStatus);
   PRErrorCode getIntoleranceReason(const nsACString& hostname, int16_t port);
 
-  void setRenegoUnrestrictedSites(const nsCString& str);
+  void setSiteList(nsTHashtable<nsCStringHashKey>& sites,
+                   const nsCString& str);
   bool isRenegoUnrestrictedSite(const nsCString& str);
   void clearStoredData();
   void loadVersionFallbackLimit();
+  void setInsecureFallbackSites(const nsCString& str)
+  {
+    setSiteList(mInsecureFallbackSites, str);
+  }
+  bool isInsecureFallbackSite(const nsACString& hostname);
 
   bool mFalseStartRequireNPN;
-  bool mFalseStartRequireForwardSecrecy;
+  // Use the static list of sites that require insecure fallback
+  // to TLS 1.0 if true, set by the pref
+  // security.tls.insecure_fallback_hosts.use_static_list.
+  bool mUseStaticFallbackList;
   uint16_t mVersionFallbackLimit;
 private:
   mozilla::Mutex mutex;

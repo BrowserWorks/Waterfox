@@ -223,6 +223,7 @@ LRecoverInfo::appendDefinition(MDefinition *def)
 {
     MOZ_ASSERT(def->isRecoveredOnBailout());
     def->setInWorklist();
+
     if (!appendOperands(def))
         return false;
     return instructions_.append(def);
@@ -231,6 +232,12 @@ LRecoverInfo::appendDefinition(MDefinition *def)
 bool
 LRecoverInfo::appendResumePoint(MResumePoint *rp)
 {
+    // Stores should be recovered first.
+    for (auto iter(rp->storesBegin()), end(rp->storesEnd()); iter != end; ++iter) {
+        if (!appendDefinition(iter->operand))
+            return false;
+    }
+
     if (rp->caller() && !appendResumePoint(rp->caller()))
         return false;
 
@@ -543,15 +550,15 @@ LMoveGroup::add(LAllocation *from, LAllocation *to, LDefinition::Type type)
     if (LDefinition(type).isSimdType()) {
         if (from->isMemory()) {
             if (from->isArgument())
-                MOZ_ASSERT(from->toArgument()->index() % SimdStackAlignment == 0);
+                MOZ_ASSERT(from->toArgument()->index() % SimdMemoryAlignment == 0);
             else
-                MOZ_ASSERT(from->toStackSlot()->slot() % SimdStackAlignment == 0);
+                MOZ_ASSERT(from->toStackSlot()->slot() % SimdMemoryAlignment == 0);
         }
         if (to->isMemory()) {
             if (to->isArgument())
-                MOZ_ASSERT(to->toArgument()->index() % SimdStackAlignment == 0);
+                MOZ_ASSERT(to->toArgument()->index() % SimdMemoryAlignment == 0);
             else
-                MOZ_ASSERT(to->toStackSlot()->slot() % SimdStackAlignment == 0);
+                MOZ_ASSERT(to->toStackSlot()->slot() % SimdMemoryAlignment == 0);
         }
     }
 #endif

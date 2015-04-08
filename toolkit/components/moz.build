@@ -10,7 +10,6 @@ if CONFIG['MOZ_ENABLE_XREMOTE']:
 
 DIRS += [
     'aboutcache',
-    'aboutmedia',
     'aboutmemory',
     'addoncompat',
     'alerts',
@@ -41,6 +40,7 @@ DIRS += [
     'promiseworker',
     'prompts',
     'protobuf',
+    'reader',
     'reflect',
     'sqlite',
     'startup',

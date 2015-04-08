@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/es_MX.xml
@@ -8,13 +8,8 @@
 // ***************************************************************************
 es_MX{
     %%Parent{"es_419"}
-    Version{"2.1.10.42"}
+    Version{"2.1.13.23"}
     units{
-        acceleration{
-            g-force{
-                dnam{"fuerza G"}
-            }
-        }
         angle{
             arc-minute{
                 dnam{"arcominutos"}
@@ -28,16 +23,6 @@ es_MX{
             }
         }
         energy{
-            calorie{
-                dnam{"calorías"}
-                one{"{0} caloría"}
-                other{"{0} calorías"}
-            }
-            foodcalorie{
-                dnam{"calorías"}
-                one{"{0} caloría"}
-                other{"{0} calorías"}
-            }
             joule{
                 dnam{"joules"}
             }
@@ -51,9 +36,6 @@ es_MX{
             }
         }
         length{
-            decimeter{
-                dnam{"decímetros"}
-            }
             micrometer{
                 dnam{"micrometros"}
                 one{"{0} micrometro"}
@@ -75,13 +57,6 @@ es_MX{
                 dnam{"lux"}
             }
         }
-        mass{
-            carat{
-                dnam{"quilates"}
-                one{"{0} quilate"}
-                other{"{0} quilates"}
-            }
-        }
         power{
             gigawatt{
                 dnam{"gigawatts"}
@@ -96,13 +71,6 @@ es_MX{
                 dnam{"miliwatts"}
                 one{"{0} miliwatt"}
                 other{"{0} miliwatts"}
-            }
-        }
-        proportion{
-            karat{
-                dnam{"quilates"}
-                one{"{0} quilate"}
-                other{"{0} quilates"}
             }
         }
         temperature{
@@ -129,23 +97,23 @@ es_MX{
         duration{
             day{
                 dnam{"días"}
-                one{"{0} d"}
-                other{"{0} d"}
+                one{"{0}d"}
+                other{"{0}d"}
             }
             month{
                 dnam{"m"}
-                one{"{0} m"}
-                other{"{0} m"}
+                one{"{0}m"}
+                other{"{0}m"}
             }
             week{
                 dnam{"sem"}
-                one{"{0} sem"}
-                other{"{0} sem"}
+                one{"{0}sem"}
+                other{"{0}sem"}
             }
             year{
                 dnam{"a"}
                 one{"{0}a"}
-                other{"{0} a"}
+                other{"{0}a"}
             }
         }
     }
@@ -169,8 +137,6 @@ es_MX{
             }
             degree{
                 dnam{"º"}
-                one{"{0}°"}
-                other{"{0}°"}
             }
         }
         digital{
@@ -205,17 +171,6 @@ es_MX{
                 dnam{"a"}
                 one{"{0} a"}
                 other{"{0} a"}
-            }
-        }
-        energy{
-            foodcalorie{
-                dnam{"cal"}
-                one{"{0} cal"}
-                other{"{0} cal"}
-            }
-            joule{
-                one{"{0} J"}
-                other{"{0} J"}
             }
         }
         length{
@@ -256,23 +211,9 @@ es_MX{
                 other{"{0} ozt"}
             }
         }
-        pressure{
-            pound-per-square-inch{
-                dnam{"psi"}
-                one{"{0} psi"}
-                other{"{0} psi"}
-            }
-        }
         speed{
             kilometer-per-hour{
                 dnam{"km/hora"}
-            }
-        }
-        temperature{
-            kelvin{
-                dnam{"K"}
-                one{"{0} K"}
-                other{"{0} K"}
             }
         }
         volume{

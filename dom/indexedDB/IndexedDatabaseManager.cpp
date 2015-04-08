@@ -16,27 +16,32 @@
 #include "mozilla/ClearOnShutdown.h"
 #include "mozilla/CondVar.h"
 #include "mozilla/ContentEvents.h"
+#include "mozilla/EventDispatcher.h"
+#include "mozilla/Preferences.h"
+#include "mozilla/Services.h"
 #include "mozilla/dom/ContentChild.h"
 #include "mozilla/dom/DOMError.h"
+#include "mozilla/dom/ErrorEvent.h"
 #include "mozilla/dom/ErrorEventBinding.h"
 #include "mozilla/dom/PBlobChild.h"
 #include "mozilla/dom/quota/OriginOrPatternString.h"
 #include "mozilla/dom/quota/QuotaManager.h"
 #include "mozilla/dom/quota/Utilities.h"
 #include "mozilla/dom/TabContext.h"
-#include "mozilla/EventDispatcher.h"
 #include "mozilla/ipc/BackgroundChild.h"
 #include "mozilla/ipc/PBackgroundChild.h"
-#include "mozilla/Services.h"
-#include "mozilla/Preferences.h"
-#include "mozilla/storage.h"
 #include "nsContentUtils.h"
+#include "nsGlobalWindow.h"
 #include "nsThreadUtils.h"
+#include "prlog.h"
 
 #include "IDBEvents.h"
 #include "IDBFactory.h"
 #include "IDBKeyRange.h"
 #include "IDBRequest.h"
+#include "ProfilerHelpers.h"
+#include "WorkerScope.h"
+#include "WorkerPrivate.h"
 
 // Bindings for ResolveConstructors
 #include "mozilla/dom/IDBCursorBinding.h"
@@ -63,6 +68,7 @@ namespace dom {
 namespace indexedDB {
 
 using namespace mozilla::dom::quota;
+using namespace mozilla::dom::workers;
 
 class FileManagerInfo
 {
@@ -111,13 +117,30 @@ private:
 
 namespace {
 
-const char kTestingPref[] = "dom.indexedDB.testing";
+#define IDB_PREF_BRANCH_ROOT "dom.indexedDB."
 
-mozilla::StaticRefPtr<IndexedDatabaseManager> gDBManager;
+const char kTestingPref[] = IDB_PREF_BRANCH_ROOT "testing";
+const char kPrefExperimental[] = IDB_PREF_BRANCH_ROOT "experimental";
 
-mozilla::Atomic<bool> gInitialized(false);
-mozilla::Atomic<bool> gClosed(false);
-mozilla::Atomic<bool> gTestingMode(false);
+#define IDB_PREF_LOGGING_BRANCH_ROOT IDB_PREF_BRANCH_ROOT "logging."
+
+const char kPrefLoggingEnabled[] = IDB_PREF_LOGGING_BRANCH_ROOT "enabled";
+const char kPrefLoggingDetails[] = IDB_PREF_LOGGING_BRANCH_ROOT "details";
+
+#if defined(DEBUG) || defined(MOZ_ENABLE_PROFILER_SPS)
+const char kPrefLoggingProfiler[] =
+  IDB_PREF_LOGGING_BRANCH_ROOT "profiler-marks";
+#endif
+
+#undef IDB_PREF_LOGGING_BRANCH_ROOT
+#undef IDB_PREF_BRANCH_ROOT
+
+StaticRefPtr<IndexedDatabaseManager> gDBManager;
+
+Atomic<bool> gInitialized(false);
+Atomic<bool> gClosed(false);
+Atomic<bool> gTestingMode(false);
+Atomic<bool> gExperimentalFeaturesEnabled(false);
 
 class AsyncDeleteFileRunnable MOZ_FINAL : public nsIRunnable
 {
@@ -181,13 +204,12 @@ private:
 };
 
 void
-TestingPrefChangedCallback(const char* aPrefName, void* aClosure)
+AtomicBoolPrefChangedCallback(const char* aPrefName, void* aClosure)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  MOZ_ASSERT(!strcmp(aPrefName, kTestingPref));
-  MOZ_ASSERT(!aClosure);
+  MOZ_ASSERT(aClosure);
 
-  gTestingMode = Preferences::GetBool(aPrefName);
+  *static_cast<Atomic<bool>*>(aClosure) = Preferences::GetBool(aPrefName);
 }
 
 } // anonymous namespace
@@ -205,6 +227,13 @@ IndexedDatabaseManager::~IndexedDatabaseManager()
 
 bool IndexedDatabaseManager::sIsMainProcess = false;
 bool IndexedDatabaseManager::sFullSynchronousMode = false;
+
+PRLogModuleInfo* IndexedDatabaseManager::sLoggingModule;
+
+Atomic<IndexedDatabaseManager::LoggingMode>
+  IndexedDatabaseManager::sLoggingMode(
+    IndexedDatabaseManager::Logging_Disabled);
+
 mozilla::Atomic<bool> IndexedDatabaseManager::sLowDiskSpaceMode(false);
 
 // static
@@ -220,6 +249,10 @@ IndexedDatabaseManager::GetOrCreate()
 
   if (!gDBManager) {
     sIsMainProcess = XRE_GetProcessType() == GeckoProcessType_Default;
+
+    if (!sLoggingModule) {
+      sLoggingModule = PR_NewLogModule("IndexedDB");
+    }
 
     if (sIsMainProcess && Preferences::GetBool("disk_space_watcher.enabled", false)) {
       // See if we're starting up in low disk space conditions.
@@ -269,18 +302,9 @@ IndexedDatabaseManager::Init()
 {
   NS_ASSERTION(NS_IsMainThread(), "Wrong thread!");
 
-  // Make sure that the quota manager is up.
-  QuotaManager* qm = QuotaManager::GetOrCreate();
-  NS_ENSURE_STATE(qm);
-
   // During Init() we can't yet call IsMainProcess(), just check sIsMainProcess
   // directly.
   if (sIsMainProcess) {
-    // Must initialize the storage service on the main thread.
-    nsCOMPtr<mozIStorageService> ss =
-      do_GetService(MOZ_STORAGE_SERVICE_CONTRACTID);
-    NS_ENSURE_STATE(ss);
-
     nsCOMPtr<nsIObserverService> obs = mozilla::services::GetObserverService();
     NS_ENSURE_STATE(obs);
 
@@ -289,8 +313,12 @@ IndexedDatabaseManager::Init()
     NS_ENSURE_SUCCESS(rv, rv);
   }
 
-  Preferences::RegisterCallbackAndCall(TestingPrefChangedCallback,
-                                       kTestingPref);
+  Preferences::RegisterCallbackAndCall(AtomicBoolPrefChangedCallback,
+                                       kTestingPref,
+                                       &gTestingMode);
+  Preferences::RegisterCallbackAndCall(AtomicBoolPrefChangedCallback,
+                                       kPrefExperimental,
+                                       &gExperimentalFeaturesEnabled);
 
   // By default IndexedDB uses SQLite with PRAGMA synchronous = NORMAL. This
   // guarantees (unlike synchronous = OFF) atomicity and consistency, but not
@@ -299,6 +327,15 @@ IndexedDatabaseManager::Init()
   // durability, but with an extra fsync() and the corresponding performance
   // hit.
   sFullSynchronousMode = Preferences::GetBool("dom.indexedDB.fullSynchronous");
+
+  Preferences::RegisterCallback(LoggingModePrefChangedCallback,
+                                kPrefLoggingDetails);
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  Preferences::RegisterCallback(LoggingModePrefChangedCallback,
+                                kPrefLoggingProfiler);
+#endif
+  Preferences::RegisterCallbackAndCall(LoggingModePrefChangedCallback,
+                                       kPrefLoggingEnabled);
 
   return NS_OK;
 }
@@ -312,20 +349,35 @@ IndexedDatabaseManager::Destroy()
     NS_ERROR("Shutdown more than once?!");
   }
 
-  Preferences::UnregisterCallback(TestingPrefChangedCallback, kTestingPref);
+  Preferences::UnregisterCallback(AtomicBoolPrefChangedCallback,
+                                  kTestingPref,
+                                  &gTestingMode);
+  Preferences::UnregisterCallback(AtomicBoolPrefChangedCallback,
+                                  kPrefExperimental,
+                                  &gExperimentalFeaturesEnabled);
+
+  Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
+                                  kPrefLoggingDetails);
+#ifdef MOZ_ENABLE_PROFILER_SPS
+  Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
+                                  kPrefLoggingProfiler);
+#endif
+  Preferences::UnregisterCallback(LoggingModePrefChangedCallback,
+                                  kPrefLoggingEnabled);
 
   delete this;
 }
 
 // static
 nsresult
-IndexedDatabaseManager::FireWindowOnError(nsPIDOMWindow* aOwner,
-                                          EventChainPostVisitor& aVisitor)
+IndexedDatabaseManager::CommonPostHandleEvent(
+                                             DOMEventTargetHelper* aEventTarget,
+                                             IDBFactory* aFactory,
+                                             EventChainPostVisitor& aVisitor)
 {
-  NS_ENSURE_TRUE(aVisitor.mDOMEvent, NS_ERROR_UNEXPECTED);
-  if (!aOwner) {
-    return NS_OK;
-  }
+  MOZ_ASSERT(aEventTarget);
+  MOZ_ASSERT(aFactory);
+  MOZ_ASSERT(aVisitor.mDOMEvent);
 
   if (aVisitor.mEventStatus == nsEventStatus_eConsumeNoDefault) {
     return NS_OK;
@@ -333,23 +385,25 @@ IndexedDatabaseManager::FireWindowOnError(nsPIDOMWindow* aOwner,
 
   nsString type;
   nsresult rv = aVisitor.mDOMEvent->GetType(type);
-  NS_ENSURE_SUCCESS(rv, rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    return rv;
+  }
 
-  if (nsDependentString(kErrorEventType) != type) {
+  NS_NAMED_LITERAL_STRING(errorType, "error");
+
+  MOZ_ASSERT(nsDependentString(kErrorEventType) == errorType);
+
+  if (type != errorType) {
     return NS_OK;
   }
 
   nsCOMPtr<EventTarget> eventTarget =
     aVisitor.mDOMEvent->InternalDOMEvent()->GetTarget();
+  MOZ_ASSERT(eventTarget);
 
-  IDBRequest* request = static_cast<IDBRequest*>(eventTarget.get());
-  NS_ENSURE_TRUE(request, NS_ERROR_UNEXPECTED);
+  auto* request = static_cast<IDBRequest*>(eventTarget.get());
 
-  ErrorResult ret;
-  nsRefPtr<DOMError> error = request->GetError(ret);
-  if (ret.Failed()) {
-    return ret.ErrorCode();
-  }
+  nsRefPtr<DOMError> error = request->GetErrorAfterResult();
 
   nsString errorName;
   if (error) {
@@ -364,40 +418,91 @@ IndexedDatabaseManager::FireWindowOnError(nsPIDOMWindow* aOwner,
   init.mCancelable = true;
   init.mBubbles = true;
 
-  nsCOMPtr<nsIScriptGlobalObject> sgo(do_QueryInterface(aOwner));
-  NS_ASSERTION(sgo, "How can this happen?!");
-
   nsEventStatus status = nsEventStatus_eIgnore;
-  if (NS_FAILED(sgo->HandleScriptError(init, &status))) {
-    NS_WARNING("Failed to dispatch script error event");
-    status = nsEventStatus_eIgnore;
+
+  if (NS_IsMainThread()) {
+    if (nsPIDOMWindow* window = aEventTarget->GetOwner()) {
+      nsCOMPtr<nsIScriptGlobalObject> sgo = do_QueryInterface(window);
+      MOZ_ASSERT(sgo);
+
+      if (NS_WARN_IF(NS_FAILED(sgo->HandleScriptError(init, &status)))) {
+        status = nsEventStatus_eIgnore;
+      }
+    } else {
+      // We don't fire error events at any global for non-window JS on the main
+      // thread.
+    }
+  } else {
+    // Not on the main thread, must be in a worker.
+    WorkerPrivate* workerPrivate = GetCurrentThreadWorkerPrivate();
+    MOZ_ASSERT(workerPrivate);
+
+    nsRefPtr<WorkerGlobalScope> globalScope = workerPrivate->GlobalScope();
+    MOZ_ASSERT(globalScope);
+
+    nsRefPtr<ErrorEvent> errorEvent =
+      ErrorEvent::Constructor(globalScope, errorType, init);
+    MOZ_ASSERT(errorEvent);
+
+    errorEvent->SetTrusted(true);
+
+    auto* target = static_cast<EventTarget*>(globalScope.get());
+
+    if (NS_WARN_IF(NS_FAILED(
+      EventDispatcher::DispatchDOMEvent(target,
+                                        /* aWidgetEvent */ nullptr,
+                                        errorEvent,
+                                        /* aPresContext */ nullptr,
+                                        &status)))) {
+      status = nsEventStatus_eIgnore;
+    }
   }
 
-  bool preventDefaultCalled = status == nsEventStatus_eConsumeNoDefault;
-  if (preventDefaultCalled) {
+  if (status == nsEventStatus_eConsumeNoDefault) {
     return NS_OK;
   }
 
-  // Log an error to the error console.
-  nsCOMPtr<nsIScriptError> scriptError =
-    do_CreateInstance(NS_SCRIPTERROR_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  nsAutoCString category;
+  if (aFactory->IsChrome()) {
+    category.AssignLiteral("chrome ");
+  } else {
+    category.AssignLiteral("content ");
+  }
+  category.AppendLiteral("javascript");
 
-  if (NS_FAILED(scriptError->InitWithWindowID(errorName,
-                                              init.mFilename,
-                                              EmptyString(), init.mLineno,
-                                              0, 0,
-                                              "IndexedDB",
-                                              aOwner->WindowID()))) {
-    NS_WARNING("Failed to init script error!");
-    return NS_ERROR_FAILURE;
+  // Log the error to the error console.
+  nsCOMPtr<nsIConsoleService> consoleService =
+    do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+  MOZ_ASSERT(consoleService);
+
+  nsCOMPtr<nsIScriptError> scriptError =
+    do_CreateInstance(NS_SCRIPTERROR_CONTRACTID);
+  MOZ_ASSERT(consoleService);
+
+  if (uint64_t innerWindowID = aFactory->InnerWindowID()) {
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
+      scriptError->InitWithWindowID(errorName,
+                                    init.mFilename,
+                                    /* aSourceLine */ EmptyString(),
+                                    init.mLineno,
+                                    /* aColumnNumber */ 0,
+                                    nsIScriptError::errorFlag,
+                                    category,
+                                    innerWindowID)));
+  } else {
+    MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
+      scriptError->Init(errorName,
+                        init.mFilename,
+                        /* aSourceLine */ EmptyString(),
+                        init.mLineno,
+                        /* aColumnNumber */ 0,
+                        nsIScriptError::errorFlag,
+                        category.get())));
   }
 
-  nsCOMPtr<nsIConsoleService> consoleService =
-    do_GetService(NS_CONSOLESERVICE_CONTRACTID, &rv);
-  NS_ENSURE_SUCCESS(rv, rv);
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(consoleService->LogMessage(scriptError)));
 
-  return consoleService->LogMessage(scriptError);
+  return NS_OK;
 }
 
 // static
@@ -428,6 +533,12 @@ IndexedDatabaseManager::DefineIndexedDB(JSContext* aCx,
   MOZ_ASSERT(nsContentUtils::IsCallerChrome(), "Only for chrome!");
   MOZ_ASSERT(js::GetObjectClass(aGlobal)->flags & JSCLASS_DOM_GLOBAL,
              "Passed object is not a global object!");
+
+  // We need to ensure that the manager has been created already here so that we
+  // load preferences that may control which properties are exposed.
+  if (NS_WARN_IF(!GetOrCreate())) {
+    return false;
+  }
 
   if (!IDBCursorBinding::GetConstructorObject(aCx, aGlobal) ||
       !IDBCursorWithValueBinding::GetConstructorObject(aCx, aGlobal) ||
@@ -491,7 +602,30 @@ IndexedDatabaseManager::InLowDiskSpaceMode()
                "initialized!");
   return sLowDiskSpaceMode;
 }
-#endif
+
+// static
+IndexedDatabaseManager::LoggingMode
+IndexedDatabaseManager::GetLoggingMode()
+{
+  MOZ_ASSERT(gDBManager,
+             "GetLoggingMode called before IndexedDatabaseManager has been "
+             "initialized!");
+
+  return sLoggingMode;
+}
+
+// static
+PRLogModuleInfo*
+IndexedDatabaseManager::GetLoggingModule()
+{
+  MOZ_ASSERT(gDBManager,
+             "GetLoggingModule called before IndexedDatabaseManager has been "
+             "initialized!");
+
+  return sLoggingModule;
+}
+
+#endif // DEBUG
 
 // static
 bool
@@ -511,6 +645,24 @@ IndexedDatabaseManager::FullSynchronous()
              "FullSynchronous() called before indexedDB has been initialized!");
 
   return sFullSynchronousMode;
+}
+
+// static
+bool
+IndexedDatabaseManager::ExperimentalFeaturesEnabled(JSContext* aCx,
+                                                    JSObject* aGlobal)
+{
+  if (NS_IsMainThread()) {
+    if (NS_WARN_IF(!GetOrCreate())) {
+      return false;
+    }
+  } else {
+    MOZ_ASSERT(Get(),
+               "ExperimentalFeaturesEnabled() called off the main thread "
+               "before indexedDB has been initialized!");
+  }
+
+  return gExperimentalFeaturesEnabled;
 }
 
 already_AddRefed<FileManager>
@@ -685,6 +837,44 @@ IndexedDatabaseManager::BlockAndGetFileReferences(
   }
 
   return NS_OK;
+}
+
+// static
+void
+IndexedDatabaseManager::LoggingModePrefChangedCallback(
+                                                    const char* /* aPrefName */,
+                                                    void* /* aClosure */)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  if (!Preferences::GetBool(kPrefLoggingEnabled)) {
+    sLoggingMode = Logging_Disabled;
+    return;
+  }
+
+  bool useProfiler = 
+#if defined(DEBUG) || defined(MOZ_ENABLE_PROFILER_SPS)
+    Preferences::GetBool(kPrefLoggingProfiler);
+#if !defined(MOZ_ENABLE_PROFILER_SPS)
+  if (useProfiler) {
+    NS_WARNING("IndexedDB cannot create profiler marks because this build does "
+               "not have profiler extensions enabled!");
+    useProfiler = false;
+  }
+#endif
+#else
+    false;
+#endif
+
+  const bool logDetails = Preferences::GetBool(kPrefLoggingDetails);
+
+  if (useProfiler) {
+    sLoggingMode = logDetails ?
+                   Logging_DetailedProfilerMarks :
+                   Logging_ConciseProfilerMarks;
+  } else {
+    sLoggingMode = logDetails ? Logging_Detailed : Logging_Concise;
+  }
 }
 
 NS_IMPL_ADDREF(IndexedDatabaseManager)

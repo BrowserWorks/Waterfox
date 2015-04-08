@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/mr.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/mr.xml
- */
 mr{
     Countries{
         001{"विश्व"}
@@ -302,18 +299,18 @@ mr{
         ZW{"झिम्बाब्वे"}
         ZZ{"अज्ञात प्रदेश"}
     }
-    Countries%variant{
-        CD{"काँगो (ङीआरसी)"}
-        CG{"काँगो (प्रजासत्ताक)"}
-        FK{"फॉकलंड बेटे (इस्लास मालविनास)"}
-        MK{"मॅसेडोनिया (FYROM)"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"यू.के."}
         HK{"हाँगकाँग"}
         MO{"मकाओ"}
         PS{"पॅलेस्टाईन"}
         US{"यू.एस."}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"काँगो (ङीआरसी)"}
+        CG{"काँगो (प्रजासत्ताक)"}
+        FK{"फॉकलंड बेटे (इस्लास मालविनास)"}
+        MK{"मॅसेडोनिया (FYROM)"}
+    }
+    Version{"2.1.12.94"}
 }

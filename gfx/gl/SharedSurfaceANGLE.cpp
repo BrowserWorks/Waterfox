@@ -158,18 +158,24 @@ SharedSurface_ANGLEShareHandle::PollSync()
 void
 SharedSurface_ANGLEShareHandle::ProducerAcquireImpl()
 {
-  if (mKeyedMutex)
-      mKeyedMutex->AcquireSync(0, INFINITE);
+    if (mKeyedMutex) {
+        HRESULT hr = mKeyedMutex->AcquireSync(0, 10000);
+        if (hr == WAIT_TIMEOUT) {
+            MOZ_CRASH();
+        }
+    }
 }
 
 void
 SharedSurface_ANGLEShareHandle::ProducerReleaseImpl()
 {
     if (mKeyedMutex) {
+        GLLibraryEGL* egl = &sEGLLibrary;
+        mGL->fFlush();
+        egl->fSurfaceReleaseSyncANGLE(mEGL->Display(), mPBuffer);
         // XXX: ReleaseSync() has an implicit flush of the D3D commands
         // whether we need Flush() or not depends on the ANGLE semantics.
         // For now, we'll just do it
-        mGL->fFlush();
         mKeyedMutex->ReleaseSync(0);
         return;
     }
@@ -195,8 +201,12 @@ SharedSurface_ANGLEShareHandle::ConsumerAcquireImpl()
         }
     }
 
-    if (mConsumerKeyedMutex)
-        mConsumerKeyedMutex->AcquireSync(0, INFINITE);
+    if (mConsumerKeyedMutex) {
+      HRESULT hr = mConsumerKeyedMutex->AcquireSync(0, 10000);
+      if (hr == WAIT_TIMEOUT) {
+        MOZ_CRASH();
+      }
+    }
 }
 
 void

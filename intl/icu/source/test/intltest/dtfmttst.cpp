@@ -1,6 +1,6 @@
 /********************************************************************
  * COPYRIGHT:
- * Copyright (c) 1997-2014, International Business Machines
+ * Copyright (c) 1997-2015, International Business Machines
  * Corporation and others. All Rights Reserved.
  ********************************************************************/
 
@@ -58,6 +58,7 @@ void DateFormatTest::runIndexedTest( int32_t index, UBool exec, const char* &nam
     TESTCASE_AUTO(TestDateFormatZone061);
     TESTCASE_AUTO(TestDateFormatZone146);
     TESTCASE_AUTO(TestLocaleDateFormat);
+    TESTCASE_AUTO(TestFormattingLocaleTimeSeparator);
     TESTCASE_AUTO(TestWallyWedel);
     TESTCASE_AUTO(TestDateFormatCalendar);
     TESTCASE_AUTO(TestSpaceParsing);
@@ -432,7 +433,7 @@ DateFormatTest::escape(UnicodeString& s)
 /**
  * This MUST be kept in sync with DateFormatSymbols.gPatternChars.
  */
-static const char* PATTERN_CHARS = "GyMdkHmsSEDFwWahKzYeugAZvcLQqVUOXxr";
+static const char* PATTERN_CHARS = "GyMdkHmsSEDFwWahKzYeugAZvcLQqVUOXxr:";
 
 /**
  * A list of the names of all the fields in DateFormat.
@@ -474,6 +475,7 @@ static const char* DATEFORMAT_FIELD_NAMES[] = {
     "TIMEZONE_ISO_FIELD",
     "TIMEZONE_ISO_LOCAL_FIELD",
     "RELATED_YEAR_FIELD",
+    "UDAT_TIME_SEPARATOR_FIELD",
 };
 
 static const int32_t DATEFORMAT_FIELD_NAMES_LENGTH =
@@ -529,22 +531,22 @@ void DateFormatTest::TestFieldPosition() {
         "", "1997", "August", "13", "", "", "34", "12", "", "Wednesday",
         "", "", "", "", "PM", "2", "", "Pacific Daylight Time", "", "",
         "", "", "", "", "", "", "", "", "", "",
-        "", "", "", "", "",
+        "", "", "", "", "", ":",
 
         "", "1997", "ao\\u00FBt", "13", "", "14", "34", "12", "", "mercredi",
         "", "", "", "", "", "", "", "heure d\\u2019\\u00E9t\\u00E9 du Pacifique", "", "",
         "", "", "", "", "",  "", "", "", "", "",
-        "", "", "", "", "",
+        "", "", "", "", "", ":",
 
         "AD", "1997", "8", "13", "14", "14", "34", "12", "5", "Wed",
         "225", "2", "33", "3", "PM", "2", "2", "PDT", "1997", "4",
         "1997", "2450674", "52452513", "-0700", "PT",  "4", "8", "3", "3", "uslax",
-        "1997", "GMT-7", "-07", "-07", "1997",
+        "1997", "GMT-7", "-07", "-07", "1997", ":",
 
         "Anno Domini", "1997", "August", "0013", "0014", "0014", "0034", "0012", "5130", "Wednesday",
         "0225", "0002", "0033", "0003", "PM", "0002", "0002", "Pacific Daylight Time", "1997", "Wednesday",
         "1997", "2450674", "52452513", "GMT-07:00", "Pacific Time",  "Wednesday", "August", "3rd quarter", "3rd quarter", "Los Angeles Time",
-        "1997", "GMT-07:00", "-0700", "-0700","1997",
+        "1997", "GMT-07:00", "-0700", "-0700", "1997", ":",
     };
 
     const int32_t EXPECTED_LENGTH = sizeof(EXPECTED)/sizeof(EXPECTED[0]);
@@ -1313,6 +1315,44 @@ DateFormatTest::TestLocaleDateFormat() // Bug 495
     delete dfFrench;
 }
 
+void
+DateFormatTest::TestFormattingLocaleTimeSeparator()
+{
+    const UDate testDate = 874266720000.;  // Sun Sep 14 21:52:00 CET 1997
+    logln((UnicodeString)"Date set to : " + dateToString(testDate));
+
+    const LocalPointer<const TimeZone> tz(TimeZone::createTimeZone("CET"));
+
+    const LocalPointer<DateFormat> dfArab(DateFormat::createTimeInstance(
+            DateFormat::SHORT, Locale("ar")));
+
+    const LocalPointer<DateFormat> dfLatn(DateFormat::createTimeInstance(
+            DateFormat::SHORT, Locale("ar", NULL, NULL, "numbers=latn")));
+
+    if (dfLatn.isNull() || dfArab.isNull()) {
+        dataerrln("Error calling DateFormat::createTimeInstance()");
+        return;
+    }
+
+    dfArab->setTimeZone(*tz);
+    dfLatn->setTimeZone(*tz);
+
+    const UnicodeString expectedArab = UnicodeString(
+            "\\u0669\\u060C\\u0665\\u0662 \\u0645", -1, US_INV).unescape();
+
+    const UnicodeString expectedLatn = UnicodeString(
+            "9:52 \\u0645", -1, US_INV).unescape();
+
+    UnicodeString actualArab;
+    UnicodeString actualLatn;
+
+    dfArab->format(testDate, actualArab);
+    dfLatn->format(testDate, actualLatn);
+
+    assertEquals("Arab", expectedArab, actualArab);
+    assertEquals("Latn", expectedLatn, actualLatn);
+}
+
 /**
  * Test DateFormat(Calendar) API
  */
@@ -1425,7 +1465,6 @@ void DateFormatTest::TestSpaceParsing() {
         "hh:mm:ss a", "12:34:56 PM", "1970 01 01 12:34:56",
         NULL,         "12:34:56PM",  "1970 01 01 12:34:56",
         NULL,         "12.34.56PM",  "1970 01 01 12:34:56",
-        NULL,         "12-34-56 PM", "1970 01 01 12:34:56",
         NULL,         "12 : 34 : 56  PM", "1970 01 01 12:34:56",
         
         "MM d yy 'at' hh:mm:ss a", "04/05/06 12:34:56 PM", "2006 04 05 12:34:56",
@@ -1713,6 +1752,11 @@ void DateFormatTest::TestNarrowNames()
             "ccccc", "1970 01 01 0:00:00", "T",
             "ccccc", "1970 01 02 0:00:00", "F",
             "ccccc", "1970 01 03 0:00:00", "S",
+            
+            "h:mm a",     "2015 01 01 10:00:00", "10:00 AM",
+            "h:mm a",     "2015 01 01 22:00:00", "10:00 PM",
+            "h:mm aaaaa", "2015 01 01 10:00:00", "10:00 a",
+            "h:mm aaaaa", "2015 01 01 22:00:00", "10:00 p",
         };
 
         const char *CS_DATA[] = {
@@ -1762,10 +1806,25 @@ void DateFormatTest::TestNarrowNames()
             "ccccc", "1970 01 01 0:00:00", "\\u010C",
             "ccccc", "1970 01 02 0:00:00", "P",
             "ccccc", "1970 01 03 0:00:00", "S",
+            
+            "h:mm a",     "2015 01 01 10:00:00", "10:00 dopoledne",
+            "h:mm a",     "2015 01 01 22:00:00", "10:00 odpoledne",
+            "h:mm aaaaa", "2015 01 01 10:00:00", "10:00 dop.",
+            "h:mm aaaaa", "2015 01 01 22:00:00", "10:00 odp.",
+        };
+
+        const char *CA_DATA[] = {
+            "yyyy MM dd HH:mm:ss",
+
+            "h:mm a",     "2015 01 01 10:00:00", "10:00 a. m.",
+            "h:mm a",     "2015 01 01 22:00:00", "10:00 p. m.",
+            "h:mm aaaaa", "2015 01 01 10:00:00", "10:00 a.m.",
+            "h:mm aaaaa", "2015 01 01 22:00:00", "10:00 p.m.",
         };
 
       expectFormat(EN_DATA, ARRAY_SIZE(EN_DATA), Locale("en", "", ""));
       expectFormat(CS_DATA, ARRAY_SIZE(CS_DATA), Locale("cs", "", ""));
+      expectFormat(CA_DATA, ARRAY_SIZE(CA_DATA), Locale("ca", "", ""));
 }
 
 void DateFormatTest::TestEras()
@@ -3962,39 +4021,39 @@ void DateFormatTest::TestMonthPatterns()
 
     const MonthPatternItem items[] = {
         // locale                     date style;           expected formats for the 3 dates above
-        { "root@calendar=chinese",    DateFormat::kLong,  { UnicodeString("ren-chen M04 2"),  UnicodeString("ren-chen M04bis 2"),  UnicodeString("ren-chen M05 2") } },
-        { "root@calendar=chinese",    DateFormat::kShort, { UnicodeString("29-04-02"),      UnicodeString("29-04bis-02"),           UnicodeString("29-05-02") } },
+        { "root@calendar=chinese",    DateFormat::kLong,  { UnicodeString("2012(ren-chen) M04 2"),  UnicodeString("2012(ren-chen) M04bis 2"),  UnicodeString("2012(ren-chen) M05 2") } },
+        { "root@calendar=chinese",    DateFormat::kShort, { UnicodeString("2012-04-02"),    UnicodeString("2012-04bis-02"),         UnicodeString("2012-05-02") } },
         { "root@calendar=chinese",    -1,                 { UnicodeString("29-4-2"),        UnicodeString("29-4bis-2"),             UnicodeString("29-5-2") } },
         { "root@calendar=chinese",    -2,                 { UnicodeString("78x29-4-2"),     UnicodeString("78x29-4bis-2"),          UnicodeString("78x29-5-2") } },
         { "root@calendar=chinese",    -3,                 { UnicodeString("ren-chen-4-2"),  UnicodeString("ren-chen-4bis-2"),       UnicodeString("ren-chen-5-2") } },
         { "root@calendar=chinese",    -4,                 { UnicodeString("ren-chen M04 2"),  UnicodeString("ren-chen M04bis 2"),   UnicodeString("ren-chen M05 2") } },
         { "en@calendar=gregorian",    -3,                 { UnicodeString("2012-4-22"),     UnicodeString("2012-5-22"),             UnicodeString("2012-6-20") } },
-        { "en@calendar=chinese",      DateFormat::kLong,  { UnicodeString("Month4 2, ren-chen"), UnicodeString("Month4bis 2, ren-chen"), UnicodeString("Month5 2, ren-chen") } },
-        { "en@calendar=chinese",      DateFormat::kShort, { UnicodeString("4/2/29"),        UnicodeString("4bis/2/29"),             UnicodeString("5/2/29") } },
-        { "zh@calendar=chinese",      DateFormat::kLong,  { CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u56DB\\u6708\\u521D\\u4E8C"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u95F0\\u56DB\\u6708\\u521D\\u4E8C"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u4E94\\u6708\\u521D\\u4E8C") } },
-        { "zh@calendar=chinese",      DateFormat::kShort, { CharsToUnicodeString("\\u58EC\\u8FB0-4-2"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0-\\u95F04-2"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0-5-2") } },
+        { "en@calendar=chinese",      DateFormat::kLong,  { UnicodeString("Month4 2, 2012(ren-chen)"), UnicodeString("Month4bis 2, 2012(ren-chen)"), UnicodeString("Month5 2, 2012(ren-chen)") } },
+        { "en@calendar=chinese",      DateFormat::kShort, { UnicodeString("4/2/2012"),      UnicodeString("4bis/2/2012"),           UnicodeString("5/2/2012") } },
+        { "zh@calendar=chinese",      DateFormat::kLong,  { CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u56DB\\u6708\\u521D\\u4E8C"),
+                                                            CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u95F0\\u56DB\\u6708\\u521D\\u4E8C"),
+                                                            CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u4E94\\u6708\\u521D\\u4E8C") } },
+        { "zh@calendar=chinese",      DateFormat::kShort, { CharsToUnicodeString("2012-4-2"),
+                                                            CharsToUnicodeString("2012-\\u95F04-2"),
+                                                            CharsToUnicodeString("2012-5-2") } },
         { "zh@calendar=chinese",      -3,                 { CharsToUnicodeString("\\u58EC\\u8FB0-4-2"),
                                                             CharsToUnicodeString("\\u58EC\\u8FB0-\\u95F04-2"),
                                                             CharsToUnicodeString("\\u58EC\\u8FB0-5-2") } },
         { "zh@calendar=chinese",      -4,                 { CharsToUnicodeString("\\u58EC\\u8FB0 \\u56DB\\u6708 2"),
                                                             CharsToUnicodeString("\\u58EC\\u8FB0 \\u95F0\\u56DB\\u6708 2"),
                                                             CharsToUnicodeString("\\u58EC\\u8FB0 \\u4E94\\u6708 2") } },
-        { "zh_Hant@calendar=chinese", DateFormat::kLong,  { CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u56DB\\u6708\\u521D\\u4E8C"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u958F\\u56DB\\u6708\\u521D\\u4E8C"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0\\u5E74\\u4E94\\u6708\\u521D\\u4E8C") } },
-        { "zh_Hant@calendar=chinese", DateFormat::kShort, { CharsToUnicodeString("\\u58EC\\u8FB0/4/2"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0/\\u958F4/2"),
-                                                            CharsToUnicodeString("\\u58EC\\u8FB0/5/2") } },
+        { "zh_Hant@calendar=chinese", DateFormat::kLong,  { CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u56DB\\u6708\\u521D\\u4E8C"),
+                                                            CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u958F\\u56DB\\u6708\\u521D\\u4E8C"),
+                                                            CharsToUnicodeString("2012\\u58EC\\u8FB0\\u5E74\\u4E94\\u6708\\u521D\\u4E8C") } },
+        { "zh_Hant@calendar=chinese", DateFormat::kShort, { CharsToUnicodeString("2012/4/2"),
+                                                            CharsToUnicodeString("2012/\\u958F4/2"),
+                                                            CharsToUnicodeString("2012/5/2") } },
         { "fr@calendar=chinese",      DateFormat::kLong,  { CharsToUnicodeString("2 s\\u00ECyu\\u00E8 ren-chen"),
                                                             CharsToUnicodeString("2 s\\u00ECyu\\u00E8bis ren-chen"),
                                                             CharsToUnicodeString("2 w\\u01D4yu\\u00E8 ren-chen") } },
         { "fr@calendar=chinese",      DateFormat::kShort, { UnicodeString("2/4/29"),        UnicodeString("2/4bis/29"),             UnicodeString("2/5/29") } },
-        { "en@calendar=dangi",        DateFormat::kLong,  { UnicodeString("Month3bis 2, 29"),  UnicodeString("Month4 2, 29"),       UnicodeString("Month5 1, 29") } },
-        { "en@calendar=dangi",        DateFormat::kShort, { UnicodeString("3bis/2/29"),     UnicodeString("4/2/29"),                UnicodeString("5/1/29") } },
+        { "en@calendar=dangi",        DateFormat::kLong,  { UnicodeString("Month3bis 2, 2012(29)"),  UnicodeString("Month4 2, 2012(29)"),       UnicodeString("Month5 1, 2012(29)") } },
+        { "en@calendar=dangi",        DateFormat::kShort, { UnicodeString("3bis/2/2012"),   UnicodeString("4/2/2012"),              UnicodeString("5/1/2012") } },
         { "en@calendar=dangi",        -2,                 { UnicodeString("78x29-3bis-2"),  UnicodeString("78x29-4-2"),             UnicodeString("78x29-5-1") } },
         { "ko@calendar=dangi",        DateFormat::kLong,  { CharsToUnicodeString("\\uC784\\uC9C4\\uB144 \\uC7243\\uC6D4 2\\uC77C"),
                                                             CharsToUnicodeString("\\uC784\\uC9C4\\uB144 4\\uC6D4 2\\uC77C"),

@@ -420,7 +420,7 @@ IntlInitialize(JSContext *cx, HandleObject obj, Handle<PropertyName*> initialize
 static bool
 CreateDefaultOptions(JSContext *cx, MutableHandleValue defaultOptions)
 {
-    RootedObject options(cx, NewObjectWithGivenProto(cx, &JSObject::class_, nullptr, cx->global()));
+    RootedObject options(cx, NewObjectWithGivenProto<PlainObject>(cx, nullptr, cx->global()));
     if (!options)
         return false;
     defaultOptions.setObject(*options);
@@ -439,7 +439,7 @@ static bool
 intl_availableLocales(JSContext *cx, CountAvailable countAvailable,
                       GetAvailable getAvailable, MutableHandleValue result)
 {
-    RootedObject locales(cx, NewObjectWithGivenProto(cx, &JSObject::class_, nullptr, nullptr));
+    RootedObject locales(cx, NewObjectWithGivenProto<PlainObject>(cx, nullptr, nullptr));
     if (!locales)
         return false;
 
@@ -457,8 +457,8 @@ intl_availableLocales(JSContext *cx, CountAvailable countAvailable,
         RootedAtom a(cx, Atomize(cx, lang, strlen(lang)));
         if (!a)
             return false;
-        if (!JSObject::defineProperty(cx, locales, a->asPropertyName(), t,
-                                      JS_PropertyStub, JS_StrictPropertyStub, JSPROP_ENUMERATE))
+        if (!JSObject::defineProperty(cx, locales, a->asPropertyName(), t, nullptr, nullptr,
+                                      JSPROP_ENUMERATE))
         {
             return false;
         }
@@ -559,13 +559,13 @@ static const uint32_t COLLATOR_SLOTS_COUNT = 1;
 static const Class CollatorClass = {
     js_Object_str,
     JSCLASS_HAS_RESERVED_SLOTS(COLLATOR_SLOTS_COUNT),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
+    nullptr, /* convert */
     collator_finalize
 };
 
@@ -720,11 +720,8 @@ InitCollatorClass(JSContext *cx, HandleObject Intl, Handle<GlobalObject*> global
 
     // 8.1
     RootedValue ctorValue(cx, ObjectValue(*ctor));
-    if (!JSObject::defineProperty(cx, Intl, cx->names().Collator, ctorValue,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0))
-    {
+    if (!JSObject::defineProperty(cx, Intl, cx->names().Collator, ctorValue, nullptr, nullptr, 0))
         return nullptr;
-    }
 
     return ctor;
 }
@@ -1048,13 +1045,13 @@ static const uint32_t NUMBER_FORMAT_SLOTS_COUNT = 1;
 static const Class NumberFormatClass = {
     js_Object_str,
     JSCLASS_HAS_RESERVED_SLOTS(NUMBER_FORMAT_SLOTS_COUNT),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
+    nullptr, /* convert */
     numberFormat_finalize
 };
 
@@ -1211,8 +1208,8 @@ InitNumberFormatClass(JSContext *cx, HandleObject Intl, Handle<GlobalObject*> gl
 
     // 8.1
     RootedValue ctorValue(cx, ObjectValue(*ctor));
-    if (!JSObject::defineProperty(cx, Intl, cx->names().NumberFormat, ctorValue,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0))
+    if (!JSObject::defineProperty(cx, Intl, cx->names().NumberFormat, ctorValue, nullptr, nullptr,
+                                  0))
     {
         return nullptr;
     }
@@ -1505,13 +1502,13 @@ static const uint32_t DATE_TIME_FORMAT_SLOTS_COUNT = 1;
 static const Class DateTimeFormatClass = {
     js_Object_str,
     JSCLASS_HAS_RESERVED_SLOTS(DATE_TIME_FORMAT_SLOTS_COUNT),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
+    nullptr, /* addProperty */
+    nullptr, /* delProperty */
+    nullptr, /* getProperty */
+    nullptr, /* setProperty */
+    nullptr, /* enumerate */
+    nullptr, /* resolve */
+    nullptr, /* convert */
     dateTimeFormat_finalize
 };
 
@@ -1668,7 +1665,7 @@ InitDateTimeFormatClass(JSContext *cx, HandleObject Intl, Handle<GlobalObject*> 
     // 8.1
     RootedValue ctorValue(cx, ObjectValue(*ctor));
     if (!JSObject::defineProperty(cx, Intl, cx->names().DateTimeFormat, ctorValue,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0))
+                                  nullptr, nullptr, 0))
     {
         return nullptr;
     }
@@ -2000,14 +1997,7 @@ js::intl_FormatDateTime(JSContext *cx, unsigned argc, Value *vp)
 
 const Class js::IntlClass = {
     js_Object_str,
-    JSCLASS_HAS_CACHED_PROTO(JSProto_Intl),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub
+    JSCLASS_HAS_CACHED_PROTO(JSProto_Intl)
 };
 
 #if JS_HAS_TOSOURCE
@@ -2046,11 +2036,8 @@ js_InitIntlClass(JSContext *cx, HandleObject obj)
         return nullptr;
 
     RootedValue IntlValue(cx, ObjectValue(*Intl));
-    if (!JSObject::defineProperty(cx, global, cx->names().Intl, IntlValue,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0))
-    {
+    if (!JSObject::defineProperty(cx, global, cx->names().Intl, IntlValue, nullptr, nullptr, 0))
         return nullptr;
-    }
 
     if (!JS_DefineFunctions(cx, Intl, intl_static_methods))
         return nullptr;
@@ -2071,8 +2058,8 @@ bool
 GlobalObject::initIntlObject(JSContext *cx, Handle<GlobalObject*> global)
 {
     RootedObject Intl(cx);
-    Intl = NewObjectWithGivenProto(cx, &IntlClass, global->getOrCreateObjectPrototype(cx),
-                                   global, SingletonObject);
+    RootedObject proto(cx, global->getOrCreateObjectPrototype(cx));
+    Intl = NewObjectWithGivenProto(cx, &IntlClass, proto, global, SingletonObject);
     if (!Intl)
         return false;
 

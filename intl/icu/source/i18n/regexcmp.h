@@ -1,7 +1,7 @@
 //
 //  regexcmp.h
 //
-//  Copyright (C) 2002-2014, International Business Machines Corporation and others.
+//  Copyright (C) 2002-2015, International Business Machines Corporation and others.
 //  All Rights Reserved.
 //
 //  This file contains declarations for the class RegexCompile
@@ -220,6 +220,9 @@ private:
     UChar32                       fLastSetLiteral;   // The last single code point added to a set.
                                                      //   needed when "-y" is scanned, and we need
                                                      //   to turn "x-y" into a range.
+
+    UnicodeString                *fCaptureName;      // Named Capture, the group name is built up
+                                                     //   in this string while being scanned.
 };
 
 // Constant values to be pushed onto fSetOpStack while scanning & evalueating [set expressions]

@@ -9,6 +9,7 @@
 #include "pkix/ScopedPtr.h"
 #include "pkix/pkixtypes.h"
 #include "nsNSSComponent.h"
+#include "mozilla/BinarySearch.h"
 #include "mozilla/Casting.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Telemetry.h"
@@ -52,6 +53,8 @@
 
 #include <algorithm>
 
+#include "IntolerantFallbackList.inc"
+
 using namespace mozilla;
 using namespace mozilla::psm;
 
@@ -79,36 +82,12 @@ getSiteKey(const nsACString& hostName, uint16_t port,
 // SSM_UserCertChoice: enum for cert choice info
 typedef enum {ASK, AUTO} SSM_UserCertChoice;
 
-// Forward secrecy provides us with a proof of posession of the private key
-// from the server. Without of proof of posession of the private key of the
-// server, any MitM can force us to false start in a connection that the real
-// server never participates in, since with RSA key exchange a MitM can
-// complete the server's first round of the handshake without knowing the
-// server's public key This would be used, for example, to greatly accelerate
-// the attacks on RC4 or other attacks that allow a MitM to decrypt encrypted
-// data without having the server's private key. Without false start, such
-// attacks are naturally rate limited by network latency and may also be rate
-// limited explicitly by the server's DoS or other security mechanisms.
-// Further, because the server that has the private key must participate in the
-// handshake, the server could detect these kinds of attacks if they they are
-// repeated rapidly and/or frequently, by noticing lots of invalid or
-// incomplete handshakes.
-//
-// With this in mind, when we choose not to require forward secrecy (when the
-// pref's value is false), then we will still only false start for RSA key
-// exchange only if the most recent handshake we've previously done used RSA
-// key exchange. This way, we prevent any (EC)DHE-to-RSA downgrade attacks for
-// servers that consistently choose (EC)DHE key exchange. In order to prevent
-// downgrade from ECDHE_*_GCM cipher suites, we need to also consider downgrade
-// from TLS 1.2 to earlier versions (bug 861310).
-static const bool FALSE_START_REQUIRE_FORWARD_SECRECY_DEFAULT = true;
-
-// XXX(perf bug 940787): We currently require NPN because there is a very
-// high (perfect so far) correlation between servers that are false-start-
-// tolerant and servers that support NPN, according to Google. Without this, we
-// will run into interop issues with a small percentage of servers that stop
-// responding when we attempt to false start.
-static const bool FALSE_START_REQUIRE_NPN_DEFAULT = true;
+// Historically, we have required that the server negotiate ALPN or NPN in
+// order to false start, as a compatibility hack to work around
+// implementations that just stop responding during false start. However, now
+// false start is resricted to modern crypto (TLS 1.2 and AEAD cipher suites)
+// so it is less likely that requring NPN or ALPN is still necessary.
+static const bool FALSE_START_REQUIRE_NPN_DEFAULT = false;
 
 } // unnamed namespace
 
@@ -134,7 +113,6 @@ nsNSSSocketInfo::nsNSSSocketInfo(SharedSSLState& aState, uint32_t providerFlags)
     mNotedTimeUntilReady(false),
     mFailedVerification(false),
     mKEAUsed(nsISSLSocketControl::KEY_EXCHANGE_UNKNOWN),
-    mKEAExpected(nsISSLSocketControl::KEY_EXCHANGE_UNKNOWN),
     mKEAKeyBits(0),
     mSSLVersionUsed(nsISSLSocketControl::SSL_VERSION_UNKNOWN),
     mMACAlgorithmUsed(nsISSLSocketControl::SSL_MAC_UNKNOWN),
@@ -167,20 +145,6 @@ NS_IMETHODIMP
 nsNSSSocketInfo::GetKEAUsed(int16_t* aKea)
 {
   *aKea = mKEAUsed;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::GetKEAExpected(int16_t* aKea)
-{
-  *aKea = mKEAExpected;
-  return NS_OK;
-}
-
-NS_IMETHODIMP
-nsNSSSocketInfo::SetKEAExpected(int16_t aKea)
-{
-  mKEAExpected = aKea;
   return NS_OK;
 }
 
@@ -437,8 +401,9 @@ nsNSSSocketInfo::IsAcceptableForHost(const nsACString& hostname, bool* _retval)
 
   // Before checking the server certificate we need to make sure the
   // handshake has completed.
-  if (!mHandshakeCompleted || !SSLStatus() || !SSLStatus()->mServerCert)
+  if (!mHandshakeCompleted || !SSLStatus() || !SSLStatus()->HasServerCert()) {
     return NS_OK;
+  }
 
   // If the cert has error bits (e.g. it is untrusted) then do not join.
   // The value of mHaveCertErrorBits is only reliable because we know that
@@ -457,7 +422,10 @@ nsNSSSocketInfo::IsAcceptableForHost(const nsACString& hostname, bool* _retval)
 
   ScopedCERTCertificate nssCert;
 
-  nsCOMPtr<nsIX509Cert> cert(SSLStatus()->mServerCert);
+  nsCOMPtr<nsIX509Cert> cert;
+  if (NS_FAILED(SSLStatus()->GetServerCert(getter_AddRefs(cert)))) {
+    return NS_OK;
+  }
   if (cert) {
     nssCert = cert->GetCert();
   }
@@ -711,12 +679,10 @@ nsNSSSocketInfo::SharedState()
 
 void nsSSLIOLayerHelpers::Cleanup()
 {
+  MutexAutoLock lock(mutex);
   mTLSIntoleranceInfo.Clear();
-
-  if (mRenegoUnrestrictedSites) {
-    delete mRenegoUnrestrictedSites;
-    mRenegoUnrestrictedSites = nullptr;
-  }
+  mRenegoUnrestrictedSites.Clear();
+  mInsecureFallbackSites.Clear();
 }
 
 static void
@@ -898,6 +864,16 @@ nsSSLIOLayerHelpers::forgetIntolerance(const nsACString& hostName,
   return tolerant;
 }
 
+bool
+nsSSLIOLayerHelpers::fallbackLimitReached(const nsACString& hostName,
+                                          uint16_t intolerant)
+{
+  if (isInsecureFallbackSite(hostName)) {
+    return intolerant <= SSL_LIBRARY_VERSION_TLS_1_0;
+  }
+  return intolerant <= mVersionFallbackLimit;
+}
+
 // returns true if we should retry the handshake
 bool
 nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
@@ -906,7 +882,7 @@ nsSSLIOLayerHelpers::rememberIntolerantAtVersion(const nsACString& hostName,
                                                  uint16_t intolerant,
                                                  PRErrorCode intoleranceReason)
 {
-  if (intolerant <= minVersion || intolerant <= mVersionFallbackLimit) {
+  if (intolerant <= minVersion || fallbackLimitReached(hostName, intolerant)) {
     // We can't fall back any further. Assume that intolerance isn't the issue.
     uint32_t tolerant = forgetIntolerance(hostName, port);
     // If we know the server is tolerant at the version, we don't have to
@@ -1256,6 +1232,14 @@ retryDueToTLSIntolerance(PRErrorCode err, nsNSSSocketInfo* socketInfo)
 
     return false;
   }
+
+  // Disallow PR_CONNECT_RESET_ERROR if fallback limit reached.
+  if (err == PR_CONNECT_RESET_ERROR &&
+      socketInfo->SharedState().IOLayerHelpers()
+        .fallbackLimitReached(socketInfo->GetHostName(), range.max)) {
+    return false;
+  }
+
   if ((err == SSL_ERROR_NO_CYPHER_OVERLAP || err == PR_END_OF_FILE_ERROR ||
        err == PR_CONNECT_RESET_ERROR) &&
       nsNSSComponent::AreAnyWeakCiphersEnabled()) {
@@ -1481,12 +1465,11 @@ nsSSLIOLayerPoll(PRFileDesc* fd, int16_t in_flags, int16_t* out_flags)
 }
 
 nsSSLIOLayerHelpers::nsSSLIOLayerHelpers()
-  : mRenegoUnrestrictedSites(nullptr)
-  , mTreatUnsafeNegotiationAsBroken(false)
+  : mTreatUnsafeNegotiationAsBroken(false)
   , mWarnLevelMissingRFC5746(1)
   , mTLSIntoleranceInfo()
-  , mFalseStartRequireNPN(true)
-  , mFalseStartRequireForwardSecrecy(false)
+  , mFalseStartRequireNPN(false)
+  , mUseStaticFallbackList(true)
   , mVersionFallbackLimit(SSL_LIBRARY_VERSION_TLS_1_0)
   , mutex("nsSSLIOLayerHelpers.mutex")
 {
@@ -1693,11 +1676,9 @@ PrefObserver::Observe(nsISupports* aSubject, const char* aTopic,
     NS_ConvertUTF16toUTF8 prefName(someData);
 
     if (prefName.EqualsLiteral("security.ssl.renego_unrestricted_hosts")) {
-      nsCString unrestricted_hosts;
-      Preferences::GetCString("security.ssl.renego_unrestricted_hosts", &unrestricted_hosts);
-      if (!unrestricted_hosts.IsEmpty()) {
-        mOwner->setRenegoUnrestrictedSites(unrestricted_hosts);
-      }
+      nsCString unrestrictedHosts;
+      Preferences::GetCString("security.ssl.renego_unrestricted_hosts", &unrestrictedHosts);
+      mOwner->setSiteList(mOwner->mRenegoUnrestrictedSites, unrestrictedHosts);
     } else if (prefName.EqualsLiteral("security.ssl.treat_unsafe_negotiation_as_broken")) {
       bool enabled;
       Preferences::GetBool("security.ssl.treat_unsafe_negotiation_as_broken", &enabled);
@@ -1710,12 +1691,15 @@ PrefObserver::Observe(nsISupports* aSubject, const char* aTopic,
       mOwner->mFalseStartRequireNPN =
         Preferences::GetBool("security.ssl.false_start.require-npn",
                              FALSE_START_REQUIRE_NPN_DEFAULT);
-    } else if (prefName.EqualsLiteral("security.ssl.false_start.require-forward-secrecy")) {
-      mOwner->mFalseStartRequireForwardSecrecy =
-        Preferences::GetBool("security.ssl.false_start.require-forward-secrecy",
-                             FALSE_START_REQUIRE_FORWARD_SECRECY_DEFAULT);
     } else if (prefName.EqualsLiteral("security.tls.version.fallback-limit")) {
       mOwner->loadVersionFallbackLimit();
+    } else if (prefName.EqualsLiteral("security.tls.insecure_fallback_hosts")) {
+      nsCString insecureFallbackHosts;
+      Preferences::GetCString("security.tls.insecure_fallback_hosts", &insecureFallbackHosts);
+      mOwner->setInsecureFallbackSites(insecureFallbackHosts);
+    } else if (prefName.EqualsLiteral("security.tls.insecure_fallback_hosts.use_static_list")) {
+      mOwner->mUseStaticFallbackList =
+        Preferences::GetBool("security.tls.insecure_fallback_hosts.use_static_list", true);
     }
   }
   return NS_OK;
@@ -1753,7 +1737,9 @@ nsSSLIOLayerHelpers::~nsSSLIOLayerHelpers()
     Preferences::RemoveObserver(mPrefObserver,
         "security.ssl.false_start.require-npn");
     Preferences::RemoveObserver(mPrefObserver,
-        "security.ssl.false_start.require-forward-secrecy");
+        "security.tls.version.fallback-limit");
+    Preferences::RemoveObserver(mPrefObserver,
+        "security.tls.insecure_fallback_hosts");
   }
 }
 
@@ -1802,13 +1788,9 @@ nsSSLIOLayerHelpers::Init()
     nsSSLPlaintextLayerMethods.recv = PlaintextRecv;
   }
 
-  mRenegoUnrestrictedSites = new nsTHashtable<nsCStringHashKey>();
-
-  nsCString unrestricted_hosts;
-  Preferences::GetCString("security.ssl.renego_unrestricted_hosts", &unrestricted_hosts);
-  if (!unrestricted_hosts.IsEmpty()) {
-    setRenegoUnrestrictedSites(unrestricted_hosts);
-  }
+  nsCString unrestrictedHosts;
+  Preferences::GetCString("security.ssl.renego_unrestricted_hosts", &unrestrictedHosts);
+  setSiteList(mRenegoUnrestrictedSites, unrestrictedHosts);
 
   bool enabled = false;
   Preferences::GetBool("security.ssl.treat_unsafe_negotiation_as_broken", &enabled);
@@ -1821,10 +1803,12 @@ nsSSLIOLayerHelpers::Init()
   mFalseStartRequireNPN =
     Preferences::GetBool("security.ssl.false_start.require-npn",
                          FALSE_START_REQUIRE_NPN_DEFAULT);
-  mFalseStartRequireForwardSecrecy =
-    Preferences::GetBool("security.ssl.false_start.require-forward-secrecy",
-                         FALSE_START_REQUIRE_FORWARD_SECRECY_DEFAULT);
   loadVersionFallbackLimit();
+  nsCString insecureFallbackHosts;
+  Preferences::GetCString("security.tls.insecure_fallback_hosts", &insecureFallbackHosts);
+  setInsecureFallbackSites(insecureFallbackHosts);
+  mUseStaticFallbackList =
+    Preferences::GetBool("security.tls.insecure_fallback_hosts.use_static_list", true);
 
   mPrefObserver = new PrefObserver(this);
   Preferences::AddStrongObserver(mPrefObserver,
@@ -1836,9 +1820,9 @@ nsSSLIOLayerHelpers::Init()
   Preferences::AddStrongObserver(mPrefObserver,
                                  "security.ssl.false_start.require-npn");
   Preferences::AddStrongObserver(mPrefObserver,
-                                 "security.ssl.false_start.require-forward-secrecy");
-  Preferences::AddStrongObserver(mPrefObserver,
                                  "security.tls.version.fallback-limit");
+  Preferences::AddStrongObserver(mPrefObserver,
+                                 "security.tls.insecure_fallback_hosts");
   return NS_OK;
 }
 
@@ -1846,51 +1830,98 @@ void
 nsSSLIOLayerHelpers::loadVersionFallbackLimit()
 {
   // see nsNSSComponent::setEnabledTLSVersions for pref handling rules
-  int32_t limit = 1;   // 1 = TLS 1.0
-  Preferences::GetInt("security.tls.version.fallback-limit", &limit);
-  limit += SSL_LIBRARY_VERSION_3_0;
-  mVersionFallbackLimit = (uint16_t)limit;
-  if (limit != (int32_t)mVersionFallbackLimit) { // overflow check
-    mVersionFallbackLimit = SSL_LIBRARY_VERSION_TLS_1_0;
-  }
+  uint32_t limit = Preferences::GetUint("security.tls.version.fallback-limit",
+                                        3); // 3 = TLS 1.2
+  SSLVersionRange defaults = { SSL_LIBRARY_VERSION_TLS_1_2,
+                               SSL_LIBRARY_VERSION_TLS_1_2 };
+  SSLVersionRange filledInRange;
+  nsNSSComponent::FillTLSVersionRange(filledInRange, limit, limit, defaults);
+
+  mVersionFallbackLimit = filledInRange.max;
 }
 
 void
 nsSSLIOLayerHelpers::clearStoredData()
 {
-  mRenegoUnrestrictedSites->Clear();
+  MutexAutoLock lock(mutex);
+  mRenegoUnrestrictedSites.Clear();
+  mInsecureFallbackSites.Clear();
   mTLSIntoleranceInfo.Clear();
 }
 
 void
-nsSSLIOLayerHelpers::setRenegoUnrestrictedSites(const nsCString& str)
+nsSSLIOLayerHelpers::setSiteList(nsTHashtable<nsCStringHashKey>& sites,
+                                 const nsCString& str)
 {
   MutexAutoLock lock(mutex);
 
-  if (mRenegoUnrestrictedSites) {
-    delete mRenegoUnrestrictedSites;
-    mRenegoUnrestrictedSites = nullptr;
-  }
+  sites.Clear();
 
-  mRenegoUnrestrictedSites = new nsTHashtable<nsCStringHashKey>();
-  if (!mRenegoUnrestrictedSites)
+  if (str.IsEmpty()) {
     return;
+  }
 
   nsCCharSeparatedTokenizer toker(str, ',');
 
   while (toker.hasMoreTokens()) {
     const nsCSubstring& host = toker.nextToken();
     if (!host.IsEmpty()) {
-      mRenegoUnrestrictedSites->PutEntry(host);
+      sites.PutEntry(host);
     }
   }
+}
+
+struct FallbackListComparator
+{
+  explicit FallbackListComparator(const char* aTarget)
+    : mTarget(aTarget)
+  {}
+
+  int operator()(const char* aVal) const {
+    return strcmp(mTarget, aVal);
+  }
+
+private:
+  const char* mTarget;
+};
+
+static const char* const kFallbackWildcardList[] =
+{
+  ".kuronekoyamato.co.jp", // bug 1128366
+  ".userstorage.mega.co.nz", // bug 1133496
+  ".wildcard.test",
+};
+
+bool
+nsSSLIOLayerHelpers::isInsecureFallbackSite(const nsACString& hostname)
+{
+  size_t match;
+  if (mUseStaticFallbackList) {
+    const char* host = PromiseFlatCString(hostname).get();
+    if (BinarySearchIf(kIntolerantFallbackList, 0,
+          ArrayLength(kIntolerantFallbackList),
+          FallbackListComparator(host), &match)) {
+      return true;
+    }
+    for (size_t i = 0; i < ArrayLength(kFallbackWildcardList); ++i) {
+      size_t hostLen = hostname.Length();
+      const char* target = kFallbackWildcardList[i];
+      size_t targetLen = strlen(target);
+      if (hostLen > targetLen &&
+          !memcmp(host + hostLen - targetLen, target, targetLen)) {
+        return true;
+      }
+    }
+  }
+  MutexAutoLock lock(mutex);
+  return mInsecureFallbackSites.Contains(hostname);
 }
 
 bool
 nsSSLIOLayerHelpers::isRenegoUnrestrictedSite(const nsCString& str)
 {
   MutexAutoLock lock(mutex);
-  return mRenegoUnrestrictedSites->Contains(str);
+  return mRenegoUnrestrictedSites.Contains(str);
 }
 
 void

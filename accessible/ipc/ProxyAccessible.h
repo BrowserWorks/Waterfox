@@ -23,11 +23,16 @@ public:
 
   ProxyAccessible(uint64_t aID, ProxyAccessible* aParent,
                   DocAccessibleParent* aDoc, role aRole) :
-     mParent(aParent), mDoc(aDoc), mID(aID), mRole(aRole), mOuterDoc(false)
+     mParent(aParent), mDoc(aDoc), mWrapper(0), mID(aID), mRole(aRole),
+     mOuterDoc(false)
   {
     MOZ_COUNT_CTOR(ProxyAccessible);
   }
-  ~ProxyAccessible() { MOZ_COUNT_DTOR(ProxyAccessible); }
+  ~ProxyAccessible()
+  {
+    MOZ_COUNT_DTOR(ProxyAccessible);
+    MOZ_ASSERT(!mWrapper);
+  }
 
   void AddChildAt(uint32_t aIdx, ProxyAccessible* aChild)
   { mChildren.InsertElementAt(aIdx, aChild); }
@@ -86,8 +91,9 @@ public:
   uint64_t ID() const { return mID; }
 
 protected:
-  ProxyAccessible() :
-    mParent(nullptr), mDoc(nullptr), mWrapper(0), mID(0)
+  explicit ProxyAccessible(DocAccessibleParent* aThisAsDoc) :
+    mParent(nullptr), mDoc(aThisAsDoc), mWrapper(0), mID(0),
+    mRole(roles::DOCUMENT)
   { MOZ_COUNT_CTOR(ProxyAccessible); }
 
 protected:

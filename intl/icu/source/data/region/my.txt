@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/my.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/my.xml
- */
 my{
     Countries{
         001{"ကမ္ဘာ"}
@@ -301,18 +298,18 @@ my{
         ZW{"ဇင်ဘာဘွေ"}
         ZZ{"မသိ သို့မဟုတ် မရှိ သော နေရာ"}
     }
-    Countries%variant{
-        CD{"ကွန်ဂို (DRC)"}
-        CG{"ကွန်ဂို (Republic)"}
-        FK{"ဖော့ခ်လန်ကျွန်းစု(အီလားစ် မောလ်ဗီနာစ်)"}
-        MK{"မာစီဒိုနီအာ"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"ယူကေ"}
         HK{"ဟောင်ကောင်"}
         MO{"မကာအို"}
         PS{"ပါလက်စတိုင်း"}
         US{"ယူအက်စ်"}
     }
-    Version{"2.1.8.9"}
+    Countries%variant{
+        CD{"ကွန်ဂို (DRC)"}
+        CG{"ကွန်ဂို (Republic)"}
+        FK{"ဖော့ခ်လန်ကျွန်းစု(အီလားစ် မောလ်ဗီနာစ်)"}
+        MK{"မာစီဒိုနီအာ"}
+    }
+    Version{"2.1.13.21"}
 }

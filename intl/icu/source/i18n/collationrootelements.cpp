@@ -125,7 +125,7 @@ CollationRootElements::getSecondaryBefore(uint32_t p, uint32_t s) const {
     } else {
         index = findPrimary(p) + 1;
         previousSec = Collation::BEFORE_WEIGHT16;
-        sec = Collation::COMMON_WEIGHT16;
+        sec = getFirstSecTerForPrimary(index) >> 16;
     }
     U_ASSERT(s >= sec);
     while(s > sec) {
@@ -155,7 +155,7 @@ CollationRootElements::getTertiaryBefore(uint32_t p, uint32_t s, uint32_t t) con
     } else {
         index = findPrimary(p) + 1;
         previousTer = Collation::BEFORE_WEIGHT16;
-        secTer = Collation::COMMON_SEC_AND_TER_CE;
+        secTer = getFirstSecTerForPrimary(index);
     }
     uint32_t st = (s << 16) | t;
     while(st > secTer) {
@@ -191,33 +191,38 @@ CollationRootElements::getPrimaryAfter(uint32_t p, int32_t index, UBool isCompre
 
 uint32_t
 CollationRootElements::getSecondaryAfter(int32_t index, uint32_t s) const {
+    uint32_t secTer;
     uint32_t secLimit;
     if(index == 0) {
         // primary = 0
+        U_ASSERT(s != 0);
         index = (int32_t)elements[IX_FIRST_SECONDARY_INDEX];
+        secTer = elements[index];
         // Gap at the end of the secondary CE range.
         secLimit = 0x10000;
     } else {
         U_ASSERT(index >= (int32_t)elements[IX_FIRST_PRIMARY_INDEX]);
-        ++index;
+        secTer = getFirstSecTerForPrimary(index + 1);
+        // If this is an explicit sec/ter unit, then it will be read once more.
         // Gap for secondaries of primary CEs.
         secLimit = getSecondaryBoundary();
     }
     for(;;) {
-        uint32_t secTer = elements[index];
-        if((secTer & SEC_TER_DELTA_FLAG) == 0) { return secLimit; }
         uint32_t sec = secTer >> 16;
         if(sec > s) { return sec; }
-        ++index;
+        secTer = elements[++index];
+        if((secTer & SEC_TER_DELTA_FLAG) == 0) { return secLimit; }
     }
 }
 
 uint32_t
 CollationRootElements::getTertiaryAfter(int32_t index, uint32_t s, uint32_t t) const {
+    uint32_t secTer;
     uint32_t terLimit;
     if(index == 0) {
         // primary = 0
         if(s == 0) {
+            U_ASSERT(t != 0);
             index = (int32_t)elements[IX_FIRST_TERTIARY_INDEX];
             // Gap at the end of the tertiary CE range.
             terLimit = 0x4000;
@@ -226,20 +231,40 @@ CollationRootElements::getTertiaryAfter(int32_t index, uint32_t s, uint32_t t) c
             // Gap for tertiaries of primary/secondary CEs.
             terLimit = getTertiaryBoundary();
         }
+        secTer = elements[index] & ~SEC_TER_DELTA_FLAG;
     } else {
         U_ASSERT(index >= (int32_t)elements[IX_FIRST_PRIMARY_INDEX]);
-        ++index;
+        secTer = getFirstSecTerForPrimary(index + 1);
+        // If this is an explicit sec/ter unit, then it will be read once more.
         terLimit = getTertiaryBoundary();
     }
     uint32_t st = (s << 16) | t;
     for(;;) {
-        uint32_t secTer = elements[index];
+        if(secTer > st) {
+            U_ASSERT((secTer >> 16) == s);
+            return secTer & 0xffff;
+        }
+        secTer = elements[++index];
         // No tertiary greater than t for this primary+secondary.
         if((secTer & SEC_TER_DELTA_FLAG) == 0 || (secTer >> 16) > s) { return terLimit; }
         secTer &= ~SEC_TER_DELTA_FLAG;
-        if(secTer > st) { return secTer & 0xffff; }
-        ++index;
     }
+}
+
+uint32_t
+CollationRootElements::getFirstSecTerForPrimary(int32_t index) const {
+    uint32_t secTer = elements[index];
+    if((secTer & SEC_TER_DELTA_FLAG) == 0) {
+        // No sec/ter delta.
+        return Collation::COMMON_SEC_AND_TER_CE;
+    }
+    secTer &= ~SEC_TER_DELTA_FLAG;
+    if(secTer > Collation::COMMON_SEC_AND_TER_CE) {
+        // Implied sec/ter.
+        return Collation::COMMON_SEC_AND_TER_CE;
+    }
+    // Explicit sec/ter below common/common.
+    return secTer;
 }
 
 int32_t

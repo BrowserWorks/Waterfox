@@ -290,6 +290,10 @@ class BaseMarionetteOptions(OptionParser):
                         dest='device_serial',
                         action='store',
                         help='serial ID of a device to use for adb / fastboot')
+        self.add_option('--adb-host',
+                        help='host to use for adb connection')
+        self.add_option('--adb-port',
+                        help='port to use for adb connection')
         self.add_option('--type',
                         dest='type',
                         action='store',
@@ -386,7 +390,11 @@ class BaseMarionetteOptions(OptionParser):
                         action='store',
                         default='Marionette-based Tests',
                         help='Define the name to associate with the logger used')
-
+        self.add_option('--jsdebugger',
+                        dest='jsdebugger',
+                        action='store_true',
+                        default=False,
+                        help='Enable the jsdebugger for marionette javascript.')
 
     def parse_args(self, args=None, values=None):
         options, tests = OptionParser.parse_args(self, args, values)
@@ -436,6 +444,9 @@ class BaseMarionetteOptions(OptionParser):
             if not 1 <= options.this_chunk <= options.total_chunks:
                 self.error('Chunk to run must be between 1 and %s.' % options.total_chunks)
 
+        if options.jsdebugger:
+            options.app_args.append('-jsdebugger')
+
         for handler in self.verify_usage_handlers:
             handler(options, tests)
 
@@ -455,7 +466,7 @@ class BaseMarionetteTestRunner(object):
                  shuffle=False, shuffle_seed=random.randint(0, sys.maxint),
                  sdcard=None, this_chunk=1, total_chunks=1, sources=None,
                  server_root=None, gecko_log=None, result_callbacks=None,
-                 **kwargs):
+                 adb_host=None, adb_port=None, **kwargs):
         self.address = address
         self.emulator = emulator
         self.emulator_binary = emulator_binary
@@ -495,6 +506,8 @@ class BaseMarionetteTestRunner(object):
         self.manifest_skipped_tests = []
         self.tests = []
         self.result_callbacks = result_callbacks if result_callbacks is not None else []
+        self._adb_host = adb_host
+        self._adb_port = adb_port
 
         def gather_debug(test, status):
             rv = {}
@@ -605,6 +618,8 @@ class BaseMarionetteTestRunner(object):
             'device_serial': self.device_serial,
             'symbols_path': self.symbols_path,
             'timeout': self.timeout,
+            'adb_host': self._adb_host,
+            'adb_port': self._adb_port,
         }
         if self.bin:
             kwargs.update({
@@ -667,7 +682,7 @@ if((navigator.mozSettings == undefined) || (navigator.mozSettings == null) || (n
 let setReq = navigator.mozSettings.createLock().set({'lockscreen.enabled': false});
 setReq.onsuccess = function() {
     let appName = 'Test Container';
-    let activeApp = window.wrappedJSObject.System.currentApp;
+    let activeApp = window.wrappedJSObject.Service.currentApp;
 
     // if the Test Container is already open then do nothing
     if(activeApp.name === appName){
@@ -728,7 +743,9 @@ setReq.onerror = function() {
         version_info = mozversion.get_version(binary=self.bin,
                                               sources=self.sources,
                                               dm_type=os.environ.get('DM_TRANS', 'adb'),
-                                              device_serial=self.device_serial)
+                                              device_serial=self.device_serial,
+                                              adb_host=self.marionette.adb_host,
+                                              adb_port=self.marionette.adb_port)
 
         device_info = None
         if self.capabilities['device'] != 'desktop' and self.capabilities['browserName'] == 'B2G':
@@ -922,7 +939,9 @@ setReq.onerror = function() {
                 break
 
     def run_test_sets(self):
-        if self.total_chunks > len(self.tests):
+        if len(self.tests) < 1:
+            raise Exception('There are no tests to run.')
+        elif self.total_chunks > len(self.tests):
             raise ValueError('Total number of chunks must be between 1 and %d.' % len(self.tests))
         if self.total_chunks > 1:
             chunks = [[] for i in range(self.total_chunks)]
@@ -941,6 +960,9 @@ setReq.onerror = function() {
     def cleanup(self):
         if self.httpd:
             self.httpd.stop()
+
+        if self.marionette:
+            self.marionette.cleanup()
 
     __del__ = cleanup
 

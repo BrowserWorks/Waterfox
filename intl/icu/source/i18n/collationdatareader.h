@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationdatareader.h
@@ -109,7 +109,7 @@ private:
 
 /*
  * Format of collation data (ucadata.icu, binary data in coll/ *.res files).
- * Format version 4.0.
+ * Format version 5.
  *
  * The root collation data is stored in the ucadata.icu file.
  * Tailorings are stored inside .res resource bundle files, with a complete file header.
@@ -151,9 +151,29 @@ private:
  * int32_t reorderCodes[]; -- empty in root
  *      The list of script and reordering codes.
  *
+ *      Beginning with format version 5, this array may optionally
+ *      have trailing entries with a full list of reorder ranges
+ *      as described for CollationSettings::reorderRanges.
+ *
+ *      Script or reorder codes are first and do not exceed 16-bit values.
+ *      Range limits are stored in the upper 16 bits, and are never 0.
+ *      Split this array into reorder codes and ranges at the first entry
+ *      with non-zero upper 16 bits.
+ *
+ *      If the ranges are missing but needed for split-reordered primary lead bytes,
+ *      then they are regenerated at load time.
+ *
  * uint8_t reorderTable[256]; -- empty in root; can be longer to include padding bytes
  *      Primary-weight lead byte permutation table.
  *      Normally present when the reorderCodes are, but can be built at load time.
+ *
+ *      Beginning with format version 5, a 0 entry at a non-zero index
+ *      (which is otherwise an illegal value)
+ *      means that the primary lead byte is "split"
+ *      (there are different offsets for primaries that share that lead byte)
+ *      and the reordering offset must be determined via the reorder ranges
+ *      that are either stored as part of the reorderCodes array
+ *      or regenerated at load time.
  *
  * UTrie2 trie; -- see utrie2_impl.h and utrie2.h
  *      The trie holds the main collation data. Each code point is mapped to a 32-bit value.
@@ -194,12 +214,35 @@ private:
  *      See the CollationFastLatin class.
  *
  * uint16_t scripts[]; -- empty in all tailorings
+ *      Format version 5:
+ *      uint16_t numScripts;
+ *      uint16_t scriptsIndex[numScripts+16];
+ *      uint16_t scriptStarts[];
+ *      See CollationData::numScripts etc.
+ *
+ *      Format version 4:
  *      Table of the reordering groups with their first and last lead bytes,
  *      and their script and reordering codes.
  *      See CollationData::scripts.
  *
  * UBool compressibleBytes[]; -- empty in all tailorings
  *      Flag for getSortKey(), indicating primary weight lead bytes that are compressible.
+ *
+ * -----------------
+ * Changes for formatVersion 5 (ICU 55)
+ *
+ * Reordering moves single scripts, not groups of scripts.
+ * Reorder ranges are optionally appended to the reorderCodes,
+ * and a 0 entry in the reorderTable indicates a split lead byte.
+ * The scripts data has a new format.
+ *
+ * The rootElements may contain secondary and tertiary weights below common=05.
+ * (Used for small Hiragana letters.)
+ * Where is occurs, there is also an explicit unit with common secondary & tertiary weights.
+ * There are no other data structure changes, but builder code needs to be able to handle such data.
+ *
+ * The collation element for the merge separator code point U+FFFE
+ * does not necessarily have special, unique secondary/tertiary weights any more.
  */
 
 U_NAMESPACE_END

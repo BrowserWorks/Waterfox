@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/am.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/am.xml
- */
 am{
     Countries{
         001{"ዓለም"}
@@ -302,6 +299,13 @@ am{
         ZW{"ዚምቧቤ"}
         ZZ{"ያልታወቀ ክልል"}
     }
+    Countries%short{
+        GB{"ዩናይትድ ኪንግደም"}
+        HK{"ሆንግ ኮንግ"}
+        MO{"ማካኡ"}
+        PS{"ፍልስጥኤም"}
+        US{"ዩ ኤስ"}
+    }
     Countries%variant{
         CD{"ኮንጎ (የዲሞክራቲክ ሪፐብሊክ ኮንጎ)"}
         CG{"ኮንጎ (ሪፐብሊክ)"}
@@ -310,12 +314,5 @@ am{
         MK{"መቄዶንያ (የቀድሞ የዩጎስላቭ መቄዶንያ ሪፐብሊክ)"}
         TL{"ምስራቅ ቲሞር"}
     }
-    CountriesShort{
-        GB{"ዩናይትድ ኪንግደም"}
-        HK{"ሆንግ ኮንግ"}
-        MO{"ማካኡ"}
-        PS{"ፍልስጥኤም"}
-        US{"ዩ ኤስ"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

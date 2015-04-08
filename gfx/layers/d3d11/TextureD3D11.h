@@ -28,7 +28,9 @@ class CompositorD3D11;
 class TextureClientD3D11 : public TextureClient
 {
 public:
-  TextureClientD3D11(gfx::SurfaceFormat aFormat, TextureFlags aFlags);
+  TextureClientD3D11(ISurfaceAllocator* aAllocator,
+                     gfx::SurfaceFormat aFormat,
+                     TextureFlags aFlags);
 
   virtual ~TextureClientD3D11();
 
@@ -62,6 +64,8 @@ public:
   virtual TemporaryRef<TextureClient>
   CreateSimilar(TextureFlags aFlags = TextureFlags::DEFAULT,
                 TextureAllocationFlags aAllocFlags = ALLOC_DEFAULT) const MOZ_OVERRIDE;
+
+  virtual void SyncWithObject(SyncObject* aSyncObject) MOZ_OVERRIDE;
 
 protected:
   gfx::IntSize mSize;
@@ -228,6 +232,25 @@ private:
   friend class CompositorD3D11;
 
   RefPtr<ID3D11RenderTargetView> mRTView;
+};
+
+class SyncObjectD3D11 : public SyncObject
+{
+public:
+  SyncObjectD3D11(SyncHandle aSyncHandle);
+
+  virtual SyncType GetSyncType() { return SyncType::D3D11; }
+  virtual void FinalizeFrame();
+
+  void RegisterTexture(ID3D11Texture2D* aTexture);
+  void RegisterTexture(ID3D10Texture2D* aTexture);
+
+private:
+  RefPtr<ID3D11Texture2D> mD3D11Texture;
+  RefPtr<ID3D10Texture2D> mD3D10Texture;
+  std::vector<ID3D10Texture2D*> mD3D10SyncedTextures;
+  std::vector<ID3D11Texture2D*> mD3D11SyncedTextures;
+  SyncHandle mHandle;
 };
 
 inline uint32_t GetMaxTextureSizeForFeatureLevel(D3D_FEATURE_LEVEL aFeatureLevel)

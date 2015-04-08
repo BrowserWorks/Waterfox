@@ -1,7 +1,7 @@
 /*
  * @(#)Features.cpp 1.4 00/03/15
  *
- * (C) Copyright IBM Corp. 1998-2013 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1998-2015 - All Rights Reserved
  *
  */
 
@@ -15,6 +15,9 @@ U_NAMESPACE_BEGIN
 
 LEReferenceTo<FeatureTable> FeatureListTable::getFeatureTable(const LETableReference &base, le_uint16 featureIndex, LETag *featureTag, LEErrorCode &success) const
 {
+    LEReferenceToArrayOf<FeatureRecord>
+        featureRecordArrayRef(base, success, featureRecordArray, featureIndex);
+
   if (featureIndex >= SWAPW(featureCount) || LE_FAILURE(success)) {
     return LEReferenceTo<FeatureTable>();
   }

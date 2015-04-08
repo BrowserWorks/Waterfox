@@ -52,6 +52,15 @@ public abstract class SessionParser {
 
     abstract public void onTabRead(SessionTab tab);
 
+    /**
+     * Placeholder method that must be overloaded to handle closedTabs while parsing session data.
+     *
+     * @param closedTabs, JSONArray of recently closed tab entries.
+     * @throws JSONException
+     */
+    public void onClosedTabsRead(final JSONArray closedTabs) throws JSONException{
+    }
+
     public void parse(String... sessionStrings) {
         final LinkedList<SessionTab> sessionTabs = new LinkedList<SessionTab>();
         int totalCount = 0;
@@ -61,11 +70,20 @@ public abstract class SessionParser {
                 final JSONObject window = new JSONObject(sessionString).getJSONArray("windows").getJSONObject(0);
                 final JSONArray tabs = window.getJSONArray("tabs");
                 final int optSelected = window.optInt("selected", -1);
+                final JSONArray closedTabs = window.optJSONArray("closedTabs");
+                if (closedTabs != null) {
+                    onClosedTabsRead(closedTabs);
+                }
 
                 for (int i = 0; i < tabs.length(); i++) {
                     final JSONObject tab = tabs.getJSONObject(i);
                     final int index = tab.getInt("index");
-                    final JSONObject entry = tab.getJSONArray("entries").getJSONObject(index - 1);
+                    final JSONArray entries = tab.getJSONArray("entries");
+                    if (index < 1 || entries.length() < index) {
+                        Log.w(LOGTAG, "Session entries and index don't agree.");
+                        continue;
+                    }
+                    final JSONObject entry = entries.getJSONObject(index - 1);
                     final String url = entry.getString("url");
 
                     String title = entry.optString("title");

@@ -701,9 +701,9 @@ class ScopeIter
     void settle();
 
     /* ScopeIter does not have value semantics. */
-    ScopeIter(const ScopeIter &si) MOZ_DELETE;
+    ScopeIter(const ScopeIter &si) = delete;
 
-    ScopeIter(JSContext *cx) MOZ_DELETE;
+    ScopeIter(JSContext *cx) = delete;
 
   public:
 
@@ -930,7 +930,7 @@ class DebugScopes
   public:
     void mark(JSTracer *trc);
     void sweep(JSRuntime *rt);
-#if defined(JSGC_GENERATIONAL) && defined(JS_GC_ZEAL)
+#ifdef JS_GC_ZEAL
     void checkHashTablesAfterMovingGC(JSRuntime *rt);
 #endif
 

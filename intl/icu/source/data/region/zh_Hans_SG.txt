@@ -1,16 +1,14 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
-// * Source File: <path>/common/main/zh_Hans_SG.xml
+// * Source File: <path>/icu-locale-deprecates.xml & build.xml
 // *
 // ***************************************************************************
+/**
+ * generated alias target
+ */
 zh_Hans_SG{
-    Countries{
-        CP{"克利柏顿岛"}
-        ME{"黑山"}
-        PM{"圣皮埃尔和密克隆"}
-    }
-    Version{"2.1.8.19"}
+    ___{""}
 }

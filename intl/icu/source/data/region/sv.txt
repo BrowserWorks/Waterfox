@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/sv.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/sv.xml
- */
 sv{
     Countries{
         001{"världen"}
@@ -302,18 +299,18 @@ sv{
         ZW{"Zimbabwe"}
         ZZ{"okänd region"}
     }
-    Countries%variant{
-        CD{"Demokratiska republiken Kongo"}
-        CG{"Republiken Kongo"}
-        FK{"Falklandsöarna (Malvinerna)"}
-        MK{"f.d. jugoslaviska republiken Makedonien"}
-    }
-    CountriesShort{
+    Countries%short{
         GB{"Storbritannien"}
         HK{"Hongkong"}
         MO{"Macao"}
         PS{"Palestina"}
         US{"USA"}
     }
-    Version{"2.1.10.33"}
+    Countries%variant{
+        CD{"Demokratiska republiken Kongo"}
+        CG{"Republiken Kongo"}
+        FK{"Falklandsöarna (Malvinerna)"}
+        MK{"f.d. jugoslaviska republiken Makedonien"}
+    }
+    Version{"2.1.12.94"}
 }

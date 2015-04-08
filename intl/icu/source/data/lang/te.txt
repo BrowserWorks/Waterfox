@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/te.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/te.xml
- */
 te{
     Keys{
         calendar{"క్యాలెండర్"}
@@ -520,13 +517,13 @@ te{
         zxx{"లిపి లేదు"}
         zza{"జాజా"}
     }
-    Languages%variant{
-        ps{"పుష్టో"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"అజెరి"}
         en_GB{"యు.కె. ఇంగ్లీష్"}
         en_US{"యు.ఎస్. ఇంగ్లీష్"}
+    }
+    Languages%variant{
+        ps{"పుష్టో"}
     }
     Scripts{
         Arab{"అరబిక్"}
@@ -787,7 +784,7 @@ te{
         REVISED{"సవరించబడిన వర్ణక్రమం"}
         WADEGILE{"వేడ్-గైల్స్ రోమనైజేషన్"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"భాష: {0}"}
         script{"లిపి: {0}"}

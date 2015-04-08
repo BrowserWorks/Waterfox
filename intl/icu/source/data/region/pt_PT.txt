@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/pt_PT.xml
@@ -16,24 +16,17 @@ pt_PT{
         AM{"Arménia"}
         BH{"Barém"}
         BJ{"Benim"}
-        BW{"Botswana"}
-        CC{"Ilhas Cocos"}
         CD{"Congo-Kinshasa"}
         CG{"Congo-Brazzaville"}
         CM{"Camarões"}
         CW{"Curaçau"}
-        CX{"Ilha do Natal"}
         CZ{"República Checa"}
-        DJ{"Jibuti"}
         DM{"Domínica"}
         EE{"Estónia"}
-        EG{"Egipto"}
         FK{"Ilhas Falkland"}
         FO{"Ilhas Faroé"}
         GL{"Gronelândia"}
-        GS{"Ilhas Geórgia do Sul e Sandwich do Sul"}
         GU{"Guame"}
-        GW{"Guiné-Bissau"}
         IR{"Irão"}
         KE{"Quénia"}
         KY{"Ilhas Caimão"}
@@ -44,17 +37,15 @@ pt_PT{
         MS{"Monserrate"}
         MU{"Maurícia"}
         NC{"Nova Caledónia"}
-        NL{"Países Baixos"}
         PL{"Polónia"}
         PN{"Pitcairn"}
-        PS{"Território Palestiniano"}
+        PS{"Territórios palestinianos"}
         QO{"Oceânia Insular"}
         RO{"Roménia"}
         SC{"Seicheles"}
         SG{"Singapura"}
         SI{"Eslovénia"}
         SM{"São Marino"}
-        TC{"Ilhas Turcas e Caicos"}
         TK{"Toquelau"}
         TM{"Turquemenistão"}
         TT{"Trindade e Tobago"}
@@ -68,8 +59,5 @@ pt_PT{
         FK{"Ilhas Malvinas"}
         MK{"Antiga República Jugoslava da Macedónia"}
     }
-    CountriesShort{
-        GB{"RU"}
-    }
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
 }

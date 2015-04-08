@@ -49,7 +49,7 @@ GLScreenBuffer::Create(GLContext* gl,
         XRE_GetProcessType() != GeckoProcessType_Default)
     {
         layers::TextureFlags flags = layers::TextureFlags::DEALLOCATE_CLIENT |
-                                     layers::TextureFlags::NEEDS_Y_FLIP;
+                                     layers::TextureFlags::ORIGIN_BOTTOM_LEFT;
         if (!caps.premultAlpha) {
             flags |= layers::TextureFlags::NON_PREMULTIPLIED;
         }
@@ -438,10 +438,6 @@ GLScreenBuffer::Swap(const gfx::IntSize& size)
     mFront = mBack;
     mBack = newBack;
 
-    // Fence before copying.
-    if (mFront) {
-        mFront->Surf()->ProducerRelease();
-    }
     if (mBack) {
         mBack->Surf()->ProducerAcquire();
     }
@@ -453,6 +449,14 @@ GLScreenBuffer::Swap(const gfx::IntSize& size)
         auto src  = mFront->Surf();
         auto dest = mBack->Surf();
         SharedSurface::ProdCopy(src, dest, mFactory.get());
+    }
+
+    // XXX: We would prefer to fence earlier on platforms that don't need
+    // the full ProducerAcquire/ProducerRelease semantics, so that the fence
+    // doesn't include the copy operation. Unfortunately, the current API
+    // doesn't expose a good way to do that.
+    if (mFront) {
+        mFront->Surf()->ProducerRelease();
     }
 
     return true;
@@ -525,11 +529,18 @@ GLScreenBuffer::Readback(SharedSurface* src, gfx::DataSourceSurface* dest)
   }
 
   {
+      // Even though we're reading. We're doing it on
+      // the producer side. So we call ProducerAcquire
+      // instead of ConsumerAcquire.
+      src->ProducerAcquire();
+
       UniquePtr<ReadBuffer> buffer = CreateRead(src);
       MOZ_ASSERT(buffer);
 
       ScopedBindFramebuffer autoFB(mGL, buffer->mFB);
       ReadPixelsIntoDataSurface(mGL, dest);
+
+      src->ProducerRelease();
   }
 
   if (needsSwap) {

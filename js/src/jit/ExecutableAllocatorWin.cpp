@@ -31,8 +31,6 @@
 
 #include "jit/ExecutableAllocator.h"
 
-#define UNW_FLAG_EHANDLER  0x01 //Define this manually because ICL 14 SP1+VS2010 does not call the correct unwind headers
-
 using namespace js::jit;
 
 uint64_t ExecutableAllocator::rngSeed;
@@ -68,7 +66,7 @@ void *ExecutableAllocator::computeRandomAllocationAddress()
 # error "Unsupported architecture"
 #endif
     uint64_t rand = random_next(&rngSeed, 32) << chunkBits;
-    return (void *) (base | rand & mask);
+    return (void *) (base | (rand & mask));
 }
 
 static bool

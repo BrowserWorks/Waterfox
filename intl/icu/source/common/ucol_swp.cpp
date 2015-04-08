@@ -1,7 +1,7 @@
 /*
 *******************************************************************************
 *
-*   Copyright (C) 2003-2014, International Business Machines
+*   Copyright (C) 2003-2015, International Business Machines
 *   Corporation and others.  All Rights Reserved.
 *
 *******************************************************************************
@@ -340,7 +340,7 @@ swapFormatVersion3(const UDataSwapper *ds,
     return header.size;
 }
 
-// swap formatVersion 4 ---------------------------------------------------- ***
+// swap formatVersion 4 or 5 ----------------------------------------------- ***
 
 // The following are copied from CollationDataReader, trading an awkward copy of constants
 // for an awkward relocation of the i18n collationdatareader.h file into the common library.
@@ -566,7 +566,7 @@ ucol_swap(const UDataSwapper *ds,
         info.dataFormat[1]==0x43 &&
         info.dataFormat[2]==0x6f &&
         info.dataFormat[3]==0x6c &&
-        (info.formatVersion[0]==3 || info.formatVersion[0]==4)
+        (3<=info.formatVersion[0] && info.formatVersion[0]<=5)
     )) {
         udata_printError(ds, "ucol_swap(): data format %02x.%02x.%02x.%02x "
                          "(format version %02x.%02x) is not recognized as collation data\n",

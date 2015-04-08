@@ -70,8 +70,8 @@ public:
                                   nsXPIDLString& aAltText);
 
 private:
-  nsCSSFrameConstructor(const nsCSSFrameConstructor& aCopy) MOZ_DELETE;
-  nsCSSFrameConstructor& operator=(const nsCSSFrameConstructor& aCopy) MOZ_DELETE;
+  nsCSSFrameConstructor(const nsCSSFrameConstructor& aCopy) = delete;
+  nsCSSFrameConstructor& operator=(const nsCSSFrameConstructor& aCopy) = delete;
 
 public:
   mozilla::RestyleManager* RestyleManager() const
@@ -831,6 +831,7 @@ private:
     // aSuppressWhiteSpaceOptimizations is true if optimizations that
     // skip constructing whitespace frames for this item or items
     // around it cannot be performed.
+    // Also, the return value is always non-null, thanks to infallible 'new'.
     FrameConstructionItem* AppendItem(const FrameConstructionData* aFCData,
                                       nsIContent* aContent,
                                       nsIAtom* aTag,
@@ -898,8 +899,15 @@ private:
       }
 
       FrameConstructionItem& item() {
+        MOZ_ASSERT(!IsDone(), "Should have checked IsDone()!");
         return *FrameConstructionItemList::ToItem(mCurrent);
       }
+
+      const FrameConstructionItem& item() const {
+        MOZ_ASSERT(!IsDone(), "Should have checked IsDone()!");
+        return *FrameConstructionItemList::ToItem(mCurrent);
+      }
+
       bool IsDone() const { return mCurrent == mEnd; }
       bool AtStart() const { return mCurrent == PR_NEXT_LINK(mEnd); }
       void Next() {
@@ -912,10 +920,15 @@ private:
       }
       void SetToEnd() { mCurrent = mEnd; }
 
+      // Skip over all items that want the given parent type. Return whether
+      // the iterator is done after doing that.  The iterator must not be done
+      // when this is called.
+      inline bool SkipItemsWantingParentType(ParentType aParentType);
+
       // Skip over all items that want a parent type different from the given
       // one.  Return whether the iterator is done after doing that.  The
       // iterator must not be done when this is called.
-      inline bool SkipItemsWantingParentType(ParentType aParentType);
+      inline bool SkipItemsNotWantingParentType(ParentType aParentType);
 
       // Skip over non-replaced inline frames and positioned frames.
       // Return whether the iterator is done after doing that.
@@ -928,6 +941,11 @@ private:
       // The iterator must not be done when this is called.
       inline bool SkipItemsThatDontNeedAnonFlexOrGridItem(
         const nsFrameConstructorState& aState);
+
+      // Skip over all items that do not want a ruby parent.  Return whether
+      // the iterator is done after doing that.  The iterator must not be done
+      // when this is called.
+      inline bool SkipItemsNotWantingRubyParent();
 
       // Skip over whitespace.  Return whether the iterator is done after doing
       // that.  The iterator must not be done, and must be pointing to a
@@ -1025,8 +1043,8 @@ private:
                           bool aSuppressWhiteSpaceOptimizations,
                           nsTArray<nsIAnonymousContentCreator::ContentInfo>* aAnonChildren) :
       mFCData(aFCData), mContent(aContent), mTag(aTag),
-      mNameSpaceID(aNameSpaceID),
       mPendingBinding(aPendingBinding), mStyleContext(aStyleContext),
+      mNameSpaceID(aNameSpaceID),
       mSuppressWhiteSpaceOptimizations(aSuppressWhiteSpaceOptimizations),
       mIsText(false), mIsGeneratedContent(false),
       mIsAnonymousContentCreatorContent(false),
@@ -1070,61 +1088,6 @@ private:
       return mIsBlock || (mFCData->mBits & FCDATA_IS_LINE_BREAK);
     }
 
-    // The FrameConstructionData to use.
-    const FrameConstructionData* mFCData;
-    // The nsIContent node to use when initializing the new frame.
-    nsIContent* mContent;
-    // The XBL-resolved tag name to use for frame construction.
-    nsIAtom* mTag;
-    // The XBL-resolved namespace to use for frame construction.
-    int32_t mNameSpaceID;
-    // The PendingBinding for this frame construction item, if any.  May be
-    // null.  We maintain a list of PendingBindings in the frame construction
-    // state in the order in which AddToAttachedQueue should be called on them:
-    // depth-first, post-order traversal order.  Since we actually traverse the
-    // DOM in a mix of breadth-first and depth-first, it is the responsibility
-    // of whoever constructs FrameConstructionItem kids of a given
-    // FrameConstructionItem to push its mPendingBinding as the current
-    // insertion point before doing so and pop it afterward.
-    PendingBinding* mPendingBinding;
-    // The style context to use for creating the new frame.
-    nsRefPtr<nsStyleContext> mStyleContext;
-    // Whether optimizations to skip constructing textframes around
-    // this content need to be suppressed.
-    bool mSuppressWhiteSpaceOptimizations;
-    // Whether this is a text content item.
-    bool mIsText;
-    // Whether this is a generated content container.
-    // If it is, mContent is a strong pointer.
-    bool mIsGeneratedContent;
-    // Whether this is an item for nsIAnonymousContentCreator content.
-    bool mIsAnonymousContentCreatorContent;
-    // Whether this is an item for the root popupgroup.
-    bool mIsRootPopupgroup;
-    // Whether construction from this item will create only frames that are
-    // IsInlineOutside() in the principal child list.  This is not precise, but
-    // conservative: if true the frames will really be inline, whereas if false
-    // they might still all be inline.
-    bool mIsAllInline;
-    // Whether construction from this item will create only frames that are
-    // IsBlockOutside() in the principal child list.  This is not precise, but
-    // conservative: if true the frames will really be blocks, whereas if false
-    // they might still be blocks (and in particular, out-of-flows that didn't
-    // find a containing block).
-    bool mIsBlock;
-    // Whether construction from this item will give leading and trailing
-    // inline frames.  This is equal to mIsAllInline, except for inline frame
-    // items, where it's always true, whereas mIsAllInline might be false due
-    // to {ib} splits.
-    bool mHasInlineEnds;
-    // Whether construction from this item will create a popup that needs to
-    // go into the global popup items.
-    bool mIsPopup;
-    // Whether this item should be treated as a line participant
-    bool mIsLineParticipant;
-    // Whether this item is for an SVG <a> element
-    bool mIsForSVGAElement;
-
     // Child frame construction items.
     FrameConstructionItemList mChildItems;
 
@@ -1144,8 +1107,63 @@ private:
     // a frame has been created for their parent item.
     nsTArray<nsIAnonymousContentCreator::ContentInfo> mAnonChildren;
 
+    // The FrameConstructionData to use.
+    const FrameConstructionData* mFCData;
+    // The nsIContent node to use when initializing the new frame.
+    nsIContent* mContent;
+    // The XBL-resolved tag name to use for frame construction.
+    nsIAtom* mTag;
+    // The PendingBinding for this frame construction item, if any.  May be
+    // null.  We maintain a list of PendingBindings in the frame construction
+    // state in the order in which AddToAttachedQueue should be called on them:
+    // depth-first, post-order traversal order.  Since we actually traverse the
+    // DOM in a mix of breadth-first and depth-first, it is the responsibility
+    // of whoever constructs FrameConstructionItem kids of a given
+    // FrameConstructionItem to push its mPendingBinding as the current
+    // insertion point before doing so and pop it afterward.
+    PendingBinding* mPendingBinding;
+    // The style context to use for creating the new frame.
+    nsRefPtr<nsStyleContext> mStyleContext;
+    // The XBL-resolved namespace to use for frame construction.
+    int32_t mNameSpaceID;
+    // Whether optimizations to skip constructing textframes around
+    // this content need to be suppressed.
+    bool mSuppressWhiteSpaceOptimizations:1;
+    // Whether this is a text content item.
+    bool mIsText:1;
+    // Whether this is a generated content container.
+    // If it is, mContent is a strong pointer.
+    bool mIsGeneratedContent:1;
+    // Whether this is an item for nsIAnonymousContentCreator content.
+    bool mIsAnonymousContentCreatorContent:1;
+    // Whether this is an item for the root popupgroup.
+    bool mIsRootPopupgroup:1;
+    // Whether construction from this item will create only frames that are
+    // IsInlineOutside() in the principal child list.  This is not precise, but
+    // conservative: if true the frames will really be inline, whereas if false
+    // they might still all be inline.
+    bool mIsAllInline:1;
+    // Whether construction from this item will create only frames that are
+    // IsBlockOutside() in the principal child list.  This is not precise, but
+    // conservative: if true the frames will really be blocks, whereas if false
+    // they might still be blocks (and in particular, out-of-flows that didn't
+    // find a containing block).
+    bool mIsBlock:1;
+    // Whether construction from this item will give leading and trailing
+    // inline frames.  This is equal to mIsAllInline, except for inline frame
+    // items, where it's always true, whereas mIsAllInline might be false due
+    // to {ib} splits.
+    bool mHasInlineEnds:1;
+    // Whether construction from this item will create a popup that needs to
+    // go into the global popup items.
+    bool mIsPopup:1;
+    // Whether this item should be treated as a line participant
+    bool mIsLineParticipant:1;
+    // Whether this item is for an SVG <a> element
+    bool mIsForSVGAElement:1;
+
   private:
-    FrameConstructionItem(const FrameConstructionItem& aOther) MOZ_DELETE; /* not implemented */
+    FrameConstructionItem(const FrameConstructionItem& aOther) = delete; /* not implemented */
   };
 
   /**
@@ -1159,6 +1177,59 @@ private:
                                        FrameConstructionItemList& aItems,
                                        nsIFrame* aParentFrame);
 
+  enum RubyWhitespaceType
+  {
+    eRubyNotWhitespace,
+    eRubyInterLevelWhitespace,
+    // Includes inter-base and inter-annotation whitespace
+    eRubyInterLeafWhitespace,
+    eRubyInterSegmentWhitespace
+  };
+
+  /**
+   * Function to compute the whitespace type according to the display
+   * values of the previous and the next elements.
+   */
+  static inline RubyWhitespaceType ComputeRubyWhitespaceType(
+    uint_fast8_t aPrevDisplay, uint_fast8_t aNextDisplay);
+
+  /**
+   * Function to interpret the type of whitespace between
+   * |aStartIter| and |aEndIter|.
+   */
+  static inline RubyWhitespaceType InterpretRubyWhitespace(
+    nsFrameConstructorState& aState,
+    const FCItemIterator& aStartIter, const FCItemIterator& aEndIter);
+
+  /**
+   * Function to wrap consecutive misparented inline content into
+   * a ruby base box or a ruby text box.
+   */
+  void WrapItemsInPseudoRubyLeafBox(FCItemIterator& aIter,
+                                    nsStyleContext* aParentStyle,
+                                    nsIContent* aParentContent);
+
+  /**
+   * Function to wrap consecutive misparented items
+   * into a ruby level container.
+   */
+  inline void WrapItemsInPseudoRubyLevelContainer(
+    nsFrameConstructorState& aState, FCItemIterator& aIter,
+    nsStyleContext* aParentStyle, nsIContent* aParentContent);
+
+  /**
+   * Function to trim leading and trailing whitespaces.
+   */
+  inline void TrimLeadingAndTrailingWhitespaces(
+    nsFrameConstructorState& aState, FrameConstructionItemList& aItems);
+
+  /**
+   * Function to create internal ruby boxes.
+   */
+  inline void CreateNeededPseudoInternalRubyBoxes(
+    nsFrameConstructorState& aState,
+    FrameConstructionItemList& aItems, nsIFrame* aParentFrame);
+
   /**
    * Function to create the pseudo intermediate containers we need.
    * @param aItems the child frame construction items before pseudo creation
@@ -1167,6 +1238,15 @@ private:
   inline void CreateNeededPseudoContainers(nsFrameConstructorState& aState,
                                            FrameConstructionItemList& aItems,
                                            nsIFrame* aParentFrame);
+
+  /**
+   * Function to wrap consecutive items into a pseudo parent.
+   */
+  inline void WrapItemsInPseudoParent(nsIContent* aParentContent,
+                                      nsStyleContext* aParentStyle,
+                                      ParentType aWrapperType,
+                                      FCItemIterator& aIter,
+                                      const FCItemIterator& aEndIter);
 
   /**
    * Function to create the pseudo siblings we need.
@@ -1986,9 +2066,6 @@ private:
   nsContainerFrame*   mRootElementFrame;
   // This is the frame for the root element that has no pseudo-element style.
   nsIFrame*           mRootElementStyleFrame;
-  // This is the containing block for fixed-pos frames --- the
-  // viewport or page frame
-  nsContainerFrame*   mFixedContainingBlock;
   // This is the containing block that contains the root element ---
   // the real "initial containing block" according to CSS 2.1.
   nsContainerFrame*   mDocElementContainingBlock;

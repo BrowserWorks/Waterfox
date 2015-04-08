@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/de.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/de.xml
- */
 de{
     Keys{
         calendar{"Kalender"}
@@ -638,7 +635,7 @@ de{
         zxx{"Keine Sprachinhalte"}
         zza{"Zaza"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"Aserbaidschanisch"}
         en_GB{"UK-Englisch"}
         en_US{"US-Englisch"}
@@ -851,7 +848,7 @@ de{
             upper{"Großbuchstaben zuerst aufführen"}
         }
         colCaseLevel{
-            no{"Nach Groß-/Kleinschreibung sortieren"}
+            no{"Ohne Groß-/Kleinschreibung sortieren"}
             yes{"Nach Groß-/Kleinschreibung sortieren"}
         }
         colHiraganaQuaternary{
@@ -989,7 +986,7 @@ de{
         VALENCIA{"Valencianisch"}
         WADEGILE{"Wade-Giles"}
     }
-    Version{"2.1.10.51"}
+    Version{"2.1.13.4"}
     codePatterns{
         language{"Sprache: {0}"}
         script{"Schrift: {0}"}

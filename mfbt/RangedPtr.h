@@ -15,7 +15,6 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Attributes.h"
-#include "mozilla/NullPtr.h"
 
 #include <stdint.h>
 
@@ -275,8 +274,8 @@ public:
   }
 
 private:
-  RangedPtr() MOZ_DELETE;
-  T* operator&() MOZ_DELETE;
+  RangedPtr() = delete;
+  T* operator&() = delete;
 };
 
 } /* namespace mozilla */

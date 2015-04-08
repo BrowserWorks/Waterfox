@@ -1,6 +1,6 @@
 /*
 ******************************************************************************
-* Copyright (C) 1996-2014, International Business Machines Corporation and
+* Copyright (C) 1996-2015, International Business Machines Corporation and
 * others. All Rights Reserved.
 ******************************************************************************
 */
@@ -531,7 +531,7 @@ public:
      *                  function chaining. (See User Guide for details.)
      * @return *this
      * @see getMaxVariable
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual Collator &setMaxVariable(UColReorderCode group, UErrorCode &errorCode);
 
@@ -539,7 +539,7 @@ public:
      * Returns the maximum reordering group whose characters are affected by UCOL_ALTERNATE_HANDLING.
      * @return the maximum variable reordering group.
      * @see setMaxVariable
-     * @draft ICU 53
+     * @stable ICU 53
      */
     virtual UColReorderCode getMaxVariable() const;
 
@@ -651,7 +651,7 @@ public:
      * Retrieves the reordering codes for this collator.
      * @param dest The array to fill with the script ordering.
      * @param destCapacity The length of dest. If it is 0, then dest may be NULL and the function
-     *  will only return the length of the result without writing any of the result string (pre-flighting).
+     *  will only return the length of the result without writing any codes (pre-flighting).
      * @param status A reference to an error code value, which must not indicate
      * a failure before the function call.
      * @return The length of the script ordering array.
@@ -670,6 +670,7 @@ public:
      * length is also set to 0. An empty array will clear any reordering codes on the collator.
      * @param reorderCodesLength The length of reorderCodes.
      * @param status error code
+     * @see ucol_setReorderCodes
      * @see Collator#getReorderCodes
      * @see Collator#getEquivalentReorderCodes
      * @stable ICU 4.8 

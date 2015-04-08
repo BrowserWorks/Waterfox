@@ -108,6 +108,12 @@ Sink(MIRGenerator *mir, MIRGraph &graph)
             if (!sinkEnabled)
                 continue;
 
+            // To move an effectful instruction, we would have to verify that the
+            // side-effect is not observed. In the mean time, we just inhibit
+            // this optimization on effectful instructions.
+            if (ins->isEffectful())
+                continue;
+
             // If all the uses are under a loop, we might not want to work
             // against LICM by moving everything back into the loop, but if the
             // loop is it-self inside an if, then we still want to move the
@@ -201,6 +207,12 @@ Sink(MIRGenerator *mir, MIRGraph &graph)
 
                 use->replaceProducer(clone);
             }
+
+            // As we move this instruction in a different block, we should
+            // verify that we do not carry over a resume point which would refer
+            // to an outdated state of the control flow.
+            if (ins->resumePoint())
+                ins->clearResumePoint();
 
             // Now, that all uses which are not dominated by usesDominator are
             // using the cloned instruction, we can safely move the instruction

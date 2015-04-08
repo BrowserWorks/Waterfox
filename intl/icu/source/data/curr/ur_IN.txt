@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ur_IN.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ur_IN.xml
- */
 ur_IN{
     Currencies{
         CRC{
@@ -27,10 +24,6 @@ ur_IN{
             "CVE",
             "کیپ ورڈی اسکیوڈو",
         }
-        DKK{
-            "DKK",
-            "ڈنمارک کرون",
-        }
         ERN{
             "ERN",
             "اریٹیریائی ناکفا",
@@ -42,10 +35,6 @@ ur_IN{
         GHS{
             "GHS",
             "گھانی سیڈی",
-        }
-        NOK{
-            "NOK",
-            "ناروے کرون",
         }
         PKR{
             "PKR",
@@ -73,10 +62,6 @@ ur_IN{
             one{"کیپ ورڈی اسکیوڈو"}
             other{"کیپ ورڈی اسکیوڈو"}
         }
-        DKK{
-            one{"ڈنمارک کرون"}
-            other{"ڈنمارک کرونر"}
-        }
         ERN{
             one{"اریٹیریائی ناکفا"}
             other{"اریٹیریائی ناکفا"}
@@ -89,10 +74,6 @@ ur_IN{
             one{"گھانی سیڈی"}
             other{"گھانی سیڈی"}
         }
-        NOK{
-            one{"ناروے کرون"}
-            other{"ناروے کرونوں"}
-        }
         PKR{
             one{"پاکستانی روپیہ"}
             other{"پاکستانی روپے"}
@@ -102,5 +83,5 @@ ur_IN{
             other{"ساموآئی ٹالا"}
         }
     }
-    Version{"2.1.8.19"}
+    Version{"2.1.13.23"}
 }

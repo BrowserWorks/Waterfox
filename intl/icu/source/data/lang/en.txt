@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/en.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/en.xml
- */
 en{
     Keys{
         calendar{"Calendar"}
@@ -24,6 +21,7 @@ en{
         collation{"Sort Order"}
         currency{"Currency"}
         kv{"Highest Ignored"}
+        lb{"Line Break Style"}
         numbers{"Numbers"}
         timezone{"Time Zone"}
         va{"Locale Variant"}
@@ -130,7 +128,7 @@ en{
         chp{"Chipewyan"}
         chr{"Cherokee"}
         chy{"Cheyenne"}
-        ckb{"Sorani Kurdish"}
+        ckb{"Central Kurdish"}
         co{"Corsican"}
         cop{"Coptic"}
         cps{"Capiznon"}
@@ -612,6 +610,7 @@ en{
         wal{"Wolaytta"}
         war{"Waray"}
         was{"Washo"}
+        wbp{"Warlpiri"}
         wo{"Wolof"}
         wuu{"Wu Chinese"}
         xal{"Kalmyk"}
@@ -640,15 +639,15 @@ en{
         zxx{"No linguistic content"}
         zza{"Zaza"}
     }
+    Languages%short{
+        az{"Azeri"}
+        en_GB{"UK English"}
+        en_US{"US English"}
+    }
     Languages%variant{
         ky{"Kirghiz"}
         ps{"Pushto"}
         ug{"Uighur"}
-    }
-    LanguagesShort{
-        az{"Azeri"}
-        en_GB{"U.K. English"}
-        en_US{"U.S. English"}
     }
     Scripts{
         Afak{"Afaka"}
@@ -886,8 +885,10 @@ en{
         }
         collation{
             big5han{"Traditional Chinese Sort Order - Big5"}
+            compat{"Previous Sort Order, for compatibility"}
             dictionary{"Dictionary Sort Order"}
             ducet{"Default Unicode Sort Order"}
+            emoji{"Emoji Sort Order"}
             eor{"European Ordering Rules"}
             gb2312han{"Simplified Chinese Sort Order - GB2312"}
             phonebook{"Phonebook Sort Order"}
@@ -902,6 +903,11 @@ en{
             unihan{"Radical-Stroke Sort Order"}
             zhuyin{"Zhuyin Sort Order"}
         }
+        lb{
+            loose{"Loose Line Break Style"}
+            normal{"Normal Line Break Style"}
+            strict{"Strict Line Break Style"}
+        }
         numbers{
             arab{"Arabic-Indic Digits"}
             arabext{"Extended Arabic-Indic Digits"}
@@ -915,7 +921,7 @@ en{
             deva{"Devanagari Digits"}
             ethi{"Ethiopic Numerals"}
             finance{"Financial Numerals"}
-            fullwide{"Full Width Digits"}
+            fullwide{"Full-Width Digits"}
             geor{"Georgian Numerals"}
             grek{"Greek Numerals"}
             greklow{"Greek Lowercase Numerals"}
@@ -1028,7 +1034,7 @@ en{
         VALENCIA{"Valencian"}
         WADEGILE{"Wade-Giles Romanization"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.13.48"}
     codePatterns{
         language{"Language: {0}"}
         script{"Script: {0}"}

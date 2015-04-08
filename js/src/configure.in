@@ -205,19 +205,7 @@ if test -n "$gonkdir" ; then
     STLPORT_CPPFLAGS="-I$_topsrcdir/build/stlport/stlport -I$gonkdir/ndk/sources/cxx-stl/system/include"
     STLPORT_LIBS="-lstlport"
 
-    case "$target_cpu" in
-    arm)
-        ARCH_DIR=arch-arm
-        ;;
-    i?86)
-        ARCH_DIR=arch-x86
-        ;;
-    mips*)
-        ARCH_DIR=arch-mips
-        ;;
-    esac
-
-    CPPFLAGS="-DANDROID -isystem $gonkdir/bionic/libc/$ARCH_DIR/include -isystem $gonkdir/bionic/libc/include/ -isystem $gonkdir/bionic/libc/kernel/common -isystem $gonkdir/bionic/libc/kernel/$ARCH_DIR -isystem $gonkdir/bionic/libm/include -I$gonkdir/frameworks/base/native/include -I$gonkdir/system/core/include -isystem $gonkdir/bionic $CPPFLAGS -I$gonkdir/external/valgrind/fxos-include"
+    CPPFLAGS="-DANDROID $TARGET_C_INCLUDES -I$gonkdir/frameworks/base/native/include -I$gonkdir/system/core/include -isystem $gonkdir/bionic $CPPFLAGS -I$gonkdir/external/valgrind/fxos-include"
     CFLAGS="-mandroid -fno-short-enums -fno-exceptions $CFLAGS"
     CXXFLAGS="-mandroid -fno-short-enums -fno-exceptions -Wno-psabi $CXXFLAGS $STLPORT_CPPFLAGS"
     LIBS="$LIBS $STLPORT_LIBS"
@@ -248,9 +236,9 @@ fi
 dnl ==============================================================
 dnl Get mozilla version from central milestone file
 dnl ==============================================================
-MOZILLA_VERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir`
-MOZILLA_UAVERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir -uaversion`
-MOZILLA_SYMBOLVERSION=`$PERL $srcdir/config/milestone.pl -topsrcdir $srcdir -symbolversion`
+MOZILLA_VERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir`
+MOZILLA_UAVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --uaversion`
+MOZILLA_SYMBOLVERSION=`$PYTHON $srcdir/python/mozbuild/mozbuild/milestone.py --topsrcdir $srcdir --symbolversion`
 
 AC_DEFINE_UNQUOTED(MOZILLA_VERSION,"$MOZILLA_VERSION")
 AC_DEFINE_UNQUOTED(MOZILLA_VERSION_U,$MOZILLA_VERSION)
@@ -349,13 +337,6 @@ MOZ_TOOL_VARIABLES
 
 MOZ_CHECK_COMPILER_WRAPPER
 
-if test -n "$GNU_CC" -a -z "$CLANG_CC" ; then
-    if test "$GCC_MAJOR_VERSION" -eq 4 -a "$GCC_MINOR_VERSION" -lt 4 ||
-       test "$GCC_MAJOR_VERSION" -lt 4; then
-        AC_MSG_ERROR([Only GCC 4.4 or newer supported])
-    fi
-fi
-
 dnl Special win32 checks
 dnl ========================================================
 
@@ -365,24 +346,21 @@ MOZ_ARG_ENABLE_BOOL(metro,
     MOZ_METRO=)
 if test -n "$MOZ_METRO"; then
     AC_DEFINE(MOZ_METRO)
-    # Target the Windows 8 Kit
-    WINSDK_TARGETVER=602
-    WINVER=502
-else
-    # Target the Windows 7 SDK by default
-    WINSDK_TARGETVER=601
-    WINVER=502
 fi
+
+# Target the Windows 8.1 SDK by default
+WINSDK_TARGETVER=603
+WINVER=502
 
 MOZ_ARG_WITH_STRING(windows-version,
 [  --with-windows-version=WINSDK_TARGETVER
-                          Windows SDK version to target. Lowest version
-                          currently allowed is 601, highest is 602],
+                          Windows SDK version to target. Win8.1 (603) is
+                          currently the minimum supported version.],
   WINSDK_TARGETVER=$withval)
 
-# Currently only two sdk versions allowed, 601 and 602
+# Currently only version 603 is allowed
 case "$WINSDK_TARGETVER" in
-601|602)
+603)
     MOZ_WINSDK_TARGETVER=0${WINSDK_TARGETVER}0000
     ;;
 
@@ -518,7 +496,7 @@ case "$target" in
             AC_MSG_ERROR([windres version $WINDRES_VERSION or higher is required to build.])
         fi
 
-        MOZ_WINSDK_MAXVER=0x06010000
+        MOZ_WINSDK_MAXVER=0x06030000
     fi # !GNU_CC
 
     AC_DEFINE_UNQUOTED(WINVER,0x$WINVER)
@@ -599,7 +577,6 @@ fi
 AC_MSG_RESULT([$TAR])
 AC_SUBST(TAR)
 
-if test -z "$TINDERBOX_SKIP_PERL_VERSION_CHECK"; then
 AC_MSG_CHECKING([for minimum required perl version >= $PERL_VERSION])
 _perl_version=`PERL_VERSION=$PERL_VERSION $PERL -e 'print "$]"; if ($] >= $ENV{PERL_VERSION}) { exit(0); } else { exit(1); }' 2>&5`
 _perl_res=$?
@@ -607,7 +584,6 @@ AC_MSG_RESULT([$_perl_version])
 
 if test "$_perl_res" != 0; then
     AC_MSG_ERROR([Perl $PERL_VERSION or higher is required.])
-fi
 fi
 
 AC_MSG_CHECKING([for full perl installation])
@@ -1056,11 +1032,11 @@ MOZ_ANDROID_STLPORT
 dnl ========================================================
 dnl Suppress Clang Argument Warnings
 dnl ========================================================
-if test -n "$CLANG_CC"; then
+if test -n "${CLANG_CC}${CLANG_CL}"; then
     _WARNINGS_CFLAGS="-Qunused-arguments ${_WARNINGS_CFLAGS}"
     CPPFLAGS="-Qunused-arguments ${CPPFLAGS}"
 fi
-if test -n "$CLANG_CXX"; then
+if test -n "${CLANG_CXX}${CLANG_CL}"; then
     _WARNINGS_CXXFLAGS="-Qunused-arguments ${_WARNINGS_CXXFLAGS}"
 fi
 
@@ -1091,6 +1067,20 @@ if test -n "$MOZ_MSAN"; then
     MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
 fi
 AC_SUBST(MOZ_MSAN)
+
+dnl ========================================================
+dnl = Use Thread Sanitizer
+dnl ========================================================
+MOZ_ARG_ENABLE_BOOL(thread-sanitizer,
+[  --enable-thread-sanitizer       Enable Thread Sanitizer (default=no)],
+   MOZ_TSAN=1,
+   MOZ_TSAN= )
+if test -n "$MOZ_TSAN"; then
+    MOZ_LLVM_HACKS=1
+    AC_DEFINE(MOZ_TSAN)
+    MOZ_PATH_PROG(LLVM_SYMBOLIZER, llvm-symbolizer)
+fi
+AC_SUBST(MOZ_TSAN)
 
 # The LLVM symbolizer is used by all sanitizers
 AC_SUBST(LLVM_SYMBOLIZER)
@@ -1498,16 +1488,6 @@ case "$host" in
     ;;
 esac
 
-dnl Check for using a custom <inttypes.h> implementation
-dnl ========================================================
-AC_MSG_CHECKING(for custom <inttypes.h> implementation)
-if test "$MOZ_CUSTOM_INTTYPES_H"; then
-  AC_DEFINE_UNQUOTED(MOZ_CUSTOM_INTTYPES_H, "$MOZ_CUSTOM_INTTYPES_H")
-  AC_MSG_RESULT(using $MOZ_CUSTOM_INTTYPES_H)
-else
-  AC_MSG_RESULT(none specified)
-fi
-
 MOZ_DOING_LTO(lto_is_enabled)
 
 dnl ========================================================
@@ -1724,7 +1704,7 @@ ia64*-hpux*)
         MKCSHLIB='$(CC) $(DSO_LDOPTS) -o $@'
         RC='$(WINDRES)'
         # Use static libgcc and libstdc++
-        LDFLAGS="$LDFLAGS -static-libgcc -static-libstdc++"
+        LDFLAGS="$LDFLAGS -static"
         # Use temp file for windres (bug 213281)
         RCFLAGS='-O coff --use-temp-file'
         # mingw doesn't require kernel32, user32, and advapi32 explicitly
@@ -2243,12 +2223,7 @@ AC_SUBST(WRAP_SYSTEM_INCLUDES)
 AC_SUBST(VISIBILITY_FLAGS)
 
 MOZ_GCC_PR49911
-MOZ_GCC_PR39608
-if test "$OS_TARGET" != WINNT; then
-    # Only run this test with clang on non-Windows platforms, because clang
-    # cannot do enough code gen for now to make this test work correctly.
-    MOZ_LLVM_PR8927
-fi
+MOZ_LLVM_PR8927
 
 dnl Checks for header files.
 dnl ========================================================
@@ -2654,21 +2629,6 @@ if test "$ac_cv_cpp_dynamic_cast_void_ptr" = yes ; then
 fi
 
 
-dnl note that this one is reversed - if the test fails, then
-dnl we require implementations of unused virtual methods. Which
-dnl really blows because it means we'll have useless vtable
-dnl bloat.
-AC_CACHE_CHECK(whether C++ requires implementation of unused virtual methods,
-               ac_cv_cpp_unused_required,
-               [AC_TRY_LINK(class X {private: virtual void never_called();};,
-                               X x;,
-                               ac_cv_cpp_unused_required=no,
-                               ac_cv_cpp_unused_required=yes)])
-if test "$ac_cv_cpp_unused_required" = yes ; then
-   AC_DEFINE(NEED_CPP_UNUSED_IMPLEMENTATIONS)
-fi
-
-
 # try harder, when checking for __thread support, see bug 521750 comment #33 and below
 # We pass MOZ_OPTIMIZE_LDFLAGS to the linker because if dead_strip is
 # enabled, the linker in xcode 4.1 will crash. Without this it would crash when
@@ -2985,16 +2945,16 @@ AC_SUBST(MOZ_OPTIMIZE_SIZE_TWEAK)
 AC_SUBST(MOZ_PGO_OPTIMIZE_FLAGS)
 
 dnl ========================================================
-dnl = Enable trace logging
+dnl = Disable trace logging
 dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(trace-logging,
-[  --enable-trace-logging   Enable trace logging],
-    ENABLE_TRACE_LOGGING=1,
+ENABLE_TRACE_LOGGING=1
+MOZ_ARG_DISABLE_BOOL(trace-logging,
+[  --disable-trace-logging   Disable trace logging],
     ENABLE_TRACE_LOGGING= )
 
 AC_SUBST(ENABLE_TRACE_LOGGING)
 
-if test "$ENABLE_TRACE_LOGGING"; then
+if test -n "$ENABLE_TRACE_LOGGING"; then
     AC_DEFINE(JS_TRACE_LOGGING)
 fi
 
@@ -3023,21 +2983,6 @@ elif test "$GNU_CC"; then
 fi
 
 dnl ========================================================
-dnl = Enable trace malloc
-dnl ========================================================
-NS_TRACE_MALLOC=${MOZ_TRACE_MALLOC}
-MOZ_ARG_ENABLE_BOOL(trace-malloc,
-[  --enable-trace-malloc   Enable malloc tracing],
-    NS_TRACE_MALLOC=1,
-    NS_TRACE_MALLOC= )
-if test "$NS_TRACE_MALLOC"; then
-  # Please, Mr. Linker Man, don't take away our symbol names
-  MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
-  AC_DEFINE(NS_TRACE_MALLOC)
-fi
-AC_SUBST(NS_TRACE_MALLOC)
-
-dnl ========================================================
 dnl = Enable DMD
 dnl ========================================================
 
@@ -3046,9 +2991,6 @@ MOZ_ARG_ENABLE_BOOL(dmd,
     MOZ_DMD=1,
     MOZ_DMD= )
 
-if test "$NS_TRACE_MALLOC"; then        # trace-malloc disables DMD
-    MOZ_DMD=
-fi
 if test "$MOZ_DMD"; then
     AC_DEFINE(MOZ_DMD)
 
@@ -3065,10 +3007,6 @@ MOZ_ARG_ENABLE_BOOL(jemalloc,
 [  --enable-jemalloc       Replace memory allocator with jemalloc],
     MOZ_MEMORY=1,
     MOZ_MEMORY=)
-
-if test "$NS_TRACE_MALLOC"; then
-    MOZ_MEMORY=
-fi
 
 if test "$MOZ_MEMORY"; then
   AC_DEFINE(MOZ_MEMORY)
@@ -3140,45 +3078,6 @@ dnl ========================================================
 MOZ_ARG_WITH_STRING(wrap-malloc,
 [  --with-wrap-malloc=DIR  Location of malloc wrapper library],
     WRAP_LDFLAGS="${WRAP_LDFLAGS} $withval")
-
-dnl ========================================================
-dnl = Use JS Call tracing
-dnl ========================================================
-MOZ_ARG_ENABLE_BOOL(trace-jscalls,
-[  --enable-trace-jscalls  Enable JS call enter/exit callback (default=no)],
-    MOZ_TRACE_JSCALLS=1,
-    MOZ_TRACE_JSCALLS= )
-if test -n "$MOZ_TRACE_JSCALLS"; then
-    AC_DEFINE(MOZ_TRACE_JSCALLS)
-fi
-
-dnl ========================================================
-dnl = Use incremental GC
-dnl ========================================================
-JSGC_INCREMENTAL=1
-MOZ_ARG_DISABLE_BOOL(gcincremental,
-[  --disable-gcincremental Disable incremental GC],
-    JSGC_INCREMENTAL= )
-if test -n "$JSGC_INCREMENTAL"; then
-    AC_DEFINE(JSGC_INCREMENTAL)
-fi
-
-dnl ========================================================
-dnl = Use generational GC
-dnl ========================================================
-dnl Use generational GC by default in all shell builds. The top-level mozilla
-dnl configure.in will configure SpiderMonkey with --disable-gcgenerational as
-dnl needed on a per-platform basis.
-JSGC_GENERATIONAL=1
-MOZ_ARG_DISABLE_BOOL(gcgenerational,
-[  --disable-gcgenerational Disable generational GC],
-    JSGC_GENERATIONAL= ,
-    JSGC_GENERATIONAL=1 )
-if test -n "$JSGC_GENERATIONAL"; then
-    AC_DEFINE(JSGC_GENERATIONAL)
-fi
-JSGC_GENERATIONAL_CONFIGURED=$JSGC_GENERATIONAL
-AC_SUBST(JSGC_GENERATIONAL_CONFIGURED)
 
 dnl ========================================================
 dnl = Use compacting GC
@@ -3502,9 +3401,9 @@ if test -z "$SKIP_LIBRARY_CHECKS"; then
     AC_LANG_RESTORE
 fi
 
-# Demangle only for debug or trace-malloc or DMD builds
+# Demangle only for debug or DMD builds
 MOZ_DEMANGLE_SYMBOLS=
-if test "$HAVE_DEMANGLE" && test "$MOZ_DEBUG" -o "$NS_TRACE_MALLOC" -o "$MOZ_DMD"; then
+if test "$HAVE_DEMANGLE" && test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_DEMANGLE_SYMBOLS=1
     AC_DEFINE(MOZ_DEMANGLE_SYMBOLS)
 fi
@@ -3744,7 +3643,7 @@ if test "$JS_HAS_CTYPES"; then
   AC_DEFINE(JS_HAS_CTYPES)
 fi
 
-if test "$MOZ_DEBUG" -o "$NS_TRACE_MALLOC" -o "$MOZ_DMD"; then
+if test "$MOZ_DEBUG" -o "$MOZ_DMD"; then
     MOZ_COMPONENTS_VERSION_SCRIPT_LDFLAGS=
 fi
 

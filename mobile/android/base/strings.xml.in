@@ -8,9 +8,7 @@
 #includesubst @BRANDPATH@
 #includesubst @STRINGSPATH@
 #includesubst @SYNCSTRINGSPATH@
-#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #includesubst @SEARCHSTRINGSPATH@
-#endif
 
 <!-- C-style format strings. -->
 <!ENTITY formatI "&#037;I">
@@ -33,9 +31,7 @@
   <string name="moz_android_shared_fxaccount_type">@MOZ_ANDROID_SHARED_FXACCOUNT_TYPE@</string>
   <string name="android_package_name_for_ui">@ANDROID_PACKAGE_NAME@</string>
 
-#ifdef MOZ_ANDROID_SEARCH_ACTIVITY
 #include ../search/strings/search_strings.xml.in
-#endif
 
 #include ../services/strings.xml.in
   <string name="no_space_to_start_error">&no_space_to_start_error;</string>
@@ -182,6 +178,8 @@
   <string name="pref_cookies_not_accept_foreign">&pref_cookies_not_accept_foreign;</string>
   <string name="pref_cookies_disabled">&pref_cookies_disabled;</string>
 
+  <string name="pref_tracking_protection_title">&pref_tracking_protection_title;</string>
+  <string name="pref_tracking_protection_summary">&pref_tracking_protection_summary;</string>
   <string name="pref_donottrack_title">&pref_donottrack_title;</string>
   <string name="pref_donottrack_summary">&pref_donottrack_summary;</string>
 
@@ -369,6 +367,7 @@
   <string name="home_remote_tabs_empty">&home_remote_tabs_empty;</string>
   <string name="home_remote_tabs_unable_to_connect">&home_remote_tabs_unable_to_connect;</string>
   <string name="home_remote_tabs_need_to_sign_in">&home_remote_tabs_need_to_sign_in;</string>
+  <string name="home_remote_tabs_need_to_finish_migrating">&home_remote_tabs_need_to_finish_migrating;</string>
   <string name="home_remote_tabs_trouble_verifying">&home_remote_tabs_trouble_verifying;</string>
   <string name="home_remote_tabs_need_to_verify">&home_remote_tabs_need_to_verify;</string>
   <string name="home_remote_tabs_one_hidden_device">&home_remote_tabs_one_hidden_device;</string>
@@ -451,10 +450,6 @@
 
   <string name="updater_apply_title">&updater_apply_title2;</string>
   <string name="updater_apply_select">&updater_apply_select2;</string>
-
-  <!-- New tablet UI -->
-  <string name="new_tablet_restart">&new_tablet_restart;</string>
-  <string name="new_tablet_pref">&new_tablet_pref;</string>
 
   <!-- Search suggestions opt-in -->
   <string name="suggestions_prompt">&suggestions_prompt3;</string>

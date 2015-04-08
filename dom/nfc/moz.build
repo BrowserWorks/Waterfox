@@ -19,6 +19,7 @@ if CONFIG['MOZ_NFC']:
     ]
     EXTRA_COMPONENTS += [
         'NfcContentHelper.js',
+        'NfcContentHelper.manifest',
         'nsNfc.js',
         'nsNfc.manifest',
     ]
@@ -30,6 +31,7 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['MOZ_NFC']:
     ]
     XPIDL_SOURCES += [
         'gonk/nsINfcService.idl',
+        'gonk/nsINfcSystemMessage.idl',
     ]
     EXTRA_COMPONENTS += [
         'gonk/Nfc.js',

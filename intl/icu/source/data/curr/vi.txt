@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/vi.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/vi.xml
- */
 vi{
     Currencies{
         ADP{
@@ -581,7 +578,7 @@ vi{
         }
         LSL{
             "LSL",
-            "Đồng loti của Lesotho",
+            "Ioti Lesotho",
         }
         LTL{
             "LTL",
@@ -709,7 +706,7 @@ vi{
         }
         MZE{
             "MZE",
-            "Đồng Escudo Mozambique",
+            "Escudo Mozambique",
         }
         MZM{
             "MZM",
@@ -905,7 +902,7 @@ vi{
         }
         SVC{
             "SVC",
-            "Đồng Colón Salvador",
+            "Colón El Salvador",
         }
         SYP{
             "SYP",
@@ -1704,5 +1701,5 @@ vi{
     CurrencyUnitPatterns{
         other{"{0} {1}"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

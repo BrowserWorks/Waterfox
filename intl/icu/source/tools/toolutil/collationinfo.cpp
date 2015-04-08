@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 2013-2014, International Business Machines
+* Copyright (C) 2013-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * collationinfo.cpp
@@ -16,9 +16,11 @@
 
 #if !UCONFIG_NO_COLLATION
 
+#include "collationdata.h"
 #include "collationdatareader.h"
 #include "collationinfo.h"
 #include "uassert.h"
+#include "uvectr32.h"
 
 U_NAMESPACE_BEGIN
 
@@ -110,6 +112,37 @@ CollationInfo::printSizes(int32_t sizeWithHeader, const int32_t indexes[]) {
 int32_t
 CollationInfo::getDataLength(const int32_t indexes[], int32_t startIndex) {
     return indexes[startIndex + 1] - indexes[startIndex];
+}
+
+void
+CollationInfo::printReorderRanges(const CollationData &data, const int32_t *codes, int32_t length) {
+    UErrorCode errorCode = U_ZERO_ERROR;
+    UVector32 ranges(errorCode);
+    data.makeReorderRanges(codes, length, ranges, errorCode);
+    if(U_FAILURE(errorCode)) {
+        printf("  error building reorder ranges: %s\n", u_errorName(errorCode));
+        return;
+    }
+
+    int32_t start = 0;
+    for(int32_t i = 0; i < ranges.size(); ++i) {
+        int32_t pair = ranges.elementAti(i);
+        int32_t limit = (pair >> 16) & 0xffff;
+        int16_t offset = (int16_t)pair;
+        if(offset == 0) {
+            // [inclusive-start, exclusive-limit[
+            printf("          [%04x, %04x[\n", start, limit);
+        } else if(offset > 0) {
+            printf("  reorder [%04x, %04x[ by offset  %02x to [%04x, %04x[\n",
+                    start, limit, offset,
+                    start + (offset << 8), limit + (offset << 8));
+        } else /* offset < 0 */ {
+            printf("  reorder [%04x, %04x[ by offset -%02x to [%04x, %04x[\n",
+                    start, limit, -offset,
+                    start + (offset << 8), limit + (offset << 8));
+        }
+        start = limit;
+    }
 }
 
 U_NAMESPACE_END

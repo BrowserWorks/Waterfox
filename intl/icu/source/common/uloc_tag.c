@@ -1320,7 +1320,7 @@ _appendLDMLExtensionAsKeywords(const char* ldmlext, ExtensionListEntry** appendT
         /* BCP47 representation of LDML key/type pairs */
         while (!isDone) {
             const char *pNextBcpKey = NULL;
-            int32_t nextBcpKeyLen;
+            int32_t nextBcpKeyLen = 0;
             UBool emitKeyword = FALSE;
 
             if (*pTag) {

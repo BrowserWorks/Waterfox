@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lv.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/lv.xml
- */
 lv{
     Countries{
         001{"pasaule"}
@@ -302,6 +299,13 @@ lv{
         ZW{"Zimbabve"}
         ZZ{"nezināms reģions"}
     }
+    Countries%short{
+        GB{"Lielbritānija"}
+        HK{"Honkonga"}
+        MO{"Makao"}
+        PS{"Palestīna"}
+        US{"ASV"}
+    }
     Countries%variant{
         CD{"Kongo Demokrātiskā Republika"}
         CG{"Kongo (Republika)"}
@@ -309,12 +313,5 @@ lv{
         FK{"Folklenda (Malvinu) salas"}
         MK{"Maķedonija (BDRM)"}
     }
-    CountriesShort{
-        GB{"Lielbritānija"}
-        HK{"Honkonga"}
-        MO{"Makao"}
-        PS{"Palestīna"}
-        US{"ASV"}
-    }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
 }

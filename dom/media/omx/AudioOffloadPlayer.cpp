@@ -55,18 +55,18 @@ PRLogModuleInfo* gAudioOffloadPlayerLog;
 static const uint64_t OFFLOAD_PAUSE_MAX_MSECS = 60000ll;
 
 AudioOffloadPlayer::AudioOffloadPlayer(MediaOmxCommonDecoder* aObserver) :
-  mObserver(aObserver),
-  mInputBuffer(nullptr),
-  mSampleRate(0),
-  mSeeking(false),
-  mSeekDuringPause(false),
-  mReachedEOS(false),
-  mSeekTimeUs(0),
-  mStartPosUs(0),
-  mPositionTimeMediaUs(-1),
   mStarted(false),
   mPlaying(false),
-  mIsElementVisible(true)
+  mSeeking(false),
+  mReachedEOS(false),
+  mSeekDuringPause(false),
+  mIsElementVisible(true),
+  mSampleRate(0),
+  mStartPosUs(0),
+  mSeekTimeUs(0),
+  mPositionTimeMediaUs(-1),
+  mInputBuffer(nullptr),
+  mObserver(aObserver)
 {
   MOZ_ASSERT(NS_IsMainThread());
 
@@ -77,8 +77,13 @@ AudioOffloadPlayer::AudioOffloadPlayer(MediaOmxCommonDecoder* aObserver) :
 #endif
 
   CHECK(aObserver);
+#if ANDROID_VERSION >= 21
+  mSessionId = AudioSystem::newAudioUniqueId();
+  AudioSystem::acquireAudioSessionId(mSessionId, -1);
+#else
   mSessionId = AudioSystem::newAudioSessionId();
   AudioSystem::acquireAudioSessionId(mSessionId);
+#endif
   mAudioSink = new AudioOutput(mSessionId,
       IPCThreadState::self()->getCallingUid());
 }
@@ -86,7 +91,11 @@ AudioOffloadPlayer::AudioOffloadPlayer(MediaOmxCommonDecoder* aObserver) :
 AudioOffloadPlayer::~AudioOffloadPlayer()
 {
   Reset();
+#if ANDROID_VERSION >= 21
+  AudioSystem::releaseAudioSessionId(mSessionId, -1);
+#else
   AudioSystem::releaseAudioSessionId(mSessionId);
+#endif
 }
 
 void AudioOffloadPlayer::SetSource(const sp<MediaSource> &aSource)

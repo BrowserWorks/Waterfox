@@ -1,23 +1,14 @@
 /* Any copyright is dedicated to the Public Domain.
    http://creativecommons.org/publicdomain/zero/1.0/ */
 
-///////////////////
-//
-// Whitelisting this test.
-// As part of bug 1077403, the leaking uncaught rejection should be fixed. 
-//
-thisTestLeaksUncaughtRejectionsAndShouldBeFixed("Error: Connection closed");
-
 const TEST_URI = "http://example.com/browser/browser/devtools/webconsole/test/test-bug-632275-getters.html";
 
 let getterValue = null;
 
 function test() {
-  addTab(TEST_URI);
-  browser.addEventListener("load", function onLoad() {
-    browser.removeEventListener("load", onLoad, true);
-    openConsole(null, consoleOpened);
-  }, true);
+  loadTab(TEST_URI).then(() => {
+    openConsole().then(consoleOpened);
+  });
 }
 
 function consoleOpened(hud) {
@@ -46,6 +37,7 @@ function onViewOpened(hud, event, view)
     is(textContent.indexOf("document.body.client"), -1,
        "no document.width/height warning displayed");
 
+    getterValue = null;
     finishTest();
   });
 }

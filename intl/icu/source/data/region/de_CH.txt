@@ -1,6 +1,6 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/de_CH.xml
@@ -12,15 +12,11 @@ de_CH{
         BN{"Brunei"}
         BW{"Botswana"}
         BY{"Weissrussland"}
-        CV{"Kapverden"}
-        DJ{"Djibouti"}
         GB{"Grossbritannien"}
         MH{"Marshall-Inseln"}
         QO{"Äusseres Ozeanien"}
-        RW{"Rwanda"}
         SB{"Salomon-Inseln"}
-        ST{"Sao Tomé und Principe"}
         ZW{"Zimbabwe"}
     }
-    Version{"2.1.8.21"}
+    Version{"2.1.11.70"}
 }

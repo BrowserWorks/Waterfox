@@ -1,6 +1,6 @@
 //*******************************************************************************
 //*
-//*   Copyright (C) 2002-2012, International Business Machines
+//*   Copyright (C) 2002-2015, International Business Machines
 //*   Corporation and others.  All Rights Reserved.
 //*
 //*******************************************************************************
@@ -23,9 +23,9 @@ testaliases:table(nofallback)
 
     // alias that uses another alias and references parts of the end structure
     referencingalias:alias { "testaliases/anotheralias/2" } // Referencing through another alias
-    anotheralias:alias { "/ICUDATA/ja_JP/LocaleScript" } // Provoke a fallback too
+    anotheralias:alias { "/ICUDATA/ja_JP/calendar/gregorian/DateTimePatterns" } // Provoke a fallback too
 
-    LocaleScript:alias { "/ICUDATA/ja/LocaleScript" }
+    DateTimePatterns:alias { "/ICUDATA/ja/calendar/gregorian/DateTimePatterns" }
 
     // aliasing using position
     boundaries:alias { "/ICUDATA-brkitr/th" } // Referencing corresponding resource in another bundle

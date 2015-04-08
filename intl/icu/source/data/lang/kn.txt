@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/kn.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/kn.xml
- */
 kn{
     Keys{
         calendar{"ಕ್ಯಾಲೆಂಡರ್"}
@@ -518,14 +515,14 @@ kn{
         zxx{"ಯಾವುದೇ ಭಾಷಾಸಂಬಂಧಿ ವಿಷಯವಿಲ್ಲ"}
         zza{"ಜಾಝಾ"}
     }
-    Languages%variant{
-        ps{"ಪುಶ್ತೋ"}
-        ug{"ಉಯ್‌ಗರ್"}
-    }
-    LanguagesShort{
+    Languages%short{
         az{"ಅಝೆರಿ"}
         en_GB{"ಯು.ಕೆ. ಇಂಗ್ಲಿಷ್"}
         en_US{"ಯು.ಎಸ್. ಇಂಗ್ಲಿಷ್"}
+    }
+    Languages%variant{
+        ps{"ಪುಶ್ತೋ"}
+        ug{"ಉಯ್‌ಗರ್"}
     }
     Scripts{
         Arab{"ಅರೇಬಿಕ್"}
@@ -779,7 +776,7 @@ kn{
             vaii{"ವಾಯ್ ಅಂಕೆಗಳು"}
         }
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.51"}
     codePatterns{
         language{"ಭಾಷೆ: {0}"}
         script{"ಲಿಪಿ : {0}"}

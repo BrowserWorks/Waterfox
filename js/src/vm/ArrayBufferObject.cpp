@@ -38,10 +38,10 @@
 #include "gc/Barrier.h"
 #include "gc/Marking.h"
 #include "gc/Memory.h"
+#include "js/Conversions.h"
 #include "js/MemoryMetrics.h"
 #include "vm/GlobalObject.h"
 #include "vm/Interpreter.h"
-#include "vm/NumericConversions.h"
 #include "vm/WrapperObject.h"
 
 #include "jsatominlines.h"
@@ -50,6 +50,8 @@
 
 #include "vm/NativeObject-inl.h"
 #include "vm/Shape-inl.h"
+
+using JS::ToInt32;
 
 using mozilla::DebugOnly;
 using mozilla::UniquePtr;
@@ -94,14 +96,7 @@ js::ToClampedIndex(JSContext *cx, HandleValue v, uint32_t length, uint32_t *out)
 
 const Class ArrayBufferObject::protoClass = {
     "ArrayBufferPrototype",
-    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer),
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub
+    JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer)
 };
 
 const Class ArrayBufferObject::class_ = {
@@ -110,13 +105,13 @@ const Class ArrayBufferObject::class_ = {
     JSCLASS_HAS_RESERVED_SLOTS(RESERVED_SLOTS) |
     JSCLASS_HAS_CACHED_PROTO(JSProto_ArrayBuffer) |
     JSCLASS_BACKGROUND_FINALIZE,
-    JS_PropertyStub,         /* addProperty */
-    JS_DeletePropertyStub,   /* delProperty */
-    JS_PropertyStub,         /* getProperty */
-    JS_StrictPropertyStub,   /* setProperty */
-    JS_EnumerateStub,
-    JS_ResolveStub,
-    JS_ConvertStub,
+    nullptr,                 /* addProperty */
+    nullptr,                 /* delProperty */
+    nullptr,                 /* getProperty */
+    nullptr,                 /* setProperty */
+    nullptr,                 /* enumerate */
+    nullptr,                 /* resolve */
+    nullptr,                 /* convert */
     ArrayBufferObject::finalize,
     nullptr,        /* call        */
     nullptr,        /* hasInstance */
@@ -1205,7 +1200,7 @@ ArrayBufferViewObject::trace(JSTracer *trc, JSObject *objArg)
 
             void *srcData = obj->getPrivate();
             void *dstData = view->as<InlineTypedObject>().inlineTypedMem() + offset;
-            obj->setPrivate(dstData);
+            obj->setPrivateUnbarriered(dstData);
 
             // We can't use a direct forwarding pointer here, as there might
             // not be enough bytes available, and other views might have data

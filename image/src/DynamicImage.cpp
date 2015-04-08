@@ -36,13 +36,6 @@ DynamicImage::GetProgressTracker()
   return nullptr;
 }
 
-nsIntRect
-DynamicImage::FrameRect(uint32_t aWhichFrame)
-{
-  gfxIntSize size(mDrawable->Size());
-  return nsIntRect(0, 0, size.width, size.height);
-}
-
 size_t
 DynamicImage::SizeOfSourceWithComputedFallback(MallocSizeOf aMallocSizeOf) const
 {
@@ -193,12 +186,11 @@ DynamicImage::GetFrame(uint32_t aWhichFrame,
                                      SurfaceFormat::B8G8R8A8);
   nsRefPtr<gfxContext> context = new gfxContext(dt);
 
-  nsresult rv = Draw(context, size, ImageRegion::Create(size),
+  auto result = Draw(context, size, ImageRegion::Create(size),
                      aWhichFrame, GraphicsFilter::FILTER_NEAREST,
                      Nothing(), aFlags);
 
-  NS_ENSURE_SUCCESS(rv, nullptr);
-  return dt->Snapshot();
+  return result == DrawResult::SUCCESS ? dt->Snapshot() : nullptr;
 }
 
 NS_IMETHODIMP_(bool)
@@ -210,13 +202,14 @@ DynamicImage::IsOpaque()
 }
 
 NS_IMETHODIMP
-DynamicImage::GetImageContainer(LayerManager* aManager, ImageContainer** _retval)
+DynamicImage::GetImageContainer(LayerManager* aManager,
+                                ImageContainer** _retval)
 {
   *_retval = nullptr;
   return NS_OK;
 }
 
-NS_IMETHODIMP
+NS_IMETHODIMP_(DrawResult)
 DynamicImage::Draw(gfxContext* aContext,
                    const nsIntSize& aSize,
                    const ImageRegion& aRegion,
@@ -232,7 +225,7 @@ DynamicImage::Draw(gfxContext* aContext,
   if (aSize == drawableSize) {
     gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, aRegion,
                                SurfaceFormat::B8G8R8A8, aFilter);
-    return NS_OK;
+    return DrawResult::SUCCESS;
   }
 
   gfxSize scale(double(aSize.width) / drawableSize.width,
@@ -246,7 +239,7 @@ DynamicImage::Draw(gfxContext* aContext,
 
   gfxUtils::DrawPixelSnapped(aContext, mDrawable, drawableSize, region,
                              SurfaceFormat::B8G8R8A8, aFilter);
-  return NS_OK;
+  return DrawResult::SUCCESS;
 }
 
 NS_IMETHODIMP
@@ -261,10 +254,10 @@ DynamicImage::StartDecoding()
   return NS_OK;
 }
 
-bool
-DynamicImage::IsDecoded()
+NS_IMETHODIMP
+DynamicImage::RequestDecodeForSize(const nsIntSize& aSize, uint32_t aFlags)
 {
-  return true;
+  return NS_OK;
 }
 
 NS_IMETHODIMP
@@ -325,7 +318,9 @@ DynamicImage::SetAnimationStartTime(const mozilla::TimeStamp& aTime)
 { }
 
 nsIntSize
-DynamicImage::OptimalImageSizeForDest(const gfxSize& aDest, uint32_t aWhichFrame, GraphicsFilter aFilter, uint32_t aFlags)
+DynamicImage::OptimalImageSizeForDest(const gfxSize& aDest,
+                                      uint32_t aWhichFrame,
+                                      GraphicsFilter aFilter, uint32_t aFlags)
 {
   gfxIntSize size(mDrawable->Size());
   return nsIntSize(size.width, size.height);

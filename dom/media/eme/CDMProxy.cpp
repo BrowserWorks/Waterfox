@@ -12,7 +12,7 @@
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
 #include "MainThreadUtils.h"
-#include "mozilla/EMELog.h"
+#include "mozilla/EMEUtils.h"
 #include "nsIConsoleService.h"
 #include "prenv.h"
 #include "mozilla/PodOperations.h"
@@ -138,7 +138,8 @@ CDMProxy::OnCDMCreated(uint32_t aPromiseId)
 }
 
 void
-CDMProxy::CreateSession(dom::SessionType aSessionType,
+CDMProxy::CreateSession(uint32_t aCreateSessionToken,
+                        dom::SessionType aSessionType,
                         PromiseId aPromiseId,
                         const nsAString& aInitDataType,
                         nsTArray<uint8_t>& aInitData)
@@ -148,6 +149,7 @@ CDMProxy::CreateSession(dom::SessionType aSessionType,
 
   nsAutoPtr<CreateSessionData> data(new CreateSessionData());
   data->mSessionType = aSessionType;
+  data->mCreateSessionToken = aCreateSessionToken;
   data->mPromiseId = aPromiseId;
   data->mInitDataType = NS_ConvertUTF16toUTF8(aInitDataType);
   data->mInitData = Move(aInitData);
@@ -174,7 +176,8 @@ CDMProxy::gmp_CreateSession(nsAutoPtr<CreateSessionData> aData)
     RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
     return;
   }
-  mCDM->CreateSession(aData->mPromiseId,
+  mCDM->CreateSession(aData->mCreateSessionToken,
+                      aData->mPromiseId,
                       aData->mInitDataType,
                       aData->mInitData,
                       ToGMPSessionType(aData->mSessionType));
@@ -271,10 +274,6 @@ CDMProxy::CloseSession(const nsAString& aSessionId,
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  {
-    CDMCaps::AutoLock caps(Capabilites());
-    caps.DropKeysForSession(aSessionId);
-  }
   nsAutoPtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
@@ -301,10 +300,6 @@ CDMProxy::RemoveSession(const nsAString& aSessionId,
   MOZ_ASSERT(NS_IsMainThread());
   NS_ENSURE_TRUE_VOID(!mKeys.IsNull());
 
-  {
-    CDMCaps::AutoLock caps(Capabilites());
-    caps.DropKeysForSession(aSessionId);
-  }
   nsAutoPtr<SessionOpData> data(new SessionOpData());
   data->mPromiseId = aPromiseId;
   data->mSessionId = NS_ConvertUTF16toUTF8(aSessionId);
@@ -331,7 +326,9 @@ CDMProxy::Shutdown()
   mKeys.Clear();
   // Note: This may end up being the last owning reference to the CDMProxy.
   nsRefPtr<nsIRunnable> task(NS_NewRunnableMethod(this, &CDMProxy::gmp_Shutdown));
-  mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  if (mGMPThread) {
+    mGMPThread->Dispatch(task, NS_DISPATCH_NORMAL);
+  }
 }
 
 void
@@ -342,7 +339,7 @@ CDMProxy::gmp_Shutdown()
   // Abort any pending decrypt jobs, to awaken any clients waiting on a job.
   for (size_t i = 0; i < mDecryptionJobs.Length(); i++) {
     DecryptJob* job = mDecryptionJobs[i];
-    job->mClient->Decrypted(NS_ERROR_ABORT, nullptr);
+    job->mClient->Decrypted(GMPAbortedErr, nullptr);
   }
   mDecryptionJobs.Clear();
 
@@ -390,14 +387,16 @@ CDMProxy::GetNodeId() const
 }
 
 void
-CDMProxy::OnResolveNewSessionPromise(uint32_t aPromiseId,
-                                     const nsAString& aSessionId)
+CDMProxy::OnSetSessionId(uint32_t aCreateSessionToken,
+                         const nsAString& aSessionId)
 {
   MOZ_ASSERT(NS_IsMainThread());
   if (mKeys.IsNull()) {
     return;
   }
-  mKeys->OnSessionCreated(aPromiseId, aSessionId);
+
+  nsRefPtr<dom::MediaKeySession> session(mKeys->GetPendingSession(aCreateSessionToken));
+  session->SetSessionId(aSessionId);
 }
 
 void
@@ -410,10 +409,21 @@ CDMProxy::OnResolveLoadSessionPromise(uint32_t aPromiseId, bool aSuccess)
   mKeys->OnSessionLoaded(aPromiseId, aSuccess);
 }
 
+static dom::MediaKeyMessageType
+ToMediaKeyMessageType(GMPSessionMessageType aMessageType) {
+  switch (aMessageType) {
+    case kGMPLicenseRequest: return dom::MediaKeyMessageType::License_request;
+    case kGMPLicenseRenewal: return dom::MediaKeyMessageType::License_renewal;
+    case kGMPLicenseRelease: return dom::MediaKeyMessageType::License_release;
+    case kGMPIndividualizationRequest: return dom::MediaKeyMessageType::Individualization_request;
+    default: return dom::MediaKeyMessageType::License_request;
+  };
+};
+
 void
 CDMProxy::OnSessionMessage(const nsAString& aSessionId,
-                           nsTArray<uint8_t>& aMessage,
-                           const nsAString& aDestinationURL)
+                           GMPSessionMessageType aMessageType,
+                           nsTArray<uint8_t>& aMessage)
 {
   MOZ_ASSERT(NS_IsMainThread());
   if (mKeys.IsNull()) {
@@ -421,12 +431,12 @@ CDMProxy::OnSessionMessage(const nsAString& aSessionId,
   }
   nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
-    session->DispatchKeyMessage(aMessage, aDestinationURL);
+    session->DispatchKeyMessage(ToMediaKeyMessageType(aMessageType), aMessage);
   }
 }
 
 void
-CDMProxy::OnKeysChange(const nsAString& aSessionId)
+CDMProxy::OnKeyStatusesChange(const nsAString& aSessionId)
 {
   MOZ_ASSERT(NS_IsMainThread());
   if (mKeys.IsNull()) {
@@ -434,7 +444,7 @@ CDMProxy::OnKeysChange(const nsAString& aSessionId)
   }
   nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
   if (session) {
-    session->DispatchKeysChange();
+    session->DispatchKeyStatusesChange();
   }
 }
 
@@ -450,7 +460,13 @@ void
 CDMProxy::OnSessionClosed(const nsAString& aSessionId)
 {
   MOZ_ASSERT(NS_IsMainThread());
-  NS_WARNING("CDMProxy::OnSessionClosed() not implemented");
+  if (mKeys.IsNull()) {
+    return;
+  }
+  nsRefPtr<dom::MediaKeySession> session(mKeys->GetSession(aSessionId));
+  if (session) {
+    session->OnClosed();
+  }
 }
 
 static void
@@ -522,7 +538,7 @@ CDMProxy::gmp_Decrypt(nsAutoPtr<DecryptJob> aJob)
   MOZ_ASSERT(aJob->mSample);
 
   if (!mCDM) {
-    aJob->mClient->Decrypted(NS_ERROR_FAILURE, nullptr);
+    aJob->mClient->Decrypted(GMPAbortedErr, nullptr);
     return;
   }
 
@@ -549,24 +565,33 @@ CDMProxy::gmp_Decrypted(uint32_t aId,
         PodCopy(job->mSample->data,
                 aDecryptedData.Elements(),
                 std::min<size_t>(aDecryptedData.Length(), job->mSample->size));
-        job->mClient->Decrypted(NS_OK, job->mSample.forget());
+        job->mClient->Decrypted(GMPNoErr, job->mSample.forget());
+      } else if (aResult == GMPNoKeyErr) {
+        NS_WARNING("CDM returned GMPNoKeyErr");
+        // We still have the encrypted sample, so we can re-enqueue it to be
+        // decrypted again once the key is usable again.
+        job->mClient->Decrypted(GMPNoKeyErr, job->mSample.forget());
       } else {
-        job->mClient->Decrypted(NS_ERROR_FAILURE, nullptr);
+        nsAutoCString str("CDM returned decode failure GMPErr=");
+        str.AppendInt(aResult);
+        NS_WARNING(str.get());
+        job->mClient->Decrypted(aResult, nullptr);
       }
       mDecryptionJobs.RemoveElementAt(i);
       return;
-    } else {
-      NS_WARNING("GMPDecryptorChild returned incorrect job ID");
     }
   }
+  NS_WARNING("GMPDecryptorChild returned incorrect job ID");
 }
 
 void
-CDMProxy::gmp_Terminated()
+CDMProxy::Terminated()
 {
-  MOZ_ASSERT(IsOnGMPThread());
-  EME_LOG("CDM terminated");
-  gmp_Shutdown();
+  MOZ_ASSERT(NS_IsMainThread());
+  NS_WARNING("CDM terminated");
+  if (!mKeys.IsNull()) {
+    mKeys->Terminated();
+  }
 }
 
 } // namespace mozilla

@@ -53,7 +53,6 @@ public class Tab {
     private boolean mHasFeeds;
     private boolean mHasOpenSearch;
     private final SiteIdentity mSiteIdentity;
-    private boolean mReaderEnabled;
     private BitmapDrawable mThumbnail;
     private final int mParentId;
     private final boolean mExternal;
@@ -96,7 +95,6 @@ public class Tab {
     public static final int LOAD_PROGRESS_STOP = 100;
 
     private static final int DEFAULT_BACKGROUND_COLOR = Color.WHITE;
-    public static final int MAX_HISTORY_LIST_SIZE = 50;
 
     public enum ErrorType {
         CERT_ERROR,  // Pages with certificate problems
@@ -178,6 +176,10 @@ public class Tab {
         return mUrl;
     }
 
+    /**
+     * Returns the base domain of the loaded uri. Note that if the page is
+     * a Reader mode uri, the base domain returned is that of the original uri.
+     */
     public String getBaseDomain() {
         return mBaseDomain;
     }
@@ -261,10 +263,6 @@ public class Tab {
 
     public SiteIdentity getSiteIdentity() {
         return mSiteIdentity;
-    }
-
-    public boolean getReaderEnabled() {
-        return mReaderEnabled;
     }
 
     public boolean isBookmark() {
@@ -475,11 +473,6 @@ public class Tab {
         mSiteIdentity.update(identityData);
     }
 
-    public void setReaderEnabled(boolean readerEnabled) {
-        mReaderEnabled = readerEnabled;
-        Tabs.getInstance().notifyListeners(this, Tabs.TabEvents.MENU_UPDATED);
-    }
-
     void updateBookmark() {
         if (getURL() == null) {
             return;
@@ -530,7 +523,7 @@ public class Tab {
     public void toggleReaderMode() {
         if (AboutPages.isAboutReader(mUrl)) {
             Tabs.getInstance().loadUrl(ReaderModeUtils.getUrlFromAboutReader(mUrl));
-        } else if (mReaderEnabled) {
+        } else {
             mEnteringReaderMode = true;
             Tabs.getInstance().loadUrl(ReaderModeUtils.getAboutReaderForUrl(mUrl, mId));
         }
@@ -614,8 +607,7 @@ public class Tab {
 
         setHasFeeds(false);
         setHasOpenSearch(false);
-        updateIdentityData(null);
-        setReaderEnabled(false);
+        mSiteIdentity.reset();
         setZoomConstraints(new ZoomConstraints(true));
         setHasTouchListeners(false);
         setBackgroundColor(DEFAULT_BACKGROUND_COLOR);
@@ -632,8 +624,7 @@ public class Tab {
     void handleDocumentStart(boolean restoring, String url) {
         setLoadProgress(LOAD_PROGRESS_START);
         setState((!restoring && shouldShowProgress(url)) ? STATE_LOADING : STATE_SUCCESS);
-        updateIdentityData(null);
-        setReaderEnabled(false);
+        mSiteIdentity.reset();
     }
 
     void handleDocumentStop(boolean success) {

@@ -279,7 +279,7 @@ WebrtcGmpVideoEncoder::Encode_g(const webrtc::I420VideoFrame* aInputImage,
   if (err != GMPNoErr) {
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
-  UniquePtr<GMPVideoi420Frame> frame(static_cast<GMPVideoi420Frame*>(ftmp));
+  GMPUnique<GMPVideoi420Frame>::Ptr frame(static_cast<GMPVideoi420Frame*>(ftmp));
 
   err = frame->CreateFrame(aInputImage->allocated_size(webrtc::kYPlane),
                            aInputImage->buffer(webrtc::kYPlane),
@@ -506,7 +506,8 @@ WebrtcGmpVideoDecoder::WebrtcGmpVideoDecoder() :
   mGMP(nullptr),
   mHost(nullptr),
   mCallback(nullptr),
-  mCachedPluginId(0) {}
+  mCachedPluginId(0),
+  mDecoderStatus(GMPNoErr){}
 
 static void
 Decoder_Close_g(GMPVideoDecoderProxy* aGMP)
@@ -635,7 +636,7 @@ WebrtcGmpVideoDecoder::Decode_g(const webrtc::EncodedImage& aInputImage,
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
-  UniquePtr<GMPVideoEncodedFrame> frame(static_cast<GMPVideoEncodedFrame*>(ftmp));
+  GMPUnique<GMPVideoEncodedFrame>::Ptr frame(static_cast<GMPVideoEncodedFrame*>(ftmp));
   err = frame->CreateEmptyFrame(aInputImage._length);
   if (err != GMPNoErr) {
     return WEBRTC_VIDEO_CODEC_ERROR;
@@ -676,7 +677,10 @@ WebrtcGmpVideoDecoder::Decode_g(const webrtc::EncodedImage& aInputImage,
   if (NS_FAILED(rv)) {
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
-
+  if(mDecoderStatus != GMPNoErr){
+    mDecoderStatus = GMPNoErr;
+    return WEBRTC_VIDEO_CODEC_ERROR;
+  }
   return WEBRTC_VIDEO_CODEC_OK;
 }
 

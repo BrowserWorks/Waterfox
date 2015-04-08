@@ -83,6 +83,7 @@ function WebConsoleActor(aConnection, aParentActor)
 
   this.traits = {
     customNetworkRequest: !this._parentIsContentActor,
+    evaluateJSAsync: true
   };
 }
 
@@ -729,6 +730,39 @@ WebConsoleActor.prototype =
   },
 
   /**
+   * Handler for the "evaluateJSAsync" request. This method evaluates the given
+   * JavaScript string and sends back a packet with a unique ID.
+   * The result will be returned later as an unsolicited `evaluationResult`,
+   * that can be associated back to this request via the `resultID` field.
+   *
+   * @param object aRequest
+   *        The JSON request object received from the Web Console client.
+   * @return object
+   *         The response packet to send to with the unique id in the
+   *         `resultID` field.
+   */
+  onEvaluateJSAsync: function WCA_onEvaluateJSAsync(aRequest)
+  {
+    // We want to be able to run console commands without waiting
+    // for the first to return (see Bug 1088861).
+
+    // First, send a response packet with the id only.
+    let resultID = Date.now();
+    this.conn.send({
+      from: this.actorID,
+      resultID: resultID
+    });
+
+    // Then, execute the script that may pause.
+    let response = this.onEvaluateJS(aRequest);
+    response.resultID = resultID;
+
+    // Finally, send an unsolicited evaluationResult packet with
+    // the normal return value
+    this.conn.sendActorEvent(this.actorID, "evaluationResult", response);
+  },
+
+  /**
    * Handler for the "evaluateJS" request. This method evaluates the given
    * JavaScript string and sends back the result.
    *
@@ -1025,9 +1059,15 @@ WebConsoleActor.prototype =
    */
   evalWithDebugger: function WCA_evalWithDebugger(aString, aOptions = {})
   {
+    let trimmedString = aString.trim();
     // The help function needs to be easy to guess, so we make the () optional.
-    if (aString.trim() == "help" || aString.trim() == "?") {
+    if (trimmedString == "help" || trimmedString == "?") {
       aString = "help()";
+    }
+
+    // Add easter egg for console.mihai().
+    if (trimmedString == "console.mihai()" || trimmedString == "console.mihai();") {
+      aString = "\"http://incompleteness.me/blog/2015/02/09/console-dot-mihai/\"";
     }
 
     // Find the Debugger.Frame of the given FrameActor.
@@ -1471,6 +1511,7 @@ WebConsoleActor.prototype.requestTypes =
   stopListeners: WebConsoleActor.prototype.onStopListeners,
   getCachedMessages: WebConsoleActor.prototype.onGetCachedMessages,
   evaluateJS: WebConsoleActor.prototype.onEvaluateJS,
+  evaluateJSAsync: WebConsoleActor.prototype.onEvaluateJSAsync,
   autocomplete: WebConsoleActor.prototype.onAutocomplete,
   clearMessagesCache: WebConsoleActor.prototype.onClearMessagesCache,
   getPreferences: WebConsoleActor.prototype.onGetPreferences,
@@ -1720,6 +1761,20 @@ NetworkEventActor.prototype =
   },
 
   /**
+   * The "getSecurityInfo" packet type handler.
+   *
+   * @return object
+   *         The response packet - connection security information.
+   */
+  onGetSecurityInfo: function NEA_onGetSecurityInfo()
+  {
+    return {
+      from: this.actorID,
+      securityInfo: this._securityInfo,
+    };
+  },
+
+  /**
    * The "getResponseHeaders" packet type handler.
    *
    * @return object
@@ -1875,6 +1930,26 @@ NetworkEventActor.prototype =
   },
 
   /**
+   * Add connection security information.
+   *
+   * @param object info
+   *        The object containing security information.
+   */
+  addSecurityInfo: function NEA_addSecurityInfo(info)
+  {
+    this._securityInfo = info;
+
+    let packet = {
+      from: this.actorID,
+      type: "networkEventUpdate",
+      updateType: "securityInfo",
+      state: info.state,
+    };
+
+    this.conn.send(packet);
+  },
+
+  /**
    * Add network response headers.
    *
    * @param array aHeaders
@@ -1997,4 +2072,5 @@ NetworkEventActor.prototype.requestTypes =
   "getResponseCookies": NetworkEventActor.prototype.onGetResponseCookies,
   "getResponseContent": NetworkEventActor.prototype.onGetResponseContent,
   "getEventTimings": NetworkEventActor.prototype.onGetEventTimings,
+  "getSecurityInfo": NetworkEventActor.prototype.onGetSecurityInfo,
 };

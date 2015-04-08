@@ -12,6 +12,7 @@ const events = require("sdk/event/core");
 const Heritage = require("sdk/core/heritage");
 const {CssLogic} = require("devtools/styleinspector/css-logic");
 const EventEmitter = require("devtools/toolkit/event-emitter");
+const {setIgnoreLayoutChanges} = require("devtools/server/actors/layout");
 
 Cu.import("resource://gre/modules/devtools/LayoutHelpers.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
@@ -683,16 +684,15 @@ AutoRefreshHighlighter.prototype = {
   _startRefreshLoop: function() {
     let win = this.currentNode.ownerDocument.defaultView;
     this.rafID = win.requestAnimationFrame(this._startRefreshLoop.bind(this));
+    this.rafWin = win;
     this.update();
   },
 
   _stopRefreshLoop: function() {
-    if (!this.rafID) {
-      return;
+    if (this.rafID && !Cu.isDeadWrapper(this.rafWin)) {
+      this.rafWin.cancelAnimationFrame(this.rafID);
     }
-    let win = this.currentNode.ownerDocument.defaultView;
-    win.cancelAnimationFrame(this.rafID);
-    this.rafID = null;
+    this.rafID = this.rafWin = null;
   },
 
   destroy: function() {
@@ -984,6 +984,8 @@ BoxModelHighlighter.prototype = Heritage.extend(AutoRefreshHighlighter.prototype
    * Should be called whenever node size or attributes change
    */
   _update: function() {
+    setIgnoreLayoutChanges(true);
+
     if (this._updateBoxModel()) {
       if (!this.options.hideInfoBar) {
         this._showInfobar();
@@ -995,15 +997,21 @@ BoxModelHighlighter.prototype = Heritage.extend(AutoRefreshHighlighter.prototype
       // Nothing to highlight (0px rectangle like a <script> tag for instance)
       this._hide();
     }
+
+    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
   },
 
   /**
    * Hide the highlighter, the outline and the infobar.
    */
   _hide: function() {
+    setIgnoreLayoutChanges(true);
+
     this._untrackMutations();
     this._hideBoxModel();
     this._hideInfobar();
+
+    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
   },
 
   /**
@@ -1249,7 +1257,7 @@ BoxModelHighlighter.prototype = Heritage.extend(AutoRefreshHighlighter.prototype
       pseudos += ":" + pseudo;
     }
 
-    let rect = node.getBoundingClientRect();
+    let rect = this.currentQuads.border.bounds;
     let dim = Math.ceil(rect.width) + " x " + Math.ceil(rect.height);
 
     let elementId = this.ID_CLASS_PREFIX + "nodeinfobar-";
@@ -1491,6 +1499,8 @@ CssTransformHighlighter.prototype = Heritage.extend(AutoRefreshHighlighter.proto
    * Should be called whenever node size or attributes change
    */
   _update: function() {
+    setIgnoreLayoutChanges(true);
+
     // Getting the points for the transformed shape
     let quad = this.currentQuads.border;
     if (!quad || quad.bounds.width <= 0 || quad.bounds.height <= 0) {
@@ -1511,13 +1521,17 @@ CssTransformHighlighter.prototype = Heritage.extend(AutoRefreshHighlighter.proto
     this.markup.scaleRootElement(this.currentNode, this.ID_CLASS_PREFIX + "root");
 
     this._showShapes();
+
+    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
   },
 
   /**
    * Hide the highlighter, the outline and the infobar.
    */
   _hide: function() {
+    setIgnoreLayoutChanges(true);
     this._hideShapes();
+    setIgnoreLayoutChanges(false, this.currentNode.ownerDocument.documentElement);
   },
 
   _hideShapes: function() {

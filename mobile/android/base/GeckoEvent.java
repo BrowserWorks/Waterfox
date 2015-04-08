@@ -28,13 +28,10 @@ import android.view.MotionEvent;
 import org.mozilla.gecko.mozglue.JNITarget;
 import org.mozilla.gecko.mozglue.RobocopTarget;
 
-/* We're not allowed to hold on to most events given to us
+/**
+ * We're not allowed to hold on to most events given to us
  * so we save the parts of the events we want to use in GeckoEvent.
  * Fields have different meanings depending on the event type.
- */
-
-/* This class is referenced by Robocop via reflection; use care when
- * modifying the signature.
  */
 @JNITarget
 public class GeckoEvent {
@@ -719,13 +716,6 @@ public class GeckoEvent {
         GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOAD_URI);
         event.mCharacters = uri;
         event.mCharactersExtra = "";
-        return event;
-    }
-
-    public static GeckoEvent createWebappLoadEvent(String uri) {
-        GeckoEvent event = GeckoEvent.get(NativeGeckoEvent.LOAD_URI);
-        event.mCharacters = uri;
-        event.mCharactersExtra = "-webapp";
         return event;
     }
 

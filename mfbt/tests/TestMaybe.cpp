@@ -23,18 +23,13 @@ using mozilla::Swap;
 using mozilla::ToMaybe;
 using mozilla::UniquePtr;
 
-// Work around a bug in Visual Studio 2010 and 2012 that prevents expressions of
+#if MOZ_IS_MSVC
+   template<typename T> struct Identity { typedef T type; };
+#  define DECLTYPE(EXPR) Identity<decltype(EXPR)>::type
+#elif MOZ_IS_GCC
+// Work around a bug in GCC < 4.7 that prevents expressions of
 // the form |decltype(foo)::type| from working. See here:
 // http://stackoverflow.com/questions/14330768/c11-compiler-error-when-using-decltypevar-followed-by-internal-type-of-var
-// GCC < 4.7 also has a similar bug.
-#if MOZ_IS_MSVC
-#  if MOZ_MSVC_VERSION_AT_LEAST(12)
-#    define DECLTYPE(EXPR) decltype(EXPR)
-#  else
-     template<typename T> struct Identity { typedef T type; };
-#    define DECLTYPE(EXPR) Identity<decltype(EXPR)>::type
-#  endif
-#elif MOZ_IS_GCC
 #  if MOZ_GCC_VERSION_AT_LEAST(4, 7, 0)
 #    define DECLTYPE(EXPR) decltype(EXPR)
 #  else
@@ -170,8 +165,8 @@ struct UncopyableValue
   Status GetStatus() { return mStatus; }
 
 private:
-  UncopyableValue(const UncopyableValue& aOther) MOZ_DELETE;
-  UncopyableValue& operator=(const UncopyableValue& aOther) MOZ_DELETE;
+  UncopyableValue(const UncopyableValue& aOther) = delete;
+  UncopyableValue& operator=(const UncopyableValue& aOther) = delete;
 
   Status mStatus;
 };
@@ -201,8 +196,8 @@ struct UnmovableValue
   Status GetStatus() { return mStatus; }
 
 private:
-  UnmovableValue(UnmovableValue&& aOther) MOZ_DELETE;
-  UnmovableValue& operator=(UnmovableValue&& aOther) MOZ_DELETE;
+  UnmovableValue(UnmovableValue&& aOther) = delete;
+  UnmovableValue& operator=(UnmovableValue&& aOther) = delete;
 
   Status mStatus;
 };
@@ -226,10 +221,10 @@ struct UncopyableUnmovableValue
   Status GetStatus() { return mStatus; }
 
 private:
-  UncopyableUnmovableValue(const UncopyableUnmovableValue& aOther) MOZ_DELETE;
-  UncopyableUnmovableValue& operator=(const UncopyableUnmovableValue& aOther) MOZ_DELETE;
-  UncopyableUnmovableValue(UncopyableUnmovableValue&& aOther) MOZ_DELETE;
-  UncopyableUnmovableValue& operator=(UncopyableUnmovableValue&& aOther) MOZ_DELETE;
+  UncopyableUnmovableValue(const UncopyableUnmovableValue& aOther) = delete;
+  UncopyableUnmovableValue& operator=(const UncopyableUnmovableValue& aOther) = delete;
+  UncopyableUnmovableValue(UncopyableUnmovableValue&& aOther) = delete;
+  UncopyableUnmovableValue& operator=(UncopyableUnmovableValue&& aOther) = delete;
 
   Status mStatus;
 };

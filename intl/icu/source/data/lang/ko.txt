@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ko.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ko.xml
- */
 ko{
     Keys{
         calendar{"달력"}
@@ -559,7 +556,7 @@ ko{
         zxx{"언어 관련 내용 없음"}
         zza{"자자어"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"아제리어"}
     }
     Scripts{
@@ -888,7 +885,7 @@ ko{
         VAIDIKA{"바이디카"}
         VALLADER{"발라더"}
     }
-    Version{"2.1.9.31"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"언어: {0}"}
         script{"스크립트: {0}"}

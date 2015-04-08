@@ -238,9 +238,6 @@ typedef uint64_t JSValueShiftedTag;
 typedef enum JSWhyMagic
 {
     JS_ELEMENTS_HOLE,            /* a hole in a native object's elements */
-    JS_NATIVE_ENUMERATE,         /* indicates that a custom enumerate hook forwarded
-                                  * to JS_EnumerateState, which really means the object can be
-                                  * enumerated like a native object. */
     JS_NO_ITER_VALUE,            /* there is not a pending iterator value */
     JS_GENERATOR_CLOSING,        /* exception value thrown when closing a generator */
     JS_NO_CONSTANT,              /* compiler sentinel value */
@@ -1254,6 +1251,10 @@ class Value
         return JSVAL_TO_GCTHING_IMPL(data);
     }
 
+    GCCellPtr toGCCellPtr() const {
+        return GCCellPtr(toGCThing(), gcKind());
+    }
+
     bool toBoolean() const {
         MOZ_ASSERT(isBoolean());
         return JSVAL_TO_BOOLEAN_IMPL(data);
@@ -1369,7 +1370,7 @@ static MOZ_ALWAYS_INLINE void
 ExposeValueToActiveJS(const Value &v)
 {
     if (v.isMarkable())
-        js::gc::ExposeGCThingToActiveJS(v.toGCThing(), v.gcKind());
+        js::gc::ExposeGCThingToActiveJS(GCCellPtr(v));
 }
 
 /************************************************************************/
@@ -1630,12 +1631,10 @@ SameType(const Value &lhs, const Value &rhs)
 
 /************************************************************************/
 
-#ifdef JSGC_GENERATIONAL
 namespace JS {
 JS_PUBLIC_API(void) HeapValuePostBarrier(Value *valuep);
 JS_PUBLIC_API(void) HeapValueRelocate(Value *valuep);
 }
-#endif
 
 namespace js {
 
@@ -1659,10 +1658,8 @@ template <> struct GCMethods<JS::Value>
     static bool needsPostBarrier(const JS::Value &v) {
         return v.isObject() && gc::IsInsideNursery(reinterpret_cast<gc::Cell*>(&v.toObject()));
     }
-#ifdef JSGC_GENERATIONAL
     static void postBarrier(JS::Value *v) { JS::HeapValuePostBarrier(v); }
     static void relocate(JS::Value *v) { JS::HeapValueRelocate(v); }
-#endif
 };
 
 template <class Outer> class MutableValueOperations;
@@ -1925,7 +1922,7 @@ DOUBLE_TO_JSVAL(double d)
      * because GCC from XCode 3.1.4 miscompiles the above code.
      */
 #if defined(JS_VALUE_IS_CONSTEXPR)
-    return IMPL_TO_JSVAL(MOZ_UNLIKELY(d != d)
+    return IMPL_TO_JSVAL(MOZ_UNLIKELY(mozilla::IsNaN(d))
                          ? (jsval_layout) { .asBits = 0x7FF8000000000000LL }
                          : (jsval_layout) { .asDouble = d });
 #else

@@ -20,6 +20,7 @@
 #include "jsfun.h"
 #include "jsnum.h"
 #include "jsobj.h"
+#include "jsprf.h"
 #include "jsscript.h"
 #include "jstypes.h"
 #include "jsutil.h"
@@ -64,13 +65,13 @@ static const JSFunctionSpec exception_methods[] = {
         JSCLASS_IMPLEMENTS_BARRIERS | \
         JSCLASS_HAS_CACHED_PROTO(JSProto_##name) | \
         JSCLASS_HAS_RESERVED_SLOTS(ErrorObject::RESERVED_SLOTS), \
-        JS_PropertyStub,         /* addProperty */ \
-        JS_DeletePropertyStub,   /* delProperty */ \
-        JS_PropertyStub,         /* getProperty */ \
-        JS_StrictPropertyStub,   /* setProperty */ \
-        JS_EnumerateStub, \
-        JS_ResolveStub, \
-        JS_ConvertStub, \
+        nullptr,                 /* addProperty */ \
+        nullptr,                 /* delProperty */ \
+        nullptr,                 /* getProperty */ \
+        nullptr,                 /* setProperty */ \
+        nullptr,                 /* enumerate */ \
+        nullptr,                 /* resolve */ \
+        nullptr,                 /* convert */ \
         exn_finalize, \
         nullptr,                 /* call        */ \
         nullptr,                 /* hasInstance */ \
@@ -94,13 +95,13 @@ ErrorObject::classes[JSEXN_LIMIT] = {
         JSCLASS_IMPLEMENTS_BARRIERS |
         JSCLASS_HAS_CACHED_PROTO(JSProto_Error) |
         JSCLASS_HAS_RESERVED_SLOTS(ErrorObject::RESERVED_SLOTS),
-        JS_PropertyStub,         /* addProperty */
-        JS_DeletePropertyStub,   /* delProperty */
-        JS_PropertyStub,         /* getProperty */
-        JS_StrictPropertyStub,   /* setProperty */
-        JS_EnumerateStub,
-        JS_ResolveStub,
-        JS_ConvertStub,
+        nullptr,                 /* addProperty */
+        nullptr,                 /* delProperty */
+        nullptr,                 /* getProperty */
+        nullptr,                 /* setProperty */
+        nullptr,                 /* enumerate */
+        nullptr,                 /* resolve */
+        nullptr,                 /* convert */
         exn_finalize,
         nullptr,                 /* call        */
         nullptr,                 /* hasInstance */
@@ -507,11 +508,8 @@ ErrorObject::createProto(JSContext *cx, JSProtoKey key)
     // instance properties.
     RootedPropertyName name(cx, ClassName(key, cx));
     RootedValue nameValue(cx, StringValue(name));
-    if (!JSObject::defineProperty(cx, err, cx->names().name, nameValue,
-                                  JS_PropertyStub, JS_StrictPropertyStub, 0))
-    {
+    if (!JSObject::defineProperty(cx, err, cx->names().name, nameValue, nullptr, nullptr, 0))
         return nullptr;
-    }
 
     return errorProto;
 }
@@ -713,8 +711,31 @@ ErrorReport::init(JSContext *cx, HandleValue exn)
     if (exn.isObject()) {
         exnObject = &exn.toObject();
         reportp = js_ErrorFromException(cx, exnObject);
-    }
 
+        JSCompartment *comp = exnObject->compartment();
+        JSAddonId *addonId = comp->addonId;
+        if (addonId) {
+            UniqueChars addonIdChars(JS_EncodeString(cx, addonId));
+
+            const char *filename = nullptr;
+            
+            if (reportp && reportp->filename) {
+                filename = strrchr(reportp->filename, '/');
+                if (filename)
+                    filename++;
+            }
+            if (!filename) {
+                filename = "FILE_NOT_FOUND";
+            }
+            char histogramKey[64];
+            JS_snprintf(histogramKey, sizeof(histogramKey),
+                        "%s %s %u",
+                        addonIdChars.get(),
+                        filename,
+                        (reportp ? reportp->lineno : 0) );
+            cx->runtime()->addTelemetry(JS_TELEMETRY_ADDON_EXCEPTIONS, 1, histogramKey);
+        }
+    }
     // Be careful not to invoke ToString if we've already successfully extracted
     // an error report, since the exception might be wrapped in a security
     // wrapper, and ToString-ing it might throw.

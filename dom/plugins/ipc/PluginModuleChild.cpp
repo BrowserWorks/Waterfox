@@ -84,6 +84,12 @@ typedef HANDLE (WINAPI *CreateFileWPtr)(LPCWSTR fname, DWORD access,
                                         DWORD creation, DWORD flags,
                                         HANDLE ftemplate);
 static CreateFileWPtr sCreateFileWStub = nullptr;
+typedef HANDLE (WINAPI *CreateFileAPtr)(LPCSTR fname, DWORD access,
+                                        DWORD share,
+                                        LPSECURITY_ATTRIBUTES security,
+                                        DWORD creation, DWORD flags,
+                                        HANDLE ftemplate);
+static CreateFileAPtr sCreateFileAStub = nullptr;
 
 // Used with fix for flash fullscreen window loosing focus.
 static bool gDelayFlashFocusReplyUntilEval = false;
@@ -93,6 +99,13 @@ typedef BOOL (WINAPI *GetWindowInfoPtr)(HWND hwnd, PWINDOWINFO pwi);
 static GetWindowInfoPtr sGetWindowInfoPtrStub = nullptr;
 static HWND sBrowserHwnd = nullptr;
 #endif
+
+template<>
+struct RunnableMethodTraits<PluginModuleChild>
+{
+    static void RetainCallee(PluginModuleChild* obj) { }
+    static void ReleaseCallee(PluginModuleChild* obj) { }
+};
 
 /* static */
 PluginModuleChild*
@@ -1880,7 +1893,21 @@ PluginModuleChild::AnswerNP_GetEntryPoints(NPError* _retval)
 }
 
 bool
-PluginModuleChild::AnswerNP_Initialize(const PluginSettings& aSettings, NPError* _retval)
+PluginModuleChild::AnswerNP_Initialize(const PluginSettings& aSettings, NPError* rv)
+{
+    *rv = DoNP_Initialize(aSettings);
+    return true;
+}
+
+bool
+PluginModuleChild::RecvAsyncNP_Initialize(const PluginSettings& aSettings)
+{
+    NPError error = DoNP_Initialize(aSettings);
+    return SendNP_InitializeResult(error);
+}
+
+NPError
+PluginModuleChild::DoNP_Initialize(const PluginSettings& aSettings)
 {
     PLUGIN_LOG_DEBUG_METHOD;
     AssertPluginThread();
@@ -1899,23 +1926,58 @@ PluginModuleChild::AnswerNP_Initialize(const PluginSettings& aSettings, NPError*
     SendBackUpXResources(FileDescriptor(xSocketFd));
 #endif
 
+    NPError result;
 #if defined(OS_LINUX) || defined(OS_BSD)
-    *_retval = mInitializeFunc(&sBrowserFuncs, &mFunctions);
-    return true;
+    result = mInitializeFunc(&sBrowserFuncs, &mFunctions);
 #elif defined(OS_WIN) || defined(OS_MACOSX)
-    *_retval = mInitializeFunc(&sBrowserFuncs);
-    return true;
+    result = mInitializeFunc(&sBrowserFuncs);
 #else
 #  error Please implement me for your platform
 #endif
+
+    return result;
 }
 
 #if defined(XP_WIN)
 
+// Windows 8 RTM (kernelbase's version is 6.2.9200.16384) doesn't call
+// CreateFileW from CreateFileA.
+// So we hook CreateFileA too to use CreateFileW hook.
+
+static HANDLE WINAPI
+CreateFileAHookFn(LPCSTR fname, DWORD access, DWORD share,
+                  LPSECURITY_ATTRIBUTES security, DWORD creation, DWORD flags,
+                  HANDLE ftemplate)
+{
+    while (true) { // goto out
+        // Our hook is for mms.cfg into \Windows\System32\Macromed\Flash
+        // We don't requrie supporting too long path.
+        WCHAR unicodeName[MAX_PATH];
+        size_t len = strlen(fname);
+
+        if (len >= MAX_PATH) {
+            break;
+        }
+
+        // We call to CreateFileW for workaround of Windows 8 RTM
+        int newLen = MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, fname,
+                                         len, unicodeName, MAX_PATH);
+        if (newLen == 0 || newLen >= MAX_PATH) {
+            break;
+        }
+        unicodeName[newLen] = '\0';
+
+        return CreateFileW(unicodeName, access, share, security, creation, flags, ftemplate);
+    }
+
+    return sCreateFileAStub(fname, access, share, security, creation, flags,
+                            ftemplate);
+}
+
 HANDLE WINAPI
-CreateFileHookFn(LPCWSTR fname, DWORD access, DWORD share,
-                 LPSECURITY_ATTRIBUTES security, DWORD creation, DWORD flags,
-                 HANDLE ftemplate)
+CreateFileWHookFn(LPCWSTR fname, DWORD access, DWORD share,
+                  LPSECURITY_ATTRIBUTES security, DWORD creation, DWORD flags,
+                  HANDLE ftemplate)
 {
     static const WCHAR kConfigFile[] = L"mms.cfg";
     static const size_t kConfigLength = ArrayLength(kConfigFile) - 1;
@@ -1983,8 +2045,11 @@ PluginModuleChild::HookProtectedMode()
 {
     sKernel32Intercept.Init("kernel32.dll");
     sKernel32Intercept.AddHook("CreateFileW",
-                               reinterpret_cast<intptr_t>(CreateFileHookFn),
+                               reinterpret_cast<intptr_t>(CreateFileWHookFn),
                                (void**) &sCreateFileWStub);
+    sKernel32Intercept.AddHook("CreateFileA",
+                               reinterpret_cast<intptr_t>(CreateFileAHookFn),
+                               (void**) &sCreateFileAStub);
 }
 
 BOOL WINAPI
@@ -2020,8 +2085,7 @@ PPluginInstanceChild*
 PluginModuleChild::AllocPPluginInstanceChild(const nsCString& aMimeType,
                                              const uint16_t& aMode,
                                              const InfallibleTArray<nsCString>& aNames,
-                                             const InfallibleTArray<nsCString>& aValues,
-                                             NPError* rv)
+                                             const InfallibleTArray<nsCString>& aValues)
 {
     PLUGIN_LOG_DEBUG_METHOD;
     AssertPluginThread();
@@ -2037,7 +2101,8 @@ PluginModuleChild::AllocPPluginInstanceChild(const nsCString& aMimeType,
     }
 #endif
 
-    return new PluginInstanceChild(&mFunctions);
+    return new PluginInstanceChild(&mFunctions, aMimeType, aMode, aNames,
+                                   aValues);
 }
 
 void
@@ -2090,68 +2155,39 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
 }
 
 bool
-PluginModuleChild::AnswerPPluginInstanceConstructor(PPluginInstanceChild* aActor,
-                                                    const nsCString& aMimeType,
-                                                    const uint16_t& aMode,
-                                                    const InfallibleTArray<nsCString>& aNames,
-                                                    const InfallibleTArray<nsCString>& aValues,
-                                                    NPError* rv)
+PluginModuleChild::RecvPPluginInstanceConstructor(PPluginInstanceChild* aActor,
+                                                  const nsCString& aMimeType,
+                                                  const uint16_t& aMode,
+                                                  const InfallibleTArray<nsCString>& aNames,
+                                                  const InfallibleTArray<nsCString>& aValues)
 {
     PLUGIN_LOG_DEBUG_METHOD;
     AssertPluginThread();
 
+    NS_ASSERTION(aActor, "Null actor!");
+    return true;
+}
+
+bool
+PluginModuleChild::AnswerSyncNPP_New(PPluginInstanceChild* aActor, NPError* rv)
+{
+    PLUGIN_LOG_DEBUG_METHOD;
     PluginInstanceChild* childInstance =
         reinterpret_cast<PluginInstanceChild*>(aActor);
-    NS_ASSERTION(childInstance, "Null actor!");
+    AssertPluginThread();
+    *rv = childInstance->DoNPP_New();
+    return true;
+}
 
-    // unpack the arguments into a C format
-    int argc = aNames.Length();
-    NS_ASSERTION(argc == (int) aValues.Length(),
-                 "argn.length != argv.length");
-
-    nsAutoArrayPtr<char*> argn(new char*[1 + argc]);
-    nsAutoArrayPtr<char*> argv(new char*[1 + argc]);
-    argn[argc] = 0;
-    argv[argc] = 0;
-
-    for (int i = 0; i < argc; ++i) {
-        argn[i] = const_cast<char*>(NullableStringGet(aNames[i]));
-        argv[i] = const_cast<char*>(NullableStringGet(aValues[i]));
-    }
-
-    NPP npp = childInstance->GetNPP();
-
-    // FIXME/cjones: use SAFE_CALL stuff
-    *rv = mFunctions.newp((char*)NullableStringGet(aMimeType),
-                          npp,
-                          aMode,
-                          argc,
-                          argn,
-                          argv,
-                          0);
-    if (NPERR_NO_ERROR != *rv) {
-        return true;
-    }
-
-    childInstance->Initialize();
-
-#if defined(XP_MACOSX) && defined(__i386__)
-    // If an i386 Mac OS X plugin has selected the Carbon event model then
-    // we have to fail. We do not support putting Carbon event model plugins
-    // out of process. Note that Carbon is the default model so out of process
-    // plugins need to actively negotiate something else in order to work
-    // out of process.
-    if (childInstance->EventModel() == NPEventModelCarbon) {
-      // Send notification that a plugin tried to negotiate Carbon NPAPI so that
-      // users can be notified that restarting the browser in i386 mode may allow
-      // them to use the plugin.
-      childInstance->SendNegotiatedCarbon();
-
-      // Fail to instantiate.
-      *rv = NPERR_MODULE_LOAD_FAILED_ERROR;
-    }
-#endif
-
+bool
+PluginModuleChild::RecvAsyncNPP_New(PPluginInstanceChild* aActor)
+{
+    PLUGIN_LOG_DEBUG_METHOD;
+    PluginInstanceChild* childInstance =
+        reinterpret_cast<PluginInstanceChild*>(aActor);
+    AssertPluginThread();
+    NPError rv = childInstance->DoNPP_New();
+    childInstance->SendAsyncNPP_NewResult(rv);
     return true;
 }
 

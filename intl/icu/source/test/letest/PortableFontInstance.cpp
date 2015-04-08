@@ -1,7 +1,7 @@
 /*
  *******************************************************************************
  *
- *   Copyright (C) 1999-2013, International Business Machines
+ *   Copyright (C) 1999-2015, International Business Machines
  *   Corporation and others.  All Rights Reserved.
  *
  *******************************************************************************
@@ -97,7 +97,8 @@ PortableFontInstance::PortableFontInstance(const char *fileName, float pointSize
     // read in the directory
     SFNTDirectory tempDir;
 
-    fread(&tempDir, sizeof tempDir, 1, fFile);
+    size_t numRead = fread(&tempDir, sizeof tempDir, 1, fFile);
+    (void)numRead;
 
     le_int32 dirSize = sizeof tempDir + ((SWAPW(tempDir.numTables) - ANY_NUMBER) * sizeof(DirectoryEntry));
     const LETag headTag = LE_HEAD_TABLE_TAG;
@@ -116,7 +117,7 @@ PortableFontInstance::PortableFontInstance(const char *fileName, float pointSize
     }
 
     fseek(fFile, 0L, SEEK_SET);
-    fread((void *) fDirectory, sizeof(char), dirSize, fFile);
+    numRead = fread((void *) fDirectory, sizeof(char), dirSize, fFile);
 
     //
     // We calculate these numbers 'cause some fonts
@@ -242,16 +243,11 @@ const void *PortableFontInstance::readTable(LETag tag, le_uint32 *length) const
 
     if (table != NULL) {
         fseek(fFile, SWAPL(entry->offset), SEEK_SET);
-        fread(table, sizeof(char), *length, fFile);
+        size_t numRead = fread(table, sizeof(char), *length, fFile);
+        (void)numRead;
     }
 
     return table;
-}
-
-const void *PortableFontInstance::getFontTable(LETag tableTag) const
-{
-  size_t ignored;
-  return getFontTable(tableTag, ignored);
 }
 
 const void *PortableFontInstance::getFontTable(LETag tableTag, size_t &length) const

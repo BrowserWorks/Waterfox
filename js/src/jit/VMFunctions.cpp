@@ -105,9 +105,10 @@ InvokeFunction(JSContext *cx, HandleObject obj0, uint32_t argc, Value *argv, Val
 }
 
 JSObject *
-NewGCObject(JSContext *cx, gc::AllocKind allocKind, gc::InitialHeap initialHeap)
+NewGCObject(JSContext *cx, gc::AllocKind allocKind, gc::InitialHeap initialHeap,
+            const js::Class *clasp)
 {
-    return js::NewGCObject<CanGC>(cx, allocKind, 0, initialHeap);
+    return js::NewGCObject<CanGC>(cx, allocKind, 0, initialHeap, clasp);
 }
 
 bool
@@ -194,9 +195,8 @@ SetConst(JSContext *cx, HandlePropertyName name, HandleObject scopeChain, Handle
 }
 
 bool
-MutatePrototype(JSContext *cx, HandleObject obj, HandleValue value)
+MutatePrototype(JSContext *cx, HandlePlainObject obj, HandleValue value)
 {
-    MOZ_ASSERT(obj->is<JSObject>(), "must only be used with object literals");
     if (!value.isObjectOrNull())
         return true;
 
@@ -283,7 +283,7 @@ template bool StringsEqual<true>(JSContext *cx, HandleString lhs, HandleString r
 template bool StringsEqual<false>(JSContext *cx, HandleString lhs, HandleString rhs, bool *res);
 
 JSObject*
-NewInitObject(JSContext *cx, HandleNativeObject templateObject)
+NewInitObject(JSContext *cx, HandlePlainObject templateObject)
 {
     NewObjectKind newKind = templateObject->hasSingletonType() ? SingletonObject : GenericObject;
     if (!templateObject->hasLazyType() && templateObject->type()->shouldPreTenure())
@@ -300,7 +300,7 @@ NewInitObject(JSContext *cx, HandleNativeObject templateObject)
 }
 
 JSObject *
-NewInitObjectWithClassPrototype(JSContext *cx, HandleObject templateObject)
+NewInitObjectWithClassPrototype(JSContext *cx, HandlePlainObject templateObject)
 {
     MOZ_ASSERT(!templateObject->hasSingletonType());
     MOZ_ASSERT(!templateObject->hasLazyType());
@@ -308,11 +308,10 @@ NewInitObjectWithClassPrototype(JSContext *cx, HandleObject templateObject)
     NewObjectKind newKind = templateObject->type()->shouldPreTenure()
                             ? TenuredObject
                             : GenericObject;
-    JSObject *obj = NewObjectWithGivenProto(cx,
-                                            templateObject->getClass(),
-                                            templateObject->getProto(),
-                                            cx->global(),
-                                            newKind);
+    PlainObject *obj = NewObjectWithGivenProto<PlainObject>(cx,
+                                                            templateObject->getProto(),
+                                                            cx->global(),
+                                                            newKind);
     if (!obj)
         return nullptr;
 
@@ -505,7 +504,7 @@ SetProperty(JSContext *cx, HandleObject obj, HandlePropertyName name, HandleValu
     }
 
     if (MOZ_LIKELY(!obj->getOps()->setProperty)) {
-        return baseops::SetPropertyHelper<SequentialExecution>(
+        return baseops::SetPropertyHelper(
             cx, obj.as<NativeObject>(), obj.as<NativeObject>(), id,
             (op == JSOP_SETNAME || op == JSOP_STRICTSETNAME ||
              op == JSOP_SETGNAME || op == JSOP_STRICTSETGNAME)
@@ -545,13 +544,11 @@ NewCallObject(JSContext *cx, HandleShape shape, HandleTypeObject type, uint32_t 
     if (!obj)
         return nullptr;
 
-#ifdef JSGC_GENERATIONAL
     // The JIT creates call objects in the nursery, so elides barriers for
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
     if (!IsInsideNursery(obj))
         cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
-#endif
 
     return obj;
 }
@@ -563,14 +560,12 @@ NewSingletonCallObject(JSContext *cx, HandleShape shape, uint32_t lexicalBegin)
     if (!obj)
         return nullptr;
 
-#ifdef JSGC_GENERATIONAL
     // The JIT creates call objects in the nursery, so elides barriers for
     // the initializing writes. The interpreter, however, may have allocated
     // the call object tenured, so barrier as needed before re-entering.
     MOZ_ASSERT(!IsInsideNursery(obj),
                "singletons are created in the tenured heap");
     cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(obj);
-#endif
 
     return obj;
 }
@@ -706,7 +701,6 @@ FilterArgumentsOrEval(JSContext *cx, JSString *str)
         !StringHasPattern(linear, eval, mozilla::ArrayLength(eval));
 }
 
-#ifdef JSGC_GENERATIONAL
 void
 PostWriteBarrier(JSRuntime *rt, JSObject *obj)
 {
@@ -723,7 +717,6 @@ PostGlobalWriteBarrier(JSRuntime *rt, JSObject *obj)
         obj->compartment()->globalWriteBarriered = true;
     }
 }
-#endif
 
 uint32_t
 GetIndexFromString(JSString *str)
@@ -779,9 +772,9 @@ DebugEpilogueOnBaselineReturn(JSContext *cx, BaselineFrame *frame, jsbytecode *p
     if (!DebugEpilogue(cx, frame, pc, true)) {
         // DebugEpilogue popped the frame by updating jitTop, so run the stop event
         // here before we enter the exception handler.
-        TraceLogger *logger = TraceLoggerForMainThread(cx->runtime());
-        TraceLogStopEvent(logger, TraceLogger::Baseline);
-        TraceLogStopEvent(logger); // Leave script.
+        TraceLoggerThread *logger = TraceLoggerForMainThread(cx->runtime());
+        TraceLogStopEvent(logger, TraceLogger_Baseline);
+        TraceLogStopEvent(logger, TraceLogger_Scripts);
         return false;
     }
 
@@ -795,7 +788,7 @@ DebugEpilogue(JSContext *cx, BaselineFrame *frame, jsbytecode *pc, bool ok)
     ScopeIter si(frame, pc, cx);
     UnwindAllScopes(cx, si);
     jsbytecode *unwindPc = frame->script()->main();
-    frame->setUnwoundScopeOverridePc(unwindPc);
+    frame->setOverridePc(unwindPc);
 
     // If Debugger::onLeaveFrame returns |true| we have to return the frame's
     // return value. If it returns |false|, the debugger threw an exception.
@@ -826,9 +819,14 @@ DebugEpilogue(JSContext *cx, BaselineFrame *frame, jsbytecode *pc, bool ok)
         JitFrameLayout *prefix = frame->framePrefix();
         EnsureExitFrame(prefix);
         cx->mainThread().jitTop = (uint8_t *)prefix;
+        return false;
     }
 
-    return ok;
+    // Clear the override pc. This is not necessary for correctness: the frame
+    // will return immediately, but this simplifies the check we emit in debug
+    // builds after each callVM, to ensure this flag is not set.
+    frame->clearOverridePc();
+    return true;
 }
 
 JSObject *
@@ -919,11 +917,19 @@ DebugAfterYield(JSContext *cx, BaselineFrame *frame)
 }
 
 bool
-GeneratorThrowOrClose(JSContext *cx, BaselineFrame *frame, HandleObject obj, HandleValue arg,
-                      uint32_t resumeKind)
+GeneratorThrowOrClose(JSContext *cx, BaselineFrame *frame, Handle<GeneratorObject*> genObj,
+                      HandleValue arg, uint32_t resumeKind)
 {
+    // Set the frame's pc to the current resume pc, so that frame iterators
+    // work. This function always returns false, so we're guaranteed to enter
+    // the exception handler where we will clear the pc.
+    JSScript *script = frame->script();
+    uint32_t offset = script->yieldOffsets()[genObj->yieldIndex()];
+    frame->setOverridePc(script->offsetToPC(offset));
+
     MOZ_ALWAYS_TRUE(DebugAfterYield(cx, frame));
-    return js::GeneratorThrowOrClose(cx, obj, arg, resumeKind);
+    MOZ_ALWAYS_FALSE(js::GeneratorThrowOrClose(cx, genObj, arg, resumeKind));
+    return false;
 }
 
 bool
@@ -1174,9 +1180,8 @@ SetDenseElement(JSContext *cx, HandleNativeObject obj, int32_t index, HandleValu
                 bool strict)
 {
     // This function is called from Ion code for StoreElementHole's OOL path.
-    // In this case we know the object is native, has no indexed properties
-    // and we can use setDenseElement instead of setDenseElementWithType.
-    MOZ_ASSERT(!obj->isIndexed());
+    // In this case we know the object is native and we can use setDenseElement
+    // instead of setDenseElementWithType.
 
     NativeObject::EnsureDenseResult result = NativeObject::ED_SPARSE;
     do {
@@ -1298,15 +1303,6 @@ AssertValidValue(JSContext *cx, Value *v)
         AssertValidSymbolPtr(cx, v->toSymbol());
 }
 #endif
-
-// Definition of the MTypedObjectProto MIR.
-JSObject *
-TypedObjectProto(JSObject *obj)
-{
-    MOZ_ASSERT(obj->is<TypedObject>());
-    TypedObject &typedObj = obj->as<TypedObject>();
-    return &typedObj.typedProto();
-}
 
 bool
 ObjectIsCallable(JSObject *obj)

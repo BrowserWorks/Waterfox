@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/km.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/km.xml
- */
 km{
     Countries{
         001{"ពិភពលោក"}
@@ -301,6 +298,13 @@ km{
         ZW{"ហ្ស៊ីមបាបវ៉េ"}
         ZZ{"មិន​ស្គាល់​តំបន់"}
     }
+    Countries%short{
+        GB{"ច.អ."}
+        HK{"ហុងកុង"}
+        MO{"ម៉ាកាវ"}
+        PS{"ប៉ាលេស្ទីន"}
+        US{"ស.រ.អ"}
+    }
     Countries%variant{
         CD{"កុងហ្គោ (សាធារណរដ្ឋ​ប្រជាធិបតេយ្យ)"}
         CG{"កុងហ្គោ (សធារណៈរដ្ឋ)"}
@@ -309,12 +313,5 @@ km{
         MK{"ម៉ាសេដ្វាន"}
         TL{"ទីម័រ​ខាង​កើត"}
     }
-    CountriesShort{
-        GB{"ច.អ."}
-        HK{"ហុងកុង"}
-        MO{"ម៉ាកាវ"}
-        PS{"ប៉ាលេស្ទីន"}
-        US{"ស.រ.អ"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.13.51"}
 }

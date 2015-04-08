@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/ne.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/ne.xml
- */
 ne{
     Countries{
         001{"विश्व"}
@@ -302,6 +299,13 @@ ne{
         ZW{"जिम्बाबे"}
         ZZ{"अज्ञात क्षेत्र"}
     }
+    Countries%short{
+        GB{"बेलायत"}
+        HK{"हङकङ"}
+        MO{"मकावो"}
+        PS{"प्यालेसटाइन"}
+        US{"अमेरिका"}
+    }
     Countries%variant{
         CD{"कङ्गो (डीआर्‌सी)"}
         CG{"कङ्गो (गणतन्त्र)"}
@@ -309,12 +313,5 @@ ne{
         MK{"म्याकेडोनिया (फाइरम)"}
         TL{"पृर्वी टीमोर"}
     }
-    CountriesShort{
-        GB{"बेलायत"}
-        HK{"हङकङ"}
-        MO{"मकावो"}
-        PS{"प्यालेसटाइन"}
-        US{"अमेरिका"}
-    }
-    Version{"2.1.8.95"}
+    Version{"2.1.12.94"}
 }

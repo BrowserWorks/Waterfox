@@ -21,19 +21,19 @@ int BarkWhenTracedClass::finalizeCount;
 int BarkWhenTracedClass::traceCount;
 
 const JSClass BarkWhenTracedClass::class_ = {
-  "BarkWhenTracedClass", 0,
-  JS_PropertyStub,
-  JS_DeletePropertyStub,
-  JS_PropertyStub,
-  JS_StrictPropertyStub,
-  JS_EnumerateStub,
-  JS_ResolveStub,
-  JS_ConvertStub,
-  finalize,
-  nullptr,
-  nullptr,
-  nullptr,
-  trace
+    "BarkWhenTracedClass", 0,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    nullptr,
+    finalize,
+    nullptr,
+    nullptr,
+    nullptr,
+    trace
 };
 
 struct Kennel {

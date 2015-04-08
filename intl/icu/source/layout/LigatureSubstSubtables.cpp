@@ -1,5 +1,5 @@
 /*
- * (C) Copyright IBM Corp. 1998-2013 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1998-2015 - All Rights Reserved
  *
  */
 
@@ -27,6 +27,9 @@ le_uint32 LigatureSubstitutionSubtable::process(const LETableReference &base, Gl
             Offset ligTableOffset = SWAPW(ligSetTable->ligatureTableOffsetArray[lig]);
             const LigatureTable *ligTable = (const LigatureTable *) ((char *)ligSetTable + ligTableOffset);
             le_uint16 compCount = SWAPW(ligTable->compCount) - 1;
+            LEReferenceToArrayOf<TTGlyphID>
+                componentArrayRef(base, success, ligTable->componentArray, compCount);
+            if (LE_FAILURE(success)) { return 0; }
             le_int32 startPosition = glyphIterator->getCurrStreamPosition();
             TTGlyphID ligGlyph = SWAPW(ligTable->ligGlyph);
             le_uint16 comp;

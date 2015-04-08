@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/lb.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/lb.xml
- */
 lb{
     Keys{
         calendar{"Kalenner"}
@@ -626,7 +623,7 @@ lb{
         zxx{"Keng Sproochinhalter"}
         zza{"Zaza"}
     }
-    LanguagesShort{
+    Languages%short{
         en_GB{"Englesch (UK)"}
         en_US{"Englesch (US)"}
     }
@@ -885,7 +882,7 @@ lb{
         VALENCIA{"Valencianesch"}
         WADEGILE{"Wade-Giles"}
     }
-    Version{"2.1.10.42"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Sprooch: {0}"}
         script{"Schrëft: {0}"}

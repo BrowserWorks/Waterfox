@@ -146,7 +146,7 @@ Abs<long double>(const long double aLongDouble)
 
 } // namespace mozilla
 
-#if defined(_WIN32) && (_MSC_VER >= 1300) && \
+#if defined(_MSC_VER) && \
     (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
 #  define MOZ_BITSCAN_WINDOWS
 
@@ -281,12 +281,12 @@ CountTrailingZeroes64(uint64_t aValue)
 
 #else
 #  error "Implement these!"
-inline uint_fast8_t CountLeadingZeroes32(uint32_t aValue) MOZ_DELETE;
-inline uint_fast8_t CountTrailingZeroes32(uint32_t aValue) MOZ_DELETE;
-inline uint_fast8_t CountPopulation32(uint32_t aValue) MOZ_DELETE;
-inline uint_fast8_t CountPopulation64(uint64_t aValue) MOZ_DELETE;
-inline uint_fast8_t CountLeadingZeroes64(uint64_t aValue) MOZ_DELETE;
-inline uint_fast8_t CountTrailingZeroes64(uint64_t aValue) MOZ_DELETE;
+inline uint_fast8_t CountLeadingZeroes32(uint32_t aValue) = delete;
+inline uint_fast8_t CountTrailingZeroes32(uint32_t aValue) = delete;
+inline uint_fast8_t CountPopulation32(uint32_t aValue) = delete;
+inline uint_fast8_t CountPopulation64(uint64_t aValue) = delete;
+inline uint_fast8_t CountLeadingZeroes64(uint64_t aValue) = delete;
+inline uint_fast8_t CountTrailingZeroes64(uint64_t aValue) = delete;
 #endif
 
 } // namespace detail

@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/tr.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/tr.xml
- */
 tr{
     Keys{
         calendar{"Takvim"}
@@ -638,7 +635,7 @@ tr{
         zxx{"Dilbilim içeriği yok"}
         zza{"Zazaca"}
     }
-    LanguagesShort{
+    Languages%short{
         az{"Azerice"}
         en_GB{"İngilizce (BK)"}
     }
@@ -982,7 +979,7 @@ tr{
         VALENCIA{"Valensiyaca"}
         WADEGILE{"Wade-Giles (Latin Alfabesinde Yazımı)"}
     }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
     codePatterns{
         language{"Dil: {0}"}
         script{"Alfabe: {0}"}

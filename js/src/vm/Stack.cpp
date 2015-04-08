@@ -30,8 +30,8 @@ using mozilla::PodCopy;
 /*****************************************************************************/
 
 void
-InterpreterFrame::initExecuteFrame(JSContext *cx, JSScript *script, AbstractFramePtr evalInFramePrev,
-                                   const Value &thisv, JSObject &scopeChain, ExecuteType type)
+InterpreterFrame::initExecuteFrame(JSContext *cx, HandleScript script, AbstractFramePtr evalInFramePrev,
+                                   const Value &thisv, HandleObject scopeChain, ExecuteType type)
 {
     /*
      * See encoding of ExecuteType. When GLOBAL isn't set, we are executing a
@@ -55,7 +55,7 @@ InterpreterFrame::initExecuteFrame(JSContext *cx, JSScript *script, AbstractFram
             MOZ_ASSERT(iter.isFunctionFrame() || iter.isGlobalFrame());
             MOZ_ASSERT(!iter.isAsmJS());
             if (iter.isFunctionFrame()) {
-                callee = iter.callee();
+                callee = iter.callee(cx);
                 flags_ |= FUNCTION;
             } else {
                 flags_ |= GLOBAL;
@@ -79,7 +79,7 @@ InterpreterFrame::initExecuteFrame(JSContext *cx, JSScript *script, AbstractFram
 #endif
     }
 
-    scopeChain_ = &scopeChain;
+    scopeChain_ = scopeChain.get();
     prev_ = nullptr;
     prevpc_ = nullptr;
     prevsp_ = nullptr;
@@ -458,7 +458,7 @@ InterpreterStack::pushExecuteFrame(JSContext *cx, HandleScript script, const Val
 
     InterpreterFrame *fp = reinterpret_cast<InterpreterFrame *>(buffer + 2 * sizeof(Value));
     fp->mark_ = mark;
-    fp->initExecuteFrame(cx, script, evalInFrame, thisv, *scopeChain, type);
+    fp->initExecuteFrame(cx, script, evalInFrame, thisv, scopeChain, type);
     fp->initLocals();
 
     return fp;
@@ -583,7 +583,7 @@ FrameIter::settleOnActivation()
     }
 }
 
-FrameIter::Data::Data(ThreadSafeContext *cx, SavedOption savedOption,
+FrameIter::Data::Data(JSContext *cx, SavedOption savedOption,
                       ContextOption contextOption, JSPrincipals *principals)
   : cx_(cx),
     savedOption_(savedOption),
@@ -613,7 +613,7 @@ FrameIter::Data::Data(const FrameIter::Data &other)
 {
 }
 
-FrameIter::FrameIter(ThreadSafeContext *cx, SavedOption savedOption)
+FrameIter::FrameIter(JSContext *cx, SavedOption savedOption)
   : data_(cx, savedOption, CURRENT_CONTEXT, nullptr),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
 {
@@ -622,7 +622,7 @@ FrameIter::FrameIter(ThreadSafeContext *cx, SavedOption savedOption)
     settleOnActivation();
 }
 
-FrameIter::FrameIter(ThreadSafeContext *cx, ContextOption contextOption,
+FrameIter::FrameIter(JSContext *cx, ContextOption contextOption,
                      SavedOption savedOption)
   : data_(cx, savedOption, contextOption, nullptr),
     ionInlineFrames_(cx, (js::jit::JitFrameIterator*) nullptr)
@@ -864,7 +864,7 @@ FrameIter::functionDisplayAtom() const
         break;
       case INTERP:
       case JIT:
-        return callee()->displayAtom();
+        return calleeTemplate()->displayAtom();
       case ASMJS:
         return data_.asmJSFrames_.functionDisplayAtom();
     }
@@ -1062,7 +1062,7 @@ FrameIter::updatePcQuadratic()
 }
 
 JSFunction *
-FrameIter::callee() const
+FrameIter::calleeTemplate() const
 {
     switch (data_.state_) {
       case DONE:
@@ -1075,25 +1075,59 @@ FrameIter::callee() const
         if (data_.jitFrames_.isBaselineJS())
             return data_.jitFrames_.callee();
         MOZ_ASSERT(data_.jitFrames_.isIonScripted());
-        return ionInlineFrames_.callee();
+        return ionInlineFrames_.calleeTemplate();
     }
     MOZ_CRASH("Unexpected state");
 }
 
-Value
-FrameIter::calleev() const
+JSFunction *
+FrameIter::callee(JSContext *cx) const
 {
     switch (data_.state_) {
       case DONE:
       case ASMJS:
         break;
       case INTERP:
-        MOZ_ASSERT(isFunctionFrame());
-        return interpFrame()->calleev();
+        return calleeTemplate();
       case JIT:
-        return ObjectValue(*callee());
+        if (data_.jitFrames_.isIonScripted()) {
+            jit::MaybeReadFallback recover(cx, activation()->asJit(), &data_.jitFrames_);
+            return ionInlineFrames_.callee(recover);
+        }
+        MOZ_ASSERT(data_.jitFrames_.isBaselineJS());
+        return calleeTemplate();
     }
     MOZ_CRASH("Unexpected state");
+}
+
+bool
+FrameIter::matchCallee(JSContext *cx, HandleFunction fun) const
+{
+    RootedFunction currentCallee(cx, calleeTemplate());
+
+    // As we do not know if the calleeTemplate is the real function, or the
+    // template from which it would be cloned, we compare properties which are
+    // stable across the cloning of JSFunctions.
+    if (((currentCallee->flags() ^ fun->flags()) & JSFunction::STABLE_ACROSS_CLONES) != 0 ||
+        currentCallee->nargs() != fun->nargs())
+    {
+        return false;
+    }
+
+    // Use the same condition as |js::CloneFunctionObject|, to know if we should
+    // expect both functions to have the same JSScript. If so, and if they are
+    // different, then they cannot be equal.
+    bool useSameScript = CloneFunctionObjectUseSameScript(fun->compartment(), currentCallee);
+    if (useSameScript &&
+        (currentCallee->hasScript() != fun->hasScript() ||
+         currentCallee->nonLazyScript() != fun->nonLazyScript()))
+    {
+        return false;
+    }
+
+    // If none of the previous filters worked, then take the risk of
+    // invalidating the frame to identify the JSFunction.
+    return callee(cx) == fun;
 }
 
 unsigned
@@ -1129,15 +1163,17 @@ FrameIter::unaliasedActual(unsigned i, MaybeCheckAliasing checkAliasing) const
 }
 
 JSObject *
-FrameIter::scopeChain() const
+FrameIter::scopeChain(JSContext *cx) const
 {
     switch (data_.state_) {
       case DONE:
       case ASMJS:
         break;
       case JIT:
-        if (data_.jitFrames_.isIonScripted())
-            return ionInlineFrames_.scopeChain();
+        if (data_.jitFrames_.isIonScripted()) {
+            jit::MaybeReadFallback recover(cx, activation()->asJit(), &data_.jitFrames_);
+            return ionInlineFrames_.scopeChain(recover);
+        }
         return data_.jitFrames_.baselineFrame()->scopeChain();
       case INTERP:
         return interpFrame()->scopeChain();
@@ -1146,11 +1182,11 @@ FrameIter::scopeChain() const
 }
 
 CallObject &
-FrameIter::callObj() const
+FrameIter::callObj(JSContext *cx) const
 {
-    MOZ_ASSERT(callee()->isHeavyweight());
+    MOZ_ASSERT(calleeTemplate()->isHeavyweight());
 
-    JSObject *pobj = scopeChain();
+    JSObject *pobj = scopeChain(cx);
     while (!pobj->is<CallObject>())
         pobj = pobj->enclosingScope();
     return pobj->as<CallObject>();
@@ -1173,7 +1209,7 @@ bool
 FrameIter::computeThis(JSContext *cx) const
 {
     MOZ_ASSERT(!done() && !isAsmJS());
-    assertSameCompartment(cx, scopeChain());
+    assertSameCompartment(cx, scopeChain(cx));
     return ComputeThis(cx, abstractFramePtr());
 }
 
@@ -1184,7 +1220,7 @@ FrameIter::computedThisValue() const
 }
 
 Value
-FrameIter::thisv(JSContext *cx)
+FrameIter::thisv(JSContext *cx) const
 {
     switch (data_.state_) {
       case DONE:
@@ -1326,7 +1362,7 @@ AbstractFramePtr::evalPrevScopeChain(JSContext *cx) const
     while (iter.isIon() || iter.abstractFramePtr() != *this)
         ++iter;
     ++iter;
-    return iter.scopeChain();
+    return iter.scopeChain(cx);
 }
 
 bool
@@ -1352,18 +1388,6 @@ jit::JitActivation::JitActivation(JSContext *cx, bool active)
         prevJitTop_ = nullptr;
         prevJitJSContext_ = nullptr;
     }
-}
-
-jit::JitActivation::JitActivation(ForkJoinContext *cx)
-  : Activation(cx, Jit),
-    active_(true),
-    rematerializedFrames_(nullptr),
-    ionRecovery_(cx),
-    bailoutData_(nullptr)
-{
-    prevJitTop_ = cx->perThreadData->jitTop;
-    prevJitJSContext_ = cx->perThreadData->jitJSContext;
-    cx->perThreadData->jitJSContext = nullptr;
 }
 
 jit::JitActivation::~JitActivation()
@@ -1473,8 +1497,18 @@ jit::JitActivation::getRematerializedFrame(JSContext *cx, const JitFrameIterator
         // preserve identity. Therefore, we always rematerialize an uninlined
         // frame and all its inlined frames at once.
         InlineFrameIterator inlineIter(cx, &iter);
-        if (!RematerializedFrame::RematerializeInlineFrames(cx, top, inlineIter, p->value()))
+        MaybeReadFallback recover(cx, this, &iter);
+
+        // Frames are often rematerialized with the cx inside a Debugger's
+        // compartment. To recover slots and to create CallObjects, we need to
+        // be in the activation's compartment.
+        AutoCompartment ac(cx, compartment_);
+
+        if (!RematerializedFrame::RematerializeInlineFrames(cx, top, inlineIter, recover,
+                                                            p->value()))
+        {
             return nullptr;
+        }
     }
 
     return p->value()[inlineDepth];

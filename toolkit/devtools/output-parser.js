@@ -14,8 +14,13 @@ const MAX_ITERATIONS = 100;
 const REGEX_QUOTES = /^".*?"|^".*|^'.*?'|^'.*/;
 const REGEX_WHITESPACE = /^\s+/;
 const REGEX_FIRST_WORD_OR_CHAR = /^\w+|^./;
-const REGEX_CSS_PROPERTY_VALUE = /(^[^;]+)/;
 const REGEX_CUBIC_BEZIER = /^linear|^ease-in-out|^ease-in|^ease-out|^ease|^cubic-bezier\(([0-9.\- ]+,){3}[0-9.\- ]+\)/;
+
+// CSS variable names are identifiers which the spec defines as follows:
+//   In CSS, identifiers (including element names, classes, and IDs in
+//   selectors) can contain only the characters [a-zA-Z0-9] and ISO 10646
+//   characters U+00A0 and higher, plus the hyphen (-) and the underscore (_).
+const REGEX_CSS_VAR = /\bvar\(\s*--[-_a-zA-Z0-9\u00A0-\u10FFFF]+\s*\)/;
 
 /**
  * This regex matches:
@@ -188,6 +193,15 @@ OutputParser.prototype = {
         continue;
       }
 
+      matched = text.match(REGEX_CSS_VAR);
+      if (matched) {
+        let match = matched[0];
+
+        text = this._trimMatchFromStart(text, match);
+        this._appendTextNode(match);
+        continue;
+      }
+
       matched = text.match(REGEX_WHITESPACE);
       if (matched) {
         let match = matched[0];
@@ -337,15 +351,7 @@ OutputParser.prototype = {
    *         CSS Property value to check
    */
   _cssPropertySupportsValue: function(name, value) {
-    let win = Services.appShell.hiddenDOMWindow;
-    let doc = win.document;
-
-    value = value.replace("!important", "");
-
-    let div = doc.createElement("div");
-    div.style.setProperty(name, value);
-
-    return !!div.style.getPropertyValue(name);
+    return DOMUtils.cssPropertyIsValid(name, value);
   },
 
   /**

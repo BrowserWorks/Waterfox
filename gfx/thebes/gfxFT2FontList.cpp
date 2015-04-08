@@ -196,13 +196,11 @@ FT2FontEntry::CreateScaledFont(const gfxFontStyle *aStyle)
             aStyle->allowSyntheticStyle;
 
     if (needsOblique) {
-        const double kSkewFactor = 0.25;
-
         cairo_matrix_t style;
         cairo_matrix_init(&style,
                           1,                //xx
                           0,                //yx
-                          -1 * kSkewFactor,  //xy
+                          -1 * OBLIQUE_SKEW_FACTOR, //xy
                           1,                //yy
                           0,                //x0
                           0);               //y0
@@ -694,7 +692,7 @@ public:
 
             FNCMapEntry* mapEntry =
                 static_cast<FNCMapEntry*>
-                (PL_DHashTableOperate(&mMap, filename.get(), PL_DHASH_ADD));
+                (PL_DHashTableAdd(&mMap, filename.get()));
             if (mapEntry) {
                 mapEntry->mFilename.Assign(filename);
                 mapEntry->mTimestamp = timestamp;
@@ -721,7 +719,7 @@ public:
             return;
         }
         PLDHashEntryHdr *hdr =
-            PL_DHashTableOperate(&mMap, aFileName.get(), PL_DHASH_LOOKUP);
+            PL_DHashTableLookup(&mMap, aFileName.get());
         if (!hdr) {
             return;
         }
@@ -746,7 +744,7 @@ public:
         }
         FNCMapEntry* entry =
             static_cast<FNCMapEntry*>
-            (PL_DHashTableOperate(&mMap, aFileName.get(), PL_DHASH_ADD));
+            (PL_DHashTableAdd(&mMap, aFileName.get()));
         if (entry) {
             entry->mFilename.Assign(aFileName);
             entry->mTimestamp = aTimestamp;

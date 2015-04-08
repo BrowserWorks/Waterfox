@@ -1,7 +1,7 @@
 
 /*
  *
- * (C) Copyright IBM Corp. 1998-2014 - All Rights Reserved
+ * (C) Copyright IBM Corp. 1998-2015 - All Rights Reserved
  *
  */
 
@@ -156,39 +156,13 @@ public:
      *
      * Subclasses which represent composite fonts should always return <code>NULL</code>.
      *
-     * Note that implementing this function does not allow for range checking.
-     * Subclasses that desire the safety of range checking must implement the
-     * variation which has a length parameter.
-     *
-     * @param tableTag - the four byte table tag. (e.g. 'cmap')
-     *
-     * @return the address of the table in memory, or <code>NULL</code>
-     *         if the table doesn't exist.
-     *
-     * @deprecated ICU 54. See {@link icu::LayoutEngine}
-     */
-    virtual const void *getFontTable(LETag tableTag) const = 0;
-
-    /**
-     * This method reads a table from the font. Note that in general,
-     * it only makes sense to call this method on an <code>LEFontInstance</code>
-     * which represents a physical font - i.e. one which has been returned by
-     * <code>getSubFont()</code>. This is because each subfont in a composite font
-     * will have different tables, and there's no way to know which subfont to access.
-     *
-     * Subclasses which represent composite fonts should always return <code>NULL</code>.
-     *
-     * This version sets a length, for range checking.
-     * Note that range checking can only be accomplished if this function is
-     * implemented in subclasses.
-     *
      * @param tableTag - the four byte table tag. (e.g. 'cmap')
      * @param length - ignored on entry, on exit will be the length of the table if known, or -1 if unknown.
      * @return the address of the table in memory, or <code>NULL</code>
      *         if the table doesn't exist.
      * @deprecated ICU 54. See {@link LayoutEngine}
      */
-    virtual const void* getFontTable(LETag tableTag, size_t &length) const { length=-1; return getFontTable(tableTag); }  /* -1 = unknown length */
+    virtual const void* getFontTable(LETag tableTag, size_t &length) const = 0;
 
     /**
      * This method is used to determine if the font can

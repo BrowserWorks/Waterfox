@@ -19,13 +19,6 @@ namespace gc {
 void
 MarkPersistentRootedChains(JSTracer *trc);
 
-#ifdef JSGC_FJGENERATIONAL
-class ForkJoinNurseryCollectionTracer;
-
-void
-MarkForkJoinStack(ForkJoinNurseryCollectionTracer *trc);
-#endif
-
 class AutoCopyFreeListToArenas
 {
     JSRuntime *runtime;
@@ -56,8 +49,8 @@ class AutoTraceSession
     JSRuntime *runtime;
 
   private:
-    AutoTraceSession(const AutoTraceSession&) MOZ_DELETE;
-    void operator=(const AutoTraceSession&) MOZ_DELETE;
+    AutoTraceSession(const AutoTraceSession&) = delete;
+    void operator=(const AutoTraceSession&) = delete;
 
     HeapState prevState;
 };
@@ -118,10 +111,24 @@ class AutoStopVerifyingBarriers
     }
 
     ~AutoStopVerifyingBarriers() {
+        // Nasty special case: verification runs a minor GC, which *may* nest
+        // inside of an outer minor GC. This is not allowed by the
+        // gc::Statistics phase tree. So we pause the "real" GC, if in fact one
+        // is in progress.
+        gcstats::Phase outer = gc->stats.currentPhase();
+        if (outer != gcstats::PHASE_NONE)
+            gc->stats.endPhase(outer);
+        MOZ_ASSERT((gc->stats.currentPhase() == gcstats::PHASE_NONE) ||
+                   (gc->stats.currentPhase() == gcstats::PHASE_GC_BEGIN) ||
+                   (gc->stats.currentPhase() == gcstats::PHASE_GC_END));
+
         if (restartPreVerifier)
             gc->startVerifyPreBarriers();
         if (restartPostVerifier)
             gc->startVerifyPostBarriers();
+
+        if (outer != gcstats::PHASE_NONE)
+            gc->stats.beginPhase(outer);
     }
 };
 #else

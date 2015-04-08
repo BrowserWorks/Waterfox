@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2014, International Business Machines
+ * Copyright (C) 1999-2015, International Business Machines
  * Corporation and others.  All Rights Reserved.
  *
  * file name: collationfcd.cpp

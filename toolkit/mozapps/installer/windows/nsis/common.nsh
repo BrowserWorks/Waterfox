@@ -3694,7 +3694,7 @@
       Push $R5
       Push $R4
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ; Since shortcuts that are pinned can later be removed without removing
         ; the pinned shortcut unpin the pinned shortcuts for the application's
         ; main exe using the pinned shortcuts themselves.
@@ -5091,7 +5091,7 @@
 
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWinVista}
+        ${OrUnless} ${AtLeastWin7}
           MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
           ; Nothing initialized so no need to call OnEndCommon
           Quit

@@ -1,11 +1,11 @@
 /********************************************************************
  * COPYRIGHT: 
- * Copyright (c) 1997-2014, International Business Machines Corporation and
+ * Copyright (c) 1997-2015, International Business Machines Corporation and
  * others. All Rights Reserved.
  ********************************************************************/
 /*****************************************************************************
 *
-* File CCONVTST.C
+* File ncnvtst.c
 *
 * Modification History:
 *        Name                     Description
@@ -755,6 +755,7 @@ static void TestRegressionUTF8(){
 #define MAX_UTF32_LEN 1
 
 static void TestRegressionUTF32(){
+#if !UCONFIG_ONLY_HTML_CONVERSION
     UChar32 currCh = 0;
     int32_t offset32;
     int32_t offset16;
@@ -886,6 +887,7 @@ static void TestRegressionUTF32(){
         }
         ucnv_close(convLE);
     }
+#endif
 }
 
 /*Walk through the available converters*/

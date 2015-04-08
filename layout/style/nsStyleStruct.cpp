@@ -1670,17 +1670,12 @@ nsChangeHint nsStyleTable::CalcDifference(const nsStyleTable& aOther) const
 // -----------------------
 // nsStyleTableBorder
 
-nsStyleTableBorder::nsStyleTableBorder(nsPresContext* aPresContext) 
+nsStyleTableBorder::nsStyleTableBorder()
 { 
   MOZ_COUNT_CTOR(nsStyleTableBorder);
   mBorderCollapse = NS_STYLE_BORDER_SEPARATE;
 
-  nsCompatibility compatMode = eCompatibility_FullStandards;
-  if (aPresContext)
-    compatMode = aPresContext->CompatibilityMode();
-  mEmptyCells = (compatMode == eCompatibility_NavQuirks)
-                  ? NS_STYLE_TABLE_EMPTY_CELLS_SHOW_BACKGROUND     
-                  : NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
+  mEmptyCells = NS_STYLE_TABLE_EMPTY_CELLS_SHOW;
   mCaptionSide = NS_STYLE_CAPTION_SIDE_TOP;
   mBorderSpacingX = 0;
   mBorderSpacingY = 0;
@@ -2892,6 +2887,7 @@ nsStyleVisibility::nsStyleVisibility(nsPresContext* aPresContext)
   mVisible = NS_STYLE_VISIBILITY_VISIBLE;
   mPointerEvents = NS_STYLE_POINTER_EVENTS_AUTO;
   mWritingMode = NS_STYLE_WRITING_MODE_HORIZONTAL_TB;
+  mTextOrientation = NS_STYLE_TEXT_ORIENTATION_MIXED;
 }
 
 nsStyleVisibility::nsStyleVisibility(const nsStyleVisibility& aSource)
@@ -2902,6 +2898,7 @@ nsStyleVisibility::nsStyleVisibility(const nsStyleVisibility& aSource)
   mVisible = aSource.mVisible;
   mPointerEvents = aSource.mPointerEvents;
   mWritingMode = aSource.mWritingMode;
+  mTextOrientation = aSource.mTextOrientation;
 } 
 
 nsChangeHint nsStyleVisibility::CalcDifference(const nsStyleVisibility& aOther) const
@@ -2922,6 +2919,9 @@ nsChangeHint nsStyleVisibility::CalcDifference(const nsStyleVisibility& aOther) 
       } else {
         NS_UpdateHint(hint, NS_STYLE_HINT_VISUAL);
       }
+    }
+    if (mTextOrientation != aOther.mTextOrientation) {
+      NS_UpdateHint(hint, NS_STYLE_HINT_REFLOW);
     }
     if (mPointerEvents != aOther.mPointerEvents) {
       // nsSVGPathGeometryFrame's mRect depends on stroke _and_ on the value
@@ -3351,8 +3351,8 @@ nsStyleText::nsStyleText(void)
   mWordBreak = NS_STYLE_WORDBREAK_NORMAL;
   mWordWrap = NS_STYLE_WORDWRAP_NORMAL;
   mHyphens = NS_STYLE_HYPHENS_MANUAL;
+  mRubyPosition = NS_STYLE_RUBY_POSITION_INITIAL;
   mTextSizeAdjust = NS_STYLE_TEXT_SIZE_ADJUST_AUTO;
-  mTextOrientation = NS_STYLE_TEXT_ORIENTATION_MIXED;
   mTextCombineUpright = NS_STYLE_TEXT_COMBINE_UPRIGHT_NONE;
   mControlCharacterVisibility = NS_STYLE_CONTROL_CHARACTER_VISIBILITY_HIDDEN;
 
@@ -3375,8 +3375,8 @@ nsStyleText::nsStyleText(const nsStyleText& aSource)
     mWordBreak(aSource.mWordBreak),
     mWordWrap(aSource.mWordWrap),
     mHyphens(aSource.mHyphens),
+    mRubyPosition(aSource.mRubyPosition),
     mTextSizeAdjust(aSource.mTextSizeAdjust),
-    mTextOrientation(aSource.mTextOrientation),
     mTextCombineUpright(aSource.mTextCombineUpright),
     mControlCharacterVisibility(aSource.mControlCharacterVisibility),
     mTabSize(aSource.mTabSize),
@@ -3416,8 +3416,8 @@ nsChangeHint nsStyleText::CalcDifference(const nsStyleText& aOther) const
       (mWordBreak != aOther.mWordBreak) ||
       (mWordWrap != aOther.mWordWrap) ||
       (mHyphens != aOther.mHyphens) ||
+      (mRubyPosition != aOther.mRubyPosition) ||
       (mTextSizeAdjust != aOther.mTextSizeAdjust) ||
-      (mTextOrientation != aOther.mTextOrientation) ||
       (mLetterSpacing != aOther.mLetterSpacing) ||
       (mLineHeight != aOther.mLineHeight) ||
       (mTextIndent != aOther.mTextIndent) ||

@@ -41,13 +41,8 @@ DirectProxyHandler::defineProperty(JSContext *cx, HandleObject proxy, HandleId i
     RootedValue v(cx, desc.value());
     return CheckDefineProperty(cx, target, id, v, desc.attributes(),
                                desc.getter(), desc.setter()) &&
-           JS_DefinePropertyById(cx, target, id, v,
-                                 // Descriptors never store JSNatives for
-                                 // accessors: they have either JSFunctions or
-                                 // JSPropertyOps.
-                                 desc.attributes() | JSPROP_PROPOP_ACCESSORS,
-                                 JS_PROPERTYOP_GETTER(desc.getter()),
-                                 JS_PROPERTYOP_SETTER(desc.setter()));
+           JSObject::defineGeneric(cx, target, id, v, desc.getter(), desc.setter(),
+                                   desc.attributes());
 }
 
 bool
@@ -65,6 +60,15 @@ DirectProxyHandler::delete_(JSContext *cx, HandleObject proxy, HandleId id, bool
     assertEnteredPolicy(cx, proxy, id, SET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return JSObject::deleteGeneric(cx, target, id, bp);
+}
+
+bool
+DirectProxyHandler::enumerate(JSContext *cx, HandleObject proxy, MutableHandleObject objp) const
+{
+    assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
+    MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
+    RootedObject target(cx, proxy->as<ProxyObject>().target());
+    return GetIterator(cx, target, 0, objp);
 }
 
 bool
@@ -208,11 +212,7 @@ DirectProxyHandler::hasOwn(JSContext *cx, HandleObject proxy, HandleId id, bool 
 {
     assertEnteredPolicy(cx, proxy, id, GET);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
-    Rooted<PropertyDescriptor> desc(cx);
-    if (!JS_GetPropertyDescriptorById(cx, target, id, &desc))
-        return false;
-    *bp = (desc.object() == target);
-    return true;
+    return js::HasOwnProperty(cx, target, id, bp);
 }
 
 bool
@@ -240,26 +240,6 @@ DirectProxyHandler::getOwnEnumerablePropertyKeys(JSContext *cx, HandleObject pro
     assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
     RootedObject target(cx, proxy->as<ProxyObject>().target());
     return GetPropertyKeys(cx, target, JSITER_OWNONLY, &props);
-}
-
-bool
-DirectProxyHandler::getEnumerablePropertyKeys(JSContext *cx, HandleObject proxy,
-                                              AutoIdVector &props) const
-{
-    assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
-    MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
-    RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return GetPropertyKeys(cx, target, 0, &props);
-}
-
-bool
-DirectProxyHandler::iterate(JSContext *cx, HandleObject proxy, unsigned flags,
-                            MutableHandleObject objp) const
-{
-    assertEnteredPolicy(cx, proxy, JSID_VOID, ENUMERATE);
-    MOZ_ASSERT(!hasPrototype()); // Should never be called if there's a prototype.
-    RootedObject target(cx, proxy->as<ProxyObject>().target());
-    return GetIterator(cx, target, flags, objp);
 }
 
 bool

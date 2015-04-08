@@ -5,25 +5,39 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "Decoder.h"
+
+#include "mozilla/gfx/2D.h"
+#include "DecodePool.h"
+#include "GeckoProfiler.h"
+#include "imgIContainer.h"
 #include "nsIConsoleService.h"
 #include "nsIScriptError.h"
-#include "GeckoProfiler.h"
+#include "nsProxyRelease.h"
 #include "nsServiceManagerUtils.h"
 #include "nsComponentManagerUtils.h"
+
+using mozilla::gfx::IntSize;
+using mozilla::gfx::SurfaceFormat;
 
 namespace mozilla {
 namespace image {
 
-Decoder::Decoder(RasterImage &aImage)
+Decoder::Decoder(RasterImage* aImage)
   : mImage(aImage)
   , mProgress(NoProgress)
   , mImageData(nullptr)
   , mColormap(nullptr)
   , mChunkCount(0)
-  , mDecodeFlags(0)
+  , mFlags(0)
   , mBytesDecoded(0)
+  , mSendPartialInvalidations(false)
+  , mDataDone(false)
   , mDecodeDone(false)
   , mDataError(false)
+  , mDecodeAborted(false)
+  , mShouldReportError(false)
+  , mImageIsTransient(false)
+  , mImageIsLocked(false)
   , mFrameCount(0)
   , mFailCode(NS_OK)
   , mNeedsNewFrame(false)
@@ -41,6 +55,21 @@ Decoder::~Decoder()
   MOZ_ASSERT(mInvalidRect.IsEmpty(),
              "Destroying Decoder without taking all its invalidations");
   mInitialized = false;
+
+  if (!NS_IsMainThread()) {
+    // Dispatch mImage to main thread to prevent it from being destructed by the
+    // decode thread.
+    nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+    NS_WARN_IF_FALSE(mainThread, "Couldn't get the main thread!");
+    if (mainThread) {
+      // Handle ambiguous nsISupports inheritance.
+      RasterImage* rawImg = nullptr;
+      mImage.swap(rawImg);
+      DebugOnly<nsresult> rv =
+        NS_ProxyRelease(mainThread, NS_ISUPPORTS_CAST(ImageResource*, rawImg));
+      MOZ_ASSERT(NS_SUCCEEDED(rv), "Failed to proxy release to main thread");
+    }
+  }
 }
 
 /*
@@ -51,7 +80,7 @@ void
 Decoder::Init()
 {
   // No re-initializing
-  NS_ABORT_IF_FALSE(!mInitialized, "Can't re-initialize a decoder!");
+  MOZ_ASSERT(!mInitialized, "Can't re-initialize a decoder!");
 
   // Fire OnStartDecode at init time to support bug 512435.
   if (!IsSizeDecode()) {
@@ -82,6 +111,7 @@ Decoder::InitSharedDecoder(uint8_t* aImageData, uint32_t aImageDataLength,
 
   // We have all the frame data, so we've started the frame.
   if (!IsSizeDecode()) {
+    mFrameCount++;
     PostFrameStart();
   }
 
@@ -90,13 +120,76 @@ Decoder::InitSharedDecoder(uint8_t* aImageData, uint32_t aImageDataLength,
   mInitialized = true;
 }
 
+nsresult
+Decoder::Decode()
+{
+  MOZ_ASSERT(mInitialized, "Should be initialized here");
+  MOZ_ASSERT(mIterator, "Should have a SourceBufferIterator");
+
+  // We keep decoding chunks until the decode completes or there are no more
+  // chunks available.
+  while (!GetDecodeDone() && !HasError()) {
+    auto newState = mIterator->AdvanceOrScheduleResume(this);
+
+    if (newState == SourceBufferIterator::WAITING) {
+      // We can't continue because the rest of the data hasn't arrived from the
+      // network yet. We don't have to do anything special; the
+      // SourceBufferIterator will ensure that Decode() gets called again on a
+      // DecodePool thread when more data is available.
+      return NS_OK;
+    }
+
+    if (newState == SourceBufferIterator::COMPLETE) {
+      mDataDone = true;
+
+      nsresult finalStatus = mIterator->CompletionStatus();
+      if (NS_FAILED(finalStatus)) {
+        PostDataError();
+      }
+
+      CompleteDecode();
+      return finalStatus;
+    }
+
+    MOZ_ASSERT(newState == SourceBufferIterator::READY);
+
+    Write(mIterator->Data(), mIterator->Length());
+  }
+
+  CompleteDecode();
+  return HasError() ? NS_ERROR_FAILURE : NS_OK;
+}
+
 void
-Decoder::Write(const char* aBuffer, uint32_t aCount, DecodeStrategy aStrategy)
+Decoder::Resume()
+{
+  DecodePool* decodePool = DecodePool::Singleton();
+  MOZ_ASSERT(decodePool);
+
+  nsCOMPtr<nsIEventTarget> target = decodePool->GetEventTarget();
+  if (MOZ_UNLIKELY(!target)) {
+    // We're shutting down and the DecodePool's thread pool has been destroyed.
+    return;
+  }
+
+  nsCOMPtr<nsIRunnable> worker = decodePool->CreateDecodeWorker(this);
+  target->Dispatch(worker, nsIEventTarget::DISPATCH_NORMAL);
+}
+
+bool
+Decoder::ShouldSyncDecode(size_t aByteLimit)
+{
+  MOZ_ASSERT(aByteLimit > 0);
+  MOZ_ASSERT(mIterator, "Should have a SourceBufferIterator");
+
+  return mIterator->RemainingBytesIsNoMoreThan(aByteLimit);
+}
+
+void
+Decoder::Write(const char* aBuffer, uint32_t aCount)
 {
   PROFILER_LABEL("ImageDecoder", "Write",
     js::ProfileEntry::Category::GRAPHICS);
-
-  MOZ_ASSERT(NS_IsMainThread() || aStrategy == DecodeStrategy::ASYNC);
 
   // We're strict about decoder errors
   MOZ_ASSERT(!HasDecoderError(),
@@ -124,22 +217,26 @@ Decoder::Write(const char* aBuffer, uint32_t aCount, DecodeStrategy aStrategy)
     return;
   }
 
-  // Pass the data along to the implementation
-  WriteInternal(aBuffer, aCount, aStrategy);
+  MOZ_ASSERT(!NeedsNewFrame() || HasDataError(),
+             "Should not need a new frame before writing anything");
+  MOZ_ASSERT(!NeedsToFlushData() || HasDataError(),
+             "Should not need to flush data before writing anything");
 
-  // If we're a synchronous decoder and we need a new frame to proceed, let's
-  // create one and call it again.
-  if (aStrategy == DecodeStrategy::SYNC) {
-    while (NeedsNewFrame() && !HasDataError()) {
-      nsresult rv = AllocateFrame();
+  // Pass the data along to the implementation.
+  WriteInternal(aBuffer, aCount);
 
-      if (NS_SUCCEEDED(rv)) {
-        // Use the data we saved when we asked for a new frame.
-        WriteInternal(nullptr, 0, aStrategy);
-      }
+  // If we need a new frame to proceed, let's create one and call it again.
+  while (NeedsNewFrame() && !HasDataError()) {
+    MOZ_ASSERT(!IsSizeDecode(), "Shouldn't need new frame for size decode");
 
-      mNeedsToFlushData = false;
+    nsresult rv = AllocateFrame();
+
+    if (NS_SUCCEEDED(rv)) {
+      // Use the data we saved when we asked for a new frame.
+      WriteInternal(nullptr, 0);
     }
+
+    mNeedsToFlushData = false;
   }
 
   // Finish telemetry.
@@ -147,10 +244,8 @@ Decoder::Write(const char* aBuffer, uint32_t aCount, DecodeStrategy aStrategy)
 }
 
 void
-Decoder::Finish(ShutdownReason aReason)
+Decoder::CompleteDecode()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   // Implementation-specific finalization
   if (!HasError())
     FinishInternal();
@@ -159,41 +254,19 @@ Decoder::Finish(ShutdownReason aReason)
   if (mInFrame && !HasError())
     PostFrameStop();
 
-  // If PostDecodeDone() has not been called, we need to sent teardown
-  // notifications.
-  if (!IsSizeDecode() && !mDecodeDone) {
+  // If PostDecodeDone() has not been called, and this decoder wasn't aborted
+  // early because of low-memory conditions or losing a race with another
+  // decoder, we need to send teardown notifications (and report an error to the
+  // console later).
+  if (!IsSizeDecode() && !mDecodeDone && !WasAborted()) {
+    mShouldReportError = true;
 
-    // Log data errors to the error console
-    nsCOMPtr<nsIConsoleService> consoleService =
-      do_GetService(NS_CONSOLESERVICE_CONTRACTID);
-    nsCOMPtr<nsIScriptError> errorObject =
-      do_CreateInstance(NS_SCRIPTERROR_CONTRACTID);
+    // If we only have a data error, we're usable if we have at least one
+    // complete frame.
+    if (!HasDecoderError() && GetCompleteFrameCount() > 0) {
+      // We're usable, so do exactly what we should have when the decoder
+      // completed.
 
-    if (consoleService && errorObject && !HasDecoderError()) {
-      nsAutoString msg(NS_LITERAL_STRING("Image corrupt or truncated: ") +
-                       NS_ConvertUTF8toUTF16(mImage.GetURIString()));
-
-      if (NS_SUCCEEDED(errorObject->InitWithWindowID(
-                         msg,
-                         NS_ConvertUTF8toUTF16(mImage.GetURIString()),
-                         EmptyString(), 0, 0, nsIScriptError::errorFlag,
-                         "Image", mImage.InnerWindowID()
-                       ))) {
-        consoleService->LogMessage(errorObject);
-      }
-    }
-
-    bool usable = !HasDecoderError();
-    if (aReason != ShutdownReason::NOT_NEEDED && !HasDecoderError()) {
-      // If we only have a data error, we're usable if we have at least one complete frame.
-      if (GetCompleteFrameCount() == 0) {
-        usable = false;
-      }
-    }
-
-    // If we're usable, do exactly what we should have when the decoder
-    // completed.
-    if (usable) {
       // Not writing to the entire frame may have left us transparent.
       PostHasTransparency();
 
@@ -202,52 +275,99 @@ Decoder::Finish(ShutdownReason aReason)
       }
       PostDecodeDone();
     } else {
+      // We're not usable. Record some final progress indicating the error.
       if (!IsSizeDecode()) {
         mProgress |= FLAG_DECODE_COMPLETE | FLAG_ONLOAD_UNBLOCKED;
       }
       mProgress |= FLAG_HAS_ERROR;
     }
   }
+}
+
+void
+Decoder::Finish()
+{
+  MOZ_ASSERT(NS_IsMainThread());
+
+  MOZ_ASSERT(HasError() || !mInFrame, "Finishing while we're still in a frame");
+
+  // If we detected an error in CompleteDecode(), log it to the error console.
+  if (mShouldReportError && !WasAborted()) {
+    nsCOMPtr<nsIConsoleService> consoleService =
+      do_GetService(NS_CONSOLESERVICE_CONTRACTID);
+    nsCOMPtr<nsIScriptError> errorObject =
+      do_CreateInstance(NS_SCRIPTERROR_CONTRACTID);
+
+    if (consoleService && errorObject && !HasDecoderError()) {
+      nsAutoString msg(NS_LITERAL_STRING("Image corrupt or truncated: ") +
+                       NS_ConvertUTF8toUTF16(mImage->GetURIString()));
+
+      if (NS_SUCCEEDED(errorObject->InitWithWindowID(
+                         msg,
+                         NS_ConvertUTF8toUTF16(mImage->GetURIString()),
+                         EmptyString(), 0, 0, nsIScriptError::errorFlag,
+                         "Image", mImage->InnerWindowID()
+                       ))) {
+        consoleService->LogMessage(errorObject);
+      }
+    }
+  }
 
   // Set image metadata before calling DecodingComplete, because
   // DecodingComplete calls Optimize().
-  mImageMetadata.SetOnImage(&mImage);
+  mImageMetadata.SetOnImage(mImage);
 
-  if (mDecodeDone) {
+  if (HasSize()) {
+    SetSizeOnImage();
+  }
+
+  if (mDecodeDone && !IsSizeDecode()) {
     MOZ_ASSERT(HasError() || mCurrentFrame, "Should have an error or a frame");
-    mImage.DecodingComplete(mCurrentFrame.get());
+
+    // If this image wasn't animated and isn't a transient image, mark its frame
+    // as optimizable. We don't support optimizing animated images and
+    // optimizing transient images isn't worth it.
+    if (!mIsAnimated && !mImageIsTransient && mCurrentFrame) {
+      mCurrentFrame->SetOptimizable();
+    }
+
+    mImage->OnDecodingComplete();
   }
 }
 
 void
 Decoder::FinishSharedDecoder()
 {
-  MOZ_ASSERT(NS_IsMainThread());
-
   if (!HasError()) {
     FinishInternal();
   }
 }
 
 nsresult
-Decoder::AllocateFrame()
+Decoder::AllocateFrame(const nsIntSize& aTargetSize /* = nsIntSize() */)
 {
   MOZ_ASSERT(mNeedsNewFrame);
-  MOZ_ASSERT(NS_IsMainThread());
 
-  mCurrentFrame = mImage.EnsureFrame(mNewFrameData.mFrameNum,
-                                     mNewFrameData.mFrameRect,
-                                     mDecodeFlags,
-                                     mNewFrameData.mFormat,
-                                     mNewFrameData.mPaletteDepth,
-                                     mCurrentFrame.get());
+  nsIntSize targetSize = aTargetSize;
+  if (targetSize == nsIntSize()) {
+    MOZ_ASSERT(HasSize());
+    targetSize = mImageMetadata.GetSize();
+  }
+
+  mCurrentFrame = EnsureFrame(mNewFrameData.mFrameNum,
+                              targetSize,
+                              mNewFrameData.mFrameRect,
+                              GetDecodeFlags(),
+                              mNewFrameData.mFormat,
+                              mNewFrameData.mPaletteDepth,
+                              mCurrentFrame.get());
 
   if (mCurrentFrame) {
     // Gather the raw pointers the decoders will use.
     mCurrentFrame->GetImageData(&mImageData, &mImageDataLength);
     mCurrentFrame->GetPaletteData(&mColormap, &mColormapSize);
 
-    if (mNewFrameData.mFrameNum == mFrameCount) {
+    if (mNewFrameData.mFrameNum + 1 == mFrameCount) {
       PostFrameStart();
     }
   } else {
@@ -267,15 +387,168 @@ Decoder::AllocateFrame()
   return mCurrentFrame ? NS_OK : NS_ERROR_FAILURE;
 }
 
+RawAccessFrameRef
+Decoder::EnsureFrame(uint32_t aFrameNum,
+                     const nsIntSize& aTargetSize,
+                     const nsIntRect& aFrameRect,
+                     uint32_t aDecodeFlags,
+                     SurfaceFormat aFormat,
+                     uint8_t aPaletteDepth,
+                     imgFrame* aPreviousFrame)
+{
+  if (mDataError || NS_FAILED(mFailCode)) {
+    return RawAccessFrameRef();
+  }
+
+  MOZ_ASSERT(aFrameNum <= mFrameCount, "Invalid frame index!");
+  if (aFrameNum > mFrameCount) {
+    return RawAccessFrameRef();
+  }
+
+  // Adding a frame that doesn't already exist. This is the normal case.
+  if (aFrameNum == mFrameCount) {
+    return InternalAddFrame(aFrameNum, aTargetSize, aFrameRect, aDecodeFlags,
+                            aFormat, aPaletteDepth, aPreviousFrame);
+  }
+
+  // We're replacing a frame. It must be the first frame; there's no reason to
+  // ever replace any other frame, since the first frame is the only one we
+  // speculatively allocate without knowing what the decoder really needs.
+  // XXX(seth): I'm not convinced there's any reason to support this at all. We
+  // should figure out how to avoid triggering this and rip it out.
+  MOZ_ASSERT(aFrameNum == 0, "Replacing a frame other than the first?");
+  MOZ_ASSERT(mFrameCount == 1, "Should have only one frame");
+  MOZ_ASSERT(aPreviousFrame, "Need the previous frame to replace");
+  if (aFrameNum != 0 || !aPreviousFrame || mFrameCount != 1) {
+    return RawAccessFrameRef();
+  }
+
+  MOZ_ASSERT(!aPreviousFrame->GetRect().IsEqualEdges(aFrameRect) ||
+             aPreviousFrame->GetFormat() != aFormat ||
+             aPreviousFrame->GetPaletteDepth() != aPaletteDepth,
+             "Replacing first frame with the same kind of frame?");
+
+  // Reset our state.
+  mInFrame = false;
+  RawAccessFrameRef ref = Move(mCurrentFrame);
+
+  MOZ_ASSERT(ref, "No ref to current frame?");
+
+  // Reinitialize the old frame.
+  nsIntSize oldSize = ThebesIntSize(aPreviousFrame->GetImageSize());
+  bool nonPremult =
+    aDecodeFlags & imgIContainer::FLAG_DECODE_NO_PREMULTIPLY_ALPHA;
+  if (NS_FAILED(aPreviousFrame->ReinitForDecoder(oldSize, aFrameRect, aFormat,
+                                                 aPaletteDepth, nonPremult))) {
+    NS_WARNING("imgFrame::ReinitForDecoder should succeed");
+    mFrameCount = 0;
+    aPreviousFrame->Abort();
+    return RawAccessFrameRef();
+  }
+
+  return ref;
+}
+
+RawAccessFrameRef
+Decoder::InternalAddFrame(uint32_t aFrameNum,
+                          const nsIntSize& aTargetSize,
+                          const nsIntRect& aFrameRect,
+                          uint32_t aDecodeFlags,
+                          SurfaceFormat aFormat,
+                          uint8_t aPaletteDepth,
+                          imgFrame* aPreviousFrame)
+{
+  MOZ_ASSERT(aFrameNum <= mFrameCount, "Invalid frame index!");
+  if (aFrameNum > mFrameCount) {
+    return RawAccessFrameRef();
+  }
+
+  if (aTargetSize.width <= 0 || aTargetSize.height <= 0 ||
+      aFrameRect.width <= 0 || aFrameRect.height <= 0) {
+    NS_WARNING("Trying to add frame with zero or negative size");
+    return RawAccessFrameRef();
+  }
+
+  if (!SurfaceCache::CanHold(aTargetSize.ToIntSize())) {
+    NS_WARNING("Trying to add frame that's too large for the SurfaceCache");
+    return RawAccessFrameRef();
+  }
+
+  nsRefPtr<imgFrame> frame = new imgFrame();
+  bool nonPremult =
+    aDecodeFlags & imgIContainer::FLAG_DECODE_NO_PREMULTIPLY_ALPHA;
+  if (NS_FAILED(frame->InitForDecoder(aTargetSize, aFrameRect, aFormat,
+                                      aPaletteDepth, nonPremult))) {
+    NS_WARNING("imgFrame::Init should succeed");
+    return RawAccessFrameRef();
+  }
+
+  RawAccessFrameRef ref = frame->RawAccessRef();
+  if (!ref) {
+    frame->Abort();
+    return RawAccessFrameRef();
+  }
+
+  InsertOutcome outcome =
+    SurfaceCache::Insert(frame, ImageKey(mImage.get()),
+                         RasterSurfaceKey(aTargetSize.ToIntSize(),
+                                          aDecodeFlags,
+                                          aFrameNum),
+                         Lifetime::Persistent);
+  if (outcome != InsertOutcome::SUCCESS) {
+    // We either hit InsertOutcome::FAILURE, which is a temporary failure due to
+    // low memory (we know it's not permanent because we checked CanHold()
+    // above), or InsertOutcome::FAILURE_ALREADY_PRESENT, which means that
+    // another decoder beat us to decoding this frame. Either way, we should
+    // abort this decoder rather than treat this as a real error.
+    mDecodeAborted = true;
+    ref->Abort();
+    return RawAccessFrameRef();
+  }
+
+  nsIntRect refreshArea;
+
+  if (aFrameNum == 1) {
+    MOZ_ASSERT(aPreviousFrame, "Must provide a previous frame when animated");
+    aPreviousFrame->SetRawAccessOnly();
+
+    // If we dispose of the first frame by clearing it, then the first frame's
+    // refresh area is all of itself.
+    // RESTORE_PREVIOUS is invalid (assumed to be DISPOSE_CLEAR).
+    AnimationData previousFrameData = aPreviousFrame->GetAnimationData();
+    if (previousFrameData.mDisposalMethod == DisposalMethod::CLEAR ||
+        previousFrameData.mDisposalMethod == DisposalMethod::CLEAR_ALL ||
+        previousFrameData.mDisposalMethod == DisposalMethod::RESTORE_PREVIOUS) {
+      refreshArea = previousFrameData.mRect;
+    }
+  }
+
+  if (aFrameNum > 0) {
+    ref->SetRawAccessOnly();
+
+    // Some GIFs are huge but only have a small area that they animate. We only
+    // need to refresh that small area when frame 0 comes around again.
+    refreshArea.UnionRect(refreshArea, frame->GetRect());
+  }
+
+  mFrameCount++;
+  mImage->OnAddedFrame(mFrameCount, refreshArea);
+
+  return ref;
+}
+
 void
 Decoder::SetSizeOnImage()
 {
   MOZ_ASSERT(mImageMetadata.HasSize(), "Should have size");
   MOZ_ASSERT(mImageMetadata.HasOrientation(), "Should have orientation");
 
-  mImage.SetSize(mImageMetadata.GetWidth(),
-                 mImageMetadata.GetHeight(),
-                 mImageMetadata.GetOrientation());
+  nsresult rv = mImage->SetSize(mImageMetadata.GetWidth(),
+                                mImageMetadata.GetHeight(),
+                                mImageMetadata.GetOrientation());
+  if (NS_FAILED(rv)) {
+    PostResizeError();
+  }
 }
 
 /*
@@ -283,7 +556,7 @@ Decoder::SetSizeOnImage()
  */
 
 void Decoder::InitInternal() { }
-void Decoder::WriteInternal(const char* aBuffer, uint32_t aCount, DecodeStrategy aStrategy) { }
+void Decoder::WriteInternal(const char* aBuffer, uint32_t aCount) { }
 void Decoder::FinishInternal() { }
 
 /*
@@ -319,7 +592,6 @@ Decoder::PostFrameStart()
   NS_ABORT_IF_FALSE(!mInFrame, "Starting new frame but not done with old one!");
 
   // Update our state to reflect the new frame
-  mFrameCount++;
   mInFrame = true;
 
   // If we just became animated, record that fact.
@@ -327,19 +599,13 @@ Decoder::PostFrameStart()
     mIsAnimated = true;
     mProgress |= FLAG_IS_ANIMATED;
   }
-
-  // Decoder implementations should only call this method if they successfully
-  // appended the frame to the image. So mFrameCount should always match that
-  // reported by the Image.
-  MOZ_ASSERT(mFrameCount == mImage.GetNumFrames(),
-             "Decoder frame count doesn't match image's!");
 }
 
 void
-Decoder::PostFrameStop(FrameBlender::FrameAlpha aFrameAlpha /* = FrameBlender::kFrameHasAlpha */,
-                       FrameBlender::FrameDisposalMethod aDisposalMethod /* = FrameBlender::kDisposeKeep */,
+Decoder::PostFrameStop(Opacity aFrameOpacity /* = Opacity::TRANSPARENT */,
+                       DisposalMethod aDisposalMethod /* = DisposalMethod::KEEP */,
                        int32_t aTimeout /* = 0 */,
-                       FrameBlender::FrameBlendMethod aBlendMethod /* = FrameBlender::kBlendOver */)
+                       BlendMethod aBlendMethod /* = BlendMethod::OVER */)
 {
   // We should be mid-frame
   MOZ_ASSERT(!IsSizeDecode(), "Stopping frame during a size decode");
@@ -349,28 +615,33 @@ Decoder::PostFrameStop(FrameBlender::FrameAlpha aFrameAlpha /* = FrameBlender::k
   // Update our state
   mInFrame = false;
 
-  if (aFrameAlpha == FrameBlender::kFrameOpaque) {
-    mCurrentFrame->SetHasNoAlpha();
-  }
-
-  mCurrentFrame->SetFrameDisposalMethod(aDisposalMethod);
-  mCurrentFrame->SetRawTimeout(aTimeout);
-  mCurrentFrame->SetBlendMethod(aBlendMethod);
-  mCurrentFrame->ImageUpdated(mCurrentFrame->GetRect());
+  mCurrentFrame->Finish(aFrameOpacity, aDisposalMethod, aTimeout, aBlendMethod);
 
   mProgress |= FLAG_FRAME_COMPLETE | FLAG_ONLOAD_UNBLOCKED;
+
+  // If we're not sending partial invalidations, then we send an invalidation
+  // here when the first frame is complete.
+  if (!mSendPartialInvalidations && !mIsAnimated) {
+    mInvalidRect.UnionRect(mInvalidRect,
+                           nsIntRect(nsIntPoint(0, 0), GetSize()));
+  }
 }
 
 void
-Decoder::PostInvalidation(nsIntRect& aRect)
+Decoder::PostInvalidation(const nsIntRect& aRect,
+                          const Maybe<nsIntRect>& aRectAtTargetSize
+                            /* = Nothing() */)
 {
   // We should be mid-frame
   NS_ABORT_IF_FALSE(mInFrame, "Can't invalidate when not mid-frame!");
   NS_ABORT_IF_FALSE(mCurrentFrame, "Can't invalidate when not mid-frame!");
 
-  // Account for the new region
-  mInvalidRect.UnionRect(mInvalidRect, aRect);
-  mCurrentFrame->ImageUpdated(aRect);
+  // Record this invalidation, unless we're not sending partial invalidations
+  // or we're past the first frame.
+  if (mSendPartialInvalidations && !mIsAnimated) {
+    mInvalidRect.UnionRect(mInvalidRect, aRect);
+    mCurrentFrame->ImageUpdated(aRectAtTargetSize.valueOr(aRect));
+  }
 }
 
 void
@@ -390,6 +661,10 @@ void
 Decoder::PostDataError()
 {
   mDataError = true;
+
+  if (mInFrame && mCurrentFrame) {
+    mCurrentFrame->Abort();
+  }
 }
 
 void
@@ -402,6 +677,10 @@ Decoder::PostDecoderError(nsresult aFailureCode)
   // XXXbholley - we should report the image URI here, but imgContainer
   // needs to know its URI first
   NS_WARNING("Image decoding error - This is probably a bug!");
+
+  if (mInFrame && mCurrentFrame) {
+    mCurrentFrame->Abort();
+  }
 }
 
 void

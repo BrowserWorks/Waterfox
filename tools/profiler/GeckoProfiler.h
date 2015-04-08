@@ -49,7 +49,6 @@
 #ifndef SAMPLER_H
 #define SAMPLER_H
 
-#include "mozilla/NullPtr.h"
 #include "js/TypeDecls.h"
 
 namespace mozilla {
@@ -67,6 +66,7 @@ enum TracingMetadata {
 #ifndef MOZ_ENABLE_PROFILER_SPS
 
 #include <stdint.h>
+#include <stdarg.h>
 
 // Insert a RAII in this scope to active a pseudo label. Any samples collected
 // in this scope will contain this annotation. For dynamic strings use
@@ -200,6 +200,9 @@ static inline double profiler_time() { return 0; }
 static inline double profiler_time(const mozilla::TimeStamp& aTime) { return 0; }
 
 static inline bool profiler_in_privacy_mode() { return false; }
+
+static inline void profiler_log(const char *str) {}
+static inline void profiler_log(const char *fmt, va_list args) {}
 
 #else
 

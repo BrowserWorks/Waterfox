@@ -24,8 +24,8 @@ BEGIN_TEST(testGCFinalizeCallback)
     /* Full GC, incremental. */
     FinalizeCalls = 0;
     JS::PrepareForFullGC(rt);
-    JS::IncrementalGC(rt, JS::gcreason::API, 1000000);
-    CHECK(rt->gc.state() == js::gc::NO_INCREMENTAL);
+    JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
     CHECK(checkFinalizeStatus());
@@ -41,7 +41,7 @@ BEGIN_TEST(testGCFinalizeCallback)
     /* Compartment GC, non-incremental, single compartment. */
     FinalizeCalls = 0;
     JS::PrepareZoneForGC(global1->zone());
-    JS::GCForReason(rt, JS::gcreason::API);
+    JS::GCForReason(rt, GC_NORMAL, JS::gcreason::API);
     CHECK(!rt->gc.isFullGc());
     CHECK(checkSingleGroup());
     CHECK(checkFinalizeStatus());
@@ -52,7 +52,7 @@ BEGIN_TEST(testGCFinalizeCallback)
     JS::PrepareZoneForGC(global1->zone());
     JS::PrepareZoneForGC(global2->zone());
     JS::PrepareZoneForGC(global3->zone());
-    JS::GCForReason(rt, JS::gcreason::API);
+    JS::GCForReason(rt, GC_NORMAL, JS::gcreason::API);
     CHECK(!rt->gc.isFullGc());
     CHECK(checkSingleGroup());
     CHECK(checkFinalizeStatus());
@@ -61,8 +61,8 @@ BEGIN_TEST(testGCFinalizeCallback)
     /* Compartment GC, incremental, single compartment. */
     FinalizeCalls = 0;
     JS::PrepareZoneForGC(global1->zone());
-    JS::IncrementalGC(rt, JS::gcreason::API, 1000000);
-    CHECK(rt->gc.state() == js::gc::NO_INCREMENTAL);
+    JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkSingleGroup());
     CHECK(checkFinalizeStatus());
@@ -73,8 +73,8 @@ BEGIN_TEST(testGCFinalizeCallback)
     JS::PrepareZoneForGC(global1->zone());
     JS::PrepareZoneForGC(global2->zone());
     JS::PrepareZoneForGC(global3->zone());
-    JS::IncrementalGC(rt, JS::gcreason::API, 1000000);
-    CHECK(rt->gc.state() == js::gc::NO_INCREMENTAL);
+    JS::StartIncrementalGC(rt, GC_NORMAL, JS::gcreason::API, 1000000);
+    CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
     CHECK(checkFinalizeStatus());
@@ -95,7 +95,7 @@ BEGIN_TEST(testGCFinalizeCallback)
     JS::RootedObject global4(cx, createTestGlobal());
     budget = js::SliceBudget(js::WorkBudget(1));
     rt->gc.gcDebugSlice(budget);
-    CHECK(rt->gc.state() == js::gc::NO_INCREMENTAL);
+    CHECK(!rt->gc.isIncrementalGCInProgress());
     CHECK(!rt->gc.isFullGc());
     CHECK(checkMultipleGroups());
     CHECK(checkFinalizeStatus());

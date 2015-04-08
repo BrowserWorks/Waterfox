@@ -7,12 +7,6 @@
 #include "SandboxFilter.h"
 #include "SandboxAssembler.h"
 
-#include "linux_seccomp.h"
-#include "linux_syscalls.h"
-
-#include "mozilla/ArrayUtils.h"
-#include "mozilla/NullPtr.h"
-
 #include <errno.h>
 #include <linux/ipc.h>
 #include <linux/net.h>
@@ -21,6 +15,10 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
+
+#include "mozilla/ArrayUtils.h"
+#include "sandbox/linux/seccomp-bpf/linux_seccomp.h"
+#include "sandbox/linux/services/linux_syscalls.h"
 
 namespace mozilla {
 
@@ -133,6 +131,7 @@ SandboxFilterImplContent::Build() {
 
   Allow(SYSCALL(clock_gettime));
   Allow(SYSCALL(epoll_wait));
+  Allow(SYSCALL(epoll_pwait));
   Allow(SYSCALL(gettimeofday));
   Allow(SYSCALL(read));
   Allow(SYSCALL(write));
@@ -169,6 +168,9 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(dup));
   Allow(SYSCALL(nanosleep));
   Allow(SYSCALL(poll));
+  Allow(SYSCALL(ppoll));
+  Allow(SYSCALL(openat));
+  Allow(SYSCALL(faccessat));
   // select()'s arguments used to be passed by pointer as a struct.
 #if SYSCALL_EXISTS(_newselect)
   Allow(SYSCALL(_newselect));
@@ -244,6 +246,7 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(sched_setparam));
   Allow(SYSCALL(sigaltstack));
   Allow(SYSCALL(pipe));
+  Allow(SYSCALL(set_tid_address));
 
   /* Always last and always OK calls */
   /* Architecture-specific very infrequently used syscalls */
@@ -299,6 +302,9 @@ SandboxFilterImplContent::Build() {
   Allow(SYSCALL(umask));
   Allow(SYSCALL(getresgid));
   Allow(SYSCALL(poll));
+  Allow(SYSCALL(ppoll));
+  Allow(SYSCALL(openat));
+  Allow(SYSCALL(faccessat));
   Allow(SYSCALL(inotify_init1));
   Allow(SYSCALL(wait4));
   Allow(SYSVIPCCALL(shmctl, SHMCTL));
@@ -358,6 +364,7 @@ void SandboxFilterImplGMP::Build() {
   Allow(SYSCALL(write));
   Allow(SYSCALL(read));
   Allow(SYSCALL(epoll_wait));
+  Allow(SYSCALL(epoll_pwait));
   Allow(SOCKETCALL(recvmsg, RECVMSG));
   Allow(SOCKETCALL(sendmsg, SENDMSG));
   Allow(SYSCALL(time));
@@ -470,7 +477,6 @@ SandboxFilter::SandboxFilter(const sock_fprog** aStored, SandboxType aType,
     MOZ_CRASH("Nonexistent sandbox type!");
   }
   impl->Build();
-  impl->Finish();
   impl->Compile(&filterVec, aVerbose);
   delete impl;
 

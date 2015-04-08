@@ -50,6 +50,14 @@ class gfxTextContextPaint;
 
 #define SMALL_CAPS_SCALE_FACTOR        0.8
 
+// The skew factor used for synthetic-italic [oblique] fonts;
+// we use a platform-dependent value to harmonize with the platform's own APIs.
+#ifdef XP_WIN
+#define OBLIQUE_SKEW_FACTOR  0.3
+#else
+#define OBLIQUE_SKEW_FACTOR  0.25
+#endif
+
 struct gfxTextRunDrawCallbacks;
 
 namespace mozilla {
@@ -1873,6 +1881,7 @@ protected:
                           const char16_t *aText,
                           uint32_t         aOffset, // position within aShapedText
                           uint32_t         aLength,
+                          bool             aVertical,
                           gfxShapedText   *aShapedText);
 
     // Shape text directly into a range within a textrun, without using the

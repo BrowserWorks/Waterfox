@@ -36,7 +36,9 @@ const NS_DIRECTORY_SERVICE_CONTRACTID =
 const NS_OBSERVER_SERVICE_CONTRACTID =
           "@mozilla.org/observer-service;1";
 
-Components.utils.import("resource://gre/modules/FileUtils.jsm");
+CU.import("resource://gre/modules/FileUtils.jsm");
+CU.import("chrome://reftest/content/httpd.jsm", this);
+CU.import("resource://gre/modules/Services.jsm");
 
 var gLoadTimeout = 0;
 var gTimeoutHook = null;
@@ -397,17 +399,7 @@ function InitAndStartRefTests()
     if (gRemote) {
         gServer = null;
     } else {
-        // not all gecko applications autoregister xpcom components
-        if (CC["@mozilla.org/server/jshttp;1"] === undefined) {
-            var file = CC["@mozilla.org/file/directory_service;1"].
-                        getService(CI.nsIProperties).get("ProfD", CI.nsIFile);
-            file.appendRelativePath("extensions/reftest@mozilla.org/chrome.manifest");
-
-            registrar = Components.manager.QueryInterface(CI.nsIComponentRegistrar);
-            registrar.autoRegister(file);
-        }
-        gServer = CC["@mozilla.org/server/jshttp;1"].
-                      createInstance(CI.nsIHttpServer);
+        gServer = new HttpServer();
     }
     try {
         if (gServer)
@@ -807,7 +799,12 @@ function ReadManifest(aURL, inherited_status)
                      .getService(CI.nsIScriptSecurityManager);
 
     var listURL = aURL;
-    var channel = gIOService.newChannelFromURI(aURL);
+    var channel = gIOService.newChannelFromURI2(aURL,
+                                                null,      // aLoadingNode
+                                                Services.scriptSecurityManager.getSystemPrincipal(),
+                                                null,      // aTriggeringPrincipal
+                                                CI.nsILoadInfo.SEC_NORMAL,
+                                                CI.nsIContentPolicy.TYPE_OTHER);
     var inputStream = channel.open();
     if (channel instanceof Components.interfaces.nsIHttpChannel
         && channel.responseStatus != 200) {
@@ -1479,6 +1476,12 @@ function UpdateCurrentCanvasForInvalidation(rects)
         var top = Math.floor(r.top);
         var right = Math.ceil(r.right);
         var bottom = Math.ceil(r.bottom);
+
+        // Clamp the values to the canvas size
+        left = Math.max(0, Math.min(left, gCurrentCanvas.width));
+        top = Math.max(0, Math.min(top, gCurrentCanvas.height));
+        right = Math.max(0, Math.min(right, gCurrentCanvas.width));
+        bottom = Math.max(0, Math.min(bottom, gCurrentCanvas.height));
 
         ctx.save();
         ctx.translate(left, top);

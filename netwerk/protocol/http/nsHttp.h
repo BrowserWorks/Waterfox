@@ -39,15 +39,16 @@ namespace net {
         // 27 was http/2-draft09, h2-10, and h2-11
         // 28 was http/2-draft12
         // 29 was http/2-draft13
-        // 30 was also h2-14. They're effectively the same, -15 just adds one
-        // error code. So, we advertise both, but our "default position" is -15.
-        HTTP2_VERSION_DRAFT15 = 30
+        // 30 was also h2-14. They're effectively the same, -15 added an
+        // error code. So, we advertise all, but our "default position" is -16.
+        HTTP_VERSION_2_DRAFT_15 = 30,
+        HTTP_VERSION_2_DRAFT_16 = 31
     };
 
 typedef uint8_t nsHttpVersion;
 
-#define NS_HTTP2_DRAFT_VERSION HTTP2_VERSION_DRAFT15
-#define NS_HTTP2_DRAFT_TOKEN "h2-15"
+#define HTTP_VERSION_2_DRAFT_LATEST HTTP_VERSION_2_DRAFT_16
+#define HTTP2_DRAFT_LATEST_TOKEN "h2-16"
 
 //-----------------------------------------------------------------------------
 // http connection capabilities
@@ -84,12 +85,8 @@ typedef uint8_t nsHttpVersion;
 // group is currently blocking on some resources
 #define NS_HTTP_LOAD_UNBLOCKED       (1<<8)
 
-// These flags allow a transaction to use TLS false start with
-// weaker security profiles based on past history
-#define NS_HTTP_ALLOW_RSA_FALSESTART (1<<9)
-
 // This flag indicates the transaction should accept associated pushes
-#define NS_HTTP_ONPUSH_LISTENER      (1<<10)
+#define NS_HTTP_ONPUSH_LISTENER      (1<<9)
 
 //-----------------------------------------------------------------------------
 // some default values

@@ -1,6 +1,6 @@
 /*
 *******************************************************************************
-* Copyright (C) 1996-2014, International Business Machines
+* Copyright (C) 1996-2015, International Business Machines
 * Corporation and others.  All Rights Reserved.
 *******************************************************************************
 * rulebasedcollator.cpp
@@ -673,9 +673,7 @@ RuleBasedCollator::setReorderCodes(const int32_t *reorderCodes, int32_t length,
                 errorCode = U_MEMORY_ALLOCATION_ERROR;
                 return;
             }
-            ownedSettings->aliasReordering(defaultSettings.reorderCodes,
-                                           defaultSettings.reorderCodesLength,
-                                           defaultSettings.reorderTable);
+            ownedSettings->copyReorderingFrom(defaultSettings, errorCode);
             setFastLatinOptions(*ownedSettings);
         }
         return;
@@ -685,17 +683,7 @@ RuleBasedCollator::setReorderCodes(const int32_t *reorderCodes, int32_t length,
         errorCode = U_MEMORY_ALLOCATION_ERROR;
         return;
     }
-    if(length == 0) {
-        ownedSettings->resetReordering();
-    } else {
-        uint8_t reorderTable[256];
-        data->makeReorderTable(reorderCodes, length, reorderTable, errorCode);
-        if(U_FAILURE(errorCode)) { return; }
-        if(!ownedSettings->setReordering(reorderCodes, length, reorderTable)) {
-            errorCode = U_MEMORY_ALLOCATION_ERROR;
-            return;
-        }
-    }
+    ownedSettings->setReordering(*data, reorderCodes, length, errorCode);
     setFastLatinOptions(*ownedSettings);
 }
 

@@ -56,6 +56,11 @@ private:
     /** Implements CollationRuleParser::Sink. */
     virtual void addReset(int32_t strength, const UnicodeString &str,
                           const char *&errorReason, UErrorCode &errorCode);
+    /**
+     * Returns the secondary or tertiary weight preceding the current node's weight.
+     * node=nodes[index].
+     */
+    uint32_t getWeight16Before(int32_t index, int64_t node, int32_t level);
 
     int64_t getSpecialResetPosition(const UnicodeString &str,
                                     const char *&parserErrorReason, UErrorCode &errorCode);
@@ -96,7 +101,7 @@ private:
 
     /**
      * Finds the node which implies or contains a common=05 weight of the given strength
-     * (secondary or tertiary).
+     * (secondary or tertiary), if the current node is stronger.
      * Skips weaker nodes and tailored nodes if the current node is stronger
      * and is followed by an explicit-common-weight node.
      * Always returns the input index if that node is no stronger than the given strength.
@@ -218,15 +223,13 @@ private:
     /** At most 1M nodes, limited by the 20 bits in node bit fields. */
     static const int32_t MAX_INDEX = 0xfffff;
     /**
-     * Node bit 6 is set on a primary node if there are tailored nodes
-     * with secondary values below the common secondary weight (05),
-     * from a reset-secondary-before (&[before 2]).
+     * Node bit 6 is set on a primary node if there are nodes
+     * with secondary values below the common secondary weight (05).
      */
     static const int32_t HAS_BEFORE2 = 0x40;
     /**
-     * Node bit 5 is set on a primary or secondary node if there are tailored nodes
-     * with tertiary values below the common tertiary weight (05),
-     * from a reset-tertiary-before (&[before 3]).
+     * Node bit 5 is set on a primary or secondary node if there are nodes
+     * with tertiary values below the common tertiary weight (05).
      */
     static const int32_t HAS_BEFORE3 = 0x20;
     /**
@@ -338,15 +341,16 @@ private:
      * A node of a given strength normally implies "common" weights on weaker levels.
      *
      * A node with HAS_BEFORE2 must be immediately followed by
-     * a secondary node with BEFORE_WEIGHT16, then a secondary tailored node,
+     * a secondary node with an explicit below-common weight, then a secondary tailored node,
      * and later an explicit common-secondary node.
-     * (&[before 2] resets to the BEFORE_WEIGHT16 node so that
+     * The below-common weight can be a root weight,
+     * or it can be BEFORE_WEIGHT16 for tailoring before an implied common weight
+     * or before the lowest root weight.
+     * (&[before 2] resets to an explicit secondary node so that
      * the following addRelation(secondary) tailors right after that.
      * If we did not have this node and instead were to reset on the primary node,
      * then addRelation(secondary) would skip forward to the the COMMON_WEIGHT16 node.)
      *
-     * All secondary tailored nodes between these two explicit ones
-     * will be assigned lower-than-common secondary weights.
      * If the flag is not set, then there are no explicit secondary nodes
      * with the common or lower weights.
      *

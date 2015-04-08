@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/dsb.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/dsb.xml
- */
 dsb{
     Countries{
         001{"swět"}
@@ -301,6 +298,13 @@ dsb{
         ZW{"Simbabwe"}
         ZZ{"njeznaty region"}
     }
+    Countries%short{
+        GB{"UK"}
+        HK{"Hongkong"}
+        MO{"Macao"}
+        PS{"Palestina"}
+        US{"USA"}
+    }
     Countries%variant{
         CD{"Kongo (Demokratiska republika)"}
         CG{"Kongo (Republika)"}
@@ -309,12 +313,5 @@ dsb{
         MK{"Makedońska (PRJ)"}
         TL{"Pódzajtšny Timor"}
     }
-    CountriesShort{
-        GB{"UK"}
-        HK{"Hongkong"}
-        MO{"Macao"}
-        PS{"Palestina"}
-        US{"USA"}
-    }
-    Version{"2.1.8.9"}
+    Version{"2.1.12.94"}
 }

@@ -179,26 +179,26 @@ public:
 private:
   virtual ~FileOpenHelper() {}
 
-  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult);
+  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
   NS_IMETHOD OnDataWritten(CacheFileHandle *aHandle, const char *aBuf,
-                           nsresult aResult) {
+                           nsresult aResult) MOZ_OVERRIDE {
     MOZ_CRASH("FileOpenHelper::OnDataWritten should not be called!");
     return NS_ERROR_UNEXPECTED;
   }
   NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf,
-                        nsresult aResult) {
+                        nsresult aResult) MOZ_OVERRIDE {
     MOZ_CRASH("FileOpenHelper::OnDataRead should not be called!");
     return NS_ERROR_UNEXPECTED;
   }
-  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) {
+  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE {
     MOZ_CRASH("FileOpenHelper::OnFileDoomed should not be called!");
     return NS_ERROR_UNEXPECTED;
   }
-  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) {
+  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE {
     MOZ_CRASH("FileOpenHelper::OnEOFSet should not be called!");
     return NS_ERROR_UNEXPECTED;
   }
-  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) {
+  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE {
     MOZ_CRASH("FileOpenHelper::OnFileRenamed should not be called!");
     return NS_ERROR_UNEXPECTED;
   }
@@ -1171,7 +1171,7 @@ CacheIndex::HasEntry(const nsACString &aKey, EntryStatus *_retval)
 
 // static
 nsresult
-CacheIndex::GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt)
+CacheIndex::GetEntryForEviction(bool aIgnoreEmptyEntries, SHA1Sum::Hash *aHash, uint32_t *aCnt)
 {
   LOG(("CacheIndex::GetEntryForEviction()"));
 
@@ -1204,11 +1204,17 @@ CacheIndex::GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt)
     if (index->mExpirationArray[i]->mExpirationTime < now) {
       memcpy(&hash, &index->mExpirationArray[i]->mHash, sizeof(SHA1Sum::Hash));
 
-      if (!IsForcedValidEntry(&hash)) {
-        foundEntry = true;
-        break;
+      if (IsForcedValidEntry(&hash)) {
+        continue;
       }
 
+      if (aIgnoreEmptyEntries &&
+          !CacheIndexEntry::GetFileSize(index->mExpirationArray[i])) {
+        continue;
+      }
+
+      foundEntry = true;
+      break;
     } else {
       // all further entries have not expired yet
       break;
@@ -1233,10 +1239,17 @@ CacheIndex::GetEntryForEviction(SHA1Sum::Hash *aHash, uint32_t *aCnt)
     for (j = 0; j < index->mFrecencyArray.Length(); j++) {
       memcpy(&hash, &index->mFrecencyArray[j]->mHash, sizeof(SHA1Sum::Hash));
 
-      if (!IsForcedValidEntry(&hash)) {
-        foundEntry = true;
-        break;
+      if (IsForcedValidEntry(&hash)) {
+        continue;
       }
+
+      if (aIgnoreEmptyEntries &&
+          !CacheIndexEntry::GetFileSize(index->mFrecencyArray[j])) {
+        continue;
+      }
+
+      foundEntry = true;
+      break;
     }
 
     if (!foundEntry)
@@ -2201,9 +2214,10 @@ CacheIndex::ParseRecords()
 
   if (pos != mRWBufPos) {
     memmove(mRWBuf, mRWBuf + pos, mRWBufPos - pos);
-    mRWBufPos -= pos;
-    pos = 0;
   }
+
+  mRWBufPos -= pos;
+  pos = 0;
 
   int64_t fileOffset = sizeof(CacheIndexHeader) +
                        mSkipEntries * sizeof(CacheIndexRecord) + mRWBufPos;
@@ -2286,7 +2300,7 @@ CacheIndex::StartReadingJournal()
 void
 CacheIndex::ParseJournal()
 {
-  LOG(("CacheIndex::ParseRecords()"));
+  LOG(("CacheIndex::ParseJournal()"));
 
   nsresult rv;
 
@@ -2322,9 +2336,10 @@ CacheIndex::ParseJournal()
 
   if (pos != mRWBufPos) {
     memmove(mRWBuf, mRWBuf + pos, mRWBufPos - pos);
-    mRWBufPos -= pos;
-    pos = 0;
   }
+
+  mRWBufPos -= pos;
+  pos = 0;
 
   int64_t fileOffset = mSkipEntries * sizeof(CacheIndexRecord) + mRWBufPos;
 

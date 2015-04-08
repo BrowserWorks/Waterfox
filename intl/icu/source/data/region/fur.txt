@@ -1,14 +1,11 @@
 ﻿// ***************************************************************************
 // *
-// * Copyright (C) 2014 International Business Machines
+// * Copyright (C) 2015 International Business Machines
 // * Corporation and others. All Rights Reserved.
 // * Tool: org.unicode.cldr.icu.NewLdml2IcuConverter
 // * Source File: <path>/common/main/fur.xml
 // *
 // ***************************************************************************
-/**
- * ICU <specials> source: <path>/common/main/fur.xml
- */
 fur{
     Countries{
         001{"Mont"}
@@ -296,15 +293,15 @@ fur{
         ZW{"Zimbabwe"}
         ZZ{"Regjon no cognossude o no valide"}
     }
+    Countries%short{
+        HK{"Hong Kong"}
+        MO{"Macao"}
+    }
     Countries%variant{
         CD{"Congo (RDC)"}
         CG{"Congo (Republiche)"}
         FK{"Isulis Falkland (Isulis Malvinas)"}
         MK{"Macedonie (FYROM)"}
     }
-    CountriesShort{
-        HK{"Hong Kong"}
-        MO{"Macao"}
-    }
-    Version{"2.1.7.53"}
+    Version{"2.1.10.93"}
 }

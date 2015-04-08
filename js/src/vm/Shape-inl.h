@@ -24,7 +24,7 @@
 namespace js {
 
 inline
-StackBaseShape::StackBaseShape(ThreadSafeContext *cx, const Class *clasp,
+StackBaseShape::StackBaseShape(ExclusiveContext *cx, const Class *clasp,
                                JSObject *parent, JSObject *metadata, uint32_t objectFlags)
   : flags(objectFlags),
     clasp(clasp),
@@ -51,35 +51,8 @@ Shape::get(JSContext* cx, HandleObject receiver, JSObject* obj, JSObject *pobj,
 inline Shape *
 Shape::search(ExclusiveContext *cx, jsid id)
 {
-    Shape **_;
+    ShapeTable::Entry *_;
     return search(cx, this, id, &_);
-}
-
-inline Shape *
-Shape::searchThreadLocal(ThreadSafeContext *cx, Shape *start, jsid id,
-                         Shape ***pspp, bool adding)
-{
-    /*
-     * Note that adding is a best-effort attempt to claim an entry in a shape
-     * table. In the sequential case, this can be done either when the object
-     * is in dictionary mode, or when it has been hashified.
-     *
-     * In parallel, an object that is in dictionary mode may be thread
-     * local. That is, it was converted to a dictionary in the current thread,
-     * with all its shapes cloned into the current thread, and its shape table
-     * allocated thread locally. In that case, we may add to the
-     * table. Otherwise it is not allowed.
-     */
-    MOZ_ASSERT_IF(adding, cx->isThreadLocal(start) && start->inDictionary());
-
-    if (start->inDictionary()) {
-        *pspp = start->table().search(id, adding);
-        return SHAPE_FETCH(*pspp);
-    }
-
-    *pspp = nullptr;
-
-    return searchNoHashify(start, id);
 }
 
 inline bool
@@ -96,6 +69,9 @@ Shape::set(JSContext* cx, HandleObject obj, HandleObject receiver, bool strict,
     if (attrs & JSPROP_GETTER)
         return js_ReportGetterOnlyAssignment(cx, strict);
 
+    if (!setterOp())
+        return true;
+
     RootedId id(cx, propid());
 
     /*
@@ -111,25 +87,25 @@ Shape::set(JSContext* cx, HandleObject obj, HandleObject receiver, bool strict,
 }
 
 /* static */ inline Shape *
-Shape::search(ExclusiveContext *cx, Shape *start, jsid id, Shape ***pspp, bool adding)
+Shape::search(ExclusiveContext *cx, Shape *start, jsid id, ShapeTable::Entry **pentry, bool adding)
 {
     if (start->inDictionary()) {
-        *pspp = start->table().search(id, adding);
-        return SHAPE_FETCH(*pspp);
+        *pentry = &start->table().search(id, adding);
+        return (*pentry)->shape();
     }
 
-    *pspp = nullptr;
+    *pentry = nullptr;
 
     if (start->hasTable()) {
-        Shape **spp = start->table().search(id, adding);
-        return SHAPE_FETCH(spp);
+        ShapeTable::Entry &entry = start->table().search(id, adding);
+        return entry.shape();
     }
 
     if (start->numLinearSearches() == LINEAR_SEARCHES_MAX) {
         if (start->isBigEnoughForAShapeTable()) {
             if (Shape::hashify(cx, start)) {
-                Shape **spp = start->table().search(id, adding);
-                return SHAPE_FETCH(spp);
+                ShapeTable::Entry &entry = start->table().search(id, adding);
+                return entry.shape();
             } else {
                 cx->recoverFromOutOfMemory();
             }
@@ -203,7 +179,7 @@ EmptyShape::ensureInitialCustomShape(ExclusiveContext *cx, Handle<ObjectSubclass
 }
 
 inline
-AutoRooterGetterSetter::Inner::Inner(ThreadSafeContext *cx, uint8_t attrs,
+AutoRooterGetterSetter::Inner::Inner(ExclusiveContext *cx, uint8_t attrs,
                                      PropertyOp *pgetter_, StrictPropertyOp *psetter_)
   : CustomAutoRooter(cx), attrs(attrs),
     pgetter(pgetter_), psetter(psetter_)
@@ -213,7 +189,7 @@ AutoRooterGetterSetter::Inner::Inner(ThreadSafeContext *cx, uint8_t attrs,
 }
 
 inline
-AutoRooterGetterSetter::AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
+AutoRooterGetterSetter::AutoRooterGetterSetter(ExclusiveContext *cx, uint8_t attrs,
                                                PropertyOp *pgetter, StrictPropertyOp *psetter
                                                MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
 {
@@ -223,7 +199,7 @@ AutoRooterGetterSetter::AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t at
 }
 
 inline
-AutoRooterGetterSetter::AutoRooterGetterSetter(ThreadSafeContext *cx, uint8_t attrs,
+AutoRooterGetterSetter::AutoRooterGetterSetter(ExclusiveContext *cx, uint8_t attrs,
                                                JSNative *pgetter, JSNative *psetter
                                                MOZ_GUARD_OBJECT_NOTIFIER_PARAM_IN_IMPL)
 {

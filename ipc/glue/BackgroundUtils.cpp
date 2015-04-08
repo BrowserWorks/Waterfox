@@ -129,16 +129,30 @@ PrincipalToPrincipalInfo(nsIPrincipal* aPrincipal,
     return rv;
   }
 
+  if (NS_WARN_IF(!uri)) {
+    return NS_ERROR_FAILURE;
+  }
+
   nsCString spec;
   rv = uri->GetSpec(spec);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
   }
 
-  uint32_t appId;
-  rv = aPrincipal->GetAppId(&appId);
+  bool isUnknownAppId;
+  rv = aPrincipal->GetUnknownAppId(&isUnknownAppId);
   if (NS_WARN_IF(NS_FAILED(rv))) {
     return rv;
+  }
+
+  uint32_t appId;
+  if (isUnknownAppId) {
+    appId = nsIScriptSecurityManager::UNKNOWN_APP_ID;
+  } else {
+    rv = aPrincipal->GetAppId(&appId);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
   }
 
   bool isInBrowserElement;

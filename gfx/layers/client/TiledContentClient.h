@@ -218,6 +218,11 @@ struct TileClient
   */
   void Flip();
 
+  void DumpTexture(std::stringstream& aStream) {
+    // TODO We should combine the OnWhite/OnBlack here an just output a single image.
+    CompositableClient::DumpTextureClient(aStream, mFrontBuffer);
+  }
+
   /**
   * Returns an unlocked TextureClient that can be used for writing new
   * data to the tile. This may flip the front-buffer to the back-buffer if
@@ -234,7 +239,6 @@ struct TileClient
                                gfxContentType aContent, SurfaceMode aMode,
                                bool *aCreatedTextureClient,
                                nsIntRegion& aAddPaintedRegion,
-                               bool aCanRerasterizeValidRegion,
                                RefPtr<TextureClient>* aTextureClientOnWhite);
 
   void DiscardFrontBuffer();
@@ -274,7 +278,6 @@ private:
   // Copies dirty pixels from the front buffer into the back buffer,
   // and records the copied region in aAddPaintedRegion.
   void ValidateBackBufferFromFront(const nsIntRegion &aDirtyRegion,
-                                   bool aCanRerasterizeValidRegion,
                                    nsIntRegion& aAddPaintedRegion);
 };
 
@@ -445,12 +448,6 @@ protected:
 
   void UnlockTile(TileClient aTile);
 
-  // If this returns true, we perform the paint operation into a single large
-  // buffer and copy it out to the tiles instead of calling PaintThebes() on
-  // each tile individually. Somewhat surprisingly, this turns out to be faster
-  // on Android.
-  bool UseSinglePaintBuffer() { return !gfxPrefs::PerTileDrawing(); }
-
   void ReleaseTile(TileClient aTile) { aTile.Release(); }
 
   void SwapTiles(TileClient& aTileA, TileClient& aTileB) { std::swap(aTileA, aTileB); }
@@ -532,6 +529,12 @@ protected:
     mTiledBuffer.Release();
     mLowPrecisionTiledBuffer.Release();
   }
+
+  virtual void PrintInfo(std::stringstream& aStream, const char* aPrefix);
+
+  virtual void Dump(std::stringstream& aStream,
+                    const char* aPrefix="",
+                    bool aDumpHtml=false);
 
 public:
   virtual TextureInfo GetTextureInfo() const MOZ_OVERRIDE

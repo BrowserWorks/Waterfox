@@ -540,6 +540,8 @@ public:
   void CacheClientNotifyDataEnded(nsresult aStatus);
   // Notify that the principal for the cached resource changed.
   void CacheClientNotifyPrincipalChanged();
+  // Notify the decoder that the cache suspended status changed.
+  void CacheClientNotifySuspendedStatusChanged();
 
   // These are called on the main thread by MediaCache. These shouldn't block,
   // but they may grab locks --- the media cache is not holding its lock
@@ -742,7 +744,7 @@ class MOZ_STACK_CLASS AutoPinned {
   }
 
   operator T*() const { return mResource; }
-  T* operator->() const { return mResource; }
+  T* operator->() const MOZ_NO_ADDREF_RELEASE_ON_RETURN { return mResource; }
 
 private:
   T* mResource;

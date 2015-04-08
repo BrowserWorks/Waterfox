@@ -12,6 +12,45 @@
 namespace mozilla {
 
 void
+WebGLContext::UpdateBoundBuffer(GLenum target, WebGLBuffer* buffer)
+{
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
+    bufferSlot = buffer;
+
+    if (!buffer)
+        return;
+
+    /* https://www.khronos.org/registry/webgl/specs/latest/2.0/#5.1
+     *
+     * In the WebGL 2 API, buffers have their WebGL buffer type
+     * initially set to undefined. Calling bindBuffer, bindBufferRange
+     * or bindBufferBase with the target argument set to any buffer
+     * binding point except COPY_READ_BUFFER or COPY_WRITE_BUFFER will
+     * then set the WebGL buffer type of the buffer being bound
+     * according to the table above.
+     *
+     * Any call to one of these functions which attempts to bind a
+     * WebGLBuffer that has the element array WebGL buffer type to a
+     * binding point that falls under other data, or bind a
+     * WebGLBuffer which has the other data WebGL buffer type to
+     * ELEMENT_ARRAY_BUFFER will generate an INVALID_OPERATION error,
+     * and the state of the binding point will remain untouched.
+     */
+    if (target != LOCAL_GL_COPY_READ_BUFFER && target != LOCAL_GL_COPY_WRITE_BUFFER)
+        buffer->BindTo(target);
+}
+
+void
+WebGLContext::UpdateBoundBufferIndexed(GLenum target, GLuint index, WebGLBuffer* buffer)
+{
+    UpdateBoundBuffer(target, buffer);
+
+    WebGLRefPtr<WebGLBuffer>& bufferIndexSlot =
+        GetBufferSlotByTargetIndexed(target, index);
+    bufferIndexSlot = buffer;
+}
+
+void
 WebGLContext::BindBuffer(GLenum target, WebGLBuffer* buffer)
 {
     if (IsContextLost())
@@ -24,26 +63,15 @@ WebGLContext::BindBuffer(GLenum target, WebGLBuffer* buffer)
     if (buffer && buffer->IsDeleted())
         return;
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bindBuffer");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bindBuffer"))
         return;
 
-    if (buffer) {
-        if (!buffer->HasEverBeenBound()) {
-            buffer->BindTo(target);
-        } else if (target != buffer->Target()) {
-            ErrorInvalidOperation("bindBuffer: Buffer already bound to a"
-                                  " different target.");
-            return;
-        }
-    }
+    if (!ValidateBufferForTarget(target, buffer, "bindBuffer"))
+        return;
 
-    *bufferSlot = buffer;
+    WebGLContextUnchecked::BindBuffer(target, buffer);
 
-    MakeContextCurrent();
-
-    gl->fBindBuffer(target, buffer ? buffer->GLName() : 0);
+    UpdateBoundBuffer(target, buffer);
 }
 
 void
@@ -56,38 +84,31 @@ WebGLContext::BindBufferBase(GLenum target, GLuint index, WebGLBuffer* buffer)
         return;
 
     // silently ignore a deleted buffer
-    if (buffer && buffer->IsDeleted()) {
-        return;
-    }
-
-    WebGLRefPtr<WebGLBuffer>* indexedBufferSlot;
-    indexedBufferSlot = GetBufferSlotByTargetIndexed(target, index,
-                                                     "bindBufferBase");
-    if (!indexedBufferSlot)
+    if (buffer && buffer->IsDeleted())
         return;
 
-    if (buffer) {
-        if (!buffer->HasEverBeenBound())
-            buffer->BindTo(target);
+    // ValidateBufferTarget
+    switch (target) {
+    case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
+        if (index >= mGLMaxTransformFeedbackSeparateAttribs)
+            return ErrorInvalidValue("bindBufferBase: index should be less than "
+                                     "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
 
-        if (target != buffer->Target()) {
-            ErrorInvalidOperation("bindBuffer: Buffer already bound to a"
-                                  " different target.");
-            return;
-        }
+    case LOCAL_GL_UNIFORM_BUFFER:
+        if (index >= mGLMaxUniformBufferBindings)
+            return ErrorInvalidValue("bindBufferBase: index should be less than "
+                                     "MAX_UNIFORM_BUFFER_BINDINGS");
+
+    default:
+        return ErrorInvalidEnumInfo("bindBufferBase: target", target);
     }
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bindBufferBase");
+    if (!ValidateBufferForTarget(target, buffer, "bindBufferBase"))
+        return;
 
-    MOZ_ASSERT(bufferSlot, "GetBufferSlotByTarget(Indexed) mismatch");
+    WebGLContextUnchecked::BindBufferBase(target, index, buffer);
 
-    *indexedBufferSlot = buffer;
-    *bufferSlot = buffer;
-
-    MakeContextCurrent();
-
-    gl->fBindBufferBase(target, index, buffer ? buffer->GLName() : 0);
+    UpdateBoundBufferIndexed(target, index, buffer);
 }
 
 void
@@ -104,42 +125,27 @@ WebGLContext::BindBufferRange(GLenum target, GLuint index, WebGLBuffer* buffer,
     if (buffer && buffer->IsDeleted())
         return;
 
-    WebGLRefPtr<WebGLBuffer>* indexedBufferSlot;
-    indexedBufferSlot = GetBufferSlotByTargetIndexed(target, index,
-                                                     "bindBufferRange");
-    if (!indexedBufferSlot)
-        return;
+    // ValidateBufferTarget
+    switch (target) {
+    case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
+        if (index >= mGLMaxTransformFeedbackSeparateAttribs)
+            return ErrorInvalidValue("bindBufferRange: index should be less than "
+                                     "MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS");
 
-    if (buffer) {
-        if (!buffer->HasEverBeenBound())
-            buffer->BindTo(target);
-
-        if (target != buffer->Target()) {
-            ErrorInvalidOperation("bindBuffer: Buffer already bound to a"
-                                  " different target.");
-            return;
-        }
-
-        CheckedInt<WebGLsizeiptr> checked_neededByteLength = CheckedInt<WebGLsizeiptr>(offset) + size;
-        if (!checked_neededByteLength.isValid() ||
-            checked_neededByteLength.value() > buffer->ByteLength())
-        {
-            return ErrorInvalidValue("bindBufferRange: invalid range");
-        }
+    case LOCAL_GL_UNIFORM_BUFFER:
+        if (index >= mGLMaxUniformBufferBindings)
+            return ErrorInvalidValue("bindBufferRange: index should be less than "
+                                     "MAX_UNIFORM_BUFFER_BINDINGS");
+    default:
+        return ErrorInvalidEnumInfo("bindBufferRange: target", target);
     }
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "BindBufferRange");
+    if (!ValidateBufferForTarget(target, buffer, "bindBufferRange"))
+        return;
 
-    MOZ_ASSERT(bufferSlot, "GetBufferSlotByTarget(Indexed) mismatch");
+    WebGLContextUnchecked::BindBufferRange(target, index, buffer, offset, size);
 
-    *indexedBufferSlot = buffer;
-    *bufferSlot = buffer;
-
-    MakeContextCurrent();
-
-    gl->fBindBufferRange(target, index, buffer ? buffer->GLName() : 0, offset,
-                         size);
+    UpdateBoundBufferIndexed(target, index, buffer);
 }
 
 void
@@ -148,10 +154,10 @@ WebGLContext::BufferData(GLenum target, WebGLsizeiptr size, GLenum usage)
     if (IsContextLost())
         return;
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bufferData");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bufferData"))
         return;
+
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
 
     if (size < 0)
         return ErrorInvalidValue("bufferData: negative size");
@@ -163,7 +169,7 @@ WebGLContext::BufferData(GLenum target, WebGLsizeiptr size, GLenum usage)
     if (!CheckedInt<GLsizeiptr>(size).isValid())
         return ErrorOutOfMemory("bufferData: bad size");
 
-    WebGLBuffer* boundBuffer = bufferSlot->get();
+    WebGLBuffer* boundBuffer = bufferSlot.get();
 
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferData: no buffer bound!");
@@ -201,10 +207,10 @@ WebGLContext::BufferData(GLenum target,
         return ErrorInvalidValue("bufferData: null object passed");
     }
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bufferData");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bufferData"))
         return;
+
+    const WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
 
     const dom::ArrayBuffer& data = maybeData.Value();
     data.ComputeLengthAndData();
@@ -217,7 +223,7 @@ WebGLContext::BufferData(GLenum target,
     if (!ValidateBufferUsageEnum(usage, "bufferData: usage"))
         return;
 
-    WebGLBuffer* boundBuffer = bufferSlot->get();
+    WebGLBuffer* boundBuffer = bufferSlot.get();
 
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferData: no buffer bound!");
@@ -244,16 +250,15 @@ WebGLContext::BufferData(GLenum target, const dom::ArrayBufferView& data,
     if (IsContextLost())
         return;
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bufferSubData");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bufferData"))
         return;
+
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
 
     if (!ValidateBufferUsageEnum(usage, "bufferData: usage"))
         return;
 
-    WebGLBuffer* boundBuffer = bufferSlot->get();
-
+    WebGLBuffer* boundBuffer = bufferSlot.get();
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferData: no buffer bound!");
 
@@ -290,23 +295,24 @@ WebGLContext::BufferSubData(GLenum target, WebGLsizeiptr byteOffset,
         return;
     }
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bufferSubData");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bufferSubData"))
         return;
+
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
 
     if (byteOffset < 0)
         return ErrorInvalidValue("bufferSubData: negative offset");
 
-    WebGLBuffer* boundBuffer = bufferSlot->get();
-
+    WebGLBuffer* boundBuffer = bufferSlot.get();
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferData: no buffer bound!");
 
     const dom::ArrayBuffer& data = maybeData.Value();
     data.ComputeLengthAndData();
 
-    CheckedInt<WebGLsizeiptr> checked_neededByteLength = CheckedInt<WebGLsizeiptr>(byteOffset) + data.Length();
+    CheckedInt<WebGLsizeiptr> checked_neededByteLength =
+        CheckedInt<WebGLsizeiptr>(byteOffset) + data.Length();
+
     if (!checked_neededByteLength.isValid()) {
         ErrorInvalidValue("bufferSubData: Integer overflow computing the needed"
                           " byte length.");
@@ -335,22 +341,23 @@ WebGLContext::BufferSubData(GLenum target, WebGLsizeiptr byteOffset,
     if (IsContextLost())
         return;
 
-    WebGLRefPtr<WebGLBuffer>* bufferSlot = GetBufferSlotByTarget(target,
-                                                                 "bufferSubData");
-    if (!bufferSlot)
+    if (!ValidateBufferTarget(target, "bufferSubData"))
         return;
+
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
 
     if (byteOffset < 0)
         return ErrorInvalidValue("bufferSubData: negative offset");
 
-    WebGLBuffer* boundBuffer = bufferSlot->get();
-
+    WebGLBuffer* boundBuffer = bufferSlot.get();
     if (!boundBuffer)
         return ErrorInvalidOperation("bufferSubData: no buffer bound!");
 
     data.ComputeLengthAndData();
 
-    CheckedInt<WebGLsizeiptr> checked_neededByteLength = CheckedInt<WebGLsizeiptr>(byteOffset) + data.Length();
+    CheckedInt<WebGLsizeiptr> checked_neededByteLength =
+        CheckedInt<WebGLsizeiptr>(byteOffset) + data.Length();
+
     if (!checked_neededByteLength.isValid()) {
         ErrorInvalidValue("bufferSubData: Integer overflow computing the needed"
                           " byte length.");
@@ -444,50 +451,57 @@ WebGLContext::ValidateBufferUsageEnum(GLenum target, const char* info)
     return false;
 }
 
-WebGLRefPtr<WebGLBuffer>*
-WebGLContext::GetBufferSlotByTarget(GLenum target, const char* info)
+WebGLRefPtr<WebGLBuffer>&
+WebGLContext::GetBufferSlotByTarget(GLenum target)
 {
+    /* This function assumes that target has been validated for either
+     * WebGL1 or WebGL2.
+     */
     switch (target) {
     case LOCAL_GL_ARRAY_BUFFER:
-        return &mBoundArrayBuffer;
+        return mBoundArrayBuffer;
+
+    case LOCAL_GL_COPY_READ_BUFFER:
+        return mBoundCopyReadBuffer;
+
+    case LOCAL_GL_COPY_WRITE_BUFFER:
+        return mBoundCopyWriteBuffer;
 
     case LOCAL_GL_ELEMENT_ARRAY_BUFFER:
-        return &mBoundVertexArray->mElementArrayBuffer;
+        return mBoundVertexArray->mElementArrayBuffer;
+
+    case LOCAL_GL_PIXEL_PACK_BUFFER:
+        return mBoundPixelPackBuffer;
+
+    case LOCAL_GL_PIXEL_UNPACK_BUFFER:
+        return mBoundPixelUnpackBuffer;
 
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
-        if (!IsWebGL2()) {
-            break;
-        }
-        return &mBoundTransformFeedbackBuffer;
+        return mBoundTransformFeedbackBuffer;
+
+    case LOCAL_GL_UNIFORM_BUFFER:
+        return mBoundUniformBuffer;
 
     default:
-        break;
+        MOZ_CRASH("Should not get here.");
     }
-
-    ErrorInvalidEnum("%s: target: Invalid enum value 0x%x.", info, target);
-    return nullptr;
 }
 
-WebGLRefPtr<WebGLBuffer>*
-WebGLContext::GetBufferSlotByTargetIndexed(GLenum target, GLuint index,
-                                           const char* info)
+WebGLRefPtr<WebGLBuffer>&
+WebGLContext::GetBufferSlotByTargetIndexed(GLenum target, GLuint index)
 {
+    /* This function assumes that target has been validated for either WebGL1 or WebGL. */
     switch (target) {
     case LOCAL_GL_TRANSFORM_FEEDBACK_BUFFER:
-        if (index >= mGLMaxTransformFeedbackSeparateAttribs) {
-            ErrorInvalidValue("%s: `index` should be less than"
-                              " MAX_TRANSFORM_FEEDBACK_SEPARATE_ATTRIBS.", info,
-                              index);
-            return nullptr;
-        }
-        return nullptr; // See bug 903594
+        MOZ_ASSERT(index < mGLMaxTransformFeedbackSeparateAttribs);
+        return mBoundTransformFeedbackBuffers[index];
+    case LOCAL_GL_UNIFORM_BUFFER:
+        MOZ_ASSERT(index < mGLMaxUniformBufferBindings);
+        return mBoundUniformBuffers[index];
 
     default:
-        break;
+        MOZ_CRASH("Should not get here.");
     }
-
-    ErrorInvalidEnum("%s: target: invalid enum value 0x%x", info, target);
-    return nullptr;
 }
 
 GLenum
@@ -497,7 +511,7 @@ WebGLContext::CheckedBufferData(GLenum target, GLsizeiptr size,
 #ifdef XP_MACOSX
     // bug 790879
     if (gl->WorkAroundDriverBugs() &&
-        int64_t(size) > INT32_MAX) // the cast avoids a potential always-true warning on 32bit
+        int64_t(size) > INT32_MAX) // cast avoids a potential always-true warning on 32bit
     {
         GenerateWarning("Rejecting valid bufferData call with size %lu to avoid"
                         " a Mac bug", size);
@@ -505,12 +519,8 @@ WebGLContext::CheckedBufferData(GLenum target, GLsizeiptr size,
     }
 #endif
 
-    WebGLBuffer* boundBuffer = nullptr;
-    if (target == LOCAL_GL_ARRAY_BUFFER) {
-        boundBuffer = mBoundArrayBuffer;
-    } else if (target == LOCAL_GL_ELEMENT_ARRAY_BUFFER) {
-        boundBuffer = mBoundVertexArray->mElementArrayBuffer;
-    }
+    WebGLRefPtr<WebGLBuffer>& bufferSlot = GetBufferSlotByTarget(target);
+    WebGLBuffer* boundBuffer = bufferSlot.get();
     MOZ_ASSERT(boundBuffer, "No buffer bound for this target.");
 
     bool sizeChanges = uint32_t(size) != boundBuffer->ByteLength();

@@ -2021,6 +2021,7 @@ TIntermTyped* TParseContext::addIndexExpression(TIntermTyped *baseExpression, co
         recover();
     }
 
+	//BUG=angle:857
     TIntermConstantUnion *indexConstantUnion = indexExpression->getAsConstantUnion();
 
     if (indexExpression->getQualifier() == EvqConst && indexConstantUnion)
