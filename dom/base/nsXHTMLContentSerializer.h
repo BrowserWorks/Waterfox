@@ -28,67 +28,75 @@ class nsXHTMLContentSerializer : public nsXMLContentSerializer {
 
   NS_IMETHOD Init(uint32_t flags, uint32_t aWrapColumn,
                   const char* aCharSet, bool aIsCopying,
-                  bool aRewriteEncodingDeclaration) MOZ_OVERRIDE;
+                  bool aRewriteEncodingDeclaration) override;
 
   NS_IMETHOD AppendText(nsIContent* aText,
                         int32_t aStartOffset,
                         int32_t aEndOffset,
-                        nsAString& aStr) MOZ_OVERRIDE;
+                        nsAString& aStr) override;
 
   NS_IMETHOD AppendDocumentStart(nsIDocument *aDocument,
-                                 nsAString& aStr) MOZ_OVERRIDE;
+                                 nsAString& aStr) override;
 
  protected:
 
 
   virtual bool CheckElementStart(nsIContent * aContent,
                           bool & aForceFormat,
-                          nsAString& aStr) MOZ_OVERRIDE;
+                          nsAString& aStr,
+                          nsresult& aResult) override;
 
-  virtual void AppendEndOfElementStart(nsIContent *aOriginalElement,
+  NS_WARN_UNUSED_RESULT
+  virtual bool AppendEndOfElementStart(nsIContent *aOriginalElement,
                                nsIAtom * aName,
                                int32_t aNamespaceID,
-                               nsAString& aStr) MOZ_OVERRIDE;
+                               nsAString& aStr) override;
 
-  virtual void AfterElementStart(nsIContent * aContent,
-                         nsIContent *aOriginalElement,
-                         nsAString& aStr) MOZ_OVERRIDE;
+  NS_WARN_UNUSED_RESULT
+  virtual bool AfterElementStart(nsIContent* aContent,
+                                 nsIContent* aOriginalElement,
+                                 nsAString& aStr) override;
 
   virtual bool CheckElementEnd(nsIContent * aContent,
                           bool & aForceFormat,
-                          nsAString& aStr) MOZ_OVERRIDE;
+                          nsAString& aStr) override;
 
   virtual void AfterElementEnd(nsIContent * aContent,
-                               nsAString& aStr) MOZ_OVERRIDE;
+                               nsAString& aStr) override;
 
-  virtual bool LineBreakBeforeOpen(int32_t aNamespaceID, nsIAtom* aName) MOZ_OVERRIDE;
-  virtual bool LineBreakAfterOpen(int32_t aNamespaceID, nsIAtom* aName) MOZ_OVERRIDE;
-  virtual bool LineBreakBeforeClose(int32_t aNamespaceID, nsIAtom* aName) MOZ_OVERRIDE;
-  virtual bool LineBreakAfterClose(int32_t aNamespaceID, nsIAtom* aName) MOZ_OVERRIDE;
+  virtual bool LineBreakBeforeOpen(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakAfterOpen(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakBeforeClose(int32_t aNamespaceID, nsIAtom* aName) override;
+  virtual bool LineBreakAfterClose(int32_t aNamespaceID, nsIAtom* aName) override;
 
   bool HasLongLines(const nsString& text, int32_t& aLastNewlineOffset);
 
   // functions to check if we enter in or leave from a preformated content
-  virtual void MaybeEnterInPreContent(nsIContent* aNode) MOZ_OVERRIDE;
-  virtual void MaybeLeaveFromPreContent(nsIContent* aNode) MOZ_OVERRIDE;
+  virtual void MaybeEnterInPreContent(nsIContent* aNode) override;
+  virtual void MaybeLeaveFromPreContent(nsIContent* aNode) override;
 
-  virtual void SerializeAttributes(nsIContent* aContent,
+  NS_WARN_UNUSED_RESULT
+  virtual bool SerializeAttributes(nsIContent* aContent,
                            nsIContent *aOriginalElement,
                            nsAString& aTagPrefix,
                            const nsAString& aTagNamespaceURI,
                            nsIAtom* aTagName,
                            nsAString& aStr,
                            uint32_t aSkipAttr,
-                           bool aAddNSAttr) MOZ_OVERRIDE;
+                           bool aAddNSAttr) override;
 
   bool IsFirstChildOfOL(nsIContent* aElement);
 
-  void SerializeLIValueAttribute(nsIContent* aElement,
+  NS_WARN_UNUSED_RESULT
+  bool SerializeLIValueAttribute(nsIContent* aElement,
                                  nsAString& aStr);
   bool IsShorthandAttr(const nsIAtom* aAttrName,
                          const nsIAtom* aElementName);
-  virtual void AppendAndTranslateEntities(const nsAString& aStr,
-                                          nsAString& aOutputStr) MOZ_OVERRIDE;
+
+  NS_WARN_UNUSED_RESULT
+  virtual bool AppendAndTranslateEntities(const nsAString& aStr,
+                                          nsAString& aOutputStr) override;
+
   nsresult EscapeURI(nsIContent* aContent,
                      const nsAString& aURI,
                      nsAString& aEscapedURI);

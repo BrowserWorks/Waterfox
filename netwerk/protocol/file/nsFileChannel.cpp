@@ -22,6 +22,9 @@
 #include "nsIMIMEService.h"
 #include <algorithm>
 
+using namespace mozilla;
+using namespace mozilla::net;
+
 //-----------------------------------------------------------------------------
 
 class nsFileCopyEvent : public nsRunnable {
@@ -175,9 +178,9 @@ public:
   }
 
   NS_IMETHODIMP ReadSegments(nsWriteSegmentFun fun, void *closure,
-                             uint32_t count, uint32_t *result) MOZ_OVERRIDE;
+                             uint32_t count, uint32_t *result) override;
   NS_IMETHODIMP AsyncWait(nsIInputStreamCallback *callback, uint32_t flags,
-                          uint32_t count, nsIEventTarget *target) MOZ_OVERRIDE;
+                          uint32_t count, nsIEventTarget *target) override;
 
 private:
   virtual ~nsFileUploadContentStream() {}
@@ -453,8 +456,9 @@ nsFileChannel::SetUploadStream(nsIInputStream *stream,
       nsresult rv = mUploadStream->Available(&avail);
       if (NS_FAILED(rv))
         return rv;
-      if (avail < INT64_MAX)
-        mUploadLength = avail;
+      // if this doesn't fit in the javascript MAX_SAFE_INTEGER
+      // pretend we don't know the size
+      mUploadLength = InScriptableRange(avail) ? avail : -1;
     }
   } else {
     mUploadLength = -1;

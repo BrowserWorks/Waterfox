@@ -10,7 +10,6 @@
 #include "nsPoint.h"                    // for nsIntPoint
 #include "nsRegion.h"
 
-#include "mozilla/TypedEnum.h"
 #include "mozilla/TypedEnumBits.h"
 
 #ifdef MOZ_WIDGET_GONK
@@ -46,7 +45,7 @@ class TextureHost;
 #undef NONE
 #undef OPAQUE
 
-MOZ_BEGIN_ENUM_CLASS(LayersBackend, int8_t)
+enum class LayersBackend : int8_t {
   LAYERS_NONE = 0,
   LAYERS_BASIC,
   LAYERS_OPENGL,
@@ -55,29 +54,29 @@ MOZ_BEGIN_ENUM_CLASS(LayersBackend, int8_t)
   LAYERS_D3D11,
   LAYERS_CLIENT,
   LAYERS_LAST
-MOZ_END_ENUM_CLASS(LayersBackend)
+};
 
-MOZ_BEGIN_ENUM_CLASS(BufferMode, int8_t)
+enum class BufferMode : int8_t {
   BUFFER_NONE,
   BUFFERED
-MOZ_END_ENUM_CLASS(BufferMode)
+};
 
-MOZ_BEGIN_ENUM_CLASS(DrawRegionClip, int8_t)
+enum class DrawRegionClip : int8_t {
   DRAW,
   NONE
-MOZ_END_ENUM_CLASS(DrawRegionClip)
+};
 
-MOZ_BEGIN_ENUM_CLASS(SurfaceMode, int8_t)
+enum class SurfaceMode : int8_t {
   SURFACE_NONE = 0,
   SURFACE_OPAQUE,
   SURFACE_SINGLE_CHANNEL_ALPHA,
   SURFACE_COMPONENT_ALPHA
-MOZ_END_ENUM_CLASS(SurfaceMode)
+};
 
 // LayerRenderState for Composer2D
 // We currently only support Composer2D using gralloc. If we want to be backed
 // by other surfaces we will need a more generic LayerRenderState.
-MOZ_BEGIN_ENUM_CLASS(LayerRenderStateFlags, int8_t)
+enum class LayerRenderStateFlags : int8_t {
   LAYER_RENDER_STATE_DEFAULT = 0,
   ORIGIN_BOTTOM_LEFT = 1 << 0,
   BUFFER_ROTATION = 1 << 1,
@@ -87,7 +86,7 @@ MOZ_BEGIN_ENUM_CLASS(LayerRenderStateFlags, int8_t)
   // render. This avoids confusion when a layer might return different kinds
   // of surfaces over time (e.g. video frames).
   OPAQUE = 1 << 3
-MOZ_END_ENUM_CLASS(LayerRenderStateFlags)
+};
 MOZ_MAKE_ENUM_CLASS_BITWISE_OPERATORS(LayerRenderStateFlags)
 
 // The 'ifdef MOZ_WIDGET_GONK' sadness here is because we don't want to include
@@ -151,12 +150,12 @@ struct LayerRenderState {
 #endif
 };
 
-MOZ_BEGIN_ENUM_CLASS(ScaleMode, int8_t)
+enum class ScaleMode : int8_t {
   SCALE_NONE,
   STRETCH,
   SENTINEL
 // Unimplemented - PRESERVE_ASPECT_RATIO_CONTAIN
-MOZ_END_ENUM_CLASS(ScaleMode)
+};
 
 struct EventRegions {
   nsIntRegion mHitRegion;
@@ -219,6 +218,34 @@ struct EventRegions {
     return result;
   }
 };
+
+// Bit flags that go on a ContainerLayer (or RefLayer) and override the
+// event regions in the entire subtree below. This is needed for propagating
+// various flags across processes since the child-process layout code doesn't
+// know about parent-process listeners or CSS rules.
+enum EventRegionsOverride {
+  // The default, no flags set
+  NoOverride             = 0,
+  // Treat all hit regions in the subtree as dispatch-to-content
+  ForceDispatchToContent = (1 << 0),
+  // Treat all hit regions in the subtree as empty
+  ForceEmptyHitRegion    = (1 << 1),
+  // OR union of all valid bit flags, for use in BitFlagsEnumSerializer
+  ALL_BITS               = (1 << 2) - 1
+};
+
+MOZ_ALWAYS_INLINE EventRegionsOverride
+operator|(EventRegionsOverride a, EventRegionsOverride b)
+{
+  return (EventRegionsOverride)((int)a | (int)b);
+}
+
+MOZ_ALWAYS_INLINE EventRegionsOverride&
+operator|=(EventRegionsOverride& a, EventRegionsOverride b)
+{
+  a = a | b;
+  return a;
+}
 
 } // namespace
 } // namespace

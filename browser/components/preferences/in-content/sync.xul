@@ -4,7 +4,8 @@
 
 <!-- Sync panel -->
 
-<preferences hidden="true" data-category="paneSync">
+<preferences id="syncEnginePrefs" hidden="true" data-category="paneSync"
+             onchange="gSyncPane.onPreferenceChanged();">
   <preference id="engine.addons"
               name="services.sync.engine.addons"
               type="bool"/>
@@ -22,6 +23,10 @@
               type="bool"/>
   <preference id="engine.passwords"
               name="services.sync.engine.passwords"
+              type="bool"/>
+  <!-- non Sync-Engine engines -->
+  <preference id="engine.readinglist"
+              name="readinglist.scheduler.enabled"
               type="bool"/>
 </preferences>
 
@@ -173,14 +178,14 @@
         </label>
       </hbox>
     </groupbox>
-    <hbox id="tosPP-normal" pack="center">
+    <vbox id="tosPP-normal">
       <label id="tosPP-normal-ToS" class="text-link">
         &prefs.tosLink.label;
       </label>
       <label id="tosPP-normal-PP" class="text-link">
         &prefs.ppLink.label;
       </label>
-    </hbox>
+    </vbox>
   </vbox>
 
   <vbox id="needsUpdate" align="center" pack="center">
@@ -226,7 +231,8 @@
       <deck id="fxaLoginStatus">
 
         <!-- logged in and verified and all is good -->
-        <hbox align="center">
+        <hbox id="fxaLoginVerified"
+              align="center">
           <label id="fxaEmailAddress1"/>
           <spacer flex="1"/>
           <button id="verifiedManage"
@@ -236,7 +242,8 @@
         </hbox>
 
         <!-- logged in to an unverified account -->
-        <hbox flex="1">
+        <hbox id="fxaLoginUnverified"
+              flex="1">
           <description>
             &signedInUnverified.beforename.label;
             <label id="fxaEmailAddress2"/>
@@ -253,7 +260,8 @@
         </hbox>
 
         <!-- logged in locally but server rejected credentials -->
-        <hbox flex="1">
+        <hbox id="fxaLoginRejected"
+              flex="1">
           <description>
             &signedInLoginFailure.beforename.label;
             <label id="fxaEmailAddress3"/>
@@ -287,6 +295,11 @@
           <checkbox label="&engine.history.label;"
                     accesskey="&engine.history.accesskey;"
                     preference="engine.history"/>
+          <checkbox id="readinglist-engine"
+                    label="&engine.readinglist.label;"
+                    accesskey="&engine.readinglist.accesskey;"
+                    preference="engine.readinglist"
+                    hidden="true"/>
           <checkbox label="&engine.addons.label;"
                     accesskey="&engine.addons.accesskey;"
                     preference="engine.addons"/>
@@ -306,13 +319,13 @@
                 flex="1"/>
     </hbox>
     <spacer flex="1"/>
-    <hbox id="tosPP-small" pack="center">
-      <label id="tosPP-small-ToS" class="text-link small">
+    <vbox id="tosPP-small">
+      <label id="tosPP-small-ToS" class="text-link">
         &prefs.tosLink.label;
       </label>
-      <label id="tosPP-small-PP" class="text-link small">
+      <label id="tosPP-small-PP" class="text-link">
         &fxaPrivacyNotice.link.label;
       </label>
-    </hbox>
+    </vbox>
   </vbox>
 </deck>

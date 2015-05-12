@@ -208,6 +208,7 @@ Layer::Layer(LayerManager* aManager, void* aImplData) :
   mStickyPositionData(nullptr),
   mScrollbarTargetId(FrameMetrics::NULL_SCROLL_ID),
   mScrollbarDirection(ScrollDirection::NONE),
+  mIsScrollbarContainer(false),
   mDebugColorIndex(0),
   mAnimationGeneration(0)
 {}
@@ -850,6 +851,66 @@ Layer::TransformRectToRenderTarget(const LayerIntRect& aRect)
   return quad;
 }
 
+bool
+Layer::GetVisibleRegionRelativeToRootLayer(nsIntRegion& aResult,
+                                           nsIntPoint* aLayerOffset)
+{
+  MOZ_ASSERT(aLayerOffset, "invalid offset pointer");
+
+  IntPoint offset;
+  aResult = GetEffectiveVisibleRegion();
+  for (Layer* layer = this; layer; layer = layer->GetParent()) {
+    gfx::Matrix matrix;
+    if (!layer->GetLocalTransform().Is2D(&matrix) ||
+        !matrix.IsTranslation()) {
+      return false;
+    }
+
+    // The offset of |layer| to its parent.
+    IntPoint currentLayerOffset = RoundedToInt(matrix.GetTranslation());
+
+    // Translate the accumulated visible region of |this| by the offset of
+    // |layer|.
+    aResult.MoveBy(currentLayerOffset.x, currentLayerOffset.y);
+
+    // If the parent layer clips its lower layers, clip the visible region
+    // we're accumulating.
+    if (layer->GetEffectiveClipRect()) {
+      aResult.AndWith(*layer->GetEffectiveClipRect());
+    }
+
+    // Now we need to walk across the list of siblings for this parent layer,
+    // checking to see if any of these layer trees obscure |this|. If so,
+    // remove these areas from the visible region as well. This will pick up
+    // chrome overlays like a tab modal prompt.
+    Layer* sibling;
+    for (sibling = layer->GetNextSibling(); sibling;
+         sibling = sibling->GetNextSibling()) {
+      gfx::Matrix siblingMatrix;
+      if (!sibling->GetLocalTransform().Is2D(&siblingMatrix) ||
+          !siblingMatrix.IsTranslation()) {
+        return false;
+      }
+
+      // Retreive the translation from sibling to |layer|. The accumulated
+      // visible region is currently oriented with |layer|.
+      IntPoint siblingOffset = RoundedToInt(siblingMatrix.GetTranslation());
+      nsIntRegion siblingVisibleRegion(sibling->GetEffectiveVisibleRegion());
+      // Translate the siblings region to |layer|'s origin.
+      siblingVisibleRegion.MoveBy(-siblingOffset.x, -siblingOffset.y);
+      // Subtract the sibling visible region from the visible region of |this|.
+      aResult.SubOut(siblingVisibleRegion);
+    }
+
+    // Keep track of the total offset for aLayerOffset.  We use this in plugin
+    // positioning code.
+    offset += currentLayerOffset;
+  }
+
+  *aLayerOffset = nsIntPoint(offset.x, offset.y);
+  return true;
+}
+
 ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
   : Layer(aManager, aImplData),
     mFirstChild(nullptr),
@@ -863,7 +924,8 @@ ContainerLayer::ContainerLayer(LayerManager* aManager, void* aImplData)
     mUseIntermediateSurface(false),
     mSupportsComponentAlphaChildren(false),
     mMayHaveReadbackChild(false),
-    mChildrenChanged(false)
+    mChildrenChanged(false),
+    mEventRegionsOverride(EventRegionsOverride::NoOverride)
 {
   mContentFlags = 0; // Clear NO_TEXT, NO_TEXT_OVER_TRANSPARENT
 }
@@ -1020,6 +1082,7 @@ ContainerLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs)
   aAttrs = ContainerLayerAttributes(mPreXScale, mPreYScale,
                                     mInheritedXScale, mInheritedYScale,
                                     mPresShellResolution, mScaleToResolution,
+                                    mEventRegionsOverride,
                                     reinterpret_cast<uint64_t>(mHMDInfo.get()));
 }
 
@@ -1211,7 +1274,7 @@ ContainerLayer::DidInsertChild(Layer* aLayer)
 void
 RefLayer::FillSpecificAttributes(SpecificLayerAttributes& aAttrs)
 {
-  aAttrs = RefLayerAttributes(GetReferentId());
+  aAttrs = RefLayerAttributes(GetReferentId(), mEventRegionsOverride);
 }
 
 /** 
@@ -1687,6 +1750,12 @@ ContainerLayer::PrintInfo(std::stringstream& aStream, const char* aPrefix)
   if (mScaleToResolution) {
     aStream << nsPrintfCString(" [presShellResolution=%g]", mPresShellResolution).get();
   }
+  if (mEventRegionsOverride & EventRegionsOverride::ForceDispatchToContent) {
+    aStream << " [force-dtc]";
+  }
+  if (mEventRegionsOverride & EventRegionsOverride::ForceEmptyHitRegion) {
+    aStream << " [force-ehr]";
+  }
   if (mHMDInfo) {
     aStream << nsPrintfCString(" [hmd=%p]", mHMDInfo.get()).get();
   }
@@ -1959,8 +2028,8 @@ LayerManager::InitLog()
 /*static*/ bool
 LayerManager::IsLogEnabled()
 {
-  NS_ABORT_IF_FALSE(!!sLog,
-                    "layer manager must be created before logging is allowed");
+  MOZ_ASSERT(!!sLog,
+             "layer manager must be created before logging is allowed");
   return PR_LOG_TEST(sLog, PR_LOG_DEBUG);
 }
 

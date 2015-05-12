@@ -12,7 +12,7 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLDivElement MOZ_FINAL : public nsGenericHTMLElement,
+class HTMLDivElement final : public nsGenericHTMLElement,
                                  public nsIDOMHTMLDivElement
 {
 public:
@@ -25,21 +25,21 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
 
   // nsIDOMHTMLDivElement
-  NS_IMETHOD GetAlign(nsAString& aAlign) MOZ_OVERRIDE
+  NS_IMETHOD GetAlign(nsAString& aAlign) override
   {
-    nsString align;
+    DOMString align;
     GetAlign(align);
-    aAlign = align;
+    align.ToString(aAlign);
     return NS_OK;
   }
-  NS_IMETHOD SetAlign(const nsAString& aAlign) MOZ_OVERRIDE
+  NS_IMETHOD SetAlign(const nsAString& aAlign) override
   {
     mozilla::ErrorResult rv;
     SetAlign(aAlign, rv);
     return rv.ErrorCode();
   }
 
-  void GetAlign(nsString& aAlign)
+  void GetAlign(DOMString& aAlign)
   {
     GetHTMLAttr(nsGkAtoms::align, aAlign);
   }
@@ -51,15 +51,15 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
-                              nsAttrValue& aResult) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+                              nsAttrValue& aResult) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
 protected:
   virtual ~HTMLDivElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx) override;
 
 private:
   static void MapAttributesIntoRule(const nsMappedAttributes* aAttributes,

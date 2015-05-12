@@ -12,15 +12,15 @@
   <!--original fetch url was https://git.mozilla.org/releases-->
   <remote fetch="https://git.mozilla.org/releases" name="mozillaorg"/>
   <!-- B2G specific things. -->
-  <project name="platform_build" path="build" remote="b2g" revision="0e94c080bee081a50aa2097527b0b40852f9143f">
+  <project name="platform_build" path="build" remote="b2g" revision="4efd19d199ae52656604f794c5a77518400220fd">
     <copyfile dest="Makefile" src="core/root.mk"/>
   </project>
-  <project name="rilproxy" path="rilproxy" remote="b2g" revision="827214fcf38d6569aeb5c6d6f31cb296d1f09272"/>
+  <project name="rilproxy" path="rilproxy" remote="b2g" revision="5ef30994f4778b4052e58a4383dbe7890048c87e"/>
   <project name="fake-libdvm" path="dalvik" remote="b2g" revision="d50ae982b19f42f0b66d08b9eb306be81687869f"/>
-  <project name="gaia" path="gaia" remote="mozillaorg" revision="7c5b27cad370db377b18a742d3f3fdb0070e899f"/>
-  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="049c281ad212bf528b2af8fc246b0dd0c9f97415"/>
-  <project name="moztt" path="external/moztt" remote="b2g" revision="fe893bb760a3bb64375f62fdf4762a58c59df9ef"/>
-  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="34ea6163f9f0e0122fb0bb03607eccdca31ced7a"/>
+  <project name="gaia" path="gaia" remote="mozillaorg" revision="288bf1c58ef9ccecd68508978a0141ee71974681"/>
+  <project name="gonk-misc" path="gonk-misc" remote="b2g" revision="3905180d9e2dbe03d7ce3b3a6debe4d4adc938d1"/>
+  <project name="moztt" path="external/moztt" remote="b2g" revision="c42985975f2bbc42859b9136ed348186d989b93d"/>
+  <project name="apitrace" path="external/apitrace" remote="apitrace" revision="a1ddea3133e0807350326cee5dcf0d06fad00c08"/>
   <project name="valgrind" path="external/valgrind" remote="b2g" revision="daa61633c32b9606f58799a3186395fd2bbb8d8c"/>
   <project name="vex" path="external/VEX" remote="b2g" revision="47f031c320888fe9f3e656602588565b52d43010"/>
   <!-- Stock Android things -->
@@ -78,7 +78,6 @@
   <project name="platform/external/mdnsresponder" path="external/mdnsresponder" revision="15dd90d06fce6f13243a2c24248a64b3381f7e25"/>
   <project name="platform/external/mksh" path="external/mksh" revision="1b182dd7e82bdd41dd2791831b68252d86a61c82"/>
   <project name="platform/external/netcat" path="external/netcat" revision="7fddee20c8f2b792a85ed5cd663c241af7db282b"/>
-  <project name="platform/external/netperf" path="external/netperf" revision="8665619efddab9dea468beaa6569829c76aa7c13"/>
   <project name="platform/external/openssl" path="external/openssl" revision="2d1bb4b8633349cca0bd3319149629cc39c73b97"/>
   <project name="platform/external/ping" path="external/ping" revision="ea46d4544bd58b406cac525b4036264da2a81404"/>
   <project name="platform/external/ping6" path="external/ping6" revision="501b3d22cd27e732f7c2e66ac2ca9d7e668e690a"/>
@@ -102,7 +101,7 @@
   <project name="platform/external/webrtc" path="external/webrtc" revision="1a1433203ddf6395516e065ada1dcdfc8bd5c654"/>
   <project name="platform/external/yaffs2" path="external/yaffs2" revision="d94a17182a88c2c2d865f50b728de8561d251efa"/>
   <project name="platform/external/zlib" path="external/zlib" revision="06608b270da9ec8a3e618f201d7356aad83f9ffe"/>
-  <project name="platform_frameworks_av" path="frameworks/av" remote="b2g" revision="7a1003b370cde4406afd9186de0b1a5aa95543db"/>
+  <project name="platform_frameworks_av" path="frameworks/av" remote="b2g" revision="5fec1fcdc31a4db34e60cc0f73f7c93000fb1a8d"/>
   <project name="platform/frameworks/base" path="frameworks/base" revision="8fafbc6692a52d1f1417693f24f6349b4de5afbd"/>
   <project name="platform/frameworks/native" path="frameworks/native" revision="c135c11c422c1570fdae2e19336f06f39e723c5a"/>
   <project name="platform/frameworks/opt/emoji" path="frameworks/opt/emoji" revision="bc06a1779be6919a581a938e1c3118b3a4ab4c18"/>
@@ -118,10 +117,10 @@
   <project name="platform/prebuilts/sdk" path="prebuilts/sdk" revision="842e33e43a55ea44833b9e23e4d180fa17c843af"/>
   <project name="platform/prebuilts/tools" path="prebuilts/tools" revision="5db24726f0f42124304195a6bdea129039eeeaeb"/>
   <project name="platform/system/bluetooth" path="system/bluetooth" revision="930ae098543881f47eac054677726ee4b998b2f8"/>
-  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="288db53ad77084bd44791add5e3a4c266a6e9c60"/>
+  <project name="platform_system_bluetoothd" path="system/bluetoothd" remote="b2g" revision="e0fc03e0a3062063c3c85996dcc881c0a49ed98d"/>
   <project name="platform_system_core" path="system/core" remote="b2g" revision="542d1f59dc331b472307e5bd043101d14d5a3a3e"/>
   <project name="platform/system/extras" path="system/extras" revision="18c1180e848e7ab8691940481f5c1c8d22c37b3e"/>
-  <project name="platform_system_libfdio" path="system/libfdio" remote="b2g" revision="fe95bc6f83af5c18a73aa86c96e7fa7f79b91477"/>
+  <project name="platform_system_libfdio" path="system/libfdio" remote="b2g" revision="8f7d94ac711af4678169805137c6c42def39b3ed"/>
   <project name="platform/system/media" path="system/media" revision="d90b836f66bf1d9627886c96f3a2d9c3007fbb80"/>
   <project name="platform/system/netd" path="system/netd" revision="56112dd7b811301b718d0643a82fd5cac9522073"/>
   <project name="platform/system/security" path="system/security" revision="f48ff68fedbcdc12b570b7699745abb6e7574907"/>
@@ -131,7 +130,7 @@
   <project name="device-mako" path="device/lge/mako" remote="b2g" revision="78d17f0c117f0c66dd55ee8d5c5dde8ccc93ecba"/>
   <project name="device/generic/armv7-a-neon" path="device/generic/armv7-a-neon" revision="3a9a17613cc685aa232432566ad6cc607eab4ec1"/>
   <project name="device/lge/mako-kernel" path="device/lge/mako-kernel" revision="d1729e53d71d711c8fde25eab8728ff2b9b4df0e"/>
-  <project name="platform_system_nfcd" path="system/nfcd" remote="b2g" revision="22cd128c866dd895fd2e019918982b147503ac80"/>
+  <project name="platform_system_nfcd" path="system/nfcd" remote="b2g" revision="d19dad5844e8803d5e88d1577a2742b4f5cbc467"/>
   <project name="platform/external/libnfc-nci" path="external/libnfc-nci" revision="7d33aaf740bbf6c7c6e9c34a92b371eda311b66b"/>
   <project name="platform/external/wpa_supplicant_8" path="external/wpa_supplicant_8" revision="0e56e450367cd802241b27164a2979188242b95f"/>
   <project name="platform/hardware/broadcom/wlan" path="hardware/broadcom/wlan" revision="0e1929fa3aa38bf9d40e9e953d619fab8164c82e"/>

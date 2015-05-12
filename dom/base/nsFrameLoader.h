@@ -54,7 +54,7 @@ typedef struct _GtkWidget GtkWidget;
 class QX11EmbedContainer;
 #endif
 
-class nsFrameLoader MOZ_FINAL : public nsIFrameLoader,
+class nsFrameLoader final : public nsIFrameLoader,
                                 public nsStubMutationObserver,
                                 public mozilla::dom::ipc::MessageManagerCallback
 {
@@ -86,16 +86,16 @@ public:
   /**
    * MessageManagerCallback methods that we override.
    */
-  virtual bool DoLoadFrameScript(const nsAString& aURL,
-                                 bool aRunInGlobalScope) MOZ_OVERRIDE;
+  virtual bool DoLoadMessageManagerScript(const nsAString& aURL,
+                                          bool aRunInGlobalScope) override;
   virtual bool DoSendAsyncMessage(JSContext* aCx,
                                   const nsAString& aMessage,
                                   const mozilla::dom::StructuredCloneData& aData,
                                   JS::Handle<JSObject *> aCpows,
-                                  nsIPrincipal* aPrincipal) MOZ_OVERRIDE;
-  virtual bool CheckPermission(const nsAString& aPermission) MOZ_OVERRIDE;
-  virtual bool CheckManifestURL(const nsAString& aManifestURL) MOZ_OVERRIDE;
-  virtual bool CheckAppHasPermission(const nsAString& aPermission) MOZ_OVERRIDE;
+                                  nsIPrincipal* aPrincipal) override;
+  virtual bool CheckPermission(const nsAString& aPermission) override;
+  virtual bool CheckManifestURL(const nsAString& aManifestURL) override;
+  virtual bool CheckAppHasPermission(const nsAString& aPermission) override;
 
   /**
    * Called from the layout frame associated with this frame loader;
@@ -287,7 +287,7 @@ private:
 
   // Updates the subdocument position and size. This gets called only
   // when we have our own in-process DocShell.
-  nsresult UpdateBaseWindowPositionAndSize(nsSubDocumentFrame *aIFrame);
+  void UpdateBaseWindowPositionAndSize(nsSubDocumentFrame *aIFrame);
   nsresult CheckURILoad(nsIURI* aURI);
   void FireErrorEvent();
   nsresult ReallyStartLoadingInternal();
@@ -311,6 +311,8 @@ private:
   // Update the permission manager's app-id refcount based on mOwnerContent's
   // own-or-containing-app.
   void ResetPermissionManagerStatus();
+
+  void InitializeBrowserAPI();
 
   nsCOMPtr<nsIDocShell> mDocShell;
   nsCOMPtr<nsIURI> mURIToLoad;
@@ -351,7 +353,6 @@ private:
   bool mRemoteFrame : 1;
   bool mClipSubdocument : 1;
   bool mClampScrollPosition : 1;
-  bool mRemoteBrowserInitialized : 1;
   bool mObservingOwnerContent : 1;
 
   // Backs nsIFrameLoader::{Get,Set}Visible.  Visibility state here relates to
@@ -369,9 +370,6 @@ private:
   // See nsIFrameLoader.idl. EVENT_MODE_NORMAL_DISPATCH automatically
   // forwards some input events to out-of-process content.
   uint32_t mEventMode;
-
-  // Indicate if we have sent 'remote-browser-pending'.
-  bool mPendingFrameSent;
 };
 
 #endif

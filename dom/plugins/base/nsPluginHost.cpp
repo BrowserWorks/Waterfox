@@ -30,7 +30,7 @@
 #include "nsIURL.h"
 #include "nsTArray.h"
 #include "nsReadableUtils.h"
-#include "nsIProtocolProxyService2.h"
+#include "nsProtocolProxyService.h"
 #include "nsIStreamConverterService.h"
 #include "nsIFile.h"
 #if defined(XP_MACOSX)
@@ -606,32 +606,30 @@ nsresult nsPluginHost::FindProxyForURL(const char* url, char* *result)
   }
   nsresult res;
 
-  nsCOMPtr<nsIURI> uriIn;
-  nsCOMPtr<nsIProtocolProxyService> proxyService;
-  nsCOMPtr<nsIProtocolProxyService2> proxyService2;
-  nsCOMPtr<nsIIOService> ioService;
-
-  proxyService = do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &res);
+  nsCOMPtr<nsIProtocolProxyService> proxyService =
+    do_GetService(NS_PROTOCOLPROXYSERVICE_CONTRACTID, &res);
   if (NS_FAILED(res) || !proxyService)
     return res;
 
-  proxyService2 = do_QueryInterface(proxyService, &res);
-  if (NS_FAILED(res) || !proxyService2)
-    return res;
+  nsRefPtr<nsProtocolProxyService> rawProxyService = do_QueryObject(proxyService);
+  if (!rawProxyService) {
+    return NS_ERROR_FAILURE;
+  }
 
-  ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &res);
+  nsCOMPtr<nsIIOService> ioService = do_GetService(NS_IOSERVICE_CONTRACTID, &res);
   if (NS_FAILED(res) || !ioService)
     return res;
 
-  // make an nsURI from the argument url
-  res = ioService->NewURI(nsDependentCString(url), nullptr, nullptr, getter_AddRefs(uriIn));
+  // make a temporary channel from the argument url
+  nsCOMPtr<nsIChannel> tempChannel;
+  res = ioService->NewChannel(nsDependentCString(url), nullptr, nullptr, getter_AddRefs(tempChannel));
   if (NS_FAILED(res))
     return res;
 
   nsCOMPtr<nsIProxyInfo> pi;
 
-  // Remove this with bug 778201
-  res = proxyService2->DeprecatedBlockingResolve(uriIn, 0, getter_AddRefs(pi));
+  // Remove this deprecated call in the future (see Bug 778201):
+  res = rawProxyService->DeprecatedBlockingResolve(tempChannel, 0, getter_AddRefs(pi));
   if (NS_FAILED(res))
     return res;
 
@@ -938,6 +936,14 @@ nsPluginHost::TrySetUpPluginInstance(const char *aMimeType,
         aMimeType, aOwner, urlSpec.get()));
 
   PR_LogFlush();
+#endif
+
+#ifdef XP_WIN
+  bool changed;
+  if ((mRegKeyHKLM && NS_SUCCEEDED(mRegKeyHKLM->HasChanged(&changed)) && changed) ||
+      (mRegKeyHKCU && NS_SUCCEEDED(mRegKeyHKCU->HasChanged(&changed)) && changed)) {
+    ReloadPlugins();
+  }
 #endif
 
   nsRefPtr<nsNPAPIPlugin> plugin;
@@ -1500,7 +1506,8 @@ nsPluginHost::EnumerateSiteData(const nsACString& domain,
 NS_IMETHODIMP
 nsPluginHost::RegisterPlayPreviewMimeType(const nsACString& mimeType,
                                           bool ignoreCTP,
-                                          const nsACString& redirectURL)
+                                          const nsACString& redirectURL,
+                                          const nsACString& whitelist)
 {
   nsAutoCString mt(mimeType);
   nsAutoCString url(redirectURL);
@@ -1509,9 +1516,10 @@ nsPluginHost::RegisterPlayPreviewMimeType(const nsACString& mimeType,
     url.AssignLiteral("data:application/x-moz-playpreview;,");
     url.Append(mimeType);
   }
+  nsAutoCString wl(whitelist);
 
   nsRefPtr<nsPluginPlayPreviewInfo> playPreview =
-    new nsPluginPlayPreviewInfo(mt.get(), ignoreCTP, url.get());
+    new nsPluginPlayPreviewInfo(mt.get(), ignoreCTP, url.get(), wl.get());
   mPlayPreviewMimeTypes.AppendElement(playPreview);
   return NS_OK;
 }
@@ -1560,6 +1568,10 @@ nsPluginHost::ClearSiteData(nsIPluginTag* plugin, const nsACString& domain,
   }
 
   nsPluginTag* tag = static_cast<nsPluginTag*>(plugin);
+
+  if (!tag->IsEnabled()) {
+    return NS_ERROR_NOT_AVAILABLE;
+  }
 
   // We only ensure support for clearing Flash site data for now.
   // We will also attempt to clear data for any plugin that happens
@@ -1654,19 +1666,43 @@ nsPluginHost::SiteHasData(nsIPluginTag* plugin, const nsACString& domain,
   return NS_OK;
 }
 
-bool nsPluginHost::IsJavaMIMEType(const char* aType)
+nsPluginHost::SpecialType
+nsPluginHost::GetSpecialType(const nsACString & aMIMEType)
 {
+  if (aMIMEType.LowerCaseEqualsASCII("application/x-shockwave-flash") ||
+      aMIMEType.LowerCaseEqualsASCII("application/futuresplash")) {
+    return eSpecialType_Flash;
+  }
+
+  if (aMIMEType.LowerCaseEqualsASCII("application/x-silverlight") ||
+      aMIMEType.LowerCaseEqualsASCII("application/x-silverlight-2")) {
+    return eSpecialType_Silverlight;
+  }
+
+  if (aMIMEType.LowerCaseEqualsASCII("audio/x-pn-realaudio-plugin")) {
+    NS_WARNING("You are loading RealPlayer");
+    return eSpecialType_RealPlayer;
+  }
+
+  if (aMIMEType.LowerCaseEqualsASCII("application/pdf")) {
+    return eSpecialType_PDF;
+  }
+
+  // Java registers variants of its MIME with parameters, e.g.
+  // application/x-java-vm;version=1.3
+  const nsACString &noParam = Substring(aMIMEType, 0, aMIMEType.FindChar(';'));
+
   // The java mime pref may well not be one of these,
   // e.g. application/x-java-test used in the test suite
   nsAdoptingCString javaMIME = Preferences::GetCString(kPrefJavaMIME);
-  return aType &&
-    (javaMIME.EqualsIgnoreCase(aType) ||
-     (0 == PL_strncasecmp(aType, "application/x-java-vm",
-                          sizeof("application/x-java-vm") - 1)) ||
-     (0 == PL_strncasecmp(aType, "application/x-java-applet",
-                          sizeof("application/x-java-applet") - 1)) ||
-     (0 == PL_strncasecmp(aType, "application/x-java-bean",
-                          sizeof("application/x-java-bean") - 1)));
+  if ((!javaMIME.IsEmpty() && noParam.LowerCaseEqualsASCII(javaMIME)) ||
+      noParam.LowerCaseEqualsASCII("application/x-java-vm") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-applet") ||
+      noParam.LowerCaseEqualsASCII("application/x-java-bean")) {
+    return eSpecialType_Java;
+  }
+
+  return eSpecialType_None;
 }
 
 // Check whether or not a tag is a live, valid tag, and that it's loaded.
@@ -2084,6 +2120,29 @@ nsPluginHost::SetChromeEpochForContent(uint32_t aEpoch)
   mPluginEpoch = aEpoch;
 }
 
+#ifdef XP_WIN
+static void
+WatchRegKey(uint32_t aRoot, nsCOMPtr<nsIWindowsRegKey>& aKey)
+{
+  if (aKey) {
+    return;
+  }
+
+  aKey = do_CreateInstance("@mozilla.org/windows-registry-key;1");
+  if (!aKey) {
+    return;
+  }
+  nsresult rv = aKey->Open(aRoot,
+                           NS_LITERAL_STRING("Software\\MozillaPlugins"),
+                           nsIWindowsRegKey::ACCESS_READ | nsIWindowsRegKey::ACCESS_NOTIFY);
+  if (NS_WARN_IF(NS_FAILED(rv))) {
+    aKey = nullptr;
+    return;
+  }
+  aKey->StartWatching(true);
+}
+#endif
+
 nsresult nsPluginHost::LoadPlugins()
 {
 #ifdef ANDROID
@@ -2098,6 +2157,11 @@ nsresult nsPluginHost::LoadPlugins()
 
   if (mPluginsDisabled)
     return NS_OK;
+
+#ifdef XP_WIN
+  WatchRegKey(nsIWindowsRegKey::ROOT_KEY_LOCAL_MACHINE, mRegKeyHKLM);
+  WatchRegKey(nsIWindowsRegKey::ROOT_KEY_CURRENT_USER, mRegKeyHKCU);
+#endif
 
   bool pluginschanged;
   nsresult rv = FindPlugins(true, &pluginschanged);

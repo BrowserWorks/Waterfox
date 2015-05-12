@@ -12,11 +12,9 @@
 #include "media/stagefright/MediaDefs.h"
 #include "media/stagefright/Utils.h"
 #include "mozilla/ArrayUtils.h"
-#include "mozilla/fallible.h"
 #include "include/ESDS.h"
 
 using namespace stagefright;
-using mozilla::fallible_t;
 
 namespace mp4_demuxer
 {
@@ -136,7 +134,6 @@ CryptoSample::Update(sp<MetaData>& aMetaData)
 void
 TrackConfig::Update(sp<MetaData>& aMetaData, const char* aMimeType)
 {
-  // aMimeType points to a string from MediaDefs.cpp so we don't need to copy it
   mime_type = aMimeType;
   duration = FindInt64(aMetaData, kKeyDuration);
   media_time = FindInt64(aMetaData, kKeyMediaTime);
@@ -178,7 +175,8 @@ bool
 AudioDecoderConfig::IsValid()
 {
   return channel_count > 0 && samples_per_second > 0 && frequency_index > 0 &&
-         (mime_type != MEDIA_MIMETYPE_AUDIO_AAC || aac_profile > 0);
+         (!mime_type.Equals(MEDIA_MIMETYPE_AUDIO_AAC) ||
+          aac_profile > 0 || extended_profile > 0);
 }
 
 void
@@ -224,7 +222,7 @@ MP4Sample::Clone() const
   s->size = size;
   s->crypto = crypto;
   s->extra_data = extra_data;
-  s->extra_buffer = s->data = new ((fallible_t())) uint8_t[size];
+  s->extra_buffer = s->data = new (fallible) uint8_t[size];
   if (!s->extra_buffer) {
     return nullptr;
   }
@@ -265,7 +263,7 @@ MP4Sample::Pad(size_t aPaddingBytes)
   // not then we copy to a new buffer.
   uint8_t* newData = mMediaBuffer && newSize <= mMediaBuffer->size()
                        ? data
-                       : new ((fallible_t())) uint8_t[newSize];
+                       : new (fallible) uint8_t[newSize];
   if (!newData) {
     return false;
   }
@@ -293,7 +291,7 @@ MP4Sample::Prepend(const uint8_t* aData, size_t aSize)
   // not then we copy to a new buffer.
   uint8_t* newData = mMediaBuffer && newSize <= mMediaBuffer->size()
                        ? data
-                       : new ((fallible_t())) uint8_t[newSize];
+                       : new (fallible) uint8_t[newSize];
   if (!newData) {
     return false;
   }
@@ -320,7 +318,7 @@ MP4Sample::Replace(const uint8_t* aData, size_t aSize)
   // not then we copy to a new buffer.
   uint8_t* newData = mMediaBuffer && aSize <= mMediaBuffer->size()
                        ? data
-                       : new ((fallible_t())) uint8_t[aSize];
+                       : new (fallible) uint8_t[aSize];
   if (!newData) {
     return false;
   }

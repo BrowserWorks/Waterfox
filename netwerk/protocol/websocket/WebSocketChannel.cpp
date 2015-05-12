@@ -338,7 +338,7 @@ public:
   // delay/queue the connection (returns false)
   static void ConditionallyConnect(WebSocketChannel *ws)
   {
-    NS_ABORT_IF_FALSE(ws->mConnecting == NOT_CONNECTING, "opening state");
+    MOZ_ASSERT(ws->mConnecting == NOT_CONNECTING, "opening state");
 
     StaticMutexAutoLock lock(sLock);
     if (!sManager) {
@@ -362,8 +362,8 @@ public:
 
   static void OnConnected(WebSocketChannel *aChannel)
   {
-    NS_ABORT_IF_FALSE(aChannel->mConnecting == CONNECTING_IN_PROGRESS,
-                      "Channel completed connect, but not connecting?");
+    MOZ_ASSERT(aChannel->mConnecting == CONNECTING_IN_PROGRESS,
+               "Channel completed connect, but not connecting?");
 
     StaticMutexAutoLock lock(sLock);
     if (!sManager) {
@@ -418,9 +418,9 @@ public:
     if (aChannel->mConnecting) {
       // Only way a connecting channel may get here w/o failing is if it was
       // closed with GOING_AWAY (1001) because of navigation, tab close, etc.
-      NS_ABORT_IF_FALSE(NS_FAILED(aReason) ||
-                        aChannel->mScriptCloseCode == CLOSE_GOING_AWAY,
-                        "websocket closed while connecting w/o failing?");
+      MOZ_ASSERT(NS_FAILED(aReason) ||
+                 aChannel->mScriptCloseCode == CLOSE_GOING_AWAY,
+                 "websocket closed while connecting w/o failing?");
 
       sManager->RemoveFromQueue(aChannel);
 
@@ -489,8 +489,8 @@ private:
     if (index >= 0) {
       WebSocketChannel *chan = mQueue[index]->mChannel;
 
-      NS_ABORT_IF_FALSE(chan->mConnecting == CONNECTING_QUEUED,
-                        "transaction not queued but in queue");
+      MOZ_ASSERT(chan->mConnecting == CONNECTING_QUEUED,
+                 "transaction not queued but in queue");
       LOG(("WebSocket: ConnectNext: found channel [this=%p] in queue", chan));
 
       mFailures.DelayOrBegin(chan);
@@ -500,7 +500,7 @@ private:
   void RemoveFromQueue(WebSocketChannel *aChannel)
   {
     int32_t index = IndexOf(aChannel);
-    NS_ABORT_IF_FALSE(index >= 0, "connection to remove not in queue");
+    MOZ_ASSERT(index >= 0, "connection to remove not in queue");
     if (index >= 0) {
       nsOpenConn *olddata = mQueue[index];
       mQueue.RemoveElementAt(index);
@@ -550,7 +550,7 @@ StaticMutex           nsWSAdmissionManager::sLock;
 // CallOnMessageAvailable
 //-----------------------------------------------------------------------------
 
-class CallOnMessageAvailable MOZ_FINAL : public nsIRunnable
+class CallOnMessageAvailable final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -563,7 +563,7 @@ public:
       mData(aData),
       mLen(aLen) {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mChannel->IsOnTargetThread());
 
@@ -594,7 +594,7 @@ NS_IMPL_ISUPPORTS(CallOnMessageAvailable, nsIRunnable)
 // CallOnStop
 //-----------------------------------------------------------------------------
 
-class CallOnStop MOZ_FINAL : public nsIRunnable
+class CallOnStop final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -606,7 +606,7 @@ public:
       mReason(aReason)
   {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mChannel->IsOnTargetThread());
 
@@ -633,7 +633,7 @@ NS_IMPL_ISUPPORTS(CallOnStop, nsIRunnable)
 // CallOnServerClose
 //-----------------------------------------------------------------------------
 
-class CallOnServerClose MOZ_FINAL : public nsIRunnable
+class CallOnServerClose final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -646,7 +646,7 @@ public:
       mCode(aCode),
       mReason(aReason) {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     MOZ_ASSERT(mChannel->IsOnTargetThread());
 
@@ -671,7 +671,7 @@ NS_IMPL_ISUPPORTS(CallOnServerClose, nsIRunnable)
 // CallAcknowledge
 //-----------------------------------------------------------------------------
 
-class CallAcknowledge MOZ_FINAL : public nsCancelableRunnable
+class CallAcknowledge final : public nsCancelableRunnable
 {
 public:
   CallAcknowledge(WebSocketChannel* aChannel,
@@ -703,7 +703,7 @@ private:
 // CallOnTransportAvailable
 //-----------------------------------------------------------------------------
 
-class CallOnTransportAvailable MOZ_FINAL : public nsIRunnable
+class CallOnTransportAvailable final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -717,7 +717,7 @@ public:
       mSocketIn(aSocketIn),
       mSocketOut(aSocketOut) {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     LOG(("WebSocketChannel::CallOnTransportAvailable %p\n", this));
     return mChannel->OnTransportAvailable(mTransport, mSocketIn, mSocketOut);
@@ -981,20 +981,20 @@ public:
   int32_t OrigLength() const { return mDeflated ? mOrigLength : mLength; }
 
   uint8_t* BeginWriting() {
-    NS_ABORT_IF_FALSE(mMsgType != kMsgTypeStream,
-                      "Stream should have been converted to string by now");
+    MOZ_ASSERT(mMsgType != kMsgTypeStream,
+               "Stream should have been converted to string by now");
     return (uint8_t *)(mMsg.pString ? mMsg.pString->BeginWriting() : nullptr);
   }
 
   uint8_t* BeginReading() {
-    NS_ABORT_IF_FALSE(mMsgType != kMsgTypeStream,
-                      "Stream should have been converted to string by now");
+    MOZ_ASSERT(mMsgType != kMsgTypeStream,
+               "Stream should have been converted to string by now");
     return (uint8_t *)(mMsg.pString ? mMsg.pString->BeginReading() : nullptr);
   }
 
   nsresult ConvertStreamToString()
   {
-    NS_ABORT_IF_FALSE(mMsgType == kMsgTypeStream, "Not a stream!");
+    MOZ_ASSERT(mMsgType == kMsgTypeStream, "Not a stream!");
 
 #ifdef DEBUG
     // Make sure we got correct length from Blob
@@ -1018,8 +1018,8 @@ public:
 
   bool DeflatePayload(PMCECompression *aCompressor)
   {
-    NS_ABORT_IF_FALSE(mMsgType != kMsgTypeStream,
-                      "Stream should have been converted to string by now");
+    MOZ_ASSERT(mMsgType != kMsgTypeStream,
+               "Stream should have been converted to string by now");
     MOZ_ASSERT(!mDeflated);
 
     nsresult rv;
@@ -1073,7 +1073,7 @@ private:
 // OutboundEnqueuer
 //-----------------------------------------------------------------------------
 
-class OutboundEnqueuer MOZ_FINAL : public nsIRunnable
+class OutboundEnqueuer final : public nsIRunnable
 {
 public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -1081,7 +1081,7 @@ public:
   OutboundEnqueuer(WebSocketChannel *aChannel, OutboundMessage *aMsg)
     : mChannel(aChannel), mMessage(aMsg) {}
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     mChannel->EnqueueOutgoingMessage(mChannel->mOutgoingMessages, mMessage);
     return NS_OK;
@@ -1140,9 +1140,10 @@ WebSocketChannel::WebSocketChannel() :
   mConnectionLogService(nullptr),
   mCountRecv(0),
   mCountSent(0),
-  mAppId(NECKO_NO_APP_ID)
+  mAppId(NECKO_NO_APP_ID),
+  mIsInBrowser(false)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   LOG(("WebSocketChannel::WebSocketChannel() %p\n", this));
 
@@ -1320,8 +1321,7 @@ WebSocketChannel::BeginOpen()
   }
 
   if (localChannel) {
-    bool isInBrowser;
-    NS_GetAppInfo(localChannel, &mAppId, &isInBrowser);
+    NS_GetAppInfo(localChannel, &mAppId, &mIsInBrowser);
   }
 
 #ifdef MOZ_WIDGET_GONK
@@ -1381,9 +1381,9 @@ WebSocketChannel::UpdateReadBuffer(uint8_t *buffer, uint32_t count,
   if (!mBuffered)
     mFramePtr = mBuffer;
 
-  NS_ABORT_IF_FALSE(IsPersistentFramePtr(), "update read buffer bad mFramePtr");
-  NS_ABORT_IF_FALSE(mFramePtr - accumulatedFragments >= mBuffer,
-                    "reserved FramePtr bad");
+  MOZ_ASSERT(IsPersistentFramePtr(), "update read buffer bad mFramePtr");
+  MOZ_ASSERT(mFramePtr - accumulatedFragments >= mBuffer,
+             "reserved FramePtr bad");
 
   if (mBuffered + count <= mBufferSize) {
     // append to existing buffer
@@ -1421,7 +1421,7 @@ nsresult
 WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
 {
   LOG(("WebSocketChannel::ProcessInput %p [%d %d]\n", this, count, mBuffered));
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
 
   nsresult rv;
 
@@ -1553,8 +1553,8 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
 
         // For frag > 1 move the data body back on top of the headers
         // so we have contiguous stream of data
-        NS_ABORT_IF_FALSE(mFramePtr + framingLength == payload,
-                          "payload offset from frameptr wrong");
+        MOZ_ASSERT(mFramePtr + framingLength == payload,
+                   "payload offset from frameptr wrong");
         ::memmove(mFramePtr, payload, avail);
         payload = mFramePtr;
         if (mBuffered)
@@ -1609,7 +1609,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
                utf8Data.Length()));
         } else {
           if (!utf8Data.Assign((const char *)payload, payloadLength,
-                               mozilla::fallible_t())) {
+                               mozilla::fallible)) {
             return NS_ERROR_OUT_OF_MEMORY;
           }
         }
@@ -1692,8 +1692,8 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
         // Remove the control frame from the stream so we have a contiguous
         // data buffer of reassembled fragments
         LOG(("WebSocketChannel:: Removing Control From Read buffer\n"));
-        NS_ABORT_IF_FALSE(mFramePtr + framingLength == payload,
-                          "payload offset from frameptr wrong");
+        MOZ_ASSERT(mFramePtr + framingLength == payload,
+                   "payload offset from frameptr wrong");
         ::memmove(mFramePtr, payload + payloadLength, avail - payloadLength);
         payload = mFramePtr;
         avail -= payloadLength;
@@ -1719,7 +1719,7 @@ WebSocketChannel::ProcessInput(uint8_t *buffer, uint32_t count)
                binaryData.Length()));
         } else {
           if (!binaryData.Assign((const char *)payload, payloadLength,
-                                 mozilla::fallible_t())) {
+                                 mozilla::fallible)) {
             return NS_ERROR_OUT_OF_MEMORY;
           }
         }
@@ -1852,7 +1852,7 @@ void
 WebSocketChannel::EnqueueOutgoingMessage(nsDeque &aQueue,
                                          OutboundMessage *aMsg)
 {
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
 
   LOG(("WebSocketChannel::EnqueueOutgoingMessage %p "
        "queueing msg %p [type=%s len=%d]\n",
@@ -1886,20 +1886,20 @@ void
 WebSocketChannel::PrimeNewOutgoingMessage()
 {
   LOG(("WebSocketChannel::PrimeNewOutgoingMessage() %p\n", this));
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
-  NS_ABORT_IF_FALSE(!mCurrentOut, "Current message in progress");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(!mCurrentOut, "Current message in progress");
 
   nsresult rv = NS_OK;
 
   mCurrentOut = (OutboundMessage *)mOutgoingPongMessages.PopFront();
   if (mCurrentOut) {
-    NS_ABORT_IF_FALSE(mCurrentOut->GetMsgType() == kMsgTypePong,
-                     "Not pong message!");
+    MOZ_ASSERT(mCurrentOut->GetMsgType() == kMsgTypePong,
+               "Not pong message!");
   } else {
     mCurrentOut = (OutboundMessage *)mOutgoingPingMessages.PopFront();
     if (mCurrentOut)
-      NS_ABORT_IF_FALSE(mCurrentOut->GetMsgType() == kMsgTypePing,
-                        "Not ping message!");
+      MOZ_ASSERT(mCurrentOut->GetMsgType() == kMsgTypePing,
+                 "Not ping message!");
     else
       mCurrentOut = (OutboundMessage *)mOutgoingMessages.PopFront();
   }
@@ -1942,8 +1942,8 @@ WebSocketChannel::PrimeNewOutgoingMessage()
         mOutHeader[1] += 2;
         mHdrOutToSend = 8;
         if (!mScriptCloseReason.IsEmpty()) {
-          NS_ABORT_IF_FALSE(mScriptCloseReason.Length() <= 123,
-                            "Close Reason Too Long");
+          MOZ_ASSERT(mScriptCloseReason.Length() <= 123,
+                     "Close Reason Too Long");
           mOutHeader[1] += mScriptCloseReason.Length();
           mHdrOutToSend += mScriptCloseReason.Length();
           memcpy (payload + 2,
@@ -2007,7 +2007,7 @@ WebSocketChannel::PrimeNewOutgoingMessage()
       mOutHeader[0] = kFinalFragBit | kBinary;
       break;
     case kMsgTypeFin:
-      NS_ABORT_IF_FALSE(false, "unreachable");  // avoid compiler warning
+      MOZ_ASSERT(false, "unreachable");  // avoid compiler warning
       break;
     }
 
@@ -2040,7 +2040,7 @@ WebSocketChannel::PrimeNewOutgoingMessage()
     payload = mOutHeader + mHdrOutToSend;
   }
 
-  NS_ABORT_IF_FALSE(payload, "payload offset not found");
+  MOZ_ASSERT(payload, "payload offset not found");
 
   // Perform the sending mask. Never use a zero mask
   uint32_t mask;
@@ -2297,7 +2297,7 @@ WebSocketChannel::AbortSession(nsresult reason)
   mTCPClosed = true;
 
   if (mLingeringCloseTimer) {
-    NS_ABORT_IF_FALSE(mStopped, "Lingering without Stop");
+    MOZ_ASSERT(mStopped, "Lingering without Stop");
     LOG(("WebSocketChannel:: Cleanup connection based on TCP Close"));
     CleanupConnection();
     return;
@@ -2325,7 +2325,7 @@ WebSocketChannel::ReleaseSession()
 {
   LOG(("WebSocketChannel::ReleaseSession() %p stopped = %d\n",
        this, mStopped));
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
 
   if (mStopped)
     return;
@@ -2362,7 +2362,7 @@ WebSocketChannel::HandleExtensions()
   nsresult rv;
   nsAutoCString extensions;
 
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   rv = mHttpChannel->GetResponseHeader(
     NS_LITERAL_CSTRING("Sec-WebSocket-Extensions"), extensions);
@@ -2562,7 +2562,7 @@ WebSocketChannel::ApplyForAdmission()
 
   MOZ_ASSERT(!mCancelable);
 
-  return pps->AsyncResolve(mURI,
+  return pps->AsyncResolve(mHttpChannel,
                            nsIProtocolProxyService::RESOLVE_PREFER_HTTPS_PROXY |
                            nsIProtocolProxyService::RESOLVE_ALWAYS_TUNNEL,
                            this, getter_AddRefs(mCancelable));
@@ -2581,7 +2581,7 @@ WebSocketChannel::StartWebsocketData()
   }
 
   LOG(("WebSocketChannel::StartWebsocketData() %p", this));
-  NS_ABORT_IF_FALSE(!mDataStarted, "StartWebsocketData twice");
+  MOZ_ASSERT(!mDataStarted, "StartWebsocketData twice");
   mDataStarted = 1;
 
   // We're now done CONNECTING, which means we can now open another,
@@ -2653,7 +2653,7 @@ WebSocketChannel::OnLookupComplete(nsICancelable *aRequest,
   LOG(("WebSocketChannel::OnLookupComplete() %p [%p %p %x]\n",
        this, aRequest, aRecord, aStatus));
 
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   if (mStopped) {
     LOG(("WebSocketChannel::OnLookupComplete: Request Already Stopped\n"));
@@ -2683,7 +2683,7 @@ WebSocketChannel::OnLookupComplete(nsICancelable *aRequest,
 
 // nsIProtocolProxyCallback
 NS_IMETHODIMP
-WebSocketChannel::OnProxyAvailable(nsICancelable *aRequest, nsIURI *aURI,
+WebSocketChannel::OnProxyAvailable(nsICancelable *aRequest, nsIChannel *aChannel,
                                    nsIProxyInfo *pi, nsresult status)
 {
   if (mStopped) {
@@ -2861,9 +2861,9 @@ WebSocketChannel::Notify(nsITimer *timer)
   LOG(("WebSocketChannel::Notify() %p [%p]\n", this, timer));
 
   if (timer == mCloseTimer) {
-    NS_ABORT_IF_FALSE(mClientClosed, "Close Timeout without local close");
-    NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread,
-                      "not socket thread");
+    MOZ_ASSERT(mClientClosed, "Close Timeout without local close");
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread,
+               "not socket thread");
 
     mCloseTimer = nullptr;
     if (mStopped || mServerClosed)                /* no longer relevant */
@@ -2872,9 +2872,9 @@ WebSocketChannel::Notify(nsITimer *timer)
     LOG(("WebSocketChannel:: Expecting Server Close - Timed Out\n"));
     AbortSession(NS_ERROR_NET_TIMEOUT);
   } else if (timer == mOpenTimer) {
-    NS_ABORT_IF_FALSE(!mGotUpgradeOK,
-                      "Open Timer after open complete");
-    NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+    MOZ_ASSERT(!mGotUpgradeOK,
+               "Open Timer after open complete");
+    MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
     mOpenTimer = nullptr;
     LOG(("WebSocketChannel:: Connection Timed Out\n"));
@@ -2883,15 +2883,15 @@ WebSocketChannel::Notify(nsITimer *timer)
 
     AbortSession(NS_ERROR_NET_TIMEOUT);
   } else if (timer == mReconnectDelayTimer) {
-    NS_ABORT_IF_FALSE(mConnecting == CONNECTING_DELAYED,
-                      "woke up from delay w/o being delayed?");
+    MOZ_ASSERT(mConnecting == CONNECTING_DELAYED,
+               "woke up from delay w/o being delayed?");
 
     mReconnectDelayTimer = nullptr;
     LOG(("WebSocketChannel: connecting [this=%p] after reconnect delay", this));
     BeginOpen();
   } else if (timer == mPingTimer) {
-    NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread,
-                      "not socket thread");
+    MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread,
+               "not socket thread");
 
     if (mClientClosed || mServerClosed || mRequestedClose) {
       // no point in worrying about ping now
@@ -2919,7 +2919,7 @@ WebSocketChannel::Notify(nsITimer *timer)
     LOG(("WebSocketChannel:: Lingering Close Timer"));
     CleanupConnection();
   } else {
-    NS_ABORT_IF_FALSE(0, "Unknown Timer");
+    MOZ_ASSERT(0, "Unknown Timer");
   }
 
   return NS_OK;
@@ -2931,7 +2931,7 @@ NS_IMETHODIMP
 WebSocketChannel::GetSecurityInfo(nsISupports **aSecurityInfo)
 {
   LOG(("WebSocketChannel::GetSecurityInfo() %p\n", this));
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   if (mTransport) {
     if (NS_FAILED(mTransport->GetSecurityInfo(aSecurityInfo)))
@@ -2949,7 +2949,7 @@ WebSocketChannel::AsyncOpen(nsIURI *aURI,
 {
   LOG(("WebSocketChannel::AsyncOpen() %p\n", this));
 
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   if (!aURI || !aListener) {
     LOG(("WebSocketChannel::AsyncOpen() Uri or Listener null"));
@@ -3070,14 +3070,22 @@ WebSocketChannel::AsyncOpen(nsIURI *aURI,
     return rv;
   }
 
-  rv = io2->NewChannelFromURIWithProxyFlags(
+  rv = io2->NewChannelFromURIWithProxyFlags2(
               localURI,
               mURI,
               nsIProtocolProxyService::RESOLVE_PREFER_HTTPS_PROXY |
               nsIProtocolProxyService::RESOLVE_ALWAYS_TUNNEL,
+              mLoadInfo->LoadingNode() ?
+                mLoadInfo->LoadingNode()->AsDOMNode() : nullptr,
+              mLoadInfo->LoadingPrincipal(),
+              mLoadInfo->TriggeringPrincipal(),
+              mLoadInfo->GetSecurityFlags(),
+              mLoadInfo->GetContentPolicyType(),
               getter_AddRefs(localChannel));
   NS_ENSURE_SUCCESS(rv, rv);
 
+  // Please note that we still call SetLoadInfo on the channel because
+  // we want the same instance of the loadInfo to be set on the channel.
   rv = localChannel->SetLoadInfo(mLoadInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
@@ -3132,7 +3140,7 @@ NS_IMETHODIMP
 WebSocketChannel::Close(uint16_t code, const nsACString & reason)
 {
   LOG(("WebSocketChannel::Close() %p\n", this));
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   // save the networkstats (bug 855949)
   SaveNetworkStats(true);
@@ -3195,7 +3203,7 @@ nsresult
 WebSocketChannel::SendMsgCommon(const nsACString *aMsg, bool aIsBinary,
                                 uint32_t aLength, nsIInputStream *aStream)
 {
-  NS_ABORT_IF_FALSE(IsOnTargetThread(), "not target thread");
+  MOZ_ASSERT(IsOnTargetThread(), "not target thread");
 
   if (mRequestedClose) {
     LOG(("WebSocketChannel:: Error: send when closed\n"));
@@ -3207,7 +3215,7 @@ WebSocketChannel::SendMsgCommon(const nsACString *aMsg, bool aIsBinary,
     return NS_ERROR_NOT_CONNECTED;
   }
 
-  NS_ABORT_IF_FALSE(mMaxMessageSize >= 0, "max message size negative");
+  MOZ_ASSERT(mMaxMessageSize >= 0, "max message size negative");
   if (aLength > static_cast<uint32_t>(mMaxMessageSize)) {
     LOG(("WebSocketChannel:: Error: message too big\n"));
     return NS_ERROR_FILE_TOO_BIG;
@@ -3249,9 +3257,9 @@ WebSocketChannel::OnTransportAvailable(nsISocketTransport *aTransport,
     return NS_OK;
   }
 
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
-  NS_ABORT_IF_FALSE(!mRecvdHttpUpgradeTransport, "OTA duplicated");
-  NS_ABORT_IF_FALSE(aSocketIn, "OTA with invalid socketIn");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(!mRecvdHttpUpgradeTransport, "OTA duplicated");
+  MOZ_ASSERT(aSocketIn, "OTA with invalid socketIn");
 
   mTransport = aTransport;
   mSocketIn = aSocketIn;
@@ -3277,8 +3285,8 @@ WebSocketChannel::OnStartRequest(nsIRequest *aRequest,
 {
   LOG(("WebSocketChannel::OnStartRequest(): %p [%p %p] recvdhttpupgrade=%d\n",
        this, aRequest, aContext, mRecvdHttpUpgradeTransport));
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
-  NS_ABORT_IF_FALSE(!mGotUpgradeOK, "OTA duplicated");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(!mGotUpgradeOK, "OTA duplicated");
 
   if (mOpenTimer) {
     mOpenTimer->Cancel();
@@ -3432,7 +3440,7 @@ WebSocketChannel::OnStopRequest(nsIRequest *aRequest,
 {
   LOG(("WebSocketChannel::OnStopRequest() %p [%p %p %x]\n",
        this, aRequest, aContext, aStatusCode));
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   ReportConnectionTelemetry();
 
@@ -3453,7 +3461,7 @@ NS_IMETHODIMP
 WebSocketChannel::OnInputStreamReady(nsIAsyncInputStream *aStream)
 {
   LOG(("WebSocketChannel::OnInputStreamReady() %p\n", this));
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
 
   if (!mSocketIn) // did we we clean up the socket after scheduling InputReady?
     return NS_OK;
@@ -3508,7 +3516,7 @@ NS_IMETHODIMP
 WebSocketChannel::OnOutputStreamReady(nsIAsyncOutputStream *aStream)
 {
   LOG(("WebSocketChannel::OnOutputStreamReady() %p\n", this));
-  NS_ABORT_IF_FALSE(PR_GetCurrentThread() == gSocketThread, "not socket thread");
+  MOZ_ASSERT(PR_GetCurrentThread() == gSocketThread, "not socket thread");
   nsresult rv;
 
   if (!mCurrentOut)
@@ -3632,7 +3640,7 @@ WebSocketChannel::SaveNetworkStats(bool enforce)
   // Create the event to save the network statistics.
   // the event is then dispathed to the main thread.
   nsRefPtr<nsRunnable> event =
-    new SaveNetworkStatsEvent(mAppId, mActiveNetwork,
+    new SaveNetworkStatsEvent(mAppId, mIsInBrowser, mActiveNetwork,
                               mCountRecv, mCountSent, false);
   NS_DispatchToMainThread(event);
 

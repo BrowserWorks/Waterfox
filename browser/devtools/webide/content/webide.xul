@@ -14,7 +14,7 @@
 <?xml-stylesheet href="chrome://global/skin/global.css"?>
 <?xml-stylesheet href="chrome://webide/skin/webide.css"?>
 
-<window id="webide" onclose="return UI.canWindowClose();"
+<window id="webide" onclose="return UI.canCloseProject();"
         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
         xmlns:html="http://www.w3.org/1999/xhtml"
         title="&windowTitle;"
@@ -23,7 +23,7 @@
         fullscreenbutton="true"
         screenX="4" screenY="4"
         width="640" height="480"
-        persist="screenX screenY width height">
+        persist="screenX screenY width height sizemode">
 
   <script type="application/javascript" src="chrome://global/content/globalOverlay.js"></script>
   <script type="application/javascript" src="webide.js"></script>
@@ -36,6 +36,7 @@
       <command id="cmd_importPackagedApp" oncommand="Cmds.importPackagedApp()" label="&projectMenu_importPackagedApp_label;"/>
       <command id="cmd_importHostedApp" oncommand="Cmds.importHostedApp()" label="&projectMenu_importHostedApp_label;"/>
       <command id="cmd_showDevicePrefs" label="&runtimeMenu_showDevicePrefs_label;" oncommand="Cmds.showDevicePrefs()"/>
+      <command id="cmd_showSettings" label="&runtimeMenu_showSettings_label;" oncommand="Cmds.showSettings()"/>
       <command id="cmd_removeProject" oncommand="Cmds.removeProject()" label="&projectMenu_remove_label;"/>
       <command id="cmd_showProjectPanel" oncommand="Cmds.showProjectPanel()"/>
       <command id="cmd_showRuntimePanel" oncommand="Cmds.showRuntimePanel()"/>
@@ -83,6 +84,7 @@
         <menuitem command="cmd_showPermissionsTable" accesskey="&runtimeMenu_showPermissionTable_accesskey;"/>
         <menuitem command="cmd_showRuntimeDetails" accesskey="&runtimeMenu_showDetails_accesskey;"/>
         <menuitem command="cmd_showDevicePrefs" accesskey="&runtimeMenu_showDevicePrefs_accesskey;"/>
+        <menuitem command="cmd_showSettings" accesskey="&runtimeMenu_showSettings_accesskey;"/>
         <menuseparator/>
         <menuitem command="cmd_disconnectRuntime" accesskey="&runtimeMenu_disconnect_accesskey;"/>
       </menupopup>
@@ -179,6 +181,7 @@
           <toolbarbutton class="panel-item" id="runtime-details" command="cmd_showRuntimeDetails"/>
           <toolbarbutton class="panel-item" id="runtime-permissions" command="cmd_showPermissionsTable"/>
           <toolbarbutton class="panel-item" id="runtime-preferences" command="cmd_showDevicePrefs"/>
+          <toolbarbutton class="panel-item" id="runtime-preferences" command="cmd_showSettings"/>
           <toolbarbutton class="panel-item" id="runtime-screenshot"  command="cmd_takeScreenshot"/>
           <toolbarbutton class="panel-item" id="runtime-disconnect"  command="cmd_disconnectRuntime"/>
         </vbox>
@@ -193,10 +196,12 @@
       <iframe id="deck-panel-projecteditor" flex="1"/>
       <iframe id="deck-panel-addons" flex="1" src="addons.xhtml"/>
       <iframe id="deck-panel-prefs" flex="1" src="prefs.xhtml"/>
-      <iframe id="deck-panel-permissionstable" flex="1" src="permissionstable.xhtml"/>
-      <iframe id="deck-panel-runtimedetails" flex="1" src="runtimedetails.xhtml"/>
+      <iframe id="deck-panel-permissionstable" flex="1" lazysrc="permissionstable.xhtml"/>
+      <iframe id="deck-panel-runtimedetails" flex="1" lazysrc="runtimedetails.xhtml"/>
       <iframe id="deck-panel-monitor" flex="1" lazysrc="monitor.xhtml"/>
-      <iframe id="deck-panel-devicepreferences" flex="1" src="devicepreferences.xhtml"/>
+      <iframe id="deck-panel-devicepreferences" flex="1" lazysrc="devicepreferences.xhtml"/>
+      <iframe id="deck-panel-devicesettings" flex="1" lazysrc="devicesettings.xhtml"/>
+      <iframe id="deck-panel-logs" flex="1" src="logs.xhtml"/>
     </deck>
     <splitter hidden="true" class="devtools-horizontal-splitter" orient="vertical"/>
     <!-- toolbox iframe will be inserted here -->

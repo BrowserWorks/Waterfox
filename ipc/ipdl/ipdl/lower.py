@@ -310,7 +310,7 @@ function would return true for |Actor[]|."""
 
 def _abortIfFalse(cond, msg):
     return StmtExpr(ExprCall(
-        ExprVar('NS_ABORT_IF_FALSE'),
+        ExprVar('MOZ_ASSERT'),
         [ cond, ExprLiteral.String(msg) ]))
 
 def _runtimeAbort(msg):
@@ -548,6 +548,13 @@ def _cxxConstRefType(ipdltype, side):
     t.ref = 1
     return t
 
+def _cxxMoveRefType(ipdltype, side):
+    t = _cxxBareType(ipdltype, side)
+    if ipdltype.isIPDL() and (ipdltype.isArray() or ipdltype.isShmem()):
+        t.ref = 2
+        return t
+    return _cxxConstRefType(ipdltype, side)
+
 def _cxxPtrToType(ipdltype, side):
     t = _cxxBareType(ipdltype, side)
     if ipdltype.isIPDL() and ipdltype.isActor():
@@ -602,6 +609,10 @@ necessarily a C++ reference."""
         """Return this decl's C++ type as a const, 'reference' type."""
         return _cxxConstRefType(self.ipdltype, side)
 
+    def rvalueRefType(self, side):
+        """Return this decl's C++ type as an r-value 'reference' type."""
+        return _cxxMoveRefType(self.ipdltype, side)
+
     def ptrToType(self, side):
         return _cxxPtrToType(self.ipdltype, side)
 
@@ -613,6 +624,12 @@ necessarily a C++ reference."""
         if self.ipdltype.isIPDL() and self.ipdltype.isActor():
             return self.bareType(side)
         return self.constRefType(side)
+
+    def moveType(self, side):
+        """Return this decl's C++ Type with move semantics."""
+        if self.ipdltype.isIPDL() and self.ipdltype.isActor():
+            return self.bareType(side)
+        return self.rvalueRefType(side);
 
     def outType(self, side):
         """Return this decl's C++ Type with outparam semantics."""
@@ -939,6 +956,8 @@ class MessageDecl(ipdl.ast.MessageDecl):
         def makeDecl(d, sems):
             if sems is 'in':
                 return Decl(d.inType(side), d.name)
+            elif sems is 'move':
+                return Decl(d.moveType(side), d.name)
             elif sems is 'out':
                 return Decl(d.outType(side), d.name)
             else: assert 0
@@ -962,7 +981,7 @@ class MessageDecl(ipdl.ast.MessageDecl):
         cxxargs = [ ]
 
         if params:
-            cxxargs.extend([ p.var() for p in self.params ])
+            cxxargs.extend([ ExprMove(p.var()) for p in self.params ])
 
         for ret in self.returns:
             if retsems is 'in':
@@ -1695,8 +1714,8 @@ class _GenerateProtocolCode(ipdl.ast.Visitor):
 
     def genTransitionFunc(self):
         ptype = self.protocol.decl.type
-        usesend, sendvar = set(), ExprVar('__Send')
-        userecv, recvvar = set(), ExprVar('__Recv')
+        usesend, sendvar = set(), ExprVar('Send__')
+        userecv, recvvar = set(), ExprVar('Recv__')
 
         def sameTrigger(trigger, actionexpr):
             if trigger is ipdl.ast.SEND or trigger is ipdl.ast.CALL:
@@ -1861,9 +1880,9 @@ def _generateMessageClass(clsname, msgid, priority, prettyName, compress):
 
     # generate a logging function
     # 'pfx' will be something like "[FooParent] sent"
-    pfxvar = ExprVar('__pfx')
-    otherprocess = ExprVar('__otherProcess')
-    receiving = ExprVar('__receiving')
+    pfxvar = ExprVar('pfx__')
+    otherprocess = ExprVar('otherProcess__')
+    receiving = ExprVar('receiving__')
     logger = MethodDefn(MethodDecl(
         'Log',
         params=([ Decl(Type('std::string', const=1, ref=1), pfxvar.name),
@@ -1872,7 +1891,7 @@ def _generateMessageClass(clsname, msgid, priority, prettyName, compress):
         const=1))
     # TODO/cjones: allow selecting what information is printed to
     # the log
-    msgvar = ExprVar('__logmsg')
+    msgvar = ExprVar('logmsg__')
     logger.addstmt(StmtDecl(Decl(Type('std::string'), msgvar.name)))
 
     def appendToMsg(thing):
@@ -2809,7 +2828,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                 implicit = (not isdtor)
                 recvDecl = MethodDecl(
                     md.recvMethod().name,
-                    params=md.makeCxxParams(paramsems='in', returnsems='out',
+                    params=md.makeCxxParams(paramsems='move', returnsems='out',
                                             side=self.side, implicit=implicit),
                     ret=Type.BOOL, virtual=1)
 
@@ -2867,7 +2886,8 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
             # void ProcessingError(code); default to no-op
             processingerror = MethodDefn(
                 MethodDecl(p.processingErrorVar().name,
-                           params=[ Param(_Result.Type(), 'aCode') ],
+                           params=[ Param(_Result.Type(), 'aCode'),
+                                    Param(Type('char', const=1, ptr=1), 'aReason') ],
                            virtual=1))
 
             # bool ShouldContinueFromReplyTimeout(); default to |true|
@@ -3051,18 +3071,18 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         ## OnMessageReceived()/OnCallReceived()
 
         # save these away for use in message handler case stmts
-        msgvar = ExprVar('__msg')
+        msgvar = ExprVar('msg__')
         self.msgvar = msgvar
-        replyvar = ExprVar('__reply')
+        replyvar = ExprVar('reply__')
         self.replyvar = replyvar
-        itervar = ExprVar('__iter')
+        itervar = ExprVar('iter__')
         self.itervar = itervar
-        var = ExprVar('__v')
+        var = ExprVar('v__')
         self.var = var
         # for ctor recv cases, we can't read the actor ID into a PFoo*
         # because it doesn't exist on this side yet.  Use a "special"
         # actor handle instead
-        handlevar = ExprVar('__handle')
+        handlevar = ExprVar('handle__')
         self.handlevar = handlevar
 
         msgtype = ExprCall(ExprSelect(msgvar, '.', 'type'), [ ])
@@ -3115,14 +3135,14 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
               return method
 
             if dispatches:
-                routevar = ExprVar('__route')
+                routevar = ExprVar('route__')
                 routedecl = StmtDecl(
                     Decl(_actorIdType(), routevar.name),
                     init=ExprCall(ExprSelect(msgvar, '.', 'routing_id')))
 
                 routeif = StmtIf(ExprBinary(
                     ExprVar('MSG_ROUTING_CONTROL'), '!=', routevar))
-                routedvar = ExprVar('__routed')
+                routedvar = ExprVar('routed__')
                 routeif.ifb.addstmt(
                     StmtDecl(Decl(Type('ChannelListener', ptr=1),
                                   routedvar.name),
@@ -3184,12 +3204,14 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
 
         # OnProcesingError(code)
         codevar = ExprVar('aCode')
+        reasonvar = ExprVar('aReason')
         onprocessingerror = MethodDefn(
             MethodDecl('OnProcessingError',
-                       params=[ Param(_Result.Type(), codevar.name) ]))
+                       params=[ Param(_Result.Type(), codevar.name),
+                                Param(Type('char', const=1, ptr=1), reasonvar.name) ]))
         if ptype.isToplevel():
             onprocessingerror.addstmt(StmtReturn(
-                ExprCall(p.processingErrorVar(), args=[ codevar ])))
+                ExprCall(p.processingErrorVar(), args=[ codevar, reasonvar ])))
         else:
             onprocessingerror.addstmt(
                 _runtimeAbort("`OnProcessingError' called on non-toplevel actor"))
@@ -4378,7 +4400,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
 
         ## Write([const] PFoo* var)
         write = MethodDefn(self.writeMethodDecl(intype, var))
-        nullablevar = ExprVar('__nullable')
+        nullablevar = ExprVar('nullable__')
         write.decl.params.append(Decl(Type.BOOL, nullablevar.name))
         # id_t id;
         # if (!var)
@@ -4678,7 +4700,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         outtype = _cxxPtrToType(uniontype, self.side)
         ud = uniontype._ast
 
-        typename = '__type'
+        typename = 'type__'
         uniontdef = Typedef(_cxxBareType(uniontype, typename), typename)
 
         typevar = ExprVar('type')
@@ -5284,7 +5306,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         return stmts
 
     def sendAsync(self, md, msgexpr, actor=None):
-        sendok = ExprVar('__sendok')
+        sendok = ExprVar('sendok__')
         return (
             sendok,
             ([ Whitespace.NL,
@@ -5301,7 +5323,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
         )
 
     def sendBlocking(self, md, msgexpr, replyexpr, actor=None):
-        sendok = ExprVar('__sendok')
+        sendok = ExprVar('sendok__')
         return (
             sendok,
             ([ Whitespace.NL,
@@ -5391,7 +5413,7 @@ class _GenerateProtocolActorCode(ipdl.ast.Visitor):
                                    ExprVar('js::ProfileEntry::Category::OTHER') ]))
 
     def saveActorId(self, md):
-        idvar = ExprVar('__id')
+        idvar = ExprVar('id__')
         if md.decl.type.hasReply():
             # only save the ID if we're actually going to use it, to
             # avoid unused-variable warnings

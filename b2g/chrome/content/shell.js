@@ -15,6 +15,7 @@ Cu.import('resource://gre/modules/UserAgentOverrides.jsm');
 Cu.import('resource://gre/modules/Keyboard.jsm');
 Cu.import('resource://gre/modules/ErrorPage.jsm');
 Cu.import('resource://gre/modules/AlertsHelper.jsm');
+Cu.import('resource://gre/modules/RequestSyncService.jsm');
 #ifdef MOZ_WIDGET_GONK
 Cu.import('resource://gre/modules/NetworkStatsService.jsm');
 Cu.import('resource://gre/modules/ResourceStatsService.jsm');
@@ -27,6 +28,7 @@ SignInToWebsiteController.init();
 Cu.import('resource://gre/modules/FxAccountsMgmtService.jsm');
 Cu.import('resource://gre/modules/DownloadsAPI.jsm');
 Cu.import('resource://gre/modules/MobileIdentityManager.jsm');
+Cu.import('resource://gre/modules/PresentationDeviceInfoManager.jsm');
 
 XPCOMUtils.defineLazyModuleGetter(this, "SystemAppProxy",
                                   "resource://gre/modules/SystemAppProxy.jsm");
@@ -66,6 +68,11 @@ XPCOMUtils.defineLazyGetter(this, "libcutils", function () {
 XPCOMUtils.defineLazyServiceGetter(Services, 'captivePortalDetector',
                                   '@mozilla.org/toolkit/captive-detector;1',
                                   'nsICaptivePortalDetector');
+#endif
+
+#ifdef MOZ_SAFE_BROWSING
+XPCOMUtils.defineLazyModuleGetter(this, "SafeBrowsing",
+              "resource://gre/modules/SafeBrowsing.jsm");
 #endif
 
 function getContentWindow() {
@@ -220,6 +227,20 @@ var shell = {
     return this._started;
   },
 
+  bootstrap: function() {
+    let startManifestURL =
+      Cc['@mozilla.org/commandlinehandler/general-startup;1?type=b2gbootstrap']
+        .getService(Ci.nsISupports).wrappedJSObject.startManifestURL;
+    if (startManifestURL) {
+      Cu.import('resource://gre/modules/Bootstraper.jsm');
+      Bootstraper.ensureSystemAppInstall(startManifestURL)
+                 .then(this.start.bind(this))
+                 .catch(Bootstraper.bailout);
+    } else {
+      this.start();
+    }
+  },
+
   start: function shell_start() {
     this._started = true;
 
@@ -290,8 +311,7 @@ var shell = {
     systemAppFrame.setAttribute('mozbrowser', 'true');
     systemAppFrame.setAttribute('mozapp', manifestURL);
     systemAppFrame.setAttribute('allowfullscreen', 'true');
-    systemAppFrame.setAttribute('style', "overflow: hidden; height: 100%; width: 100%; border: none; position: absolute; left: 0; top: 0; right: 0; bottom: 0;");
-    systemAppFrame.setAttribute('src', "data:text/html;charset=utf-8,%3C!DOCTYPE html>%3Cbody style='background:black;");
+    systemAppFrame.setAttribute('src', 'blank.html');
     let container = document.getElementById('container');
 #ifdef MOZ_WIDGET_COCOA
     // See shell.html
@@ -331,12 +351,10 @@ var shell = {
     this.contentBrowser.addEventListener('mozbrowserloadstart', this, true);
     this.contentBrowser.addEventListener('mozbrowserselectionstatechanged', this, true);
     this.contentBrowser.addEventListener('mozbrowserscrollviewchange', this, true);
-    this.contentBrowser.addEventListener('mozbrowsertouchcarettap', this, true);
 
     CustomEventManager.init();
     WebappsHelper.init();
     UserAgentOverrides.init();
-    IndexedDBPromptHelper.init();
     CaptivePortalLoginHelper.init();
 
     this.contentBrowser.src = homeURL;
@@ -347,6 +365,11 @@ var shell = {
     ppmm.addMessageListener("sms-handler", this);
     ppmm.addMessageListener("mail-handler", this);
     ppmm.addMessageListener("file-picker", this);
+#ifdef MOZ_SAFE_BROWSING
+    setTimeout(function() {
+      SafeBrowsing.init();
+    }, 5000);
+#endif
   },
 
   stop: function shell_stop() {
@@ -359,43 +382,17 @@ var shell = {
     this.contentBrowser.removeEventListener('mozbrowserloadstart', this, true);
     this.contentBrowser.removeEventListener('mozbrowserselectionstatechanged', this, true);
     this.contentBrowser.removeEventListener('mozbrowserscrollviewchange', this, true);
-    this.contentBrowser.removeEventListener('mozbrowsertouchcarettap', this, true);
     ppmm.removeMessageListener("content-handler", this);
 
     UserAgentOverrides.uninit();
-    IndexedDBPromptHelper.uninit();
   },
 
-  // If this key event actually represents a hardware button, send a
-  // mozChromeEvent with detail.type set to 'xxx-button-press' or
-  // 'xxx-button-release' instead. Note that no more mozChromeEvent for hardware
-  // buttons needed after Bug 1014418 is landed.
-  filterHardwareKeys: function shell_filterHardwareKeys(evt) {
-    var type;
-    switch (evt.keyCode) {
-      case evt.DOM_VK_HOME:         // Home button
-        type = 'home-button';
-        break;
-      case evt.DOM_VK_SLEEP:        // Sleep button
-      case evt.DOM_VK_END:          // On desktop we don't have a sleep button
-        type = 'sleep-button';
-        break;
-      case evt.DOM_VK_VOLUME_UP:      // Volume up button
-        type = 'volume-up-button';
-        break;
-      case evt.DOM_VK_VOLUME_DOWN:    // Volume down button
-        type = 'volume-down-button';
-        break;
-      case evt.DOM_VK_ESCAPE:       // Back button (should be disabled)
-        type = 'back-button';
-        break;
-      case evt.DOM_VK_CONTEXT_MENU: // Menu button
-        type = 'menu-button';
-        break;
-      case evt.DOM_VK_F1: // headset button
-        type = 'headset-button';
-        break;
-    }
+  // If this key event represents a hardware button which needs to be send as
+  // a message, broadcasts it with the message set to 'xxx-button-press' or
+  // 'xxx-button-release'.
+  broadcastHardwareKeys: function shell_broadcastHardwareKeys(evt) {
+    let type;
+    let message;
 
     let mediaKeys = {
       'MediaTrackNext': 'media-next-track-button',
@@ -408,53 +405,33 @@ var shell = {
       'MediaFastForward': 'media-fast-forward-button'
     };
 
-    let isMediaKey = false;
-    if (mediaKeys[evt.key]) {
-      isMediaKey = true;
-      type = mediaKeys[evt.key];
-    }
-
-    // The key doesn't represent a hardware button, so no mozChromeEvent.
-    if (!type) {
+    if (evt.keyCode == evt.DOM_VK_F1) {
+      type = 'headset-button';
+      message = 'headset-button';
+    } else if (mediaKeys[evt.key]) {
+      type = 'media-button';
+      message = mediaKeys[evt.key];
+    } else {
       return;
     }
 
     switch (evt.type) {
       case 'keydown':
-        type = type + '-press';
+        message = message + '-press';
         break;
       case 'keyup':
-        type = type + '-release';
+        message = message + '-release';
         break;
     }
 
-    // Let applications receive the headset button key press/release event.
-    if (evt.keyCode == evt.DOM_VK_F1 && type !== this.lastHardwareButtonEventType) {
-      this.lastHardwareButtonEventType = type;
-      gSystemMessenger.broadcastMessage('headset-button', type);
-      return;
-    }
-
-    if (isMediaKey) {
-      this.lastHardwareButtonEventType = type;
-      gSystemMessenger.broadcastMessage('media-button', type);
-      return;
-    }
-
-    // On my device, the physical hardware buttons (sleep and volume)
-    // send multiple events (press press release release), but the
-    // soft home button just sends one.  This hack is to manually
-    // "debounce" the keys. If the type of this event is the same as
-    // the type of the last one, then don't send it.  We'll never send
-    // two presses or two releases in a row.
-    // FIXME: https://bugzilla.mozilla.org/show_bug.cgi?id=761067
-    if (type !== this.lastHardwareButtonEventType) {
-      this.lastHardwareButtonEventType = type;
-      this.sendChromeEvent({type: type});
+    // Let applications receive the headset button and media key press/release message.
+    if (message !== this.lastHardwareButtonMessage) {
+      this.lastHardwareButtonMessage = message;
+      gSystemMessenger.broadcastMessage(type, message);
     }
   },
 
-  lastHardwareButtonEventType: null, // property for the hack above
+  lastHardwareButtonMessage: null, // property for the hack above
   visibleNormalAudioActive: false,
 
   handleEvent: function shell_handleEvent(evt) {
@@ -462,7 +439,7 @@ var shell = {
     switch (evt.type) {
       case 'keydown':
       case 'keyup':
-        this.filterHardwareKeys(evt);
+        this.broadcastHardwareKeys(evt);
         break;
       case 'mozfullscreenchange':
         // When the screen goes fullscreen make sure to set the focus to the
@@ -496,12 +473,6 @@ var shell = {
       case 'mozbrowserscrollviewchange':
         this.sendChromeEvent({
           type: 'scrollviewchange',
-          detail: evt.detail,
-        });
-        break;
-      case 'mozbrowsertouchcarettap':
-        this.sendChromeEvent({
-          type: 'touchcarettap',
           detail: evt.detail,
         });
         break;
@@ -657,6 +628,10 @@ var shell = {
     content.addEventListener('load', function shell_homeLoaded() {
       content.removeEventListener('load', shell_homeLoaded);
       shell.isHomeLoaded = true;
+
+      if (Services.prefs.getBoolPref('b2g.orientation.animate')) {
+        Cu.import('resource://gre/modules/OrientationChangeHandler.jsm');
+      }
 
 #ifdef MOZ_WIDGET_GONK
       libcutils.property_set('sys.boot_completed', '1');
@@ -834,37 +809,6 @@ var WebappsHelper = {
         });
         break;
     }
-  }
-}
-
-let IndexedDBPromptHelper = {
-  _quotaPrompt: "indexedDB-quota-prompt",
-  _quotaResponse: "indexedDB-quota-response",
-
-  init:
-  function IndexedDBPromptHelper_init() {
-    Services.obs.addObserver(this, this._quotaPrompt, false);
-  },
-
-  uninit:
-  function IndexedDBPromptHelper_uninit() {
-    Services.obs.removeObserver(this, this._quotaPrompt);
-  },
-
-  observe:
-  function IndexedDBPromptHelper_observe(subject, topic, data) {
-    if (topic != this._quotaPrompt) {
-      throw new Error("Unexpected topic!");
-    }
-
-    let observer = subject.QueryInterface(Ci.nsIInterfaceRequestor)
-                          .getInterface(Ci.nsIObserver);
-    let responseTopic = this._quotaResponse;
-
-    setTimeout(function() {
-      observer.observe(null, responseTopic,
-                       Ci.nsIPermissionManager.DENY_ACTION);
-    }, 0);
   }
 }
 
@@ -1228,20 +1172,3 @@ Services.obs.addObserver(function resetProfile(subject, topic, data) {
                      .getService(Ci.nsIAppStartup);
   appStartup.quit(Ci.nsIAppStartup.eForceQuit);
 }, 'b2g-reset-profile', false);
-
-/**
-  * CID of our implementation of nsITransfer.
-  */
-const kTransferCid = Components.ID("{1b4c85df-cbdd-4bb6-b04e-613caece083c}");
-
-/**
-  * Contract ID of the service implementing nsITransfer.
-  */
-const kTransferContractId = "@mozilla.org/transfer;1";
-
-// Override Toolkit's nsITransfer implementation with the one from the
-// JavaScript API for downloads.  This will eventually be removed when
-// nsIDownloadManager will not be available anymore (bug 851471).
-Components.manager.QueryInterface(Ci.nsIComponentRegistrar)
-                  .registerFactory(kTransferCid, "",
-                                   kTransferContractId, null);

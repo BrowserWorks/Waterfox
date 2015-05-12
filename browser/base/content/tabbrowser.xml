@@ -30,7 +30,7 @@
               <xul:vbox flex="1" class="browserContainer">
                 <xul:stack flex="1" class="browserStack" anonid="browserStack">
                   <xul:browser anonid="initialBrowser" type="content-primary" message="true" messagemanagergroup="browsers"
-                               xbl:inherits="tooltip=contenttooltip,contextmenu=contentcontextmenu,autocompletepopup,selectpopup"/>
+                               xbl:inherits="tooltip=contenttooltip,contextmenu=contentcontextmenu,autocompletepopup,selectmenulist"/>
                 </xul:stack>
               </xul:vbox>
             </xul:hbox>
@@ -525,7 +525,7 @@
 
           if (aCallGlobalListeners != false &&
               aBrowser == this.mCurrentBrowser) {
-            this.mProgressListeners.forEach(function (p) {
+            for (let p of this.mProgressListeners) {
               if (aMethod in p) {
                 try {
                   if (!p[aMethod].apply(p, aArguments))
@@ -535,13 +535,13 @@
                   Components.utils.reportError(e);
                 }
               }
-            });
+            }
           }
 
           if (aCallTabsListeners != false) {
             aArguments.unshift(aBrowser);
 
-            this.mTabsProgressListeners.forEach(function (p) {
+            for (let p of this.mTabsProgressListeners) {
               if (aMethod in p) {
                 try {
                   if (!p[aMethod].apply(p, aArguments))
@@ -551,7 +551,7 @@
                   Components.utils.reportError(e);
                 }
               }
-            });
+            }
           }
 
           return rv;
@@ -664,8 +664,12 @@
                 // We need to add 2 because loadURIWithFlags may have
                 // cancelled a pending load which would have cleared
                 // its anchor scroll detection temporary increment.
-                if (aWebProgress.isTopLevel)
+                if (aWebProgress.isTopLevel) {
                   this.mBrowser.userTypedClear += 2;
+
+                  // If the browser is loading it must not be crashed anymore
+                  this.mTab.removeAttribute("crashed");
+                }
 
                 if (this._shouldShowProgress(aRequest)) {
                   if (!(aStateFlags & nsIWebProgressListener.STATE_RESTORING)) {
@@ -1358,16 +1362,19 @@
         <parameter name="aAllowThirdPartyFixup"/>
         <body>
           <![CDATA[
+            var aReferrerPolicy;
             var aFromExternal;
             var aRelatedToCurrent;
             var aAllowMixedContent;
             var aSkipAnimation;
+            var aForceNotRemote;
             var aNoReferrer;
             if (arguments.length == 2 &&
                 typeof arguments[1] == "object" &&
                 !(arguments[1] instanceof Ci.nsIURI)) {
               let params = arguments[1];
               aReferrerURI          = params.referrerURI;
+              aReferrerPolicy       = params.referrerPolicy;
               aCharset              = params.charset;
               aPostData             = params.postData;
               aLoadInBackground     = params.inBackground;
@@ -1376,6 +1383,7 @@
               aRelatedToCurrent     = params.relatedToCurrent;
               aAllowMixedContent    = params.allowMixedContent;
               aSkipAnimation        = params.skipAnimation;
+              aForceNotRemote       = params.forceNotRemote;
               aNoReferrer           = params.noReferrer;
             }
 
@@ -1384,6 +1392,7 @@
             var owner = bgLoad ? null : this.selectedTab;
             var tab = this.addTab(aURI, {
                                   referrerURI: aReferrerURI,
+                                  referrerPolicy: aReferrerPolicy,
                                   charset: aCharset,
                                   postData: aPostData,
                                   ownerTab: owner,
@@ -1392,6 +1401,7 @@
                                   relatedToCurrent: aRelatedToCurrent,
                                   skipAnimation: aSkipAnimation,
                                   allowMixedContent: aAllowMixedContent,
+                                  forceNotRemote: aForceNotRemote,
                                   noReferrer: aNoReferrer });
             if (!bgLoad)
               this.selectedTab = tab;
@@ -1487,6 +1497,10 @@
 
             if (aShouldBeRemote) {
               tab.setAttribute("remote", "true");
+              // Switching the browser to be remote will connect to a new child
+              // process so the browser can no longer be considered to be
+              // crashed.
+              tab.removeAttribute("crashed");
             } else {
               tab.removeAttribute("remote");
               aBrowser.messageManager.sendAsyncMessage("Browser:AppTab", { isAppTab: tab.pinned })
@@ -1494,6 +1508,10 @@
 
             if (wasActive)
               aBrowser.focus();
+
+            let evt = document.createEvent("Events");
+            evt.initEvent("TabRemotenessChange", true, false);
+            tab.dispatchEvent(evt);
 
             return true;
           ]]>
@@ -1505,9 +1523,18 @@
         <parameter name="aURL"/>
         <body>
           <![CDATA[
-            let shouldBeRemote = gMultiProcessBrowser &&
-                                 E10SUtils.shouldBrowserBeRemote(aURL);
-            return this.updateBrowserRemoteness(aBrowser, shouldBeRemote);
+            if (!gMultiProcessBrowser)
+              return this.updateBrowserRemoteness(aBrowser, false);
+
+            let process = aBrowser.isRemoteBrowser ? Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT
+                                                   : Ci.nsIXULRuntime.PROCESS_TYPE_DEFAULT;
+
+            // If this URL can't load in the browser's current process then flip
+            // it to the other process
+            if (!E10SUtils.canLoadURIInProcess(aURL, process))
+              return this.updateBrowserRemoteness(aBrowser, !aBrowser.isRemoteBrowser);
+
+            return false;
           ]]>
         </body>
       </method>
@@ -1599,8 +1626,8 @@
             if (!isPreloadBrowser && this.hasAttribute("autocompletepopup"))
               b.setAttribute("autocompletepopup", this.getAttribute("autocompletepopup"));
 
-            if (this.hasAttribute("selectpopup"))
-              b.setAttribute("selectpopup", this.getAttribute("selectpopup"));
+            if (this.hasAttribute("selectmenulist"))
+              b.setAttribute("selectmenulist", this.getAttribute("selectmenulist"));
 
             b.setAttribute("autoscrollpopup", this._autoScrollPopup.id);
 
@@ -1650,16 +1677,19 @@
         <body>
           <![CDATA[
             const NS_XUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+            var aReferrerPolicy;
             var aFromExternal;
             var aRelatedToCurrent;
             var aSkipAnimation;
             var aAllowMixedContent;
+            var aForceNotRemote;
             var aNoReferrer;
             if (arguments.length == 2 &&
                 typeof arguments[1] == "object" &&
                 !(arguments[1] instanceof Ci.nsIURI)) {
               let params = arguments[1];
               aReferrerURI          = params.referrerURI;
+              aReferrerPolicy       = params.referrerPolicy;
               aCharset              = params.charset;
               aPostData             = params.postData;
               aOwner                = params.ownerTab;
@@ -1668,6 +1698,7 @@
               aRelatedToCurrent     = params.relatedToCurrent;
               aSkipAnimation        = params.skipAnimation;
               aAllowMixedContent    = params.allowMixedContent;
+              aForceNotRemote       = params.forceNotRemote;
               aNoReferrer           = params.noReferrer;
             }
 
@@ -1683,7 +1714,11 @@
             t.setAttribute("onerror", "this.removeAttribute('image');");
             t.className = "tabbrowser-tab";
 
-            let remote = gMultiProcessBrowser && E10SUtils.shouldBrowserBeRemote(aURI);
+            // The new browser should be remote if this is an e10s window and
+            // the uri to load can be loaded remotely.
+            let remote = gMultiProcessBrowser &&
+                         !aForceNotRemote &&
+                         E10SUtils.canLoadURIInProcess(aURI, Ci.nsIXULRuntime.PROCESS_TYPE_CONTENT);
             if (remote)
               t.setAttribute("remote", "true");
 
@@ -1801,9 +1836,13 @@
               if (aAllowMixedContent)
                 flags |= Ci.nsIWebNavigation.LOAD_FLAGS_ALLOW_MIXED_CONTENT;
               try {
-                b.loadURIWithFlags(aURI, flags,
-                                   aNoReferrer ? null : aReferrerURI,
-                                   aCharset, aPostData);
+                b.loadURIWithFlags(aURI, {
+                                   flags: flags,
+                                   referrerURI: aNoReferrer ? null: aReferrerURI,
+                                   referrerPolicy: aReferrerPolicy,
+                                   charset: aCharset,
+                                   postData: aPostData,
+                                   });
               } catch (ex) {
                 Cu.reportError(ex);
               }
@@ -2050,25 +2089,6 @@
               return false;
 
             var browser = this.getBrowserForTab(aTab);
-            if (!aTab._pendingPermitUnload && !aTabWillBeMoved) {
-              let ds = browser.docShell;
-              if (ds && ds.contentViewer) {
-                // We need to block while calling permitUnload() because it
-                // processes the event queue and may lead to another removeTab()
-                // call before permitUnload() even returned.
-                aTab._pendingPermitUnload = true;
-                let permitUnload = ds.contentViewer.permitUnload();
-                delete aTab._pendingPermitUnload;
-                // If we were closed during onbeforeunload, we return false now
-                // so we don't (try to) close the same tab again. Of course, we
-                // also stop if the unload was cancelled by the user:
-                if (aTab.closing || !permitUnload) {
-                  // NB: deliberately keep the _closedDuringPermitUnload set to
-                  // true so we keep exiting early in case of multiple calls.
-                  return false;
-                }
-              }
-            }
 
             var closeWindow = false;
             var newTab = false;
@@ -2090,6 +2110,26 @@
               }
 
               newTab = true;
+            }
+
+            if (!aTab._pendingPermitUnload && !aTabWillBeMoved) {
+              let ds = browser.docShell;
+              if (ds && ds.contentViewer) {
+                // We need to block while calling permitUnload() because it
+                // processes the event queue and may lead to another removeTab()
+                // call before permitUnload() returns.
+                aTab._pendingPermitUnload = true;
+                let permitUnload = ds.contentViewer.permitUnload();
+                delete aTab._pendingPermitUnload;
+                // If we were closed during onbeforeunload, we return false now
+                // so we don't (try to) close the same tab again. Of course, we
+                // also stop if the unload was cancelled by the user:
+                if (aTab.closing || !permitUnload) {
+                  // NB: deliberately keep the _closedDuringPermitUnload set to
+                  // true so we keep exiting early in case of multiple calls.
+                  return false;
+                }
+              }
             }
 
             aTab.closing = true;
@@ -2138,11 +2178,11 @@
             browser.setAttribute("type", "content-targetable");
 
             // Remove this tab as the owner of any other tabs, since it's going away.
-            Array.forEach(this.tabs, function (tab) {
+            for (let tab of this.tabs) {
               if ("owner" in tab && tab.owner == aTab)
                 // |tab| is a child of the tab we're removing, make it an orphan
                 tab.owner = null;
-            });
+            }
 
             aTab._endRemoveArgs = [closeWindow, newTab];
             return true;
@@ -2546,12 +2586,12 @@
         <parameter name="aTabs"/>
         <body>
         <![CDATA[
-          Array.forEach(this.tabs, function(tab) {
+          for (let tab of this.tabs) {
             if (aTabs.indexOf(tab) == -1)
               this.hideTab(tab);
             else
               this.showTab(tab);
-          }, this);
+          }
 
           this.tabContainer._handleTabSelect(false);
         ]]>
@@ -2884,6 +2924,11 @@
         <parameter name="aPostData"/>
         <body>
           <![CDATA[
+            // Note - the callee understands both:
+            // (a) loadURIWithFlags(aURI, aFlags, ...)
+            // (b) loadURIWithFlags(aURI, { flags: aFlags, ... })
+            // Forwarding it as (a) here actually supports both (a) and (b),
+            // so you can call us either way too.
             return this.mCurrentBrowser.loadURIWithFlags(aURI, aFlags, aReferrerURI, aCharset, aPostData);
           ]]>
         </body>
@@ -3167,14 +3212,24 @@
               let spellInfo = aMessage.data.spellInfo;
               if (spellInfo)
                 spellInfo.target = aMessage.target.messageManager;
+              let documentURIObject = makeURI(aMessage.data.docLocation,
+                                              aMessage.data.charSet,
+                                              makeURI(aMessage.data.baseURI));
               gContextMenuContentData = { isRemote: true,
                                           event: aMessage.objects.event,
                                           popupNode: aMessage.objects.popupNode,
                                           browser: browser,
                                           editFlags: aMessage.data.editFlags,
                                           spellInfo: spellInfo,
+                                          principal: aMessage.data.principal,
                                           customMenuItems: aMessage.data.customMenuItems,
-                                          addonInfo: aMessage.data.addonInfo };
+                                          addonInfo: aMessage.data.addonInfo,
+                                          documentURIObject: documentURIObject,
+                                          docLocation: aMessage.data.docLocation,
+                                          charSet: aMessage.data.charSet,
+                                          referrer: aMessage.data.referrer,
+                                          referrerPolicy: aMessage.data.referrerPolicy,
+                                        };
               let popup = browser.ownerDocument.getElementById("contentAreaContextMenu");
               let event = gContextMenuContentData.event;
               let pos = browser.mapScreenCoordinatesFromContent(event.screenX, event.screenY);
@@ -3580,6 +3635,7 @@
           browser.docShell.displayLoadError(Cr.NS_ERROR_CONTENT_CRASHED, uri, null);
           browser.removeAttribute("crashedPageTitle");
           let tab = this.getTabForBrowser(browser);
+          tab.setAttribute("crashed", true);
           this.setIcon(tab, icon);
         ]]>
       </handler>
@@ -3651,8 +3707,8 @@
         if (tabs._lastTabClosedByMouse)
           tabs._expandSpacerBy(this._scrollButtonDown.clientWidth);
 
-        tabs.tabbrowser._removingTabs.forEach(tabs.tabbrowser.removeTab,
-                                              tabs.tabbrowser);
+        for (let tab of Array.from(tabs.tabbrowser._removingTabs))
+          tabs.tabbrowser.removeTab(tab);
 
         tabs._positionPinnedTabs();
       ]]></handler>
@@ -4981,10 +5037,13 @@
                      class="tab-throbber"
                      role="presentation"
                      layer="true" />
-          <xul:image xbl:inherits="src=image,fadein,pinned,selected"
+          <xul:image xbl:inherits="src=image,fadein,pinned,selected,busy,crashed"
                      anonid="tab-icon-image"
                      class="tab-icon-image"
                      validate="never"
+                     role="presentation"/>
+          <xul:image xbl:inherits="crashed,busy"
+                     class="tab-icon-overlay"
                      role="presentation"/>
           <xul:label flex="1"
                      anonid="tab-label"
@@ -5443,30 +5502,32 @@
           if (this._selectedPanel != panel) {
             var event = document.createEvent("Events");
             event.initEvent("select", true, true);
+            event.fromTab = fromTab;
+            event.toTab = toTab;
             this.dispatchEvent(event);
+
+            this._selectedIndex = val;
+
+            switchPromise.then(() => {
+              // If we cannot find the tabpanel that we were trying to switch to, then
+              // it must have been removed before our Promise could be resolved. In
+              // that case, we just cancel the tab switch.
+              var updatedTabIndex = Array.indexOf(this.childNodes, newPanel);
+              if (updatedTabIndex == -1) {
+                gBrowser._cancelTabSwitch(toTab);
+              } else {
+                this.setAttribute("selectedIndex", updatedTabIndex);
+                gBrowser._finalizeTabSwitch(toTab, fromTab);
+              }
+            }, () => {
+              // If the promise rejected, that means we don't want to actually
+              // flip the deck, so we cancel the tab switch.
+              // We need to nullcheck the method we're about to call because
+              // the binding might be dead at this point.
+              if (gBrowser._cancelTabSwitch)
+                gBrowser._cancelTabSwitch(toTab);
+            });
           }
-
-          this._selectedIndex = val;
-
-          switchPromise.then(() => {
-            // If we cannot find the tabpanel that we were trying to switch to, then
-            // it must have been removed before our Promise could be resolved. In
-            // that case, we just cancel the tab switch.
-            var updatedTabIndex = Array.indexOf(this.childNodes, newPanel);
-            if (updatedTabIndex == -1) {
-              gBrowser._cancelTabSwitch(toTab);
-            } else {
-              this.setAttribute("selectedIndex", updatedTabIndex);
-              gBrowser._finalizeTabSwitch(toTab, fromTab);
-            }
-          }, () => {
-            // If the promise rejected, that means we don't want to actually
-            // flip the deck, so we cancel the tab switch.
-            // We need to nullcheck the method we're about to call because
-            // the binding might be dead at this point.
-            if (gBrowser._cancelTabSwitch)
-              gBrowser._cancelTabSwitch(toTab);
-          });
 
           return val;
         ]]>
@@ -5487,7 +5548,16 @@
         <parameter name="aPostData"/>
         <body>
           <![CDATA[
-            _loadURIWithFlags(this, aURI, aFlags, aReferrerURI, aCharset, aPostData);
+            var params = arguments[1];
+            if (typeof(params) == "number") {
+              params = {
+                flags: aFlags,
+                referrerURI: aReferrerURI,
+                charset: aCharset,
+                postData: aPostData,
+              };
+            }
+            _loadURIWithFlags(this, aURI, params);
           ]]>
         </body>
       </method>
@@ -5506,7 +5576,16 @@
         <parameter name="aPostData"/>
         <body>
           <![CDATA[
-            _loadURIWithFlags(this, aURI, aFlags, aReferrerURI, aCharset, aPostData);
+            var params = arguments[1];
+            if (typeof(params) == "number") {
+              params = {
+                flags: aFlags,
+                referrerURI: aReferrerURI,
+                charset: aCharset,
+                postData: aPostData,
+              };
+            }
+            _loadURIWithFlags(this, aURI, params);
           ]]>
         </body>
       </method>

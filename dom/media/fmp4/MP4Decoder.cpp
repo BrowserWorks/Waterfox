@@ -42,7 +42,7 @@ MP4Decoder::SetCDMProxy(CDMProxy* aProxy)
 {
   nsresult rv = MediaDecoder::SetCDMProxy(aProxy);
   NS_ENSURE_SUCCESS(rv, rv);
-  {
+  if (aProxy) {
     // The MP4Reader can't decrypt EME content until it has a CDMProxy,
     // and the CDMProxy knows the capabilities of the CDM. The MP4Reader
     // remains in "waiting for resources" state until then.
@@ -95,6 +95,12 @@ IsSupportedH264Codec(const nsAString& aCodec)
 #ifdef XP_WIN
   if (!Preferences::GetBool("media.fragmented-mp4.use-blank-decoder") &&
       !WMFDecoderModule::HasH264()) {
+    return false;
+  }
+
+  // Disable 4k video on windows vista since it performs poorly.
+  if (!IsWin7OrLater() &&
+      level >= H264_LEVEL_5) {
     return false;
   }
 #endif

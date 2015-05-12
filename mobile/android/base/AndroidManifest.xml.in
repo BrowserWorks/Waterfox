@@ -81,6 +81,7 @@
 
     <application android:label="@string/moz_app_displayname"
                  android:icon="@drawable/icon"
+                 android:logo="@drawable/logo"
                  android:name="org.mozilla.gecko.GeckoApplication"
                  android:hardwareAccelerated="true"
 # The preprocessor does not yet support arbitrary parentheses, so this cannot
@@ -378,11 +379,15 @@
         </provider>
 
 #ifdef MOZ_ANDROID_SHARE_OVERLAY
-        <!-- Share overlay activity -->
+        <!-- Share overlay activity
+
+             Setting launchMode="singleTop" ensures onNewIntent is called when the Activity is
+             reused. Ideally we create a new instance but Android L breaks this (bug 1137928). -->
         <activity android:name="org.mozilla.gecko.overlays.ui.ShareDialog"
                   android:label="@string/overlay_share_label"
                   android:theme="@style/ShareOverlayActivity"
                   android:configChanges="keyboard|keyboardHidden|mcc|mnc|locale|layoutDirection"
+                  android:launchMode="singleTop"
                   android:windowSoftInputMode="stateAlwaysHidden|adjustResize">
 
             <intent-filter>
@@ -428,6 +433,8 @@
 
         <provider android:name="org.mozilla.gecko.db.ReadingListProvider"
                   android:authorities="@ANDROID_PACKAGE_NAME@.db.readinglist"
+                  android:exported="false"
+                  android:label="@string/reading_list_title"
                   android:permission="@ANDROID_PACKAGE_NAME@.permissions.BROWSER_PROVIDER"/>
 
         <provider android:name="org.mozilla.gecko.db.SearchHistoryProvider"

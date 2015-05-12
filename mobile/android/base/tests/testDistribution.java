@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.tests;
 
 import java.io.File;
@@ -17,9 +21,9 @@ import org.json.JSONObject;
 import org.mozilla.gecko.Actions;
 import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.BrowserLocaleManager;
+import org.mozilla.gecko.GeckoProfile;
 import org.mozilla.gecko.GeckoSharedPrefs;
 import org.mozilla.gecko.db.BrowserContract;
-import org.mozilla.gecko.db.BrowserDB;
 import org.mozilla.gecko.db.SuggestedSites;
 import org.mozilla.gecko.distribution.Distribution;
 import org.mozilla.gecko.distribution.ReferrerDescriptor;
@@ -131,7 +135,7 @@ public class testDistribution extends ContentProviderTest {
         clearDistributionPref();
         Distribution dist = initDistribution(mockPackagePath);
         SuggestedSites suggestedSites = new SuggestedSites(mActivity, dist);
-        BrowserDB.setSuggestedSites(suggestedSites);
+        GeckoProfile.get(mActivity).getDB().setSuggestedSites(suggestedSites);
 
         // Test tiles uploading for an en-US OS locale with no app locale.
         setOSLocale(Locale.US);
@@ -465,7 +469,7 @@ public class testDistribution extends ContentProviderTest {
         JSONObject response = clickTrackingTile(StringHelper.DISTRIBUTION1_LABEL);
         mAsserter.is(response.getInt("click"), 0, "JSON click index matched");
         mAsserter.is(response.getString("locale"), localeCode, "JSON locale code matched");
-        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456},{},{},{},{}]", "JSON tiles data matched");
+        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456},{\"id\":632},{\"id\":629},{\"id\":630},{\"id\":631}]", "JSON tiles data matched");
 
         inputAndLoadUrl(StringHelper.ABOUT_HOME_URL);
 
@@ -475,7 +479,7 @@ public class testDistribution extends ContentProviderTest {
         // Click the second tracking tile and verify the posted data.
         response = clickTrackingTile(StringHelper.DISTRIBUTION2_LABEL);
         mAsserter.is(response.getInt("click"), 1, "JSON click index matched");
-        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456,\"pin\":true},{},{},{},{}]", "JSON tiles data matched");
+        mAsserter.is(response.getString("tiles"), "[{\"id\":123},{\"id\":456,\"pin\":true},{\"id\":632},{\"id\":629},{\"id\":630},{\"id\":631}]", "JSON tiles data matched");
 
         inputAndLoadUrl(StringHelper.ABOUT_HOME_URL);
 

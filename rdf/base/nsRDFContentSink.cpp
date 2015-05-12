@@ -108,20 +108,20 @@ public:
     NS_DECL_NSIEXPATSINK
 
     // nsIContentSink
-    NS_IMETHOD WillParse(void);
-    NS_IMETHOD WillBuildModel(nsDTDMode aDTDMode);
-    NS_IMETHOD DidBuildModel(bool aTerminated);
-    NS_IMETHOD WillInterrupt(void);
-    NS_IMETHOD WillResume(void);
-    NS_IMETHOD SetParser(nsParserBase* aParser);
-    virtual void FlushPendingNotifications(mozFlushType aType) { }
-    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) { return NS_OK; }
-    virtual nsISupports *GetTarget() { return nullptr; }
+    NS_IMETHOD WillParse(void) override;
+    NS_IMETHOD WillBuildModel(nsDTDMode aDTDMode) override;
+    NS_IMETHOD DidBuildModel(bool aTerminated) override;
+    NS_IMETHOD WillInterrupt(void) override;
+    NS_IMETHOD WillResume(void) override;
+    NS_IMETHOD SetParser(nsParserBase* aParser) override;
+    virtual void FlushPendingNotifications(mozFlushType aType) override { }
+    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override { return NS_OK; }
+    virtual nsISupports *GetTarget() override { return nullptr; }
 
     // nsIRDFContentSink
-    NS_IMETHOD Init(nsIURI* aURL);
-    NS_IMETHOD SetDataSource(nsIRDFDataSource* aDataSource);
-    NS_IMETHOD GetDataSource(nsIRDFDataSource*& aDataSource);
+    NS_IMETHOD Init(nsIURI* aURL) override;
+    NS_IMETHOD SetDataSource(nsIRDFDataSource* aDataSource) override;
+    NS_IMETHOD GetDataSource(nsIRDFDataSource*& aDataSource) override;
 
     // pseudo constants
     static int32_t gRefCnt;

@@ -101,9 +101,9 @@ AC_SUBST(CLANG_CXX)
 AC_SUBST(CLANG_CL)
 
 if test -n "$GNU_CC" -a -z "$CLANG_CC" ; then
-    if test "$GCC_MAJOR_VERSION" -eq 4 -a "$GCC_MINOR_VERSION" -lt 6 ||
+    if test "$GCC_MAJOR_VERSION" -eq 4 -a "$GCC_MINOR_VERSION" -lt 7 ||
        test "$GCC_MAJOR_VERSION" -lt 4; then
-        AC_MSG_ERROR([Only GCC 4.6 or newer supported])
+        AC_MSG_ERROR([Only GCC 4.7 or newer supported])
     fi
 fi
 ])
@@ -172,7 +172,7 @@ AC_PROG_CXX
 
 AC_CHECK_PROGS(RANLIB, "${target_alias}-ranlib" "${target}-ranlib", :)
 AC_CHECK_PROGS(AR, "${target_alias}-ar" "${target}-ar", :)
-MOZ_PATH_PROGS(AS, "${target_alias}-as" "${target}-as", :)
+AC_CHECK_PROGS(AS, "${target_alias}-as" "${target}-as", :)
 AC_CHECK_PROGS(LD, "${target_alias}-ld" "${target}-ld", :)
 AC_CHECK_PROGS(STRIP, "${target_alias}-strip" "${target}-strip", :)
 AC_CHECK_PROGS(WINDRES, "${target_alias}-windres" "${target}-windres", :)

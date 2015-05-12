@@ -3,9 +3,11 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 add_task(function* test_non_keyword() {
-  do_log_info("Searching for non-keyworded entry should autoFill it");
-  yield promiseAddVisits({ uri: NetUtil.newURI("http://mozilla.org/test/"),
-                           transition: TRANSITION_TYPED });
+  do_print("Searching for non-keyworded entry should autoFill it");
+  yield PlacesTestUtils.addVisits({
+    uri: NetUtil.newURI("http://mozilla.org/test/"),
+    transition: TRANSITION_TYPED
+  });
   addBookmark({ uri: NetUtil.newURI("http://mozilla.org/test/") });
   yield check_autocomplete({
     search: "moz",
@@ -16,9 +18,11 @@ add_task(function* test_non_keyword() {
 });
 
 add_task(function* test_keyword() {
-  do_log_info("Searching for keyworded entry should not autoFill it");
-  yield promiseAddVisits({ uri: NetUtil.newURI("http://mozilla.org/test/"),
-                           transition: TRANSITION_TYPED });
+  do_print("Searching for keyworded entry should not autoFill it");
+  yield PlacesTestUtils.addVisits({
+    uri: NetUtil.newURI("http://mozilla.org/test/"),
+    transition: TRANSITION_TYPED
+  });
   addBookmark({ uri: NetUtil.newURI("http://mozilla.org/test/"), keyword: "moz" });
   yield check_autocomplete({
     search: "moz",
@@ -29,9 +33,11 @@ add_task(function* test_keyword() {
 });
 
 add_task(function* test_more_than_keyword() {
-  do_log_info("Searching for more than keyworded entry should autoFill it");
-  yield promiseAddVisits({ uri: NetUtil.newURI("http://mozilla.org/test/"),
-                           transition: TRANSITION_TYPED });
+  do_print("Searching for more than keyworded entry should autoFill it");
+  yield PlacesTestUtils.addVisits({
+    uri: NetUtil.newURI("http://mozilla.org/test/"),
+    transition: TRANSITION_TYPED
+  });
   addBookmark({ uri: NetUtil.newURI("http://mozilla.org/test/"), keyword: "moz" });
   yield check_autocomplete({
     search: "mozi",
@@ -42,9 +48,11 @@ add_task(function* test_more_than_keyword() {
 });
 
 add_task(function* test_less_than_keyword() {
-  do_log_info("Searching for less than keyworded entry should autoFill it");
-  yield promiseAddVisits({ uri: NetUtil.newURI("http://mozilla.org/test/"),
-                           transition: TRANSITION_TYPED });
+  do_print("Searching for less than keyworded entry should autoFill it");
+  yield PlacesTestUtils.addVisits({
+    uri: NetUtil.newURI("http://mozilla.org/test/"),
+    transition: TRANSITION_TYPED
+  });
   addBookmark({ uri: NetUtil.newURI("http://mozilla.org/test/"), keyword: "moz" });
   yield check_autocomplete({
     search: "mo",
@@ -55,9 +63,11 @@ add_task(function* test_less_than_keyword() {
 });
 
 add_task(function* test_keyword_casing() {
-  do_log_info("Searching for keyworded entry is case-insensitive");
-  yield promiseAddVisits({ uri: NetUtil.newURI("http://mozilla.org/test/"),
-                           transition: TRANSITION_TYPED });
+  do_print("Searching for keyworded entry is case-insensitive");
+  yield PlacesTestUtils.addVisits({
+    uri: NetUtil.newURI("http://mozilla.org/test/"),
+    transition: TRANSITION_TYPED
+  });
   addBookmark({ uri: NetUtil.newURI("http://mozilla.org/test/"), keyword: "moz" });
   yield check_autocomplete({
     search: "MoZ",

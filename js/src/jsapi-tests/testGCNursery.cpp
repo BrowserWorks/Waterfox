@@ -12,7 +12,7 @@
 static int ranFinalizer = 0;
 
 void
-_finalize(js::FreeOp *fop, JSObject *obj)
+_finalize(js::FreeOp* fop, JSObject* obj)
 {
     JS::AutoAssertGCCallback suppress(obj);
     ++ranFinalizer;
@@ -68,7 +68,7 @@ BEGIN_TEST(testGCNurseryFinalizer)
 
     JS::RootedObject obj(cx);
 
-    obj = JS_NewObject(cx, Jsvalify(&TenuredClass), JS::NullPtr(), JS::NullPtr());
+    obj = JS_NewObject(cx, Jsvalify(&TenuredClass));
     CHECK(!js::gc::IsInsideNursery(obj));
 
     // Null finalization list with empty nursery.
@@ -76,16 +76,16 @@ BEGIN_TEST(testGCNurseryFinalizer)
     CHECK(ranFinalizer == 0);
 
     // Null finalization list with non-empty nursery.
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewPlainObject(cx);
     CHECK(js::gc::IsInsideNursery(obj));
     obj = nullptr;
     rt->gc.minorGC(JS::gcreason::EVICT_NURSERY);
     CHECK(ranFinalizer == 0);
 
     // Single finalizable nursery thing.
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
     CHECK(js::gc::IsInsideNursery(obj));
     obj = nullptr;
     rt->gc.minorGC(JS::gcreason::EVICT_NURSERY);
@@ -93,9 +93,9 @@ BEGIN_TEST(testGCNurseryFinalizer)
     ranFinalizer = 0;
 
     // Multiple finalizable nursery things.
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
     CHECK(js::gc::IsInsideNursery(obj));
     obj = nullptr;
     rt->gc.minorGC(JS::gcreason::EVICT_NURSERY);
@@ -103,15 +103,15 @@ BEGIN_TEST(testGCNurseryFinalizer)
     ranFinalizer = 0;
 
     // Interleaved finalizable things in nursery.
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, Jsvalify(&NurseryClass), JS::NullPtr(), JS::NullPtr());
-    obj = JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr());
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewPlainObject(cx);
+    obj = JS_NewObject(cx, Jsvalify(&NurseryClass));
+    obj = JS_NewPlainObject(cx);
     CHECK(js::gc::IsInsideNursery(obj));
     obj = nullptr;
     rt->gc.minorGC(JS::gcreason::EVICT_NURSERY);

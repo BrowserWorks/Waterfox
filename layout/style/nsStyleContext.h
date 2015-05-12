@@ -9,6 +9,7 @@
 #define _nsStyleContext_h_
 
 #include "mozilla/RestyleLogging.h"
+#include "mozilla/Assertions.h"
 #include "nsRuleNode.h"
 #include "nsCSSPseudoElements.h"
 
@@ -37,7 +38,7 @@ class nsPresContext;
  * collection.
  */
 
-class nsStyleContext MOZ_FINAL
+class nsStyleContext final
 {
 public:
   /**
@@ -199,15 +200,15 @@ public:
   // To be called only from nsStyleSet.
   void SetStyleIfVisited(already_AddRefed<nsStyleContext> aStyleIfVisited)
   {
-    NS_ABORT_IF_FALSE(!IsStyleIfVisited(), "this context is not visited data");
+    MOZ_ASSERT(!IsStyleIfVisited(), "this context is not visited data");
     NS_ASSERTION(!mStyleIfVisited, "should only be set once");
 
     mStyleIfVisited = aStyleIfVisited;
 
-    NS_ABORT_IF_FALSE(mStyleIfVisited->IsStyleIfVisited(),
-                      "other context is visited data");
-    NS_ABORT_IF_FALSE(!mStyleIfVisited->GetStyleIfVisited(),
-                      "other context does not have visited data");
+    MOZ_ASSERT(mStyleIfVisited->IsStyleIfVisited(),
+               "other context is visited data");
+    MOZ_ASSERT(!mStyleIfVisited->GetStyleIfVisited(),
+               "other context does not have visited data");
     NS_ASSERTION(GetStyleIfVisited()->GetPseudo() == GetPseudo(),
                  "pseudo tag mismatch");
     if (GetParent() && GetParent()->GetStyleIfVisited()) {
@@ -304,7 +305,7 @@ public:
    */
   #define STYLE_STRUCT(name_, checkdata_cb_)              \
     const nsStyle##name_ * Style##name_() {               \
-      return DoGetStyle##name_(true);                     \
+      return DoGetStyle##name_<true>();                   \
     }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
@@ -318,12 +319,10 @@ public:
    */
   #define STYLE_STRUCT(name_, checkdata_cb_)              \
     const nsStyle##name_ * PeekStyle##name_() {           \
-      return DoGetStyle##name_(false);                    \
+      return DoGetStyle##name_<false>();                  \
     }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
-
-  void* GetUniqueStyleData(const nsStyleStructID& aSID);
 
   /**
    * Compute the style changes needed during restyling when this style
@@ -434,6 +433,9 @@ private:
   void AddChild(nsStyleContext* aChild);
   void RemoveChild(nsStyleContext* aChild);
 
+  void* GetUniqueStyleData(const nsStyleStructID& aSID);
+  void* CreateEmptyStyleData(const nsStyleStructID& aSID);
+
   void ApplyStyleFixups(bool aSkipParentDisplayBasedStyleFixup);
 
   // Helper function for HasChildThatUsesGrandancestorStyle.
@@ -444,27 +446,61 @@ private:
   // returns the structs we cache ourselves; never consults the ruletree.
   inline const void* GetCachedStyleData(nsStyleStructID aSID);
 
+#ifdef DEBUG
+  struct AutoCheckDependency {
+
+    nsStyleContext* mStyleContext;
+    nsStyleStructID mOuterSID;
+
+    AutoCheckDependency(nsStyleContext* aContext, nsStyleStructID aInnerSID)
+      : mStyleContext(aContext)
+    {
+      mOuterSID = aContext->mComputingStruct;
+      MOZ_ASSERT(mOuterSID == nsStyleStructID_None ||
+                 DependencyAllowed(mOuterSID, aInnerSID),
+                 "Undeclared dependency, see generate-stylestructlist.py");
+      aContext->mComputingStruct = aInnerSID;
+    }
+
+    ~AutoCheckDependency()
+    {
+      mStyleContext->mComputingStruct = mOuterSID;
+    }
+
+  };
+
+#define AUTO_CHECK_DEPENDENCY(sid_) \
+  AutoCheckDependency checkNesting_(this, sid_)
+#else
+#define AUTO_CHECK_DEPENDENCY(sid_)
+#endif
+
   // Helper functions for GetStyle* and PeekStyle*
   #define STYLE_STRUCT_INHERITED(name_, checkdata_cb_)                  \
-    const nsStyle##name_ * DoGetStyle##name_(bool aComputeData) {       \
+    template<bool aComputeData>                                         \
+    const nsStyle##name_ * DoGetStyle##name_() {                        \
       const nsStyle##name_ * cachedData =                               \
         static_cast<nsStyle##name_*>(                                   \
           mCachedInheritedData.mStyleStructs[eStyleStruct_##name_]);    \
       if (cachedData) /* Have it cached already, yay */                 \
         return cachedData;                                              \
       /* Have the rulenode deal */                                      \
-      return mRuleNode->GetStyle##name_(this, aComputeData);            \
+      AUTO_CHECK_DEPENDENCY(eStyleStruct_##name_);                      \
+      return mRuleNode->GetStyle##name_<aComputeData>(this);            \
     }
   #define STYLE_STRUCT_RESET(name_, checkdata_cb_)                      \
-    const nsStyle##name_ * DoGetStyle##name_(bool aComputeData) {       \
-      const nsStyle##name_ * cachedData = mCachedResetData              \
-        ? static_cast<nsStyle##name_*>(                                 \
-            mCachedResetData->mStyleStructs[eStyleStruct_##name_])      \
-        : nullptr;                                                      \
-      if (cachedData) /* Have it cached already, yay */                 \
-        return cachedData;                                              \
+    template<bool aComputeData>                                         \
+    const nsStyle##name_ * DoGetStyle##name_() {                        \
+      if (mCachedResetData) {                                           \
+        const nsStyle##name_ * cachedData =                             \
+          static_cast<nsStyle##name_*>(                                 \
+            mCachedResetData->mStyleStructs[eStyleStruct_##name_]);     \
+        if (cachedData) /* Have it cached already, yay */               \
+          return cachedData;                                            \
+      }                                                                 \
       /* Have the rulenode deal */                                      \
-      return mRuleNode->GetStyle##name_(this, aComputeData);            \
+      AUTO_CHECK_DEPENDENCY(eStyleStruct_##name_);                      \
+      return mRuleNode->GetStyle##name_<aComputeData>(this);            \
     }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT_RESET
@@ -535,6 +571,17 @@ private:
 #ifdef DEBUG
   uint32_t                mFrameRefCnt; // number of frames that use this
                                         // as their style context
+
+  nsStyleStructID         mComputingStruct;
+
+  static bool DependencyAllowed(nsStyleStructID aOuterSID,
+                                nsStyleStructID aInnerSID)
+  {
+    return !!(sDependencyTable[aOuterSID] &
+              nsCachedStyleData::GetBitForSID(aInnerSID));
+  }
+
+  static const uint32_t sDependencyTable[];
 #endif
 };
 

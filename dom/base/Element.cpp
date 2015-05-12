@@ -204,9 +204,9 @@ Element::NotifyStateChange(EventStates aStates)
 void
 Element::UpdateLinkState(EventStates aState)
 {
-  NS_ABORT_IF_FALSE(!aState.HasAtLeastOneOfStates(~(NS_EVENT_STATE_VISITED |
-                                                    NS_EVENT_STATE_UNVISITED)),
-                    "Unexpected link state bits");
+  MOZ_ASSERT(!aState.HasAtLeastOneOfStates(~(NS_EVENT_STATE_VISITED |
+                                             NS_EVENT_STATE_UNVISITED)),
+             "Unexpected link state bits");
   mState =
     (mState & ~(NS_EVENT_STATE_VISITED | NS_EVENT_STATE_UNVISITED)) |
     aState;
@@ -992,6 +992,8 @@ Element::CreateShadowRoot(ErrorResult& aError)
   nsRefPtr<ShadowRoot> shadowRoot = new ShadowRoot(this, nodeInfo.forget(),
                                                    protoBinding);
 
+  shadowRoot->SetIsComposedDocParticipant(IsInComposedDoc());
+
   // Replace the old ShadowRoot with the new one and let the old
   // ShadowRoot know about the younger ShadowRoot because the old
   // ShadowRoot is projected into the younger ShadowRoot's shadow
@@ -1007,6 +1009,8 @@ Element::CreateShadowRoot(ErrorResult& aError)
          child = child->GetNextSibling()) {
       child->UnbindFromTree(true, false);
     }
+
+    olderShadow->SetIsComposedDocParticipant(false);
   }
 
   // xblBinding takes ownership of docInfo.
@@ -1198,8 +1202,16 @@ already_AddRefed<Attr>
 Element::RemoveAttributeNode(Attr& aAttribute,
                              ErrorResult& aError)
 {
+  Element *elem = aAttribute.GetElement();
+  if (elem != this) {
+    aError.Throw(NS_ERROR_DOM_NOT_FOUND_ERR);
+    return nullptr;
+  }
+
   OwnerDoc()->WarnOnceAbout(nsIDocument::eRemoveAttributeNode);
-  return Attributes()->RemoveNamedItem(aAttribute.NodeName(), aError);
+  nsAutoString nameSpaceURI;
+  aAttribute.NodeInfo()->GetNamespaceURI(nameSpaceURI);
+  return Attributes()->RemoveNamedItemNS(nameSpaceURI, aAttribute.NodeInfo()->LocalName(), aError);
 }
 
 void
@@ -1461,13 +1473,6 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     // Being added to a document.
     SetInDocument();
 
-    // Attached callback must be enqueued whenever custom element is inserted into a
-    // document and this document has a browsing context.
-    if (GetCustomElementData() && aDocument->GetDocShell()) {
-      // Enqueue an attached callback for the custom element.
-      aDocument->EnqueueLifecycleCallback(nsIDocument::eAttached, this);
-    }
-
     // Unset this flag since we now really are in a document.
     UnsetFlags(NODE_FORCE_XBL_BINDINGS |
                // And clear the lazy frame construction bits.
@@ -1488,6 +1493,16 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
     // If we're not in the doc and not in a shadow tree,
     // update our subtree pointer.
     SetSubtreeRootPointer(aParent->SubtreeRoot());
+  }
+
+  nsIDocument* composedDoc = GetComposedDoc();
+  if (composedDoc) {
+    // Attached callback must be enqueued whenever custom element is inserted into a
+    // document and this document has a browsing context.
+    if (GetCustomElementData() && composedDoc->GetDocShell()) {
+      // Enqueue an attached callback for the custom element.
+      composedDoc->EnqueueLifecycleCallback(nsIDocument::eAttached, this);
+    }
   }
 
   // Propagate scoped style sheet tracking bit.
@@ -1570,6 +1585,7 @@ Element::BindToTree(nsIDocument* aDocument, nsIContent* aParent,
   // Call BindToTree on shadow root children.
   ShadowRoot* shadowRoot = GetShadowRoot();
   if (shadowRoot) {
+    shadowRoot->SetIsComposedDocParticipant(IsInComposedDoc());
     for (nsIContent* child = shadowRoot->GetFirstChild(); child;
          child = child->GetNextSibling()) {
       rv = child->BindToTree(nullptr, shadowRoot,
@@ -1627,8 +1643,7 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
 
   // Make sure to unbind this node before doing the kids
   nsIDocument* document =
-    HasFlag(NODE_FORCE_XBL_BINDINGS) || IsInShadowTree() ?
-      OwnerDoc() : GetUncomposedDoc();
+    HasFlag(NODE_FORCE_XBL_BINDINGS) ? OwnerDoc() : GetComposedDoc();
 
   if (aNullParent) {
     if (IsFullScreenAncestor()) {
@@ -1748,6 +1763,8 @@ Element::UnbindFromTree(bool aDeep, bool aNullParent)
          child = child->GetNextSibling()) {
       child->UnbindFromTree(true, false);
     }
+
+    shadowRoot->SetIsComposedDocParticipant(false);
   }
 }
 
@@ -1786,8 +1803,12 @@ Element::SetSMILOverrideStyleRule(css::StyleRule* aStyleRule,
     if (doc) {
       nsCOMPtr<nsIPresShell> shell = doc->GetShell();
       if (shell) {
-        shell->RestyleForAnimation(this,
-          eRestyle_StyleAttribute | eRestyle_ChangeAnimationPhase);
+        // Pass both eRestyle_StyleAttribute and
+        // eRestyle_StyleAttribute_Animations since we don't know if
+        // this style represents only the ticking of an existing
+        // animation or whether it's a new or changed animation.
+        shell->RestyleForAnimation(this, eRestyle_StyleAttribute |
+                                         eRestyle_StyleAttribute_Animations);
       }
     }
   }
@@ -1797,6 +1818,12 @@ Element::SetSMILOverrideStyleRule(css::StyleRule* aStyleRule,
 
 bool
 Element::IsLabelable() const
+{
+  return false;
+}
+
+bool
+Element::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
 {
   return false;
 }

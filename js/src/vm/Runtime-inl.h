@@ -18,59 +18,48 @@
 namespace js {
 
 inline bool
-NewObjectCache::lookupProto(const Class *clasp, JSObject *proto, gc::AllocKind kind, EntryIndex *pentry)
+NewObjectCache::lookupProto(const Class* clasp, JSObject* proto, gc::AllocKind kind, EntryIndex* pentry)
 {
     MOZ_ASSERT(!proto->is<GlobalObject>());
     return lookup(clasp, proto, kind, pentry);
 }
 
 inline bool
-NewObjectCache::lookupGlobal(const Class *clasp, js::GlobalObject *global, gc::AllocKind kind, EntryIndex *pentry)
+NewObjectCache::lookupGlobal(const Class* clasp, js::GlobalObject* global, gc::AllocKind kind, EntryIndex* pentry)
 {
     return lookup(clasp, global, kind, pentry);
 }
 
 inline void
-NewObjectCache::fillGlobal(EntryIndex entry, const Class *clasp, js::GlobalObject *global,
-                           gc::AllocKind kind, NativeObject *obj)
+NewObjectCache::fillGlobal(EntryIndex entry, const Class* clasp, js::GlobalObject* global,
+                           gc::AllocKind kind, NativeObject* obj)
 {
     //MOZ_ASSERT(global == obj->getGlobal());
     return fill(entry, clasp, global, kind, obj);
 }
 
-template <AllowGC allowGC>
-inline JSObject *
-NewObjectCache::newObjectFromHit(JSContext *cx, EntryIndex entry_, js::gc::InitialHeap heap)
+inline JSObject*
+NewObjectCache::newObjectFromHit(JSContext* cx, EntryIndex entryIndex, js::gc::InitialHeap heap)
 {
     // The new object cache does not account for metadata attached via callbacks.
     MOZ_ASSERT(!cx->compartment()->hasObjectMetadataCallback());
 
-    MOZ_ASSERT(unsigned(entry_) < mozilla::ArrayLength(entries));
-    Entry *entry = &entries[entry_];
+    MOZ_ASSERT(unsigned(entryIndex) < mozilla::ArrayLength(entries));
+    Entry* entry = &entries[entryIndex];
 
-    JSObject *templateObj = reinterpret_cast<JSObject *>(&entry->templateObject);
+    JSObject* templateObj = reinterpret_cast<JSObject*>(&entry->templateObject);
 
-    // Do an end run around JSObject::type() to avoid doing AutoUnprotectCell
+    // Do an end run around JSObject::group() to avoid doing AutoUnprotectCell
     // on the templateObj, which is not a GC thing and can't use runtimeFromAnyThread.
-    types::TypeObject *type = templateObj->type_;
+    ObjectGroup* group = templateObj->group_;
 
-    if (type->shouldPreTenure())
+    if (group->shouldPreTenure())
         heap = gc::TenuredHeap;
 
     if (cx->runtime()->gc.upcomingZealousGC())
         return nullptr;
 
-    // Trigger an identical allocation to the one that notified us of OOM
-    // so that we trigger the right kind of GC automatically.
-    if (allowGC) {
-        mozilla::DebugOnly<JSObject *> obj =
-            js::gc::AllocateObjectForCacheHit<allowGC>(cx, entry->kind, heap, type->clasp());
-        MOZ_ASSERT(!obj);
-        return nullptr;
-    }
-
-    MOZ_ASSERT(allowGC == NoGC);
-    JSObject *obj = js::gc::AllocateObjectForCacheHit<NoGC>(cx, entry->kind, heap, type->clasp());
+    JSObject* obj = js::gc::AllocateObjectForCacheHit<NoGC>(cx, entry->kind, heap, group->clasp());
     if (obj) {
         copyCachedToObject(obj, templateObj, entry->kind);
         probes::CreateObject(cx, obj);
@@ -78,6 +67,11 @@ NewObjectCache::newObjectFromHit(JSContext *cx, EntryIndex entry_, js::gc::Initi
         return obj;
     }
 
+    // Trigger an identical allocation to the one that notified us of OOM
+    // so that we trigger the right kind of GC automatically.
+    mozilla::DebugOnly<JSObject*> obj2 =
+        js::gc::AllocateObjectForCacheHit<CanGC>(cx, entry->kind, heap, group->clasp());
+    MOZ_ASSERT(!obj2);
     return nullptr;
 }
 

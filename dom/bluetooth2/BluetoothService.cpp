@@ -9,11 +9,6 @@
 #include "BluetoothService.h"
 
 #include "BluetoothCommon.h"
-#include "BluetoothA2dpManager.h"
-#include "BluetoothHfpManager.h"
-#include "BluetoothHidManager.h"
-#include "BluetoothManager.h"
-#include "BluetoothOppManager.h"
 #include "BluetoothParent.h"
 #include "BluetoothReplyRunnable.h"
 #include "BluetoothServiceChildProcess.h"
@@ -144,7 +139,7 @@ BluetoothService::ToggleBtAck::Run()
   return NS_OK;
 }
 
-class BluetoothService::StartupTask MOZ_FINAL : public nsISettingsServiceCallback
+class BluetoothService::StartupTask final : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS

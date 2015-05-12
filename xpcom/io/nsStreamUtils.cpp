@@ -17,12 +17,14 @@
 #include "nsIAsyncInputStream.h"
 #include "nsIAsyncOutputStream.h"
 #include "nsIBufferedStreams.h"
+#include "nsNetCID.h"
+#include "nsServiceManagerUtils.h"
 
 using namespace mozilla;
 
 //-----------------------------------------------------------------------------
 
-class nsInputStreamReadyEvent MOZ_FINAL
+class nsInputStreamReadyEvent final
   : public nsIRunnable
   , public nsIInputStreamCallback
 {
@@ -67,7 +69,7 @@ private:
   }
 
 public:
-  NS_IMETHOD OnInputStreamReady(nsIAsyncInputStream* aStream) MOZ_OVERRIDE
+  NS_IMETHOD OnInputStreamReady(nsIAsyncInputStream* aStream) override
   {
     mStream = aStream;
 
@@ -81,7 +83,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     if (mCallback) {
       if (mStream) {
@@ -103,7 +105,7 @@ NS_IMPL_ISUPPORTS(nsInputStreamReadyEvent, nsIRunnable,
 
 //-----------------------------------------------------------------------------
 
-class nsOutputStreamReadyEvent MOZ_FINAL
+class nsOutputStreamReadyEvent final
   : public nsIRunnable
   , public nsIOutputStreamCallback
 {
@@ -148,7 +150,7 @@ private:
   }
 
 public:
-  NS_IMETHOD OnOutputStreamReady(nsIAsyncOutputStream* aStream) MOZ_OVERRIDE
+  NS_IMETHOD OnOutputStreamReady(nsIAsyncOutputStream* aStream) override
   {
     mStream = aStream;
 
@@ -162,7 +164,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     if (mCallback) {
       if (mStream) {
@@ -396,20 +398,20 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD OnInputStreamReady(nsIAsyncInputStream* aSource) MOZ_OVERRIDE
+  NS_IMETHOD OnInputStreamReady(nsIAsyncInputStream* aSource) override
   {
     PostContinuationEvent();
     return NS_OK;
   }
 
-  NS_IMETHOD OnOutputStreamReady(nsIAsyncOutputStream* aSink) MOZ_OVERRIDE
+  NS_IMETHOD OnOutputStreamReady(nsIAsyncOutputStream* aSink) override
   {
     PostContinuationEvent();
     return NS_OK;
   }
 
   // continuation event handler
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     Process();
 
@@ -482,7 +484,7 @@ NS_IMPL_ISUPPORTS(nsAStreamCopier,
                   nsIOutputStreamCallback,
                   nsIRunnable)
 
-class nsStreamCopierIB MOZ_FINAL : public nsAStreamCopier
+class nsStreamCopierIB final : public nsAStreamCopier
 {
 public:
   nsStreamCopierIB() : nsAStreamCopier()
@@ -531,7 +533,7 @@ public:
   }
 };
 
-class nsStreamCopierOB MOZ_FINAL : public nsAStreamCopier
+class nsStreamCopierOB final : public nsAStreamCopier
 {
 public:
   nsStreamCopierOB() : nsAStreamCopier()
@@ -848,4 +850,55 @@ NS_FillArray(FallibleTArray<char>& aDest, nsIInputStream* aInput,
 
   MOZ_ASSERT(aDest.Length() <= aDest.Capacity(), "buffer overflow");
   return rv;
+}
+
+nsresult
+NS_CloneInputStream(nsIInputStream* aSource, nsIInputStream** aCloneOut,
+                    nsIInputStream** aReplacementOut)
+{
+  // Attempt to perform the clone directly on the source stream
+  nsCOMPtr<nsICloneableInputStream> cloneable = do_QueryInterface(aSource);
+  if (cloneable && cloneable->GetCloneable()) {
+    if (aReplacementOut) {
+      *aReplacementOut = nullptr;
+    }
+    return cloneable->Clone(aCloneOut);
+  }
+
+  // If we failed the clone and the caller does not want to replace their
+  // original stream, then we are done.  Return error.
+  if (!aReplacementOut) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // The caller has opted-in to the fallback clone support that replaces
+  // the original stream.  Copy the data to a pipe and return two cloned
+  // input streams.
+
+  nsCOMPtr<nsIInputStream> reader;
+  nsCOMPtr<nsIInputStream> readerClone;
+  nsCOMPtr<nsIOutputStream> writer;
+
+  nsresult rv = NS_NewPipe(getter_AddRefs(reader), getter_AddRefs(writer),
+                           0, 0,        // default segment size and max size
+                           true, true); // non-blocking
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  cloneable = do_QueryInterface(reader);
+  MOZ_ASSERT(cloneable && cloneable->GetCloneable());
+
+  rv = cloneable->Clone(getter_AddRefs(readerClone));
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  nsCOMPtr<nsIEventTarget> target =
+    do_GetService(NS_STREAMTRANSPORTSERVICE_CONTRACTID, &rv);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  rv = NS_AsyncCopy(aSource, writer, target, NS_ASYNCCOPY_VIA_WRITESEGMENTS);
+  if (NS_WARN_IF(NS_FAILED(rv))) { return rv; }
+
+  readerClone.forget(aCloneOut);
+  reader.forget(aReplacementOut);
+
+  return NS_OK;
 }

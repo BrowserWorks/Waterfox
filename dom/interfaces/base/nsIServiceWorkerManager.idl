@@ -6,9 +6,11 @@
 #include "domstubs.idl"
 
 interface nsIDocument;
+interface nsIInterceptedChannel;
+interface nsIPrincipal;
 interface nsIURI;
 
-[builtinclass, uuid(d6a9d4b6-39b0-4cd2-957d-28a57df5a031)]
+[builtinclass, uuid(d4367ffe-e435-4195-95f8-0a51b1bbfdfb)]
 interface nsIServiceWorkerUnregisterCallback : nsISupports
 {
   // aState is true if the unregistration succeded.
@@ -17,7 +19,7 @@ interface nsIServiceWorkerUnregisterCallback : nsISupports
   [noscript] void UnregisterFailed();
 };
 
-[builtinclass, uuid(78fdfe7c-0e2c-4157-ac6e-3952b61df36a)]
+[builtinclass, uuid(464882c8-81c0-4620-b9c4-44c12085b65b)]
 interface nsIServiceWorkerManager : nsISupports
 {
   /**
@@ -28,13 +30,14 @@ interface nsIServiceWorkerManager : nsISupports
    *
    * Returns a Promise.
    */
-  nsISupports register(in DOMString aScope, in DOMString aScriptURI);
+  nsISupports register(in nsIDOMWindow aWindow, in DOMString aScope, in DOMString aScriptURI);
 
   /**
    * Unregister an existing ServiceWorker registration for `aScope`.
    * It keeps aCallback alive until the operation is concluded.
    */
-  void unregister(in nsIServiceWorkerUnregisterCallback aCallback,
+  void unregister(in nsIPrincipal aPrincipal,
+                  in nsIServiceWorkerUnregisterCallback aCallback,
                   in DOMString aScope);
 
   // Returns a Promise
@@ -49,9 +52,18 @@ interface nsIServiceWorkerManager : nsISupports
   // Remove ready pending Promise
   void removeReadyPromise(in nsIDOMWindow aWindow);
 
+  // Returns true if a ServiceWorker is available for the scope of aURI.
+  bool isAvailableForURI(in nsIURI aURI);
+
+  // Returns true if a given document is currently controlled by a ServiceWorker
+  bool isControlled(in nsIDocument aDocument);
+
+  // Cause a fetch event to be dispatched to the worker global associated with the given document.
+  void dispatchFetchEvent(in nsIDocument aDoc, in nsIInterceptedChannel aChannel);
+
   // aTarget MUST be a ServiceWorkerRegistration.
-  [noscript] void AddRegistrationEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
-  [noscript] void RemoveRegistrationEventListener(in nsIURI aPageURI, in nsIDOMEventTarget aTarget);
+  [noscript] void AddRegistrationEventListener(in DOMString aScope, in nsIDOMEventTarget aTarget);
+  [noscript] void RemoveRegistrationEventListener(in DOMString aScope, in nsIDOMEventTarget aTarget);
 
   /**
    * Call this to request that document `aDoc` be controlled by a ServiceWorker

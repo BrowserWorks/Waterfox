@@ -31,7 +31,6 @@
 #include "nsCURILoader.h"
 #include "nsICategoryManager.h"
 #include "nsNTLMAuthModule.h"
-#include "nsStreamCipher.h"
 #include "nsKeyModule.h"
 #include "nsDataSignatureVerifier.h"
 #include "nsCertOverrideService.h"
@@ -93,8 +92,14 @@ _InstanceClassChrome##Constructor(nsISupports *aOuter, REFNSIID aIID,         \
         return rv;                                                            \
     }                                                                         \
                                                                               \
-    if (!EnsureNSSInitialized(ensureOperator))                                \
+    if (!NS_IS_PROCESS_DEFAULT &&                                             \
+        ensureOperator == nssEnsureChromeOrContent) {                         \
+        if (!EnsureNSSInitializedChromeOrContent()) {                         \
+            return NS_ERROR_FAILURE;                                          \
+        }                                                                     \
+    } else if (!EnsureNSSInitialized(ensureOperator)) {                       \
         return NS_ERROR_FAILURE;                                              \
+    }                                                                         \
                                                                               \
     if (NS_IS_PROCESS_DEFAULT)                                                \
         NS_NSS_INSTANTIATE(ensureOperator, _InstanceClassChrome);             \
@@ -193,9 +198,8 @@ NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCertTree)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsPkcs11)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCertPicker)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR_INIT(nssEnsure, nsNTLMAuthModule, InitTest)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCryptoHash)
+NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsureChromeOrContent, nsCryptoHash)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsCryptoHMAC)
-NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsStreamCipher)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsKeyObject)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsKeyObjectFactory)
 NS_NSS_GENERIC_FACTORY_CONSTRUCTOR(nssEnsure, nsDataSignatureVerifier)
@@ -228,7 +232,6 @@ NS_DEFINE_NAMED_CID(NS_CRYPTO_HASH_CID);
 NS_DEFINE_NAMED_CID(NS_CRYPTO_HMAC_CID);
 NS_DEFINE_NAMED_CID(NS_CERT_PICKER_CID);
 NS_DEFINE_NAMED_CID(NS_NTLMAUTHMODULE_CID);
-NS_DEFINE_NAMED_CID(NS_STREAMCIPHER_CID);
 NS_DEFINE_NAMED_CID(NS_KEYMODULEOBJECT_CID);
 NS_DEFINE_NAMED_CID(NS_KEYMODULEOBJECTFACTORY_CID);
 NS_DEFINE_NAMED_CID(NS_DATASIGNATUREVERIFIER_CID);
@@ -260,7 +263,6 @@ static const mozilla::Module::CIDEntry kNSSCIDs[] = {
   { &kNS_CRYPTO_HMAC_CID, false, nullptr, nsCryptoHMACConstructor },
   { &kNS_CERT_PICKER_CID, false, nullptr, nsCertPickerConstructor },
   { &kNS_NTLMAUTHMODULE_CID, false, nullptr, nsNTLMAuthModuleConstructor },
-  { &kNS_STREAMCIPHER_CID, false, nullptr, nsStreamCipherConstructor },
   { &kNS_KEYMODULEOBJECT_CID, false, nullptr, nsKeyObjectConstructor },
   { &kNS_KEYMODULEOBJECTFACTORY_CID, false, nullptr, nsKeyObjectFactoryConstructor },
   { &kNS_DATASIGNATUREVERIFIER_CID, false, nullptr, nsDataSignatureVerifierConstructor },
@@ -297,7 +299,6 @@ static const mozilla::Module::ContractIDEntry kNSSContracts[] = {
   { "@mozilla.org/uriloader/psm-external-content-listener;1", &kNS_PSMCONTENTLISTEN_CID },
   { NS_CRYPTO_FIPSINFO_SERVICE_CONTRACTID, &kNS_PKCS11MODULEDB_CID },
   { NS_NTLMAUTHMODULE_CONTRACTID, &kNS_NTLMAUTHMODULE_CID },
-  { NS_STREAMCIPHER_CONTRACTID, &kNS_STREAMCIPHER_CID },
   { NS_KEYMODULEOBJECT_CONTRACTID, &kNS_KEYMODULEOBJECT_CID },
   { NS_KEYMODULEOBJECTFACTORY_CONTRACTID, &kNS_KEYMODULEOBJECTFACTORY_CID },
   { NS_DATASIGNATUREVERIFIER_CONTRACTID, &kNS_DATASIGNATUREVERIFIER_CID },

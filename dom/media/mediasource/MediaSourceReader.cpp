@@ -49,6 +49,7 @@ MediaSourceReader::MediaSourceReader(MediaSourceDecoder* aDecoder)
   , mLastVideoTime(0)
   , mPendingSeekTime(-1)
   , mWaitingForSeekData(false)
+  , mSeekToEnd(false)
   , mTimeThreshold(0)
   , mDropAudioBeforeThreshold(false)
   , mDropVideoBeforeThreshold(false)
@@ -111,7 +112,7 @@ nsRefPtr<MediaDecoderReader::AudioDataPromise>
 MediaSourceReader::RequestAudioData()
 {
   nsRefPtr<AudioDataPromise> p = mAudioPromise.Ensure(__func__);
-  MSE_DEBUGV("");
+  MSE_DEBUGV("mLastAudioTime=%lld", mLastAudioTime);
   if (!mAudioTrack) {
     MSE_DEBUG("called with no audio track");
     mAudioPromise.Reject(DECODE_ERROR, __func__);
@@ -134,12 +135,16 @@ MediaSourceReader::RequestAudioData()
                                             &MediaSourceReader::CompleteAudioSeekAndRejectPromise));
       break;
     case SOURCE_NONE:
-      if (mLastAudioTime) {
+      if (!mLastAudioTime) {
+        // This is the first call to RequestAudioData.
+        // Fallback to using decoder with earliest data.
+        mAudioSourceDecoder = FirstDecoder(MediaData::AUDIO_DATA);
+      }
+      if (mLastAudioTime || !mAudioSourceDecoder) {
         CheckForWaitOrEndOfStream(MediaData::AUDIO_DATA, mLastAudioTime);
         break;
       }
-      // Fallback to using first reader
-      mAudioSourceDecoder = mAudioTrack->Decoders()[0];
+      // Fallback to getting first frame from first decoder.
     default:
       DoAudioRequest();
       break;
@@ -227,20 +232,21 @@ MediaSourceReader::OnAudioNotDecoded(NotDecodedReason aReason)
   mAudioRequest.Complete();
 
   MSE_DEBUG("aReason=%u IsEnded: %d", aReason, IsEnded());
-  if (aReason == DECODE_ERROR || aReason == CANCELED) {
-    mAudioPromise.Reject(aReason, __func__);
+  if (aReason == CANCELED) {
+    mAudioPromise.Reject(CANCELED, __func__);
     return;
   }
 
-  // End of stream. Force switching past this stream to another reader by
+  // If End of stream. Force switching past this stream to another reader by
   // switching to the end of the buffered range.
-  MOZ_ASSERT(aReason == END_OF_STREAM);
-  if (mAudioSourceDecoder) {
+  int64_t lastAudioTime = mLastAudioTime;
+  if (aReason == END_OF_STREAM && mAudioSourceDecoder) {
     AdjustEndTime(&mLastAudioTime, mAudioSourceDecoder);
   }
 
+  SwitchSourceResult result = SwitchAudioSource(&mLastAudioTime);
   // See if we can find a different source that can pick up where we left off.
-  if (SwitchAudioSource(&mLastAudioTime) == SOURCE_NEW) {
+  if (result == SOURCE_NEW) {
     GetAudioReader()->ResetDecode();
     mAudioSeekRequest.Begin(GetAudioReader()->Seek(GetReaderAudioTime(mLastAudioTime), 0)
                             ->RefableThen(GetTaskQueue(), __func__, this,
@@ -249,15 +255,30 @@ MediaSourceReader::OnAudioNotDecoded(NotDecodedReason aReason)
     return;
   }
 
+  // If we got a DECODE_ERROR and we have buffered data in the requested range
+  // then it must be a genuine decoding error.
+  // Otherwise we can assume that the data was either evicted or explicitely
+  // removed from the source buffer and we should wait for new data.
+  if (aReason == DECODE_ERROR && result != SOURCE_NONE) {
+    mAudioPromise.Reject(DECODE_ERROR, __func__);
+    return;
+  }
+
   CheckForWaitOrEndOfStream(MediaData::AUDIO_DATA, mLastAudioTime);
+
+  if (mLastAudioTime - lastAudioTime >= EOS_FUZZ_US) {
+    // No decoders are available to switch to. We will re-attempt from the last
+    // failing position.
+    mLastAudioTime = lastAudioTime;
+  }
 }
 
 nsRefPtr<MediaDecoderReader::VideoDataPromise>
 MediaSourceReader::RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThreshold)
 {
   nsRefPtr<VideoDataPromise> p = mVideoPromise.Ensure(__func__);
-  MSE_DEBUGV("RequestVideoData(%d, %lld)",
-             aSkipToNextKeyframe, aTimeThreshold);
+  MSE_DEBUGV("RequestVideoData(%d, %lld), mLastVideoTime=%lld",
+             aSkipToNextKeyframe, aTimeThreshold, mLastVideoTime);
   if (!mVideoTrack) {
     MSE_DEBUG("called with no video track");
     mVideoPromise.Reject(DECODE_ERROR, __func__);
@@ -285,12 +306,16 @@ MediaSourceReader::RequestVideoData(bool aSkipToNextKeyframe, int64_t aTimeThres
                                            &MediaSourceReader::CompleteVideoSeekAndRejectPromise));
       break;
     case SOURCE_NONE:
-      if (mLastVideoTime) {
+      if (!mLastVideoTime) {
+        // This is the first call to RequestVideoData.
+        // Fallback to using decoder with earliest data.
+        mVideoSourceDecoder = FirstDecoder(MediaData::VIDEO_DATA);
+      }
+      if (mLastVideoTime || !mVideoSourceDecoder) {
         CheckForWaitOrEndOfStream(MediaData::VIDEO_DATA, mLastVideoTime);
         break;
       }
-      // Fallback to using first reader.
-      mVideoSourceDecoder = mVideoTrack->Decoders()[0];
+      // Fallback to getting first frame from first decoder.
     default:
       DoVideoRequest();
       break;
@@ -355,20 +380,22 @@ MediaSourceReader::OnVideoNotDecoded(NotDecodedReason aReason)
   mVideoRequest.Complete();
 
   MSE_DEBUG("aReason=%u IsEnded: %d", aReason, IsEnded());
-  if (aReason == DECODE_ERROR || aReason == CANCELED) {
-    mVideoPromise.Reject(aReason, __func__);
+
+  if (aReason == CANCELED) {
+    mVideoPromise.Reject(CANCELED, __func__);
     return;
   }
 
-  // End of stream. Force switching past this stream to another reader by
+  // if End of stream. Force switching past this stream to another reader by
   // switching to the end of the buffered range.
-  MOZ_ASSERT(aReason == END_OF_STREAM);
-  if (mVideoSourceDecoder) {
+  int64_t lastVideoTime = mLastVideoTime;
+  if (aReason == END_OF_STREAM && mVideoSourceDecoder) {
     AdjustEndTime(&mLastVideoTime, mVideoSourceDecoder);
   }
 
   // See if we can find a different reader that can pick up where we left off.
-  if (SwitchVideoSource(&mLastVideoTime) == SOURCE_NEW) {
+  SwitchSourceResult result = SwitchVideoSource(&mLastVideoTime);
+  if (result == SOURCE_NEW) {
     GetVideoReader()->ResetDecode();
     mVideoSeekRequest.Begin(GetVideoReader()->Seek(GetReaderVideoTime(mLastVideoTime), 0)
                            ->RefableThen(GetTaskQueue(), __func__, this,
@@ -377,14 +404,29 @@ MediaSourceReader::OnVideoNotDecoded(NotDecodedReason aReason)
     return;
   }
 
+  // If we got a DECODE_ERROR and we have buffered data in the requested range
+  // then it must be a genuine decoding error.
+  // Otherwise we can assume that the data was either evicted or explicitely
+  // removed from the source buffer and we should wait for new data.
+  if (aReason == DECODE_ERROR && result != SOURCE_NONE) {
+    mVideoPromise.Reject(DECODE_ERROR, __func__);
+    return;
+  }
+
   CheckForWaitOrEndOfStream(MediaData::VIDEO_DATA, mLastVideoTime);
+
+  if (mLastVideoTime - lastVideoTime >= EOS_FUZZ_US) {
+    // No decoders are available to switch to. We will re-attempt from the last
+    // failing position.
+    mLastVideoTime = lastVideoTime;
+  }
 }
 
 void
 MediaSourceReader::CheckForWaitOrEndOfStream(MediaData::Type aType, int64_t aTime)
 {
   // If the entire MediaSource is done, generate an EndOfStream.
-  if (IsNearEnd(aTime)) {
+  if (IsNearEnd(aType, aTime)) {
     if (aType == MediaData::AUDIO_DATA) {
       mAudioPromise.Reject(END_OF_STREAM, __func__);
     } else {
@@ -727,6 +769,8 @@ MediaSourceReader::NotifyTimeRangesChanged()
     RefPtr<nsIRunnable> task(NS_NewRunnableMethod(
         this, &MediaSourceReader::AttemptSeek));
     GetTaskQueue()->Dispatch(task.forget());
+  } else {
+    MaybeNotifyHaveData();
   }
 }
 
@@ -824,14 +868,18 @@ MediaSourceReader::OnVideoSeekFailed(nsresult aResult)
 void
 MediaSourceReader::DoAudioSeek()
 {
-  if (SwitchAudioSource(&mPendingSeekTime) == SOURCE_NONE) {
+  int64_t seekTime = mPendingSeekTime;
+  if (mSeekToEnd) {
+    seekTime = LastSampleTime(MediaData::AUDIO_DATA);
+  }
+  if (SwitchAudioSource(&seekTime) == SOURCE_NONE) {
     // Data we need got evicted since the last time we checked for data
     // availability. Abort current seek attempt.
     mWaitingForSeekData = true;
     return;
   }
   GetAudioReader()->ResetDecode();
-  mAudioSeekRequest.Begin(GetAudioReader()->Seek(GetReaderAudioTime(mPendingSeekTime), 0)
+  mAudioSeekRequest.Begin(GetAudioReader()->Seek(GetReaderAudioTime(seekTime), 0)
                          ->RefableThen(GetTaskQueue(), __func__, this,
                                        &MediaSourceReader::OnAudioSeekCompleted,
                                        &MediaSourceReader::OnAudioSeekFailed));
@@ -866,7 +914,9 @@ MediaSourceReader::AttemptSeek()
     if (!mWaitingForSeekData) {
       return;
     }
-    if (!TrackBuffersContainTime(mPendingSeekTime)) {
+
+    mSeekToEnd = IsEnded() && mPendingSeekTime >= mMediaSourceDuration * USECS_PER_S;
+    if (!mSeekToEnd && !TrackBuffersContainTime(mPendingSeekTime)) {
       mVideoSourceDecoder = nullptr;
       mAudioSourceDecoder = nullptr;
       return;
@@ -890,14 +940,18 @@ MediaSourceReader::AttemptSeek()
 void
 MediaSourceReader::DoVideoSeek()
 {
-  if (SwitchVideoSource(&mPendingSeekTime) == SOURCE_NONE) {
+  int64_t seekTime = mPendingSeekTime;
+  if (mSeekToEnd) {
+    seekTime = LastSampleTime(MediaData::VIDEO_DATA);
+  }
+  if (SwitchVideoSource(&seekTime) == SOURCE_NONE) {
     // Data we need got evicted since the last time we checked for data
     // availability. Abort current seek attempt.
     mWaitingForSeekData = true;
     return;
   }
   GetVideoReader()->ResetDecode();
-  mVideoSeekRequest.Begin(GetVideoReader()->Seek(GetReaderVideoTime(mPendingSeekTime), 0)
+  mVideoSeekRequest.Begin(GetVideoReader()->Seek(GetReaderVideoTime(seekTime), 0)
                           ->RefableThen(GetTaskQueue(), __func__, this,
                                         &MediaSourceReader::OnVideoSeekCompleted,
                                         &MediaSourceReader::OnVideoSeekFailed));
@@ -944,6 +998,36 @@ MediaSourceReader::GetBuffered(dom::TimeRanges* aBuffered)
   return NS_OK;
 }
 
+already_AddRefed<SourceBufferDecoder>
+MediaSourceReader::FirstDecoder(MediaData::Type aType)
+{
+  ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+  TrackBuffer* trackBuffer =
+    aType == MediaData::AUDIO_DATA ? mAudioTrack : mVideoTrack;
+  MOZ_ASSERT(trackBuffer);
+  const nsTArray<nsRefPtr<SourceBufferDecoder>>& decoders = trackBuffer->Decoders();
+  if (decoders.IsEmpty()) {
+    return nullptr;
+  }
+
+  nsRefPtr<SourceBufferDecoder> firstDecoder;
+  double lowestStartTime = PositiveInfinity<double>();
+
+  for (uint32_t i = 0; i < decoders.Length(); ++i) {
+    nsRefPtr<TimeRanges> r = new TimeRanges();
+    decoders[i]->GetBuffered(r);
+    double start = r->GetStartTime();
+    if (start < 0) {
+      continue;
+    }
+    if (start < lowestStartTime) {
+      firstDecoder = decoders[i];
+      lowestStartTime = start;
+    }
+  }
+  return firstDecoder.forget();
+}
+
 nsRefPtr<MediaDecoderReader::WaitForDataPromise>
 MediaSourceReader::WaitForData(MediaData::Type aType)
 {
@@ -958,16 +1042,34 @@ MediaSourceReader::MaybeNotifyHaveData()
 {
   ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
   bool haveAudio = false, haveVideo = false;
-  if (!IsSeeking() && mAudioTrack && HaveData(mLastAudioTime, MediaData::AUDIO_DATA)) {
-    haveAudio = true;
-    WaitPromise(MediaData::AUDIO_DATA).ResolveIfExists(MediaData::AUDIO_DATA, __func__);
+  bool ended = IsEnded();
+  // If we are in ended mode, we will resolve any pending wait promises.
+  // The next Request*Data will handle END_OF_STREAM or going back into waiting
+  // mode.
+  if (!IsSeeking() && mAudioTrack) {
+    if (!mLastAudioTime) {
+      nsRefPtr<SourceBufferDecoder> d = FirstDecoder(MediaData::AUDIO_DATA);
+      haveAudio = !!d;
+    } else {
+      haveAudio = HaveData(mLastAudioTime, MediaData::AUDIO_DATA);
+    }
+    if (ended || haveAudio) {
+      WaitPromise(MediaData::AUDIO_DATA).ResolveIfExists(MediaData::AUDIO_DATA, __func__);
+    }
   }
-  if (!IsSeeking() && mVideoTrack && HaveData(mLastVideoTime, MediaData::VIDEO_DATA)) {
-    haveVideo = true;
-    WaitPromise(MediaData::VIDEO_DATA).ResolveIfExists(MediaData::VIDEO_DATA, __func__);
+  if (!IsSeeking() && mVideoTrack) {
+    if (!mLastVideoTime) {
+      nsRefPtr<SourceBufferDecoder> d = FirstDecoder(MediaData::VIDEO_DATA);
+      haveVideo = !!d;
+    } else {
+      haveVideo = HaveData(mLastVideoTime, MediaData::VIDEO_DATA);
+    }
+    if (ended || haveVideo) {
+      WaitPromise(MediaData::VIDEO_DATA).ResolveIfExists(MediaData::VIDEO_DATA, __func__);
+    }
   }
-  MSE_DEBUG("isSeeking=%d haveAudio=%d, haveVideo=%d",
-            IsSeeking(), haveAudio, haveVideo);
+  MSE_DEBUG("isSeeking=%d haveAudio=%d, haveVideo=%d ended=%d",
+            IsSeeking(), haveAudio, haveVideo, ended);
 }
 
 nsresult
@@ -1042,10 +1144,17 @@ MediaSourceReader::ReadUpdatedMetadata(MediaInfo* aInfo)
 }
 
 void
-MediaSourceReader::Ended()
+MediaSourceReader::Ended(bool aEnded)
 {
   mDecoder->GetReentrantMonitor().AssertCurrentThreadIn();
-  mEnded = true;
+  mEnded = aEnded;
+  if (aEnded) {
+    // post a task to the decode queue to try to complete any pending
+    // seek or wait
+    RefPtr<nsIRunnable> task(NS_NewRunnableMethod(
+        this, &MediaSourceReader::NotifyTimeRangesChanged));
+    GetTaskQueue()->Dispatch(task.forget());
+  }
 }
 
 bool
@@ -1056,10 +1165,29 @@ MediaSourceReader::IsEnded()
 }
 
 bool
-MediaSourceReader::IsNearEnd(int64_t aTime)
+MediaSourceReader::IsNearEnd(MediaData::Type aType, int64_t aTime)
 {
   ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
-  return mEnded && aTime >= (mMediaSourceDuration * USECS_PER_S - EOS_FUZZ_US);
+  if (!mEnded) {
+    return false;
+  }
+  TrackBuffer* trackBuffer =
+    aType == MediaData::AUDIO_DATA ? mAudioTrack : mVideoTrack;
+  nsRefPtr<dom::TimeRanges> buffered = new dom::TimeRanges();
+  trackBuffer->Buffered(buffered);
+  return aTime >= (buffered->GetEndTime() * USECS_PER_S - EOS_FUZZ_US);
+}
+
+int64_t
+MediaSourceReader::LastSampleTime(MediaData::Type aType)
+{
+  ReentrantMonitorAutoEnter mon(mDecoder->GetReentrantMonitor());
+
+  TrackBuffer* trackBuffer =
+  aType == MediaData::AUDIO_DATA ? mAudioTrack : mVideoTrack;
+  nsRefPtr<dom::TimeRanges> buffered = new dom::TimeRanges();
+  trackBuffer->Buffered(buffered);
+  return buffered->GetEndTime() * USECS_PER_S - 1;
 }
 
 void

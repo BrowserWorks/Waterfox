@@ -24,9 +24,9 @@ class Headers;
 class InternalHeaders;
 class Promise;
 
-class Response MOZ_FINAL : public nsISupports
-                         , public nsWrapperCache
+class Response final : public nsISupports
                          , public FetchBody<Response>
+                         , public nsWrapperCache
 {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Response)
@@ -37,7 +37,7 @@ public:
   Response(const Response& aOther) = delete;
 
   JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  WrapObject(JSContext* aCx) override
   {
     return ResponseBinding::Wrap(aCx, this);
   }
@@ -56,10 +56,26 @@ public:
     aUrl.AsAString() = NS_ConvertUTF8toUTF16(url);
   }
 
+  bool
+  GetFinalURL(ErrorResult& aRv) const
+  {
+    return mInternalResponse->FinalURL();
+  }
+
+  void
+  SetFinalURL(bool aFinalURL, ErrorResult& aRv);
+
   uint16_t
   Status() const
   {
     return mInternalResponse->GetStatus();
+  }
+
+  bool
+  Ok() const
+  {
+    return mInternalResponse->GetStatus() >= 200 &&
+           mInternalResponse->GetStatus() <= 299;
   }
 
   void
@@ -83,7 +99,7 @@ public:
   Error(const GlobalObject& aGlobal);
 
   static already_AddRefed<Response>
-  Redirect(const GlobalObject& aGlobal, const nsAString& aUrl, uint16_t aStatus);
+  Redirect(const GlobalObject& aGlobal, const nsAString& aUrl, uint16_t aStatus, ErrorResult& aRv);
 
   static already_AddRefed<Response>
   Constructor(const GlobalObject& aGlobal,
@@ -96,7 +112,7 @@ public:
   }
 
   already_AddRefed<Response>
-  Clone();
+  Clone(ErrorResult& aRv) const;
 
   void
   SetBody(nsIInputStream* aBody);

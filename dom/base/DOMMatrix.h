@@ -40,6 +40,9 @@ public:
     }
   }
 
+  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(DOMMatrixReadOnly)
+  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(DOMMatrixReadOnly)
+
 #define GetMatrixMember(entry2D, entry3D, default) \
 { \
   if (mMatrix3D) { \
@@ -130,16 +133,15 @@ protected:
   nsAutoPtr<gfx::Matrix>    mMatrix2D;
   nsAutoPtr<gfx::Matrix4x4> mMatrix3D;
 
-  ~DOMMatrixReadOnly()
-  {
-  }
+  virtual ~DOMMatrixReadOnly() {}
+
 private:
   DOMMatrixReadOnly() = delete;
   DOMMatrixReadOnly(const DOMMatrixReadOnly&) = delete;
   DOMMatrixReadOnly& operator=(const DOMMatrixReadOnly&) = delete;
 };
 
-class DOMMatrix MOZ_FINAL : public DOMMatrixReadOnly
+class DOMMatrix final : public DOMMatrixReadOnly
 {
 public:
   explicit DOMMatrix(nsISupports* aParent)
@@ -149,9 +151,6 @@ public:
   DOMMatrix(nsISupports* aParent, const DOMMatrixReadOnly& other)
     : DOMMatrixReadOnly(aParent, other)
   {}
-
-  NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(DOMMatrix)
-  NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(DOMMatrix)
 
   static already_AddRefed<DOMMatrix>
   Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);
@@ -167,7 +166,7 @@ public:
   Constructor(const GlobalObject& aGlobal, const Sequence<double>& aNumberSequence, ErrorResult& aRv);
 
   nsISupports* GetParentObject() const { return mParent; }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
 #define Set2DMatrixMember(entry2D, entry3D) \
 { \
@@ -246,8 +245,6 @@ public:
   DOMMatrix* SetMatrixValue(const nsAString& aTransformList, ErrorResult& aRv);
 private:
   void Ensure3DMatrix();
-
-  ~DOMMatrix() {}
 };
 
 }

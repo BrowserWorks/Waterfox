@@ -103,9 +103,8 @@
 
 // Flags for the kFlagsTable bitfield (flags_ in nsCSSPropList.h)
 
-// A property that is a *-ltr-source or *-rtl-source property for one of
-// the directional pseudo-shorthand properties.
-#define CSS_PROPERTY_DIRECTIONAL_SOURCE           (1<<0)
+// This property is a logical property (such as padding-inline-start).
+#define CSS_PROPERTY_LOGICAL                      (1<<0)
 
 #define CSS_PROPERTY_VALUE_LIST_USES_COMMAS       (1<<1) /* otherwise spaces */
 
@@ -131,12 +130,14 @@
 // list.
 #define CSS_PROPERTY_IMAGE_IS_IN_ARRAY_0          (1<<6)
 
-// This is a property for which the computed value should generally be
-// reported as the computed value of a property of a different name.  In
-// particular, the directional box properties (margin-left-value, etc.)
-// should be reported as being margin-left, etc.  Call
-// nsCSSProps::OtherNameFor to get the other property.
-#define CSS_PROPERTY_REPORT_OTHER_NAME            (1<<7)
+// This is a logical property that represents some value associated with
+// a logical axis rather than a logical box side, and thus has two
+// corresponding physical properties it could set rather than four.  For
+// example, the block-size logical property has this flag set, as it
+// represents the size in either the block or inline axis dimensions, and
+// has two corresponding physical properties, width and height.  Must not
+// be used in conjunction with CSS_PROPERTY_LOGICAL_END_EDGE.
+#define CSS_PROPERTY_LOGICAL_AXIS                 (1<<7)
 
 // This property allows calc() between lengths and percentages and
 // stores such calc() expressions in its style structs (typically in an
@@ -215,6 +216,21 @@ static_assert((CSS_PROPERTY_PARSE_PROPERTY_MASK &
 
 // This property's unitless values are pixels.
 #define CSS_PROPERTY_NUMBERS_ARE_PIXELS           (1<<24)
+
+// This property is a logical property for one of the two block axis
+// sides (such as margin-block-start or margin-block-end).  Must only be
+// set if CSS_PROPERTY_LOGICAL is set.  When not set, the logical
+// property is for one of the two inline axis sides (such as
+// margin-inline-start or margin-inline-end).
+#define CSS_PROPERTY_LOGICAL_BLOCK_AXIS           (1<<25)
+
+// This property is a logical property for the "end" edge of the
+// axis determined by the presence or absence of
+// CSS_PROPERTY_LOGICAL_BLOCK_AXIS (such as margin-block-end or
+// margin-inline-end).  Must only be set if CSS_PROPERTY_LOGICAL is set.
+// When not set, the logical property is for the "start" edge (such as
+// margin-block-start or margin-inline-start).
+#define CSS_PROPERTY_LOGICAL_END_EDGE             (1<<26)
 
 /**
  * Types of animatable values.
@@ -301,8 +317,8 @@ public:
   static bool IsCustomPropertyName(const nsACString& aProperty);
 
   static inline bool IsShorthand(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(0 <= aProperty && aProperty < eCSSProperty_COUNT,
-                 "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
     return (aProperty >= eCSSProperty_COUNT_no_shorthands);
   }
 
@@ -325,11 +341,6 @@ public:
   static const nsAFlatCString& GetStringValue(nsCSSProperty aProperty);
   static const nsAFlatCString& GetStringValue(nsCSSFontDesc aFontDesc);
   static const nsAFlatCString& GetStringValue(nsCSSCounterDesc aCounterDesc);
-
-  // Get the property to report the computed value of aProperty as being
-  // the computed value of.  aProperty must have the
-  // CSS_PROPERTY_REPORT_OTHER_NAME bit set.
-  static nsCSSProperty OtherNameFor(nsCSSProperty aProperty);
 
   // Given a CSS Property and a Property Enum Value
   // Return back a const nsString& representation of the
@@ -370,8 +381,8 @@ private:
 public:
   static inline bool PropHasFlags(nsCSSProperty aProperty, uint32_t aFlags)
   {
-    NS_ABORT_IF_FALSE(0 <= aProperty && aProperty < eCSSProperty_COUNT,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
     MOZ_ASSERT(!(aFlags & CSS_PROPERTY_PARSE_PROPERTY_MASK),
                "The CSS_PROPERTY_PARSE_* values are not bitflags; don't pass "
                "them to PropHasFlags.  You probably want PropertyParseType "
@@ -381,16 +392,16 @@ public:
 
   static inline uint32_t PropertyParseType(nsCSSProperty aProperty)
   {
-    NS_ABORT_IF_FALSE(0 <= aProperty && aProperty < eCSSProperty_COUNT,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
     return nsCSSProps::kFlagsTable[aProperty] &
            CSS_PROPERTY_PARSE_PROPERTY_MASK;
   }
 
   static inline uint32_t ValueRestrictions(nsCSSProperty aProperty)
   {
-    NS_ABORT_IF_FALSE(0 <= aProperty && aProperty < eCSSProperty_COUNT,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT,
+               "out of range");
     return nsCSSProps::kFlagsTable[aProperty] &
            CSS_PROPERTY_VALUE_RESTRICTION_MASK;
   }
@@ -401,9 +412,8 @@ private:
 
 public:
   static inline uint32_t ParserVariant(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(0 <= aProperty &&
-                      aProperty < eCSSProperty_COUNT_no_shorthands,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_no_shorthands,
+               "out of range");
     return nsCSSProps::kParserVariantTable[aProperty];
   }
 
@@ -416,9 +426,9 @@ private:
 public:
   static inline
   const nsCSSProperty * SubpropertyEntryFor(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(eCSSProperty_COUNT_no_shorthands <= aProperty &&
-                      aProperty < eCSSProperty_COUNT,
-                      "out of range");
+    MOZ_ASSERT(eCSSProperty_COUNT_no_shorthands <= aProperty &&
+               aProperty < eCSSProperty_COUNT,
+               "out of range");
     return nsCSSProps::kSubpropertyTable[aProperty -
                                          eCSSProperty_COUNT_no_shorthands];
   }
@@ -427,10 +437,9 @@ public:
   // properties containing |aProperty|, sorted from those that contain
   // the most properties to those that contain the least.
   static const nsCSSProperty * ShorthandsContaining(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(gShorthandsContainingPool, "uninitialized");
-    NS_ABORT_IF_FALSE(0 <= aProperty &&
-                      aProperty < eCSSProperty_COUNT_no_shorthands,
-                      "out of range");
+    MOZ_ASSERT(gShorthandsContainingPool, "uninitialized");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_no_shorthands,
+               "out of range");
     return gShorthandsContainingTable[aProperty];
   }
 private:
@@ -452,8 +461,8 @@ public:
    * nsRuleNode builds the nsStyle* for aSID.
    */
   static size_t PropertyCountInStruct(nsStyleStructID aSID) {
-    NS_ABORT_IF_FALSE(0 <= aSID && aSID < nsStyleStructID_Length,
-                      "out of range");
+    MOZ_ASSERT(0 <= aSID && aSID < nsStyleStructID_Length,
+               "out of range");
     return gPropertyCountInStruct[aSID];
   }
   /**
@@ -461,11 +470,37 @@ public:
    * the range 0 <= index < PropertyCountInStruct(aSID).
    */
   static size_t PropertyIndexInStruct(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(0 <= aProperty &&
-                         aProperty < eCSSProperty_COUNT_no_shorthands,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_no_shorthands,
+               "out of range");
     return gPropertyIndexInStruct[aProperty];
   }
+
+private:
+  // A table for logical property groups.  Indexes are
+  // nsCSSPropertyLogicalGroup values.
+  static const nsCSSProperty* const
+    kLogicalGroupTable[eCSSPropertyLogicalGroup_COUNT];
+
+public:
+  /**
+   * Returns an array of longhand physical properties which can be set by
+   * the argument, which must be a logical longhand property.  The returned
+   * array is terminated by an eCSSProperty_UNKNOWN value.  For example,
+   * given eCSSProperty_margin_block_start, returns an array of the four
+   * properties eCSSProperty_margin_top, eCSSProperty_margin_right,
+   * eCSSProperty_margin_bottom and eCSSProperty_margin_left, followed
+   * by the sentinel.
+   *
+   * When called with a property that has the CSS_PROPERTY_LOGICAL_AXIS
+   * flag, the returned array will have two values preceding the sentinel;
+   * otherwise it will have four.
+   *
+   * (Note that the running time of this function is proportional to the
+   * number of logical longhand properties that exist.  If we start
+   * getting too many of these properties, we should make kLogicalGroupTable
+   * be a simple array of eCSSProperty_COUNT length.)
+   */
+  static const nsCSSProperty* LogicalGroup(nsCSSProperty aProperty);
 
 private:
   static bool gPropertyEnabled[eCSSProperty_COUNT_with_aliases];
@@ -473,9 +508,8 @@ private:
 public:
 
   static bool IsEnabled(nsCSSProperty aProperty) {
-    NS_ABORT_IF_FALSE(0 <= aProperty &&
-                      aProperty < eCSSProperty_COUNT_with_aliases,
-                      "out of range");
+    MOZ_ASSERT(0 <= aProperty && aProperty < eCSSProperty_COUNT_with_aliases,
+               "out of range");
     return gPropertyEnabled[aProperty];
   }
 
@@ -502,10 +536,15 @@ public:
 
 public:
 
-#define CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(iter_, prop_)                    \
-  for (const nsCSSProperty* iter_ = nsCSSProps::SubpropertyEntryFor(prop_);   \
-       *iter_ != eCSSProperty_UNKNOWN; ++iter_) \
-    if (nsCSSProps::IsEnabled(*iter_))
+// Storing the enabledstate_ value in an nsCSSProperty variable is a small hack
+// to avoid needing a separate variable declaration for its real type
+// (nsCSSProps::EnabledState), which would then require using a block and
+// therefore a pair of macros by consumers for the start and end of the loop.
+#define CSSPROPS_FOR_SHORTHAND_SUBPROPERTIES(it_, prop_, enabledstate_)       \
+  for (const nsCSSProperty *it_ = nsCSSProps::SubpropertyEntryFor(prop_),     \
+                            es_ = (nsCSSProperty) (enabledstate_);            \
+       *it_ != eCSSProperty_UNKNOWN; ++it_)                                   \
+    if (nsCSSProps::IsEnabled(*it_, (nsCSSProps::EnabledState) es_))
 
   // Keyword/Enum value tables
   static const KTableValue kAnimationDirectionKTable[];
@@ -628,6 +667,7 @@ public:
   static const KTableValue kRadialGradientSizeKTable[];
   static const KTableValue kRadialGradientLegacySizeKTable[];
   static const KTableValue kResizeKTable[];
+  static const KTableValue kRubyAlignKTable[];
   static const KTableValue kRubyPositionKTable[];
   static const KTableValue kScrollBehaviorKTable[];
   static const KTableValue kSpeakKTable[];

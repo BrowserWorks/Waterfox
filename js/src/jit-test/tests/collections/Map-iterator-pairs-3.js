@@ -2,8 +2,8 @@
 
 load(libdir + "iteration.js");
 
-var map = Map([['a', 1]]);
-var res = map[std_iterator]().next();
+var map = new Map([['a', 1]]);
+var res = map[Symbol.iterator]().next();
 assertIteratorResult(res, ['a', 1], false);
 res.value[0] = 'b';
 res.value[1] = 2;

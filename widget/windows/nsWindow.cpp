@@ -133,14 +133,6 @@
 #include "mozilla/WindowsVersion.h"
 #include "nsThemeConstants.h"
 
-#ifdef MOZ_ENABLE_D3D9_LAYER
-#include "LayerManagerD3D9.h"
-#endif
-
-#ifdef MOZ_ENABLE_D3D10_LAYER
-#include "LayerManagerD3D10.h"
-#endif
-
 #include "nsIGfxInfo.h"
 #include "nsUXThemeConstants.h"
 #include "KeyboardLayout.h"
@@ -256,15 +248,7 @@ int             nsWindow::sTrimOnMinimize         = 2;
 // Default value for general window class (used when the pref is the empty string).
 const char*     nsWindow::sDefaultMainWindowClass = kClassNameGeneral;
 
-// If we're using D3D9, this will not be allowed during initial 5 seconds.
-bool            nsWindow::sAllowD3D9              = false;
-
 TriStateBool nsWindow::sHasBogusPopupsDropShadowOnMultiMonitor = TRI_UNKNOWN;
-
-// Used in OOPP plugin focus processing.
-const wchar_t* kOOPPPluginFocusEventId   = L"OOPP Plugin Focus Widget Event";
-uint32_t        nsWindow::sOOPPPluginFocusEvent   =
-                  RegisterWindowMessageW(kOOPPPluginFocusEventId);
 
 DWORD           nsWindow::sFirstEventTime = 0;
 TimeStamp       nsWindow::sFirstEventTimeStamp = TimeStamp();
@@ -476,7 +460,6 @@ nsresult
 nsWindow::Create(nsIWidget *aParent,
                  nsNativeWidget aNativeParent,
                  const nsIntRect &aRect,
-                 nsDeviceContext *aContext,
                  nsWidgetInitData *aInitData)
 {
   nsWidgetInitData defaultInitData;
@@ -496,7 +479,7 @@ nsWindow::Create(nsIWidget *aParent,
   // Ensure that the toolkit is created.
   nsToolkit::GetToolkit();
 
-  BaseCreate(baseParent, aRect, aContext, aInitData);
+  BaseCreate(baseParent, aRect, aInitData);
 
   HWND parent;
   if (aParent) { // has a nsIWidget parent
@@ -2003,7 +1986,7 @@ nsIntPoint nsWindow::GetClientOffset()
 
   RECT r1;
   GetWindowRect(mWnd, &r1);
-  nsIntPoint pt = WidgetToScreenOffset();
+  LayoutDeviceIntPoint pt = WidgetToScreenOffset();
   return nsIntPoint(pt.x - r1.left, pt.y - r1.top);
 }
 
@@ -2940,11 +2923,13 @@ void* nsWindow::GetNativeData(uint32_t aDataType)
                                       nullptr,
                                       nsToolkit::mDllInstance,
                                       nullptr);
+    case NS_NATIVE_PLUGIN_ID:
     case NS_NATIVE_PLUGIN_PORT:
     case NS_NATIVE_WIDGET:
     case NS_NATIVE_WINDOW:
-    case NS_NATIVE_SHAREABLE_WINDOW:
       return (void*)mWnd;
+    case NS_NATIVE_SHAREABLE_WINDOW:
+      return (void*) WinUtils::GetTopLevelHWND(mWnd);
     case NS_NATIVE_GRAPHIC:
       // XXX:  This is sleezy!!  Remember to Release the DC after using it!
 #ifdef MOZ_XUL
@@ -3080,13 +3065,13 @@ NS_METHOD nsWindow::SetIcon(const nsAString& aIconSpec)
  *
  **************************************************************/
 
-nsIntPoint nsWindow::WidgetToScreenOffset()
+LayoutDeviceIntPoint nsWindow::WidgetToScreenOffset()
 {
   POINT point;
   point.x = 0;
   point.y = 0;
   ::ClientToScreen(mWnd, &point);
-  return nsIntPoint(point.x, point.y);
+  return LayoutDeviceIntPoint(point.x, point.y);
 }
 
 nsIntSize nsWindow::ClientToWindowSize(const nsIntSize& aClientSize)
@@ -3328,24 +3313,6 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     *aAllowRetaining = true;
   }
 
-#ifdef MOZ_ENABLE_D3D10_LAYER
-  if (mLayerManager) {
-    if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_D3D10)
-    {
-      LayerManagerD3D10 *layerManagerD3D10 =
-        static_cast<LayerManagerD3D10*>(mLayerManager.get());
-      if (layerManagerD3D10->device() !=
-          gfxWindowsPlatform::GetPlatform()->GetD3D10Device())
-      {
-        MOZ_ASSERT(!mLayerManager->IsInTransaction());
-
-        mLayerManager->Destroy();
-        mLayerManager = nullptr;
-      }
-    }
-  }
-#endif
-
   RECT windowRect;
   ::GetClientRect(mWnd, &windowRect);
 
@@ -3359,64 +3326,13 @@ nsWindow::GetLayerManager(PLayerTransactionChild* aShadowManager,
     CreateCompositor();
   }
 
+  if (!mLayerManager) {
+    mLayerManager = CreateBasicLayerManager();
+  }
+
   // If we don't have a layer manager at this point we shouldn't have a
   // PCompositor actor pair either.
   MOZ_ASSERT(mLayerManager || (!mCompositorParent && !mCompositorChild));
-
-  if (!mLayerManager ||
-      (!sAllowD3D9 && aPersistence == LAYER_MANAGER_PERSISTENT &&
-        mLayerManager->GetBackendType() == LayersBackend::LAYERS_BASIC &&
-        !ShouldUseOffMainThreadCompositing())) {
-    // If D3D9 is not currently allowed but the permanent manager is required,
-    // -and- we're currently using basic layers, run through this check.
-    LayerManagerPrefs prefs;
-    GetLayerManagerPrefs(&prefs);
-
-    /* We don't currently support using an accelerated layer manager with
-     * transparent windows so don't even try. I'm also not sure if we even
-     * want to support this case. See bug #593471 */
-    if (eTransparencyTransparent == mTransparencyMode ||
-        prefs.mDisableAcceleration ||
-        windowRect.right - windowRect.left > MAX_ACCELERATED_DIMENSION ||
-        windowRect.bottom - windowRect.top > MAX_ACCELERATED_DIMENSION)
-      mUseLayersAcceleration = false;
-    else if (prefs.mAccelerateByDefault)
-      mUseLayersAcceleration = true;
-
-    if (mUseLayersAcceleration) {
-      if (aPersistence == LAYER_MANAGER_PERSISTENT && !sAllowD3D9) {
-        MOZ_ASSERT(!mLayerManager || !mLayerManager->IsInTransaction());
-
-        // This will clear out our existing layer manager if we have one since
-        // if we hit this with a LayerManager we're always using BasicLayers.
-        nsToolkit::StartAllowingD3D9();
-      }
-
-#ifdef MOZ_ENABLE_D3D10_LAYER
-      if (!prefs.mPreferD3D9 && !prefs.mPreferOpenGL) {
-        nsRefPtr<LayerManagerD3D10> layerManager =
-          new LayerManagerD3D10(this);
-        if (layerManager->Initialize(prefs.mForceAcceleration)) {
-          mLayerManager = layerManager;
-        }
-      }
-#endif
-#ifdef MOZ_ENABLE_D3D9_LAYER
-      if (!prefs.mPreferOpenGL && !mLayerManager && sAllowD3D9) {
-        nsRefPtr<LayerManagerD3D9> layerManager =
-          new LayerManagerD3D9(this);
-        if (layerManager->Initialize(prefs.mForceAcceleration)) {
-          mLayerManager = layerManager;
-        }
-      }
-#endif
-    }
-
-    // Fall back to software if we couldn't use any hardware backends.
-    if (!mLayerManager) {
-      mLayerManager = CreateBasicLayerManager();
-    }
-  }
 
   NS_ASSERTION(mLayerManager, "Couldn't provide a valid layer manager.");
 
@@ -3623,8 +3539,7 @@ nsWindow::UpdateThemeGeometries(const nsTArray<ThemeGeometry>& aThemeGeometries)
 {
   nsIntRegion clearRegion;
   for (size_t i = 0; i < aThemeGeometries.Length(); i++) {
-    if ((aThemeGeometries[i].mWidgetType == NS_THEME_WINDOW_BUTTON_BOX ||
-         aThemeGeometries[i].mWidgetType == NS_THEME_WINDOW_BUTTON_BOX_MAXIMIZED) &&
+    if (aThemeGeometries[i].mType == nsNativeThemeWin::eThemeGeometryTypeWindowButtons &&
         nsUXThemeData::CheckForCompositor())
     {
       nsIntRect bounds = aThemeGeometries[i].mRect;
@@ -3911,7 +3826,7 @@ bool nsWindow::DispatchMouseEvent(uint32_t aEventType, WPARAM wParam,
     aInputSource == nsIDOMMouseEvent::MOZ_SOURCE_PEN ||
     !(WinUtils::GetIsMouseFromTouch(aEventType) && mTouchWindow);
 
-  nsIntPoint mpScreen = eventPoint + WidgetToScreenOffset();
+  nsIntPoint mpScreen = eventPoint + WidgetToScreenOffsetUntyped();
 
   // Suppress mouse moves caused by widget creation
   if (aEventType == NS_MOUSE_MOVE) 
@@ -4422,9 +4337,9 @@ LRESULT CALLBACK nsWindow::WindowProcInternal(HWND hWnd, UINT msg, WPARAM wParam
 
   // Hold the window for the life of this method, in case it gets
   // destroyed during processing, unless we're in the dtor already.
-  nsCOMPtr<nsISupports> kungFuDeathGrip;
+  nsCOMPtr<nsIWidget> kungFuDeathGrip;
   if (!targetWindow->mInDtor)
-    kungFuDeathGrip = do_QueryInterface((nsBaseWidget*)targetWindow);
+    kungFuDeathGrip = targetWindow;
 
   targetWindow->IPCWindowProcHandler(msg, wParam, lParam);
 
@@ -4782,7 +4697,9 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
         break;
 
       // let the dwm handle nc painting on glass
-      if(nsUXThemeData::CheckForCompositor())
+      // Never allow native painting if we are on fullscreen
+      if(mSizeMode != nsSizeMode_Fullscreen &&
+         nsUXThemeData::CheckForCompositor())
         break;
 
       if (wParam == TRUE) {
@@ -5477,26 +5394,6 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
     }
     break;
 
-    default:
-    {
-      if (msg == nsAppShell::GetTaskbarButtonCreatedMessage())
-        SetHasTaskbarIconBeenCreated();
-      if (msg == sOOPPPluginFocusEvent) {
-        if (wParam == 1) {
-          // With OOPP, the plugin window exists in another process and is a child of
-          // this window. This window is a placeholder plugin window for the dom. We
-          // receive this event when the child window receives focus. (sent from
-          // PluginInstanceParent.cpp)
-          ::SendMessage(mWnd, WM_MOUSEACTIVATE, 0, 0); // See nsPluginNativeWindowWin.cpp
-        } else {
-          // WM_KILLFOCUS was received by the child process.
-          if (sJustGotDeactivate) {
-            DispatchFocusToTopLevelWindow(false);
-          }
-        }
-      }
-    }
-    break;
     case WM_SETTINGCHANGE:
       if (IsWin8OrLater() && lParam &&
           !wcsicmp(L"ConvertibleSlateMode", (wchar_t*)lParam)) {
@@ -5512,6 +5409,14 @@ nsWindow::ProcessMessage(UINT msg, WPARAM& wParam, LPARAM& lParam,
           }
         }
       }
+    break;
+
+    default:
+    {
+      if (msg == nsAppShell::GetTaskbarButtonCreatedMessage()) {
+        SetHasTaskbarIconBeenCreated();
+      }
+    }
     break;
 
   }
@@ -5903,7 +5808,7 @@ nsWindow::SynthesizeNativeKeyEvent(int32_t aNativeKeyboardLayout,
 }
 
 nsresult
-nsWindow::SynthesizeNativeMouseEvent(nsIntPoint aPoint,
+nsWindow::SynthesizeNativeMouseEvent(LayoutDeviceIntPoint aPoint,
                                      uint32_t aNativeMessage,
                                      uint32_t aModifierFlags)
 {
@@ -5920,7 +5825,7 @@ nsWindow::SynthesizeNativeMouseEvent(nsIntPoint aPoint,
 }
 
 nsresult
-nsWindow::SynthesizeNativeMouseScrollEvent(nsIntPoint aPoint,
+nsWindow::SynthesizeNativeMouseScrollEvent(LayoutDeviceIntPoint aPoint,
                                            uint32_t aNativeMessage,
                                            double aDeltaX,
                                            double aDeltaY,
@@ -6296,7 +6201,7 @@ bool nsWindow::OnTouch(WPARAM wParam, LPARAM lParam)
       touchPoint.ScreenToClient(mWnd);
       nsRefPtr<Touch> touch =
         new Touch(pInputs[i].dwID,
-                  touchPoint,
+                  LayoutDeviceIntPoint::FromUntyped(touchPoint),
                   /* radius, if known */
                   pInputs[i].dwFlags & TOUCHINPUTMASKF_CONTACTAREA ?
                     nsIntPoint(
@@ -6409,54 +6314,6 @@ bool nsWindow::OnGesture(WPARAM wParam, LPARAM lParam)
   return true; // Handled
 }
 
-static BOOL WINAPI EnumFirstChild(HWND hwnd, LPARAM lParam)
-{
-  *((HWND*)lParam) = hwnd;
-  return FALSE;
-}
-
-static void InvalidatePluginAsWorkaround(nsWindow *aWindow, const nsIntRect &aRect)
-{
-  aWindow->Invalidate(aRect);
-
-  // XXX - Even more evil workaround!! See bug 762948, flash's bottom
-  // level sandboxed window doesn't seem to get our invalidate. We send
-  // an invalidate to it manually. This is totally specialized for this
-  // bug, for other child window structures this will just be a more or
-  // less bogus invalidate but since that should not have any bad
-  // side-effects this will have to do for now.
-  HWND current = (HWND)aWindow->GetNativeData(NS_NATIVE_WINDOW);
-
-  RECT windowRect;
-  RECT parentRect;
-
-  ::GetWindowRect(current, &parentRect);
-        
-  HWND next = current;
-
-  do {
-    current = next;
-
-    ::EnumChildWindows(current, &EnumFirstChild, (LPARAM)&next);
-
-    ::GetWindowRect(next, &windowRect);
-    // This is relative to the screen, adjust it to be relative to the
-    // window we're reconfiguring.
-    windowRect.left -= parentRect.left;
-    windowRect.top -= parentRect.top;
-  } while (next != current && windowRect.top == 0 && windowRect.left == 0);
-
-  if (windowRect.top == 0 && windowRect.left == 0) {
-    RECT rect;
-    rect.left   = aRect.x;
-    rect.top    = aRect.y;
-    rect.right  = aRect.XMost();
-    rect.bottom = aRect.YMost();
-
-    ::InvalidateRect(next, &rect, FALSE);
-  }
-}
-
 nsresult
 nsWindow::ConfigureChildren(const nsTArray<Configuration>& aConfigurations)
 {
@@ -6499,7 +6356,7 @@ nsWindow::ConfigureChildren(const nsTArray<Configuration>& aConfigurations)
                  -bounds.y);
         nsIntRect toInvalidate = r.GetBounds();
 
-        InvalidatePluginAsWorkaround(w, toInvalidate);
+        WinUtils::InvalidatePluginAsWorkaround(w, toInvalidate);
       }
     }
     rv = w->SetWindowClipRegion(configuration.mClipRegion, false);
@@ -6690,54 +6547,10 @@ bool nsWindow::AutoErase(HDC dc)
   return false;
 }
 
-void
-nsWindow::AllowD3D9Callback(nsWindow *aWindow)
+bool
+nsWindow::IsPopup()
 {
-  if (aWindow->mLayerManager && !aWindow->ShouldUseOffMainThreadCompositing()) {
-    aWindow->mLayerManager->Destroy();
-    aWindow->mLayerManager = nullptr;
-  }
-}
-
-void
-nsWindow::AllowD3D9WithReinitializeCallback(nsWindow *aWindow)
-{
-  if (aWindow->mLayerManager && !aWindow->ShouldUseOffMainThreadCompositing()) {
-    aWindow->mLayerManager->Destroy();
-    aWindow->mLayerManager = nullptr;
-    (void) aWindow->GetLayerManager();
-  }
-}
-
-void
-nsWindow::StartAllowingD3D9(bool aReinitialize)
-{
-  sAllowD3D9 = true;
-
-  LayerManagerPrefs prefs;
-  GetLayerManagerPrefs(&prefs);
-  if (prefs.mDisableAcceleration) {
-    // The guarantee here is, if there's *any* chance that after we
-    // throw out our layer managers we'd create at least one new,
-    // accelerated one, we *will* throw out all the current layer
-    // managers.  We early-return here because currently, if
-    // |disableAcceleration|, we will always use basic managers and
-    // it's a waste to recreate them. If we're using OMTC we don't want to
-    // recreate out layer manager and its compositor either. This is even
-    // more wasteful.
-    //
-    // NB: the above implies that it's eminently possible for us to
-    // skip this early return but still recreate basic managers.
-    // That's OK.  It's *not* OK to take this early return when we
-    // *might* have created an accelerated manager.
-    return;
-  }
-
-  if (aReinitialize) {
-    EnumAllWindows(AllowD3D9WithReinitializeCallback);
-  } else {
-    EnumAllWindows(AllowD3D9Callback);
-  }
+  return mWindowType == eWindowType_popup;
 }
 
 bool
@@ -6763,7 +6576,11 @@ nsWindow::GetPreferredCompositorBackends(nsTArray<LayersBackend>& aHints)
   // transparent windows so don't even try. I'm also not sure if we even
   // want to support this case. See bug 593471
   if (!(prefs.mDisableAcceleration ||
-        mTransparencyMode == eTransparencyTransparent)) {
+        mTransparencyMode == eTransparencyTransparent ||
+        (IsPopup() && gfxWindowsPlatform::GetPlatform()->IsWARP()))) {
+    // See bug 1150376, D3D11 composition can cause issues on some devices
+    // on windows 7 where presentation fails randomly for windows with drop
+    // shadows.
     if (prefs.mPreferOpenGL) {
       aHints.AppendElement(LayersBackend::LAYERS_OPENGL);
     }
@@ -6850,8 +6667,8 @@ nsWindow::OnSysColorChanged()
  **************************************************************
  **************************************************************/
 
-NS_IMETHODIMP
-nsWindow::NotifyIME(const IMENotification& aIMENotification)
+nsresult
+nsWindow::NotifyIMEInternal(const IMENotification& aIMENotification)
 {
   return IMEHandler::NotifyIME(this, aIMENotification);
 }
@@ -6898,7 +6715,7 @@ nsWindow::GetIMEUpdatePreference()
 #ifdef DEBUG
 #define NS_LOG_WMGETOBJECT(aWnd, aHwnd, aAcc)                                  \
   if (a11y::logging::IsEnabled(a11y::logging::ePlatforms)) {                   \
-    printf("Get the window:\n  {\n     HWND: %d, parent HWND: %d, wndobj: %p,\n",\
+    printf("Get the window:\n  {\n     HWND: %p, parent HWND: %p, wndobj: %p,\n",\
            aHwnd, ::GetParent(aHwnd), aWnd);                                   \
     printf("     acc: %p", aAcc);                                              \
     if (aAcc) {                                                                \

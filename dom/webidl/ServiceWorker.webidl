@@ -4,22 +4,24 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * The origin of this IDL file is
- * http://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html
+ * http://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html#service-worker-obj
  *
  */
 
 // Still unclear what should be subclassed.
 // https://github.com/slightlyoff/ServiceWorker/issues/189
-[Pref="dom.serviceWorkers.enabled",
- // XXXbz I have no idea where this should be exposed.  The spec makes
- // no sense.  But since it's got a pref, let's say window.
- Exposed=Window]
+[Func="mozilla::dom::workers::ServiceWorkerVisible",
+ // FIXME(nsm): Bug 1113522. This is exposed to satisfy webidl constraints, but it won't actually work.
+ Exposed=(ServiceWorker,Window)]
 interface ServiceWorker : EventTarget {
-  readonly attribute DOMString scope;
-  readonly attribute DOMString url;
-
+  readonly attribute USVString scriptURL;
   readonly attribute ServiceWorkerState state;
+
   attribute EventHandler onstatechange;
+
+  // FIXME(catalinb): Should inherit this from Worker.
+  [Throws]
+  void postMessage(any message, optional sequence<Transferable> transferable);
 };
 
 ServiceWorker implements AbstractWorker;

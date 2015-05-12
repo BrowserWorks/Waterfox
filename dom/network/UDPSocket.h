@@ -24,7 +24,7 @@ namespace dom {
 struct UDPOptions;
 class StringOrBlobOrArrayBufferOrArrayBufferView;
 
-class UDPSocket MOZ_FINAL : public DOMEventTargetHelper
+class UDPSocket final : public DOMEventTargetHelper
                           , public nsIUDPSocketListener
                           , public nsIUDPSocketInternal
 {
@@ -43,10 +43,10 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx) override;
 
   virtual void
-  DisconnectFromOwner() MOZ_OVERRIDE;
+  DisconnectFromOwner() override;
 
   static already_AddRefed<UDPSocket>
   Constructor(const GlobalObject& aGlobal, const UDPOptions& aOptions, ErrorResult& aRv);
@@ -128,6 +128,30 @@ public:
        ErrorResult& aRv);
 
 private:
+  class ListenerProxy : public nsIUDPSocketListener
+                      , public nsIUDPSocketInternal
+  {
+  public:
+    NS_DECL_ISUPPORTS
+    NS_FORWARD_SAFE_NSIUDPSOCKETLISTENER(mSocket)
+    NS_FORWARD_SAFE_NSIUDPSOCKETINTERNAL(mSocket)
+
+    explicit ListenerProxy(UDPSocket* aSocket)
+      : mSocket(aSocket)
+    {
+    }
+
+    void Disconnect()
+    {
+      mSocket = nullptr;
+    }
+
+  private:
+    virtual ~ListenerProxy() {}
+
+    UDPSocket* mSocket;
+  };
+
   UDPSocket(nsPIDOMWindow* aOwner,
             const nsCString& aRemoteAddress,
             const Nullable<uint16_t>& aRemotePort);
@@ -176,6 +200,7 @@ private:
 
   nsCOMPtr<nsIUDPSocket> mSocket;
   nsCOMPtr<nsIUDPSocketChild> mSocketChild;
+  nsRefPtr<ListenerProxy> mListenerProxy;
 
   struct MulticastCommand {
     enum CommandType { Join, Leave };

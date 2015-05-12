@@ -5,7 +5,6 @@
 #include "mozilla/unused.h"
 #include "mp4_demuxer/SinfParser.h"
 #include "mp4_demuxer/AtomType.h"
-#include "mp4_demuxer/mp4_demuxer.h"
 #include "mp4_demuxer/Box.h"
 
 namespace mp4_demuxer {

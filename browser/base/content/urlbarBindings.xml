@@ -160,6 +160,11 @@
                 break;
               }
             }
+          } else {
+            let originalUrl = ReaderMode.getOriginalUrl(aValue);
+            if (originalUrl) {
+              returnValue = originalUrl;
+            }
           }
 
           // Set the actiontype only if the user is not overriding actions.
@@ -334,14 +339,16 @@
               Cu.reportError(ex);
             }
 
-            function loadCurrent() {
+            let loadCurrent = () => {
               openUILinkIn(url, "current", {
                 allowThirdPartyFixup: true,
                 disallowInheritPrincipal: !mayInheritPrincipal,
                 allowPinnedTabHostChange: true,
                 postData: postData
               });
-            }
+              // Ensure the start of the URL is visible for UX reasons:
+              this.selectionStart = this.selectionEnd = 0;
+            };
 
             // Focus the content area before triggering loads, since if the load
             // occurs in a new tab, we want focus to be restored to the content
@@ -1157,7 +1164,6 @@
         // Finally, build the list of one-off buttons.
         while (list.firstChild)
           list.firstChild.remove();
-        textbox._selectedButton = null;
 
         // Avoid setting the selection based on mouse events before
         // the 'popupshown' event has fired.
@@ -1194,7 +1200,7 @@
           // Ensure the panel is wide enough to fit at least 3 engines.
           minWidth = Math.max(minWidth, ENGINE_WIDTH * 3);
         }
-        panel.setAttribute("style", "min-width: " + minWidth + "px");
+        panel.style.minWidth = minWidth + "px";
 
         if (!engines.length)
           return;
@@ -1313,6 +1319,9 @@
             onSuccess: function(engine) {
               event.target.hidePopup();
               BrowserSearch.searchBar.openSuggestionsPanel();
+            },
+            onError: function(errorCode) {
+              Components.utils.reportError("Error adding search engine: " + errorCode);
             }
           }
           Services.search.addEngine(target.getAttribute("uri"),
@@ -2256,7 +2265,6 @@
         _doorhangerTitle.value =
           gNavigatorBundle.getFormattedString(
             "badContentBlocked.notblocked.message", [this._brandShortName]);
-
         if (this.notification.options.state &
             Ci.nsIWebProgressListener.STATE_BLOCKED_MIXED_ACTIVE_CONTENT) {
           _doorhangerTitle.value =
@@ -2297,6 +2305,10 @@
             Services.urlFormatter.formatURLPref("app.support.baseURL")
               + "tracking-protection";
         }
+        if (Services.prefs.getBoolPref("privacy.trackingprotection.enabled")) {
+          let histogram = Services.telemetry.getHistogramById("TRACKING_PROTECTION_EVENTS");
+          histogram.add(0);
+        }
       ]]></constructor>
       <method name="disableMixedContentProtection">
         <body><![CDATA[
@@ -2328,7 +2340,7 @@
             null, null);
           // Add the current host in the 'trackingprotection' consumer of
           // the permission manager using a normalized URI. This effectively
-          // places this host on the tracking protection white list.
+          // places this host on the tracking protection allowlist.
           Services.perms.add(normalizedUrl,
             "trackingprotection", Services.perms.ALLOW_ACTION);
           // Telemetry for disable protection
@@ -2342,7 +2354,7 @@
         <body><![CDATA[
           // Remove the current host from the 'trackingprotection' consumer
           // of the permission manager. This effectively removes this host
-          // from the tracking protection white list (any list actually).
+          // from the tracking protection allowlist.
           Services.perms.remove(gBrowser.selectedBrowser.currentURI.host,
             "trackingprotection");
           // Telemetry for enable protection

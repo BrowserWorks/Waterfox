@@ -33,10 +33,10 @@ using mozilla::DebugOnly;
 using mozilla::PodZero;
 using mozilla::RotateLeft;
 
-Shape *const ShapeTable::Entry::SHAPE_REMOVED = (Shape *)ShapeTable::Entry::SHAPE_COLLISION;
+Shape* const ShapeTable::Entry::SHAPE_REMOVED = (Shape*)ShapeTable::Entry::SHAPE_COLLISION;
 
 bool
-ShapeTable::init(ExclusiveContext *cx, Shape *lastProp)
+ShapeTable::init(ExclusiveContext* cx, Shape* lastProp)
 {
     uint32_t sizeLog2 = CeilingLog2Size(entryCount_);
     uint32_t size = JS_BIT(sizeLog2);
@@ -58,9 +58,8 @@ ShapeTable::init(ExclusiveContext *cx, Shape *lastProp)
     hashShift_ = HASH_BITS - sizeLog2;
 
     for (Shape::Range<NoGC> r(lastProp); !r.empty(); r.popFront()) {
-        Shape &shape = r.front();
-        MOZ_ASSERT(cx->isThreadLocal(&shape));
-        Entry &entry = search(shape.propid(), true);
+        Shape& shape = r.front();
+        Entry& entry = search(shape.propid(), true);
 
         /*
          * Beware duplicate args and arg vs. var conflicts: the youngest shape
@@ -77,7 +76,7 @@ ShapeTable::init(ExclusiveContext *cx, Shape *lastProp)
 }
 
 void
-Shape::removeFromDictionary(NativeObject *obj)
+Shape::removeFromDictionary(NativeObject* obj)
 {
     MOZ_ASSERT(inDictionary());
     MOZ_ASSERT(obj->inDictionaryMode());
@@ -93,7 +92,7 @@ Shape::removeFromDictionary(NativeObject *obj)
 }
 
 void
-Shape::insertIntoDictionary(HeapPtrShape *dictp)
+Shape::insertIntoDictionary(HeapPtrShape* dictp)
 {
     // Don't assert inDictionaryMode() here because we may be called from
     // JSObject::toDictionaryMode via JSObject::newDictionaryShape.
@@ -107,18 +106,17 @@ Shape::insertIntoDictionary(HeapPtrShape *dictp)
     setParent(dictp->get());
     if (parent)
         parent->listp = &parent;
-    listp = (HeapPtrShape *) dictp;
+    listp = (HeapPtrShape*) dictp;
     *dictp = this;
 }
 
 bool
-Shape::makeOwnBaseShape(ExclusiveContext *cx)
+Shape::makeOwnBaseShape(ExclusiveContext* cx)
 {
     MOZ_ASSERT(!base()->isOwned());
-    MOZ_ASSERT(cx->isThreadLocal(this));
     assertSameCompartmentDebugOnly(cx, compartment());
 
-    BaseShape *nbase = js_NewGCBaseShape<NoGC>(cx);
+    BaseShape* nbase = js_NewGCBaseShape<NoGC>(cx);
     if (!nbase)
         return false;
 
@@ -131,7 +129,7 @@ Shape::makeOwnBaseShape(ExclusiveContext *cx)
 }
 
 void
-Shape::handoffTableTo(Shape *shape)
+Shape::handoffTableTo(Shape* shape)
 {
     MOZ_ASSERT(inDictionary() && shape->inDictionary());
 
@@ -140,7 +138,7 @@ Shape::handoffTableTo(Shape *shape)
 
     MOZ_ASSERT(base()->isOwned() && !shape->base()->isOwned());
 
-    BaseShape *nbase = base();
+    BaseShape* nbase = base();
 
     MOZ_ASSERT_IF(shape->hasSlot(), nbase->slotSpan() > shape->slot());
 
@@ -151,14 +149,14 @@ Shape::handoffTableTo(Shape *shape)
 }
 
 /* static */ bool
-Shape::hashify(ExclusiveContext *cx, Shape *shape)
+Shape::hashify(ExclusiveContext* cx, Shape* shape)
 {
     MOZ_ASSERT(!shape->hasTable());
 
     if (!shape->ensureOwnBaseShape(cx))
         return false;
 
-    ShapeTable *table = cx->new_<ShapeTable>(shape->entryCount());
+    ShapeTable* table = cx->new_<ShapeTable>(shape->entryCount());
     if (!table)
         return false;
 
@@ -187,7 +185,7 @@ Hash2(HashNumber hash0, uint32_t log2, uint32_t shift)
     return ((hash0 << log2) >> shift) | 1;
 }
 
-ShapeTable::Entry &
+ShapeTable::Entry&
 ShapeTable::search(jsid id, bool adding)
 {
     MOZ_ASSERT(entries_);
@@ -196,14 +194,14 @@ ShapeTable::search(jsid id, bool adding)
     /* Compute the primary hash address. */
     HashNumber hash0 = HashId(id);
     HashNumber hash1 = Hash1(hash0, hashShift_);
-    Entry *entry = &getEntry(hash1);
+    Entry* entry = &getEntry(hash1);
 
     /* Miss: return space for a new entry. */
     if (entry->isFree())
         return *entry;
 
     /* Hit: return entry. */
-    Shape *shape = entry->shape();
+    Shape* shape = entry->shape();
     if (shape && shape->propidRaw() == id)
         return *entry;
 
@@ -217,7 +215,7 @@ ShapeTable::search(jsid id, bool adding)
 #endif
 
     /* Save the first removed entry pointer so we can recycle it if adding. */
-    Entry *firstRemoved;
+    Entry* firstRemoved;
     if (entry->isRemoved()) {
         firstRemoved = entry;
     } else {
@@ -258,22 +256,8 @@ ShapeTable::search(jsid id, bool adding)
     MOZ_CRASH("Shape::search failed to find an expected entry.");
 }
 
-#ifdef JSGC_COMPACTING
-void
-ShapeTable::fixupAfterMovingGC()
-{
-    uint32_t size = capacity();
-    for (HashNumber i = 0; i < size; i++) {
-        Entry &entry = getEntry(i);
-        Shape *shape = entry.shape();
-        if (shape && IsForwarded(shape))
-            entry.setPreservingCollision(Forwarded(shape));
-    }
-}
-#endif
-
 bool
-ShapeTable::change(int log2Delta, ExclusiveContext *cx)
+ShapeTable::change(int log2Delta, ExclusiveContext* cx)
 {
     MOZ_ASSERT(entries_);
     MOZ_ASSERT(-1 <= log2Delta && log2Delta <= 1);
@@ -285,7 +269,7 @@ ShapeTable::change(int log2Delta, ExclusiveContext *cx)
     uint32_t newLog2 = oldLog2 + log2Delta;
     uint32_t oldSize = JS_BIT(oldLog2);
     uint32_t newSize = JS_BIT(newLog2);
-    Entry *newTable = cx->pod_calloc<Entry>(newSize);
+    Entry* newTable = cx->pod_calloc<Entry>(newSize);
     if (!newTable)
         return false;
 
@@ -293,14 +277,13 @@ ShapeTable::change(int log2Delta, ExclusiveContext *cx)
     MOZ_ASSERT(newLog2 <= HASH_BITS);
     hashShift_ = HASH_BITS - newLog2;
     removedCount_ = 0;
-    Entry *oldTable = entries_;
+    Entry* oldTable = entries_;
     entries_ = newTable;
 
     /* Copy only live entries, leaving removed and free ones behind. */
-    for (Entry *oldEntry = oldTable; oldSize != 0; oldEntry++) {
-        if (Shape *shape = oldEntry->shape()) {
-            MOZ_ASSERT(cx->isThreadLocal(shape));
-            Entry &entry = search(shape->propid(), true);
+    for (Entry* oldEntry = oldTable; oldSize != 0; oldEntry++) {
+        if (Shape* shape = oldEntry->shape()) {
+            Entry& entry = search(shape->propid(), true);
             MOZ_ASSERT(entry.isFree());
             entry.setShape(shape);
         }
@@ -315,7 +298,7 @@ ShapeTable::change(int log2Delta, ExclusiveContext *cx)
 }
 
 bool
-ShapeTable::grow(ExclusiveContext *cx)
+ShapeTable::grow(ExclusiveContext* cx)
 {
     MOZ_ASSERT(needsToGrow());
 
@@ -331,8 +314,8 @@ ShapeTable::grow(ExclusiveContext *cx)
     return true;
 }
 
-/* static */ Shape *
-Shape::replaceLastProperty(ExclusiveContext *cx, StackBaseShape &base,
+/* static */ Shape*
+Shape::replaceLastProperty(ExclusiveContext* cx, StackBaseShape& base,
                            TaggedProto proto, HandleShape shape)
 {
     MOZ_ASSERT(!shape->inDictionary());
@@ -345,7 +328,7 @@ Shape::replaceLastProperty(ExclusiveContext *cx, StackBaseShape &base,
                                            base.flags & BaseShape::OBJECT_FLAG_MASK);
     }
 
-    UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+    UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
     if (!nbase)
         return nullptr;
 
@@ -360,9 +343,9 @@ Shape::replaceLastProperty(ExclusiveContext *cx, StackBaseShape &base,
  * which must be lastProperty() if inDictionaryMode(), else parent must be
  * one of lastProperty() or lastProperty()->parent.
  */
-/* static */ Shape *
-NativeObject::getChildPropertyOnDictionary(ExclusiveContext *cx, HandleNativeObject obj,
-                                           HandleShape parent, StackShape &child)
+/* static */ Shape*
+NativeObject::getChildPropertyOnDictionary(ExclusiveContext* cx, HandleNativeObject obj,
+                                           HandleShape parent, StackShape& child)
 {
     /*
      * Shared properties have no slot, but slot_ will reflect that of parent.
@@ -404,7 +387,7 @@ NativeObject::getChildPropertyOnDictionary(ExclusiveContext *cx, HandleNativeObj
         if (!shape)
             return nullptr;
         if (childRoot->hasSlot() && childRoot->slot() >= obj->lastProperty()->base()->slotSpan()) {
-            if (!setSlotSpan(cx, obj, childRoot->slot() + 1))
+            if (!obj->setSlotSpan(cx, childRoot->slot() + 1))
                 return nullptr;
         }
         shape->initDictionaryShape(*childRoot, obj->numFixedSlots(), &obj->shape_);
@@ -413,12 +396,12 @@ NativeObject::getChildPropertyOnDictionary(ExclusiveContext *cx, HandleNativeObj
     return shape;
 }
 
-/* static */ Shape *
-NativeObject::getChildProperty(ExclusiveContext *cx,
-                               HandleNativeObject obj, HandleShape parent, StackShape &unrootedChild)
+/* static */ Shape*
+NativeObject::getChildProperty(ExclusiveContext* cx,
+                               HandleNativeObject obj, HandleShape parent, StackShape& unrootedChild)
 {
     RootedGeneric<StackShape*> child(cx, &unrootedChild);
-    RootedShape shape(cx, getChildPropertyOnDictionary(cx, obj, parent, *child));
+    Shape* shape = getChildPropertyOnDictionary(cx, obj, parent, *child);
 
     if (!obj->inDictionaryMode()) {
         shape = cx->compartment()->propertyTree.getChild(cx, parent, *child);
@@ -426,7 +409,7 @@ NativeObject::getChildProperty(ExclusiveContext *cx,
             return nullptr;
         //MOZ_ASSERT(shape->parent == parent);
         //MOZ_ASSERT_IF(parent != lastProperty(), parent == lastProperty()->parent);
-        if (!setLastProperty(cx, obj, shape))
+        if (!obj->setLastProperty(cx, shape))
             return nullptr;
     }
 
@@ -434,19 +417,12 @@ NativeObject::getChildProperty(ExclusiveContext *cx,
 }
 
 bool
-js::NativeObject::toDictionaryMode(ExclusiveContext *cx)
+js::NativeObject::toDictionaryMode(ExclusiveContext* cx)
 {
     MOZ_ASSERT(!inDictionaryMode());
 
     /* We allocate the shapes from cx->compartment(), so make sure it's right. */
     MOZ_ASSERT(cx->isInsideCurrentCompartment(this));
-
-    /*
-     * This function is thread safe as long as the object is thread local. It
-     * does not modify the shared shapes, and only allocates newly allocated
-     * (and thus also thread local) shapes.
-     */
-    MOZ_ASSERT(cx->isThreadLocal(this));
 
     uint32_t span = slotSpan();
 
@@ -462,13 +438,13 @@ js::NativeObject::toDictionaryMode(ExclusiveContext *cx)
     while (shape) {
         MOZ_ASSERT(!shape->inDictionary());
 
-        Shape *dprop = shape->isAccessorShape() ? NewGCAccessorShape(cx) : NewGCShape(cx);
+        Shape* dprop = shape->isAccessorShape() ? NewGCAccessorShape(cx) : NewGCShape(cx);
         if (!dprop) {
             js_ReportOutOfMemory(cx);
             return false;
         }
 
-        HeapPtrShape *listp = dictionaryShape ? &dictionaryShape->parent : nullptr;
+        HeapPtrShape* listp = dictionaryShape ? &dictionaryShape->parent : nullptr;
         StackShape child(shape);
         dprop->initDictionaryShape(child, self->numFixedSlots(), listp);
 
@@ -495,8 +471,8 @@ js::NativeObject::toDictionaryMode(ExclusiveContext *cx)
     return true;
 }
 
-/* static */ Shape *
-NativeObject::addProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId id,
+/* static */ Shape*
+NativeObject::addProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
                           PropertyOp getter, StrictPropertyOp setter,
                           uint32_t slot, unsigned attrs,
                           unsigned flags, bool allowDictionary)
@@ -506,7 +482,7 @@ NativeObject::addProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
     MOZ_ASSERT(setter != JS_StrictPropertyStub);
 
     bool extensible;
-    if (!JSObject::isExtensible(cx, obj, &extensible))
+    if (!IsExtensible(cx, obj, &extensible))
         return nullptr;
     if (!extensible) {
         if (cx->isJSContext())
@@ -514,7 +490,7 @@ NativeObject::addProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
         return nullptr;
     }
 
-    ShapeTable::Entry *entry = nullptr;
+    ShapeTable::Entry* entry = nullptr;
     if (obj->inDictionaryMode())
         entry = &obj->lastProperty()->table().search(id, true);
 
@@ -523,7 +499,7 @@ NativeObject::addProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
 }
 
 static bool
-ShouldConvertToDictionary(JSObject *obj)
+ShouldConvertToDictionary(JSObject* obj)
 {
     /*
      * Use a lower limit if this object is likely a hashmap (SETELEM was used
@@ -534,15 +510,14 @@ ShouldConvertToDictionary(JSObject *obj)
     return obj->lastProperty()->entryCount() >= PropertyTree::MAX_HEIGHT;
 }
 
-/* static */ Shape *
-NativeObject::addPropertyInternal(ExclusiveContext *cx,
+/* static */ Shape*
+NativeObject::addPropertyInternal(ExclusiveContext* cx,
                                   HandleNativeObject obj, HandleId id,
                                   PropertyOp getter, StrictPropertyOp setter,
                                   uint32_t slot, unsigned attrs,
-                                  unsigned flags, ShapeTable::Entry *entry,
+                                  unsigned flags, ShapeTable::Entry* entry,
                                   bool allowDictionary)
 {
-    MOZ_ASSERT(cx->isThreadLocal(obj));
     MOZ_ASSERT_IF(!allowDictionary, !obj->inDictionaryMode());
     MOZ_ASSERT(getter != JS_PropertyStub);
     MOZ_ASSERT(setter != JS_StrictPropertyStub);
@@ -554,7 +529,7 @@ NativeObject::addPropertyInternal(ExclusiveContext *cx,
      * growing an object that's already in dictionary mode. Either way,
      * dictionray operations are safe if thread local.
      */
-    ShapeTable *table = nullptr;
+    ShapeTable* table = nullptr;
     if (!obj->inDictionaryMode()) {
         bool stableSlot =
             (slot == SHAPE_INVALID_SLOT) ||
@@ -626,42 +601,34 @@ NativeObject::addPropertyInternal(ExclusiveContext *cx,
     return nullptr;
 }
 
-JSObject *
-js::NewReshapedObject(JSContext *cx, HandleTypeObject type, JSObject *parent,
-                      gc::AllocKind allocKind, HandleShape shape, NewObjectKind newKind)
+Shape*
+js::ReshapeForParentAndAllocKind(JSContext* cx, Shape* shape, TaggedProto proto, JSObject* parent,
+                                 gc::AllocKind allocKind)
 {
-    RootedPlainObject res(cx, NewObjectWithType<PlainObject>(cx, type, parent, allocKind, newKind));
-    if (!res)
-        return nullptr;
+    // Compute the number of fixed slots with the new allocation kind.
+    size_t nfixed = gc::GetGCKindSlots(allocKind, shape->getObjectClass());
 
-    if (shape->isEmptyShape())
-        return res;
-
-    /* Get all the ids in the object, in order. */
+    // Get all the ids in the shape, in order.
     js::AutoIdVector ids(cx);
     {
-        for (unsigned i = 0; i <= shape->slot(); i++) {
+        for (unsigned i = 0; i < shape->slotSpan(); i++) {
             if (!ids.append(JSID_VOID))
                 return nullptr;
         }
-        Shape *nshape = shape;
+        Shape* nshape = shape;
         while (!nshape->isEmptyShape()) {
             ids[nshape->slot()].set(nshape->propid());
             nshape = nshape->previous();
         }
     }
 
-    /* Construct the new shape, without updating type information. */
+    // Construct the new shape, without updating type information.
     RootedId id(cx);
-    RootedShape newShape(cx, EmptyShape::getInitialShape(cx, res->getClass(),
-                                                         res->getTaggedProto(),
-                                                         res->getParent(),
-                                                         res->getMetadata(),
-                                                         res->numFixedSlots(),
-                                                         shape->getObjectFlags()));
+    RootedShape newShape(cx, EmptyShape::getInitialShape(cx, shape->getObjectClass(),
+                                                         proto, parent, shape->getObjectMetadata(),
+                                                         nfixed, shape->getObjectFlags()));
     for (unsigned i = 0; i < ids.length(); i++) {
         id = ids[i];
-        MOZ_ASSERT(!res->contains(cx, id));
 
         uint32_t index;
         bool indexed = js_IdIsIndex(id, &index);
@@ -679,11 +646,9 @@ js::NewReshapedObject(JSContext *cx, HandleTypeObject type, JSObject *parent,
         newShape = cx->compartment()->propertyTree.getChild(cx, newShape, child);
         if (!newShape)
             return nullptr;
-        if (!NativeObject::setLastProperty(cx, res, newShape))
-            return nullptr;
     }
 
-    return res;
+    return newShape;
 }
 
 /*
@@ -692,7 +657,7 @@ js::NewReshapedObject(JSContext *cx, HandleTypeObject type, JSObject *parent,
  * enforce all restrictions from ECMA-262 v5 8.12.9 [[DefineOwnProperty]].
  */
 static inline bool
-CheckCanChangeAttrs(ExclusiveContext *cx, JSObject *obj, Shape *shape, unsigned *attrsp)
+CheckCanChangeAttrs(ExclusiveContext* cx, JSObject* obj, Shape* shape, unsigned* attrsp)
 {
     if (shape->configurable())
         return true;
@@ -712,19 +677,18 @@ CheckCanChangeAttrs(ExclusiveContext *cx, JSObject *obj, Shape *shape, unsigned 
     return true;
 }
 
-/* static */ Shape *
-NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId id,
+/* static */ Shape*
+NativeObject::putProperty(ExclusiveContext* cx, HandleNativeObject obj, HandleId id,
                           PropertyOp getter, StrictPropertyOp setter,
                           uint32_t slot, unsigned attrs, unsigned flags)
 {
-    MOZ_ASSERT(cx->isThreadLocal(obj));
     MOZ_ASSERT(!JSID_IS_VOID(id));
     MOZ_ASSERT(getter != JS_PropertyStub);
     MOZ_ASSERT(setter != JS_StrictPropertyStub);
 
 #ifdef DEBUG
     if (obj->is<ArrayObject>()) {
-        ArrayObject *arr = &obj->as<ArrayObject>();
+        ArrayObject* arr = &obj->as<ArrayObject>();
         uint32_t index;
         if (js_IdIsIndex(id, &index))
             MOZ_ASSERT(index < arr->length() || arr->lengthIsWritable());
@@ -743,7 +707,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
      * locally. Only for those objects we can try to claim an entry in its
      * shape table.
      */
-    ShapeTable::Entry *entry;
+    ShapeTable::Entry* entry;
     RootedShape shape(cx, Shape::search(cx, obj->lastProperty(), id, &entry, true));
     if (!shape) {
         /*
@@ -752,7 +716,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
          */
         bool extensible;
 
-        if (!JSObject::isExtensible(cx, obj, &extensible))
+        if (!IsExtensible(cx, obj, &extensible))
             return nullptr;
 
         if (!extensible) {
@@ -829,7 +793,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
         if (!updateLast && !obj->generateOwnShape(cx))
             return nullptr;
 
-        /* FIXME bug 593129 -- slot allocation and JSObject *this must move out of here! */
+        /* FIXME bug 593129 -- slot allocation and JSObject* this must move out of here! */
         if (slot == SHAPE_INVALID_SLOT && !(attrs & JSPROP_SHARED)) {
             if (!allocSlot(cx, obj, &slot))
                 return nullptr;
@@ -846,7 +810,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
         shape->attrs = uint8_t(attrs);
         shape->flags = flags | Shape::IN_DICTIONARY | (accessorShape ? Shape::ACCESSOR_SHAPE : 0);
         if (shape->isAccessorShape()) {
-            AccessorShape &accShape = shape->asAccessorShape();
+            AccessorShape& accShape = shape->asAccessorShape();
             accShape.rawGetter = getter;
             if (accShape.hasGetterObject())
                 GetterSetterWriteBarrierPost(&accShape, &accShape.getterObj);
@@ -864,7 +828,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
          */
         StackBaseShape base(obj->lastProperty()->base());
 
-        UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+        UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
         if (!nbase)
             return nullptr;
 
@@ -874,7 +838,7 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
         StackShape child(nbase, id, slot, attrs, flags);
         child.updateGetterSetter(getter, setter);
         RootedShape parent(cx, shape->parent);
-        Shape *newShape = getChildProperty(cx, obj, parent, child);
+        Shape* newShape = getChildProperty(cx, obj, parent, child);
 
         if (!newShape) {
             obj->checkShapeConsistency();
@@ -903,12 +867,11 @@ NativeObject::putProperty(ExclusiveContext *cx, HandleNativeObject obj, HandleId
     return shape;
 }
 
-/* static */ Shape *
-NativeObject::changeProperty(ExclusiveContext *cx, HandleNativeObject obj,
+/* static */ Shape*
+NativeObject::changeProperty(ExclusiveContext* cx, HandleNativeObject obj,
                              HandleShape shape, unsigned attrs,
                              unsigned mask, PropertyOp getter, StrictPropertyOp setter)
 {
-    MOZ_ASSERT(cx->isThreadLocal(obj));
     MOZ_ASSERT(obj->containsPure(shape));
     MOZ_ASSERT(getter != JS_PropertyStub);
     MOZ_ASSERT(setter != JS_StrictPropertyStub);
@@ -920,7 +883,7 @@ NativeObject::changeProperty(ExclusiveContext *cx, HandleNativeObject obj,
     MOZ_ASSERT(!((attrs ^ shape->attrs) & JSPROP_SHARED) ||
                !(attrs & JSPROP_SHARED));
 
-    types::MarkTypePropertyNonData(cx, obj, shape->propid());
+    MarkTypePropertyNonData(cx, obj, shape->propid());
 
     if (!CheckCanChangeAttrs(cx, obj, shape, &attrs))
         return nullptr;
@@ -935,7 +898,7 @@ NativeObject::changeProperty(ExclusiveContext *cx, HandleNativeObject obj,
      * putProperty won't re-allocate it.
      */
     RootedId propid(cx, shape->propid());
-    Shape *newShape = putProperty(cx, obj, propid, getter, setter,
+    Shape* newShape = putProperty(cx, obj, propid, getter, setter,
                                   shape->maybeSlot(), attrs, shape->flags);
 
     obj->checkShapeConsistency();
@@ -943,12 +906,12 @@ NativeObject::changeProperty(ExclusiveContext *cx, HandleNativeObject obj,
 }
 
 bool
-NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
+NativeObject::removeProperty(ExclusiveContext* cx, jsid id_)
 {
     RootedId id(cx, id_);
     RootedNativeObject self(cx, this);
 
-    ShapeTable::Entry *entry;
+    ShapeTable::Entry* entry;
     RootedShape shape(cx, Shape::search(cx, lastProperty(), id, &entry));
     if (!shape)
         return true;
@@ -987,7 +950,7 @@ NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
              */
             RootedShape previous(cx, self->lastProperty()->parent);
             StackBaseShape base(self->lastProperty()->base());
-            BaseShape *nbase = BaseShape::getUnowned(cx, base);
+            BaseShape* nbase = BaseShape::getUnowned(cx, base);
             if (!nbase)
                 return false;
             previous->base_ = nbase;
@@ -1007,7 +970,7 @@ NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
      * list and hash in place.
      */
     if (self->inDictionaryMode()) {
-        ShapeTable &table = self->lastProperty()->table();
+        ShapeTable& table = self->lastProperty()->table();
 
         if (entry->hadCollision()) {
             entry->setRemoved();
@@ -1023,7 +986,7 @@ NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
              * checks not to alter significantly the complexity of the
              * delete in debug builds, see bug 534493.
              */
-            Shape *aprop = self->lastProperty();
+            Shape* aprop = self->lastProperty();
             for (int n = 50; --n >= 0 && aprop->parent; aprop = aprop->parent)
                 MOZ_ASSERT_IF(aprop != shape, self->contains(cx, aprop));
 #endif
@@ -1031,7 +994,7 @@ NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
 
         {
             /* Remove shape from its non-circular doubly linked list. */
-            Shape *oldLastProp = self->lastProperty();
+            Shape* oldLastProp = self->lastProperty();
             shape->removeFromDictionary(self);
 
             /* Hand off table from the old to new last property. */
@@ -1061,9 +1024,9 @@ NativeObject::removeProperty(ExclusiveContext *cx, jsid id_)
 }
 
 /* static */ void
-NativeObject::clear(JSContext *cx, HandleNativeObject obj)
+NativeObject::clear(JSContext* cx, HandleNativeObject obj)
 {
-    RootedShape shape(cx, obj->lastProperty());
+    Shape* shape = obj->lastProperty();
     MOZ_ASSERT(obj->inDictionaryMode() == shape->inDictionary());
 
     while (shape->parent) {
@@ -1075,14 +1038,14 @@ NativeObject::clear(JSContext *cx, HandleNativeObject obj)
     if (obj->inDictionaryMode())
         shape->listp = &obj->shape_;
 
-    JS_ALWAYS_TRUE(setLastProperty(cx, obj, shape));
+    JS_ALWAYS_TRUE(obj->setLastProperty(cx, shape));
 
     ++cx->runtime()->propertyRemovals;
     obj->checkShapeConsistency();
 }
 
 /* static */ bool
-NativeObject::rollbackProperties(ExclusiveContext *cx, HandleNativeObject obj, uint32_t slotSpan)
+NativeObject::rollbackProperties(ExclusiveContext* cx, HandleNativeObject obj, uint32_t slotSpan)
 {
     /*
      * Remove properties from this object until it has a matching slot span.
@@ -1098,7 +1061,6 @@ NativeObject::rollbackProperties(ExclusiveContext *cx, HandleNativeObject obj, u
             uint32_t slot = obj->lastProperty()->slot();
             if (slot < slotSpan)
                 break;
-            MOZ_ASSERT(obj->getSlot(slot).isUndefined());
         }
         if (!obj->removeProperty(cx, obj->lastProperty()->propid()))
             return false;
@@ -1107,17 +1069,15 @@ NativeObject::rollbackProperties(ExclusiveContext *cx, HandleNativeObject obj, u
     return true;
 }
 
-Shape *
-NativeObject::replaceWithNewEquivalentShape(ExclusiveContext *cx, Shape *oldShape, Shape *newShape,
+Shape*
+NativeObject::replaceWithNewEquivalentShape(ExclusiveContext* cx, Shape* oldShape, Shape* newShape,
                                             bool accessorShape)
 {
-    MOZ_ASSERT(cx->isThreadLocal(this));
-    MOZ_ASSERT(cx->isThreadLocal(oldShape));
     MOZ_ASSERT(cx->isInsideCurrentCompartment(oldShape));
     MOZ_ASSERT_IF(oldShape != lastProperty(),
                   inDictionaryMode() && lookup(cx, oldShape->propidRef()) == oldShape);
 
-    NativeObject *self = this;
+    NativeObject* self = this;
 
     if (!inDictionaryMode()) {
         RootedNativeObject selfRoot(cx, self);
@@ -1142,8 +1102,8 @@ NativeObject::replaceWithNewEquivalentShape(ExclusiveContext *cx, Shape *oldShap
         oldShape = oldRoot;
     }
 
-    ShapeTable &table = self->lastProperty()->table();
-    ShapeTable::Entry *entry = oldShape->isEmptyShape()
+    ShapeTable& table = self->lastProperty()->table();
+    ShapeTable::Entry* entry = oldShape->isEmptyShape()
                                ? nullptr
                                : &table.search(oldShape->propidRef(), false);
 
@@ -1166,19 +1126,13 @@ NativeObject::replaceWithNewEquivalentShape(ExclusiveContext *cx, Shape *oldShap
 }
 
 bool
-NativeObject::shadowingShapeChange(ExclusiveContext *cx, const Shape &shape)
+NativeObject::shadowingShapeChange(ExclusiveContext* cx, const Shape& shape)
 {
     return generateOwnShape(cx);
 }
 
 /* static */ bool
-JSObject::clearParent(JSContext *cx, HandleObject obj)
-{
-    return setParent(cx, obj, NullPtr());
-}
-
-/* static */ bool
-JSObject::setParent(JSContext *cx, HandleObject obj, HandleObject parent)
+JSObject::setParent(JSContext* cx, HandleObject obj, HandleObject parent)
 {
     if (parent && !parent->setDelegate(cx))
         return false;
@@ -1186,7 +1140,7 @@ JSObject::setParent(JSContext *cx, HandleObject obj, HandleObject parent)
     if (obj->isNative() && obj->as<NativeObject>().inDictionaryMode()) {
         StackBaseShape base(obj->lastProperty());
         base.parent = parent;
-        UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+        UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
         if (!nbase)
             return false;
 
@@ -1194,7 +1148,7 @@ JSObject::setParent(JSContext *cx, HandleObject obj, HandleObject parent)
         return true;
     }
 
-    Shape *newShape = Shape::setObjectParent(cx, parent, obj->getTaggedProto(), obj->shape_);
+    Shape* newShape = Shape::setObjectParent(cx, parent, obj->getTaggedProto(), obj->shape_);
     if (!newShape)
         return false;
 
@@ -1202,8 +1156,8 @@ JSObject::setParent(JSContext *cx, HandleObject obj, HandleObject parent)
     return true;
 }
 
-/* static */ Shape *
-Shape::setObjectParent(ExclusiveContext *cx, JSObject *parent, TaggedProto proto, Shape *last)
+/* static */ Shape*
+Shape::setObjectParent(ExclusiveContext* cx, JSObject* parent, TaggedProto proto, Shape* last)
 {
     if (last->getObjectParent() == parent)
         return last;
@@ -1216,12 +1170,12 @@ Shape::setObjectParent(ExclusiveContext *cx, JSObject *parent, TaggedProto proto
 }
 
 /* static */ bool
-JSObject::setMetadata(JSContext *cx, HandleObject obj, HandleObject metadata)
+JSObject::setMetadata(JSContext* cx, HandleObject obj, HandleObject metadata)
 {
     if (obj->isNative() && obj->as<NativeObject>().inDictionaryMode()) {
         StackBaseShape base(obj->lastProperty());
         base.metadata = metadata;
-        UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+        UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
         if (!nbase)
             return false;
 
@@ -1229,7 +1183,7 @@ JSObject::setMetadata(JSContext *cx, HandleObject obj, HandleObject metadata)
         return true;
     }
 
-    Shape *newShape = Shape::setObjectMetadata(cx, metadata, obj->getTaggedProto(), obj->shape_);
+    Shape* newShape = Shape::setObjectMetadata(cx, metadata, obj->getTaggedProto(), obj->shape_);
     if (!newShape)
         return false;
 
@@ -1237,8 +1191,8 @@ JSObject::setMetadata(JSContext *cx, HandleObject obj, HandleObject metadata)
     return true;
 }
 
-/* static */ Shape *
-Shape::setObjectMetadata(JSContext *cx, JSObject *metadata, TaggedProto proto, Shape *last)
+/* static */ Shape*
+Shape::setObjectMetadata(JSContext* cx, JSObject* metadata, TaggedProto proto, Shape* last)
 {
     if (last->getObjectMetadata() == metadata)
         return last;
@@ -1250,45 +1204,13 @@ Shape::setObjectMetadata(JSContext *cx, JSObject *metadata, TaggedProto proto, S
     return replaceLastProperty(cx, base, proto, lastRoot);
 }
 
-/* static */ bool
-JSObject::preventExtensions(JSContext *cx, HandleObject obj, bool *succeeded)
-{
-    if (obj->is<ProxyObject>())
-        return js::Proxy::preventExtensions(cx, obj, succeeded);
-
-    if (!obj->nonProxyIsExtensible()) {
-        *succeeded = true;
-        return true;
-    }
-
-    /*
-     * Force lazy properties to be resolved by iterating over the objects' own
-     * properties.
-     */
-    AutoIdVector props(cx);
-    if (!js::GetPropertyKeys(cx, obj, JSITER_HIDDEN | JSITER_OWNONLY, &props))
-        return false;
-
-    /*
-     * Convert all dense elements to sparse properties. This will shrink the
-     * initialized length and capacity of the object to zero and ensure that no
-     * new dense elements can be added without calling growElements(), which
-     * checks isExtensible().
-     */
-    if (obj->isNative() && !NativeObject::sparsifyDenseElements(cx, obj.as<NativeObject>()))
-        return false;
-
-    *succeeded = true;
-    return obj->setFlag(cx, BaseShape::NOT_EXTENSIBLE, GENERATE_SHAPE);
-}
-
 bool
-JSObject::setFlag(ExclusiveContext *cx, /*BaseShape::Flag*/ uint32_t flag_,
-                  GenerateShape generateShape)
+JSObject::setFlags(ExclusiveContext* cx, /*BaseShape::Flag*/ uint32_t flags_,
+                   GenerateShape generateShape)
 {
-    BaseShape::Flag flag = (BaseShape::Flag) flag_;
+    BaseShape::Flag flags = (BaseShape::Flag) flags_;
 
-    if (lastProperty()->getObjectFlags() & flag)
+    if ((lastProperty()->getObjectFlags() & flags) == flags)
         return true;
 
     RootedObject self(cx, this);
@@ -1297,8 +1219,8 @@ JSObject::setFlag(ExclusiveContext *cx, /*BaseShape::Flag*/ uint32_t flag_,
         if (generateShape == GENERATE_SHAPE && !as<NativeObject>().generateOwnShape(cx))
             return false;
         StackBaseShape base(self->lastProperty());
-        base.flags |= flag;
-        UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+        base.flags |= flags;
+        UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
         if (!nbase)
             return false;
 
@@ -1306,8 +1228,8 @@ JSObject::setFlag(ExclusiveContext *cx, /*BaseShape::Flag*/ uint32_t flag_,
         return true;
     }
 
-    Shape *newShape =
-        Shape::setObjectFlag(cx, flag, self->getTaggedProto(), self->lastProperty());
+    Shape* newShape =
+        Shape::setObjectFlags(cx, flags, self->getTaggedProto(), self->lastProperty());
     if (!newShape)
         return false;
 
@@ -1316,7 +1238,7 @@ JSObject::setFlag(ExclusiveContext *cx, /*BaseShape::Flag*/ uint32_t flag_,
 }
 
 bool
-NativeObject::clearFlag(ExclusiveContext *cx, BaseShape::Flag flag)
+NativeObject::clearFlag(ExclusiveContext* cx, BaseShape::Flag flag)
 {
     MOZ_ASSERT(inDictionaryMode());
     MOZ_ASSERT(lastProperty()->getObjectFlags() & flag);
@@ -1325,7 +1247,7 @@ NativeObject::clearFlag(ExclusiveContext *cx, BaseShape::Flag flag)
 
     StackBaseShape base(self->lastProperty());
     base.flags &= ~flag;
-    UnownedBaseShape *nbase = BaseShape::getUnowned(cx, base);
+    UnownedBaseShape* nbase = BaseShape::getUnowned(cx, base);
     if (!nbase)
         return false;
 
@@ -1333,14 +1255,14 @@ NativeObject::clearFlag(ExclusiveContext *cx, BaseShape::Flag flag)
     return true;
 }
 
-/* static */ Shape *
-Shape::setObjectFlag(ExclusiveContext *cx, BaseShape::Flag flag, TaggedProto proto, Shape *last)
+/* static */ Shape*
+Shape::setObjectFlags(ExclusiveContext* cx, BaseShape::Flag flags, TaggedProto proto, Shape* last)
 {
-    if (last->getObjectFlags() & flag)
+    if ((last->getObjectFlags() & flags) == flags)
         return last;
 
     StackBaseShape base(last);
-    base.flags |= flag;
+    base.flags |= flags;
 
     RootedShape lastRoot(cx, last);
     return replaceLastProperty(cx, base, proto, lastRoot);
@@ -1357,7 +1279,7 @@ StackBaseShape::hash(const Lookup& lookup)
 }
 
 /* static */ inline bool
-StackBaseShape::match(UnownedBaseShape *key, const Lookup& lookup)
+StackBaseShape::match(UnownedBaseShape* key, const Lookup& lookup)
 {
     return key->flags == lookup.flags
         && key->clasp_ == lookup.clasp
@@ -1366,7 +1288,7 @@ StackBaseShape::match(UnownedBaseShape *key, const Lookup& lookup)
 }
 
 void
-StackBaseShape::trace(JSTracer *trc)
+StackBaseShape::trace(JSTracer* trc)
 {
     if (parent)
         gc::MarkObjectRoot(trc, (JSObject**)&parent, "StackBaseShape parent");
@@ -1381,13 +1303,13 @@ StackBaseShape::trace(JSTracer *trc)
  */
 class BaseShapeSetRef : public BufferableRef
 {
-    BaseShapeSet *set;
-    UnownedBaseShape *base;
-    JSObject *parentPrior;
-    JSObject *metadataPrior;
+    BaseShapeSet* set;
+    UnownedBaseShape* base;
+    JSObject* parentPrior;
+    JSObject* metadataPrior;
 
   public:
-    BaseShapeSetRef(BaseShapeSet *set, UnownedBaseShape *base)
+    BaseShapeSetRef(BaseShapeSet* set, UnownedBaseShape* base)
       : set(set),
         base(base),
         parentPrior(base->getObjectParent()),
@@ -1396,11 +1318,11 @@ class BaseShapeSetRef : public BufferableRef
         MOZ_ASSERT(!base->isOwned());
     }
 
-    void mark(JSTracer *trc) {
-        JSObject *parent = parentPrior;
+    void mark(JSTracer* trc) {
+        JSObject* parent = parentPrior;
         if (parent)
             Mark(trc, &parent, "baseShapes set parent");
-        JSObject *metadata = metadataPrior;
+        JSObject* metadata = metadataPrior;
         if (metadata)
             Mark(trc, &metadata, "baseShapes set metadata");
         if (parent == parentPrior && metadata == metadataPrior)
@@ -1410,13 +1332,13 @@ class BaseShapeSetRef : public BufferableRef
                                            base->clasp(),
                                            parentPrior, parent,
                                            metadataPrior, metadata);
-        ReadBarriered<UnownedBaseShape *> b(base);
+        ReadBarriered<UnownedBaseShape*> b(base);
         MOZ_ALWAYS_TRUE(set->rekeyAs(lookupPrior, base, b));
     }
 };
 
 static void
-BaseShapesTablePostBarrier(ExclusiveContext *cx, BaseShapeSet *table, UnownedBaseShape *base)
+BaseShapesTablePostBarrier(ExclusiveContext* cx, BaseShapeSet* table, UnownedBaseShape* base)
 {
     if (!cx->isJSContext()) {
         MOZ_ASSERT(!IsInsideNursery(base->getObjectParent()));
@@ -1425,15 +1347,15 @@ BaseShapesTablePostBarrier(ExclusiveContext *cx, BaseShapeSet *table, UnownedBas
     }
 
     if (IsInsideNursery(base->getObjectParent()) || IsInsideNursery(base->getObjectMetadata())) {
-        StoreBuffer &sb = cx->asJSContext()->runtime()->gc.storeBuffer;
+        StoreBuffer& sb = cx->asJSContext()->runtime()->gc.storeBuffer;
         sb.putGeneric(BaseShapeSetRef(table, base));
     }
 }
 
 /* static */ UnownedBaseShape*
-BaseShape::getUnowned(ExclusiveContext *cx, StackBaseShape &base)
+BaseShape::getUnowned(ExclusiveContext* cx, StackBaseShape& base)
 {
-    BaseShapeSet &table = cx->compartment()->baseShapes;
+    BaseShapeSet& table = cx->compartment()->baseShapes;
 
     if (!table.initialized() && !table.init())
         return nullptr;
@@ -1444,13 +1366,13 @@ BaseShape::getUnowned(ExclusiveContext *cx, StackBaseShape &base)
 
     RootedGeneric<StackBaseShape*> root(cx, &base);
 
-    BaseShape *nbase_ = js_NewGCBaseShape<CanGC>(cx);
+    BaseShape* nbase_ = js_NewGCBaseShape<CanGC>(cx);
     if (!nbase_)
         return nullptr;
 
     new (nbase_) BaseShape(base);
 
-    UnownedBaseShape *nbase = static_cast<UnownedBaseShape *>(nbase_);
+    UnownedBaseShape* nbase = static_cast<UnownedBaseShape*>(nbase_);
 
     if (!p.add(cx, table, base, nbase))
         return nullptr;
@@ -1465,15 +1387,13 @@ BaseShape::assertConsistency()
 {
 #ifdef DEBUG
     if (isOwned()) {
-        UnownedBaseShape *unowned = baseUnowned();
+        UnownedBaseShape* unowned = baseUnowned();
         MOZ_ASSERT(getObjectParent() == unowned->getObjectParent());
         MOZ_ASSERT(getObjectMetadata() == unowned->getObjectMetadata());
         MOZ_ASSERT(getObjectFlags() == unowned->getObjectFlags());
     }
 #endif
 }
-
-#ifdef JSGC_COMPACTING
 
 bool
 BaseShape::fixupBaseShapeTableEntry()
@@ -1497,15 +1417,13 @@ JSCompartment::fixupBaseShapeTable()
         return;
 
     for (BaseShapeSet::Enum e(baseShapes); !e.empty(); e.popFront()) {
-        UnownedBaseShape *base = e.front().unbarrieredGet();
+        UnownedBaseShape* base = e.front().unbarrieredGet();
         if (base->fixupBaseShapeTableEntry()) {
-            ReadBarriered<UnownedBaseShape *> b(base);
+            ReadBarriered<UnownedBaseShape*> b(base);
             e.rekeyFront(base, b);
         }
     }
 }
-
-#endif
 
 void
 JSCompartment::sweepBaseShapeTable()
@@ -1514,13 +1432,13 @@ JSCompartment::sweepBaseShapeTable()
         return;
 
     for (BaseShapeSet::Enum e(baseShapes); !e.empty(); e.popFront()) {
-        UnownedBaseShape *base = e.front().unbarrieredGet();
+        UnownedBaseShape* base = e.front().unbarrieredGet();
         MOZ_ASSERT_IF(base->getObjectParent(), !IsForwarded(base->getObjectParent()));
         MOZ_ASSERT_IF(base->getObjectMetadata(), !IsForwarded(base->getObjectMetadata()));
         if (IsBaseShapeAboutToBeFinalizedFromAnyThread(&base)) {
             e.removeFront();
         } else if (base != e.front().unbarrieredGet()) {
-            ReadBarriered<UnownedBaseShape *> b(base);
+            ReadBarriered<UnownedBaseShape*> b(base);
             e.rekeyFront(base, b);
         }
     }
@@ -1535,7 +1453,7 @@ JSCompartment::checkBaseShapeTableAfterMovingGC()
         return;
 
     for (BaseShapeSet::Enum e(baseShapes); !e.empty(); e.popFront()) {
-        UnownedBaseShape *base = e.front().unbarrieredGet();
+        UnownedBaseShape* base = e.front().unbarrieredGet();
         CheckGCThingAfterMovingGC(base);
         if (base->getObjectParent())
             CheckGCThingAfterMovingGC(base->getObjectParent());
@@ -1550,7 +1468,7 @@ JSCompartment::checkBaseShapeTableAfterMovingGC()
 #endif // JSGC_HASH_TABLE_CHECKS
 
 void
-BaseShape::finalize(FreeOp *fop)
+BaseShape::finalize(FreeOp* fop)
 {
     if (table_) {
         fop->delete_(table_);
@@ -1564,7 +1482,7 @@ InitialShapeEntry::InitialShapeEntry() : shape(nullptr), proto(nullptr)
 }
 
 inline
-InitialShapeEntry::InitialShapeEntry(const ReadBarrieredShape &shape, TaggedProto proto)
+InitialShapeEntry::InitialShapeEntry(const ReadBarrieredShape& shape, TaggedProto proto)
   : shape(shape), proto(proto)
 {
 }
@@ -1577,7 +1495,7 @@ InitialShapeEntry::getLookup() const
 }
 
 /* static */ inline HashNumber
-InitialShapeEntry::hash(const Lookup &lookup)
+InitialShapeEntry::hash(const Lookup& lookup)
 {
     HashNumber hash = uintptr_t(lookup.clasp) >> 3;
     hash = RotateLeft(hash, 4) ^
@@ -1589,9 +1507,9 @@ InitialShapeEntry::hash(const Lookup &lookup)
 }
 
 /* static */ inline bool
-InitialShapeEntry::match(const InitialShapeEntry &key, const Lookup &lookup)
+InitialShapeEntry::match(const InitialShapeEntry& key, const Lookup& lookup)
 {
-    const Shape *shape = *key.shape.unsafeGet();
+    const Shape* shape = *key.shape.unsafeGet();
     return lookup.clasp == shape->getObjectClass()
         && lookup.matchProto.toWord() == key.proto.toWord()
         && lookup.matchParent == shape->getObjectParent()
@@ -1606,20 +1524,20 @@ InitialShapeEntry::match(const InitialShapeEntry &key, const Lookup &lookup)
  */
 class InitialShapeSetRef : public BufferableRef
 {
-    InitialShapeSet *set;
-    const Class *clasp;
+    InitialShapeSet* set;
+    const Class* clasp;
     TaggedProto proto;
-    JSObject *parent;
-    JSObject *metadata;
+    JSObject* parent;
+    JSObject* metadata;
     size_t nfixed;
     uint32_t objectFlags;
 
   public:
-    InitialShapeSetRef(InitialShapeSet *set,
-                       const Class *clasp,
+    InitialShapeSetRef(InitialShapeSet* set,
+                       const Class* clasp,
                        TaggedProto proto,
-                       JSObject *parent,
-                       JSObject *metadata,
+                       JSObject* parent,
+                       JSObject* metadata,
                        size_t nfixed,
                        uint32_t objectFlags)
         : set(set),
@@ -1631,10 +1549,10 @@ class InitialShapeSetRef : public BufferableRef
           objectFlags(objectFlags)
     {}
 
-    void mark(JSTracer *trc) {
+    void mark(JSTracer* trc) {
         TaggedProto priorProto = proto;
-        JSObject *priorParent = parent;
-        JSObject *priorMetadata = metadata;
+        JSObject* priorParent = parent;
+        JSObject* priorMetadata = metadata;
         if (proto.isObject())
             Mark(trc, reinterpret_cast<JSObject**>(&proto), "initialShapes set proto");
         if (parent)
@@ -1653,7 +1571,7 @@ class InitialShapeSetRef : public BufferableRef
         MOZ_ASSERT(p);
 
         /* Update the entry's possibly-moved proto, and ensure lookup will still match. */
-        InitialShapeEntry &entry = const_cast<InitialShapeEntry&>(*p);
+        InitialShapeEntry& entry = const_cast<InitialShapeEntry&>(*p);
         entry.proto = proto;
         lookup.matchProto = proto;
 
@@ -1680,7 +1598,7 @@ JSCompartment::checkInitialShapesTableAfterMovingGC()
     for (InitialShapeSet::Enum e(initialShapes); !e.empty(); e.popFront()) {
         InitialShapeEntry entry = e.front();
         TaggedProto proto = entry.proto;
-        Shape *shape = entry.shape.get();
+        Shape* shape = entry.shape.get();
 
         if (proto.isObject())
             CheckGCThingAfterMovingGC(proto.toObject());
@@ -1702,10 +1620,10 @@ JSCompartment::checkInitialShapesTableAfterMovingGC()
 
 #endif // JSGC_HASH_TABLE_CHECKS
 
-Shape *
-EmptyShape::new_(ExclusiveContext *cx, Handle<UnownedBaseShape *> base, uint32_t nfixed)
+Shape*
+EmptyShape::new_(ExclusiveContext* cx, Handle<UnownedBaseShape*> base, uint32_t nfixed)
 {
-    Shape *shape = NewGCShape(cx);
+    Shape* shape = NewGCShape(cx);
     if (!shape) {
         js_ReportOutOfMemory(cx);
         return nullptr;
@@ -1715,15 +1633,15 @@ EmptyShape::new_(ExclusiveContext *cx, Handle<UnownedBaseShape *> base, uint32_t
     return shape;
 }
 
-/* static */ Shape *
-EmptyShape::getInitialShape(ExclusiveContext *cx, const Class *clasp, TaggedProto proto,
-                            JSObject *parent, JSObject *metadata,
+/* static */ Shape*
+EmptyShape::getInitialShape(ExclusiveContext* cx, const Class* clasp, TaggedProto proto,
+                            JSObject* parent, JSObject* metadata,
                             size_t nfixed, uint32_t objectFlags)
 {
     MOZ_ASSERT_IF(proto.isObject(), cx->isInsideCurrentCompartment(proto.toObject()));
     MOZ_ASSERT_IF(parent, cx->isInsideCurrentCompartment(parent));
 
-    InitialShapeSet &table = cx->compartment()->initialShapes;
+    InitialShapeSet& table = cx->compartment()->initialShapes;
 
     if (!table.initialized() && !table.init())
         return nullptr;
@@ -1743,7 +1661,7 @@ EmptyShape::getInitialShape(ExclusiveContext *cx, const Class *clasp, TaggedProt
     if (!nbase)
         return nullptr;
 
-    Shape *shape = EmptyShape::new_(cx, nbase, nfixed);
+    Shape* shape = EmptyShape::new_(cx, nbase, nfixed);
     if (!shape)
         return nullptr;
 
@@ -1766,37 +1684,37 @@ EmptyShape::getInitialShape(ExclusiveContext *cx, const Class *clasp, TaggedProt
     return shape;
 }
 
-/* static */ Shape *
-EmptyShape::getInitialShape(ExclusiveContext *cx, const Class *clasp, TaggedProto proto,
-                            JSObject *parent, JSObject *metadata,
+/* static */ Shape*
+EmptyShape::getInitialShape(ExclusiveContext* cx, const Class* clasp, TaggedProto proto,
+                            JSObject* parent, JSObject* metadata,
                             AllocKind kind, uint32_t objectFlags)
 {
     return getInitialShape(cx, clasp, proto, parent, metadata, GetGCKindSlots(kind, clasp), objectFlags);
 }
 
 void
-NewObjectCache::invalidateEntriesForShape(JSContext *cx, HandleShape shape, HandleObject proto)
+NewObjectCache::invalidateEntriesForShape(JSContext* cx, HandleShape shape, HandleObject proto)
 {
-    const Class *clasp = shape->getObjectClass();
+    const Class* clasp = shape->getObjectClass();
 
     gc::AllocKind kind = gc::GetGCObjectKind(shape->numFixedSlots());
     if (CanBeFinalizedInBackground(kind, clasp))
         kind = GetBackgroundAllocKind(kind);
 
-    Rooted<GlobalObject *> global(cx, &shape->getObjectParent()->global());
-    Rooted<types::TypeObject *> type(cx, cx->getNewType(clasp, TaggedProto(proto)));
+    Rooted<GlobalObject*> global(cx, &shape->getObjectParent()->global());
+    RootedObjectGroup group(cx, ObjectGroup::defaultNewGroup(cx, clasp, TaggedProto(proto)));
 
     EntryIndex entry;
     if (lookupGlobal(clasp, global, kind, &entry))
         PodZero(&entries[entry]);
     if (!proto->is<GlobalObject>() && lookupProto(clasp, proto, kind, &entry))
         PodZero(&entries[entry]);
-    if (lookupType(type, kind, &entry))
+    if (lookupGroup(group, kind, &entry))
         PodZero(&entries[entry]);
 }
 
 /* static */ void
-EmptyShape::insertInitialShape(ExclusiveContext *cx, HandleShape shape, HandleObject proto)
+EmptyShape::insertInitialShape(ExclusiveContext* cx, HandleShape shape, HandleObject proto)
 {
     InitialShapeEntry::Lookup lookup(shape->getObjectClass(), TaggedProto(proto),
                                      shape->getObjectParent(), shape->getObjectMetadata(),
@@ -1805,11 +1723,11 @@ EmptyShape::insertInitialShape(ExclusiveContext *cx, HandleShape shape, HandleOb
     InitialShapeSet::Ptr p = cx->compartment()->initialShapes.lookup(lookup);
     MOZ_ASSERT(p);
 
-    InitialShapeEntry &entry = const_cast<InitialShapeEntry &>(*p);
+    InitialShapeEntry& entry = const_cast<InitialShapeEntry&>(*p);
 
     /* The new shape had better be rooted at the old one. */
 #ifdef DEBUG
-    Shape *nshape = shape;
+    Shape* nshape = shape;
     while (!nshape->isEmptyShape())
         nshape = nshape->previous();
     MOZ_ASSERT(nshape == entry.shape);
@@ -1828,7 +1746,7 @@ EmptyShape::insertInitialShape(ExclusiveContext *cx, HandleShape shape, HandleOb
      * thread, as it will not use the new object cache for allocations.
      */
     if (cx->isJSContext()) {
-        JSContext *ncx = cx->asJSContext();
+        JSContext* ncx = cx->asJSContext();
         ncx->runtime()->newObjectCache.invalidateEntriesForShape(ncx, shape, proto);
     }
 }
@@ -1838,16 +1756,16 @@ JSCompartment::sweepInitialShapeTable()
 {
     if (initialShapes.initialized()) {
         for (InitialShapeSet::Enum e(initialShapes); !e.empty(); e.popFront()) {
-            const InitialShapeEntry &entry = e.front();
-            Shape *shape = entry.shape.unbarrieredGet();
-            JSObject *proto = entry.proto.raw();
+            const InitialShapeEntry& entry = e.front();
+            Shape* shape = entry.shape.unbarrieredGet();
+            JSObject* proto = entry.proto.raw();
             if (IsShapeAboutToBeFinalizedFromAnyThread(&shape) ||
                 (entry.proto.isObject() && IsObjectAboutToBeFinalizedFromAnyThread(&proto)))
             {
                 e.removeFront();
             } else {
 #ifdef DEBUG
-                DebugOnly<JSObject *> parent = shape->getObjectParent();
+                DebugOnly<JSObject*> parent = shape->getObjectParent();
                 MOZ_ASSERT(!parent || !IsObjectAboutToBeFinalizedFromAnyThread(&parent));
                 MOZ_ASSERT(parent == shape->getObjectParent());
 #endif
@@ -1861,7 +1779,6 @@ JSCompartment::sweepInitialShapeTable()
     }
 }
 
-#ifdef JSGC_COMPACTING
 void
 JSCompartment::fixupInitialShapeTable()
 {
@@ -1879,12 +1796,12 @@ JSCompartment::fixupInitialShapeTable()
             entry.proto = TaggedProto(Forwarded(entry.proto.toObject()));
             needRekey = true;
         }
-        JSObject *parent = entry.shape->getObjectParent();
+        JSObject* parent = entry.shape->getObjectParent();
         if (parent) {
             parent = MaybeForwarded(parent);
             needRekey = true;
         }
-        JSObject *metadata = entry.shape->getObjectMetadata();
+        JSObject* metadata = entry.shape->getObjectMetadata();
         if (metadata) {
             metadata = MaybeForwarded(metadata);
             needRekey = true;
@@ -1900,10 +1817,9 @@ JSCompartment::fixupInitialShapeTable()
         }
     }
 }
-#endif // JSGC_COMPACTING
 
 void
-AutoRooterGetterSetter::Inner::trace(JSTracer *trc)
+AutoRooterGetterSetter::Inner::trace(JSTracer* trc)
 {
     if ((attrs & JSPROP_GETTER) && *pgetter)
         gc::MarkObjectRoot(trc, (JSObject**) pgetter, "AutoRooterGetterSetter getter");

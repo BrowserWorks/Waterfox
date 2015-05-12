@@ -155,6 +155,7 @@
 #include "mozilla/ArrayUtils.h"
 #include "mozilla/AutoRestore.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
+#include "mozilla/DebugOnly.h"
 #include "mozilla/HoldDropJSObjects.h"
 /* This must occur *after* base/process_util.h to avoid typedefs conflicts. */
 #include "mozilla/LinkedList.h"
@@ -801,13 +802,10 @@ PtrToNodeMatchEntry(PLDHashTable* aTable,
 }
 
 static PLDHashTableOps PtrNodeOps = {
-  PL_DHashAllocTable,
-  PL_DHashFreeTable,
   PL_DHashVoidPtrKeyStub,
   PtrToNodeMatchEntry,
   PL_DHashMoveEntryStub,
   PL_DHashClearEntryStub,
-  PL_DHashFinalizeStub,
   nullptr
 };
 
@@ -832,16 +830,14 @@ struct CCGraph
 
 private:
   PLDHashTable mPtrToNodeMap;
+  bool mOutOfMemory;
 
 public:
-  CCGraph() : mRootCount(0)
-  {
-    mPtrToNodeMap.ops = nullptr;
-  }
+  CCGraph() : mRootCount(0), mOutOfMemory(false) {}
 
   ~CCGraph()
   {
-    if (mPtrToNodeMap.ops) {
+    if (mPtrToNodeMap.IsInitialized()) {
       PL_DHashTableFinish(&mPtrToNodeMap);
     }
   }
@@ -849,7 +845,7 @@ public:
   void Init()
   {
     MOZ_ASSERT(IsEmpty(), "Failed to call CCGraph::Clear");
-    PL_DHashTableInit(&mPtrToNodeMap, &PtrNodeOps, nullptr,
+    PL_DHashTableInit(&mPtrToNodeMap, &PtrNodeOps,
                       sizeof(PtrToNodeEntry), 16384);
   }
 
@@ -860,7 +856,7 @@ public:
     mWeakMaps.Clear();
     mRootCount = 0;
     PL_DHashTableFinish(&mPtrToNodeMap);
-    mPtrToNodeMap.ops = nullptr;
+    mOutOfMemory = false;
   }
 
 #ifdef DEBUG
@@ -868,7 +864,7 @@ public:
   {
     return mNodes.IsEmpty() && mEdges.IsEmpty() &&
            mWeakMaps.IsEmpty() && mRootCount == 0 &&
-           !mPtrToNodeMap.ops;
+           !mPtrToNodeMap.IsInitialized();
   }
 #endif
 
@@ -898,21 +894,23 @@ PtrInfo*
 CCGraph::FindNode(void* aPtr)
 {
   PtrToNodeEntry* e =
-    static_cast<PtrToNodeEntry*>(PL_DHashTableLookup(&mPtrToNodeMap, aPtr));
-  if (!PL_DHASH_ENTRY_IS_BUSY(e)) {
-    return nullptr;
-  }
-  return e->mNode;
+    static_cast<PtrToNodeEntry*>(PL_DHashTableSearch(&mPtrToNodeMap, aPtr));
+  return e ? e->mNode : nullptr;
 }
 
 PtrToNodeEntry*
 CCGraph::AddNodeToMap(void* aPtr)
 {
   JS::AutoSuppressGCAnalysis suppress;
-  PtrToNodeEntry* e =
-    static_cast<PtrToNodeEntry*>(PL_DHashTableAdd(&mPtrToNodeMap, aPtr));
+  if (mOutOfMemory) {
+    return nullptr;
+  }
+
+  PtrToNodeEntry* e = static_cast<PtrToNodeEntry*>
+    (PL_DHashTableAdd(&mPtrToNodeMap, aPtr, fallible));
   if (!e) {
-    // Caller should track OOMs
+    mOutOfMemory = true;
+    MOZ_ASSERT(false, "Ran out of memory while building cycle collector graph");
     return nullptr;
   }
   return e;
@@ -1040,7 +1038,7 @@ public:
 
   void StartBlock(Block* aBlock)
   {
-    NS_ABORT_IF_FALSE(!mFreeList, "should not have free list");
+    MOZ_ASSERT(!mFreeList, "should not have free list");
 
     // Put all the entries in the block on the free list.
     nsPurpleBufferEntry* entries = aBlock->mEntries;
@@ -1260,7 +1258,7 @@ class nsCycleCollector : public nsIMemoryReporter
   nsAutoPtr<CCGraphBuilder> mBuilder;
   nsCOMPtr<nsICycleCollectorListener> mListener;
 
-  nsIThread* mThread;
+  DebugOnly<void*> mThread;
 
   nsCycleCollectorParams mParams;
 
@@ -1274,7 +1272,7 @@ class nsCycleCollector : public nsIMemoryReporter
   uint32_t mUnmergedNeeded;
   uint32_t mMergedInARow;
 
-  JSPurpleBuffer* mJSPurpleBuffer;
+  nsRefPtr<JSPurpleBuffer> mJSPurpleBuffer;
 
 private:
   virtual ~nsCycleCollector();
@@ -1366,7 +1364,7 @@ private:
     if (!aPi) {
       MOZ_CRASH();
     }
-    if (!aQueue.Push(aPi, fallible_t())) {
+    if (!aQueue.Push(aPi, fallible)) {
       mVisitor.Failed();
     }
   }
@@ -1492,7 +1490,7 @@ struct CCGraphDescriber : public LinkedListElement<CCGraphDescriber>
   Type mType;
 };
 
-class nsCycleCollectorLogSinkToFile MOZ_FINAL : public nsICycleCollectorLogSink
+class nsCycleCollectorLogSinkToFile final : public nsICycleCollectorLogSink
 {
 public:
   NS_DECL_ISUPPORTS
@@ -1503,43 +1501,43 @@ public:
   {
   }
 
-  NS_IMETHOD GetFilenameIdentifier(nsAString& aIdentifier) MOZ_OVERRIDE
+  NS_IMETHOD GetFilenameIdentifier(nsAString& aIdentifier) override
   {
     aIdentifier = mFilenameIdentifier;
     return NS_OK;
   }
 
-  NS_IMETHOD SetFilenameIdentifier(const nsAString& aIdentifier) MOZ_OVERRIDE
+  NS_IMETHOD SetFilenameIdentifier(const nsAString& aIdentifier) override
   {
     mFilenameIdentifier = aIdentifier;
     return NS_OK;
   }
 
-  NS_IMETHOD GetProcessIdentifier(int32_t* aIdentifier) MOZ_OVERRIDE
+  NS_IMETHOD GetProcessIdentifier(int32_t* aIdentifier) override
   {
     *aIdentifier = mProcessIdentifier;
     return NS_OK;
   }
 
-  NS_IMETHOD SetProcessIdentifier(int32_t aIdentifier) MOZ_OVERRIDE
+  NS_IMETHOD SetProcessIdentifier(int32_t aIdentifier) override
   {
     mProcessIdentifier = aIdentifier;
     return NS_OK;
   }
 
-  NS_IMETHOD GetGcLog(nsIFile** aPath) MOZ_OVERRIDE
+  NS_IMETHOD GetGcLog(nsIFile** aPath) override
   {
     NS_IF_ADDREF(*aPath = mGCLog.mFile);
     return NS_OK;
   }
 
-  NS_IMETHOD GetCcLog(nsIFile** aPath) MOZ_OVERRIDE
+  NS_IMETHOD GetCcLog(nsIFile** aPath) override
   {
     NS_IF_ADDREF(*aPath = mCCLog.mFile);
     return NS_OK;
   }
 
-  NS_IMETHOD Open(FILE** aGCLog, FILE** aCCLog) MOZ_OVERRIDE
+  NS_IMETHOD Open(FILE** aGCLog, FILE** aCCLog) override
   {
     nsresult rv;
 
@@ -1558,7 +1556,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD CloseGCLog() MOZ_OVERRIDE
+  NS_IMETHOD CloseGCLog() override
   {
     if (!mGCLog.mStream) {
       return NS_ERROR_UNEXPECTED;
@@ -1567,7 +1565,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD CloseCCLog() MOZ_OVERRIDE
+  NS_IMETHOD CloseCCLog() override
   {
     if (!mCCLog.mStream) {
       return NS_ERROR_UNEXPECTED;
@@ -1713,7 +1711,7 @@ private:
 NS_IMPL_ISUPPORTS(nsCycleCollectorLogSinkToFile, nsICycleCollectorLogSink)
 
 
-class nsCycleCollectorLogger MOZ_FINAL : public nsICycleCollectorListener
+class nsCycleCollectorLogger final : public nsICycleCollectorListener
 {
   ~nsCycleCollectorLogger()
   {
@@ -1737,50 +1735,50 @@ public:
     mWantAllTraces = true;
   }
 
-  NS_IMETHOD AllTraces(nsICycleCollectorListener** aListener) MOZ_OVERRIDE
+  NS_IMETHOD AllTraces(nsICycleCollectorListener** aListener) override
   {
     SetAllTraces();
     NS_ADDREF(*aListener = this);
     return NS_OK;
   }
 
-  NS_IMETHOD GetWantAllTraces(bool* aAllTraces) MOZ_OVERRIDE
+  NS_IMETHOD GetWantAllTraces(bool* aAllTraces) override
   {
     *aAllTraces = mWantAllTraces;
     return NS_OK;
   }
 
-  NS_IMETHOD GetDisableLog(bool* aDisableLog) MOZ_OVERRIDE
+  NS_IMETHOD GetDisableLog(bool* aDisableLog) override
   {
     *aDisableLog = mDisableLog;
     return NS_OK;
   }
 
-  NS_IMETHOD SetDisableLog(bool aDisableLog) MOZ_OVERRIDE
+  NS_IMETHOD SetDisableLog(bool aDisableLog) override
   {
     mDisableLog = aDisableLog;
     return NS_OK;
   }
 
-  NS_IMETHOD GetWantAfterProcessing(bool* aWantAfterProcessing) MOZ_OVERRIDE
+  NS_IMETHOD GetWantAfterProcessing(bool* aWantAfterProcessing) override
   {
     *aWantAfterProcessing = mWantAfterProcessing;
     return NS_OK;
   }
 
-  NS_IMETHOD SetWantAfterProcessing(bool aWantAfterProcessing) MOZ_OVERRIDE
+  NS_IMETHOD SetWantAfterProcessing(bool aWantAfterProcessing) override
   {
     mWantAfterProcessing = aWantAfterProcessing;
     return NS_OK;
   }
 
-  NS_IMETHOD GetLogSink(nsICycleCollectorLogSink** aLogSink) MOZ_OVERRIDE
+  NS_IMETHOD GetLogSink(nsICycleCollectorLogSink** aLogSink) override
   {
     NS_ADDREF(*aLogSink = mLogSink);
     return NS_OK;
   }
 
-  NS_IMETHOD SetLogSink(nsICycleCollectorLogSink* aLogSink) MOZ_OVERRIDE
+  NS_IMETHOD SetLogSink(nsICycleCollectorLogSink* aLogSink) override
   {
     if (!aLogSink) {
       return NS_ERROR_INVALID_ARG;
@@ -1789,7 +1787,7 @@ public:
     return NS_OK;
   }
 
-  NS_IMETHOD Begin() MOZ_OVERRIDE
+  NS_IMETHOD Begin() override
   {
     nsresult rv;
 
@@ -1814,7 +1812,7 @@ public:
     return NS_OK;
   }
   NS_IMETHOD NoteRefCountedObject(uint64_t aAddress, uint32_t aRefCount,
-                                  const char* aObjectDescription) MOZ_OVERRIDE
+                                  const char* aObjectDescription) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "%p [rc=%u] %s\n", (void*)aAddress, aRefCount,
@@ -1834,7 +1832,7 @@ public:
   }
   NS_IMETHOD NoteGCedObject(uint64_t aAddress, bool aMarked,
                             const char* aObjectDescription,
-                            uint64_t aCompartmentAddress) MOZ_OVERRIDE
+                            uint64_t aCompartmentAddress) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "%p [gc%s] %s\n", (void*)aAddress,
@@ -1858,7 +1856,7 @@ public:
     }
     return NS_OK;
   }
-  NS_IMETHOD NoteEdge(uint64_t aToAddress, const char* aEdgeName) MOZ_OVERRIDE
+  NS_IMETHOD NoteEdge(uint64_t aToAddress, const char* aEdgeName) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "> %p %s\n", (void*)aToAddress, aEdgeName);
@@ -1875,7 +1873,7 @@ public:
     return NS_OK;
   }
   NS_IMETHOD NoteWeakMapEntry(uint64_t aMap, uint64_t aKey,
-                              uint64_t aKeyDelegate, uint64_t aValue) MOZ_OVERRIDE
+                              uint64_t aKeyDelegate, uint64_t aValue) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "WeakMapEntry map=%p key=%p keyDelegate=%p value=%p\n",
@@ -1884,7 +1882,7 @@ public:
     // We don't support after-processing for weak map entries.
     return NS_OK;
   }
-  NS_IMETHOD NoteIncrementalRoot(uint64_t aAddress) MOZ_OVERRIDE
+  NS_IMETHOD NoteIncrementalRoot(uint64_t aAddress) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "IncrementalRoot %p\n", (void*)aAddress);
@@ -1892,14 +1890,14 @@ public:
     // We don't support after-processing for incremental roots.
     return NS_OK;
   }
-  NS_IMETHOD BeginResults() MOZ_OVERRIDE
+  NS_IMETHOD BeginResults() override
   {
     if (!mDisableLog) {
       fputs("==========\n", mCCLog);
     }
     return NS_OK;
   }
-  NS_IMETHOD DescribeRoot(uint64_t aAddress, uint32_t aKnownEdges) MOZ_OVERRIDE
+  NS_IMETHOD DescribeRoot(uint64_t aAddress, uint32_t aKnownEdges) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "%p [known=%u]\n", (void*)aAddress, aKnownEdges);
@@ -1913,7 +1911,7 @@ public:
     }
     return NS_OK;
   }
-  NS_IMETHOD DescribeGarbage(uint64_t aAddress) MOZ_OVERRIDE
+  NS_IMETHOD DescribeGarbage(uint64_t aAddress) override
   {
     if (!mDisableLog) {
       fprintf(mCCLog, "%p [garbage]\n", (void*)aAddress);
@@ -1926,7 +1924,7 @@ public:
     }
     return NS_OK;
   }
-  NS_IMETHOD End() MOZ_OVERRIDE
+  NS_IMETHOD End() override
   {
     if (!mDisableLog) {
       mCCLog = nullptr;
@@ -1936,7 +1934,7 @@ public:
     return NS_OK;
   }
   NS_IMETHOD ProcessNext(nsICycleCollectorHandler* aHandler,
-                         bool* aCanContinue) MOZ_OVERRIDE
+                         bool* aCanContinue) override
   {
     if (NS_WARN_IF(!aHandler) || NS_WARN_IF(!mWantAfterProcessing)) {
       return NS_ERROR_UNEXPECTED;
@@ -2032,7 +2030,7 @@ ValueIsGrayCCThing(const JS::Value& value)
 // Bacon & Rajan's |MarkRoots| routine.
 ////////////////////////////////////////////////////////////////////////
 
-class CCGraphBuilder MOZ_FINAL : public nsCycleCollectionTraversalCallback,
+class CCGraphBuilder final : public nsCycleCollectionTraversalCallback,
   public nsCycleCollectionNoteRootCallback
 {
 private:
@@ -2044,9 +2042,8 @@ private:
   nsCycleCollectionParticipant* mJSParticipant;
   nsCycleCollectionParticipant* mJSZoneParticipant;
   nsCString mNextEdgeName;
-  nsICycleCollectorListener* mListener;
+  nsCOMPtr<nsICycleCollectorListener> mListener;
   bool mMergeZones;
-  bool mRanOutOfMemory;
   nsAutoPtr<NodePool::Enumerator> mCurrNode;
 
 public:
@@ -2161,7 +2158,6 @@ CCGraphBuilder::CCGraphBuilder(CCGraph& aGraph,
   , mJSZoneParticipant(nullptr)
   , mListener(aListener)
   , mMergeZones(aMergeZones)
-  , mRanOutOfMemory(false)
 {
   if (aJSRuntime) {
     mJSParticipant = aJSRuntime->GCThingParticipant();
@@ -2196,7 +2192,6 @@ CCGraphBuilder::AddNode(void* aPtr, nsCycleCollectionParticipant* aParticipant)
 {
   PtrToNodeEntry* e = mGraph.AddNodeToMap(aPtr);
   if (!e) {
-    mRanOutOfMemory = true;
     return nullptr;
   }
 
@@ -2278,11 +2273,6 @@ CCGraphBuilder::BuildGraph(SliceBudget& aBudget)
 
   if (mGraph.mRootCount > 0) {
     SetLastChild();
-  }
-
-  if (mRanOutOfMemory) {
-    MOZ_ASSERT(false, "Ran out of memory while building cycle collector graph");
-    CC_TELEMETRY(_OOM, true);
   }
 
   mCurrNode = nullptr;
@@ -2581,13 +2571,12 @@ class JSPurpleBuffer
   }
 
 public:
-  explicit JSPurpleBuffer(JSPurpleBuffer*& aReferenceToThis)
+  explicit JSPurpleBuffer(nsRefPtr<JSPurpleBuffer>& aReferenceToThis)
     : mReferenceToThis(aReferenceToThis)
     , mValues(kSegmentSize)
     , mObjects(kSegmentSize)
   {
     mReferenceToThis = this;
-    NS_ADDREF_THIS();
     mozilla::HoldJSObjects(this);
   }
 
@@ -2597,13 +2586,12 @@ public:
     mValues.Clear();
     mObjects.Clear();
     mozilla::DropJSObjects(this);
-    NS_RELEASE_THIS();
   }
 
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(JSPurpleBuffer)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(JSPurpleBuffer)
 
-  JSPurpleBuffer*& mReferenceToThis;
+  nsRefPtr<JSPurpleBuffer>& mReferenceToThis;
 
   // These are raw pointers instead of Heap<T> because we only need Heap<T> for
   // pointers which may point into the nursery. The purple buffer never contains
@@ -2745,7 +2733,7 @@ public:
   }
 
 private:
-  nsCycleCollector* mCollector;
+  nsRefPtr<nsCycleCollector> mCollector;
   ObjectsVector mObjects;
 };
 
@@ -3009,7 +2997,7 @@ public:
 
 private:
   CCGraph& mGraph;
-  nsICycleCollectorListener* mListener;
+  nsCOMPtr<nsICycleCollectorListener> mListener;
   uint32_t& mCount;
   bool& mFailed;
 };
@@ -3403,8 +3391,7 @@ nsCycleCollector::nsCycleCollector() :
   mBeforeUnlinkCB(nullptr),
   mForgetSkippableCB(nullptr),
   mUnmergedNeeded(0),
-  mMergedInARow(0),
-  mJSPurpleBuffer(nullptr)
+  mMergedInARow(0)
 {
 }
 
@@ -3701,9 +3688,13 @@ nsCycleCollector::FinishAnyCurrentCollection()
   // Use SliceCC because we only want to finish the CC in progress.
   Collect(SliceCC, unlimitedBudget, nullptr);
 
+  // It is only okay for Collect() to have failed to finish the
+  // current CC if we're reentering the CC at some point past
+  // graph building. We need to be past the point where the CC will
+  // look at JS objects so that it is safe to GC.
   MOZ_ASSERT(mIncrementalPhase == IdlePhase ||
-             (mIncrementalPhase == ScanAndCollectWhitePhase && mActivelyCollecting),
-             "FinishAnyCurrentCollection should finish the collection, unless we've reentered the CC during unlinking");
+             (mActivelyCollecting && mIncrementalPhase != GraphBuildingPhase),
+             "Reentered CC during graph building");
 }
 
 // Don't merge too many times in a row, and do at least a minimum

@@ -36,11 +36,11 @@ public:
                     ImageContainer* aImageContainer);
   virtual ~FFmpegH264Decoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  static AVCodecID GetCodecId(const char* aMimeType);
+  virtual nsresult Init() override;
+  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual nsresult Drain() override;
+  virtual nsresult Flush() override;
+  static AVCodecID GetCodecId(const nsACString& aMimeType);
 
 private:
   void DecodeFrame(mp4_demuxer::MP4Sample* aSample);
@@ -62,6 +62,8 @@ private:
 
   MediaDataDecoderCallback* mCallback;
   nsRefPtr<ImageContainer> mImageContainer;
+  uint32_t mDisplayWidth;
+  uint32_t mDisplayHeight;
 };
 
 } // namespace mozilla

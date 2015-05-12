@@ -1,7 +1,12 @@
+/* vim:set ts=2 sw=2 sts=2 et: */
+
 option optimize_for = LITE_RUNTIME;
 
 package mozilla.layers.layerscope;
 
+// ===============================
+// Server to Client messages
+// ===============================
 message FramePacket {
   optional uint64 value = 1;
 }
@@ -108,6 +113,10 @@ message LayersPacket {
   repeated Layer layer = 1;
 }
 
+message MetaPacket {
+  optional bool composedByHwc = 1;
+}
+
 // We only need to use this Packet.
 // Other packet definitions are just type defines
 message Packet {
@@ -117,6 +126,7 @@ message Packet {
     COLOR = 3;
     TEXTURE = 4;
     LAYERS = 5;
+    META = 6;
   }
   required DataType type = 1;
 
@@ -124,4 +134,19 @@ message Packet {
   optional ColorPacket color = 3;
   optional TexturePacket texture = 4;
   optional LayersPacket layers = 5;
+  optional MetaPacket meta = 6;
+}
+
+
+// ===============================
+// Client to Server messages
+// ===============================
+message CommandPacket {
+  enum CmdType {
+    NO_OP = 0;
+    LAYERS_TREE = 1;
+    LAYERS_BUFFER = 2;
+  }
+  required CmdType type = 1;
+  optional bool value = 2;
 }

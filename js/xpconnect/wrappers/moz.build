@@ -4,11 +4,13 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+CFLAGS += ['-O2']
+
 EXPORTS += [
     'WrapperFactory.h',
 ]
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'AccessCheck.cpp',
     'AddonWrapper.cpp',
     'ChromeObjectWrapper.cpp',
@@ -39,6 +41,5 @@ FINAL_LIBRARY = 'xul'
 LOCAL_INCLUDES += [
     '../../../dom/base',
     '../src',
-    '/js/ipc',
 ]
 

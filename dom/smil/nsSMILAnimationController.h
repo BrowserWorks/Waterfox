@@ -22,6 +22,7 @@ struct nsSMILTargetIdentifier;
 class nsIDocument;
 
 namespace mozilla {
+class RestyleTracker;
 namespace dom {
 class SVGAnimationElement;
 }
@@ -40,7 +41,7 @@ class SVGAnimationElement;
 // a compound document. These time containers can be paused individually or
 // here, at the document level.
 //
-class nsSMILAnimationController MOZ_FINAL : public nsSMILTimeContainer,
+class nsSMILAnimationController final : public nsSMILTimeContainer,
                                             public nsARefreshObserver
 {
 public:
@@ -50,15 +51,15 @@ public:
   void Disconnect();
 
   // nsSMILContainer
-  virtual void Pause(uint32_t aType) MOZ_OVERRIDE;
-  virtual void Resume(uint32_t aType) MOZ_OVERRIDE;
-  virtual nsSMILTime GetParentTime() const MOZ_OVERRIDE;
+  virtual void Pause(uint32_t aType) override;
+  virtual void Resume(uint32_t aType) override;
+  virtual nsSMILTime GetParentTime() const override;
 
   // nsARefreshObserver
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() MOZ_OVERRIDE;
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) AddRef() override;
+  NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
-  virtual void WillRefresh(mozilla::TimeStamp aTime) MOZ_OVERRIDE;
+  virtual void WillRefresh(mozilla::TimeStamp aTime) override;
 
   // Methods for registering and enumerating animation elements
   void RegisterAnimationElement(mozilla::dom::SVGAnimationElement* aAnimationElement);
@@ -105,6 +106,8 @@ public:
   bool HasRegisteredAnimations()
   { return mAnimationElementTable.Count() != 0; }
 
+  void AddStyleUpdatesTo(mozilla::RestyleTracker& aTracker);
+
 protected:
   ~nsSMILAnimationController();
 
@@ -147,7 +150,7 @@ protected:
   void MaybeStartSampling(nsRefreshDriver* aRefreshDriver);
 
   // Sample-related callbacks and implementation helpers
-  virtual void DoSample() MOZ_OVERRIDE;
+  virtual void DoSample() override;
   void DoSample(bool aSkipUnchangedContainers);
 
   void RewindElements();
@@ -175,9 +178,12 @@ protected:
   static bool GetTargetIdentifierForAnimation(
       mozilla::dom::SVGAnimationElement* aAnimElem, nsSMILTargetIdentifier& aResult);
 
+  static PLDHashOperator
+    AddStyleUpdate(AnimationElementPtrKey* aKey, void* aData);
+
   // Methods for adding/removing time containers
-  virtual nsresult AddChild(nsSMILTimeContainer& aChild) MOZ_OVERRIDE;
-  virtual void     RemoveChild(nsSMILTimeContainer& aChild) MOZ_OVERRIDE;
+  virtual nsresult AddChild(nsSMILTimeContainer& aChild) override;
+  virtual void     RemoveChild(nsSMILTimeContainer& aChild) override;
 
   void FlagDocumentNeedsFlush();
 

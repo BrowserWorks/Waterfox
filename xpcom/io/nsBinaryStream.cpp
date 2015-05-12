@@ -427,9 +427,9 @@ nsBinaryInputStream::Read(char* aBuffer, uint32_t aCount, uint32_t* aNumRead)
 // a thunking function which keeps the real input stream around.
 
 // the closure wrapper
-struct ReadSegmentsClosure
+struct MOZ_STACK_CLASS ReadSegmentsClosure
 {
-  nsIInputStream* mRealInputStream;
+  nsCOMPtr<nsIInputStream> mRealInputStream;
   void* mRealClosure;
   nsWriteSegmentFun mRealWriter;
   nsresult mRealResult;
@@ -765,7 +765,7 @@ nsBinaryInputStream::ReadString(nsAString& aString)
   }
 
   // pre-allocate output buffer, and get direct access to buffer...
-  if (!aString.SetLength(length, mozilla::fallible_t())) {
+  if (!aString.SetLength(length, mozilla::fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
 

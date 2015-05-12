@@ -44,7 +44,7 @@ public:
 
   virtual void PrintDiagnostics (nsCString &log) = 0;
 
-  bool ResponseTimeoutEnabled() const MOZ_OVERRIDE MOZ_FINAL {
+  bool ResponseTimeoutEnabled() const override final {
     return true;
   }
 
@@ -58,6 +58,8 @@ public:
   // reason to throttle with the rwin other than in server push
   // scenarios.
   const static uint32_t kInitialRwin = 256 * 1024 * 1024;
+
+  const static uint32_t kDefaultMaxConcurrent = 100;
 
   // soft errors are errors that terminate a stream without terminating the
   // connection. In general non-network errors are stream errors as well

@@ -39,7 +39,7 @@ namespace dom {
 
 class TimeRanges;
 
-class SourceBuffer MOZ_FINAL : public DOMEventTargetHelper
+class SourceBuffer final : public DOMEventTargetHelper
 {
 public:
   /** WebIDL Methods. */
@@ -94,7 +94,7 @@ public:
 
   MediaSource* GetParentObject() const;
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx) override;
 
   // Notify the SourceBuffer that it has been detached from the
   // MediaSource's sourceBuffer list.
@@ -116,6 +116,11 @@ public:
   void RangeRemoval(double aStart, double aEnd);
   // Actually remove data between aStart and aEnd
   void DoRangeRemoval(double aStart, double aEnd);
+
+  bool IsActive() const
+  {
+    return mActive;
+  }
 
 #if defined(DEBUG)
   void Dump(const char* aPath);
@@ -173,6 +178,8 @@ private:
 
   SourceBufferAppendMode mAppendMode;
   bool mUpdating;
+
+  bool mActive;
 
   // Each time mUpdating is set to true, mUpdateID will be incremented.
   // This allows for a queued AppendData task to identify if it was earlier

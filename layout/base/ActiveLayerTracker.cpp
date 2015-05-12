@@ -84,7 +84,7 @@ public:
   bool mContentActive;
 };
 
-class LayerActivityTracker MOZ_FINAL : public nsExpirationTracker<LayerActivity,4> {
+class LayerActivityTracker final : public nsExpirationTracker<LayerActivity,4> {
 public:
   // 75-100ms is a good timeout period. We use 4 generations of 25ms each.
   enum { GENERATION_MS = 100 };
@@ -107,13 +107,8 @@ LayerActivity::~LayerActivity()
   }
 }
 
-static void DestroyLayerActivity(void* aPropertyValue)
-{
-  delete static_cast<LayerActivity*>(aPropertyValue);
-}
-
 // Frames with this property have NS_FRAME_HAS_LAYER_ACTIVITY_PROPERTY set
-NS_DECLARE_FRAME_PROPERTY(LayerActivityProperty, DestroyLayerActivity)
+NS_DECLARE_FRAME_PROPERTY(LayerActivityProperty, DeleteValue<LayerActivity>)
 
 void
 LayerActivityTracker::NotifyExpired(LayerActivity* aObject)

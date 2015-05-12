@@ -252,7 +252,7 @@ NeedsGCAfterCC()
     sNeedsGCAfterCC;
 }
 
-class nsJSEnvironmentObserver MOZ_FINAL : public nsIObserver
+class nsJSEnvironmentObserver final : public nsIObserver
 {
   ~nsJSEnvironmentObserver() {}
 public:
@@ -2204,8 +2204,11 @@ DOMGCSliceCallback(JSRuntime *aRt, JS::GCProgress aProgress, const JS::GCDescrip
         nsJSContext::KillFullGCTimer();
 
         // Avoid shrinking during heavy activity, which is suggested by
-        // compartment GC.
-        nsJSContext::PokeShrinkGCBuffers();
+        // compartment GC. We don't need to shrink after a shrinking GC as this
+        // happens automatically in this case.
+        if (aDesc.invocationKind_ == GC_NORMAL) {
+          nsJSContext::PokeShrinkGCBuffers();
+        }
       }
 
       if (ShouldTriggerCC(nsCycleCollector_suspectedCount())) {
@@ -2352,6 +2355,13 @@ SetMemoryGCSliceTimePrefChangedCallback(const char* aPrefName, void* aClosure)
   // handle overflow and negative pref values
   if (pref > 0 && pref < 100000)
     JS_SetGCParameter(sRuntime, JSGC_SLICE_TIME_BUDGET, pref);
+}
+
+static void
+SetMemoryGCCompactingPrefChangedCallback(const char* aPrefName, void* aClosure)
+{
+  bool pref = Preferences::GetBool(aPrefName);
+  JS_SetGCParameter(sRuntime, JSGC_COMPACTING_ENABLED, pref);
 }
 
 static void
@@ -2616,6 +2626,9 @@ nsJSContext::EnsureStatics()
   Preferences::RegisterCallbackAndCall(SetMemoryGCSliceTimePrefChangedCallback,
                                        "javascript.options.mem.gc_incremental_slice_ms");
 
+  Preferences::RegisterCallbackAndCall(SetMemoryGCCompactingPrefChangedCallback,
+                                       "javascript.options.mem.gc_compacting");
+
   Preferences::RegisterCallbackAndCall(SetMemoryGCPrefChangedCallback,
                                        "javascript.options.mem.gc_high_frequency_time_limit_ms",
                                        (void *)JSGC_HIGH_FREQUENCY_TIME_LIMIT);
@@ -2739,7 +2752,7 @@ mozilla::dom::ShutdownJSEnvironment()
 // to/from nsISupports.
 // When consumed by non-JS (eg, another script language), conversion is done
 // on-the-fly.
-class nsJSArgArray MOZ_FINAL : public nsIJSArgArray {
+class nsJSArgArray final : public nsIJSArgArray {
 public:
   nsJSArgArray(JSContext *aContext, uint32_t argc, JS::Value *argv,
                nsresult *prv);
@@ -2753,7 +2766,7 @@ public:
   NS_DECL_NSIARRAY
 
   // nsIJSArgArray
-  nsresult GetArgs(uint32_t* argc, void** argv) MOZ_OVERRIDE;
+  nsresult GetArgs(uint32_t* argc, void** argv) override;
 
   void ReleaseJSObjects();
 
@@ -2773,7 +2786,6 @@ nsJSArgArray::nsJSArgArray(JSContext *aContext, uint32_t argc, JS::Value *argv,
   // copy the array - we don't know its lifetime, and ours is tied to xpcom
   // refcounting.
   if (argc) {
-    static const fallible_t fallible = fallible_t();
     mArgv = new (fallible) JS::Heap<JS::Value>[argc];
     if (!mArgv) {
       *prv = NS_ERROR_OUT_OF_MEMORY;

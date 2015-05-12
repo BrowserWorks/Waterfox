@@ -181,6 +181,7 @@ BrowserElementParent.prototype = {
       "hello": this._recvHello,
       "loadstart": this._fireProfiledEventFromMsg,
       "loadend": this._fireProfiledEventFromMsg,
+      "loadprogresschanged": this._fireEventFromMsg,
       "close": this._fireEventFromMsg,
       "error": this._fireEventFromMsg,
       "firstpaint": this._fireProfiledEventFromMsg,
@@ -199,7 +200,6 @@ BrowserElementParent.prototype = {
       "got-set-input-method-active": this._gotDOMRequestResult,
       "selectionstatechanged": this._handleSelectionStateChanged,
       "scrollviewchange": this._handleScrollViewChange,
-      "touchcarettap": this._handleTouchCaretTap
     };
 
     let mmSecuritySensitiveCalls = {
@@ -439,12 +439,6 @@ BrowserElementParent.prototype = {
     this._frameElement.dispatchEvent(evt);
   },
 
-  _handleTouchCaretTap: function(data) {
-    let evt = this._createEvent("touchcarettap", data.json,
-                                /* cancelable = */ false);
-    this._frameElement.dispatchEvent(evt);
-  },
-
   _createEvent: function(evtName, detail, cancelable) {
     // This will have to change if we ever want to send a CustomEvent with null
     // detail.  For now, it's OK.
@@ -545,7 +539,24 @@ BrowserElementParent.prototype = {
     return this._frameLoader.visible;
   },
 
+  getChildProcessOffset: function() {
+    let offset = { x: 0, y: 0 };
+    let tabParent = this._frameLoader.tabParent;
+    if (tabParent) {
+      let offsetX = {};
+      let offsetY = {};
+      tabParent.getChildProcessOffset(offsetX, offsetY);
+      offset.x = offsetX.value;
+      offset.y = offsetY.value;
+    }
+    return offset;
+  },
+
   sendMouseEvent: defineNoReturnMethod(function(type, x, y, button, clickCount, modifiers) {
+    let offset = this.getChildProcessOffset();
+    x += offset.x;
+    y += offset.y;
+
     this._sendAsyncMsg("send-mouse-event", {
       "type": type,
       "x": x,
@@ -573,6 +584,13 @@ BrowserElementParent.prototype = {
                                  count,
                                  modifiers);
     } else {
+      let offset = this.getChildProcessOffset();
+      for (var i = 0; i < touchesX.length; i++) {
+        touchesX[i] += offset.x;
+      }
+      for (var i = 0; i < touchesY.length; i++) {
+        touchesY[i] += offset.y;
+      }
       this._sendAsyncMsg("send-touch-event", {
         "type": type,
         "identifiers": identifiers,
@@ -832,6 +850,35 @@ BrowserElementParent.prototype = {
 
     return this._sendDOMRequest('set-input-method-active',
                                 {isActive: isActive});
+  },
+
+  setNFCFocus: function(isFocus) {
+    if (!this._isAlive()) {
+      throw Components.Exception("Dead content process",
+                                 Cr.NS_ERROR_DOM_INVALID_STATE_ERR);
+    }
+
+    // For now, we use tab id as an identifier to let NFC module know
+    // which app is in foreground. But this approach will not work in
+    // in-process mode because tab id doesn't exist. Fix bug 1116449
+    // if we are going to support in-process mode.
+    try {
+      var tabId = this._frameLoader.QueryInterface(Ci.nsIFrameLoader)
+                                   .tabParent
+                                   .tabId;
+    } catch(e) {
+      debug("SetNFCFocus for in-process mode is not yet supported");
+      throw Components.Exception("SetNFCFocus for in-process mode is not yet supported",
+                                 Cr.NS_ERROR_NOT_IMPLEMENTED);
+    }
+
+    try {
+      let nfcContentHelper =
+        Cc["@mozilla.org/nfc/content-helper;1"].getService(Ci.nsINfcBrowserAPI);
+      nfcContentHelper.setFocusApp(tabId, isFocus);
+    } catch(e) {
+      // Not all platforms support NFC
+    }
   },
 
   /**

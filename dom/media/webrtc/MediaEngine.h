@@ -18,8 +18,11 @@ namespace dom {
 class File;
 }
 
-struct VideoTrackConstraintsN;
-struct AudioTrackConstraintsN;
+enum {
+  kVideoTrack = 1,
+  kAudioTrack = 2,
+  kTrackCount
+};
 
 /**
  * Abstract interface for managing audio and video devices. Each platform
@@ -39,16 +42,6 @@ enum MediaEngineState {
   kReleased
 };
 
-// includes everything from dom::MediaSourceEnum (really video sources), plus audio sources
-enum MediaSourceType {
-  Camera = (int) dom::MediaSourceEnum::Camera,
-  Screen = (int) dom::MediaSourceEnum::Screen,
-  Application = (int) dom::MediaSourceEnum::Application,
-  Window, // = (int) dom::MediaSourceEnum::Window, // XXX bug 1038926
-  Browser = (int) dom::MediaSourceEnum::Browser, // proposed in WG, unclear if it's useful
-  Microphone
-};
-
 class MediaEngine
 {
 public:
@@ -64,12 +57,12 @@ public:
 
   /* Populate an array of video sources in the nsTArray. Also include devices
    * that are currently unavailable. */
-  virtual void EnumerateVideoDevices(MediaSourceType,
+  virtual void EnumerateVideoDevices(dom::MediaSourceEnum,
                                      nsTArray<nsRefPtr<MediaEngineVideoSource> >*) = 0;
 
   /* Populate an array of audio sources in the nsTArray. Also include devices
    * that are currently unavailable. */
-  virtual void EnumerateAudioDevices(MediaSourceType,
+  virtual void EnumerateAudioDevices(dom::MediaSourceEnum,
                                      nsTArray<nsRefPtr<MediaEngineAudioSource> >*) = 0;
 
 protected:
@@ -127,7 +120,7 @@ public:
   virtual bool IsFake() = 0;
 
   /* Returns the type of media source (camera, microphone, screen, window, etc) */
-  virtual const MediaSourceType GetMediaSource() = 0;
+  virtual const dom::MediaSourceEnum GetMediaSource() = 0;
 
   // Callback interface for TakePhoto(). Either PhotoComplete() or PhotoError()
   // should be called.
@@ -229,10 +222,10 @@ public:
   virtual ~MediaEngineVideoSource() {}
 
   /* This call reserves but does not start the device. */
-  virtual nsresult Allocate(const VideoTrackConstraintsN &aConstraints,
+  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
                             const MediaEnginePrefs &aPrefs) = 0;
 
-  virtual bool SatisfiesConstraintSets(
+  virtual uint32_t GetBestFitnessDistance(
       const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) = 0;
 
 protected:
@@ -251,7 +244,7 @@ public:
   virtual ~MediaEngineAudioSource() {}
 
   /* This call reserves but does not start the device. */
-  virtual nsresult Allocate(const AudioTrackConstraintsN &aConstraints,
+  virtual nsresult Allocate(const dom::MediaTrackConstraints &aConstraints,
                             const MediaEnginePrefs &aPrefs) = 0;
 protected:
   explicit MediaEngineAudioSource(MediaEngineState aState)

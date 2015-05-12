@@ -683,15 +683,15 @@ private:
 
   virtual ~CacheIndex();
 
-  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
+  NS_IMETHOD OnFileOpened(CacheFileHandle *aHandle, nsresult aResult) override;
   nsresult   OnFileOpenedInternal(FileOpenHelper *aOpener,
                                   CacheFileHandle *aHandle, nsresult aResult);
   NS_IMETHOD OnDataWritten(CacheFileHandle *aHandle, const char *aBuf,
-                           nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
-  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) MOZ_OVERRIDE;
+                           nsresult aResult) override;
+  NS_IMETHOD OnDataRead(CacheFileHandle *aHandle, char *aBuf, nsresult aResult) override;
+  NS_IMETHOD OnFileDoomed(CacheFileHandle *aHandle, nsresult aResult) override;
+  NS_IMETHOD OnEOFSet(CacheFileHandle *aHandle, nsresult aResult) override;
+  NS_IMETHOD OnFileRenamed(CacheFileHandle *aHandle, nsresult aResult) override;
 
   void     Lock();
   void     Unlock();
@@ -1050,7 +1050,20 @@ private:
   private:
     explicit DiskConsumptionObserver(nsWeakPtr const &aWeakObserver)
       : mObserver(aWeakObserver) { }
-    virtual ~DiskConsumptionObserver() { }
+    virtual ~DiskConsumptionObserver() {
+      if (mObserver && !NS_IsMainThread()) {
+        nsIWeakReference *obs;
+        mObserver.forget(&obs);
+
+        nsCOMPtr<nsIThread> mainThread = do_GetMainThread();
+        if (mainThread) {
+          NS_ProxyRelease(mainThread, obs);
+        } else {
+          NS_WARNING("Cannot get main thread, leaking weak reference to "
+                     "CacheStorageConsumptionObserver.");
+        }
+      }
+    }
 
     NS_IMETHODIMP Run()
     {
@@ -1058,6 +1071,8 @@ private:
 
       nsCOMPtr<nsICacheStorageConsumptionObserver> observer =
         do_QueryReferent(mObserver);
+
+      mObserver = nullptr;
 
       if (observer) {
         observer->OnNetworkCacheDiskConsumption(mSize);

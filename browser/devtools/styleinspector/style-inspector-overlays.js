@@ -64,9 +64,7 @@ function HighlightersOverlay(view) {
 
   // Only initialize the overlay if at least one of the highlighter types is
   // supported
-  this.supportsHighlighters = HIGHLIGHTER_TYPES.some(type => {
-    return this.highlighterUtils.hasCustomHighlighter(type);
-  });
+  this.supportsHighlighters = this.highlighterUtils.supportsCustomHighlighters();
 }
 
 exports.HighlightersOverlay = HighlightersOverlay;
@@ -183,7 +181,14 @@ HighlightersOverlay.prototype = {
   _hideCurrent: function() {
     if (this.highlighterShown) {
       this._getHighlighter(this.highlighterShown).then(highlighter => {
-        highlighter.hide();
+        // For some reason, the call to highlighter.hide doesn't always return a
+        // promise. This causes some tests to fail when trying to install a
+        // rejection handler on the result of the call. To avoid this, check
+        // whether the result is truthy before installing the handler.
+        let promise = highlighter.hide();
+        if (promise) {
+          promise.then(null, Cu.reportError);
+        }
         this.highlighterShown = null;
       });
     }
@@ -196,9 +201,6 @@ HighlightersOverlay.prototype = {
    */
   _getHighlighter: function(type) {
     let utils = this.highlighterUtils;
-    if (!utils.hasCustomHighlighter(type)) {
-      return promise.reject();
-    }
 
     if (this.promises[type]) {
       return this.promises[type];

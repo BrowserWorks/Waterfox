@@ -199,14 +199,22 @@ SrcdirProvider.prototype = {
   _readFile: function(filename) {
     let deferred = promise.defer();
     let file = new FileUtils.File(filename);
-    NetUtil.asyncFetch(file, (inputStream, status) => {
-      if (!Components.isSuccessCode(status)) {
-        deferred.reject(new Error("Couldn't load manifest: " + filename + "\n"));
-        return;
-      }
-      var data = NetUtil.readInputStreamToString(inputStream, inputStream.available());
-      deferred.resolve(data);
-    });
+    NetUtil.asyncFetch2(
+      file,
+      (inputStream, status) => {
+        if (!Components.isSuccessCode(status)) {
+          deferred.reject(new Error("Couldn't load manifest: " + filename + "\n"));
+          return;
+        }
+        var data = NetUtil.readInputStreamToString(inputStream, inputStream.available());
+        deferred.resolve(data);
+      },
+      null,      // aLoadingNode
+      Services.scriptSecurityManager.getSystemPrincipal(),
+      null,      // aTriggeringPrincipal
+      Ci.nsILoadInfo.SEC_NORMAL,
+      Ci.nsIContentPolicy.TYPE_OTHER);
+
     return deferred.promise;
   },
 
@@ -300,7 +308,8 @@ DevToolsLoader.prototype = {
     Object.defineProperty(obj, property, {
       get: () => destructure
         ? this.require(module)[property]
-        : this.require(module || property)
+        : this.require(module || property),
+      configurable: true
     });
   },
 

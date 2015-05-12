@@ -115,7 +115,7 @@ function StyleSheetEditor(styleSheet, win, file, isNew, walker, highlighter) {
   this.styleSheet.on("error", this._onError);
   this.mediaRules = [];
   if (this.cssSheet.getMediaRules) {
-    this.cssSheet.getMediaRules().then(this._onMediaRulesChanged);
+    this.cssSheet.getMediaRules().then(this._onMediaRulesChanged, Cu.reportError);
   }
   this.cssSheet.on("media-rules-changed", this._onMediaRulesChanged);
   this.savedFile = file;
@@ -441,7 +441,7 @@ StyleSheetEditor.prototype = {
    * Toggled the disabled state of the underlying stylesheet.
    */
   toggleDisabled: function() {
-    this.styleSheet.toggleDisabled();
+    this.styleSheet.toggleDisabled().then(null, Cu.reportError);
   },
 
   /**
@@ -483,7 +483,8 @@ StyleSheetEditor.prototype = {
 
     let transitionsEnabled = Services.prefs.getBoolPref(TRANSITION_PREF);
 
-    this.styleSheet.update(this._state.text, transitionsEnabled);
+    this.styleSheet.update(this._state.text, transitionsEnabled)
+                   .then(null, Cu.reportError);
   },
 
   /**

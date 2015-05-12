@@ -40,6 +40,9 @@
 #include <utils/String8.h>
 #include "nsTArray.h"
 
+static const uint32_t kMAX_ALLOCATION =
+    (SIZE_MAX < INT32_MAX ? SIZE_MAX : INT32_MAX) - 128;
+
 namespace stagefright {
 
 class MPEG4Source : public MediaSource {
@@ -761,6 +764,11 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
         }
     } else if (chunk_size < 8) {
         // The smallest valid chunk is 8 bytes long.
+        return ERROR_MALFORMED;
+    }
+
+    if (chunk_size >= kMAX_ALLOCATION) {
+        // Could cause an overflow later. Abort.
         return ERROR_MALFORMED;
     }
 
@@ -1789,8 +1797,9 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 }
                 duration = ntohl(duration32);
             }
-            if (duration) {
-              mFileMetaData->setInt64(kKeyMovieDuration, duration * 1000LL);
+            if (duration && mHeaderTimescale) {
+                mFileMetaData->setInt64(
+                        kKeyMovieDuration, (duration * 1000000) / mHeaderTimescale);
             }
 
             *offset += chunk_size;
@@ -1842,6 +1851,10 @@ status_t MPEG4Extractor::parseChunk(off64_t *offset, int depth) {
                 size = 0;
             }
 
+            // Make sure (size + chunk_size) isn't going to overflow.
+            if (size >= kMAX_ALLOCATION - chunk_size) {
+                return ERROR_MALFORMED;
+            }
             uint8_t *buffer = new uint8_t[size + chunk_size];
 
             if (size > 0) {
@@ -2192,12 +2205,15 @@ status_t MPEG4Extractor::parseMetaData(off64_t offset, size_t size) {
         return ERROR_MALFORMED;
     }
 
-    uint8_t *buffer = new uint8_t[size + 1];
+    FallibleTArray<uint8_t> bufferBackend;
+    if (!bufferBackend.SetLength(size + 1)) {
+        // OOM ignore metadata.
+        return OK;
+    }
+
+    uint8_t *buffer = bufferBackend.Elements();
     if (mDataSource->readAt(
                 offset, buffer, size) != (ssize_t)size) {
-        delete[] buffer;
-        buffer = NULL;
-
         return ERROR_IO;
     }
 
@@ -2368,9 +2384,6 @@ status_t MPEG4Extractor::parseMetaData(off64_t offset, size_t size) {
         }
     }
 
-    delete[] buffer;
-    buffer = NULL;
-
     return OK;
 }
 
@@ -2445,7 +2458,7 @@ status_t MPEG4Extractor::updateAudioTrackInfoFromESDS_MPEG4Audio(
         return OK;
     }
 
-    if (objectTypeIndication  == 0x6b) {
+    if (objectTypeIndication  == 0x6b || objectTypeIndication  == 0x69) {
         // The media subtype is MP3 audio
         mLastTrack->meta->setCString(kKeyMIMEType, MEDIA_MIMETYPE_AUDIO_MPEG);
     }
@@ -2685,6 +2698,11 @@ status_t MPEG4Source::parseChunk(off64_t *offset) {
         }
     } else if (chunk_size < 8) {
         // The smallest valid chunk is 8 bytes long.
+        return ERROR_MALFORMED;
+    }
+
+    if (chunk_size >= kMAX_ALLOCATION) {
+        // Could cause an overflow later. Abort.
         return ERROR_MALFORMED;
     }
 
@@ -3608,8 +3626,6 @@ status_t MPEG4Source::read(
                 mDataSource->readAt(offset, (uint8_t*)mBuffer->data(), size);
         } else {
             if (!ensureSrcBufferAllocated(size)) {
-                ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
-                      size, mSrcBackend.Length());
                 return ERROR_MALFORMED;
             }
             num_bytes_read = mDataSource->readAt(offset, mSrcBuffer, size);
@@ -3975,8 +3991,6 @@ status_t MPEG4Source::fragmentedRead(
                 mDataSource->readAt(offset, (uint8_t*)mBuffer->data(), size);
         } else {
             if (!ensureSrcBufferAllocated(size)) {
-                ALOGE("Error insufficient memory, requested %u bytes (had:%u)",
-                      size, mSrcBackend.Length());
                 return ERROR_MALFORMED;
             }
             num_bytes_read = mDataSource->readAt(offset, mSrcBuffer, size);

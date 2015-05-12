@@ -53,7 +53,10 @@ struct nsDiscriminatedUnion
     nsACString*    mCStringValue;
     struct
     {
-      nsISupports* mInterfaceValue;
+      // This is an owning reference that cannot be an nsCOMPtr because
+      // nsDiscriminatedUnion needs to be POD.  AddRef/Release are manually
+      // called on this.
+      nsISupports* MOZ_OWNING_REF mInterfaceValue;
       nsIID        mInterfaceID;
     } iface;
     struct
@@ -88,7 +91,7 @@ struct nsDiscriminatedUnion
  * use to help them do all the 'standard' nsIVariant data conversions.
  */
 
-class nsVariant MOZ_FINAL : public nsIWritableVariant
+class nsVariant final : public nsIWritableVariant
 {
 public:
   NS_DECL_ISUPPORTS

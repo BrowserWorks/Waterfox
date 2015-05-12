@@ -185,15 +185,6 @@ D3D9SurfaceImage::EnsureSynchronized()
   mQuery = nullptr;
 }
 
-HANDLE
-D3D9SurfaceImage::GetShareHandle()
-{
-  // Ensure the image has completed its synchronization,
-  // and safe to used by the caller on another device.
-  EnsureSynchronized();
-  return mShareHandle;
-}
-
 const D3DSURFACE_DESC&
 D3D9SurfaceImage::GetDesc() const
 {

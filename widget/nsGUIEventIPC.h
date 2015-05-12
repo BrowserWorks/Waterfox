@@ -286,8 +286,7 @@ struct ParamTraits<mozilla::WidgetTouchEvent>
         }
         aResult->touches.AppendElement(
           new mozilla::dom::Touch(
-            identifier, mozilla::LayoutDeviceIntPoint::ToUntyped(refPoint),
-            radius, rotationAngle, force));
+            identifier, refPoint, radius, rotationAngle, force));
     }
     return true;
   }
@@ -528,6 +527,26 @@ struct ParamTraits<mozilla::WidgetCompositionEvent>
 };
 
 template<>
+struct ParamTraits<mozilla::FontRange>
+{
+  typedef mozilla::FontRange paramType;
+
+  static void Write(Message* aMsg, const paramType& aParam)
+  {
+    WriteParam(aMsg, aParam.mStartOffset);
+    WriteParam(aMsg, aParam.mFontName);
+    WriteParam(aMsg, aParam.mFontSize);
+  }
+
+  static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
+  {
+    return ReadParam(aMsg, aIter, &aResult->mStartOffset) &&
+           ReadParam(aMsg, aIter, &aResult->mFontName) &&
+           ReadParam(aMsg, aIter, &aResult->mFontSize);
+  }
+};
+
+template<>
 struct ParamTraits<mozilla::WidgetQueryContentEvent>
 {
   typedef mozilla::WidgetQueryContentEvent paramType;
@@ -537,6 +556,7 @@ struct ParamTraits<mozilla::WidgetQueryContentEvent>
     WriteParam(aMsg, static_cast<mozilla::WidgetGUIEvent>(aParam));
     WriteParam(aMsg, aParam.mSucceeded);
     WriteParam(aMsg, aParam.mUseNativeLineBreak);
+    WriteParam(aMsg, aParam.mWithFontRanges);
     WriteParam(aMsg, aParam.mInput.mOffset);
     WriteParam(aMsg, aParam.mInput.mLength);
     WriteParam(aMsg, aParam.mReply.mOffset);
@@ -545,6 +565,7 @@ struct ParamTraits<mozilla::WidgetQueryContentEvent>
     WriteParam(aMsg, aParam.mReply.mReversed);
     WriteParam(aMsg, aParam.mReply.mHasSelection);
     WriteParam(aMsg, aParam.mReply.mWidgetIsHit);
+    WriteParam(aMsg, aParam.mReply.mFontRanges);
   }
 
   static bool Read(const Message* aMsg, void** aIter, paramType* aResult)
@@ -554,6 +575,7 @@ struct ParamTraits<mozilla::WidgetQueryContentEvent>
                      static_cast<mozilla::WidgetGUIEvent*>(aResult)) &&
            ReadParam(aMsg, aIter, &aResult->mSucceeded) &&
            ReadParam(aMsg, aIter, &aResult->mUseNativeLineBreak) &&
+           ReadParam(aMsg, aIter, &aResult->mWithFontRanges) &&
            ReadParam(aMsg, aIter, &aResult->mInput.mOffset) &&
            ReadParam(aMsg, aIter, &aResult->mInput.mLength) &&
            ReadParam(aMsg, aIter, &aResult->mReply.mOffset) &&
@@ -561,7 +583,8 @@ struct ParamTraits<mozilla::WidgetQueryContentEvent>
            ReadParam(aMsg, aIter, &aResult->mReply.mRect) &&
            ReadParam(aMsg, aIter, &aResult->mReply.mReversed) &&
            ReadParam(aMsg, aIter, &aResult->mReply.mHasSelection) &&
-           ReadParam(aMsg, aIter, &aResult->mReply.mWidgetIsHit);
+           ReadParam(aMsg, aIter, &aResult->mReply.mWidgetIsHit) &&
+           ReadParam(aMsg, aIter, &aResult->mReply.mFontRanges);
   }
 };
 

@@ -246,6 +246,7 @@ load 417902-1.html
 load 417902-2.html
 load 418532-1.html
 load 418932-1.html
+load 419352.html
 load 420000-1.html
 load 420718.html
 load 420785-1.xhtml
@@ -470,8 +471,8 @@ load 700031.xhtml
 load 718516.html
 load 723108.html
 load 724235.html
-load 724978.xhtml
-load 730559.html
+skip-if(OSX=1010&&isDebugBuild) load 724978.xhtml
+skip-if(OSX=1010&&isDebugBuild) load 730559.html
 load first-letter-638937.html
 load first-letter-638937-2.html
 load 734777.html
@@ -486,7 +487,7 @@ load 762764-1.html
 load 765409.html
 asserts(0-200) load 765621.html # bug 703550
 asserts(0-200) load 767765.html # bug 407550, bug 871758, and various nscoord_MAX related asserts
-load 769303-1.html
+asserts(0-2) load 769303-1.html # bug 1123979
 load 769303-2.html
 load 769120.html
 load 777838.html
@@ -496,7 +497,7 @@ load 785555.html
 load 786740-1.html
 asserts(0-4) test-pref(font.size.inflation.emPerLine,15) load 791601.xhtml # 3 counts of bug 871327, 1 bug 367185
 test-pref(font.size.inflation.minTwips,120) load 794693.html
-asserts-if(!Android,8) load 798020-1.html
+asserts-if(!Android,4) load 798020-1.html
 load 798235-1.html
 load 799207-1.html
 load 799207-2.html
@@ -550,7 +551,9 @@ load 927558.html
 load 943509-1.html
 asserts(3-8) load 944909-1.html
 load 946167-1.html
+load 947158.html
 test-pref(layout.css.sticky.enabled,true) load 949932.html
+load 970710.html
 load 973701-1.xhtml
 load 973701-2.xhtml
 load 986899.html
@@ -564,5 +567,6 @@ load outline-on-frameset.xhtml
 pref(font.size.inflation.minTwips,200) load 1032450.html
 load 1037903.html
 load 1039454-1.html
-load 1058954-1.html
 load 1042489.html
+load 1054010-1.html
+load 1058954-1.html

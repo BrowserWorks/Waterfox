@@ -83,7 +83,7 @@ static StaticRefPtr<ContentCreationNotifier> gContentCreationNotifier;
 
 // A helper class to send updates when content processes
 // are created. Currently an update for the screen size is sent.
-class ContentCreationNotifier MOZ_FINAL : public nsIObserver
+class ContentCreationNotifier final : public nsIObserver
 {
 private:
     ~ContentCreationNotifier() {}
@@ -211,7 +211,6 @@ NS_IMETHODIMP
 nsWindow::Create(nsIWidget *aParent,
                  nsNativeWidget aNativeParent,
                  const nsIntRect &aRect,
-                 nsDeviceContext *aContext,
                  nsWidgetInitData *aInitData)
 {
     ALOG("nsWindow[%p]::Create %p [%d %d %d %d]", (void*)this, (void*)aParent, aRect.x, aRect.y, aRect.width, aRect.height);
@@ -234,7 +233,7 @@ nsWindow::Create(nsIWidget *aParent,
         mBounds.height = gAndroidBounds.height;
     }
 
-    BaseCreate(nullptr, mBounds, aContext, aInitData);
+    BaseCreate(nullptr, mBounds, aInitData);
 
     NS_ASSERTION(IsTopLevel() || parent, "non top level windowdoesn't have a parent!");
 
@@ -630,7 +629,7 @@ nsWindow::BringToFront()
 NS_IMETHODIMP
 nsWindow::GetScreenBounds(nsIntRect &aRect)
 {
-    nsIntPoint p = WidgetToScreenOffset();
+    LayoutDeviceIntPoint p = WidgetToScreenOffset();
 
     aRect.x = p.x;
     aRect.y = p.y;
@@ -640,10 +639,10 @@ nsWindow::GetScreenBounds(nsIntRect &aRect)
     return NS_OK;
 }
 
-nsIntPoint
+LayoutDeviceIntPoint
 nsWindow::WidgetToScreenOffset()
 {
-    nsIntPoint p(0, 0);
+    LayoutDeviceIntPoint p(0, 0);
     nsWindow *w = this;
 
     while (w && !w->IsTopLevel()) {
@@ -1041,8 +1040,7 @@ nsWindow::OnContextmenuEvent(AndroidGeckoEvent *ae)
     WidgetMouseEvent contextMenuEvent(true, NS_CONTEXTMENU, this,
                                       WidgetMouseEvent::eReal, WidgetMouseEvent::eNormal);
     contextMenuEvent.refPoint =
-        LayoutDeviceIntPoint(RoundedToInt(pt * GetDefaultScale())) -
-        LayoutDeviceIntPoint::FromUntyped(WidgetToScreenOffset());
+        RoundedToInt(pt * GetDefaultScale()) - WidgetToScreenOffset();
     contextMenuEvent.ignoreRootScrollFrame = true;
     contextMenuEvent.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
 
@@ -1095,7 +1093,7 @@ bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
         // retargeted. The Fennec browser.js code can use this to activate the
         // highlight element in case the this touchstart is the start of a tap.
         WidgetMouseEvent hittest(true, NS_MOUSE_MOZHITTEST, this, WidgetMouseEvent::eReal);
-        hittest.refPoint = LayoutDeviceIntPoint::FromUntyped(event.touches[0]->mRefPoint);
+        hittest.refPoint = event.touches[0]->mRefPoint;
         hittest.ignoreRootScrollFrame = true;
         hittest.inputSource = nsIDOMMouseEvent::MOZ_SOURCE_TOUCH;
         nsEventStatus status;
@@ -1140,8 +1138,8 @@ bool nsWindow::OnMultitouchEvent(AndroidGeckoEvent *ae)
 void
 nsWindow::OnNativeGestureEvent(AndroidGeckoEvent *ae)
 {
-  nsIntPoint pt(ae->Points()[0].x,
-                ae->Points()[0].y);
+  LayoutDeviceIntPoint pt(ae->Points()[0].x,
+                          ae->Points()[0].y);
   double delta = ae->X();
   int msg = 0;
 
@@ -1170,7 +1168,7 @@ nsWindow::OnNativeGestureEvent(AndroidGeckoEvent *ae)
 
 void
 nsWindow::DispatchGestureEvent(uint32_t msg, uint32_t direction, double delta,
-                               const nsIntPoint &refPoint, uint64_t time)
+                               const LayoutDeviceIntPoint &refPoint, uint64_t time)
 {
     WidgetSimpleGestureEvent event(true, msg, this);
 
@@ -1178,7 +1176,7 @@ nsWindow::DispatchGestureEvent(uint32_t msg, uint32_t direction, double delta,
     event.delta = delta;
     event.modifiers = 0;
     event.time = time;
-    event.refPoint = LayoutDeviceIntPoint::FromUntyped(refPoint);
+    event.refPoint = refPoint;
 
     DispatchEvent(&event);
 }
@@ -1377,7 +1375,6 @@ ConvertAndroidKeyCodeToKeyNameIndex(AndroidGeckoEvent& aAndroidGeckoEvent)
         case AKEYCODE_ENDCALL:
         case AKEYCODE_NUM:                // XXX Not sure
         case AKEYCODE_HEADSETHOOK:
-        case AKEYCODE_FOCUS:
         case AKEYCODE_NOTIFICATION:       // XXX Not sure
         case AKEYCODE_PICTSYMBOLS:
 
@@ -1540,7 +1537,8 @@ nsWindow::InitKeyEvent(WidgetKeyboardEvent& event, AndroidGeckoEvent& key,
     event.mIsRepeat =
         (event.message == NS_KEY_DOWN || event.message == NS_KEY_PRESS) &&
         (!!(key.Flags() & AKEY_EVENT_FLAG_LONG_PRESS) || !!key.RepeatCount());
-    event.location = key.DomKeyLocation();
+    event.location =
+        WidgetKeyboardEvent::ComputeLocationFromCodeValue(event.mCodeNameIndex);
     event.time = key.Time();
 
     if (gMenu)
@@ -2047,8 +2045,8 @@ nsWindow::UserActivity()
   }
 }
 
-NS_IMETHODIMP
-nsWindow::NotifyIME(const IMENotification& aIMENotification)
+nsresult
+nsWindow::NotifyIMEInternal(const IMENotification& aIMENotification)
 {
     switch (aIMENotification.mMessage) {
         case REQUEST_TO_COMMIT_COMPOSITION:

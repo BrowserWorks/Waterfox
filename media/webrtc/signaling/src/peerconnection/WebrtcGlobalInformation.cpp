@@ -167,8 +167,12 @@ WebrtcGlobalInformation::GetAllStats(
           pcIdFilter.Value().EqualsASCII(p->second->GetIdAsAscii().c_str())) {
         if (p->second->HasMedia()) {
           queries->append(nsAutoPtr<RTCStatsQuery>(new RTCStatsQuery(true)));
-          p->second->BuildStatsQuery_m(nullptr, // all tracks
-                                       queries->back());
+          rv = p->second->BuildStatsQuery_m(nullptr, queries->back()); // all tracks
+          if (NS_WARN_IF(NS_FAILED(rv))) {
+            aRv.Throw(rv);
+            return;
+          }
+          MOZ_ASSERT(queries->back()->report);
         }
       }
     }
@@ -182,7 +186,6 @@ WebrtcGlobalInformation::GetAllStats(
   rv = RUN_ON_THREAD(stsThread,
                      WrapRunnableNM(&GetAllStats_s, callbackHandle, queries),
                      NS_DISPATCH_NORMAL);
-
   aRv = rv;
 }
 

@@ -46,6 +46,8 @@ namespace jit {
     _(Pools)                                \
     /* Profiling-related information */     \
     _(Profiling)                            \
+    /* Information of tracked opt strats */ \
+    _(OptimizationTracking)                 \
     /* Debug info about the I$ */           \
     _(CacheFlush)                           \
                                             \
@@ -104,7 +106,7 @@ static const int NULL_ID = -1;
 class IonSpewer
 {
   private:
-    MIRGraph *graph;
+    MIRGraph* graph;
     C1Spewer c1Spewer;
     JSONSpewer jsonSpewer;
     bool inited_;
@@ -118,37 +120,37 @@ class IonSpewer
     ~IonSpewer();
 
     bool init();
-    void beginFunction(MIRGraph *graph, JS::HandleScript);
+    void beginFunction(MIRGraph* graph, JS::HandleScript);
     bool isSpewingFunction() const;
-    void spewPass(const char *pass);
-    void spewPass(const char *pass, LinearScanAllocator *ra);
+    void spewPass(const char* pass);
+    void spewPass(const char* pass, LinearScanAllocator* ra);
     void endFunction();
 };
 
 class IonSpewFunction
 {
   public:
-    IonSpewFunction(MIRGraph *graph, JS::HandleScript function);
+    IonSpewFunction(MIRGraph* graph, JS::HandleScript function);
     ~IonSpewFunction();
 };
 
-void IonSpewNewFunction(MIRGraph *graph, JS::HandleScript function);
-void IonSpewPass(const char *pass);
-void IonSpewPass(const char *pass, LinearScanAllocator *ra);
+void IonSpewNewFunction(MIRGraph* graph, JS::HandleScript function);
+void IonSpewPass(const char* pass);
+void IonSpewPass(const char* pass, LinearScanAllocator* ra);
 void IonSpewEndFunction();
 
 void CheckLogging();
-extern FILE *JitSpewFile;
-void JitSpew(JitSpewChannel channel, const char *fmt, ...);
-void JitSpewStart(JitSpewChannel channel, const char *fmt, ...);
-void JitSpewCont(JitSpewChannel channel, const char *fmt, ...);
+extern FILE* JitSpewFile;
+void JitSpew(JitSpewChannel channel, const char* fmt, ...);
+void JitSpewStart(JitSpewChannel channel, const char* fmt, ...);
+void JitSpewCont(JitSpewChannel channel, const char* fmt, ...);
 void JitSpewFin(JitSpewChannel channel);
 void JitSpewHeader(JitSpewChannel channel);
 bool JitSpewEnabled(JitSpewChannel channel);
-void JitSpewVA(JitSpewChannel channel, const char *fmt, va_list ap);
-void JitSpewStartVA(JitSpewChannel channel, const char *fmt, va_list ap);
-void JitSpewContVA(JitSpewChannel channel, const char *fmt, va_list ap);
-void JitSpewDef(JitSpewChannel channel, const char *str, MDefinition *def);
+void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap);
+void JitSpewStartVA(JitSpewChannel channel, const char* fmt, va_list ap);
+void JitSpewContVA(JitSpewChannel channel, const char* fmt, va_list ap);
+void JitSpewDef(JitSpewChannel channel, const char* str, MDefinition* def);
 
 void EnableChannel(JitSpewChannel channel);
 void DisableChannel(JitSpewChannel channel);
@@ -156,23 +158,23 @@ void EnableIonDebugLogging();
 
 #else
 
-static inline void IonSpewNewFunction(MIRGraph *graph, JS::HandleScript function)
+static inline void IonSpewNewFunction(MIRGraph* graph, JS::HandleScript function)
 { }
-static inline void IonSpewPass(const char *pass)
+static inline void IonSpewPass(const char* pass)
 { }
-static inline void IonSpewPass(const char *pass, LinearScanAllocator *ra)
+static inline void IonSpewPass(const char* pass, LinearScanAllocator* ra)
 { }
 static inline void IonSpewEndFunction()
 { }
 
 static inline void CheckLogging()
 { }
-static FILE *const JitSpewFile = nullptr;
-static inline void JitSpew(JitSpewChannel, const char *fmt, ...)
+static FILE* const JitSpewFile = nullptr;
+static inline void JitSpew(JitSpewChannel, const char* fmt, ...)
 { }
-static inline void JitSpewStart(JitSpewChannel channel, const char *fmt, ...)
+static inline void JitSpewStart(JitSpewChannel channel, const char* fmt, ...)
 { }
-static inline void JitSpewCont(JitSpewChannel channel, const char *fmt, ...)
+static inline void JitSpewCont(JitSpewChannel channel, const char* fmt, ...)
 { }
 static inline void JitSpewFin(JitSpewChannel channel)
 { }
@@ -181,9 +183,9 @@ static inline void JitSpewHeader(JitSpewChannel channel)
 { }
 static inline bool JitSpewEnabled(JitSpewChannel channel)
 { return false; }
-static inline void JitSpewVA(JitSpewChannel channel, const char *fmt, va_list ap)
+static inline void JitSpewVA(JitSpewChannel channel, const char* fmt, va_list ap)
 { }
-static inline void JitSpewDef(JitSpewChannel channel, const char *str, MDefinition *def)
+static inline void JitSpewDef(JitSpewChannel channel, const char* str, MDefinition* def)
 { }
 
 static inline void EnableChannel(JitSpewChannel)

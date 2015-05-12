@@ -18,27 +18,27 @@ class MediaEngineTabVideoSource : public MediaEngineVideoSource, nsIDOMEventList
     NS_DECL_NSITIMERCALLBACK
     MediaEngineTabVideoSource();
 
-    virtual void GetName(nsAString_internal&) MOZ_OVERRIDE;
-    virtual void GetUUID(nsAString_internal&) MOZ_OVERRIDE;
-    virtual nsresult Allocate(const VideoTrackConstraintsN &,
-                              const mozilla::MediaEnginePrefs&) MOZ_OVERRIDE;
-    virtual nsresult Deallocate() MOZ_OVERRIDE;
-    virtual nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID) MOZ_OVERRIDE;
-    virtual void SetDirectListeners(bool aHasDirectListeners) MOZ_OVERRIDE {};
-    virtual void NotifyPull(mozilla::MediaStreamGraph*, mozilla::SourceMediaStream*, mozilla::TrackID, mozilla::StreamTime) MOZ_OVERRIDE;
-    virtual nsresult Stop(mozilla::SourceMediaStream*, mozilla::TrackID) MOZ_OVERRIDE;
-    virtual nsresult Config(bool, uint32_t, bool, uint32_t, bool, uint32_t, int32_t) MOZ_OVERRIDE;
-    virtual bool IsFake() MOZ_OVERRIDE;
-    virtual const MediaSourceType GetMediaSource() MOZ_OVERRIDE {
-      return MediaSourceType::Browser;
+    virtual void GetName(nsAString_internal&) override;
+    virtual void GetUUID(nsAString_internal&) override;
+    virtual nsresult Allocate(const dom::MediaTrackConstraints &,
+                              const mozilla::MediaEnginePrefs&) override;
+    virtual nsresult Deallocate() override;
+    virtual nsresult Start(mozilla::SourceMediaStream*, mozilla::TrackID) override;
+    virtual void SetDirectListeners(bool aHasDirectListeners) override {};
+    virtual void NotifyPull(mozilla::MediaStreamGraph*, mozilla::SourceMediaStream*, mozilla::TrackID, mozilla::StreamTime) override;
+    virtual nsresult Stop(mozilla::SourceMediaStream*, mozilla::TrackID) override;
+    virtual nsresult Config(bool, uint32_t, bool, uint32_t, bool, uint32_t, int32_t) override;
+    virtual bool IsFake() override;
+    virtual const dom::MediaSourceEnum GetMediaSource() override {
+      return dom::MediaSourceEnum::Browser;
     }
-    virtual bool SatisfiesConstraintSets(
-      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) MOZ_OVERRIDE
+    virtual uint32_t GetBestFitnessDistance(
+      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) override
     {
-      return true;
+      return 0;
     }
 
-    virtual nsresult TakePhoto(PhotoCallback* aCallback) MOZ_OVERRIDE
+    virtual nsresult TakePhoto(PhotoCallback* aCallback) override
     {
       return NS_ERROR_NOT_IMPLEMENTED;
     }
@@ -70,12 +70,13 @@ protected:
     ~MediaEngineTabVideoSource() {}
 
 private:
-    int mBufW;
-    int mBufH;
+    int mBufWidthMax;
+    int mBufHeightMax;
     int64_t mWindowId;
     bool mScrollWithPage;
     int mTimePerFrame;
     ScopedFreePtr<unsigned char> mData;
+    size_t mDataSize;
     nsCOMPtr<nsIDOMWindow> mWindow;
     nsRefPtr<layers::CairoImage> mImage;
     nsCOMPtr<nsITimer> mTimer;

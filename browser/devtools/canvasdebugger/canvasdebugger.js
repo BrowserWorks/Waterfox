@@ -70,7 +70,8 @@ const EVENTS = {
 };
 
 const HTML_NS = "http://www.w3.org/1999/xhtml";
-const STRINGS_URI = "chrome://browser/locale/devtools/canvasdebugger.properties"
+const STRINGS_URI = "chrome://browser/locale/devtools/canvasdebugger.properties";
+const SHARED_STRINGS_URI = "chrome://browser/locale/devtools/shared.properties";
 
 const SNAPSHOT_START_RECORDING_DELAY = 10; // ms
 const SNAPSHOT_DATA_EXPORT_MAX_BLOCK = 1000; // ms
@@ -415,10 +416,17 @@ let SnapshotsListView = Heritage.extend(WidgetMethods, {
       return;
     }
 
-    let channel = NetUtil.newChannel(fp.file);
+    let channel = NetUtil.newChannel2(fp.file,
+                                      null,
+                                      null,
+                                      window.document,
+                                      null, // aLoadingPrincipal
+                                      null, // aTriggeringPrincipal
+                                      Ci.nsILoadInfo.SEC_NORMAL,
+                                      Ci.nsIContentPolicy.TYPE_OTHER);
     channel.contentType = "text/plain";
 
-    NetUtil.asyncFetch(channel, (inputStream, status) => {
+    NetUtil.asyncFetch2(channel, (inputStream, status) => {
       if (!Components.isSuccessCode(status)) {
         console.error("Could not import recorded animation frame snapshot file.");
         return;
@@ -516,7 +524,7 @@ let SnapshotsListView = Heritage.extend(WidgetMethods, {
 
       // Show a throbber and a "Saving…" label if serializing isn't immediate.
       setNamedTimeout("call-list-save", CALLS_LIST_SLOW_SAVE_DELAY, () => {
-        footer.setAttribute("saving", "");
+        footer.classList.add("devtools-throbber");
         save.setAttribute("disabled", "true");
         save.setAttribute("value", L10N.getStr("snapshotsList.savingLabel"));
       });
@@ -529,7 +537,7 @@ let SnapshotsListView = Heritage.extend(WidgetMethods, {
             console.error("Could not save recorded animation frame snapshot file.");
           }
           clearNamedTimeout("call-list-save");
-          footer.removeAttribute("saving");
+          footer.classList.remove("devtools-throbber");
           save.removeAttribute("disabled");
           save.setAttribute("value", L10N.getStr("snapshotsList.saveLabel"));
         });
@@ -701,7 +709,8 @@ let CallsListView = Heritage.extend(WidgetMethods, {
     let dimensionsNode = $("#screenshot-dimensions");
     let actualWidth = (width / scaling) | 0;
     let actualHeight = (height / scaling) | 0;
-    dimensionsNode.setAttribute("value", actualWidth + " x " + actualHeight);
+    dimensionsNode.setAttribute("value",
+      SHARED_L10N.getFormatStr("dimensions", actualWidth, actualHeight));
 
     window.emit(EVENTS.CALL_SCREENSHOT_DISPLAYED);
   },
@@ -1050,6 +1059,7 @@ let CallsListView = Heritage.extend(WidgetMethods, {
  * Localization convenience methods.
  */
 let L10N = new ViewHelpers.L10N(STRINGS_URI);
+let SHARED_L10N = new ViewHelpers.L10N(SHARED_STRINGS_URI);
 
 /**
  * Convenient way of emitting events from the panel window.

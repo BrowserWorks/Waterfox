@@ -78,14 +78,14 @@ void
 nsICODecoder::FinishInternal()
 {
   // We shouldn't be called in error cases
-  NS_ABORT_IF_FALSE(!HasError(), "Shouldn't call FinishInternal after error!");
+  MOZ_ASSERT(!HasError(), "Shouldn't call FinishInternal after error!");
 
   // Finish the internally used decoder as well
   if (mContainedDecoder) {
     mContainedDecoder->FinishSharedDecoder();
     mDecodeDone = mContainedDecoder->GetDecodeDone();
     mProgress |= mContainedDecoder->TakeProgress();
-    mInvalidRect.Union(mContainedDecoder->TakeInvalidRect());
+    mInvalidRect.UnionRect(mInvalidRect, mContainedDecoder->TakeInvalidRect());
   }
 }
 
@@ -216,7 +216,7 @@ nsICODecoder::SetHotSpotIfCursor()
 void
 nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
 {
-  NS_ABORT_IF_FALSE(!HasError(), "Shouldn't call WriteInternal after error!");
+  MOZ_ASSERT(!HasError(), "Shouldn't call WriteInternal after error!");
 
   if (!aCount) {
     if (mContainedDecoder) {
@@ -538,7 +538,7 @@ nsICODecoder::WriteInternal(const char* aBuffer, uint32_t aCount)
         }
 
         // Ensure memory has been allocated before decoding.
-        NS_ABORT_IF_FALSE(mRow, "mRow is null");
+        MOZ_ASSERT(mRow, "mRow is null");
         if (!mRow) {
           PostDataError();
           return;
@@ -598,7 +598,7 @@ nsICODecoder::WriteToContainedDecoder(const char* aBuffer, uint32_t aCount)
 {
   mContainedDecoder->Write(aBuffer, aCount);
   mProgress |= mContainedDecoder->TakeProgress();
-  mInvalidRect.Union(mContainedDecoder->TakeInvalidRect());
+  mInvalidRect.UnionRect(mInvalidRect, mContainedDecoder->TakeInvalidRect());
   if (mContainedDecoder->HasDataError()) {
     mDataError = mContainedDecoder->HasDataError();
   }
@@ -646,7 +646,7 @@ nsICODecoder::AllocateFrame(const nsIntSize& aTargetSize /* = nsIntSize() */)
     rv = mContainedDecoder->AllocateFrame(aTargetSize);
     mCurrentFrame = mContainedDecoder->GetCurrentFrameRef();
     mProgress |= mContainedDecoder->TakeProgress();
-    mInvalidRect.Union(mContainedDecoder->TakeInvalidRect());
+    mInvalidRect.UnionRect(mInvalidRect, mContainedDecoder->TakeInvalidRect());
     return rv;
   }
 

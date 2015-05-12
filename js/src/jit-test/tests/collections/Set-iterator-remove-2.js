@@ -2,8 +2,8 @@
 
 load(libdir + "iteration.js");
 
-var set = Set("abcd");
-var iter = set[std_iterator]();
+var set = new Set("abcd");
+var iter = set[Symbol.iterator]();
 var log = "";
 for (let x of iter) {
     log += x;

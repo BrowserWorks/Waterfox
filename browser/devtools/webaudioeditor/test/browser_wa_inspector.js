@@ -27,15 +27,9 @@ add_task(function*() {
     "InspectorView empty message should show when no node's selected.");
   ok(!isVisible($("#web-audio-editor-tabs")),
     "InspectorView tabs view should be hidden when no node's selected.");
-  is($("#web-audio-inspector-title").value, "AudioNode Inspector",
-    "Inspector should have default title when empty.");
 
-  click(panelWin, findGraphNode(panelWin, nodeIds[1]));
   // Wait for the node to be set as well as the inspector to come fully into the view
-  yield Promise.all([
-    once(panelWin, EVENTS.UI_INSPECTOR_NODE_SET),
-    once(panelWin, EVENTS.UI_INSPECTOR_TOGGLED)
-  ]);
+  yield clickGraphNode(panelWin, findGraphNode(panelWin, nodeIds[1]), true);
 
   ok(InspectorView.isVisible(), "InspectorView shown once node selected.");
   ok(!isVisible($("#web-audio-editor-details-pane-empty")),
@@ -43,17 +37,10 @@ add_task(function*() {
   ok(isVisible($("#web-audio-editor-tabs")),
     "InspectorView tabs view visible when node selected.");
 
-  is($("#web-audio-inspector-title").value, "Oscillator",
-    "Inspector should have the node title when a node is selected.");
-
   is($("#web-audio-editor-tabs").selectedIndex, 0,
     "default tab selected should be the parameters tab.");
 
-  click(panelWin, findGraphNode(panelWin, nodeIds[2]));
-  yield once(panelWin, EVENTS.UI_INSPECTOR_NODE_SET);
-
-  is($("#web-audio-inspector-title").value, "Gain",
-    "Inspector title updates when a new node is selected.");
+  yield clickGraphNode(panelWin, findGraphNode(panelWin, nodeIds[2]));
 
   yield teardown(target);
 });

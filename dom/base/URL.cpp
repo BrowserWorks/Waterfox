@@ -46,10 +46,10 @@ URL::URL(nsIURI* aURI)
 {
 }
 
-JSObject*
-URL::WrapObject(JSContext* aCx)
+bool
+URL::WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector)
 {
-  return URLBinding::Wrap(aCx, this);
+  return URLBinding::Wrap(aCx, this, aReflector);
 }
 
 /* static */ already_AddRefed<URL>
@@ -514,8 +514,10 @@ URL::GetHash(nsString& aHash, ErrorResult& aRv) const
   nsAutoCString ref;
   nsresult rv = mURI->GetRef(ref);
   if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
-    NS_UnescapeURL(ref); // XXX may result in random non-ASCII bytes!
     aHash.Assign(char16_t('#'));
+    if (nsContentUtils::EncodeDecodeURLHash()) {
+      NS_UnescapeURL(ref); // XXX may result in random non-ASCII bytes!
+    }
     AppendUTF8toUTF16(ref, aHash);
   }
 }

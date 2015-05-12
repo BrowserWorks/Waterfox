@@ -1225,6 +1225,32 @@ nsHTMLDocument::GetCookie(nsAString& aCookie)
   return rv.ErrorCode();
 }
 
+already_AddRefed<nsIChannel>
+nsHTMLDocument::CreateDummyChannelForCookies(nsIURI* aCodebaseURI)
+{
+  // The cookie service reads the privacy status of the channel we pass to it in
+  // order to determine which cookie database to query.  In some cases we don't
+  // have a proper channel to hand it to the cookie service though.  This
+  // function creates a dummy channel that is not used to load anything, for the
+  // sole purpose of handing it to the cookie service.  DO NOT USE THIS CHANNEL
+  // FOR ANY OTHER PURPOSE.
+  MOZ_ASSERT(!mChannel);
+
+  nsCOMPtr<nsIChannel> channel;
+  NS_NewChannel(getter_AddRefs(channel), aCodebaseURI, this,
+                nsILoadInfo::SEC_NORMAL,
+                nsIContentPolicy::TYPE_INVALID);
+  nsCOMPtr<nsIPrivateBrowsingChannel> pbChannel =
+    do_QueryInterface(channel);
+  nsCOMPtr<nsIDocShell> docShell(mDocumentContainer);
+  nsCOMPtr<nsILoadContext> loadContext = do_QueryInterface(docShell);
+  if (!pbChannel || !loadContext) {
+    return nullptr;
+  }
+  pbChannel->SetPrivate(loadContext->UsePrivateBrowsing());
+  return channel.forget();
+}
+
 void
 nsHTMLDocument::GetCookie(nsAString& aCookie, ErrorResult& rv)
 {
@@ -1257,8 +1283,16 @@ nsHTMLDocument::GetCookie(nsAString& aCookie, ErrorResult& rv)
       return;
     }
 
+    nsCOMPtr<nsIChannel> channel(mChannel);
+    if (!channel) {
+      channel = CreateDummyChannelForCookies(codebaseURI);
+      if (!channel) {
+        return;
+      }
+    }
+
     nsXPIDLCString cookie;
-    service->GetCookieString(codebaseURI, mChannel, getter_Copies(cookie));
+    service->GetCookieString(codebaseURI, channel, getter_Copies(cookie));
     // CopyUTF8toUTF16 doesn't handle error
     // because it assumes that the input is valid.
     nsContentUtils::ConvertStringFromEncoding(NS_LITERAL_CSTRING("UTF-8"),
@@ -1302,8 +1336,16 @@ nsHTMLDocument::SetCookie(const nsAString& aCookie, ErrorResult& rv)
       return;
     }
 
+    nsCOMPtr<nsIChannel> channel(mChannel);
+    if (!channel) {
+      channel = CreateDummyChannelForCookies(codebaseURI);
+      if (!channel) {
+        return;
+      }
+    }
+
     NS_ConvertUTF16toUTF8 cookie(aCookie);
-    service->SetCookieString(codebaseURI, nullptr, cookie.get(), mChannel);
+    service->SetCookieString(codebaseURI, nullptr, cookie.get(), channel);
   }
 }
 
@@ -1622,12 +1664,6 @@ nsHTMLDocument::Open(JSContext* cx,
           }
         }
       }
-
-      nsIXPConnect *xpc = nsContentUtils::XPConnect();
-      rv = xpc->RescueOrphansInScope(cx, oldScope->GetGlobalJSObject());
-      if (rv.Failed()) {
-        return nullptr;
-      }
     }
   }
 
@@ -1857,8 +1893,8 @@ nsHTMLDocument::WriteCommon(JSContext *cx,
     if (NS_FAILED(rv) || !mParser) {
       return rv;
     }
-    NS_ABORT_IF_FALSE(!JS_IsExceptionPending(cx),
-                      "Open() succeeded but JS exception is pending");
+    MOZ_ASSERT(!JS_IsExceptionPending(cx),
+               "Open() succeeded but JS exception is pending");
   }
 
   static NS_NAMED_LITERAL_STRING(new_line, "\n");
@@ -2731,7 +2767,7 @@ nsHTMLDocument::EditingStateChanged()
     // We might already have an editor if it was set up for mail, let's see
     // if this is actually the case.
     nsCOMPtr<nsIHTMLEditor> htmlEditor = do_QueryInterface(existingEditor);
-    NS_ABORT_IF_FALSE(htmlEditor, "If we have an editor, it must be an HTML editor");
+    MOZ_ASSERT(htmlEditor, "If we have an editor, it must be an HTML editor");
     uint32_t flags = 0;
     existingEditor->GetFlags(&flags);
     if (flags & nsIPlaintextEditor::eEditorMailMask) {

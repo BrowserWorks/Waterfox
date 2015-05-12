@@ -14,6 +14,10 @@
 #include "mozilla/Telemetry.h"
 #include "nsThreadUtils.h"
 
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+#include "nsDirectoryServiceDefs.h"
+#endif
+
 using std::vector;
 using std::string;
 
@@ -42,14 +46,69 @@ PluginProcessParent::~PluginProcessParent()
 {
 }
 
+#if defined(XP_WIN) && defined(MOZ_SANDBOX)
+static void
+AddSandboxAllowedFile(vector<std::wstring>& aAllowedFiles, nsIProperties* aDirSvc,
+                      const char* aDir, const nsAString& aSuffix = EmptyString())
+{
+    nsCOMPtr<nsIFile> userDir;
+    nsresult rv = aDirSvc->Get(aDir, NS_GET_IID(nsIFile), getter_AddRefs(userDir));
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+        return;
+    }
+
+    nsAutoString userDirPath;
+    rv = userDir->GetPath(userDirPath);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+        return;
+    }
+
+    if (!aSuffix.IsEmpty()) {
+        userDirPath.Append(aSuffix);
+    }
+    aAllowedFiles.push_back(userDirPath.get());
+    return;
+}
+
+static void
+AddSandboxAllowedFiles(int32_t aSandboxLevel,
+                       vector<std::wstring>& aAllowedFilesRead,
+                       vector<std::wstring>& aAllowedFilesReadWrite)
+{
+    if (aSandboxLevel < 3) {
+        return;
+    }
+
+    nsresult rv;
+    nsCOMPtr<nsIProperties> dirSvc =
+        do_GetService(NS_DIRECTORY_SERVICE_CONTRACTID, &rv);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+        return;
+    }
+
+    AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR);
+    AddSandboxAllowedFile(aAllowedFilesRead, dirSvc, NS_WIN_HOME_DIR,
+                          NS_LITERAL_STRING("\\*"));
+
+    AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Macromedia\\Flash Player\\*"));
+    AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_WIN_APPDATA_DIR,
+                          NS_LITERAL_STRING("\\Adobe\\Flash Player\\*"));
+    AddSandboxAllowedFile(aAllowedFilesReadWrite, dirSvc, NS_OS_TEMP_DIR,
+                          NS_LITERAL_STRING("\\*"));
+}
+#endif
+
 bool
 PluginProcessParent::Launch(mozilla::UniquePtr<LaunchCompleteTask> aLaunchCompleteTask,
-                            bool aEnableSandbox)
+                            int32_t aSandboxLevel)
 {
 #if defined(XP_WIN) && defined(MOZ_SANDBOX)
-    mEnableNPAPISandbox = aEnableSandbox;
+    mSandboxLevel = aSandboxLevel;
+    AddSandboxAllowedFiles(mSandboxLevel, mAllowedFilesRead,
+                           mAllowedFilesReadWrite);
 #else
-    if (aEnableSandbox) {
+    if (aSandboxLevel != 0) {
         MOZ_ASSERT(false,
                    "Can't enable an NPAPI process sandbox for platform/build.");
     }

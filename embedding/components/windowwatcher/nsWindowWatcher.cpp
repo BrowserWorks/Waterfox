@@ -143,8 +143,8 @@ class nsWatcherWindowEnumerator : public nsISimpleEnumerator {
 
 public:
   explicit nsWatcherWindowEnumerator(nsWindowWatcher *inWatcher);
-  NS_IMETHOD HasMoreElements(bool *retval);
-  NS_IMETHOD GetNext(nsISupports **retval);
+  NS_IMETHOD HasMoreElements(bool *retval) override;
+  NS_IMETHOD GetNext(nsISupports **retval) override;
 
   NS_DECL_ISUPPORTS
 

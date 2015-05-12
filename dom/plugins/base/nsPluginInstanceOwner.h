@@ -49,7 +49,7 @@ class gfxXlibSurface;
 #endif
 #endif
 
-class nsPluginInstanceOwner MOZ_FINAL : public nsIPluginInstanceOwner,
+class nsPluginInstanceOwner final : public nsIPluginInstanceOwner,
                                         public nsIDOMEventListener,
                                         public nsIPrivacyTransitionObserver,
                                         public nsSupportsWeakReference
@@ -63,15 +63,15 @@ public:
   
   NS_IMETHOD GetURL(const char *aURL, const char *aTarget,
                     nsIInputStream *aPostStream, 
-                    void *aHeadersData, uint32_t aHeadersDataLen) MOZ_OVERRIDE;
+                    void *aHeadersData, uint32_t aHeadersDataLen) override;
   
-  NS_IMETHOD ShowStatus(const char16_t *aStatusMsg) MOZ_OVERRIDE;
+  NS_IMETHOD ShowStatus(const char16_t *aStatusMsg) override;
   
   // This can go away, just leaving it here to avoid changing the interface.
-  NPError    ShowNativeContextMenu(NPMenu* menu, void* event) MOZ_OVERRIDE;
+  NPError    ShowNativeContextMenu(NPMenu* menu, void* event) override;
   
   NPBool     ConvertPoint(double sourceX, double sourceY, NPCoordinateSpace sourceSpace,
-                          double *destX, double *destY, NPCoordinateSpace destSpace) MOZ_OVERRIDE;
+                          double *destX, double *destY, NPCoordinateSpace destSpace) override;
   
   /**
    * Get the type of the HTML tag that was used ot instantiate this
@@ -258,6 +258,7 @@ public:
 
   void NotifyHostAsyncInitFailed();
   void NotifyHostCreateWidget();
+  void NotifyDestroyPending();
 
 private:
   virtual ~nsPluginInstanceOwner();
@@ -282,7 +283,7 @@ private:
   nsPluginNativeWindow       *mPluginWindow;
   nsRefPtr<nsNPAPIPluginInstance> mInstance;
   nsPluginFrame              *mPluginFrame;
-  nsIContent                 *mContent; // WEAK, content owns us
+  nsWeakPtr                   mContent; // WEAK, content owns us
   nsCString                   mDocumentBase;
   bool                        mWidgetCreationComplete;
   nsCOMPtr<nsIWidget>         mWidget;
@@ -362,7 +363,7 @@ private:
     {}
     virtual nsresult DrawWithXlib(cairo_surface_t* surface,
                                   nsIntPoint offset,
-                                  nsIntRect* clipRects, uint32_t numClipRects) MOZ_OVERRIDE;
+                                  nsIntRect* clipRects, uint32_t numClipRects) override;
   private:
     NPWindow* mWindow;
     nsPluginInstanceOwner* mInstanceOwner;

@@ -6,6 +6,7 @@
 #ifndef mozilla_dom_Request_h
 #define mozilla_dom_Request_h
 
+#include "nsIContentPolicy.h"
 #include "nsISupportsImpl.h"
 #include "nsWrapperCache.h"
 
@@ -25,9 +26,9 @@ class InternalHeaders;
 class Promise;
 class RequestOrUSVString;
 
-class Request MOZ_FINAL : public nsISupports
-                        , public nsWrapperCache
+class Request final : public nsISupports
                         , public FetchBody<Request>
+                        , public nsWrapperCache
 {
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Request)
@@ -36,7 +37,7 @@ public:
   Request(nsIGlobalObject* aOwner, InternalRequest* aRequest);
 
   JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  WrapObject(JSContext* aCx) override
   {
     return RequestBinding::Wrap(aCx, this);
   }
@@ -56,6 +57,9 @@ public:
   RequestMode
   Mode() const
   {
+    if (mRequest->mMode == RequestMode::Cors_with_forced_preflight) {
+      return RequestMode::Cors;
+    }
     return mRequest->mMode;
   }
 
@@ -65,16 +69,29 @@ public:
     return mRequest->mCredentialsMode;
   }
 
-  void
-  GetReferrer(DOMString& aReferrer) const
+  RequestCache
+  Cache() const
   {
-    if (mRequest->ReferrerIsNone()) {
-      aReferrer.AsAString() = EmptyString();
-      return;
-    }
+    return mRequest->GetCacheMode();
+  }
 
-    // FIXME(nsm): Spec doesn't say what to do if referrer is client.
-    aReferrer.AsAString() = NS_ConvertUTF8toUTF16(mRequest->mReferrerURL);
+  RequestContext
+  Context() const
+  {
+    return mContext;
+  }
+
+  // [ChromeOnly]
+  void
+  SetContext(RequestContext aContext)
+  {
+    mContext = aContext;
+  }
+
+  void
+  GetReferrer(nsAString& aReferrer) const
+  {
+    mRequest->GetReferrer(aReferrer);
   }
 
   InternalHeaders*
@@ -98,7 +115,7 @@ public:
   }
 
   already_AddRefed<Request>
-  Clone() const;
+  Clone(ErrorResult& aRv) const;
 
   already_AddRefed<InternalRequest>
   GetInternalRequest();
@@ -109,6 +126,7 @@ private:
   nsRefPtr<InternalRequest> mRequest;
   // Lazily created.
   nsRefPtr<Headers> mHeaders;
+  RequestContext mContext;
 };
 
 } // namespace dom

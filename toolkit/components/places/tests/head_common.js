@@ -40,6 +40,8 @@ XPCOMUtils.defineLazyModuleGetter(this, "BookmarkHTMLUtils",
                                   "resource://gre/modules/BookmarkHTMLUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesBackups",
                                   "resource://gre/modules/PlacesBackups.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "PlacesTestUtils",
+                                  "resource://testing-common/PlacesTestUtils.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "PlacesTransactions",
                                   "resource://gre/modules/PlacesTransactions.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "OS",
@@ -106,10 +108,7 @@ function DBConn(aForceNewConnection) {
     let dbConn = gDBConn = Services.storage.openDatabase(file);
 
     // Be sure to cleanly close this connection.
-    Services.obs.addObserver(function DBCloseCallback(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(DBCloseCallback, aTopic);
-      dbConn.asyncClose();
-    }, "profile-before-change", false);
+    promiseTopicObserved("profile-before-change").then(() => dbConn.asyncClose());
   }
 
   return gDBConn.connectionReady ? gDBConn : null;
@@ -377,30 +376,13 @@ function check_no_bookmarks() {
  */
 function promiseTopicObserved(aTopic)
 {
-  let deferred = Promise.defer();
-
-  Services.obs.addObserver(
-    function PTO_observe(aSubject, aTopic, aData) {
-      Services.obs.removeObserver(PTO_observe, aTopic);
-      deferred.resolve([aSubject, aData]);
+  return new Promise(resolve => {
+    Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
+      Services.obs.removeObserver(observe, aTopic);
+      resolve([aSubject, aData]);
     }, aTopic, false);
-
-  return deferred.promise;
+  });
 }
-
-/**
- * Clears history asynchronously.
- *
- * @return {Promise}
- * @resolves When history has been cleared.
- * @rejects Never.
- */
-function promiseClearHistory() {
-  let promise = promiseTopicObserved(PlacesUtils.TOPIC_EXPIRATION_FINISHED);
-  do_execute_soon(function() PlacesUtils.bhistory.removeAllPages());
-  return promise;
-}
-
 
 /**
  * Simulates a Places shutdown.
@@ -611,42 +593,6 @@ function is_time_ordered(before, after) {
 }
 
 /**
- * Waits for all pending async statements on the default connection.
- *
- * @return {Promise}
- * @resolves When all pending async statements finished.
- * @rejects Never.
- *
- * @note The result is achieved by asynchronously executing a query requiring
- *       a write lock.  Since all statements on the same connection are
- *       serialized, the end of this write operation means that all writes are
- *       complete.  Note that WAL makes so that writers don't block readers, but
- *       this is a problem only across different connections.
- */
-function promiseAsyncUpdates()
-{
-  let deferred = Promise.defer();
-
-  let db = DBConn();
-  let begin = db.createAsyncStatement("BEGIN EXCLUSIVE");
-  begin.executeAsync();
-  begin.finalize();
-
-  let commit = db.createAsyncStatement("COMMIT");
-  commit.executeAsync({
-    handleResult: function () {},
-    handleError: function () {},
-    handleCompletion: function(aReason)
-    {
-      deferred.resolve();
-    }
-  });
-  commit.finalize();
-
-  return deferred.promise;
-}
-
-/**
  * Shutdowns Places, invoking the callback when the connection has been closed.
  *
  * @param aCallback
@@ -654,10 +600,7 @@ function promiseAsyncUpdates()
  */
 function waitForConnectionClosed(aCallback)
 {
-  Services.obs.addObserver(function WFCCCallback() {
-    Services.obs.removeObserver(WFCCCallback, "places-connection-closed");
-    aCallback();
-  }, "places-connection-closed", false);
+  promiseTopicObserved("places-connection-closed").then(aCallback);
   shutdownPlaces();
 }
 
@@ -773,17 +716,6 @@ function do_check_guid_for_bookmark(aId,
 }
 
 /**
- * Logs info to the console in the standard way (includes the filename).
- *
- * @param aMessage
- *        The message to log to the console.
- */
-function do_log_info(aMessage)
-{
-  print("TEST-INFO | " + _TEST_FILE + " | " + aMessage);
-}
-
-/**
  * Compares 2 arrays returning whether they contains the same elements.
  *
  * @param a1
@@ -875,69 +807,6 @@ NavHistoryResultObserver.prototype = {
     Ci.nsINavHistoryResultObserver,
   ])
 };
-
-/**
- * Asynchronously adds visits to a page.
- *
- * @param aPlaceInfo
- *        Can be an nsIURI, in such a case a single LINK visit will be added.
- *        Otherwise can be an object describing the visit to add, or an array
- *        of these objects:
- *          { uri: nsIURI of the page,
- *            transition: one of the TRANSITION_* from nsINavHistoryService,
- *            [optional] title: title of the page,
- *            [optional] visitDate: visit date in microseconds from the epoch
- *            [optional] referrer: nsIURI of the referrer for this visit
- *          }
- *
- * @return {Promise}
- * @resolves When all visits have been added successfully.
- * @rejects JavaScript exception.
- */
-function promiseAddVisits(aPlaceInfo)
-{
-  let deferred = Promise.defer();
-  let places = [];
-  if (aPlaceInfo instanceof Ci.nsIURI) {
-    places.push({ uri: aPlaceInfo });
-  }
-  else if (Array.isArray(aPlaceInfo)) {
-    places = places.concat(aPlaceInfo);
-  } else {
-    places.push(aPlaceInfo)
-  }
-
-  // Create mozIVisitInfo for each entry.
-  let now = Date.now();
-  for (let i = 0; i < places.length; i++) {
-    if (!places[i].title) {
-      places[i].title = "test visit for " + places[i].uri.spec;
-    }
-    places[i].visits = [{
-      transitionType: places[i].transition === undefined ? TRANSITION_LINK
-                                                         : places[i].transition,
-      visitDate: places[i].visitDate || (now++) * 1000,
-      referrerURI: places[i].referrer
-    }];
-  }
-
-  PlacesUtils.asyncHistory.updatePlaces(
-    places,
-    {
-      handleError: function AAV_handleError(aResultCode, aPlaceInfo) {
-        let ex = new Components.Exception("Unexpected error in adding visits.",
-                                          aResultCode);
-        deferred.reject(ex);
-      },
-      handleResult: function () {},
-      handleCompletion: function UP_handleCompletion() {
-        deferred.resolve();
-      }
-    }
-  );
-
-  return deferred.promise;
-}
 
 /**
  * Asynchronously check a url is visited.

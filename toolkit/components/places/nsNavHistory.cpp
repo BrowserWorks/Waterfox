@@ -168,7 +168,6 @@ NS_INTERFACE_MAP_BEGIN(nsNavHistory)
   NS_INTERFACE_MAP_ENTRY(nsIObserver)
   NS_INTERFACE_MAP_ENTRY(nsISupportsWeakReference)
   NS_INTERFACE_MAP_ENTRY(nsPIPlacesDatabase)
-  NS_INTERFACE_MAP_ENTRY(nsPIPlacesHistoryListenersNotifier)
   NS_INTERFACE_MAP_ENTRY(mozIStorageVacuumParticipant)
   NS_INTERFACE_MAP_ENTRY_AMBIGUOUS(nsISupports, nsINavHistoryService)
   NS_IMPL_QUERY_CLASSINFO(nsNavHistory)
@@ -2903,7 +2902,7 @@ nsNavHistory::MarkPageAsFollowedLink(nsIURI *aURI)
 NS_IMETHODIMP
 nsNavHistory::GetPageTitle(nsIURI* aURI, nsAString& aTitle)
 {
-  //PLACES_WARN_DEPRECATED();
+  PLACES_WARN_DEPRECATED();
 
   NS_ASSERTION(NS_IsMainThread(), "This can only be called on the main thread");
   NS_ENSURE_ARG(aURI);
@@ -3051,9 +3050,7 @@ nsNavHistory::AsyncExecuteLegacyQueries(nsINavHistoryQuery** aQueries,
 }
 
 
-// nsPIPlacesHistoryListenersNotifier ******************************************
-
-NS_IMETHODIMP
+nsresult
 nsNavHistory::NotifyOnPageExpired(nsIURI *aURI, PRTime aVisitTime,
                                   bool aWholeEntry, const nsACString& aGUID,
                                   uint16_t aReason, uint32_t aTransitionType)

@@ -88,7 +88,7 @@ public:
 #endif
 
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE;
+                     nsRenderingContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("MathMLError", TYPE_MATHML_ERROR)
 };
 
@@ -129,13 +129,8 @@ IsForeignChild(const nsIFrame* aFrame)
     aFrame->GetType() == nsGkAtoms::blockFrame;
 }
 
-static void
-DestroyHTMLReflowMetrics(void *aPropertyValue)
-{
-  delete static_cast<nsHTMLReflowMetrics*>(aPropertyValue);
-}
-
-NS_DECLARE_FRAME_PROPERTY(HTMLReflowMetricsProperty, DestroyHTMLReflowMetrics)
+NS_DECLARE_FRAME_PROPERTY(HTMLReflowMetricsProperty,
+                          DeleteValue<nsHTMLReflowMetrics>)
 
 /* static */ void
 nsMathMLContainerFrame::SaveReflowAndBoundingMetricsFor(nsIFrame*                  aFrame,
@@ -1331,10 +1326,10 @@ nsMathMLContainerFrame::PositionRowChildFrames(nscoord aOffsetX,
 
 class ForceReflow : public nsIReflowCallback {
 public:
-  virtual bool ReflowFinished() MOZ_OVERRIDE {
+  virtual bool ReflowFinished() override {
     return true;
   }
-  virtual void ReflowCallbackCanceled() MOZ_OVERRIDE {}
+  virtual void ReflowCallbackCanceled() override {}
 };
 
 // We only need one of these so we just make it a static global, no need

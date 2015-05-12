@@ -15,9 +15,16 @@ Cu.importGlobalProperties(["XMLHttpRequest"]);
 
 XPCOMUtils.defineLazyModuleGetter(this, "CommonUtils", "resource://services-common/utils.js");
 XPCOMUtils.defineLazyModuleGetter(this, "OS", "resource://gre/modules/osfile.jsm");
+XPCOMUtils.defineLazyModuleGetter(this, "ReaderWorker", "resource://gre/modules/reader/ReaderWorker.jsm");
 XPCOMUtils.defineLazyModuleGetter(this, "Task", "resource://gre/modules/Task.jsm");
 
-let ReaderMode = {
+XPCOMUtils.defineLazyGetter(this, "Readability", function() {
+  let scope = {};
+  Services.scriptloader.loadSubScript("resource://gre/modules/reader/Readability.js", scope);
+  return scope["Readability"];
+});
+
+this.ReaderMode = {
   // Version of the cache schema.
   CACHE_VERSION: 1,
 
@@ -25,7 +32,12 @@ let ReaderMode = {
 
   // Don't try to parse the page if it has too many elements (for memory and
   // performance reasons)
-  MAX_ELEMS_TO_PARSE: 3000,
+  get maxElemsToParse() {
+    delete this.parseNodeLimit;
+
+    Services.prefs.addObserver("reader.parse-node-limit", this, false);
+    return this.parseNodeLimit = Services.prefs.getIntPref("reader.parse-node-limit");
+  },
 
   get isEnabledForParseOnLoad() {
     delete this.isEnabledForParseOnLoad;
@@ -55,14 +67,57 @@ let ReaderMode = {
       case "nsPref:changed":
         if (aData.startsWith("reader.parse-on-load.")) {
           this.isEnabledForParseOnLoad = this._getStateForParseOnLoad();
+        } else if (aData === "reader.parse-node-limit") {
+          this.parseNodeLimit = Services.prefs.getIntPref(aData);
         }
         break;
     }
   },
 
   /**
-   * Gets an article from a loaded browser's document. This method will parse the document
-   * if it does not find the article in the cache.
+   * Returns original URL from an about:reader URL.
+   *
+   * @param url An about:reader URL.
+   * @return The original URL for the article, or null if we did not find
+   *         a properly formatted about:reader URL.
+   */
+  getOriginalUrl: function(url) {
+    if (!url.startsWith("about:reader?")) {
+      return null;
+    }
+
+    let searchParams = new URLSearchParams(url.substring("about:reader?".length));
+    if (!searchParams.has("url")) {
+      return null;
+    }
+    let encodedURL = searchParams.get("url");
+    try {
+      return decodeURIComponent(encodedURL);
+    } catch (e) {
+      Cu.reportError("Error decoding original URL: " + e);
+      return encodedURL;
+    }
+  },
+
+  /**
+   * Decides whether or not a document is reader-able without parsing the whole thing.
+   *
+   * @param doc A document to parse.
+   * @return boolean Whether or not we should show the reader mode button.
+   */
+  isProbablyReaderable: function(doc) {
+    let uri = Services.io.newURI(doc.location.href, null, null);
+
+    if (!this._shouldCheckUri(uri)) {
+      return false;
+    }
+
+    return new Readability(uri, doc).isProbablyReaderable();
+  },
+
+  /**
+   * Gets an article from a loaded browser's document. This method will not attempt
+   * to parse certain URIs (e.g. about: URIs).
    *
    * @param doc A document to parse.
    * @return {Promise}
@@ -73,13 +128,6 @@ let ReaderMode = {
     if (!this._shouldCheckUri(uri)) {
       this.log("Reader mode disabled for URI");
       return null;
-    }
-
-    // First, try to find a parsed article in the cache.
-    let article = yield this.getArticleFromCache(uri);
-    if (article) {
-      this.log("Page found in cache, return article immediately");
-      return article;
     }
 
     return yield this._readerParse(uri, doc);
@@ -135,13 +183,13 @@ let ReaderMode = {
   /**
    * Retrieves an article from the cache given an article URI.
    *
-   * @param uri The article URI.
+   * @param url The article URL.
    * @return {Promise}
    * @resolves JS object representing the article, or null if no article is found.
    * @rejects OS.File.Error
    */
-  getArticleFromCache: Task.async(function* (uri) {
-    let path = this._toHashedPath(uri.specIgnoringRef);
+  getArticleFromCache: Task.async(function* (url) {
+    let path = this._toHashedPath(url);
     try {
       let array = yield OS.File.read(path);
       return JSON.parse(new TextDecoder().decode(array));
@@ -168,13 +216,13 @@ let ReaderMode = {
   /**
    * Removes an article from the cache given an article URI.
    *
-   * @param uri The article URI.
+   * @param url The article URL.
    * @return {Promise}
    * @resolves When the article is removed.
    * @rejects OS.File.Error
    */
-  removeArticleFromCache: Task.async(function* (uri) {
-    let path = this._toHashedPath(uri.specIgnoringRef);
+  removeArticleFromCache: Task.async(function* (url) {
+    let path = this._toHashedPath(url);
     yield OS.File.remove(path);
   }),
 
@@ -206,56 +254,48 @@ let ReaderMode = {
    * @return {Promise}
    * @resolves JS object representing the article, or null if no article is found.
    */
-  _readerParse: function (uri, doc) {
-    return new Promise((resolve, reject) => {
+  _readerParse: Task.async(function* (uri, doc) {
+    if (this.parseNodeLimit) {
       let numTags = doc.getElementsByTagName("*").length;
-      if (numTags > this.MAX_ELEMS_TO_PARSE) {
+      if (numTags > this.parseNodeLimit) {
         this.log("Aborting parse for " + uri.spec + "; " + numTags + " elements found");
-        resolve(null);
-        return;
+        return null;
       }
+    }
 
-      let worker = new ChromeWorker("chrome://global/content/reader/readerWorker.js");
-      worker.onmessage = evt => {
-        let article = evt.data;
+    let uriParam = {
+      spec: uri.spec,
+      host: uri.host,
+      prePath: uri.prePath,
+      scheme: uri.scheme,
+      pathBase: Services.io.newURI(".", null, uri).spec
+    };
 
-        if (!article) {
-          this.log("Worker did not return an article");
-          resolve(null);
-          return;
-        }
+    let serializer = Cc["@mozilla.org/xmlextras/xmlserializer;1"].
+                     createInstance(Ci.nsIDOMSerializer);
+    let serializedDoc = yield Promise.resolve(serializer.serializeToString(doc));
 
-        // Append URL to the article data. specIgnoringRef will ignore any hash
-        // in the URL.
-        article.url = uri.specIgnoringRef;
-        let flags = Ci.nsIDocumentEncoder.OutputSelectionOnly | Ci.nsIDocumentEncoder.OutputAbsoluteLinks;
-        article.title = Cc["@mozilla.org/parserutils;1"].getService(Ci.nsIParserUtils)
-                                                        .convertToPlainText(article.title, flags, 0);
-        resolve(article);
-      };
+    let article = null;
+    try {
+      article = yield ReaderWorker.post("parseDocument", [uriParam, serializedDoc]);
+    } catch (e) {
+      Cu.reportError("Error in ReaderWorker: " + e);
+    }
 
-      worker.onerror = evt => {
-        reject("Error in worker: " + evt.message);
-      };
+    if (!article) {
+      this.log("Worker did not return an article");
+      return null;
+    }
 
-      try {
-        let serializer = Cc["@mozilla.org/xmlextras/xmlserializer;1"].
-                         createInstance(Ci.nsIDOMSerializer);
-        worker.postMessage({
-          uri: {
-            spec: uri.spec,
-            host: uri.host,
-            prePath: uri.prePath,
-            scheme: uri.scheme,
-            pathBase: Services.io.newURI(".", null, uri).spec
-          },
-          doc: serializer.serializeToString(doc)
-        });
-      } catch (e) {
-        reject("Reader: could not build Readability arguments: " + e);
-      }
-    });
-  },
+    // Readability returns a URI object, but we only care about the URL.
+    article.url = article.uri.spec;
+    delete article.uri;
+
+    let flags = Ci.nsIDocumentEncoder.OutputSelectionOnly | Ci.nsIDocumentEncoder.OutputAbsoluteLinks;
+    article.title = Cc["@mozilla.org/parserutils;1"].getService(Ci.nsIParserUtils)
+                                                    .convertToPlainText(article.title, flags, 0);
+    return article;
+  }),
 
   get _cryptoHash() {
     delete this._cryptoHash;

@@ -5,6 +5,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "gc/Marking.h"
+#include "jit/Disassembler.h"
 #include "jit/JitCompartment.h"
 #if defined(JS_CODEGEN_X86)
 # include "jit/x86/MacroAssembler-x86.h"
@@ -25,37 +26,37 @@ using namespace js;
 using namespace js::jit;
 
 void
-AssemblerX86Shared::copyJumpRelocationTable(uint8_t *dest)
+AssemblerX86Shared::copyJumpRelocationTable(uint8_t* dest)
 {
     if (jumpRelocations_.length())
         memcpy(dest, jumpRelocations_.buffer(), jumpRelocations_.length());
 }
 
 void
-AssemblerX86Shared::copyDataRelocationTable(uint8_t *dest)
+AssemblerX86Shared::copyDataRelocationTable(uint8_t* dest)
 {
     if (dataRelocations_.length())
         memcpy(dest, dataRelocations_.buffer(), dataRelocations_.length());
 }
 
 void
-AssemblerX86Shared::copyPreBarrierTable(uint8_t *dest)
+AssemblerX86Shared::copyPreBarrierTable(uint8_t* dest)
 {
     if (preBarriers_.length())
         memcpy(dest, preBarriers_.buffer(), preBarriers_.length());
 }
 
 static void
-TraceDataRelocations(JSTracer *trc, uint8_t *buffer, CompactBufferReader &reader)
+TraceDataRelocations(JSTracer* trc, uint8_t* buffer, CompactBufferReader& reader)
 {
     while (reader.more()) {
         size_t offset = reader.readUnsigned();
-        void **ptr = X86Assembler::getPointerRef(buffer + offset);
+        void** ptr = X86Encoding::GetPointerRef(buffer + offset);
 
 #ifdef JS_PUNBOX64
         // All pointers on x64 will have the top bits cleared. If those bits
         // are not cleared, this must be a Value.
-        uintptr_t *word = reinterpret_cast<uintptr_t *>(ptr);
+        uintptr_t* word = reinterpret_cast<uintptr_t*>(ptr);
         if (*word >> JSVAL_TAG_SHIFT) {
             jsval_layout layout;
             layout.asBits = *word;
@@ -66,43 +67,88 @@ TraceDataRelocations(JSTracer *trc, uint8_t *buffer, CompactBufferReader &reader
         }
 #endif
 
+        // The low bit shouldn't be set. If it is, we probably got a dummy
+        // pointer inserted by CodeGenerator::visitNurseryObject, but we
+        // shouldn't be able to trigger GC before those are patched to their
+        // real values.
+        MOZ_ASSERT(!(*reinterpret_cast<uintptr_t*>(ptr) & 0x1));
+
         // No barrier needed since these are constants.
-        gc::MarkGCThingUnbarriered(trc, reinterpret_cast<void **>(ptr), "ion-masm-ptr");
+        gc::MarkGCThingUnbarriered(trc, ptr, "ion-masm-ptr");
     }
 }
 
 
 void
-AssemblerX86Shared::TraceDataRelocations(JSTracer *trc, JitCode *code, CompactBufferReader &reader)
+AssemblerX86Shared::TraceDataRelocations(JSTracer* trc, JitCode* code, CompactBufferReader& reader)
 {
     ::TraceDataRelocations(trc, code->raw(), reader);
 }
 
 void
-AssemblerX86Shared::trace(JSTracer *trc)
+AssemblerX86Shared::FixupNurseryObjects(JSContext* cx, JitCode* code, CompactBufferReader& reader,
+                                        const ObjectVector& nurseryObjects)
+{
+    MOZ_ASSERT(!nurseryObjects.empty());
+
+    uint8_t* buffer = code->raw();
+    bool hasNurseryPointers = false;
+
+    while (reader.more()) {
+        size_t offset = reader.readUnsigned();
+        void** ptr = X86Encoding::GetPointerRef(buffer + offset);
+
+        uintptr_t* word = reinterpret_cast<uintptr_t*>(ptr);
+
+#ifdef JS_PUNBOX64
+        if (*word >> JSVAL_TAG_SHIFT)
+            continue; // This is a Value.
+#endif
+
+        if (!(*word & 0x1))
+            continue;
+
+        uint32_t index = *word >> 1;
+        JSObject* obj = nurseryObjects[index];
+        *word = uintptr_t(obj);
+
+        // Either all objects are still in the nursery, or all objects are
+        // tenured.
+        MOZ_ASSERT_IF(hasNurseryPointers, IsInsideNursery(obj));
+
+        if (!hasNurseryPointers && IsInsideNursery(obj))
+            hasNurseryPointers = true;
+    }
+
+    if (hasNurseryPointers)
+        cx->runtime()->gc.storeBuffer.putWholeCellFromMainThread(code);
+}
+
+void
+AssemblerX86Shared::trace(JSTracer* trc)
 {
     for (size_t i = 0; i < jumps_.length(); i++) {
-        RelativePatch &rp = jumps_[i];
+        RelativePatch& rp = jumps_[i];
         if (rp.kind == Relocation::JITCODE) {
-            JitCode *code = JitCode::FromExecutable((uint8_t *)rp.target);
+            JitCode* code = JitCode::FromExecutable((uint8_t*)rp.target);
             MarkJitCodeUnbarriered(trc, &code, "masmrel32");
-            MOZ_ASSERT(code == JitCode::FromExecutable((uint8_t *)rp.target));
+            MOZ_ASSERT(code == JitCode::FromExecutable((uint8_t*)rp.target));
         }
     }
     if (dataRelocations_.length()) {
         CompactBufferReader reader(dataRelocations_);
-        ::TraceDataRelocations(trc, masm.buffer(), reader);
+        ::TraceDataRelocations(trc, masm.data(), reader);
     }
 }
 
 void
-AssemblerX86Shared::executableCopy(void *buffer)
+AssemblerX86Shared::executableCopy(void* buffer)
 {
     masm.executableCopy(buffer);
 }
 
 void
-AssemblerX86Shared::processCodeLabels(uint8_t *rawCode)
+AssemblerX86Shared::processCodeLabels(uint8_t* rawCode)
 {
     for (size_t i = 0; i < codeLabels_.length(); i++) {
         CodeLabel label = codeLabels_[i];
@@ -137,6 +183,15 @@ AssemblerX86Shared::InvertCondition(Condition cond)
       default:
         MOZ_CRASH("unexpected condition");
     }
+}
+
+void
+AssemblerX86Shared::verifyHeapAccessDisassembly(uint32_t begin, uint32_t end,
+                                                const Disassembler::HeapAccess& heapAccess)
+{
+#ifdef DEBUG
+    Disassembler::VerifyHeapAccess(masm.data() + begin, masm.data() + end, heapAccess);
+#endif
 }
 
 CPUInfo::SSEVersion CPUInfo::maxSSEVersion = UnknownSSE;

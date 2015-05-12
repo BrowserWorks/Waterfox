@@ -27,7 +27,7 @@ using namespace mozilla::ipc;
 
 using mozilla::DeprecatedAbs;
 
-class nsMultiplexInputStream MOZ_FINAL
+class nsMultiplexInputStream final
   : public nsIMultiplexInputStream
   , public nsISeekableStream
   , public nsIIPCSerializableInputStream
@@ -46,9 +46,9 @@ private:
   {
   }
 
-  struct ReadSegmentsState
+  struct MOZ_STACK_CLASS ReadSegmentsState
   {
-    nsIInputStream* mThisStream;
+    nsCOMPtr<nsIInputStream> mThisStream;
     uint32_t mOffset;
     nsWriteSegmentFun mWriter;
     void* mClosure;

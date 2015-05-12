@@ -14,11 +14,13 @@ from mozbuild.frontend.data import (
     Defines,
     DirectoryTraversal,
     Exports,
+    GeneratedFile,
     GeneratedInclude,
     GeneratedSources,
     HostSources,
     IPDLFile,
     JARManifest,
+    JsPreferenceFile,
     LocalInclude,
     Program,
     ReaderSummary,
@@ -181,6 +183,36 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertEqual(wanted, variables)
         self.maxDiff = maxDiff
 
+    def test_generated_files(self):
+        reader = self.reader('generated-files')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 2)
+        for o in objs:
+            self.assertIsInstance(o, GeneratedFile)
+
+        expected = ['bar.c', 'foo.c']
+        for o, expected_filename in zip(objs, expected):
+            self.assertEqual(o.output, expected_filename)
+
+    def test_generated_files_no_script(self):
+        reader = self.reader('generated-files-no-script')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Script for generating bar.c does not exist'):
+            objs = self.read_topsrcdir(reader)
+
+    def test_generated_files_no_inputs(self):
+        reader = self.reader('generated-files-no-inputs')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Input for generating foo.c does not exist'):
+            objs = self.read_topsrcdir(reader)
+
+    def test_generated_files_no_python_script(self):
+        reader = self.reader('generated-files-no-python-script')
+        with self.assertRaisesRegexp(SandboxValidationError,
+            'Script for generating bar.c does not end in .py'):
+            objs = self.read_topsrcdir(reader)
+
     def test_exports(self):
         reader = self.reader('exports')
         objs = self.read_topsrcdir(reader)
@@ -281,6 +313,21 @@ class TestEmitterBasic(unittest.TestCase):
         self.assertIn('overwrite', resources._children)
         overwrite = resources._children['overwrite']
         self.assertEqual(overwrite._strings, ['new.res'])
+
+    def test_preferences_js(self):
+        reader = self.reader('js_preference_files')
+        objs = self.read_topsrcdir(reader)
+
+        prefs = [o.path for o in objs if isinstance(o, JsPreferenceFile)]
+
+        prefsByDir = [
+            'valid_val/prefs.js',
+            'ww/ww.js',
+            'xx/xx.js',
+            'yy/yy.js',
+            ]
+
+        self.assertEqual(sorted(prefs), prefsByDir)
 
     def test_program(self):
         reader = self.reader('program')
@@ -709,7 +756,29 @@ class TestEmitterBasic(unittest.TestCase):
         for suffix, files in expected.items():
             sources = suffix_map[suffix]
             self.assertEqual(sources.files, files)
-            self.assertEqual(sources.files_per_unified_file, 32)
+            self.assertTrue(sources.have_unified_mapping)
+
+    def test_unified_sources_non_unified(self):
+        """Test that UNIFIED_SOURCES with FILES_PER_UNIFIED_FILE=1 works properly."""
+        reader = self.reader('unified-sources-non-unified')
+        objs = self.read_topsrcdir(reader)
+
+        self.assertEqual(len(objs), 3)
+        for o in objs:
+            self.assertIsInstance(o, UnifiedSources)
+
+        suffix_map = {obj.canonical_suffix: obj for obj in objs}
+        self.assertEqual(len(suffix_map), 3)
+
+        expected = {
+            '.cpp': ['bar.cxx', 'foo.cpp', 'quux.cc'],
+            '.mm': ['objc1.mm', 'objc2.mm'],
+            '.c': ['c1.c', 'c2.c'],
+        }
+        for suffix, files in expected.items():
+            sources = suffix_map[suffix]
+            self.assertEqual(sources.files, files)
+            self.assertFalse(sources.have_unified_mapping)
 
 if __name__ == '__main__':
     main()

@@ -366,7 +366,7 @@ IMEContentObserver::NotifySelectionChanged(nsIDOMDocument* aDOMDocument,
 }
 
 // Helper class, used for position change notification
-class PositionChangeEvent MOZ_FINAL : public nsRunnable
+class PositionChangeEvent final : public nsRunnable
 {
 public:
   explicit PositionChangeEvent(IMEContentObserver* aDispatcher)
@@ -463,9 +463,8 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   // The refPt is relative to its widget.
   // We should notify it with offset in the widget.
   if (aMouseEvent->widget != mWidget) {
-    charAtPt.refPoint += LayoutDeviceIntPoint::FromUntyped(
-      aMouseEvent->widget->WidgetToScreenOffset() -
-        mWidget->WidgetToScreenOffset());
+    charAtPt.refPoint += aMouseEvent->widget->WidgetToScreenOffset() -
+      mWidget->WidgetToScreenOffset();
   }
 
   IMENotification notification(NOTIFY_IME_OF_MOUSE_BUTTON_EVENT);
@@ -473,7 +472,8 @@ IMEContentObserver::OnMouseButtonEvent(nsPresContext* aPresContext,
   notification.mMouseButtonEventData.mOffset = charAtPt.mReply.mOffset;
   notification.mMouseButtonEventData.mCursorPos.Set(
     LayoutDeviceIntPoint::ToUntyped(charAtPt.refPoint));
-  notification.mMouseButtonEventData.mCharRect.Set(charAtPt.mReply.mRect);
+  notification.mMouseButtonEventData.mCharRect.Set(
+    LayoutDevicePixel::ToUntyped(charAtPt.mReply.mRect));
   notification.mMouseButtonEventData.mButton = aMouseEvent->button;
   notification.mMouseButtonEventData.mButtons = aMouseEvent->buttons;
   notification.mMouseButtonEventData.mModifiers = aMouseEvent->modifiers;

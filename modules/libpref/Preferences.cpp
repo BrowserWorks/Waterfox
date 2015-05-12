@@ -125,7 +125,7 @@ public:
   PrefChangedFunc mCallback;
 };
 
-class ValueObserver MOZ_FINAL : public nsIObserver,
+class ValueObserver final : public nsIObserver,
                                 public ValueObserverHashKey
 {
   ~ValueObserver() {
@@ -235,7 +235,7 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
   NS_ENSURE_TRUE(InitStaticMembers(), 0);
 
   size_t n = aMallocSizeOf(sPreferences);
-  if (gHashTable.ops) {
+  if (gHashTable.IsInitialized()) {
     // pref keys are allocated in a private arena, which we count elsewhere.
     // pref stringvals are allocated out of the same private arena.
     n += PL_DHashTableSizeOfExcludingThis(&gHashTable, nullptr, aMallocSizeOf);
@@ -257,7 +257,7 @@ Preferences::SizeOfIncludingThisAndOtherStuff(mozilla::MallocSizeOf aMallocSizeO
   return n;
 }
 
-class PreferenceServiceReporter MOZ_FINAL : public nsIMemoryReporter
+class PreferenceServiceReporter final : public nsIMemoryReporter
 {
   ~PreferenceServiceReporter() {}
 
@@ -955,7 +955,7 @@ Preferences::WritePrefFile(nsIFile* aFile)
   uint32_t                  writeAmount;
   nsresult                  rv;
 
-  if (!gHashTable.ops)
+  if (!gHashTable.IsInitialized())
     return NS_ERROR_NOT_INITIALIZED;
 
   // execute a "safe" save by saving through a tempfile

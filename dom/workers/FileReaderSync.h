@@ -24,7 +24,7 @@ template<typename> class Optional;
 
 BEGIN_WORKERS_NAMESPACE
 
-class FileReaderSync MOZ_FINAL
+class FileReaderSync final
 {
   NS_INLINE_DECL_REFCOUNTING(FileReaderSync)
 
@@ -41,7 +41,7 @@ public:
   static already_AddRefed<FileReaderSync>
   Constructor(const GlobalObject& aGlobal, ErrorResult& aRv);
 
-  JSObject* WrapObject(JSContext* aCx);
+  bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector);
 
   void ReadAsArrayBuffer(JSContext* aCx, JS::Handle<JSObject*> aScopeObj,
                          File& aBlob, JS::MutableHandle<JSObject*> aRetval,

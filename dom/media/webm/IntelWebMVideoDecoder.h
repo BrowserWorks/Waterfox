@@ -28,19 +28,19 @@ class IntelWebMVideoDecoder : public WebMVideoDecoder, public MediaDataDecoderCa
 {
 public:
   static WebMVideoDecoder* Create(WebMReader* aReader);
-  virtual nsresult Init(unsigned int aWidth, unsigned int aHeight) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual void Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Init(unsigned int aWidth, unsigned int aHeight) override;
+  virtual nsresult Flush() override;
+  virtual void Shutdown() override;
 
   virtual bool DecodeVideoFrame(bool &aKeyframeSkip,
-                                int64_t aTimeThreshold) MOZ_OVERRIDE;
+                                int64_t aTimeThreshold) override;
 
-  virtual void Output(MediaData* aSample) MOZ_OVERRIDE;
+  virtual void Output(MediaData* aSample) override;
 
-  virtual void DrainComplete() MOZ_OVERRIDE;
+  virtual void DrainComplete() override;
 
-  virtual void InputExhausted() MOZ_OVERRIDE;
-  virtual void Error() MOZ_OVERRIDE;
+  virtual void InputExhausted() override;
+  virtual void Error() override;
 
   IntelWebMVideoDecoder(WebMReader* aReader);
   ~IntelWebMVideoDecoder();
@@ -54,7 +54,7 @@ private:
 
   bool SkipVideoDemuxToNextKeyFrame(int64_t aTimeThreshold, uint32_t& parsed);
 
-  bool IsSupportedVideoMimeType(const char* aMimeType);
+  bool IsSupportedVideoMimeType(const nsACString& aMimeType);
 
   VP8Sample* PopSample();
 

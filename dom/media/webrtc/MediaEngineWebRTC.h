@@ -40,7 +40,6 @@
 #include "webrtc/voice_engine/include/voe_volume_control.h"
 #include "webrtc/voice_engine/include/voe_external_media.h"
 #include "webrtc/voice_engine/include/voe_audio_processing.h"
-#include "webrtc/voice_engine/include/voe_call_report.h"
 
 // Video Engine
 // conflicts with #include of scoped_ptr.h
@@ -65,21 +64,22 @@ public:
   NS_DECL_THREADSAFE_ISUPPORTS
 
   // ViEExternalRenderer.
-  virtual int FrameSizeChange(unsigned int w, unsigned int h, unsigned int streams) MOZ_OVERRIDE;
+  virtual int FrameSizeChange(unsigned int w, unsigned int h, unsigned int streams) override;
   virtual int DeliverFrame(unsigned char* buffer,
                            int size,
                            uint32_t time_stamp,
+                           int64_t ntp_time_ms,
                            int64_t render_time,
-                           void *handle) MOZ_OVERRIDE;
+                           void *handle) override;
   /**
    * Does DeliverFrame() support a null buffer and non-null handle
    * (video texture)?
    * XXX Investigate!  Especially for Android/B2G
    */
-  virtual bool IsTextureSupported() MOZ_OVERRIDE { return false; }
+  virtual bool IsTextureSupported() override { return false; }
 
   MediaEngineWebRTCVideoSource(webrtc::VideoEngine* aVideoEnginePtr, int aIndex,
-                               MediaSourceType aMediaSource = MediaSourceType::Camera)
+                               dom::MediaSourceEnum aMediaSource = dom::MediaSourceEnum::Camera)
     : MediaEngineCameraVideoSource(aIndex, "WebRTCCamera.Monitor")
     , mVideoEngine(aVideoEnginePtr)
     , mMinFps(-1)
@@ -89,28 +89,25 @@ public:
     Init();
   }
 
-  virtual nsresult Allocate(const VideoTrackConstraintsN& aConstraints,
-                            const MediaEnginePrefs& aPrefs) MOZ_OVERRIDE;
-  virtual nsresult Deallocate() MOZ_OVERRIDE;
-  virtual nsresult Start(SourceMediaStream*, TrackID) MOZ_OVERRIDE;
-  virtual nsresult Stop(SourceMediaStream*, TrackID) MOZ_OVERRIDE;
+  virtual nsresult Allocate(const dom::MediaTrackConstraints& aConstraints,
+                            const MediaEnginePrefs& aPrefs) override;
+  virtual nsresult Deallocate() override;
+  virtual nsresult Start(SourceMediaStream*, TrackID) override;
+  virtual nsresult Stop(SourceMediaStream*, TrackID) override;
   virtual void NotifyPull(MediaStreamGraph* aGraph,
                           SourceMediaStream* aSource,
                           TrackID aId,
-                          StreamTime aDesiredTime) MOZ_OVERRIDE;
+                          StreamTime aDesiredTime) override;
 
-  virtual const MediaSourceType GetMediaSource() MOZ_OVERRIDE {
+  virtual const dom::MediaSourceEnum GetMediaSource() override {
     return mMediaSource;
   }
-  virtual nsresult TakePhoto(PhotoCallback* aCallback) MOZ_OVERRIDE
+  virtual nsresult TakePhoto(PhotoCallback* aCallback) override
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
 
   void Refresh(int aIndex);
-
-  bool SatisfiesConstraintSets(
-      const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets) MOZ_OVERRIDE;
 
 protected:
   ~MediaEngineWebRTCVideoSource() { Shutdown(); }
@@ -127,12 +124,10 @@ private:
   webrtc::ViERender* mViERender;
 
   int mMinFps; // Min rate we want to accept
-  MediaSourceType mMediaSource; // source of media (camera | application | screen)
+  dom::MediaSourceEnum mMediaSource; // source of media (camera | application | screen)
 
-  static bool SatisfiesConstraintSet(const dom::MediaTrackConstraintSet& aConstraints,
-                                     const webrtc::CaptureCapability& aCandidate);
-  void ChooseCapability(const VideoTrackConstraintsN& aConstraints,
-                        const MediaEnginePrefs& aPrefs);
+  size_t NumCapabilities() override;
+  void GetCapability(size_t aIndex, webrtc::CaptureCapability& aOut) override;
 };
 
 class MediaEngineWebRTCAudioSource : public MediaEngineAudioSource,
@@ -162,34 +157,34 @@ public:
     Init();
   }
 
-  virtual void GetName(nsAString& aName) MOZ_OVERRIDE;
-  virtual void GetUUID(nsAString& aUUID) MOZ_OVERRIDE;
+  virtual void GetName(nsAString& aName) override;
+  virtual void GetUUID(nsAString& aUUID) override;
 
-  virtual nsresult Allocate(const AudioTrackConstraintsN& aConstraints,
-                            const MediaEnginePrefs& aPrefs) MOZ_OVERRIDE;
-  virtual nsresult Deallocate() MOZ_OVERRIDE;
-  virtual nsresult Start(SourceMediaStream* aStream, TrackID aID) MOZ_OVERRIDE;
-  virtual nsresult Stop(SourceMediaStream* aSource, TrackID aID) MOZ_OVERRIDE;
-  virtual void SetDirectListeners(bool aHasDirectListeners) MOZ_OVERRIDE {};
+  virtual nsresult Allocate(const dom::MediaTrackConstraints& aConstraints,
+                            const MediaEnginePrefs& aPrefs) override;
+  virtual nsresult Deallocate() override;
+  virtual nsresult Start(SourceMediaStream* aStream, TrackID aID) override;
+  virtual nsresult Stop(SourceMediaStream* aSource, TrackID aID) override;
+  virtual void SetDirectListeners(bool aHasDirectListeners) override {};
   virtual nsresult Config(bool aEchoOn, uint32_t aEcho,
                           bool aAgcOn, uint32_t aAGC,
                           bool aNoiseOn, uint32_t aNoise,
-                          int32_t aPlayoutDelay) MOZ_OVERRIDE;
+                          int32_t aPlayoutDelay) override;
 
   virtual void NotifyPull(MediaStreamGraph* aGraph,
                           SourceMediaStream* aSource,
                           TrackID aId,
-                          StreamTime aDesiredTime) MOZ_OVERRIDE;
+                          StreamTime aDesiredTime) override;
 
-  virtual bool IsFake() MOZ_OVERRIDE {
+  virtual bool IsFake() override {
     return false;
   }
 
-  virtual const MediaSourceType GetMediaSource() MOZ_OVERRIDE {
-    return MediaSourceType::Microphone;
+  virtual const dom::MediaSourceEnum GetMediaSource() override {
+    return dom::MediaSourceEnum::Microphone;
   }
 
-  virtual nsresult TakePhoto(PhotoCallback* aCallback) MOZ_OVERRIDE
+  virtual nsresult TakePhoto(PhotoCallback* aCallback) override
   {
     return NS_ERROR_NOT_IMPLEMENTED;
   }
@@ -197,7 +192,7 @@ public:
   // VoEMediaProcess.
   void Process(int channel, webrtc::ProcessingTypes type,
                int16_t audio10ms[], int length,
-               int samplingFreq, bool isStereo) MOZ_OVERRIDE;
+               int samplingFreq, bool isStereo) override;
 
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -219,7 +214,6 @@ private:
   ScopedCustomReleasePtr<webrtc::VoEExternalMedia> mVoERender;
   ScopedCustomReleasePtr<webrtc::VoENetwork> mVoENetwork;
   ScopedCustomReleasePtr<webrtc::VoEAudioProcessing> mVoEProcessing;
-  ScopedCustomReleasePtr<webrtc::VoECallReport> mVoECallReport;
 
   // mMonitor protects mSources[] access/changes, and transitions of mState
   // from kStarted to kStopped (which are combined with EndTrack()).
@@ -254,9 +248,9 @@ public:
   // before invoking Shutdown on this class.
   void Shutdown();
 
-  virtual void EnumerateVideoDevices(MediaSourceType,
+  virtual void EnumerateVideoDevices(dom::MediaSourceEnum,
                                     nsTArray<nsRefPtr<MediaEngineVideoSource> >*);
-  virtual void EnumerateAudioDevices(MediaSourceType,
+  virtual void EnumerateAudioDevices(dom::MediaSourceEnum,
                                     nsTArray<nsRefPtr<MediaEngineAudioSource> >*);
 private:
   ~MediaEngineWebRTC() {

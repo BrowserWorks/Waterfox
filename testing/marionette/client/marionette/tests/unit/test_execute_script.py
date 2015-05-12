@@ -4,8 +4,8 @@
 
 import urllib
 
-from by import By
-from errors import JavascriptException, MarionetteException
+from marionette_driver.by import By
+from marionette_driver.errors import JavascriptException, MarionetteException
 from marionette_test import MarionetteTestCase
 
 def inline(doc):
@@ -72,12 +72,29 @@ let prefs = Components.classes["@mozilla.org/preferences-service;1"]
         self.marionette.execute_script("global.barfoo = [42, 23];")
         self.assertEqual(self.marionette.execute_script("return global.barfoo;", new_sandbox=False), [42, 23])
 
+    def test_sandbox_refresh_arguments(self):
+        self.marionette.execute_script("this.foobar = [arguments[0], arguments[1]];",
+                                       script_args=[23, 42])
+        self.assertEqual(self.marionette.execute_script("return this.foobar;", new_sandbox=False),
+                         [23, 42])
+
+        self.marionette.execute_script("global.barfoo = [arguments[0], arguments[1]];",
+                                       script_args=[42, 23],
+                                       new_sandbox=False)
+        self.assertEqual(self.marionette.execute_script("return global.barfoo;", new_sandbox=False),
+                         [42, 23])
+
     def test_that_we_can_pass_in_floats(self):
         expected_result = 1.2
         result = self.marionette.execute_script("return arguments[0]",
                                                 [expected_result])
         self.assertTrue(isinstance(result, float))
         self.assertEqual(result, expected_result)
+
+    def test_null_argument(self):
+        result = self.marionette.execute_script("return arguments[0]",
+                                                [None])
+        self.assertIs(result, None)
 
 class TestExecuteChrome(TestExecuteContent):
     def setUp(self):

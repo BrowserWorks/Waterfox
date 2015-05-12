@@ -340,6 +340,7 @@ OnSharedPreferenceChangeListener
         }
 
         super.onCreate(savedInstanceState);
+        initActionBar();
 
         // Use setResourceToOpen to specify these extras.
         Bundle intentExtras = getIntent().getExtras();
@@ -398,13 +399,6 @@ OnSharedPreferenceChangeListener
             }
         });
 
-        if (Versions.feature14Plus) {
-            final ActionBar actionBar = getActionBar();
-            if (actionBar != null) {
-                actionBar.setHomeButtonEnabled(true);
-            }
-        }
-
         // N.B., if we ever need to redisplay the locale selection UI without
         // just finishing and recreating the activity, right here we'll need to
         // capture EXTRA_SHOW_FRAGMENT_TITLE from the intent and store the title ID.
@@ -413,6 +407,27 @@ OnSharedPreferenceChangeListener
         if (intentExtras != null && intentExtras.containsKey(DataReportingNotification.ALERT_NAME_DATAREPORTING_NOTIFICATION)) {
             NotificationManager notificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
             notificationManager.cancel(DataReportingNotification.ALERT_NAME_DATAREPORTING_NOTIFICATION.hashCode());
+        }
+    }
+
+    /**
+     * Initializes the action bar configuration in code.
+     *
+     * Declaring these attributes in XML does not work on some devices for an unknown reason
+     * (e.g. the back button stops working or the logo disappears; see bug 1152314) so we
+     * duplicate those attributes in code here. Note: the order of these calls matters.
+     *
+     * We keep the XML attributes because not all of these methods are available on pre-v14.
+     */
+    private void initActionBar() {
+        if (Versions.feature14Plus) {
+            final ActionBar actionBar = getActionBar();
+            if (actionBar != null) {
+                actionBar.setHomeButtonEnabled(true);
+                actionBar.setDisplayHomeAsUpEnabled(true);
+                actionBar.setLogo(R.drawable.logo);
+                actionBar.setDisplayUseLogoEnabled(true);
+            }
         }
     }
 

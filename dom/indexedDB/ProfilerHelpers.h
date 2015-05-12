@@ -36,7 +36,7 @@ namespace mozilla {
 namespace dom {
 namespace indexedDB {
 
-class MOZ_STACK_CLASS LoggingIdString MOZ_FINAL
+class MOZ_STACK_CLASS LoggingIdString final
   : public nsAutoCString
 {
 public:
@@ -44,38 +44,39 @@ public:
   {
     using mozilla::ipc::BackgroundChildImpl;
 
-    BackgroundChildImpl::ThreadLocal* threadLocal =
-      BackgroundChildImpl::GetThreadLocalForCurrentThread();
-    MOZ_ASSERT(threadLocal);
-
-    ThreadLocal* idbThreadLocal = threadLocal->mIndexedDBThreadLocal;
-    MOZ_ASSERT(idbThreadLocal);
-
-    Init(idbThreadLocal->Id());
+    if (IndexedDatabaseManager::GetLoggingMode() !=
+          IndexedDatabaseManager::Logging_Disabled) {
+      const BackgroundChildImpl::ThreadLocal* threadLocal =
+        BackgroundChildImpl::GetThreadLocalForCurrentThread();
+      if (threadLocal) {
+        const ThreadLocal* idbThreadLocal = threadLocal->mIndexedDBThreadLocal;
+        if (idbThreadLocal) {
+          Assign(idbThreadLocal->IdString());
+        }
+      }
+    }
   }
 
   explicit
   LoggingIdString(const nsID& aID)
   {
-    Init(aID);
-  }
-
-private:
-  void
-  Init(const nsID& aID)
-  {
     static_assert(NSID_LENGTH > 1, "NSID_LENGTH is set incorrectly!");
+    static_assert(NSID_LENGTH <= kDefaultStorageSize,
+                  "nID string won't fit in our storage!");
     MOZ_ASSERT(Capacity() > NSID_LENGTH);
 
-    // NSID_LENGTH counts the null terminator, SetLength() does not.
-    SetLength(NSID_LENGTH - 1);
+    if (IndexedDatabaseManager::GetLoggingMode() !=
+          IndexedDatabaseManager::Logging_Disabled) {
+      // NSID_LENGTH counts the null terminator, SetLength() does not.
+      SetLength(NSID_LENGTH - 1);
 
-    aID.ToProvidedString(
-      *reinterpret_cast<char(*)[NSID_LENGTH]>(BeginWriting()));
+      aID.ToProvidedString(
+        *reinterpret_cast<char(*)[NSID_LENGTH]>(BeginWriting()));
+    }
   }
 };
 
-class MOZ_STACK_CLASS LoggingString MOZ_FINAL
+class MOZ_STACK_CLASS LoggingString final
   : public nsAutoCString
 {
   static const char kQuote = '\"';

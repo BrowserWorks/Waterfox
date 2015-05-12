@@ -8,6 +8,7 @@ DIRS += [
     'encoder',
     'gmp',
     'gmp-plugin',
+    'gmp-plugin-openh264',
     'imagecapture',
     'mediasource',
     'ogg',
@@ -122,6 +123,7 @@ EXPORTS += [
     'SharedThreadPool.h',
     'StreamBuffer.h',
     'ThreadPoolCOMListener.h',
+    'TimeUnits.h',
     'TimeVarying.h',
     'TrackUnionStream.h',
     'VideoFrameContainer.h',
@@ -147,6 +149,7 @@ EXPORTS.mozilla.dom += [
     'MediaDevices.h',
     'MediaStreamError.h',
     'MediaStreamTrack.h',
+    'RTCIdentityProviderRegistrar.h',
     'TextTrack.h',
     'TextTrackCue.h',
     'TextTrackCueList.h',
@@ -193,6 +196,7 @@ UNIFIED_SOURCES += [
     'MediaTrack.cpp',
     'MediaTrackList.cpp',
     'MP3FrameParser.cpp',
+    'RTCIdentityProviderRegistrar.cpp',
     'RtspMediaResource.cpp',
     'SharedThreadPool.cpp',
     'StreamBuffer.cpp',
@@ -236,7 +240,7 @@ EXTRA_COMPONENTS += [
 ]
 
 EXTRA_JS_MODULES.media += [
-    'IdpProxy.jsm',
+    'IdpSandbox.jsm',
     'PeerConnectionIdp.jsm',
     'RTCStatsReport.jsm',
 ]
@@ -251,7 +255,7 @@ LOCAL_INCLUDES += [
     '/dom/camera',
     '/layout/generic',
     '/layout/xul',
-    '/netwerk/base/src',
+    '/netwerk/base',
 ]
 
 if CONFIG['MOZ_DIRECTSHOW']:

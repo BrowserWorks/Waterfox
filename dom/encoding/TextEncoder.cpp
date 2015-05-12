@@ -18,16 +18,16 @@ TextEncoder::Init(const nsAString& aEncoding, ErrorResult& aRv)
 
   // Let encoding be the result of getting an encoding from label.
   // If encoding is failure, or is none of utf-8, utf-16, and utf-16be,
-  // throw a TypeError.
+  // throw a RangeError (https://encoding.spec.whatwg.org/#dom-textencoder).
   if (!EncodingUtils::FindEncodingForLabel(label, mEncoding)) {
-    aRv.ThrowTypeError(MSG_ENCODING_NOT_SUPPORTED, &label);
+    aRv.ThrowRangeError(MSG_ENCODING_NOT_SUPPORTED, &label);
     return;
   }
 
   if (!mEncoding.EqualsLiteral("UTF-8") &&
       !mEncoding.EqualsLiteral("UTF-16LE") &&
       !mEncoding.EqualsLiteral("UTF-16BE")) {
-    aRv.ThrowTypeError(MSG_DOM_ENCODING_NOT_UTF);
+    aRv.ThrowRangeError(MSG_DOM_ENCODING_NOT_UTF);
     return;
   }
 
@@ -53,7 +53,6 @@ TextEncoder::Encode(JSContext* aCx,
   }
   // Need a fallible allocator because the caller may be a content
   // and the content can specify the length of the string.
-  static const fallible_t fallible = fallible_t();
   nsAutoArrayPtr<char> buf(new (fallible) char[maxLen + 1]);
   if (!buf) {
     aRv.Throw(NS_ERROR_OUT_OF_MEMORY);

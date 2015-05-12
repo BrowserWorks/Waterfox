@@ -56,7 +56,10 @@ ServiceWorkerContainer::RemoveReadyPromise()
   if (window) {
     nsCOMPtr<nsIServiceWorkerManager> swm =
       mozilla::services::GetServiceWorkerManager();
-    MOZ_ASSERT(swm);
+    if (!swm) {
+      // If the browser is shutting down, we don't need to remove the promise.
+      return;
+    }
 
     swm->RemoveReadyPromise(window);
   }
@@ -81,7 +84,7 @@ ServiceWorkerContainer::Register(const nsAString& aScriptURL,
     return nullptr;
   }
 
-  aRv = swm->Register(aOptions.mScope, aScriptURL, getter_AddRefs(promise));
+  aRv = swm->Register(GetOwner(), aOptions.mScope, aScriptURL, getter_AddRefs(promise));
   if (aRv.Failed()) {
     return nullptr;
   }

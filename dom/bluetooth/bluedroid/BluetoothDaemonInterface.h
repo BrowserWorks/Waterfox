@@ -11,6 +11,7 @@
 
 BEGIN_BLUETOOTH_NAMESPACE
 
+class BluetoothDaemonListenSocket;
 class BluetoothDaemonChannel;
 class BluetoothDaemonA2dpInterface;
 class BluetoothDaemonAvrcpInterface;
@@ -18,12 +19,13 @@ class BluetoothDaemonHandsfreeInterface;
 class BluetoothDaemonProtocol;
 class BluetoothDaemonSocketInterface;
 
-class BluetoothDaemonInterface MOZ_FINAL : public BluetoothInterface
+class BluetoothDaemonInterface final : public BluetoothInterface
 {
 public:
   class CleanupResultHandler;
   class InitResultHandler;
 
+  friend class BluetoothDaemonListenSocket;
   friend class BluetoothDaemonChannel;
   friend class CleanupResultHandler;
   friend class InitResultHandler;
@@ -108,31 +110,36 @@ public:
 
   /* Profile Interfaces */
 
-  BluetoothSocketInterface* GetBluetoothSocketInterface() MOZ_OVERRIDE;
-  BluetoothHandsfreeInterface* GetBluetoothHandsfreeInterface() MOZ_OVERRIDE;
-  BluetoothA2dpInterface* GetBluetoothA2dpInterface() MOZ_OVERRIDE;
-  BluetoothAvrcpInterface* GetBluetoothAvrcpInterface() MOZ_OVERRIDE;
+  BluetoothSocketInterface* GetBluetoothSocketInterface() override;
+  BluetoothHandsfreeInterface* GetBluetoothHandsfreeInterface() override;
+  BluetoothA2dpInterface* GetBluetoothA2dpInterface() override;
+  BluetoothAvrcpInterface* GetBluetoothAvrcpInterface() override;
 
 protected:
   enum Channel {
+    LISTEN_SOCKET,
     CMD_CHANNEL,
     NTF_CHANNEL
   };
 
-  BluetoothDaemonInterface(BluetoothDaemonChannel* aCmdChannel,
-                           BluetoothDaemonChannel* aNtfChannel,
-                           BluetoothDaemonProtocol* aProtocol);
+  BluetoothDaemonInterface();
   ~BluetoothDaemonInterface();
 
   void OnConnectSuccess(enum Channel aChannel);
   void OnConnectError(enum Channel aChannel);
   void OnDisconnect(enum Channel aChannel);
 
+  nsresult CreateRandomAddressString(const nsACString& aPrefix,
+                                     unsigned long aPostfixLength,
+                                     nsACString& aAddress);
+
 private:
   void DispatchError(BluetoothResultHandler* aRes, BluetoothStatus aStatus);
 
-  nsAutoPtr<BluetoothDaemonChannel> mCmdChannel;
-  nsAutoPtr<BluetoothDaemonChannel> mNtfChannel;
+  nsCString mListenSocketName;
+  nsRefPtr<BluetoothDaemonListenSocket> mListenSocket;
+  nsRefPtr<BluetoothDaemonChannel> mCmdChannel;
+  nsRefPtr<BluetoothDaemonChannel> mNtfChannel;
   nsAutoPtr<BluetoothDaemonProtocol> mProtocol;
 
   nsTArray<nsRefPtr<BluetoothResultHandler> > mResultHandlerQ;

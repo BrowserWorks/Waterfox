@@ -29,7 +29,7 @@ Link::Link(Element *aElement)
   , mNeedsRegistration(false)
   , mRegistered(false)
 {
-  NS_ABORT_IF_FALSE(mElement, "Must have an element");
+  MOZ_ASSERT(mElement, "Must have an element");
 }
 
 Link::~Link()
@@ -58,9 +58,9 @@ Link::SetLinkState(nsLinkState aState)
   // Per IHistory interface documentation, we are no longer registered.
   mRegistered = false;
 
-  NS_ABORT_IF_FALSE(LinkState() == NS_EVENT_STATE_VISITED ||
-                    LinkState() == NS_EVENT_STATE_UNVISITED,
-                    "Unexpected state obtained from LinkState()!");
+  MOZ_ASSERT(LinkState() == NS_EVENT_STATE_VISITED ||
+             LinkState() == NS_EVENT_STATE_UNVISITED,
+             "Unexpected state obtained from LinkState()!");
 
   // Tell the element to update its visited state
   mElement->UpdateState(true);
@@ -441,8 +441,10 @@ Link::GetHash(nsAString &_hash, ErrorResult& aError)
   nsAutoCString ref;
   nsresult rv = uri->GetRef(ref);
   if (NS_SUCCEEDED(rv) && !ref.IsEmpty()) {
-    NS_UnescapeURL(ref); // XXX may result in random non-ASCII bytes!
     _hash.Assign(char16_t('#'));
+    if (nsContentUtils::EncodeDecodeURLHash()) {
+      NS_UnescapeURL(ref); // XXX may result in random non-ASCII bytes!
+    }
     AppendUTF8toUTF16(ref, _hash);
   }
 }

@@ -48,9 +48,9 @@ Attr::Attr(nsDOMAttributeMap *aAttrMap,
            const nsAString  &aValue, bool aNsAware)
   : nsIAttribute(aAttrMap, aNodeInfo, aNsAware), mValue(aValue)
 {
-  NS_ABORT_IF_FALSE(mNodeInfo, "We must get a nodeinfo here!");
-  NS_ABORT_IF_FALSE(mNodeInfo->NodeType() == nsIDOMNode::ATTRIBUTE_NODE,
-                    "Wrong nodeType");
+  MOZ_ASSERT(mNodeInfo, "We must get a nodeinfo here!");
+  MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::ATTRIBUTE_NODE,
+             "Wrong nodeType");
 
   // We don't add a reference to our content. It will tell us
   // to drop our reference when it goes away.
@@ -183,7 +183,7 @@ Attr::GetValue(nsAString& aValue)
 {
   Element* element = GetElement();
   if (element) {
-    nsCOMPtr<nsIAtom> nameAtom = GetNameAtom(element);
+    nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
     element->GetAttr(mNodeInfo->NamespaceID(), nameAtom, aValue);
   }
   else {
@@ -202,7 +202,7 @@ Attr::SetValue(const nsAString& aValue, ErrorResult& aRv)
     return;
   }
 
-  nsCOMPtr<nsIAtom> nameAtom = GetNameAtom(element);
+  nsCOMPtr<nsIAtom> nameAtom = mNodeInfo->NameAtom();
   aRv = element->SetAttr(mNodeInfo->NamespaceID(),
                          nameAtom,
                          mNodeInfo->GetPrefixAtom(),

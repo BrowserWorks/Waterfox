@@ -10,20 +10,6 @@
 #include "nsStyleContext.h"
 #include "nsBidiUtils.h"
 
-// If WRITING_MODE_VERTICAL_ENABLED is defined, we will attempt to support
-// the vertical writing-mode values; if it is not defined, then
-// WritingMode.IsVertical() will be hard-coded to return false, allowing
-// many conditional branches to be optimized away while we're in the process
-// of transitioning layout to use writing-mode and logical directions, but
-// not yet ready to ship vertical support.
-
-// XXX To be removed, and the #ifdef blocks below made unconditional,
-//     once we're confident we can leave it permanently enabled.
-
-#ifndef RELEASE_BUILD
-#define WRITING_MODE_VERTICAL_ENABLED 1
-#endif
-
 // It is the caller's responsibility to operate on logical-coordinate objects
 // with matched writing modes. Failure to do so will be a runtime bug; the
 // compiler can't catch it, but in debug mode, we'll throw an assertion.
@@ -43,9 +29,60 @@
    NS_ASSERTION(param == GetWritingMode(), "writing-mode mismatch")
 
 namespace mozilla {
-// Logical side constants for use in various places.
-enum LogicalSide { eLogicalSideBStart, eLogicalSideBEnd,
-                   eLogicalSideIStart, eLogicalSideIEnd };
+
+// Physical axis constants.
+enum PhysicalAxis {
+  eAxisVertical      = 0x0,
+  eAxisHorizontal    = 0x1
+};
+
+// Logical axis, edge and side constants for use in various places.
+enum LogicalAxis {
+  eLogicalAxisBlock  = 0x0,
+  eLogicalAxisInline = 0x1
+};
+enum LogicalEdge {
+  eLogicalEdgeStart  = 0x0,
+  eLogicalEdgeEnd    = 0x1
+};
+enum LogicalSide {
+  eLogicalSideBStart = (eLogicalAxisBlock  << 1) | eLogicalEdgeStart,  // 0x0
+  eLogicalSideBEnd   = (eLogicalAxisBlock  << 1) | eLogicalEdgeEnd,    // 0x1
+  eLogicalSideIStart = (eLogicalAxisInline << 1) | eLogicalEdgeStart,  // 0x2
+  eLogicalSideIEnd   = (eLogicalAxisInline << 1) | eLogicalEdgeEnd     // 0x3
+};
+
+inline bool IsInline(LogicalSide aSide) { return aSide & 0x2; }
+inline bool IsBlock(LogicalSide aSide) { return !IsInline(aSide); }
+inline bool IsEnd(LogicalSide aSide) { return aSide & 0x1; }
+inline bool IsStart(LogicalSide aSide) { return !IsEnd(aSide); }
+
+inline LogicalAxis GetAxis(LogicalSide aSide)
+{
+  return IsInline(aSide) ? eLogicalAxisInline : eLogicalAxisBlock;
+}
+
+inline LogicalEdge GetEdge(LogicalSide aSide)
+{
+  return IsEnd(aSide) ? eLogicalEdgeEnd : eLogicalEdgeStart;
+}
+
+inline LogicalEdge GetOppositeEdge(LogicalEdge aEdge)
+{
+  // This relies on the only two LogicalEdge enum values being 0 and 1.
+  return LogicalEdge(1 - aEdge);
+}
+
+inline LogicalSide
+MakeLogicalSide(LogicalAxis aAxis, LogicalEdge aEdge)
+{
+  return LogicalSide((aAxis << 1) | aEdge);
+}
+
+inline LogicalSide GetOppositeSide(LogicalSide aSide)
+{
+  return MakeLogicalSide(GetAxis(aSide), GetOppositeEdge(GetEdge(aSide)));
+}
 
 enum LogicalSideBits {
   eLogicalSideBitsNone   = 0,
@@ -58,10 +95,17 @@ enum LogicalSideBits {
   eLogicalSideBitsAll = eLogicalSideBitsBBoth | eLogicalSideBitsIBoth
 };
 
+enum LineRelativeDir {
+  eLineRelativeDirOver  = eLogicalSideBStart,
+  eLineRelativeDirUnder = eLogicalSideBEnd,
+  eLineRelativeDirLeft  = eLogicalSideIStart,
+  eLineRelativeDirRight = eLogicalSideIEnd
+};
+
 /**
  * LogicalSides represents a set of logical sides.
  */
-struct LogicalSides MOZ_FINAL {
+struct LogicalSides final {
   LogicalSides() : mBits(0) {}
   explicit LogicalSides(LogicalSideBits aSideBits)
   {
@@ -190,11 +234,7 @@ public:
    * True if vertical writing mode, i.e. when
    * writing-mode: vertical-lr | vertical-rl.
    */
-#ifdef WRITING_MODE_VERTICAL_ENABLED
   bool IsVertical() const { return !!(mWritingMode & eOrientationMask); }
-#else
-  bool IsVertical() const { return false; }
-#endif
 
   /**
    * True if line-over/line-under are inverted from block-start/block-end.
@@ -202,11 +242,7 @@ public:
    *   - writing-mode is vertical-rl && text-orientation is sideways-left
    *   - writing-mode is vertical-lr && text-orientation is not sideways-left
    */
-#ifdef WRITING_MODE_VERTICAL_ENABLED
   bool IsLineInverted() const { return !!(mWritingMode & eLineOrientMask); }
-#else
-  bool IsLineInverted() const { return false; }
-#endif
 
   /**
    * Block-axis flow-relative to line-relative factor.
@@ -227,11 +263,123 @@ public:
    * due to text-orientation:mixed resolution, but in that case the dominant
    * baseline remains centered.
    */
-#ifdef WRITING_MODE_VERTICAL_ENABLED
   bool IsSideways() const { return !!(mWritingMode & eSidewaysMask); }
-#else
-  bool IsSideways() const { return false; }
-#endif
+
+  static mozilla::PhysicalAxis PhysicalAxisForLogicalAxis(
+                                              uint8_t aWritingModeValue,
+                                              LogicalAxis aAxis)
+  {
+    // This relies on bit 0 of a writing-value mode indicating vertical
+    // orientation and bit 0 of a LogicalAxis value indicating the inline axis,
+    // so that it can correctly form mozilla::PhysicalAxis values using bit
+    // manipulation.
+    static_assert(NS_STYLE_WRITING_MODE_HORIZONTAL_TB == 0 &&
+                  NS_STYLE_WRITING_MODE_VERTICAL_RL == 1 &&
+                  NS_STYLE_WRITING_MODE_VERTICAL_LR == 3 &&
+                  eLogicalAxisBlock == 0 &&
+                  eLogicalAxisInline == 1 &&
+                  eAxisVertical == 0 && 
+                  eAxisHorizontal == 1,
+                  "unexpected writing-mode, logical axis or physical axis "
+                  "constant values");
+    return mozilla::PhysicalAxis((aWritingModeValue ^ aAxis) & 0x1);
+  }
+
+  mozilla::PhysicalAxis PhysicalAxis(LogicalAxis aAxis) const
+  {
+    // This will set wm to either NS_STYLE_WRITING_MODE_HORIZONTAL_TB or
+    // NS_STYLE_WRITING_MODE_VERTICAL_RL, and not the other two (real
+    // and hypothetical) values.  But this is fine; we only need to
+    // distinguish between vertical and horizontal in
+    // PhysicalAxisForLogicalAxis.
+    int wm = mWritingMode & eOrientationMask;
+    return PhysicalAxisForLogicalAxis(wm, aAxis);
+  }
+
+  static mozilla::Side PhysicalSideForBlockAxis(uint8_t aWritingModeValue,
+                                                LogicalEdge aEdge)
+  {
+    // indexes are NS_STYLE_WRITING_MODE_* values, which are the same as these
+    // two-bit values:
+    //   bit 0 = the eOrientationMask value
+    //   bit 1 = the eBlockFlowMask value
+    static const mozilla::css::Side kLogicalBlockSides[][2] = {
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // horizontal-tb
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // vertical-rl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // (horizontal-bt)
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // vertical-lr
+    };
+
+    NS_ASSERTION(aWritingModeValue < 4, "invalid aWritingModeValue value");
+    return kLogicalBlockSides[aWritingModeValue][aEdge];
+  }
+
+  mozilla::Side PhysicalSideForInlineAxis(LogicalEdge aEdge) const
+  {
+    // indexes are four-bit values:
+    //   bit 0 = the eOrientationMask value
+    //   bit 1 = the eInlineFlowMask value
+    //   bit 2 = the eBlockFlowMask value
+    //   bit 3 = the eLineOrientMask value
+    static const mozilla::css::Side kLogicalInlineSides[][2] = {
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb                  ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl                    ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb                  rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl                    rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)  (inverted)    ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr      sideways-left rtl
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)  (inverted)    rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr      sideways-left ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // horizontal-tb    (inverted)    rtl
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-rl      sideways-left rtl
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // horizontal-tb    (inverted)    ltr
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-rl      sideways-left ltr
+      { NS_SIDE_LEFT,   NS_SIDE_RIGHT  },  // (horizontal-bt)                ltr
+      { NS_SIDE_TOP,    NS_SIDE_BOTTOM },  // vertical-lr                    ltr
+      { NS_SIDE_RIGHT,  NS_SIDE_LEFT   },  // (horizontal-bt)                rtl
+      { NS_SIDE_BOTTOM, NS_SIDE_TOP    },  // vertical-lr                    rtl
+    };
+
+    // Inline axis sides depend on all three of writing-mode, text-orientation
+    // and direction, which are encoded in the eOrientationMask,
+    // eInlineFlowMask, eBlockFlowMask and eLineOrientMask bits.  Use these four
+    // bits to index into kLogicalInlineSides.
+    static_assert(eOrientationMask == 0x01 && eInlineFlowMask == 0x02 &&
+                  eBlockFlowMask == 0x04 && eLineOrientMask == 0x08,
+                  "unexpected mask values");
+    int index = mWritingMode & 0x0F;
+    return kLogicalInlineSides[index][aEdge];
+  }
+
+  /**
+   * Returns the physical side corresponding to the specified logical side,
+   * given the current writing mode.
+   */
+  mozilla::Side PhysicalSide(LogicalSide aSide) const
+  {
+    if (IsBlock(aSide)) {
+      static_assert(eOrientationMask == 0x01 && eBlockFlowMask == 0x04,
+                    "unexpected mask values");
+      int wm = ((mWritingMode & eBlockFlowMask) >> 1) |
+               (mWritingMode & eOrientationMask);
+      return PhysicalSideForBlockAxis(wm, GetEdge(aSide));
+    }
+
+    return PhysicalSideForInlineAxis(GetEdge(aSide));
+  }
+
+  /**
+   * Returns the physical side corresponding to the specified
+   * line-relative direction, given the current writing mode.
+   */
+  mozilla::Side PhysicalSide(LineRelativeDir aDir) const
+  {
+    LogicalSide side = static_cast<LogicalSide>(aDir);
+    if (IsLineInverted()) {
+      side = GetOppositeSide(side);
+    }
+    return PhysicalSide(side);
+  }
 
   /**
    * Default constructor gives us a horizontal, LTR writing mode.
@@ -251,7 +399,6 @@ public:
 
     const nsStyleVisibility* styleVisibility = aStyleContext->StyleVisibility();
 
-#ifdef WRITING_MODE_VERTICAL_ENABLED
     switch (styleVisibility->mWritingMode) {
       case NS_STYLE_WRITING_MODE_HORIZONTAL_TB:
         mWritingMode = 0;
@@ -294,9 +441,6 @@ public:
         mWritingMode = 0;
         break;
     }
-#else
-    mWritingMode = 0;
-#endif
 
     if (NS_STYLE_DIRECTION_RTL == styleVisibility->mDirection) {
       mWritingMode |= eInlineFlowMask | //XXX needs update when text-orientation added
@@ -562,10 +706,16 @@ public:
                            aContainerWidth);
   }
 
-  bool operator==(LogicalPoint aOther) const
+  bool operator==(const LogicalPoint& aOther) const
   {
     CHECK_WRITING_MODE(aOther.GetWritingMode());
     return mPoint == aOther.mPoint;
+  }
+
+  bool operator!=(const LogicalPoint& aOther) const
+  {
+    CHECK_WRITING_MODE(aOther.GetWritingMode());
+    return mPoint != aOther.mPoint;
   }
 
   LogicalPoint operator+(const LogicalPoint& aOther) const
@@ -1119,7 +1269,7 @@ public:
             mMargin.right == 0 && mMargin.bottom == 0);
   }
 
-  LogicalMargin operator+(const LogicalMargin& aMargin) {
+  LogicalMargin operator+(const LogicalMargin& aMargin) const {
     CHECK_WRITING_MODE(aMargin.GetWritingMode());
     return LogicalMargin(GetWritingMode(),
                          BStart() + aMargin.BStart(),
@@ -1128,7 +1278,7 @@ public:
                          IStart() + aMargin.IStart());
   }
 
-  LogicalMargin operator-(const LogicalMargin& aMargin) {
+  LogicalMargin operator-(const LogicalMargin& aMargin) const {
     CHECK_WRITING_MODE(aMargin.GetWritingMode());
     return LogicalMargin(GetWritingMode(),
                          BStart() - aMargin.BStart(),
@@ -1322,6 +1472,30 @@ public:
   }
 
   /**
+   * Accessors for line-relative coordinates
+   */
+  nscoord LineLeft(WritingMode aWritingMode, nscoord aContainerWidth) const
+  {
+    CHECK_WRITING_MODE(aWritingMode);
+    if (aWritingMode.IsVertical()) {
+      return IStart(); // sideways-left will require aContainerHeight
+    } else {
+      return aWritingMode.IsBidiLTR() ? IStart()
+                                      : aContainerWidth - IEnd();
+    }
+  }
+  nscoord LineRight(WritingMode aWritingMode, nscoord aContainerWidth) const
+  {
+    CHECK_WRITING_MODE(aWritingMode);
+    if (aWritingMode.IsVertical()) {
+      return IEnd(); // sideways-left will require aContainerHeight
+    } else {
+      return aWritingMode.IsBidiLTR() ? IEnd()
+                                      : aContainerWidth - IStart();
+    }
+  }
+
+  /**
    * Physical coordinates of the rect.
    */
   nscoord X(WritingMode aWritingMode, nscoord aContainerWidth) const
@@ -1453,19 +1627,6 @@ public:
     return mRect.IsEqualEdges(aOther.mRect);
   }
 
-/* XXX are these correct?
-  nscoord ILeft(WritingMode aWritingMode) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsBidiLTR() ? IStart() : IEnd();
-  }
-  nscoord IRight(WritingMode aWritingMode) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    return aWritingMode.IsBidiLTR() ? IEnd() : IStart();
-  }
-*/
-
   LogicalPoint Origin(WritingMode aWritingMode) const
   {
     CHECK_WRITING_MODE(aWritingMode);
@@ -1549,19 +1710,6 @@ public:
       return nsRect(aWritingMode.IsBidiLTR() ?
                       IStart() : aContainerWidth - IEnd(),
                     BStart(), ISize(), BSize());
-    }
-  }
-
-  nsPoint GetPhysicalPosition(WritingMode aWritingMode,
-                              nscoord aContainerWidth) const
-  {
-    CHECK_WRITING_MODE(aWritingMode);
-    if (aWritingMode.IsVertical()) {
-      return nsPoint(aWritingMode.IsVerticalLR() ? BStart() : aContainerWidth - BEnd(),
-                     IStart());
-    } else {
-      return nsPoint(aWritingMode.IsBidiLTR() ? IStart() : aContainerWidth - IEnd(),
-                     BStart());
     }
   }
 

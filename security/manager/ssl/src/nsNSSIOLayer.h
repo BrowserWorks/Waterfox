@@ -24,7 +24,7 @@ class SharedSSLState;
 
 class nsIObserver;
 
-class nsNSSSocketInfo MOZ_FINAL : public mozilla::psm::TransportSecurityInfo,
+class nsNSSSocketInfo final : public mozilla::psm::TransportSecurityInfo,
                                   public nsISSLSocketControl,
                                   public nsIClientAuthUserDecision
 {
@@ -186,7 +186,6 @@ public:
   static PRIOMethods nsSSLIOLayerMethods;
   static PRIOMethods nsSSLPlaintextLayerMethods;
 
-  nsTHashtable<nsCStringHashKey> mRenegoUnrestrictedSites;
   bool mTreatUnsafeNegotiationAsBroken;
   int32_t mWarnLevelMissingRFC5746;
 
@@ -230,15 +229,9 @@ public:
                                /*out*/ StrongCipherStatus& strongCipherStatus);
   PRErrorCode getIntoleranceReason(const nsACString& hostname, int16_t port);
 
-  void setSiteList(nsTHashtable<nsCStringHashKey>& sites,
-                   const nsCString& str);
-  bool isRenegoUnrestrictedSite(const nsCString& str);
   void clearStoredData();
   void loadVersionFallbackLimit();
-  void setInsecureFallbackSites(const nsCString& str)
-  {
-    setSiteList(mInsecureFallbackSites, str);
-  }
+  void setInsecureFallbackSites(const nsCString& str);
   bool isInsecureFallbackSite(const nsACString& hostname);
 
   bool mFalseStartRequireNPN;
@@ -246,6 +239,7 @@ public:
   // to TLS 1.0 if true, set by the pref
   // security.tls.insecure_fallback_hosts.use_static_list.
   bool mUseStaticFallbackList;
+  bool mUnrestrictedRC4Fallback;
   uint16_t mVersionFallbackLimit;
 private:
   mozilla::Mutex mutex;

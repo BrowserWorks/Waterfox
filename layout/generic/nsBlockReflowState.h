@@ -115,16 +115,16 @@ public:
   // Caller must have called GetAvailableSpace for the correct position
   // (which need not be the current mBCoord).
   void ComputeReplacedBlockOffsetsForFloats(nsIFrame* aFrame,
-                                            const nsRect& aFloatAvailableSpace,
-                                            nscoord& aLeftResult,
-                                            nscoord& aRightResult);
+                          const mozilla::LogicalRect& aFloatAvailableSpace,
+                                            nscoord&  aIStartResult,
+                                            nscoord&  aIEndResult);
 
   // Caller must have called GetAvailableSpace for the current mBCoord
   void ComputeBlockAvailSpace(nsIFrame* aFrame,
                               const nsStyleDisplay* aDisplay,
                               const nsFlowAreaRect& aFloatAvailableSpace,
                               bool aBlockAvoidsFloats,
-                              nsRect& aResult);
+                              mozilla::LogicalRect& aResult);
 
 protected:
   void RecoverFloats(nsLineList::iterator aLine, nscoord aDeltaBCoord);
@@ -159,7 +159,7 @@ public:
   // padding. This, therefore, represents the inner "content area" (in
   // spacemanager coordinates) where child frames will be placed,
   // including child blocks and floats.
-  nscoord mFloatManagerX, mFloatManagerY;
+  nscoord mFloatManagerI, mFloatManagerB;
 
   // XXX get rid of this
   nsReflowStatus mReflowStatus;
@@ -205,8 +205,10 @@ public:
     return mContentArea.Size(wm).ConvertTo(aWM, wm);
   }
 
-  // Physical width. Use only for physical <-> logical coordinate conversion.
-  nscoord mContainerWidth;
+  // Physical size. Use only for physical <-> logical coordinate conversion.
+  nsSize mContainerSize;
+  nscoord ContainerWidth() const { return mContainerSize.width; }
+  nscoord ContainerHeight() const { return mContainerSize.height; }
 
   // Continuation out-of-flow float frames that need to move to our
   // next in flow are placed here during reflow.  It's a pointer to

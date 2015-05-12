@@ -2598,6 +2598,10 @@ var gListView = {
     while (this._listBox.itemCount > 0)
       this._listBox.removeItemAt(0);
 
+    if (aType == "plugin") {
+      navigator.plugins.refresh(false);
+    }
+
     var self = this;
     getAddonsAndInstalls(aType, function show_getAddonsAndInstalls(aAddonsList, aInstallsList) {
       if (gViewController && aRequest != gViewController.currentViewRequest)
@@ -3113,10 +3117,13 @@ var gDetailView = {
         errorLink.value = gStrings.ext.GetStringFromName("details.notification.vulnerableNoUpdate.link");
         errorLink.href = this._addon.blocklistURL;
         errorLink.hidden = false;
-      } else if (this._addon.isGMPlugin && !this._addon.isInstalled) {
+      } else if (this._addon.isGMPlugin && !this._addon.isInstalled &&
+                 this._addon.isActive) {
         this.node.setAttribute("notification", "warning");
         let warning = document.getElementById("detail-warning");
-        warning.textContent = gStrings.ext.GetStringFromName("details.notification.openH264Pending");
+        warning.textContent =
+          gStrings.ext.formatStringFromName("details.notification.gmpPending",
+                                            [this._addon.name], 1);
       } else {
         this.node.removeAttribute("notification");
       }
@@ -3131,7 +3138,7 @@ var gDetailView = {
       let hasActivatePermission =
         ["ask_to_activate", "enable", "disable"].some(perm => hasPermission(this._addon, perm));
 
-      if (this._addon.userDisabled === true) {
+      if (!this._addon.isActive) {
         menulist.selectedItem = neverItem;
       } else if (this._addon.userDisabled == AddonManager.STATE_ASK_TO_ACTIVATE) {
         menulist.selectedItem = askItem;

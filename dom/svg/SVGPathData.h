@@ -235,7 +235,7 @@ protected:
  * sync, so we can safely expose any protected base class methods required by
  * the SMIL code.
  */
-class SVGPathDataAndInfo MOZ_FINAL : public SVGPathData
+class SVGPathDataAndInfo final : public SVGPathData
 {
 public:
   explicit SVGPathDataAndInfo(nsSVGElement *aElement = nullptr)
@@ -263,7 +263,7 @@ public:
    */
   bool IsIdentity() const {
     if (!mElement) {
-      NS_ABORT_IF_FALSE(IsEmpty(), "target element propagation failure");
+      MOZ_ASSERT(IsEmpty(), "target element propagation failure");
       return true;
     }
     return false;

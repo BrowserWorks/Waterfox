@@ -72,7 +72,8 @@ struct PresentedMatchesReference
   { \
     ByteString(reinterpret_cast<const uint8_t*>(a), sizeof(a) - 1), \
     ByteString(reinterpret_cast<const uint8_t*>(b), sizeof(b) - 1), \
-    Result::ERROR_BAD_DER \
+    Result::ERROR_BAD_DER, \
+    false \
   }
 
 static const PresentedMatchesReference DNSID_MATCH_PARAMS[] =
@@ -1355,7 +1356,11 @@ static const CheckCertHostnameParams CHECK_CERT_HOSTNAME_PARAMS[] =
 
   // http://tools.ietf.org/html/rfc5280#section-4.2.1.6: "If the subjectAltName
   // extension is present, the sequence MUST contain at least one entry."
-  WITH_SAN("a", RDN(CN("a")), ByteString(), Result::ERROR_BAD_DER),
+  // However, for compatibility reasons, this is not enforced. See bug 1143085.
+  // This case is treated as if the extension is not present (i.e. name
+  // matching falls back to the subject CN).
+  WITH_SAN("a", RDN(CN("a")), ByteString(), Success),
+  WITH_SAN("a", RDN(CN("b")), ByteString(), Result::ERROR_BAD_CERT_DOMAIN),
 
   // http://tools.ietf.org/html/rfc5280#section-4.1.2.6 says "If subject naming
   // information is present only in the subjectAltName extension (e.g., a key
@@ -2218,11 +2223,6 @@ static const NameConstraintParams NAME_CONSTRAINT_PARAMS[] =
   { RDN(CN("b.example.com")), NO_SAN, GeneralSubtree(DNSName("a.example.com")),
     Result::ERROR_CERT_NOT_IN_NAME_SPACE, Success
   },
-  { // Empty SAN is rejected
-    RDN(CN("a.example.com")), ByteString(),
-    GeneralSubtree(DNSName("a.example.com")),
-    Result::ERROR_BAD_DER, Result::ERROR_BAD_DER
-  },
   { // DNSName CN-ID match is detected when there is a SAN w/o any DNSName or
     // IPAddress
     RDN(CN("a.example.com")), RFC822Name("foo@example.com"),
@@ -2393,6 +2393,119 @@ static const NameConstraintParams NAME_CONSTRAINT_PARAMS[] =
     GeneralSubtree(RFC822Name(".uses_underscore.example.com")),
     Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
   },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Name constraint tests that relate to having an empty SAN. According to RFC
+  // 5280 this isn't valid, but we allow it for compatibility reasons (see bug
+  // 1143085).
+  { // For DNSNames, we fall back to the subject CN.
+    RDN(CN("a.example.com")), ByteString(),
+    GeneralSubtree(DNSName("a.example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // For RFC822Names, we do not fall back to the subject emailAddress.
+    // This new implementation seems to conform better to the standards for
+    // RFC822 name constraints, by only applying the name constraints to
+    // emailAddress names in the certificate subject if there is no
+    // subjectAltName extension in the cert.
+    // In this case, the presence of the (empty) SAN extension means that RFC822
+    // name constraints are not enforced on the emailAddress attributes of the
+    // subject.
+    RDN(emailAddress("a@example.com")), ByteString(),
+    GeneralSubtree(RFC822Name("a@example.com")),
+    Success, Success
+  },
+  { // Compare this to the case where there is no SAN (i.e. the name
+    // constraints are enforced, because the extension is not present at all).
+    RDN(emailAddress("a@example.com")), NO_SAN,
+    GeneralSubtree(RFC822Name("a@example.com")),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+
+  /////////////////////////////////////////////////////////////////////////////
+  // DirectoryName name constraint tests
+
+  { // One AVA per RDN
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // RDNs can have multiple AVAs.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The constraint is a prefix of the subject DN.
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The name constraint is not a prefix of the subject DN.
+    // Note that for excludedSubtrees, we simply prohibit any non-empty
+    // directoryName constraint to ensure we are not being too lenient.
+    RDN(OU("Other Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Same as the previous one, but one RDN with multiple AVAs.
+    RDN(OU("Other Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // With multiple AVAs per RDN in the subject DN, the constraint is not a
+    // prefix of the subject DN.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The subject DN RDN has multiple AVAs, but the name constraint has only
+    // one AVA per RDN.
+    RDN(OU("Example Organization") + CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization")) +
+                                      RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // The name constraint RDN has multiple AVAs, but the subject DN has only
+    // one AVA per RDN.
+    RDN(OU("Example Organization")) + RDN(CN("example.com")), NO_SAN,
+    GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization") +
+                                          CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // In this case, the constraint uses a different encoding from the subject.
+    // We consider them to match because we allow UTF8String and
+    // PrintableString to compare equal when their contents are equal.
+    RDN(OU("Example Organization", der::UTF8String)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::PrintableString)) +
+                                              RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Same as above, but with UTF8String/PrintableString switched.
+    RDN(OU("Example Organization", der::PrintableString)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::UTF8String)) +
+                                              RDN(CN("example.com"))))),
+    Success, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // If the contents aren't the same, then they shouldn't match.
+    RDN(OU("Other Example Organization", der::UTF8String)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::PrintableString)) +
+                                              RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
+  { // Only UTF8String and PrintableString are considered equivalent.
+    RDN(OU("Example Organization", der::PrintableString)) + RDN(CN("example.com")),
+    NO_SAN, GeneralSubtree(DirectoryName(Name(RDN(OU("Example Organization",
+                                                     der::TeletexString)) +
+                                              RDN(CN("example.com"))))),
+    Result::ERROR_CERT_NOT_IN_NAME_SPACE, Result::ERROR_CERT_NOT_IN_NAME_SPACE
+  },
 };
 
 class pkixnames_CheckNameConstraints
@@ -2402,7 +2515,7 @@ class pkixnames_CheckNameConstraints
 };
 
 TEST_P(pkixnames_CheckNameConstraints,
-       NameConstraintsEnforcedforDirectlyIssuedEndEntity)
+       NameConstraintsEnforcedForDirectlyIssuedEndEntity)
 {
   // Test that name constraints are enforced on a certificate directly issued by
   // this certificate.

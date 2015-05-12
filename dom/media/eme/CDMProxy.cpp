@@ -94,10 +94,15 @@ CDMProxy::gmp_Init(nsAutoPtr<InitData> aData)
     return;
   }
 
+  nsCString version;
+  nsTArray<nsCString> tags;
+  tags.AppendElement(NS_ConvertUTF16toUTF8(mKeySystem));
+
   nsresult rv = mps->GetNodeId(aData->mOrigin,
                                aData->mTopLevelOrigin,
                                aData->mInPrivateBrowsing,
                                mNodeId);
+
   MOZ_ASSERT(!GetNodeId().IsEmpty());
   if (NS_FAILED(rv)) {
     RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -110,8 +115,6 @@ CDMProxy::gmp_Init(nsAutoPtr<InitData> aData)
           (aData->mInPrivateBrowsing ? "PrivateBrowsing" : "NonPrivateBrowsing"),
           GetNodeId().get());
 
-  nsTArray<nsCString> tags;
-  tags.AppendElement(NS_ConvertUTF16toUTF8(mKeySystem));
   rv = mps->GetGMPDecryptor(&tags, GetNodeId(), &mCDM);
   if (NS_FAILED(rv) || !mCDM) {
     RejectPromise(aData->mPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
@@ -134,7 +137,12 @@ CDMProxy::OnCDMCreated(uint32_t aPromiseId)
     return;
   }
   MOZ_ASSERT(!GetNodeId().IsEmpty());
-  mKeys->OnCDMCreated(aPromiseId, GetNodeId());
+  if (mCDM) {
+    mKeys->OnCDMCreated(aPromiseId, GetNodeId(), mCDM->GetPluginId());
+  } else {
+    // No CDM? Just reject the promise.
+    mKeys->RejectPromise(aPromiseId, NS_ERROR_DOM_INVALID_STATE_ERR);
+  }
 }
 
 void
@@ -396,7 +404,9 @@ CDMProxy::OnSetSessionId(uint32_t aCreateSessionToken,
   }
 
   nsRefPtr<dom::MediaKeySession> session(mKeys->GetPendingSession(aCreateSessionToken));
-  session->SetSessionId(aSessionId);
+  if (session) {
+    session->SetSessionId(aSessionId);
+  }
 }
 
 void
@@ -582,6 +592,14 @@ CDMProxy::gmp_Decrypted(uint32_t aId,
     }
   }
   NS_WARNING("GMPDecryptorChild returned incorrect job ID");
+}
+
+void
+CDMProxy::GetSessionIdsForKeyId(const nsTArray<uint8_t>& aKeyId,
+                                nsTArray<nsCString>& aSessionIds)
+{
+  CDMCaps::AutoLock caps(Capabilites());
+  caps.GetSessionIdsForKeyId(aKeyId, aSessionIds);
 }
 
 void

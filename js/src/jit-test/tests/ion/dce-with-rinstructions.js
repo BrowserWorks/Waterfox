@@ -374,6 +374,14 @@ function rfloor_object(i) {
     return i;
 }
 
+var uceFault_ceil_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_ceil_number'));
+function rceil_number(i){
+    var x = Math.ceil(-i - 0.12010799100);
+    if (uceFault_ceil_number(i) ||uceFault_ceil_number(i))
+        assertEq(x, - i);
+    return i;
+}
+
 var uceFault_round_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_round'));
 function rround_number(i) {
     var x = Math.round(i + 1.4);
@@ -1028,16 +1036,58 @@ function rtofloat32_object(i) {
     return i;
 }
 
-var uceFault_hypot_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_number'));
-function rhypot_number(i) {
+var uceFault_trunc_to_int32_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_trunc_to_int32_number'));
+function rtrunc_to_int32_number(i) {
+    var x = (i + 0.12) | 0;
+    if (uceFault_trunc_to_int32_number(i) || uceFault_trunc_to_int32_number(i))
+        assertEq(x, (i + 0.12) | 0);
+    return i;
+}
+
+var uceFault_trunc_to_int32_object = eval(uneval(uceFault).replace('uceFault', 'uceFault_trunc_to_int32_object'));
+function rtrunc_to_int32_object(i) {
+    var t1 = i + 0.12;
+    var o1 = { valueOf: function() { return t1; } };
+    var x = o1 | 0;
+    t1 = 777.12;
+    if (uceFault_trunc_to_int32_object(i) || uceFault_trunc_to_int32_object(i))
+        assertEq(x, (i + 0.12) | 0);
+}
+
+var uceFault_trunc_to_int32_string = eval(uneval(uceFault).replace('uceFault', 'uceFault_trunc_to_int32_string'));
+function rtrunc_to_int32_string(i) {
+    var x = (i + "0") | 0;
+    if (uceFault_trunc_to_int32_string(i) || uceFault_trunc_to_int32_string(i))
+        assertEq(x, (i + "0") | 0);
+    return i;
+}
+
+var uceFault_hypot_number_2args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_number_2args'));
+function rhypot_number_2args(i) {
     var x = Math.hypot(i, i + 1);
-    if (uceFault_hypot_number(i) || uceFault_hypot_number(i))
+    if (uceFault_hypot_number_2args(i) || uceFault_hypot_number_2args(i))
         assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1)));
     return i;
 }
 
-var uceFault_hypot_object = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_object'));
-function rhypot_object(i) {
+var uceFault_hypot_number_3args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_number_3args'));
+function rhypot_number_3args(i) {
+    var x = Math.hypot(i, i + 1, i + 2);
+    if (uceFault_hypot_number_3args(i) || uceFault_hypot_number_3args(i))
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1) + (i + 2) * (i + 2)));
+    return i;
+}
+
+var uceFault_hypot_number_4args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_number_4args'));
+function rhypot_number_4args(i) {
+    var x = Math.hypot(i, i + 1, i + 2, i + 3);
+    if (uceFault_hypot_number_4args(i) || uceFault_hypot_number_4args(i))
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1) + (i + 2) * (i + 2) + (i + 3) * (i + 3)));
+    return i;
+}
+
+var uceFault_hypot_object_2args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_object_2args'));
+function rhypot_object_2args(i) {
     var t0 = i;
     var t1 = i + 1;
     var o0 = { valueOf: function () { return t0; } };
@@ -1045,8 +1095,45 @@ function rhypot_object(i) {
     var x = Math.hypot(o0, o1);
     t0 = 1000;
     t1 = 2000;
-    if (uceFault_hypot_object(i) || uceFault_hypot_object(i) )
+    if (uceFault_hypot_object_2args(i) || uceFault_hypot_object_2args(i) )
         assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1)));
+    return i;
+}
+
+var uceFault_hypot_object_3args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_object_3args'));
+function rhypot_object_3args(i) {
+    var t0 = i;
+    var t1 = i + 1;
+    var t2 = i + 2;
+    var o0 = { valueOf: function () { return t0; } };
+    var o1 = { valueOf: function () { return t1; } };
+    var o2 = { valueOf: function () { return t2; } };
+    var x = Math.hypot(o0, o1, o2);
+    t0 = 1000;
+    t1 = 2000;
+    t2 = 3000;
+    if (uceFault_hypot_object_3args(i) || uceFault_hypot_object_3args(i) )
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1) + (i + 2) * (i + 2)));
+    return i;
+}
+
+var uceFault_hypot_object_4args = eval(uneval(uceFault).replace('uceFault', 'uceFault_hypot_object_4args'));
+function rhypot_object_4args(i) {
+    var t0 = i;
+    var t1 = i + 1;
+    var t2 = i + 2;
+    var t3 = i + 3;
+    var o0 = { valueOf: function () { return t0; } };
+    var o1 = { valueOf: function () { return t1; } };
+    var o2 = { valueOf: function () { return t2; } };
+    var o3 = { valueOf: function () { return t3; } };
+    var x = Math.hypot(o0, o1, o2, o3);
+    t0 = 1000;
+    t1 = 2000;
+    t2 = 3000;
+    t3 = 4000;
+    if (uceFault_hypot_object_4args(i) || uceFault_hypot_object_4args(i) )
+        assertEq(x, Math.sqrt(i * i + (i + 1) * (i + 1) + (i + 2) * (i + 2) + (i + 3) * (i + 3)));
     return i;
 }
 
@@ -1066,6 +1153,25 @@ function rsin_object(i) {
     t = 777;
     if (uceFault_sin_object(i) || uceFault_sin_object(i))
         assertEq(x, Math.sin(i));
+    return i;
+}
+
+var uceFault_log_number = eval(uneval(uceFault).replace('uceFault', 'uceFault_log_number'));
+function rlog_number(i) {
+    var x = Math.log(i);
+    if (uceFault_log_number(i) || uceFault_log_number(i))
+        assertEq(x, Math.log(99) /* log(99) */);
+    return i;
+}
+
+var uceFault_log_object = eval(uneval(uceFault).replace('uceFault', 'uceFault_log_object'));
+function rlog_object(i) {
+    var t = i;
+    var o = { valueOf: function() { return t; } };
+    var x = Math.log(o); /* Evaluated with t == i, not t == 1000 */
+    t = 1000;
+    if (uceFault_log_object(i) || uceFault_log_object(i))
+        assertEq(x, Math.log(99) /* log(99) */);
     return i;
 }
 
@@ -1109,6 +1215,7 @@ for (i = 0; i < 100; i++) {
     rinline_arguments_length_3(i, 0, 1);
     rfloor_number(i);
     rfloor_object(i);
+    rceil_number(i);
     rround_number(i);
     rround_double(i);
     rcharCodeAt(i);
@@ -1167,10 +1274,19 @@ for (i = 0; i < 100; i++) {
     rtodouble_number(i);
     rtofloat32_number(i);
     rtofloat32_object(i);
-    rhypot_number(i);
-    rhypot_object(i);
+    rtrunc_to_int32_number(i);
+    rtrunc_to_int32_object(i);
+    rtrunc_to_int32_string(i);
+    rhypot_number_2args(i);
+    rhypot_number_3args(i);
+    rhypot_number_4args(i);
+    rhypot_object_2args(i);
+    rhypot_object_3args(i);
+    rhypot_object_4args(i);
     rsin_number(i);
     rsin_object(i);
+    rlog_number(i);
+    rlog_object(i);
 }
 
 // Test that we can refer multiple time to the same recover instruction, as well

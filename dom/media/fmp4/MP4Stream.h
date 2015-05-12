@@ -11,7 +11,6 @@
 
 #include "MediaResource.h"
 
-#include "mozilla/fallible.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/Monitor.h"
 
@@ -25,10 +24,10 @@ public:
   virtual ~MP4Stream();
   bool BlockingReadIntoCache(int64_t aOffset, size_t aCount, Monitor* aToUnlock);
   virtual bool ReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                      size_t* aBytesRead) MOZ_OVERRIDE;
+                      size_t* aBytesRead) override;
   virtual bool CachedReadAt(int64_t aOffset, void* aBuffer, size_t aCount,
-                            size_t* aBytesRead) MOZ_OVERRIDE;
-  virtual bool Length(int64_t* aSize) MOZ_OVERRIDE;
+                            size_t* aBytesRead) override;
+  virtual bool Length(int64_t* aSize) override;
 
   struct ReadRecord {
     ReadRecord(int64_t aOffset, size_t aCount) : mOffset(aOffset), mCount(aCount) {}
@@ -77,7 +76,7 @@ private:
 
     bool Init()
     {
-      mBuffer = new ((fallible_t())) char[mCount];
+      mBuffer = new (fallible) char[mCount];
       return !!mBuffer;
     }
 

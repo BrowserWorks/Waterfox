@@ -91,33 +91,8 @@ public:
    * extreme allowed value in the relevant direction (that is, it must be at
    * its maximum value if we are overscrolled at our composition length, and
    * at its minimum value if we are overscrolled at the origin).
-   * Note that if |mInUnderscroll| is true, the interpretation of this field
-   * changes slightly (see below).
    */
   ParentLayerCoord GetOverscroll() const;
-
-  /**
-   * Return whether the axis is in underscroll.
-   *
-   * This flag is set when an overscroll animation is in a state where the
-   * spring physics caused a snap-back movement to "overshoot" its target and
-   * as a result the spring is stretched in a direction opposite to the one
-   * when we were in overscroll. We call this situation "underscroll". When in
-   * underscroll, GetOverscroll() can be nonzero, but rather than being
-   * interpreted as overscroll (stretch) at the other end of the composition
-   * bounds, it's interpeted as an "underscroll" (compression) at the same end.
-   * This table summarizes what the possible combinations of GetOverscroll()
-   * and IsInUnderscroll() mean:
-   *
-   *   GetOverscroll() | IsInUnderscroll() |    Description
-   *-------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------
-   *       negative    |      false        | The axis is overscrolled at its origin. A stretch is applied with the content fixed in place at the origin.
-   *       positive    |      false        | The axis is overscrolled at its composition end. A stretch is applied with the content fixed in place at the composition end.
-   *       positive    |      true         | The axis is underscrolled at its origin. A compression is applied with the content fixed in place at the origin.
-   *       negative    |      true         | The axis is underscrolled at its composition end. A compression is applied with the content fixed in place at the composition end.
-   *---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   */
-  bool IsInUnderscroll() const;
 
   /**
    * Sample the snap-back animation to relieve overscroll.
@@ -247,8 +222,24 @@ protected:
   float mVelocity;      // Units: ParentLayerCoords per millisecond
   bool mAxisLocked;     // Whether movement on this axis is locked.
   AsyncPanZoomController* mAsyncPanZoomController;
-  ParentLayerCoord mOverscroll;  // See GetOverscroll().
-  bool mInUnderscroll;           // See IsInUnderscroll().
+
+  // mOverscroll is the displacement of an oscillating spring from its resting
+  // state. The resting state moves as the overscroll animation progresses.
+  ParentLayerCoord mOverscroll;
+  // Used to record the initial overscroll when we start sampling for animation.
+  ParentLayerCoord mFirstOverscrollAnimationSample;
+  // These two variables are used in combination to make sure that
+  // GetOverscroll() never changes sign during animation. This is necessary,
+  // as mOverscroll itself oscillates around zero during animation.
+  // If we're not sampling overscroll animation, mOverscrollScale will be 1.0
+  // and mLastOverscrollPeak will be zero.
+  // If we are animating, after the overscroll reaches its peak,
+  // mOverscrollScale will be 2.0 and mLastOverscrollPeak will store the amount
+  // of overscroll at the last peak of the oscillation. Together, these values
+  // guarantee that the result of GetOverscroll() never changes sign.
+  ParentLayerCoord mLastOverscrollPeak;
+  float mOverscrollScale;
+
   // A queue of (timestamp, velocity) pairs; these are the historical
   // velocities at the given timestamps. Timestamps are in milliseconds,
   // velocities are in screen pixels per ms. This member can only be
@@ -261,6 +252,10 @@ protected:
   // actual overscroll amount.
   ParentLayerCoord ApplyResistance(ParentLayerCoord aOverscroll) const;
 
+  // Helper function to disable overscroll transformations triggered by
+  // SampleOverscrollAnimation().
+  void StopSamplingOverscrollAnimation();
+
   // Helper function for SampleOverscrollAnimation().
   void StepOverscrollAnimation(double aStepDurationMilliseconds);
 
@@ -271,21 +266,21 @@ protected:
 class AxisX : public Axis {
 public:
   explicit AxisX(AsyncPanZoomController* mAsyncPanZoomController);
-  virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const MOZ_OVERRIDE;
-  virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
-  virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
-  virtual ScreenPoint MakePoint(ScreenCoord aCoord) const MOZ_OVERRIDE;
-  virtual const char* Name() const MOZ_OVERRIDE;
+  virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const override;
+  virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const override;
+  virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const override;
+  virtual ScreenPoint MakePoint(ScreenCoord aCoord) const override;
+  virtual const char* Name() const override;
 };
 
 class AxisY : public Axis {
 public:
   explicit AxisY(AsyncPanZoomController* mAsyncPanZoomController);
-  virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const MOZ_OVERRIDE;
-  virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
-  virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const MOZ_OVERRIDE;
-  virtual ScreenPoint MakePoint(ScreenCoord aCoord) const MOZ_OVERRIDE;
-  virtual const char* Name() const MOZ_OVERRIDE;
+  virtual ParentLayerCoord GetPointOffset(const ParentLayerPoint& aPoint) const override;
+  virtual ParentLayerCoord GetRectLength(const ParentLayerRect& aRect) const override;
+  virtual ParentLayerCoord GetRectOffset(const ParentLayerRect& aRect) const override;
+  virtual ScreenPoint MakePoint(ScreenCoord aCoord) const override;
+  virtual const char* Name() const override;
 };
 
 }

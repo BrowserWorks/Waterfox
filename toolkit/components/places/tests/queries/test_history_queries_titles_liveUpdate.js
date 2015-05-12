@@ -61,14 +61,14 @@ add_task(function pages_query()
     let node = root.getChild(i);
     do_check_eq(node.title, gTestData[i].title);
     let uri = NetUtil.newURI(node.uri);
-    yield promiseAddVisits({uri: uri, title: "changedTitle"});
+    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
     do_check_eq(node.title, "changedTitle");
-    yield promiseAddVisits({uri: uri, title: gTestData[i].title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: gTestData[i].title});
     do_check_eq(node.title, gTestData[i].title);
   }
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function visits_query()
@@ -86,16 +86,16 @@ add_task(function visits_query()
     let uri = NetUtil.newURI(testData.uri);
     let node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
-    yield promiseAddVisits({uri: uri, title: "changedTitle"});
+    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, "changedTitle");
-    yield promiseAddVisits({uri: uri, title: testData.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: testData.title});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
   }
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function pages_searchterm_query()
@@ -112,14 +112,14 @@ add_task(function pages_searchterm_query()
     let node = root.getChild(i);
     let uri = NetUtil.newURI(node.uri);
     do_check_eq(node.title, gTestData[i].title);
-    yield promiseAddVisits({uri: uri, title: "changedTitle"});
+    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
     do_check_eq(node.title, "changedTitle");
-    yield promiseAddVisits({uri: uri, title: gTestData[i].title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: gTestData[i].title});
     do_check_eq(node.title, gTestData[i].title);
   }
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function visits_searchterm_query()
@@ -137,16 +137,16 @@ add_task(function visits_searchterm_query()
     let uri = NetUtil.newURI(testData.uri);
     let node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
-    yield promiseAddVisits({uri: uri, title: "changedTitle"});
+    yield PlacesTestUtils.addVisits({uri: uri, title: "changedTitle"});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, "changedTitle");
-    yield promiseAddVisits({uri: uri, title: testData.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: testData.title});
     node = searchNodeHavingUrl(root, testData.uri);
     do_check_eq(node.title, testData.title);
   }
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function pages_searchterm_is_title_query()
@@ -162,15 +162,15 @@ add_task(function pages_searchterm_is_title_query()
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield promiseAddVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield promiseAddVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
     compareArrayToResult([], root);
   });
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function visits_searchterm_is_title_query()
@@ -187,13 +187,13 @@ add_task(function visits_searchterm_is_title_query()
     let uri = NetUtil.newURI(data.uri);
     let origTitle = data.title;
     data.title = "match";
-    yield promiseAddVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
     compareArrayToResult([data], root);
     data.title = origTitle;
-    yield promiseAddVisits({uri: uri, title: data.title});
+    yield PlacesTestUtils.addVisits({uri: uri, title: data.title});
     compareArrayToResult([], root);
   });
 
   root.containerOpen = false;
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });

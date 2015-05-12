@@ -146,7 +146,7 @@ struct nsStyleGradientStop {
   bool operator!=(const nsStyleGradientStop&) const = delete;
 };
 
-class nsStyleGradient MOZ_FINAL {
+class nsStyleGradient final {
 public:
   nsStyleGradient();
   uint8_t mShape;  // NS_STYLE_GRADIENT_SHAPE_*
@@ -219,9 +219,9 @@ struct nsStyleImage {
     return mType;
   }
   imgRequestProxy* GetImageData() const {
-    NS_ABORT_IF_FALSE(mType == eStyleImageType_Image, "Data is not an image!");
-    NS_ABORT_IF_FALSE(mImageTracked,
-                      "Should be tracking any image we're going to use!");
+    MOZ_ASSERT(mType == eStyleImageType_Image, "Data is not an image!");
+    MOZ_ASSERT(mImageTracked,
+               "Should be tracking any image we're going to use!");
     return mImage;
   }
   nsStyleGradient* GetGradientData() const {
@@ -419,14 +419,14 @@ struct nsStyleBackground {
     Dimension mWidth, mHeight;
 
     nscoord ResolveWidthLengthPercentage(const nsSize& aBgPositioningArea) const {
-      NS_ABORT_IF_FALSE(mWidthType == eLengthPercentage,
-                        "resolving non-length/percent dimension!");
+      MOZ_ASSERT(mWidthType == eLengthPercentage,
+                 "resolving non-length/percent dimension!");
       return mWidth.ResolveLengthPercentage(aBgPositioningArea.width);
     }
 
     nscoord ResolveHeightLengthPercentage(const nsSize& aBgPositioningArea) const {
-      NS_ABORT_IF_FALSE(mHeightType == eLengthPercentage,
-                        "resolving non-length/percent dimension!");
+      MOZ_ASSERT(mHeightType == eLengthPercentage,
+                 "resolving non-length/percent dimension!");
       return mHeight.ResolveLengthPercentage(aBgPositioningArea.height);
     }
 
@@ -728,7 +728,7 @@ struct nsCSSShadowItem {
   }
 };
 
-class nsCSSShadowArray MOZ_FINAL {
+class nsCSSShadowArray final {
   public:
     void* operator new(size_t aBaseSize, uint32_t aArrayLen) {
       // We can allocate both this nsCSSShadowArray and the
@@ -763,11 +763,11 @@ private:
 public:
     uint32_t Length() const { return mLength; }
     nsCSSShadowItem* ShadowAt(uint32_t i) {
-      NS_ABORT_IF_FALSE(i < mLength, "Accessing too high an index in the text shadow array!");
+      MOZ_ASSERT(i < mLength, "Accessing too high an index in the text shadow array!");
       return &mArray[i];
     }
     const nsCSSShadowItem* ShadowAt(uint32_t i) const {
-      NS_ABORT_IF_FALSE(i < mLength, "Accessing too high an index in the text shadow array!");
+      MOZ_ASSERT(i < mLength, "Accessing too high an index in the text shadow array!");
       return &mArray[i];
     }
 
@@ -1065,15 +1065,15 @@ struct nsStyleOutline {
   void RecalcData(nsPresContext* aContext);
   nsChangeHint CalcDifference(const nsStyleOutline& aOther) const;
   static nsChangeHint MaxDifference() {
-    return NS_CombineHint(nsChangeHint_AllReflowHints,
+    return NS_CombineHint(NS_CombineHint(nsChangeHint_UpdateOverflow,
+                                         nsChangeHint_SchedulePaint),
                           NS_CombineHint(nsChangeHint_RepaintFrame,
                                          nsChangeHint_NeutralChange));
   }
   static nsChangeHint MaxDifferenceNeverInherited() {
     // CalcDifference never returns nsChangeHint_NeedReflow or
-    // nsChangeHint_ClearAncestorIntrinsics as inherited hints.
-    return NS_CombineHint(nsChangeHint_NeedReflow,
-                          nsChangeHint_ClearAncestorIntrinsics);
+    // nsChangeHint_ClearAncestorIntrinsics at all.
+    return nsChangeHint(0);
   }
 
   nsStyleCorners  mOutlineRadius; // [reset] coord, percent, calc
@@ -1331,7 +1331,7 @@ struct nsStylePosition {
   static nsChangeHint MaxDifference() {
     return NS_CombineHint(NS_STYLE_HINT_REFLOW,
                           nsChangeHint(nsChangeHint_RecomputePosition |
-                                       nsChangeHint_UpdateOverflow));
+                                       nsChangeHint_UpdateParentOverflow));
   }
   static nsChangeHint MaxDifferenceNeverInherited() {
     // CalcDifference can return both nsChangeHint_ClearAncestorIntrinsics and
@@ -1507,8 +1507,8 @@ struct nsStyleTextReset {
 
   void SetDecorationStyle(uint8_t aStyle)
   {
-    NS_ABORT_IF_FALSE((aStyle & BORDER_STYLE_MASK) == aStyle,
-                      "style doesn't fit");
+    MOZ_ASSERT((aStyle & BORDER_STYLE_MASK) == aStyle,
+               "style doesn't fit");
     mTextDecorationStyle &= ~BORDER_STYLE_MASK;
     mTextDecorationStyle |= (aStyle & BORDER_STYLE_MASK);
   }
@@ -1596,6 +1596,7 @@ struct nsStyleText {
   uint8_t mWordBreak;                   // [inherited] see nsStyleConsts.h
   uint8_t mWordWrap;                    // [inherited] see nsStyleConsts.h
   uint8_t mHyphens;                     // [inherited] see nsStyleConsts.h
+  uint8_t mRubyAlign;                   // [inherited] see nsStyleConsts.h
   uint8_t mRubyPosition;                // [inherited] see nsStyleConsts.h
   uint8_t mTextSizeAdjust;              // [inherited] see nsStyleConsts.h
   uint8_t mTextCombineUpright;          // [inherited] see nsStyleConsts.h
@@ -1816,7 +1817,7 @@ struct nsTimingFunction {
   nsTimingFunction(Type aType, uint32_t aSteps)
     : mType(aType)
   {
-    NS_ABORT_IF_FALSE(mType == StepStart || mType == StepEnd, "wrong type");
+    MOZ_ASSERT(mType == StepStart || mType == StepEnd, "wrong type");
     mSteps = aSteps;
   }
 
@@ -1892,6 +1893,11 @@ struct StyleTransition {
   float GetDuration() const { return mDuration; }
   nsCSSProperty GetProperty() const { return mProperty; }
   nsIAtom* GetUnknownProperty() const { return mUnknownProperty; }
+
+  float GetCombinedDuration() const {
+    // http://dev.w3.org/csswg/css-transitions/#combined-duration
+    return std::max(mDuration, 0.0f) + mDelay;
+  }
 
   void SetTimingFunction(const nsTimingFunction& aTimingFunction)
     { mTimingFunction = aTimingFunction; }
@@ -2316,9 +2322,9 @@ struct nsStyleContentData {
 
   void SetImage(imgRequestProxy* aRequest)
   {
-    NS_ABORT_IF_FALSE(!mImageTracked,
-                      "Setting a new image without untracking the old one!");
-    NS_ABORT_IF_FALSE(mType == eStyleContentType_Image, "Wrong type!");
+    MOZ_ASSERT(!mImageTracked,
+               "Setting a new image without untracking the old one!");
+    MOZ_ASSERT(mType == eStyleContentType_Image, "Wrong type!");
     NS_IF_ADDREF(mContent.mImage = aRequest);
   }
 private:
@@ -2842,7 +2848,7 @@ struct nsStyleSVG {
   }
 };
 
-class nsStyleBasicShape MOZ_FINAL {
+class nsStyleBasicShape final {
 public:
   enum Type {
     eInset,

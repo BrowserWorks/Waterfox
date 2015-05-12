@@ -114,29 +114,7 @@ ClientEngine.prototype = {
     if (localName != "")
       return localName;
 
-    // Generate a client name if we don't have a useful one yet
-    let env = Cc["@mozilla.org/process/environment;1"]
-                .getService(Ci.nsIEnvironment);
-    let user = env.get("USER") || env.get("USERNAME") ||
-               Svc.Prefs.get("account") || Svc.Prefs.get("username");
-
-    let brandName = this.brandName;
-    let appName;
-    try {
-      let syncStrings = new StringBundle("chrome://browser/locale/sync.properties");
-      appName = syncStrings.getFormattedString("sync.defaultAccountApplication", [brandName]);
-    } catch (ex) {}
-    appName = appName || brandName;
-
-    let system =
-      // 'device' is defined on unix systems
-      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("device") ||
-      // hostname of the system, usually assigned by the user or admin
-      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("host") ||
-      // fall back on ua info string
-      Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler).oscpu;
-
-    return this.localName = Str.sync.get("client.name2", [user, appName, system]);
+    return this.localName = Utils.getDefaultDeviceName();
   },
   set localName(value) Svc.Prefs.set("client.name", value),
 
@@ -164,7 +142,9 @@ ClientEngine.prototype = {
   },
 
   // Treat reset the same as wiping for locally cached clients
-  _resetClient: function _resetClient() this._wipeClient(),
+  _resetClient() {
+    this._wipeClient();
+  },
 
   _wipeClient: function _wipeClient() {
     SyncEngine.prototype._resetClient.call(this);
@@ -268,7 +248,7 @@ ClientEngine.prototype = {
       this.clearCommands();
 
       // Process each command in order.
-      for each ({command: command, args: args} in commands) {
+      for each (let {command, args} in commands) {
         this._log.debug("Processing command: " + command + "(" + args + ")");
 
         let engines = [args[0]];
@@ -400,7 +380,9 @@ function ClientStore(name, engine) {
 ClientStore.prototype = {
   __proto__: Store.prototype,
 
-  create: function create(record) this.update(record),
+  create(record) {
+    this.update(record)
+  },
 
   update: function update(record) {
     // Only grab commands from the server; local name/type always wins
@@ -436,7 +418,9 @@ ClientStore.prototype = {
     return record;
   },
 
-  itemExists: function itemExists(id) id in this.getAllIDs(),
+  itemExists(id) {
+    return id in this.getAllIDs();
+  },
 
   getAllIDs: function getAllIDs() {
     let ids = {};

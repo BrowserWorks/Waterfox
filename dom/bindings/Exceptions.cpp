@@ -6,6 +6,7 @@
 #include "mozilla/dom/Exceptions.h"
 
 #include "js/GCAPI.h"
+#include "js/TypeDecls.h"
 #include "jsapi.h"
 #include "jsprf.h"
 #include "mozilla/CycleCollectedJSRuntime.h"
@@ -87,6 +88,12 @@ ThrowExceptionObject(JSContext* aCx, Exception* aException)
 bool
 Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
 {
+  if (aRv == NS_ERROR_UNCATCHABLE_EXCEPTION) {
+    // Nuke any existing exception on aCx, to make sure we're uncatchable.
+    JS_ClearPendingException(aCx);
+    return false;
+  }
+
   if (JS_IsExceptionPending(aCx)) {
     // Don't clobber the existing exception.
     return false;
@@ -127,6 +134,8 @@ Throw(JSContext* aCx, nsresult aRv, const char* aMessage)
 void
 ThrowAndReport(nsPIDOMWindow* aWindow, nsresult aRv, const char* aMessage)
 {
+  MOZ_ASSERT(aRv != NS_ERROR_UNCATCHABLE_EXCEPTION,
+             "Doesn't make sense to report uncatchable exceptions!");
   AutoJSAPI jsapi;
   if (NS_WARN_IF(!jsapi.InitWithLegacyErrorReporting(aWindow))) {
     return;
@@ -184,6 +193,18 @@ GetCurrentJSStack()
 
   // Note that CreateStack only returns JS frames, so we're done here.
   return stack.forget();
+}
+
+AutoForceSetExceptionOnContext::AutoForceSetExceptionOnContext(JSContext* aCx)
+  : mCx(aCx)
+{
+  mOldValue = JS::ContextOptionsRef(mCx).autoJSAPIOwnsErrorReporting();
+  JS::ContextOptionsRef(mCx).setAutoJSAPIOwnsErrorReporting(true);
+}
+
+AutoForceSetExceptionOnContext::~AutoForceSetExceptionOnContext()
+{
+  JS::ContextOptionsRef(mCx).setAutoJSAPIOwnsErrorReporting(mOldValue);
 }
 
 namespace exceptions {
@@ -281,19 +302,22 @@ public:
   static already_AddRefed<nsIStackFrame>
   CreateStack(JSContext* aCx, int32_t aMaxDepth = -1);
 
-  NS_IMETHOD GetLanguageName(nsACString& aLanguageName) MOZ_OVERRIDE;
-  NS_IMETHOD GetFilename(nsAString& aFilename) MOZ_OVERRIDE;
-  NS_IMETHOD GetName(nsAString& aFunction) MOZ_OVERRIDE;
-  NS_IMETHOD GetCaller(nsIStackFrame** aCaller) MOZ_OVERRIDE;
-  NS_IMETHOD GetFormattedStack(nsAString& aStack) MOZ_OVERRIDE;
+  NS_IMETHOD GetLanguageName(nsACString& aLanguageName) override;
+  NS_IMETHOD GetFilename(nsAString& aFilename) override;
+  NS_IMETHOD GetName(nsAString& aFunction) override;
+  NS_IMETHOD GetCaller(nsIStackFrame** aCaller) override;
+  NS_IMETHOD GetFormattedStack(nsAString& aStack) override;
+  virtual bool CallerSubsumes(JSContext* aCx) override;
+  NS_IMETHOD GetSanitized(JSContext* aCx,
+                          nsIStackFrame** aSanitized) override;
 
 protected:
-  virtual bool IsJSFrame() const MOZ_OVERRIDE {
+  virtual bool IsJSFrame() const override {
     return true;
   }
 
-  virtual nsresult GetLineno(int32_t* aLineNo) MOZ_OVERRIDE;
-  virtual nsresult GetColNo(int32_t* aColNo) MOZ_OVERRIDE;
+  virtual nsresult GetLineno(int32_t* aLineNo) override;
+  virtual nsresult GetColNo(int32_t* aColNo) override;
 
 private:
   virtual ~JSStackFrame();
@@ -377,15 +401,22 @@ NS_IMETHODIMP JSStackFrame::GetFilename(nsAString& aFilename)
     JS::Rooted<JSObject*> stack(cx, mStack);
     JS::ExposeObjectToActiveJS(mStack);
     JSAutoCompartment ac(cx, stack);
+
     JS::Rooted<JS::Value> filenameVal(cx);
-    if (!JS_GetProperty(cx, stack, "source", &filenameVal) ||
-        !filenameVal.isString()) {
+    if (!JS_GetProperty(cx, stack, "source", &filenameVal)) {
       return NS_ERROR_UNEXPECTED;
     }
+
+    if (filenameVal.isNull()) {
+      filenameVal = JS_GetEmptyStringValue(cx);
+    }
+    MOZ_ASSERT(filenameVal.isString());
+
     nsAutoJSString str;
     if (!str.init(cx, filenameVal.toString())) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
+
     mFilename = str;
     mFilenameInitialized = true;
   }
@@ -458,11 +489,15 @@ JSStackFrame::GetLineno(int32_t* aLineNo)
     JS::ExposeObjectToActiveJS(mStack);
     JSAutoCompartment ac(cx, stack);
     JS::Rooted<JS::Value> lineVal(cx);
-    if (!JS_GetProperty(cx, stack, "line", &lineVal) ||
-        !lineVal.isNumber()) {
+    if (!JS_GetProperty(cx, stack, "line", &lineVal)) {
       return NS_ERROR_UNEXPECTED;
     }
-    mLineno = lineVal.toNumber();
+    if (lineVal.isNumber()) {
+      mLineno = lineVal.toNumber();
+    } else {
+      MOZ_ASSERT(lineVal.isNull());
+      mLineno = 0;
+    }
     mLinenoInitialized = true;
   }
 
@@ -487,11 +522,15 @@ JSStackFrame::GetColNo(int32_t* aColNo)
     JS::ExposeObjectToActiveJS(mStack);
     JSAutoCompartment ac(cx, stack);
     JS::Rooted<JS::Value> colVal(cx);
-    if (!JS_GetProperty(cx, stack, "column", &colVal) ||
-        !colVal.isNumber()) {
+    if (!JS_GetProperty(cx, stack, "column", &colVal)) {
       return NS_ERROR_UNEXPECTED;
     }
-    mColNo = colVal.toNumber();
+    if (colVal.isNumber()) {
+      mColNo = colVal.toNumber();
+    } else {
+      MOZ_ASSERT(colVal.isNull());
+      mColNo = 0;
+    }
     mColNoInitialized = true;
   }
 
@@ -508,6 +547,35 @@ NS_IMETHODIMP StackFrame::GetColumnNumber(int32_t* aColumnNumber)
 NS_IMETHODIMP StackFrame::GetSourceLine(nsACString& aSourceLine)
 {
   aSourceLine.Truncate();
+  return NS_OK;
+}
+
+/* [noscript] readonly attribute nsIStackFrame sanitized */
+NS_IMETHODIMP StackFrame::GetSanitized(JSContext*, nsIStackFrame** aSanitized)
+{
+  NS_ADDREF(*aSanitized = this);
+  return NS_OK;
+}
+
+/* [noscript] readonly attribute nsIStackFrame sanitized */
+NS_IMETHODIMP JSStackFrame::GetSanitized(JSContext* aCx, nsIStackFrame** aSanitized)
+{
+  // NB: Do _not_ enter the compartment of the SavedFrame object here, because
+  // we are checking against the caller's compartment's principals in
+  // GetFirstSubsumedSavedFrame.
+
+  JS::RootedObject savedFrame(aCx, mStack);
+  JS::ExposeObjectToActiveJS(mStack);
+
+  savedFrame = js::GetFirstSubsumedSavedFrame(aCx, savedFrame);
+  nsCOMPtr<nsIStackFrame> stackFrame;
+  if (savedFrame) {
+    stackFrame = new JSStackFrame(savedFrame);
+  } else {
+    stackFrame = new StackFrame();
+  }
+
+  stackFrame.forget(aSanitized);
   return NS_OK;
 }
 
@@ -611,6 +679,37 @@ NS_IMETHODIMP StackFrame::ToString(nsACString& _retval)
                        NS_ConvertUTF16toUTF8(funname).get(),
                        lineno);
   return NS_OK;
+}
+
+/* virtual */ bool
+StackFrame::CallerSubsumes(JSContext* aCx)
+{
+  return true;
+}
+
+/* virtual */ bool
+JSStackFrame::CallerSubsumes(JSContext* aCx)
+{
+  if (!NS_IsMainThread()) {
+    return true;
+  }
+
+  if (!mStack) {
+    // No problem here, there's no data to leak.
+    return true;
+  }
+
+  nsIPrincipal* callerPrincipal = nsContentUtils::SubjectPrincipal();
+
+  JS::Rooted<JSObject*> unwrappedStack(aCx, js::CheckedUnwrap(mStack));
+  if (!unwrappedStack) {
+    // We can't leak data here either.
+    return true;
+  }
+
+  nsIPrincipal* stackPrincipal =
+    nsJSPrincipals::get(js::GetSavedFramePrincipals(unwrappedStack));
+  return callerPrincipal->SubsumesConsideringDomain(stackPrincipal);
 }
 
 /* static */ already_AddRefed<nsIStackFrame>

@@ -235,11 +235,16 @@ var LoginManagerContent = {
   onFormPassword: function (event) {
     if (!event.isTrusted)
       return;
+    let form = event.target;
 
+    let doc = form.ownerDocument;
+    let win = doc.defaultView;
+    let messageManager = messageManagerFromWindow(win);
+
+    messageManager.sendAsyncMessage("LoginStats:LoginEncountered");
     if (!gEnabled)
       return;
 
-    let form = event.target;
     log("onFormPassword for", form.ownerDocument.documentURI);
     this._asyncFindLogins(form, { showMasterPassword: true })
         .then(this.loginsFound.bind(this))
@@ -250,7 +255,7 @@ var LoginManagerContent = {
     let doc = form.ownerDocument;
     let autofillForm = gAutofillForms && !PrivateBrowsingUtils.isContentWindowPrivate(doc.defaultView);
 
-    this._fillForm(form, autofillForm, false, false, false, loginsFound);
+    this._fillForm(form, autofillForm, false, false, loginsFound);
   },
 
   /*
@@ -293,7 +298,7 @@ var LoginManagerContent = {
     if (usernameField == acInputField && passwordField) {
       this._asyncFindLogins(acForm, { showMasterPassword: false })
           .then(({ form, loginsFound }) => {
-              this._fillForm(form, true, true, true, true, loginsFound);
+              this._fillForm(form, true, true, true, loginsFound);
           })
           .then(null, Cu.reportError);
     } else {
@@ -563,14 +568,13 @@ var LoginManagerContent = {
    * [success, foundLogins].
    *
    * - autofillForm denotes if we should fill the form in automatically
-   * - ignoreAutocomplete denotes if we should ignore autocomplete=off
-   *     attributes
    * - userTriggered is an indication of whether this filling was triggered by
    *     the user
    * - foundLogins is an array of nsILoginInfo
    */
-  _fillForm : function (form, autofillForm, ignoreAutocomplete,
-                        clobberPassword, userTriggered, foundLogins) {
+  _fillForm : function (form, autofillForm, clobberPassword,
+                        userTriggered, foundLogins) {
+    let ignoreAutocomplete = true;
     const AUTOFILL_RESULT = {
       FILLED: 0,
       NO_PASSWORD_FIELD: 1,
@@ -782,6 +786,10 @@ var LoginManagerContent = {
 
     if (didFillForm) {
       recordAutofillResult(AUTOFILL_RESULT.FILLED);
+      let doc = form.ownerDocument;
+      let win = doc.defaultView;
+      let messageManager = messageManagerFromWindow(win);
+      messageManager.sendAsyncMessage("LoginStats:LoginFillSuccessful");
     } else {
       let autofillResult = AUTOFILL_RESULT.UNKNOWN_FAILURE;
       switch (didntFillReason) {

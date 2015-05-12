@@ -25,12 +25,14 @@
  */
 
 const {Cu} = require("chrome");
+const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const {setInterval, clearInterval} = require("sdk/timers");
 const protocol = require("devtools/server/protocol");
 const {ActorClass, Actor, FrontClass, Front, Arg, method, RetVal} = protocol;
 const {NodeActor} = require("devtools/server/actors/inspector");
 const EventEmitter = require("devtools/toolkit/event-emitter");
+const events = require("sdk/event/core");
 
 const PLAYER_DEFAULT_AUTO_REFRESH_TIMEOUT = 500; // ms
 
@@ -87,6 +89,41 @@ let AnimationPlayerActor = ActorClass({
   },
 
   /**
+   * Some of the player's properties are retrieved from the node's
+   * computed-styles because the Web Animations API does not provide them yet.
+   * But the computed-styles may contain multiple animations for a node and so
+   * we need to know which is the index of the current animation in the style.
+   * @return {Number}
+   */
+  getPlayerIndex: function() {
+    let names = this.styles.animationName;
+
+    // If no names are found, then it's probably a transition, in which case we
+    // can't find the actual index, so just trust the playerIndex passed by
+    // the AnimationsActor at initialization time.
+    // Note that this may be incorrect if by the time the AnimationPlayerActor
+    // is initialized, one of the transitions has ended, but it's the best we
+    // can do for now.
+    if (!names) {
+      return this.playerIndex;
+    }
+
+    // If there's only one name.
+    if (names.contains(",") === -1) {
+      return 0;
+    }
+
+    // If there are several names, retrieve the index of the animation name in
+    // the list.
+    names = names.split(",").map(n => n.trim());
+    for (let i = 0; i < names.length; i ++) {
+      if (names[i] === this.player.source.effect.name) {
+        return i;
+      }
+    }
+  },
+
+  /**
    * Get the animation duration from this player, in milliseconds.
    * Note that the Web Animations API doesn't yet offer a way to retrieve this
    * directly from the AnimationPlayer object, so for now, a duration is only
@@ -103,11 +140,37 @@ let AnimationPlayerActor = ActorClass({
       return null;
     }
 
+    // If the computed duration has multiple entries, we need to find the right
+    // one.
     if (durationText.indexOf(",") !== -1) {
-      durationText = durationText.split(",")[this.playerIndex];
+      durationText = durationText.split(",")[this.getPlayerIndex()];
     }
 
     return parseFloat(durationText) * 1000;
+  },
+
+  /**
+   * Get the animation delay from this player, in milliseconds.
+   * Note that the Web Animations API doesn't yet offer a way to retrieve this
+   * directly from the AnimationPlayer object, so for now, a delay is only
+   * returned if found in the node's computed styles.
+   * @return {Number}
+   */
+  getDelay: function() {
+    let delayText;
+    if (this.styles.animationDelay !== "0s") {
+      delayText = this.styles.animationDelay;
+    } else if (this.styles.transitionDelay !== "0s") {
+      delayText = this.styles.transitionDelay;
+    } else {
+      return 0;
+    }
+
+    if (delayText.indexOf(",") !== -1) {
+      delayText = delayText.split(",")[this.getPlayerIndex()];
+    }
+
+    return parseFloat(delayText) * 1000;
   },
 
   /**
@@ -122,10 +185,12 @@ let AnimationPlayerActor = ActorClass({
   getIterationCount: function() {
     let iterationText = this.styles.animationIterationCount;
     if (iterationText.indexOf(",") !== -1) {
-      iterationText = iterationText.split(",")[this.playerIndex];
+      iterationText = iterationText.split(",")[this.getPlayerIndex()];
     }
 
-    return parseInt(iterationText, 10);
+    return iterationText === "infinite"
+           ? null
+           : parseInt(iterationText, 10);
   },
 
   /**
@@ -135,27 +200,44 @@ let AnimationPlayerActor = ActorClass({
    * @return {Object}
    */
   getCurrentState: method(function() {
-    return {
-      /**
-       * Return the player's current startTime value.
-       * Will be null whenever the animation is paused or waiting to start.
-       */
+    // Note that if you add a new property to the state object, make sure you
+    // add the corresponding property in the AnimationPlayerFront' initialState
+    // getter.
+    let newState = {
+      // startTime is null whenever the animation is paused or waiting to start.
       startTime: this.player.startTime,
       currentTime: this.player.currentTime,
       playState: this.player.playState,
       name: this.player.source.effect.name,
       duration: this.getDuration(),
+      delay: this.getDelay(),
       iterationCount: this.getIterationCount(),
-      /**
-       * Is the animation currently running on the compositor. This is important for
-       * developers to know if their animation is hitting the fast path or not.
-       * Currently this will only be true for Firefox OS though (where we have
-       * compositor animations enabled).
-       * Returns false whenever the animation is paused as it is taken off the
-       * compositor then.
-       */
+      // isRunningOnCompositor is important for developers to know if their
+      // animation is hitting the fast path or not. Currently only true for
+      // Firefox OS (where we have compositor animations enabled).
+      // Returns false whenever the animation is paused as it is taken off the
+      // compositor then.
       isRunningOnCompositor: this.player.isRunningOnCompositor
     };
+
+    // If we've saved a state before, compare and only send what has changed.
+    // It's expected of the front to also save old states to re-construct the
+    // full state when an incomplete one is received.
+    // This is to minimize protocol traffic.
+    let sentState = {};
+    if (this.currentState) {
+      for (let key in newState) {
+        if (typeof this.currentState[key] === "undefined" ||
+            this.currentState[key] !== newState[key]) {
+          sentState[key] = newState[key];
+        }
+      }
+    } else {
+      sentState = newState;
+    }
+    this.currentState = newState;
+
+    return sentState;
   }, {
     request: {},
     response: {
@@ -239,6 +321,7 @@ let AnimationPlayerFront = FrontClass(AnimationPlayerActor, {
       playState: this._form.playState,
       name: this._form.name,
       duration: this._form.duration,
+      delay: this._form.delay,
       iterationCount: this._form.iterationCount,
       isRunningOnCompositor: this._form.isRunningOnCompositor
     }
@@ -297,20 +380,36 @@ let AnimationPlayerFront = FrontClass(AnimationPlayerActor, {
       return;
     }
 
-    // Check if something has changed
-    let hasChanged = false;
-    for (let key in data) {
-      if (this.state[key] !== data[key]) {
-        hasChanged = true;
-        break;
-      }
+    // If the animationplayer is now finished, stop auto-refreshing.
+    if (data.playState === "finished") {
+      this.stopAutoRefresh();
     }
 
-    if (hasChanged) {
+    if (this.currentStateHasChanged) {
       this.state = data;
       this.emit(this.AUTO_REFRESH_EVENT, this.state);
     }
-  })
+  }),
+
+  /**
+   * getCurrentState interceptor re-constructs incomplete states since the actor
+   * only sends the values that have changed.
+   */
+  getCurrentState: protocol.custom(function() {
+    this.currentStateHasChanged = false;
+    return this._getCurrentState().then(data => {
+      for (let key in this.state) {
+        if (typeof data[key] === "undefined") {
+          data[key] = this.state[key];
+        } else if (data[key] !== this.state[key]) {
+          this.currentStateHasChanged = true;
+        }
+      }
+      return data;
+    });
+  }, {
+    impl: "_getCurrentState"
+  }),
 });
 
 /**
@@ -321,10 +420,17 @@ let AnimationsActor = exports.AnimationsActor = ActorClass({
 
   initialize: function(conn, tabActor) {
     Actor.prototype.initialize.call(this, conn);
+    this.tabActor = tabActor;
+
+    this.allAnimationsPaused = false;
+    this.onNavigate = this.onNavigate.bind(this);
+    events.on(this.tabActor, "navigate", this.onNavigate);
   },
 
   destroy: function() {
     Actor.prototype.destroy.call(this);
+    events.off(this.tabActor, "navigate", this.onNavigate);
+    this.tabActor = null;
   },
 
   /**
@@ -359,6 +465,77 @@ let AnimationsActor = exports.AnimationsActor = ActorClass({
     response: {
       players: RetVal("array:animationplayer")
     }
+  }),
+
+  /**
+   * Iterates through all nodes in all of the tabActor's window documents and
+   * finds all existing animation players.
+   * This is currently used to allow playing/pausing all animations at once
+   * until the WebAnimations API provides a way to play/pause via the document
+   * timeline (alternatively, when bug 1123524 is fixed, we will be able to
+   * only iterate once and then listen for changes).
+   */
+  getAllAnimationPlayers: function() {
+    let players = [];
+
+    // These loops shouldn't be as bad as they look.
+    // Typically, there will be very few windows, and getElementsByTagName is
+    // really fast even on large DOM trees.
+    for (let window of this.tabActor.windows) {
+      let root = window.document.body || window.document;
+      for (let element of root.getElementsByTagNameNS("*", "*")) {
+        players = [...players, ...element.getAnimationPlayers()];
+      }
+    }
+
+    return players;
+  },
+
+  onNavigate: function({isTopLevel}) {
+    if (isTopLevel) {
+      this.allAnimationsPaused = false;
+    }
+  },
+
+  /**
+   * Pause all animations in the current tabActor's frames.
+   */
+  pauseAll: method(function() {
+    for (let player of this.getAllAnimationPlayers()) {
+      player.pause();
+    }
+    this.allAnimationsPaused = true;
+  }, {
+    request: {},
+    response: {}
+  }),
+
+  /**
+   * Play all animations in the current tabActor's frames.
+   * This method only returns when the animations have left their pending states.
+   */
+  playAll: method(function() {
+    let readyPromises = [];
+    for (let player of this.getAllAnimationPlayers()) {
+      player.play();
+      readyPromises.push(player.ready);
+    }
+    this.allAnimationsPaused = false;
+    return promise.all(readyPromises);
+  }, {
+    request: {},
+    response: {}
+  }),
+
+  toggleAll: method(function() {
+    if (this.allAnimationsPaused) {
+      return this.playAll();
+    } else {
+      return this.pauseAll();
+    }
+  }, {
+    request: {},
+    response: {}
   })
 });
 

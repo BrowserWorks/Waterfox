@@ -44,6 +44,7 @@ static char *RCSSTRING __UNUSED__="$Id: ice_component.c,v 1.2 2008/04/28 17:59:0
 #include "stun.h"
 #include "nr_socket_local.h"
 #include "nr_socket_turn.h"
+#include "nr_socket_wrapper.h"
 #include "nr_socket_buffered_stun.h"
 #include "ice_reg.h"
 
@@ -238,7 +239,7 @@ static int nr_ice_component_initialize_udp(struct nr_ice_ctx_ *ctx,nr_ice_compon
           &ctx->turn_servers[j].turn_server,component->component_id,&cand))
           ABORT(r);
         cand->state=NR_ICE_CAND_STATE_INITIALIZING; /* Don't start */
-        cand->done_cb=nr_ice_initialize_finished_cb;
+        cand->done_cb=nr_ice_gather_finished_cb;
         cand->cb_arg=cand;
 
         TAILQ_INSERT_TAIL(&component->candidates,cand,entry_comp);
@@ -290,6 +291,8 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
     char label[256];
     int r,_status;
 
+    r_log(LOG_ICE,LOG_DEBUG,"nr_ice_component_initialize_tcp");
+
     /* Create a new relayed candidate for each addr/TURN server pair */
     for(i=0;i<addr_ct;i++){
       char suppress;
@@ -324,6 +327,15 @@ static int nr_ice_component_initialize_tcp(struct nr_ice_ctx_ *ctx,nr_ice_compon
           r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): couldn't create socket for address %s",ctx->label,addr.as_string);
           continue;
         }
+
+        r_log(LOG_ICE,LOG_DEBUG,"nr_ice_component_initialize_tcp create");
+
+        if (ctx->turn_tcp_socket_wrapper) {
+          /* Wrap it */
+          if((r=nr_socket_wrapper_factory_wrap(ctx->turn_tcp_socket_wrapper, sock, &sock)))
+            ABORT(r);
+        }
+
         /* Wrap it */
         if((r=nr_socket_buffered_stun_create(sock, NR_STUN_MAX_MESSAGE_SIZE, &buffered_sock)))
           ABORT(r);
@@ -381,6 +393,11 @@ int nr_ice_component_initialize(struct nr_ice_ctx_ *ctx,nr_ice_component *compon
     Data pwd;
     nr_ice_candidate *cand;
 
+    if (component->candidate_ct) {
+      r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): component with id %d already has candidates, probably restarting gathering because of a new stream",ctx->label,component->component_id);
+      return(0);
+    }
+
     r_log(LOG_ICE,LOG_DEBUG,"ICE(%s): initializing component with id %d",ctx->label,component->component_id);
 
     if(addr_ct==0){
@@ -423,7 +440,7 @@ int nr_ice_component_initialize(struct nr_ice_ctx_ *ctx,nr_ice_component *compon
     cand=TAILQ_FIRST(&component->candidates);
     while(cand){
       if(cand->state!=NR_ICE_CAND_STATE_INITIALIZING){
-        if(r=nr_ice_candidate_initialize(cand,nr_ice_initialize_finished_cb,cand)){
+        if(r=nr_ice_candidate_initialize(cand,nr_ice_gather_finished_cb,cand)){
           if(r!=R_WOULDBLOCK){
             ctx->uninitialized_candidates--;
             cand->state=NR_ICE_CAND_STATE_FAILED;

@@ -18,7 +18,7 @@ class CodeGenerator;
 class MoveEmitterARM
 {
     uint32_t inCycle_;
-    MacroAssemblerARMCompat &masm;
+    MacroAssemblerARMCompat& masm;
 
     // Original stack push value.
     uint32_t pushedAtStart_;
@@ -40,22 +40,24 @@ class MoveEmitterARM
     FloatRegister tempFloatReg();
     Operand cycleSlot(uint32_t slot, uint32_t subslot) const;
     Operand spillSlot() const;
-    Operand toOperand(const MoveOperand &operand, bool isFloat) const;
+    Operand toOperand(const MoveOperand& operand, bool isFloat) const;
 
-    void emitMove(const MoveOperand &from, const MoveOperand &to);
-    void emitFloat32Move(const MoveOperand &from, const MoveOperand &to);
-    void emitDoubleMove(const MoveOperand &from, const MoveOperand &to);
-    void breakCycle(const MoveOperand &from, const MoveOperand &to,
+    void emitMove(const MoveOperand& from, const MoveOperand& to);
+    void emitFloat32Move(const MoveOperand& from, const MoveOperand& to);
+    void emitDoubleMove(const MoveOperand& from, const MoveOperand& to);
+    void breakCycle(const MoveOperand& from, const MoveOperand& to,
                     MoveOp::Type type, uint32_t slot);
-    void completeCycle(const MoveOperand &from, const MoveOperand &to,
+    void completeCycle(const MoveOperand& from, const MoveOperand& to,
                        MoveOp::Type type, uint32_t slot);
-    void emit(const MoveOp &move);
+    void emit(const MoveOp& move);
 
   public:
-    MoveEmitterARM(MacroAssemblerARMCompat &masm);
+    MoveEmitterARM(MacroAssemblerARMCompat& masm);
     ~MoveEmitterARM();
-    void emit(const MoveResolver &moves);
+    void emit(const MoveResolver& moves);
     void finish();
+
+    void setScratchRegister(Register reg) {}
 };
 
 typedef MoveEmitterARM MoveEmitter;

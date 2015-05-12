@@ -46,7 +46,7 @@ class SVGAnimatedPathSegList;
  *
  * Our DOM items are created lazily on demand as and when script requests them.
  */
-class DOMSVGPathSegList MOZ_FINAL : public nsISupports,
+class DOMSVGPathSegList final : public nsISupports,
                                     public nsWrapperCache
 {
   friend class AutoChangePathSegListNotifier;
@@ -56,7 +56,7 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(DOMSVGPathSegList)
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
 
   nsISupports* GetParentObject()
   {
@@ -98,9 +98,9 @@ public:
    * we've hit OOM, in which case our length will be zero.
    */
   uint32_t LengthNoFlush() const {
-    NS_ABORT_IF_FALSE(mItems.Length() == 0 ||
-                      mItems.Length() == InternalList().CountItems(),
-                      "DOM wrapper's list length is out of sync");
+    MOZ_ASSERT(mItems.Length() == 0 ||
+               mItems.Length() == InternalList().CountItems(),
+               "DOM wrapper's list length is out of sync");
     return mItems.Length();
   }
 

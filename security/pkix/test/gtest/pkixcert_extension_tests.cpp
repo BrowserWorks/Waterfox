@@ -60,52 +60,64 @@ CreateCertWithOneExtension(const char* subjectStr, const ByteString& extension)
   return CreateCertWithExtensions(subjectStr, extensions);
 }
 
-class TrustEverythingTrustDomain : public TrustDomain
+class TrustEverythingTrustDomain final : public TrustDomain
 {
 private:
-  virtual Result GetCertTrust(EndEntityOrCA, const CertPolicyId&,
-                              Input candidateCert,
-                              /*out*/ TrustLevel& trustLevel)
+  Result GetCertTrust(EndEntityOrCA, const CertPolicyId&, Input,
+                      /*out*/ TrustLevel& trustLevel) override
   {
     trustLevel = TrustLevel::TrustAnchor;
     return Success;
   }
 
-  virtual Result FindIssuer(Input /*encodedIssuerName*/,
-                            IssuerChecker& /*checker*/, Time /*time*/)
+  Result FindIssuer(Input /*encodedIssuerName*/, IssuerChecker& /*checker*/,
+                    Time /*time*/) override
   {
     ADD_FAILURE();
     return Result::FATAL_ERROR_LIBRARY_FAILURE;
   }
 
-  virtual Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
-                                 /*optional*/ const Input*,
-                                 /*optional*/ const Input*)
+  Result CheckRevocation(EndEntityOrCA, const CertID&, Time,
+                         /*optional*/ const Input*, /*optional*/ const Input*)
+                         override
   {
     return Success;
   }
 
-  virtual Result IsChainValid(const DERArray&, Time)
+  Result IsChainValid(const DERArray&, Time) override
   {
     return Success;
   }
 
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo)
+  Result DigestBuf(Input input, DigestAlgorithm digestAlg,
+                   /*out*/ uint8_t* digestBuf, size_t digestLen) override
   {
-    return TestVerifySignedData(signedData, subjectPublicKeyInfo);
+    return TestDigestBuf(input, digestAlg, digestBuf, digestLen);
   }
 
-  virtual Result DigestBuf(Input, /*out*/ uint8_t*, size_t)
+  Result CheckRSAPublicKeyModulusSizeInBits(EndEntityOrCA, unsigned int)
+                                            override
   {
-    ADD_FAILURE();
-    return Result::FATAL_ERROR_LIBRARY_FAILURE;
+    return Success;
   }
 
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo)
+  Result VerifyRSAPKCS1SignedDigest(const SignedDigest& signedDigest,
+                                    Input subjectPublicKeyInfo) override
   {
-    return TestCheckPublicKey(subjectPublicKeyInfo);
+    return TestVerifyRSAPKCS1SignedDigest(signedDigest, subjectPublicKeyInfo);
   }
+
+  Result CheckECDSACurveIsAcceptable(EndEntityOrCA, NamedCurve) override
+  {
+    return Success;
+  }
+
+  Result VerifyECDSASignedDigest(const SignedDigest& signedDigest,
+                                 Input subjectPublicKeyInfo) override
+  {
+    return TestVerifyECDSASignedDigest(signedDigest, subjectPublicKeyInfo);
+  }
+
 };
 
 // python DottedOIDToCode.py --tlv unknownExtensionOID 1.3.6.1.4.1.13769.666.666.666.1.500.9.3

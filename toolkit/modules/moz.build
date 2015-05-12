@@ -30,6 +30,7 @@ EXTRA_JS_MODULES += [
     'Log.jsm',
     'NewTabUtils.jsm',
     'PageMenu.jsm',
+    'PageMetadata.jsm',
     'PermissionsUtils.jsm',
     'PopupNotifications.jsm',
     'Preferences.jsm',
@@ -63,6 +64,7 @@ EXTRA_JS_MODULES += [
 EXTRA_PP_JS_MODULES += [
     'CertUtils.jsm',
     'GMPInstallManager.jsm',
+    'GMPUtils.jsm',
     'ResetProfile.jsm',
     'secondscreen/RokuApp.jsm',
     'Services.jsm',

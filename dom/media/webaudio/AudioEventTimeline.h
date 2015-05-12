@@ -10,7 +10,6 @@
 #include <algorithm>
 #include "mozilla/Assertions.h"
 #include "mozilla/FloatingPoint.h"
-#include "mozilla/TypedEnum.h"
 #include "mozilla/PodOperations.h"
 
 #include "nsTArray.h"
@@ -23,7 +22,7 @@ namespace dom {
 
 // This is an internal helper class and should not be used outside of this header.
 struct AudioTimelineEvent {
-  enum Type MOZ_ENUM_TYPE(uint32_t) {
+  enum Type : uint32_t {
     SetValue,
     LinearRamp,
     ExponentialRamp,

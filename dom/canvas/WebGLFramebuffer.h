@@ -22,7 +22,7 @@ namespace gl {
     class GLContext;
 }
 
-class WebGLFramebuffer MOZ_FINAL
+class WebGLFramebuffer final
     : public nsWrapperCache
     , public WebGLBindableName<FBTarget>
     , public WebGLRefCountedObject<WebGLFramebuffer>
@@ -31,7 +31,7 @@ class WebGLFramebuffer MOZ_FINAL
     , public SupportsWeakPtr<WebGLFramebuffer>
 {
 public:
-    MOZ_DECLARE_REFCOUNTED_TYPENAME(WebGLFramebuffer)
+    MOZ_DECLARE_WEAKREFERENCE_TYPENAME(WebGLFramebuffer)
 
     explicit WebGLFramebuffer(WebGLContext* webgl, GLuint fbo);
 
@@ -157,7 +157,7 @@ public:
 
     void FinalizeAttachments() const;
 
-    virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+    virtual JSObject* WrapObject(JSContext* cx) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLFramebuffer)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLFramebuffer)
@@ -174,6 +174,8 @@ public:
 
     void NotifyAttachableChanged() const;
 
+    bool ValidateForRead(const char* info, TexInternalFormat* const out_format);
+
 private:
     ~WebGLFramebuffer() {
         DeleteOnce();
@@ -187,6 +189,7 @@ private:
     Attachment mDepthAttachment;
     Attachment mStencilAttachment;
     Attachment mDepthStencilAttachment;
+    GLenum mReadBufferMode;
 };
 
 } // namespace mozilla

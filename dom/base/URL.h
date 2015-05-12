@@ -32,7 +32,7 @@ namespace workers {
 class URLProxy;
 }
 
-class URL MOZ_FINAL : public URLSearchParamsObserver
+class URL final : public URLSearchParamsObserver
 {
   ~URL() {}
 
@@ -43,8 +43,8 @@ public:
   explicit URL(nsIURI* aURI);
 
   // WebIDL methods
-  JSObject*
-  WrapObject(JSContext* aCx);
+  bool
+  WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector);
 
   static already_AddRefed<URL>
   Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
@@ -123,7 +123,7 @@ public:
   }
 
   // URLSearchParamsObserver
-  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) MOZ_OVERRIDE;
+  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) override;
 
 private:
   nsIURI* GetURI() const

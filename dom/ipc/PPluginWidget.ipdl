@@ -33,10 +33,10 @@ parent:
   async __delete__();
 
 parent:
-  async Create();
+  sync Create() returns (nsresult aResult);
+
   async Destroy();
   async SetFocus(bool aRaise);
-  async Invalidate(nsIntRect aRect);
 
   /**
    * Returns NS_NATIVE_PLUGIN_PORT and its variants: a sharable native
@@ -46,14 +46,17 @@ parent:
    */
   sync GetNativePluginPort() returns (uintptr_t value);
 
+child:
   /**
-   * nsIWidget interfaces we'll need until this information flows
-   * over the compositor connection.
+   * Event indicating the parent is shutting down.
+   * aWhichSide - indicates which side intititated the shutdown.
    */
-  async Show(bool aState);
-  async Resize(nsIntRect aRect);
-  async Move(double aX, double aY);
-  async SetWindowClipRegion(nsIntRect[] Regions, bool aIntersectWithExisting);
+  async ParentShutdown(uint16_t aWhichSide);
+
+  /**
+   * Requests a full update of the plugin window.
+   */
+  async UpdateWindow(uintptr_t aChildId);
 };
 
 }

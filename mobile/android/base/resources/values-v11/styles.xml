@@ -48,7 +48,8 @@
  
     <!-- GeckoPreferences ActionBar -->
     <style name="ActionBar.GeckoPreferences">
-         <item name="android:displayOptions">showHome|homeAsUp|showTitle</item>
+         <!-- Partially duplicated in GeckoPreferences.initActionBar - look there for more details. -->
+         <item name="android:displayOptions">showHome|homeAsUp|showTitle|useLogo</item>
     </style>
  
     <!-- TabsLayout ActionBar -->

@@ -54,7 +54,7 @@ enum GMPState {
   GMPStateClosing
 };
 
-class GMPParent MOZ_FINAL : public PGMPParent,
+class GMPParent final : public PGMPParent,
                             public GMPSharedMem
 {
 public:
@@ -75,6 +75,10 @@ public:
   // Notify all active de/encoders that we are closing, either because of
   // normal shutdown or unexpected shutdown/crash.
   void CloseActive(bool aDieWhenUnloaded);
+
+  // Tell the plugin to die after shutdown.
+  void MarkForDeletion();
+  bool IsMarkedForDeletion();
 
   // Called by the GMPService to forcibly close active de/encoders at shutdown
   void Shutdown();
@@ -115,7 +119,9 @@ public:
   void SetNodeId(const nsACString& aNodeId);
   const nsACString& GetNodeId() const { return mNodeId; }
 
+  const nsCString& GetDisplayName() const;
   const nsCString& GetVersion() const;
+  const nsACString& GetPluginId() const;
 
   // Returns true if a plugin can be or is being used across multiple NodeIds.
   bool CanBeSharedCrossNodeIds() const;
@@ -130,9 +136,12 @@ public:
   }
 
   // GMPSharedMem
-  virtual void CheckThread() MOZ_OVERRIDE;
+  virtual void CheckThread() override;
 
   void AbortAsyncShutdown();
+
+  // Called when the child process has died.
+  void ChildTerminated();
 
 private:
   ~GMPParent();
@@ -143,33 +152,33 @@ private:
   void WriteExtraDataForMinidump(CrashReporter::AnnotationTable& notes);
   void GetCrashID(nsString& aResult);
 #endif
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
 
-  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) MOZ_OVERRIDE;
-  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) MOZ_OVERRIDE;
+  virtual PCrashReporterParent* AllocPCrashReporterParent(const NativeThreadId& aThread) override;
+  virtual bool DeallocPCrashReporterParent(PCrashReporterParent* aCrashReporter) override;
 
-  virtual PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) MOZ_OVERRIDE;
+  virtual PGMPVideoDecoderParent* AllocPGMPVideoDecoderParent() override;
+  virtual bool DeallocPGMPVideoDecoderParent(PGMPVideoDecoderParent* aActor) override;
 
-  virtual PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor) MOZ_OVERRIDE;
+  virtual PGMPVideoEncoderParent* AllocPGMPVideoEncoderParent() override;
+  virtual bool DeallocPGMPVideoEncoderParent(PGMPVideoEncoderParent* aActor) override;
 
-  virtual PGMPDecryptorParent* AllocPGMPDecryptorParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPDecryptorParent(PGMPDecryptorParent* aActor) MOZ_OVERRIDE;
+  virtual PGMPDecryptorParent* AllocPGMPDecryptorParent() override;
+  virtual bool DeallocPGMPDecryptorParent(PGMPDecryptorParent* aActor) override;
 
-  virtual PGMPAudioDecoderParent* AllocPGMPAudioDecoderParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor) MOZ_OVERRIDE;
+  virtual PGMPAudioDecoderParent* AllocPGMPAudioDecoderParent() override;
+  virtual bool DeallocPGMPAudioDecoderParent(PGMPAudioDecoderParent* aActor) override;
 
-  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) MOZ_OVERRIDE;
-  virtual PGMPStorageParent* AllocPGMPStorageParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvPGMPStorageConstructor(PGMPStorageParent* actor) override;
+  virtual PGMPStorageParent* AllocPGMPStorageParent() override;
+  virtual bool DeallocPGMPStorageParent(PGMPStorageParent* aActor) override;
 
-  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) MOZ_OVERRIDE;
-  virtual PGMPTimerParent* AllocPGMPTimerParent() MOZ_OVERRIDE;
-  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) MOZ_OVERRIDE;
+  virtual bool RecvPGMPTimerConstructor(PGMPTimerParent* actor) override;
+  virtual PGMPTimerParent* AllocPGMPTimerParent() override;
+  virtual bool DeallocPGMPTimerParent(PGMPTimerParent* aActor) override;
 
-  virtual bool RecvAsyncShutdownComplete() MOZ_OVERRIDE;
-  virtual bool RecvAsyncShutdownRequired() MOZ_OVERRIDE;
+  virtual bool RecvAsyncShutdownComplete() override;
+  virtual bool RecvAsyncShutdownRequired() override;
 
   nsresult EnsureAsyncShutdownTimeoutSet();
 
@@ -179,10 +188,14 @@ private:
   nsCString mDisplayName; // name of plugin displayed to users
   nsCString mDescription; // description of plugin for display to users
   nsCString mVersion;
+  nsCString mPluginId;
   nsTArray<nsAutoPtr<GMPCapability>> mCapabilities;
   GMPProcessParent* mProcess;
   bool mDeleteProcessOnlyOnUnload;
   bool mAbnormalShutdownInProgress;
+  bool mIsBlockingDeletion;
+
+  bool mCanDecrypt;
 
   nsTArray<nsRefPtr<GMPVideoDecoderParent>> mVideoDecoders;
   nsTArray<nsRefPtr<GMPVideoEncoderParent>> mVideoEncoders;

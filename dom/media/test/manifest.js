@@ -56,7 +56,9 @@ var gPlayedTests = [
   { name:"seek.webm", type:"video/webm", duration:3.966 },
   { name:"gizmo.mp4", type:"video/mp4", duration:5.56 },
   { name:"owl.mp3", type:"audio/mpeg", duration:3.29 },
-  { name:"vbr.mp3", type:"audio/mpeg", duration:10.0 },
+  // Disable vbr.mp3 to see if it reduces the error of AUDCLNT_E_CPUUSAGE_EXCEEDED.
+  // See bug 1110922 comment 26.
+  //{ name:"vbr.mp3", type:"audio/mpeg", duration:10.0 },
   { name:"bug495794.ogg", type:"audio/ogg", duration:0.3 }
 ];
 
@@ -94,6 +96,10 @@ var gTrackTests = [
   { name:"bogus.duh", type:"bogus/duh" }
 ];
 
+var gClosingConnectionsTest = [
+  { name:"seek.ogv", type:"video/ogg", duration:3.966 }
+];
+
 // Used by any media recorder test. Need one test file per decoder backend
 // currently supported by the media encoder.
 var gMediaRecorderTests = [
@@ -105,6 +111,10 @@ var gMediaRecorderTests = [
 // something crashes we have some idea of which backend is responsible.
 // Used by test_playback, which expects no error event and one ended event.
 var gPlayTests = [
+  // Test playback of a WebM file with vp9 video
+  //{ name:"vp9.webm", type:"video/webm", duration:4 },
+  { name:"vp9cake.webm", type:"video/webm", duration:7.966 },
+
   // 8-bit samples
   { name:"r11025_u8_c1.wav", type:"audio/x-wav", duration:1.0 },
   // 8-bit samples, file is truncated
@@ -219,10 +229,6 @@ var gPlayTests = [
 
   // Invalid file
   { name:"bogus.duh", type:"bogus/duh", duration:Number.NaN },
-
-  // Test playback of a WebM file with vp9 video
-  //{ name:"vp9.webm", type:"video/webm", duration:4 },
-  { name:"vp9cake.webm", type:"video/webm", duration:7.966 }
 ];
 
 // A file for each type we can support.
@@ -729,6 +735,26 @@ function removeNodeAndSource(n) {
   while (n.firstChild) {
     n.removeChild(n.firstChild);
   }
+}
+
+function TimeStamp(token) {
+  function pad(x) {
+    return (x < 10) ? "0" + x : x;
+  }
+  var now = new Date();
+  var ms = now.getMilliseconds();
+  var time = "[" +
+             pad(now.getHours()) + ":" +
+             pad(now.getMinutes()) + ":" +
+             pad(now.getSeconds()) + "." +
+             ms +
+             "]" +
+             (ms < 10 ? "  " : (ms < 100 ? " " : ""));
+  return token ? (time + " " + token) : time;
+}
+
+function Log(token, msg) {
+  info(TimeStamp(token) + " " + msg);
 }
 
 // Number of tests to run in parallel.

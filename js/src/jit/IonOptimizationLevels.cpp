@@ -41,7 +41,7 @@ OptimizationInfo::initNormalOptimizationInfo()
     maxInlineDepth_ = 3;
     scalarReplacement_ = true;
     smallFunctionMaxInlineDepth_ = 10;
-    compilerWarmUpThreshold_ = 1000;
+    compilerWarmUpThreshold_ = CompilerWarmupThreshold;
     inliningWarmUpThresholdFactor_ = 0.125;
     inliningRecompileThresholdFactor_ = 4;
 }
@@ -65,7 +65,7 @@ OptimizationInfo::initAsmjsOptimizationInfo()
 }
 
 uint32_t
-OptimizationInfo::compilerWarmUpThreshold(JSScript *script, jsbytecode *pc) const
+OptimizationInfo::compilerWarmUpThreshold(JSScript* script, jsbytecode* pc) const
 {
     MOZ_ASSERT(pc == nullptr || pc == script->code() || JSOp(*pc) == JSOP_LOOPENTRY);
 
@@ -73,8 +73,8 @@ OptimizationInfo::compilerWarmUpThreshold(JSScript *script, jsbytecode *pc) cons
         pc = nullptr;
 
     uint32_t warmUpThreshold = compilerWarmUpThreshold_;
-    if (js_JitOptions.forceDefaultIonWarmUpThreshold)
-        warmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold;
+    if (js_JitOptions.forcedDefaultIonWarmUpThreshold.isSome())
+        warmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold.ref();
 
     // If the script is too large to compile on the main thread, we can still
     // compile it off thread. In these cases, increase the warm-up counter
@@ -139,13 +139,13 @@ OptimizationInfos::isLastLevel(OptimizationLevel level) const
 }
 
 OptimizationLevel
-OptimizationInfos::levelForScript(JSScript *script, jsbytecode *pc) const
+OptimizationInfos::levelForScript(JSScript* script, jsbytecode* pc) const
 {
     OptimizationLevel prev = Optimization_DontCompile;
 
     while (!isLastLevel(prev)) {
         OptimizationLevel level = nextLevel(prev);
-        const OptimizationInfo *info = get(level);
+        const OptimizationInfo* info = get(level);
         if (script->getWarmUpCount() < info->compilerWarmUpThreshold(script, pc))
             return prev;
 

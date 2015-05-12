@@ -60,9 +60,7 @@ loop.panel = (function(_, mozL10n) {
       // When we don't need to rely on the pref, this can move back to
       // getDefaultProps (bug 1100258).
       return {
-        selectedTab: this.props.selectedTab ||
-          (navigator.mozLoop.getLoopPref("rooms.enabled") ?
-            "rooms" : "call")
+        selectedTab: this.props.selectedTab || "rooms"
       };
     },
 
@@ -90,6 +88,7 @@ loop.panel = (function(_, mozL10n) {
             <li className={cx({selected: isSelected})}
                 key={i}
                 data-tab-name={tabName}
+                title={mozL10n.get(tabName + "_tab_button_tooltip")}
                 onClick={this.handleSelectTab} />
           );
         }
@@ -217,6 +216,8 @@ loop.panel = (function(_, mozL10n) {
   });
 
   var ToSView = React.createClass({
+    mixins: [sharedMixins.WindowCloseMixin],
+
     getInitialState: function() {
       var getPref = navigator.mozLoop.getLoopPref.bind(navigator.mozLoop);
 
@@ -225,6 +226,16 @@ loop.panel = (function(_, mozL10n) {
         gettingStartedSeen: getPref("gettingStarted.seen"),
         showPartnerLogo: getPref("showPartnerLogo")
       };
+    },
+
+    handleLinkClick: function(event) {
+      if (!event.target || !event.target.href) {
+        return;
+      }
+
+      event.preventDefault();
+      navigator.mozLoop.openURL(event.target.href);
+      this.closeWindow();
     },
 
     renderPartnerLogo: function() {
@@ -263,7 +274,8 @@ loop.panel = (function(_, mozL10n) {
         return <div id="powered-by-wrapper">
           {this.renderPartnerLogo()}
           <p className="terms-service"
-             dangerouslySetInnerHTML={{__html: tosHTML}}></p>
+             dangerouslySetInnerHTML={{__html: tosHTML}}
+             onClick={this.handleLinkClick}></p>
          </div>;
       } else {
         return <div />;
@@ -305,6 +317,10 @@ loop.panel = (function(_, mozL10n) {
    * Panel settings (gear) menu.
    */
   var SettingsDropdown = React.createClass({
+    propTypes: {
+      mozLoop: React.PropTypes.object.isRequired
+    },
+
     mixins: [sharedMixins.DropdownMenuMixin, sharedMixins.WindowCloseMixin],
 
     handleClickSettingsEntry: function() {
@@ -312,40 +328,36 @@ loop.panel = (function(_, mozL10n) {
     },
 
     handleClickAccountEntry: function() {
-      navigator.mozLoop.openFxASettings();
+      this.props.mozLoop.openFxASettings();
+      this.closeWindow();
     },
 
     handleClickAuthEntry: function() {
       if (this._isSignedIn()) {
-        navigator.mozLoop.logOutFromFxA();
+        this.props.mozLoop.logOutFromFxA();
       } else {
-        navigator.mozLoop.logInToFxA();
+        this.props.mozLoop.logInToFxA();
       }
     },
 
     handleHelpEntry: function(event) {
       event.preventDefault();
-      var helloSupportUrl = navigator.mozLoop.getLoopPref('support_url');
-      window.open(helloSupportUrl);
-      window.close();
+      var helloSupportUrl = this.props.mozLoop.getLoopPref("support_url");
+      this.props.mozLoop.openURL(helloSupportUrl);
+      this.closeWindow();
     },
 
     _isSignedIn: function() {
-      return !!navigator.mozLoop.userProfile;
+      return !!this.props.mozLoop.userProfile;
     },
 
     openGettingStartedTour: function() {
-      navigator.mozLoop.openGettingStartedTour("settings-menu");
+      this.props.mozLoop.openGettingStartedTour("settings-menu");
       this.closeWindow();
     },
 
     render: function() {
       var cx = React.addons.classSet;
-
-      // For now all of the menu entries require FxA so hide the whole gear if FxA is disabled.
-      if (!navigator.mozLoop.fxAEnabled) {
-        return null;
-      }
 
       return (
         <div className="settings-menu dropdown">
@@ -360,7 +372,7 @@ loop.panel = (function(_, mozL10n) {
             <SettingsDropdownEntry label={mozL10n.get("settings_menu_item_account")}
                                    onClick={this.handleClickAccountEntry}
                                    icon="account"
-                                   displayed={this._isSignedIn()} />
+                                   displayed={this._isSignedIn() && this.props.mozLoop.fxAEnabled} />
             <SettingsDropdownEntry icon="tour"
                                    label={mozL10n.get("tour_label")}
                                    onClick={this.openGettingStartedTour} />
@@ -368,163 +380,12 @@ loop.panel = (function(_, mozL10n) {
                                           mozL10n.get("settings_menu_item_signout") :
                                           mozL10n.get("settings_menu_item_signin")}
                                    onClick={this.handleClickAuthEntry}
-                                   displayed={navigator.mozLoop.fxAEnabled}
+                                   displayed={this.props.mozLoop.fxAEnabled}
                                    icon={this._isSignedIn() ? "signout" : "signin"} />
             <SettingsDropdownEntry label={mozL10n.get("help_label")}
                                    onClick={this.handleHelpEntry}
                                    icon="help" />
           </ul>
-        </div>
-      );
-    }
-  });
-
-  /**
-   * Call url result view.
-   */
-  var CallUrlResult = React.createClass({
-    mixins: [sharedMixins.DocumentVisibilityMixin],
-
-    propTypes: {
-      callUrl:        React.PropTypes.string,
-      callUrlExpiry:  React.PropTypes.number,
-      notifications:  React.PropTypes.object.isRequired,
-      client:         React.PropTypes.object.isRequired
-    },
-
-    getInitialState: function() {
-      return {
-        pending: false,
-        copied: false,
-        callUrl: this.props.callUrl || "",
-        callUrlExpiry: 0
-      };
-    },
-
-    /**
-     * Provided by DocumentVisibilityMixin. Schedules retrieval of a new call
-     * URL everytime the panel is reopened.
-     */
-    onDocumentVisible: function() {
-      this._fetchCallUrl();
-    },
-
-    componentDidMount: function() {
-      // If we've already got a callURL, don't bother requesting a new one.
-      // As of this writing, only used for visual testing in the UI showcase.
-      if (this.state.callUrl.length) {
-        return;
-      }
-
-      this._fetchCallUrl();
-    },
-
-    /**
-     * Fetches a call URL.
-     */
-    _fetchCallUrl: function() {
-      this.setState({pending: true});
-      // XXX This is an empty string as a conversation identifier. Bug 1015938 implements
-      // a user-set string.
-      this.props.client.requestCallUrl("",
-                                       this._onCallUrlReceived);
-    },
-
-    _onCallUrlReceived: function(err, callUrlData) {
-      if (err) {
-        if (err.code != 401) {
-          // 401 errors are already handled in hawkRequest and show an error
-          // message about the session.
-          this.props.notifications.errorL10n("unable_retrieve_url");
-        }
-        this.setState(this.getInitialState());
-      } else {
-        try {
-          var callUrl = new window.URL(callUrlData.callUrl);
-          // XXX the current server vers does not implement the callToken field
-          // but it exists in the API. This workaround should be removed in the future
-          var token = callUrlData.callToken ||
-                      callUrl.pathname.split('/').pop();
-
-          // Now that a new URL is available, indicate it has not been shared.
-          this.linkExfiltrated = false;
-
-          this.setState({pending: false, copied: false,
-                         callUrl: callUrl.href,
-                         callUrlExpiry: callUrlData.expiresAt});
-        } catch(e) {
-          console.log(e);
-          this.props.notifications.errorL10n("unable_retrieve_url");
-          this.setState(this.getInitialState());
-        }
-      }
-    },
-
-    handleEmailButtonClick: function(event) {
-      this.handleLinkExfiltration(event);
-
-      sharedUtils.composeCallUrlEmail(this.state.callUrl);
-    },
-
-    handleCopyButtonClick: function(event) {
-      this.handleLinkExfiltration(event);
-      // XXX the mozLoop object should be passed as a prop, to ease testing and
-      //     using a fake implementation in UI components showcase.
-      navigator.mozLoop.copyString(this.state.callUrl);
-      this.setState({copied: true});
-    },
-
-    linkExfiltrated: false,
-
-    handleLinkExfiltration: function(event) {
-      // Update the count of shared URLs only once per generated URL.
-      if (!this.linkExfiltrated) {
-        this.linkExfiltrated = true;
-        try {
-          navigator.mozLoop.telemetryAdd("LOOP_CLIENT_CALL_URL_SHARED", true);
-        } catch (err) {
-          console.error("Error recording telemetry", err);
-        }
-      }
-
-      // Note URL expiration every time it is shared.
-      if (this.state.callUrlExpiry) {
-        navigator.mozLoop.noteCallUrlExpiry(this.state.callUrlExpiry);
-      }
-    },
-
-    render: function() {
-      // XXX setting elem value from a state (in the callUrl input)
-      // makes it immutable ie read only but that is fine in our case.
-      // readOnly attr will suppress a warning regarding this issue
-      // from the react lib.
-      var cx = React.addons.classSet;
-      return (
-        <div className="generate-url">
-          <header id="share-link-header">{mozL10n.get("share_link_header_text")}</header>
-          <div className="generate-url-stack">
-            <input type="url" value={this.state.callUrl} readOnly="true"
-                   onCopy={this.handleLinkExfiltration}
-                   className={cx({"generate-url-input": true,
-                                  pending: this.state.pending,
-                                  // Used in functional testing, signals that
-                                  // call url was received from loop server
-                                  callUrl: !this.state.pending})} />
-            <div className={cx({"generate-url-spinner": true,
-                                spinner: true,
-                                busy: this.state.pending})} />
-          </div>
-          <ButtonGroup additionalClass="url-actions">
-            <Button additionalClass="button-email"
-                    disabled={!this.state.callUrl}
-                    onClick={this.handleEmailButtonClick}
-                    caption={mozL10n.get("share_button")} />
-            <Button additionalClass="button-copy"
-                    disabled={!this.state.callUrl}
-                    onClick={this.handleCopyButtonClick}
-                    caption={this.state.copied ? mozL10n.get("copied_url_button") :
-                                                 mozL10n.get("copy_url_button")} />
-          </ButtonGroup>
         </div>
       );
     }
@@ -841,15 +702,13 @@ loop.panel = (function(_, mozL10n) {
   var PanelView = React.createClass({
     propTypes: {
       notifications: React.PropTypes.object.isRequired,
-      client: React.PropTypes.object.isRequired,
       // Mostly used for UI components showcase and unit tests
-      callUrl: React.PropTypes.string,
       userProfile: React.PropTypes.object,
       // Used only for unit tests.
       showTabButtons: React.PropTypes.bool,
       selectedTab: React.PropTypes.string,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      mozLoop: React.PropTypes.object,
+      mozLoop: React.PropTypes.object.isRequired,
       roomStore:
         React.PropTypes.instanceOf(loop.store.RoomStore).isRequired
     },
@@ -890,17 +749,13 @@ loop.panel = (function(_, mozL10n) {
       }
     },
 
-    _roomsEnabled: function() {
-      return this.props.mozLoop.getLoopPref("rooms.enabled");
-    },
-
     _onStatusChanged: function() {
       var profile = this.props.mozLoop.userProfile;
       var currUid = this.state.userProfile ? this.state.userProfile.uid : null;
       var newUid = profile ? profile.uid : null;
       if (currUid != newUid) {
         // On profile change (login, logout), switch back to the default tab.
-        this.selectTab(this._roomsEnabled() ? "rooms" : "call");
+        this.selectTab("rooms");
         this.setState({userProfile: profile});
       }
       this.updateServiceErrors();
@@ -921,34 +776,6 @@ loop.panel = (function(_, mozL10n) {
           console.error("Invalid action", e.detail.action);
           break;
       }
-    },
-
-    /**
-     * The rooms feature is hidden by default for now. Once it gets mainstream,
-     * this method can be simplified.
-     */
-    _renderRoomsOrCallTab: function() {
-      if (!this._roomsEnabled()) {
-        return (
-          <Tab name="call">
-            <div className="content-area">
-              <CallUrlResult client={this.props.client}
-                             notifications={this.props.notifications}
-                             callUrl={this.props.callUrl} />
-              <ToSView />
-            </div>
-          </Tab>
-        );
-      }
-
-      return (
-        <Tab name="rooms">
-          <RoomList dispatcher={this.props.dispatcher}
-                    store={this.props.roomStore}
-                    userDisplayName={this._getUserDisplayName()}/>
-          <ToSView />
-        </Tab>
-      );
     },
 
     startForm: function(name, contact) {
@@ -1007,10 +834,16 @@ loop.panel = (function(_, mozL10n) {
                                 clearOnDocumentHidden={true} />
           <TabView ref="tabView" selectedTab={this.props.selectedTab}
             buttonsHidden={hideButtons} mozLoop={this.props.mozLoop}>
-            {this._renderRoomsOrCallTab()}
+            <Tab name="rooms">
+              <RoomList dispatcher={this.props.dispatcher}
+                        store={this.props.roomStore}
+                        userDisplayName={this._getUserDisplayName()}/>
+              <ToSView />
+            </Tab>
             <Tab name="contacts">
               <ContactsList selectTab={this.selectTab}
-                            startForm={this.startForm} />
+                            startForm={this.startForm}
+                            notifications={this.props.notifications} />
             </Tab>
             <Tab name="contacts_add" hidden={true}>
               <ContactDetailsForm ref="contacts_add" mode="add"
@@ -1033,7 +866,7 @@ loop.panel = (function(_, mozL10n) {
             <div className="signin-details">
               <AuthLink />
               <div className="footer-signin-separator" />
-              <SettingsDropdown />
+              <SettingsDropdown mozLoop={this.props.mozLoop}/>
             </div>
           </div>
         </div>
@@ -1049,7 +882,6 @@ loop.panel = (function(_, mozL10n) {
     // else to ensure the L10n environment is setup correctly.
     mozL10n.initialize(navigator.mozLoop);
 
-    var client = new loop.Client();
     var notifications = new sharedModels.NotificationCollection();
     var dispatcher = new loop.Dispatcher();
     var roomStore = new loop.store.RoomStore(dispatcher, {
@@ -1058,7 +890,6 @@ loop.panel = (function(_, mozL10n) {
     });
 
     React.render(<PanelView
-      client={client}
       notifications={notifications}
       roomStore={roomStore}
       mozLoop={navigator.mozLoop}
@@ -1077,7 +908,6 @@ loop.panel = (function(_, mozL10n) {
     init: init,
     AuthLink: AuthLink,
     AvailabilityDropdown: AvailabilityDropdown,
-    CallUrlResult: CallUrlResult,
     GettingStartedView: GettingStartedView,
     PanelView: PanelView,
     RoomEntry: RoomEntry,

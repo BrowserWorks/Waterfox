@@ -74,6 +74,12 @@
 #if MOZ_PACKAGE_MSVC_DLLS
 @BINPATH@/@MSVC_C_RUNTIME_DLL@
 @BINPATH@/@MSVC_CXX_RUNTIME_DLL@
+#ifdef MSVC_APPCRT_DLL
+@BINPATH@/@MSVC_APPCRT_DLL@
+#endif
+#ifdef MSVC_DESKTOPCRT_DLL
+@BINPATH@/@MSVC_DESKTOPCRT_DLL@
+#endif
 #endif
 #endif
 #ifdef MOZ_SHARED_MOZGLUE
@@ -139,6 +145,7 @@
 @BINPATH@/components/chrome.xpt
 @BINPATH@/components/commandhandler.xpt
 @BINPATH@/components/commandlines.xpt
+@BINPATH@/components/compartments.xpt
 @BINPATH@/components/composer.xpt
 @BINPATH@/components/content_events.xpt
 @BINPATH@/components/content_html.xpt
@@ -176,6 +183,9 @@
 @BINPATH@/components/dom_geolocation.xpt
 @BINPATH@/components/dom_media.xpt
 @BINPATH@/components/dom_network.xpt
+#ifdef MOZ_SECUREELEMENT
+@BINPATH@/components/dom_secureelement.xpt
+#endif
 #ifdef MOZ_NFC
 @BINPATH@/components/dom_nfc.xpt
 #endif
@@ -210,6 +220,7 @@
 @BINPATH@/components/dom_xul.xpt
 @BINPATH@/components/dom_time.xpt
 @BINPATH@/components/dom_engineeringmode.xpt
+@BINPATH@/components/dom_presentation.xpt
 @BINPATH@/components/downloads.xpt
 @BINPATH@/components/editor.xpt
 @BINPATH@/components/embed_base.xpt
@@ -229,7 +240,6 @@
 @BINPATH@/components/htmlparser.xpt
 @BINPATH@/components/identity.xpt
 @BINPATH@/components/imglib2.xpt
-@BINPATH@/components/imgicon.xpt
 @BINPATH@/components/inspector.xpt
 @BINPATH@/components/intl.xpt
 @BINPATH@/components/jar.xpt
@@ -342,6 +352,9 @@
 @BINPATH@/components/zipwriter.xpt
 
 ; JavaScript components
+@BINPATH@/components/RequestSync.manifest
+@BINPATH@/components/RequestSyncManager.js
+@BINPATH@/components/RequestSyncScheduler.js
 @BINPATH@/components/ChromeNotifications.js
 @BINPATH@/components/ChromeNotifications.manifest
 @BINPATH@/components/ConsoleAPI.manifest
@@ -373,7 +386,6 @@
 @BINPATH@/components/nsBrowserGlue.js
 @BINPATH@/components/nsSetDefaultBrowser.manifest
 @BINPATH@/components/nsSetDefaultBrowser.js
-@BINPATH@/components/BrowserPlaces.manifest
 @BINPATH@/components/toolkitsearch.manifest
 @BINPATH@/components/nsTryToClose.manifest
 @BINPATH@/components/nsTryToClose.js
@@ -401,6 +413,14 @@
 @BINPATH@/components/nsAsyncShutdown.js
 @BINPATH@/components/htmlMenuBuilder.js
 @BINPATH@/components/htmlMenuBuilder.manifest
+@BINPATH@/components/PresentationDeviceInfoManager.manifest
+@BINPATH@/components/PresentationDeviceInfoManager.js
+#ifdef MOZ_SECUREELEMENT
+@BINPATH@/components/SecureElement.js
+@BINPATH@/components/SecureElement.manifest
+@BINPATH@/components/UiccConnector.js
+@BINPATH@/components/UiccConnector.manifest
+#endif
 
 ; WiFi, NetworkManager, NetworkStats
 #ifdef MOZ_WIDGET_GONK
@@ -471,6 +491,7 @@
 @BINPATH@/components/OopCommandLine.js
 @BINPATH@/components/CommandLine.js
 #endif
+@BINPATH@/components/BootstrapCommandLine.js
 
 #ifdef MOZ_UPDATER
 @BINPATH@/components/nsUpdateService.manifest
@@ -497,7 +518,6 @@
 @BINPATH@/components/UnifiedComplete.manifest
 @BINPATH@/components/UnifiedComplete.js
 @BINPATH@/components/nsPlacesExpiration.js
-@BINPATH@/components/PlacesProtocolHandler.js
 @BINPATH@/components/PlacesCategoriesStarter.js
 @BINPATH@/components/nsDefaultCLH.manifest
 @BINPATH@/components/nsDefaultCLH.js
@@ -535,6 +555,10 @@
 @BINPATH@/components/Nfc.js
 @BINPATH@/components/NfcContentHelper.manifest
 @BINPATH@/components/NfcContentHelper.js
+#endif
+#ifdef MOZ_SECUREELEMENT
+@BINPATH@/components/DOMSecureElement.manifest
+@BINPATH@/components/DOMSecureElement.js
 #endif
 #ifdef MOZ_ENABLE_DBUS
 @BINPATH@/components/@DLL_PREFIX@dbusservice@DLL_SUFFIX@
@@ -582,6 +606,7 @@
 
 @BINPATH@/components/SystemMessageInternal.js
 @BINPATH@/components/SystemMessageManager.js
+@BINPATH@/components/SystemMessageCache.js
 @BINPATH@/components/SystemMessageManager.manifest
 @BINPATH@/components/HCIEventTransactionSystemMessage.manifest
 @BINPATH@/components/HCIEventTransactionSystemMessageConfigurator.js
@@ -599,6 +624,7 @@
 
 @BINPATH@/components/Payment.js
 @BINPATH@/components/PaymentFlowInfo.js
+@BINPATH@/components/PaymentProvider.js
 @BINPATH@/components/Payment.manifest
 
 @BINPATH@/components/DownloadsAPI.js
@@ -728,7 +754,6 @@
 @BINPATH@/res/fonts/*
 @BINPATH@/res/dtd/*
 @BINPATH@/res/html/*
-@BINPATH@/res/langGroups.properties
 @BINPATH@/res/language.properties
 @BINPATH@/res/entityTables/*
 #ifdef XP_MACOSX
@@ -850,6 +875,7 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/ProcessGlobal.js
 @BINPATH@/components/OMAContentHandler.js
 @BINPATH@/components/PaymentGlue.js
+@BINPATH@/components/PaymentProviderStrategy.js
 @BINPATH@/components/RecoveryService.js
 @BINPATH@/components/MailtoProtocolHandler.js
 @BINPATH@/components/SmsProtocolHandler.js
@@ -861,6 +887,7 @@ bin/components/@DLL_PREFIX@nkgnomevfs@DLL_SUFFIX@
 @BINPATH@/components/InterAppCommUIGlue.js
 @BINPATH@/components/SystemMessageGlue.js
 @BINPATH@/components/B2GAppMigrator.js
+@BINPATH@/components/B2GPresentationDevicePrompt.js
 
 #ifndef MOZ_WIDGET_GONK
 @BINPATH@/components/SimulatorScreen.js

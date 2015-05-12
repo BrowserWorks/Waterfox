@@ -86,15 +86,27 @@ enum nsChangeHint {
 
   /**
    * The frame's overflow area has changed, through a change in its transform.
+   * In other words, the frame's pre-transform overflow is unchanged, but
+   * its post-transform overflow has changed, and thus its effect on its
+   * parent's overflow has changed.  If the pre-transform overflow has
+   * changed, see nsChangeHint_UpdateOverflow.
    * Does not update any descendant frames.
    */
   nsChangeHint_UpdatePostTransformOverflow = 0x2000,
 
   /**
+   * This frame's effect on its parent's overflow area has changed.
+   * (But neither its pre-transform nor post-transform overflow have
+   * changed; if those are the case, see
+   * nsChangeHint_UpdatePostTransformOverflow.)
+   */
+  nsChangeHint_UpdateParentOverflow = 0x4000,
+
+  /**
    * The children-only transform of an SVG frame changed, requiring the
    * overflow rects of the frame's immediate children to be updated.
    */
-  nsChangeHint_ChildrenOnlyTransform = 0x4000,
+  nsChangeHint_ChildrenOnlyTransform = 0x8000,
 
   /**
    * The frame's offsets have changed, while its dimensions might have
@@ -106,7 +118,7 @@ enum nsChangeHint {
    * nsChangeHint_UpdateOverflow in order to get the overflow areas of
    * the ancestors updated as well.
    */
-  nsChangeHint_RecomputePosition = 0x8000,
+  nsChangeHint_RecomputePosition = 0x10000,
 
   /**
    * Behaves like ReconstructFrame, but only if the frame has descendants
@@ -114,7 +126,7 @@ enum nsChangeHint {
    * has changed whether the frame is a container for fixed-pos or abs-pos
    * elements, but reframing is otherwise not needed.
    */
-  nsChangeHint_AddOrRemoveTransform = 0x10000,
+  nsChangeHint_AddOrRemoveTransform = 0x20000,
 
   /**
    * This change hint has *no* change handling behavior.  However, it
@@ -122,19 +134,19 @@ enum nsChangeHint {
    * changes, and it's inherited by a child, that might require a reflow
    * due to the border-width change on the child.
    */
-  nsChangeHint_BorderStyleNoneChange = 0x20000,
+  nsChangeHint_BorderStyleNoneChange = 0x40000,
 
   /**
    * SVG textPath needs to be recomputed because the path has changed.
    * This means that the glyph positions of the text need to be recomputed.
    */
-  nsChangeHint_UpdateTextPath = 0x40000,
+  nsChangeHint_UpdateTextPath = 0x80000,
 
   /**
    * This will schedule an invalidating paint. This is useful if something
    * has changed which will be invalidated by DLBI.
    */
-  nsChangeHint_SchedulePaint = 0x80000,
+  nsChangeHint_SchedulePaint = 0x100000,
 
   /**
    * A hint reflecting that style data changed with no change handling
@@ -150,12 +162,12 @@ enum nsChangeHint {
    * different data would be cached information that would be re-calculated
    * to the same values, such as nsStyleBorder::mSubImages.)
    */
-  nsChangeHint_NeutralChange = 0x100000,
+  nsChangeHint_NeutralChange = 0x200000,
 
   /**
    * This will cause rendering observers to be invalidated.
    */
-  nsChangeHint_InvalidateRenderingObservers = 0x200000
+  nsChangeHint_InvalidateRenderingObservers = 0x400000
 
   // IMPORTANT NOTE: When adding new hints, consider whether you need to
   // add them to NS_HintsNotHandledForDescendantsIn() below.  Please also
@@ -214,6 +226,7 @@ inline bool NS_IsHintSubset(nsChangeHint aSubset, nsChangeHint aSuperSet) {
           nsChangeHint_UpdateOpacityLayer | \
           nsChangeHint_UpdateOverflow | \
           nsChangeHint_UpdatePostTransformOverflow | \
+          nsChangeHint_UpdateParentOverflow | \
           nsChangeHint_ChildrenOnlyTransform | \
           nsChangeHint_RecomputePosition | \
           nsChangeHint_AddOrRemoveTransform | \
@@ -229,6 +242,7 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
     nsChangeHint_UpdateOpacityLayer |
     nsChangeHint_UpdateOverflow |
     nsChangeHint_UpdatePostTransformOverflow |
+    nsChangeHint_UpdateParentOverflow |
     nsChangeHint_ChildrenOnlyTransform |
     nsChangeHint_RecomputePosition |
     nsChangeHint_AddOrRemoveTransform |
@@ -248,9 +262,9 @@ inline nsChangeHint NS_HintsNotHandledForDescendantsIn(nsChangeHint aChangeHint)
     NS_UpdateHint(result, nsChangeHint_ClearAncestorIntrinsics);
   }
 
-  NS_ABORT_IF_FALSE(NS_IsHintSubset(result,
-                                    nsChangeHint_Hints_NotHandledForDescendants),
-                    "something is inconsistent");
+  MOZ_ASSERT(NS_IsHintSubset(result,
+                             nsChangeHint_Hints_NotHandledForDescendants),
+             "something is inconsistent");
 
   return result;
 }
@@ -334,32 +348,30 @@ enum nsRestyleHint {
   // work.)  Supported only for element style contexts and not for
   // pseudo-elements or anonymous boxes, on which it converts to
   // eRestyle_Self.
+  // If the change is for the advance of a declarative animation, use
+  // the value below instead.
   eRestyle_StyleAttribute = (1<<6),
 
-  // Additional restyle hint to be used along with CSSTransitions,
-  // CSSAnimations, SVGAttrAnimations, or StyleAttribute.  This
-  // indicates that along with the replacement given, appropriate
-  // switching between the style with animation and style without
-  // animation should be performed by adding or removing rules that
-  // should be present only in the style with animation.
-  // This is implied by eRestyle_Self or eRestyle_Subtree.
-  // FIXME: Remove this as part of bug 960465.
-  eRestyle_ChangeAnimationPhase = (1 << 7),
-
-  // Same as the previous, except this applies to the entire subtree.
-  // FIXME: Remove this as part of bug 960465.
-  eRestyle_ChangeAnimationPhaseDescendants = (1 << 8),
+  // Same as eRestyle_StyleAttribute, but for when the change results
+  // from the advance of a declarative animation.
+  eRestyle_StyleAttribute_Animations = (1<<7),
 
   // Continue the restyling process to the current frame's children even
   // if this frame's restyling resulted in no style changes.
-  eRestyle_Force = (1<<9),
+  eRestyle_Force = (1<<8),
 
   // Continue the restyling process to all of the current frame's
   // descendants, even if any frame's restyling resulted in no style
   // changes.  (Implies eRestyle_Force.)  Note that this is weaker than
   // eRestyle_Subtree, which makes us rerun selector matching on all
   // descendants rather than just continuing the restyling process.
-  eRestyle_ForceDescendants = (1<<10),
+  eRestyle_ForceDescendants = (1<<9),
+
+  // Useful unions:
+  eRestyle_AllHintsWithAnimations = eRestyle_CSSTransitions |
+                                    eRestyle_CSSAnimations |
+                                    eRestyle_SVGAttrAnimations |
+                                    eRestyle_StyleAttribute_Animations,
 };
 
 // The functions below need an integral type to cast to to avoid

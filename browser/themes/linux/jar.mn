@@ -6,7 +6,7 @@ browser.jar:
 % skin browser classic/1.0 %skin/classic/browser/
 % override chrome://global/skin/icons/warning-16.png moz-icon://stock/gtk-dialog-warning?size=menu
   skin/classic/browser/sanitizeDialog.css
-* skin/classic/browser/aboutSessionRestore.css
+* skin/classic/browser/aboutSessionRestore.css                  (../shared/aboutSessionRestore.css)
   skin/classic/browser/aboutSessionRestore-window-icon.png
   skin/classic/browser/aboutWelcomeBack.css                     (../shared/aboutWelcomeBack.css)
   skin/classic/browser/aboutCertError.css
@@ -21,15 +21,13 @@ browser.jar:
 #ifdef MOZ_SERVICES_SYNC
   skin/classic/browser/aboutSyncTabs.css
 #endif
-  skin/classic/browser/aboutTabCrashed.css
+  skin/classic/browser/aboutTabCrashed.css                      (../shared/aboutTabCrashed.css)
   skin/classic/browser/actionicon-tab.png
 * skin/classic/browser/browser.css
 * skin/classic/browser/devedition.css
 * skin/classic/browser/browser-lightweightTheme.css
   skin/classic/browser/click-to-play-warning-stripes.png
   skin/classic/browser/content-contextmenu.svg
-  skin/classic/browser/dots.png                             (../shared/dots.png)
-  skin/classic/browser/dots@2x.png                          (../shared/dots@2x.png)
   skin/classic/browser/drm-icon.svg                         (../shared/drm-icon.svg)
 * skin/classic/browser/engineManager.css
   skin/classic/browser/fullscreen-darknoise.png
@@ -88,7 +86,16 @@ browser.jar:
   skin/classic/browser/Toolbar-inverted.png
   skin/classic/browser/Toolbar-small.png
   skin/classic/browser/undoCloseTab.png                        (../shared/undoCloseTab.png)
+  skin/classic/browser/update-badge.svg                        (../shared/update-badge.svg)
   skin/classic/browser/urlbar-arrow.png
+  skin/classic/browser/session-restore.svg                  (../shared/incontent-icons/session-restore.svg)
+  skin/classic/browser/tab-crashed.svg                      (../shared/incontent-icons/tab-crashed.svg)
+  skin/classic/browser/welcome-back.svg                     (../shared/incontent-icons/welcome-back.svg)
+  skin/classic/browser/reader-tour.png                      (../shared/reader/reader-tour.png)
+  skin/classic/browser/readerMode.svg                       (../shared/reader/readerMode.svg)
+  skin/classic/browser/readinglist/icons.svg          (../shared/readinglist/icons.svg)
+  skin/classic/browser/readinglist/readinglist-icon.svg (../shared/readinglist/readinglist-icon.svg)
+* skin/classic/browser/readinglist/sidebar.css        (readinglist/sidebar.css)
   skin/classic/browser/webRTC-shareDevice-16.png
   skin/classic/browser/webRTC-shareDevice-64.png
   skin/classic/browser/webRTC-sharingDevice-16.png    (../shared/webrtc/webRTC-sharingDevice-16.png)
@@ -172,8 +179,7 @@ browser.jar:
 * skin/classic/browser/preferences/in-content/preferences.css (preferences/in-content/preferences.css)
 * skin/classic/browser/preferences/in-content/dialog.css      (preferences/in-content/dialog.css)
   skin/classic/browser/preferences/in-content/favicon.ico     (../shared/incontentprefs/favicon.ico)
-  skin/classic/browser/preferences/in-content/icons.png       (../shared/incontentprefs/icons.png)
-  skin/classic/browser/preferences/in-content/icons@2x.png    (../shared/incontentprefs/icons@2x.png)
+  skin/classic/browser/preferences/in-content/icons.svg       (../shared/incontentprefs/icons.svg)
   skin/classic/browser/preferences/in-content/search.css      (../shared/incontentprefs/search.css)
   skin/classic/browser/preferences/applications.css   (preferences/applications.css)
   skin/classic/browser/preferences/aboutPermissions.css (preferences/aboutPermissions.css)
@@ -188,6 +194,7 @@ browser.jar:
   skin/classic/browser/tabbrowser/alltabs.png         (tabbrowser/alltabs.png)
   skin/classic/browser/tabbrowser/alltabs-inverted.png (tabbrowser/alltabs-inverted.png)
   skin/classic/browser/tabbrowser/connecting.png      (tabbrowser/connecting.png)
+  skin/classic/browser/tabbrowser/crashed.svg         (../shared/tabbrowser/crashed.svg)
   skin/classic/browser/tabbrowser/loading.png         (tabbrowser/loading.png)
   skin/classic/browser/tabbrowser/tab-active-middle.png     (tabbrowser/tab-active-middle.png)
   skin/classic/browser/tabbrowser/tab-arrow-left.png        (tabbrowser/tab-arrow-left.png)
@@ -232,6 +239,7 @@ browser.jar:
   skin/classic/browser/devtools/newtab-inverted.png    (../shared/devtools/images/newtab-inverted.png)
   skin/classic/browser/devtools/newtab-inverted@2x.png (../shared/devtools/images/newtab-inverted@2x.png)
 * skin/classic/browser/devtools/widgets.css           (devtools/widgets.css)
+  skin/classic/browser/devtools/power.svg                     (../shared/devtools/images/power.svg)
   skin/classic/browser/devtools/filetype-dir-close.svg        (../shared/devtools/images/filetypes/dir-close.svg)
   skin/classic/browser/devtools/filetype-dir-open.svg         (../shared/devtools/images/filetypes/dir-open.svg)
   skin/classic/browser/devtools/filetype-globe.svg            (../shared/devtools/images/filetypes/globe.svg)

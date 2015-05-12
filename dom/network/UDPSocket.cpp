@@ -20,6 +20,10 @@
 namespace mozilla {
 namespace dom {
 
+NS_IMPL_ISUPPORTS(UDPSocket::ListenerProxy,
+                  nsIUDPSocketListener,
+                  nsIUDPSocketInternal)
+
 NS_IMPL_CYCLE_COLLECTION_CLASS(UDPSocket)
 
 NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INHERITED(UDPSocket, DOMEventTargetHelper)
@@ -174,6 +178,11 @@ UDPSocket::CloseWithReason(nsresult aReason)
   }
 
   mReadyState = SocketReadyState::Closed;
+
+  if (mListenerProxy) {
+    mListenerProxy->Disconnect();
+    mListenerProxy = nullptr;
+  }
 
   if (mSocket) {
     mSocket->Close();
@@ -430,7 +439,9 @@ UDPSocket::InitLocal(const nsAString& aLocalAddress,
   }
   mLocalPort.SetValue(localPort);
 
-  rv = mSocket->AsyncListen(this);
+  mListenerProxy = new ListenerProxy(this);
+
+  rv = mSocket->AsyncListen(mListenerProxy);
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -458,7 +469,14 @@ UDPSocket::InitRemote(const nsAString& aLocalAddress,
     return rv;
   }
 
-  rv = sock->Bind(this, NS_ConvertUTF16toUTF8(aLocalAddress), aLocalPort, mAddressReuse, mLoopback);
+  mListenerProxy = new ListenerProxy(this);
+
+  rv = sock->Bind(mListenerProxy,
+                  NS_ConvertUTF16toUTF8(aLocalAddress),
+                  aLocalPort,
+                  mAddressReuse,
+                  mLoopback);
+
   if (NS_FAILED(rv)) {
     return rv;
   }
@@ -494,13 +512,13 @@ UDPSocket::Init(const nsString& aLocalAddress,
     return rv.ErrorCode();
   }
 
-  class OpenSocketRunnable MOZ_FINAL : public nsRunnable
+  class OpenSocketRunnable final : public nsRunnable
   {
   public:
     explicit OpenSocketRunnable(UDPSocket* aSocket) : mSocket(aSocket)
     { }
 
-    NS_IMETHOD Run() MOZ_OVERRIDE
+    NS_IMETHOD Run() override
     {
       MOZ_ASSERT(mSocket);
 

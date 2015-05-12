@@ -146,15 +146,9 @@ function testSendBigArray(socket) {
       ok(is_same_buffer(msg.data, BIG_TYPED_ARRAY.subarray(byteBegin, byteReceived)), 'expected same buffer data [' + byteBegin+ '-' + byteReceived + ']');
       if (byteReceived >= BIG_TYPED_ARRAY.length) {
         socket.removeEventListener('message', recv_callback);
-        clearTimeout(timeout);
         resolve(socket);
       }
     });
-
-    let timeout = setTimeout(function() {
-      ok(false, 'timeout for sending big array');
-      resolve(socket);
-    }, 5000);
   });
 }
 
@@ -173,15 +167,9 @@ function testSendBigBlob(socket) {
       ok(is_same_buffer(msg.data, BIG_TYPED_ARRAY.subarray(byteBegin, byteReceived)), 'expected same buffer data [' + byteBegin+ '-' + byteReceived + ']');
       if (byteReceived >= BIG_TYPED_ARRAY.length) {
         socket.removeEventListener('message', recv_callback);
-        clearTimeout(timeout);
         resolve(socket);
       }
     });
-
-    let timeout = setTimeout(function() {
-      ok(false, 'timeout for sending big blob');
-      resolve(socket);
-    }, 5000);
   });
 }
 
@@ -286,6 +274,7 @@ function testOpenFailed() {
 
   return socket.opened.then(function() {
     ok(false, 'should not resolve openedPromise while fail to bind socket');
+    socket.close();
   }).catch(function(reason) {
     is(reason.name, 'NetworkError', 'expected openedPromise to be rejected while fail to bind socket');
   });
@@ -303,7 +292,9 @@ function testSendBeforeOpen() {
     ok(true, 'expected send fail before openedPromise is resolved');
   }
 
-  return socket.opened;
+  return socket.opened.then(function() {
+    socket.close();
+  });
 }
 
 function testCloseBeforeOpened() {
@@ -329,6 +320,9 @@ function testOpenWithoutClose() {
     let socket = new UDPSocket();
     closed.push(socket.closed);
   }
+
+  SpecialPowers.gc();
+  info('all unrefereced socket should be closed right after GC');
 
   return Promise.all(closed);
 }

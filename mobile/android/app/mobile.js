@@ -101,7 +101,7 @@ pref("network.buffer.cache.count", 24);
 pref("network.buffer.cache.size",  16384);
 
 // predictive actions
-pref("network.predictor.enabled", false);
+pref("network.predictor.enabled", true);
 pref("network.predictor.max-db-size", 2097152); // bytes
 pref("network.predictor.preserve", 50); // percentage of predictor data to keep when cleaning up
 
@@ -123,6 +123,7 @@ pref("browser.sessionstore.interval", 10000); // milliseconds
 pref("browser.sessionstore.max_tabs_undo", 5);
 pref("browser.sessionstore.max_resumed_crashes", 1);
 pref("browser.sessionstore.recent_crashes", 0);
+pref("browser.sessionstore.privacy_level", 0); // saving data: 0 = all, 1 = unencrypted sites, 2 = never
 
 /* these should help performance */
 pref("mozilla.widget.force-24bpp", true);
@@ -297,11 +298,6 @@ pref("chrome.override_package.passwordmgr", "browser");
 // enable xul error pages
 pref("browser.xul.error_pages.enabled", true);
 
-pref("browser.history.grouping", "day");
-pref("browser.history.showSessions", false);
-pref("browser.sessionhistory.max_entries", 50);
-pref("browser.history_expire_sites", 40000);
-
 // disable color management
 pref("gfx.color_management.mode", 0);
 
@@ -399,6 +395,9 @@ pref("font.size.inflation.minTwips", 120);
 
 // When true, zooming will be enabled on all sites, even ones that declare user-scalable=no.
 pref("browser.ui.zoom.force-user-scalable", false);
+
+pref("ui.zoomedview.enabled", false);
+pref("ui.zoomedview.limitReadableSize", 8);  // value in layer pixels
 
 pref("ui.touch.radius.enabled", false);
 pref("ui.touch.radius.leftmm", 3);
@@ -542,7 +541,6 @@ pref("dom.webnotifications.enabled", true);
 
 // prevent tooltips from showing up
 pref("browser.chrome.toolbar_tips", false);
-pref("dom.indexedDB.warningQuota", 5);
 
 // prevent video elements from preloading too much data
 pref("media.preload.default", 1); // default to preload none
@@ -568,7 +566,7 @@ pref("media.fragmented-mp4.android-media-codec.enabled", true);
 pref("media.fragmented-mp4.android-media-codec.preferred", true);
 
 // optimize images memory usage
-pref("image.mem.decodeondraw", false);
+pref("image.mem.decodeondraw", true);
 
 #ifdef NIGHTLY_BUILD
 // Shumway component (SWF player) is disabled by default. Also see bug 904346.
@@ -701,26 +699,6 @@ pref("network.manage-offline-status", true);
 
 // increase the timeout clamp for background tabs to 15 minutes
 pref("dom.min_background_timeout_value", 900000);
-
-// The default state of reader mode works on loaded a page.
-pref("reader.parse-on-load.enabled", true);
-
-// Force to enable reader mode to parse on loaded a page.
-// Allow reader mode even on low-memory platforms
-pref("reader.parse-on-load.force-enabled", false);
-
-// The default of font size in reader (1-5)
-pref("reader.font_size", 3);
-
-// The default color scheme in reader (light, dark, sepia, auto)
-// auto = color automatically adjusts according to ambient light level
-pref("reader.color_scheme", "auto");
-
-// The font type in reader (sans-serif, serif)
-pref("reader.font_type", "sans-serif");
-
-// Used to show a first-launch tip in reader
-pref("reader.has_used_toolbar", false);
 
 // Media plugins for libstagefright playback on android
 pref("media.plugins.enabled", true);
@@ -869,3 +847,17 @@ pref("dom.meta-viewport.enabled", true);
 
 // Enable GMP support in the addon manager.
 pref("media.gmp-provider.enabled", true);
+
+// The default color scheme in reader mode (light, dark, auto)
+// auto = color automatically adjusts according to ambient light level
+// (auto only works on platforms where the 'devicelight' event is enabled)
+pref("reader.color_scheme", "auto");
+
+// Color scheme values available in reader mode UI.
+pref("reader.color_scheme.values", "[\"dark\",\"auto\",\"light\"]");
+
+// Whether to use a vertical or horizontal toolbar.
+pref("reader.toolbar.vertical", false);
+
+// Whether or not to display buttons related to reading list in reader view.
+pref("browser.readinglist.enabled", true);

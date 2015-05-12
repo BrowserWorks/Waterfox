@@ -11,13 +11,11 @@ const OVERVIEW_UPDATE_INTERVAL = 200; // ms
 const FRAMERATE_GRAPH_LOW_RES_INTERVAL = 100; // ms
 const FRAMERATE_GRAPH_HIGH_RES_INTERVAL = 16; // ms
 
-const FRAMERATE_GRAPH_HEIGHT = 45; // px
+const FRAMERATE_GRAPH_HEIGHT = 40; // px
 const MARKERS_GRAPH_HEADER_HEIGHT = 14; // px
-const MARKERS_GRAPH_ROW_HEIGHT = 11; // px
-const MARKERS_GROUP_VERTICAL_PADDING = 5; // px
+const MARKERS_GRAPH_ROW_HEIGHT = 10; // px
+const MARKERS_GROUP_VERTICAL_PADDING = 4; // px
 const MEMORY_GRAPH_HEIGHT = 30; // px
-
-const GRAPH_SCROLL_EVENTS_DRAIN = 50; // ms
 
 /**
  * View handler for the overview panel's time view, displaying
@@ -27,79 +25,175 @@ let OverviewView = {
   /**
    * Sets up the view with event binding.
    */
-  initialize: Task.async(function *() {
+  initialize: function () {
+    if (gFront.getMocksInUse().timeline) {
+      this.disable();
+    }
+    this._onRecordingWillStart = this._onRecordingWillStart.bind(this);
     this._onRecordingStarted = this._onRecordingStarted.bind(this);
+    this._onRecordingWillStop = this._onRecordingWillStop.bind(this);
     this._onRecordingStopped = this._onRecordingStopped.bind(this);
+    this._onRecordingSelected = this._onRecordingSelected.bind(this);
     this._onRecordingTick = this._onRecordingTick.bind(this);
-    this._onGraphMouseUp = this._onGraphMouseUp.bind(this);
-    this._onGraphScroll = this._onGraphScroll.bind(this);
+    this._onGraphSelecting = this._onGraphSelecting.bind(this);
+    this._onPrefChanged = this._onPrefChanged.bind(this);
 
-    yield this._showFramerateGraph();
-    yield this._showMarkersGraph();
-    yield this._showMemoryGraph();
+    // Toggle the initial visibility of memory and framerate graph containers
+    // based off of prefs.
+    $("#memory-overview").hidden = !PerformanceController.getPref("enable-memory");
+    $("#time-framerate").hidden = !PerformanceController.getPref("enable-framerate");
 
-    this.framerateGraph.on("mouseup", this._onGraphMouseUp);
-    this.framerateGraph.on("scroll", this._onGraphScroll);
-    this.markersOverview.on("mouseup", this._onGraphMouseUp);
-    this.markersOverview.on("scroll", this._onGraphScroll);
-    this.memoryOverview.on("mouseup", this._onGraphMouseUp);
-    this.memoryOverview.on("scroll", this._onGraphScroll);
-
+    PerformanceController.on(EVENTS.PREF_CHANGED, this._onPrefChanged);
+    PerformanceController.on(EVENTS.RECORDING_WILL_START, this._onRecordingWillStart);
     PerformanceController.on(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
+    PerformanceController.on(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
     PerformanceController.on(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
-  }),
+    PerformanceController.on(EVENTS.RECORDING_SELECTED, this._onRecordingSelected);
+  },
 
   /**
    * Unbinds events.
    */
   destroy: function () {
-    this.framerateGraph.off("mouseup", this._onGraphMouseUp);
-    this.framerateGraph.off("scroll", this._onGraphScroll);
-    this.markersOverview.off("mouseup", this._onGraphMouseUp);
-    this.markersOverview.off("scroll", this._onGraphScroll);
-    this.memoryOverview.off("mouseup", this._onGraphMouseUp);
-    this.memoryOverview.off("scroll", this._onGraphScroll);
-
-    clearNamedTimeout("graph-scroll");
+    PerformanceController.off(EVENTS.PREF_CHANGED, this._onPrefChanged);
+    PerformanceController.off(EVENTS.RECORDING_WILL_START, this._onRecordingWillStart);
     PerformanceController.off(EVENTS.RECORDING_STARTED, this._onRecordingStarted);
+    PerformanceController.off(EVENTS.RECORDING_WILL_STOP, this._onRecordingWillStop);
     PerformanceController.off(EVENTS.RECORDING_STOPPED, this._onRecordingStopped);
+    PerformanceController.off(EVENTS.RECORDING_SELECTED, this._onRecordingSelected);
   },
 
   /**
-   * Sets up the framerate graph.
+   * Disabled in the event we're using a Timeline mock, so we'll have no
+   * markers, ticks or memory data to show, so just block rendering and hide
+   * the panel.
    */
-  _showFramerateGraph: Task.async(function *() {
-    this.framerateGraph = new LineGraphWidget($("#time-framerate"), {
-      metric: L10N.getStr("graphs.fps")
-    });
-    this.framerateGraph.fixedHeight = FRAMERATE_GRAPH_HEIGHT;
-    yield this.framerateGraph.ready();
-  }),
+  disable: function () {
+    this._disabled = true;
+    $("#overview-pane").hidden = true;
+  },
 
   /**
-   * Sets up the markers overivew graph.
+   * Returns the disabled status.
+   *
+   * @return boolean
    */
-  _showMarkersGraph: Task.async(function *() {
+  isDisabled: function () {
+    return this._disabled;
+  },
+
+  /**
+   * Sets the time interval selection for all graphs in this overview.
+   *
+   * @param object interval
+   *        The { starTime, endTime }, in milliseconds.
+   */
+  setTimeInterval: function(interval, options = {}) {
+    if (this.isDisabled()) {
+      return;
+    }
+
+    let recording = PerformanceController.getCurrentRecording();
+    if (recording == null) {
+      throw new Error("A recording should be available in order to set the selection.");
+    }
+    let mapStart = () => 0;
+    let mapEnd = () => recording.getDuration();
+    let selection = { start: interval.startTime, end: interval.endTime };
+    this._stopSelectionChangeEventPropagation = options.stopPropagation;
+    this.markersOverview.setMappedSelection(selection, { mapStart, mapEnd });
+    this._stopSelectionChangeEventPropagation = false;
+  },
+
+  /**
+   * Gets the time interval selection for all graphs in this overview.
+   *
+   * @return object
+   *         The { startTime, endTime }, in milliseconds.
+   */
+  getTimeInterval: function() {
+    let recording = PerformanceController.getCurrentRecording();
+
+    if (this.isDisabled()) {
+      return { startTime: 0, endTime: recording.getDuration() };
+    }
+
+    if (recording == null) {
+      throw new Error("A recording should be available in order to get the selection.");
+    }
+    let mapStart = () => 0;
+    let mapEnd = () => recording.getDuration();
+    let selection = this.markersOverview.getMappedSelection({ mapStart, mapEnd });
+    return { startTime: selection.min, endTime: selection.max };
+  },
+
+  /**
+   * Sets up the markers overivew graph, if needed.
+   *
+   * @return object
+   *         A promise resolved to `true` when the graph was initialized.
+   */
+  _markersGraphAvailable: Task.async(function *() {
+    if (this.markersOverview) {
+      yield this.markersOverview.ready();
+      return true;
+    }
     this.markersOverview = new MarkersOverview($("#markers-overview"), TIMELINE_BLUEPRINT);
     this.markersOverview.headerHeight = MARKERS_GRAPH_HEADER_HEIGHT;
     this.markersOverview.rowHeight = MARKERS_GRAPH_ROW_HEIGHT;
     this.markersOverview.groupPadding = MARKERS_GROUP_VERTICAL_PADDING;
+    this.markersOverview.on("selecting", this._onGraphSelecting);
     yield this.markersOverview.ready();
-
-    CanvasGraphUtils.linkAnimation(this.framerateGraph, this.markersOverview);
-    CanvasGraphUtils.linkSelection(this.framerateGraph, this.markersOverview);
+    return true;
   }),
 
   /**
-   * Sets up the memory overview graph.
+   * Sets up the memory overview graph, if allowed and needed.
+   *
+   * @return object
+   *         A promise resolved to `true` if the graph was initialized and is
+   *         ready to use, `false` if the graph is disabled.
    */
-  _showMemoryGraph: Task.async(function *() {
+  _memoryGraphAvailable: Task.async(function *() {
+    if (!PerformanceController.getPref("enable-memory")) {
+      return false;
+    }
+    if (this.memoryOverview) {
+      yield this.memoryOverview.ready();
+      return true;
+    }
     this.memoryOverview = new MemoryOverview($("#memory-overview"));
     this.memoryOverview.fixedHeight = MEMORY_GRAPH_HEIGHT;
     yield this.memoryOverview.ready();
 
-    CanvasGraphUtils.linkAnimation(this.framerateGraph, this.memoryOverview);
-    CanvasGraphUtils.linkSelection(this.framerateGraph, this.memoryOverview);
+    CanvasGraphUtils.linkAnimation(this.markersOverview, this.memoryOverview);
+    CanvasGraphUtils.linkSelection(this.markersOverview, this.memoryOverview);
+    return true;
+  }),
+
+  /**
+   * Sets up the framerate graph, if allowed and needed.
+   *
+   * @return object
+   *         A promise resolved to `true` if the graph was initialized and is
+   *         ready to use, `false` if the graph is disabled.
+   */
+  _framerateGraphAvailable: Task.async(function *() {
+    if (!PerformanceController.getPref("enable-framerate")) {
+      return false;
+    }
+    if (this.framerateGraph) {
+      yield this.framerateGraph.ready();
+      return true;
+    }
+    let metric = L10N.getStr("graphs.fps");
+    this.framerateGraph = new LineGraphWidget($("#time-framerate"), { metric });
+    this.framerateGraph.fixedHeight = FRAMERATE_GRAPH_HEIGHT;
+    yield this.framerateGraph.ready();
+
+    CanvasGraphUtils.linkAnimation(this.markersOverview, this.framerateGraph);
+    CanvasGraphUtils.linkSelection(this.markersOverview, this.framerateGraph);
+    return true;
   }),
 
   /**
@@ -109,19 +203,30 @@ let OverviewView = {
    *        The fps graph resolution. @see Graphs.jsm
    */
   render: Task.async(function *(resolution) {
-    let interval = PerformanceController.getInterval();
-    let markers = PerformanceController.getMarkers();
-    let memory = PerformanceController.getMemory();
-    let timestamps = PerformanceController.getTicks();
+    if (this.isDisabled()) {
+      return;
+    }
+    let recording = PerformanceController.getCurrentRecording();
+    let duration = recording.getDuration();
+    let markers = recording.getMarkers();
+    let memory = recording.getMemory();
+    let timestamps = recording.getTicks();
 
-    this.markersOverview.setData({ interval, markers });
-    this.emit(EVENTS.MARKERS_GRAPH_RENDERED);
-
-    this.memoryOverview.setData({ interval, memory });
-    this.emit(EVENTS.MEMORY_GRAPH_RENDERED);
-
-    yield this.framerateGraph.setDataFromTimestamps(timestamps, resolution);
-    this.emit(EVENTS.FRAMERATE_GRAPH_RENDERED);
+    // Empty or older recordings might yield no markers, memory or timestamps.
+    if (markers && (yield this._markersGraphAvailable())) {
+      this.markersOverview.setData({ markers, duration });
+      this.emit(EVENTS.MARKERS_GRAPH_RENDERED);
+    }
+    if (memory && (yield this._memoryGraphAvailable())) {
+      this.memoryOverview.dataDuration = duration;
+      this.memoryOverview.setData(memory);
+      this.emit(EVENTS.MEMORY_GRAPH_RENDERED);
+    }
+    if (timestamps && (yield this._framerateGraphAvailable())) {
+      this.framerateGraph.dataDuration = duration;
+      yield this.framerateGraph.setDataFromTimestamps(timestamps, resolution);
+      this.emit(EVENTS.FRAMERATE_GRAPH_RENDERED);
+    }
 
     // Finished rendering all graphs in this overview.
     this.emit(EVENTS.OVERVIEW_RENDERED);
@@ -138,40 +243,6 @@ let OverviewView = {
   }),
 
   /**
-   * Fired when the graph selection has changed. Called by
-   * mouseup and scroll events.
-   */
-  _onSelectionChange: function () {
-    if (this.framerateGraph.hasSelection()) {
-      let { min: beginAt, max: endAt } = this.framerateGraph.getMappedSelection();
-      this.emit(EVENTS.OVERVIEW_RANGE_SELECTED, { beginAt, endAt });
-    } else {
-      this.emit(EVENTS.OVERVIEW_RANGE_CLEARED);
-    }
-  },
-
-  /**
-   * Listener handling the "mouseup" event for the framerate graph.
-   * Fires an event to be handled elsewhere.
-   */
-  _onGraphMouseUp: function () {
-    // Only fire a selection change event if the selection is actually enabled.
-    if (this.framerateGraph.selectionEnabled) {
-      this._onSelectionChange();
-    }
-  },
-
-  /**
-   * Listener handling the "scroll" event for the framerate graph.
-   * Fires a debounced event to be handled elsewhere.
-   */
-  _onGraphScroll: function () {
-    setNamedTimeout("graph-scroll", GRAPH_SCROLL_EVENTS_DRAIN, () => {
-      this._onSelectionChange();
-    });
-  },
-
-  /**
    * Called to refresh the timer to keep firing _onRecordingTick.
    */
   _prepareNextTick: function () {
@@ -183,30 +254,102 @@ let OverviewView = {
   },
 
   /**
-   * Called when recording starts.
+   * Fired when the graph selection has changed. Called by
+   * mouseup and scroll events.
    */
-  _onRecordingStarted: function () {
-    this._timeoutId = setTimeout(this._onRecordingTick, OVERVIEW_UPDATE_INTERVAL);
-
-    this.framerateGraph.dropSelection();
-    this.framerateGraph.selectionEnabled = false;
-    this.markersOverview.selectionEnabled = false;
-    this.memoryOverview.selectionEnabled = false;
+  _onGraphSelecting: function () {
+    if (this._stopSelectionChangeEventPropagation) {
+      return;
+    }
+    // If the range is smaller than a pixel (which can happen when performing
+    // a click on the graphs), treat this as a cleared selection.
+    let interval = this.getTimeInterval();
+    if (interval.endTime - interval.startTime < 1) {
+      this.emit(EVENTS.OVERVIEW_RANGE_CLEARED);
+    } else {
+      this.emit(EVENTS.OVERVIEW_RANGE_SELECTED, interval);
+    }
   },
 
   /**
-   * Called when recording stops.
+   * Called when recording will start.
    */
-  _onRecordingStopped: function () {
+  _onRecordingWillStart: Task.async(function* (_, recording) {
+    yield this._checkSelection(recording);
+    this.markersOverview.dropSelection();
+  }),
+
+  /**
+   * Called when recording actually starts.
+   */
+  _onRecordingStarted: function (_, recording) {
+    this._timeoutId = setTimeout(this._onRecordingTick, OVERVIEW_UPDATE_INTERVAL);
+  },
+
+  /**
+   * Called when recording will stop.
+   */
+  _onRecordingWillStop: function(_, recording) {
     clearTimeout(this._timeoutId);
     this._timeoutId = null;
+  },
 
+  /**
+   * Called when recording actually stops.
+   */
+  _onRecordingStopped: Task.async(function* (_, recording) {
     this.render(FRAMERATE_GRAPH_HIGH_RES_INTERVAL);
+    yield this._checkSelection(recording);
+  }),
 
-    this.framerateGraph.selectionEnabled = true;
-    this.markersOverview.selectionEnabled = true;
-    this.memoryOverview.selectionEnabled = true;
-  }
+  /**
+   * Called when a new recording is selected.
+   */
+  _onRecordingSelected: Task.async(function* (_, recording) {
+    if (!recording) {
+      return;
+    }
+    // If timeout exists, we have something recording, so
+    // this will still tick away at rendering. Otherwise, force a render.
+    if (!this._timeoutId) {
+      yield this.render(FRAMERATE_GRAPH_HIGH_RES_INTERVAL);
+    }
+    yield this._checkSelection(recording);
+    this.markersOverview.dropSelection();
+  }),
+
+  /**
+   * Makes sure the selection is enabled or disabled in all the graphs,
+   * based on whether a recording currently exists and is not in progress.
+   */
+  _checkSelection: Task.async(function* (recording) {
+    let selectionEnabled = !recording.isRecording();
+
+    if (yield this._markersGraphAvailable()) {
+      this.markersOverview.selectionEnabled = selectionEnabled;
+    }
+    if (yield this._memoryGraphAvailable()) {
+      this.memoryOverview.selectionEnabled = selectionEnabled;
+    }
+    if (yield this._framerateGraphAvailable()) {
+      this.framerateGraph.selectionEnabled = selectionEnabled;
+    }
+  }),
+
+  /**
+   * Called whenever a preference in `devtools.performance.ui.` changes. Used
+   * to toggle the visibility of memory and framerate graphs.
+   */
+  _onPrefChanged: function (_, prefName) {
+    if (prefName === "enable-memory") {
+      $("#memory-overview").hidden = !PerformanceController.getPref("enable-memory");
+    }
+    if (prefName === "enable-framerate") {
+      $("#time-framerate").hidden = !PerformanceController.getPref("enable-framerate");
+    }
+  },
+
+  toString: () => "[object OverviewView]"
 };
 
 // Decorates the OverviewView as an EventEmitter

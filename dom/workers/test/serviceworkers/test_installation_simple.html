@@ -66,48 +66,32 @@
       // because the registration is for the realworker scope, so the workers
       // should be obtained for that scope and not for
       // test_installation_simple.html
-      var worker = wr.installing || wr.waiting || wr.active;
-      ok(worker && worker.scope.match(/realworker$/) &&
-         worker.url.match(/worker.js$/), "Valid worker instance should be available.");
+      var worker = wr.installing;
+      ok(worker && wr.scope.match(/realworker$/) &&
+         worker.scriptURL.match(/worker.js$/), "Valid worker instance should be available.");
     }, function(e) {
       info("Error: " + e.name);
       ok(false, "realWorker Registration should have succeeded!");
     });
   }
 
-  function abortPrevious() {
-    var p = navigator.serviceWorker.register("worker2.js", { scope: "foo/" });
-    var q = navigator.serviceWorker.register("worker3.js", { scope: "foo/" });
-
-    return Promise.all([
-      p.then(function(wr) {
-        ok(false, "First registration should fail with AbortError");
-      }, function(e) {
-        ok(e.name === "AbortError", "First registration should fail with AbortError");
-      }),
-
-      q.then(function(wr) {
-        ok(wr instanceof ServiceWorkerRegistration, "Second registration should succeed");
-      }, function(e) {
-        ok(false, "Second registration should succeed");
-      })
-    ]);
-  }
-
   function networkError404() {
-    return navigator.serviceWorker.register("404.js").then(function(w) {
-        todo(false, "Should fail with NetworkError");
+    return navigator.serviceWorker.register("404.js", { scope: "network_error/"}).then(function(w) {
+        ok(false, "Should fail with NetworkError");
       }, function(e) {
-        todo(e.name === "NetworkError", "Should fail with NetworkError");
+        ok(e.name === "NetworkError", "Should fail with NetworkError");
       });
   }
 
   function parseError() {
-    var p = navigator.serviceWorker.register("parse_error_worker.js");
+    var p = navigator.serviceWorker.register("parse_error_worker.js", { scope: "parse_error/" });
     return p.then(function(wr) {
       ok(false, "Registration should fail with parse error");
+      return navigator.serviceWorker.getRegistration("parse_error/").then(function(swr) {
+        // See https://github.com/slightlyoff/ServiceWorker/issues/547
+        is(swr, undefined, "A failed registration for a scope with no prior controllers should clear itself");
+      });
     }, function(e) {
-    info("NSM " + e.name);
       ok(e instanceof Error, "Registration should fail with parse error");
     });
   }
@@ -136,8 +120,7 @@
         window.onmessage = null;
         // We have to make frame navigate away, otherwise it will call
         // MaybeStopControlling() when this document is unloaded. At that point
-        // the pref has been disabled, and so MaybeStopControlling() will just
-        // return since it is currently gated.
+        // the pref has been disabled, so the ServiceWorkerManager is not available.
         frame.setAttribute("src", new URL("about:blank").href);
         resolve();
       } else if (e.data.type == "check") {
@@ -179,7 +162,6 @@
       .then(sameOriginScope)
       .then(httpsOnly)
       .then(realWorker)
-      .then(abortPrevious)
       .then(networkError404)
       .then(parseError)
       .then(updatefound)

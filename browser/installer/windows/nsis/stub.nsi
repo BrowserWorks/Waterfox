@@ -894,7 +894,7 @@ Function createOptions
   SetCtlColors $0 ${COMMON_TEXT_COLOR_NORMAL} ${COMMON_BKGRD_COLOR}
   SendMessage $0 ${WM_SETFONT} $FontNormal 0
 
-  ${If} ${AtLeastWin7}
+  ${If} ${AtLeastWinXP}
     StrCpy $0 "$(ADD_SC_TASKBAR)"
   ${Else}
     StrCpy $0 "$(ADD_SC_QUICKLAUNCHBAR)"

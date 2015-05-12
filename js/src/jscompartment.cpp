@@ -13,12 +13,12 @@
 #include "jsfriendapi.h"
 #include "jsgc.h"
 #include "jsiter.h"
-#include "jsproxy.h"
 #include "jswatchpoint.h"
 #include "jswrapper.h"
 
 #include "gc/Marking.h"
 #include "jit/JitCompartment.h"
+#include "js/Proxy.h"
 #include "js/RootingAPI.h"
 #include "proxy/DeadObjectProxy.h"
 #include "vm/Debugger.h"
@@ -28,7 +28,6 @@
 #include "jsatominlines.h"
 #include "jsfuninlines.h"
 #include "jsgcinlines.h"
-#include "jsinferinlines.h"
 #include "jsobjinlines.h"
 
 using namespace js;
@@ -36,8 +35,9 @@ using namespace js::gc;
 using namespace js::jit;
 
 using mozilla::DebugOnly;
+using mozilla::PodArrayZero;
 
-JSCompartment::JSCompartment(Zone *zone, const JS::CompartmentOptions &options = JS::CompartmentOptions())
+JSCompartment::JSCompartment(Zone* zone, const JS::CompartmentOptions& options = JS::CompartmentOptions())
   : options_(options),
     zone_(zone),
     runtime_(zone->runtimeFromMainThread()),
@@ -76,12 +76,15 @@ JSCompartment::JSCompartment(Zone *zone, const JS::CompartmentOptions &options =
     maybeAlive(true),
     jitCompartment_(nullptr)
 {
+    PodArrayZero(sawDeprecatedLanguageExtension);
     runtime_->numCompartments++;
     MOZ_ASSERT_IF(options.mergeable(), options.invisibleToDebugger());
 }
 
 JSCompartment::~JSCompartment()
 {
+    reportTelemetry();
+
     js_delete(jitCompartment_);
     js_delete(watchpointMap);
     js_delete(scriptCountsMap);
@@ -94,7 +97,7 @@ JSCompartment::~JSCompartment()
 }
 
 bool
-JSCompartment::init(JSContext *cx)
+JSCompartment::init(JSContext* cx)
 {
     /*
      * As a hack, we clear our timezone cache every time we create a new
@@ -121,8 +124,8 @@ JSCompartment::init(JSContext *cx)
     return true;
 }
 
-jit::JitRuntime *
-JSRuntime::createJitRuntime(JSContext *cx)
+jit::JitRuntime*
+JSRuntime::createJitRuntime(JSContext* cx)
 {
     // The shared stubs are created in the atoms compartment, which may be
     // accessed by other threads with an exclusive context.
@@ -130,7 +133,7 @@ JSRuntime::createJitRuntime(JSContext *cx)
 
     MOZ_ASSERT(!jitRuntime_);
 
-    jit::JitRuntime *jrt = cx->new_<jit::JitRuntime>();
+    jit::JitRuntime* jrt = cx->new_<jit::JitRuntime>();
     if (!jrt)
         return nullptr;
 
@@ -146,7 +149,7 @@ JSRuntime::createJitRuntime(JSContext *cx)
         js_delete(jitRuntime_);
         jitRuntime_ = nullptr;
 
-        JSCompartment *comp = cx->runtime()->atomsCompartment();
+        JSCompartment* comp = cx->runtime()->atomsCompartment();
         if (comp->jitCompartment_) {
             js_delete(comp->jitCompartment_);
             comp->jitCompartment_ = nullptr;
@@ -159,7 +162,7 @@ JSRuntime::createJitRuntime(JSContext *cx)
 }
 
 bool
-JSCompartment::ensureJitCompartmentExists(JSContext *cx)
+JSCompartment::ensureJitCompartmentExists(JSContext* cx)
 {
     using namespace js::jit;
     if (jitCompartment_)
@@ -190,14 +193,14 @@ JSCompartment::ensureJitCompartmentExists(JSContext *cx)
  */
 class WrapperMapRef : public BufferableRef
 {
-    WrapperMap *map;
+    WrapperMap* map;
     CrossCompartmentKey key;
 
   public:
-    WrapperMapRef(WrapperMap *map, const CrossCompartmentKey &key)
+    WrapperMapRef(WrapperMap* map, const CrossCompartmentKey& key)
       : map(map), key(key) {}
 
-    void mark(JSTracer *trc) {
+    void mark(JSTracer* trc) {
         CrossCompartmentKey prior = key;
         if (key.debugger)
             Mark(trc, &key.debugger, "CCW debugger");
@@ -229,7 +232,7 @@ JSCompartment::checkWrapperMapAfterMovingGC()
         CrossCompartmentKey key = e.front().key();
         CheckGCThingAfterMovingGC(key.debugger);
         CheckGCThingAfterMovingGC(key.wrapped);
-        CheckGCThingAfterMovingGC(static_cast<Cell *>(e.front().value().get().toGCThing()));
+        CheckGCThingAfterMovingGC(static_cast<Cell*>(e.front().value().get().toGCThing()));
 
         WrapperMap::Ptr ptr = crossCompartmentWrappers.lookup(key);
         MOZ_ASSERT(ptr.found() && &*ptr == &e.front());
@@ -238,7 +241,7 @@ JSCompartment::checkWrapperMapAfterMovingGC()
 #endif
 
 bool
-JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, const js::Value &wrapper)
+JSCompartment::putWrapper(JSContext* cx, const CrossCompartmentKey& wrapped, const js::Value& wrapper)
 {
     MOZ_ASSERT(wrapped.wrapped);
     MOZ_ASSERT(!IsPoisonedPtr(wrapped.wrapped));
@@ -249,7 +252,7 @@ JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, con
     bool success = crossCompartmentWrappers.put(wrapped, ReadBarriered<Value>(wrapper));
 
     /* There's no point allocating wrappers in the nursery since we will tenure them anyway. */
-    MOZ_ASSERT(!IsInsideNursery(static_cast<gc::Cell *>(wrapper.toGCThing())));
+    MOZ_ASSERT(!IsInsideNursery(static_cast<gc::Cell*>(wrapper.toGCThing())));
 
     if (success && (IsInsideNursery(wrapped.wrapped) || IsInsideNursery(wrapped.debugger))) {
         WrapperMapRef ref(&crossCompartmentWrappers, wrapped);
@@ -259,8 +262,8 @@ JSCompartment::putWrapper(JSContext *cx, const CrossCompartmentKey &wrapped, con
     return success;
 }
 
-static JSString *
-CopyStringPure(JSContext *cx, JSString *str)
+static JSString*
+CopyStringPure(JSContext* cx, JSString* str)
 {
     /*
      * Directly allocate the copy in the destination compartment, rather than
@@ -269,7 +272,7 @@ CopyStringPure(JSContext *cx, JSString *str)
      */
 
     size_t len = str->length();
-    JSString *copy;
+    JSString* copy;
     if (str->isLinear()) {
         /* Only use AutoStableStringChars if the NoGC allocation fails. */
         if (str->hasLatin1Chars()) {
@@ -307,13 +310,13 @@ CopyStringPure(JSContext *cx, JSString *str)
 }
 
 bool
-JSCompartment::wrap(JSContext *cx, MutableHandleString strp)
+JSCompartment::wrap(JSContext* cx, MutableHandleString strp)
 {
     MOZ_ASSERT(!cx->runtime()->isAtomsCompartment(this));
     MOZ_ASSERT(cx->compartment() == this);
 
     /* If the string is already in this compartment, we are done. */
-    JSString *str = strp;
+    JSString* str = strp;
     if (str->zoneFromAnyThread() == zone())
         return true;
 
@@ -332,7 +335,7 @@ JSCompartment::wrap(JSContext *cx, MutableHandleString strp)
     }
 
     /* No dice. Make a copy, and cache it. */
-    JSString *copy = CopyStringPure(cx, str);
+    JSString* copy = CopyStringPure(cx, str);
     if (!copy)
         return false;
     if (!putWrapper(cx, CrossCompartmentKey(key), StringValue(copy)))
@@ -343,7 +346,7 @@ JSCompartment::wrap(JSContext *cx, MutableHandleString strp)
 }
 
 bool
-JSCompartment::wrap(JSContext *cx, MutableHandleObject obj, HandleObject existingArg)
+JSCompartment::wrap(JSContext* cx, MutableHandleObject obj, HandleObject existingArg)
 {
     MOZ_ASSERT(!cx->runtime()->isAtomsCompartment(this));
     MOZ_ASSERT(cx->compartment() == this);
@@ -364,7 +367,7 @@ JSCompartment::wrap(JSContext *cx, MutableHandleObject obj, HandleObject existin
     MOZ_ASSERT(global);
     MOZ_ASSERT(objGlobal);
 
-    const JSWrapObjectCallbacks *cb = cx->runtime()->wrapObjectCallbacks;
+    const JSWrapObjectCallbacks* cb = cx->runtime()->wrapObjectCallbacks;
 
     if (obj->compartment() == this) {
         obj.set(GetOuterObject(cx, obj));
@@ -446,7 +449,7 @@ JSCompartment::wrap(JSContext *cx, MutableHandleObject obj, HandleObject existin
 }
 
 bool
-JSCompartment::wrap(JSContext *cx, MutableHandle<PropertyDescriptor> desc)
+JSCompartment::wrap(JSContext* cx, MutableHandle<PropertyDescriptor> desc)
 {
     if (!wrap(cx, desc.object()))
         return false;
@@ -464,12 +467,12 @@ JSCompartment::wrap(JSContext *cx, MutableHandle<PropertyDescriptor> desc)
 }
 
 bool
-JSCompartment::wrap(JSContext *cx, MutableHandle<PropDesc> desc)
+JSCompartment::wrap(JSContext* cx, MutableHandle<PropDesc> desc)
 {
     if (desc.isUndefined())
         return true;
 
-    JSCompartment *comp = cx->compartment();
+    JSCompartment* comp = cx->compartment();
 
     if (desc.hasValue()) {
         RootedValue value(cx, desc.value());
@@ -498,14 +501,14 @@ JSCompartment::wrap(JSContext *cx, MutableHandle<PropDesc> desc)
  * across compartments.
  */
 void
-JSCompartment::markCrossCompartmentWrappers(JSTracer *trc)
+JSCompartment::markCrossCompartmentWrappers(JSTracer* trc)
 {
     MOZ_ASSERT(!zone()->isCollecting());
 
     for (WrapperMap::Enum e(crossCompartmentWrappers); !e.empty(); e.popFront()) {
         Value v = e.front().value();
         if (e.front().key().kind == CrossCompartmentKey::ObjectWrapper) {
-            ProxyObject *wrapper = &v.toObject().as<ProxyObject>();
+            ProxyObject* wrapper = &v.toObject().as<ProxyObject>();
 
             /*
              * We have a cross-compartment wrapper. Its private pointer may
@@ -517,13 +520,13 @@ JSCompartment::markCrossCompartmentWrappers(JSTracer *trc)
 }
 
 void
-JSCompartment::trace(JSTracer *trc)
+JSCompartment::trace(JSTracer* trc)
 {
     savedStacks_.trace(trc);
 }
 
 void
-JSCompartment::markRoots(JSTracer *trc)
+JSCompartment::markRoots(JSTracer* trc)
 {
     MOZ_ASSERT(!trc->runtime()->isHeapMinorCollecting());
 
@@ -545,20 +548,13 @@ JSCompartment::sweepInnerViews()
 }
 
 void
-JSCompartment::sweepTypeObjectTables()
-{
-    sweepNewTypeObjectTable(newTypeObjects);
-    sweepNewTypeObjectTable(lazyTypeObjects);
-}
-
-void
 JSCompartment::sweepSavedStacks()
 {
     savedStacks_.sweep(runtimeFromAnyThread());
 }
 
 void
-JSCompartment::sweepGlobalObject(FreeOp *fop)
+JSCompartment::sweepGlobalObject(FreeOp* fop)
 {
     if (global_.unbarrieredGet() && IsObjectAboutToBeFinalizedFromAnyThread(global_.unsafeGet())) {
         if (isDebuggee())
@@ -571,14 +567,14 @@ void
 JSCompartment::sweepSelfHostingScriptSource()
 {
     if (selfHostingScriptSource.unbarrieredGet() &&
-        IsObjectAboutToBeFinalizedFromAnyThread((JSObject **) selfHostingScriptSource.unsafeGet()))
+        IsObjectAboutToBeFinalizedFromAnyThread((JSObject**) selfHostingScriptSource.unsafeGet()))
     {
         selfHostingScriptSource.set(nullptr);
     }
 }
 
 void
-JSCompartment::sweepJitCompartment(FreeOp *fop)
+JSCompartment::sweepJitCompartment(FreeOp* fop)
 {
     if (jitCompartment_)
         jitCompartment_->sweep(fop, this);
@@ -598,7 +594,7 @@ JSCompartment::sweepRegExps()
 void
 JSCompartment::sweepDebugScopes()
 {
-    JSRuntime *rt = runtimeFromAnyThread();
+    JSRuntime* rt = runtimeFromAnyThread();
     if (debugScopes)
         debugScopes->sweep(rt);
 }
@@ -614,10 +610,10 @@ void
 JSCompartment::sweepNativeIterators()
 {
     /* Sweep list of native iterators. */
-    NativeIterator *ni = enumerators->next();
+    NativeIterator* ni = enumerators->next();
     while (ni != enumerators) {
-        JSObject *iterObj = ni->iterObj();
-        NativeIterator *next = ni->next();
+        JSObject* iterObj = ni->iterObj();
+        NativeIterator* next = ni->next();
         if (gc::IsObjectAboutToBeFinalizedFromAnyThread(&iterObj))
             ni->unlink();
         ni = next;
@@ -649,26 +645,21 @@ JSCompartment::sweepCrossCompartmentWrappers()
     }
 }
 
-#ifdef JSGC_COMPACTING
-
 void JSCompartment::fixupAfterMovingGC()
 {
     fixupGlobal();
-    fixupNewTypeObjectTable(newTypeObjects);
-    fixupNewTypeObjectTable(lazyTypeObjects);
     fixupInitialShapeTable();
     fixupBaseShapeTable();
+    objectGroups.fixupTablesAfterMovingGC();
 }
 
 void
 JSCompartment::fixupGlobal()
 {
-    GlobalObject *global = *global_.unsafeGet();
+    GlobalObject* global = *global_.unsafeGet();
     if (global)
         global_.set(MaybeForwarded(global));
 }
-
-#endif // JSGC_COMPACTING
 
 void
 JSCompartment::purge()
@@ -685,22 +676,17 @@ JSCompartment::clearTables()
     // merging a compartment that has been used off thread into another
     // compartment and zone.
     MOZ_ASSERT(crossCompartmentWrappers.empty());
-    MOZ_ASSERT_IF(callsiteClones.initialized(), callsiteClones.empty());
     MOZ_ASSERT(!jitCompartment_);
     MOZ_ASSERT(!debugScopes);
     MOZ_ASSERT(!gcWeakMapList);
     MOZ_ASSERT(enumerators->next() == enumerators);
     MOZ_ASSERT(regExps.empty());
 
-    types.clearTables();
+    objectGroups.clearTables();
     if (baseShapes.initialized())
         baseShapes.clear();
     if (initialShapes.initialized())
         initialShapes.clear();
-    if (newTypeObjects.initialized())
-        newTypeObjects.clear();
-    if (lazyTypeObjects.initialized())
-        lazyTypeObjects.clear();
     if (savedStacks_.initialized())
         savedStacks_.clear();
 }
@@ -716,13 +702,13 @@ JSCompartment::setObjectMetadataCallback(js::ObjectMetadataCallback callback)
 }
 
 static bool
-AddInnerLazyFunctionsFromScript(JSScript *script, AutoObjectVector &lazyFunctions)
+AddInnerLazyFunctionsFromScript(JSScript* script, AutoObjectVector& lazyFunctions)
 {
     if (!script->hasObjects())
         return true;
-    ObjectArray *objects = script->objects();
+    ObjectArray* objects = script->objects();
     for (size_t i = script->innerObjectsStart(); i < objects->length; i++) {
-        JSObject *obj = objects->vector[i];
+        JSObject* obj = objects->vector[i];
         if (obj->is<JSFunction>() && obj->as<JSFunction>().isInterpretedLazy()) {
             if (!lazyFunctions.append(obj))
                 return false;
@@ -732,27 +718,34 @@ AddInnerLazyFunctionsFromScript(JSScript *script, AutoObjectVector &lazyFunction
 }
 
 static bool
-CreateLazyScriptsForCompartment(JSContext *cx)
+CreateLazyScriptsForCompartment(JSContext* cx)
 {
     AutoObjectVector lazyFunctions(cx);
 
-    // Find all live lazy scripts in the compartment, and via them all root
-    // lazy functions in the compartment: those which have not been compiled,
-    // which have a source object, indicating that they have a parent, and
-    // which do not have an uncompiled enclosing script. The last condition is
-    // so that we don't compile lazy scripts whose enclosing scripts failed to
-    // compile, indicating that the lazy script did not escape the script.
-    for (gc::ZoneCellIter i(cx->zone(), gc::FINALIZE_LAZY_SCRIPT); !i.done(); i.next()) {
-        LazyScript *lazy = i.get<LazyScript>();
-        JSFunction *fun = lazy->functionNonDelazifying();
-        if (fun->compartment() == cx->compartment() &&
-            lazy->sourceObject() && !lazy->maybeScript() &&
-            !lazy->hasUncompiledEnclosingScript())
-        {
-            MOZ_ASSERT(fun->isInterpretedLazy());
-            MOZ_ASSERT(lazy == fun->lazyScriptOrNull());
-            if (!lazyFunctions.append(fun))
-                return false;
+    // Find all live root lazy functions in the compartment: those which
+    // have not been compiled, which have a source object, indicating that
+    // they have a parent, and which do not have an uncompiled enclosing
+    // script. The last condition is so that we don't compile lazy scripts
+    // whose enclosing scripts failed to compile, indicating that the lazy
+    // script did not escape the script.
+    //
+    // Note that while we ideally iterate over LazyScripts, LazyScripts do not
+    // currently stand in 1-1 relation with JSScripts; JSFunctions with the
+    // same LazyScript may create different JSScripts due to relazification of
+    // clones. See bug 1105306.
+    for (gc::ZoneCellIter i(cx->zone(), JSFunction::FinalizeKind); !i.done(); i.next()) {
+        JSObject* obj = i.get<JSObject>();
+        if (obj->compartment() == cx->compartment() && obj->is<JSFunction>()) {
+            JSFunction* fun = &obj->as<JSFunction>();
+            if (fun->isInterpretedLazy()) {
+                LazyScript* lazy = fun->lazyScriptOrNull();
+                if (lazy && lazy->sourceObject() && !lazy->maybeScript() &&
+                    !lazy->hasUncompiledEnclosingScript())
+                {
+                    if (!lazyFunctions.append(fun))
+                        return false;
+                }
+            }
         }
     }
 
@@ -760,17 +753,20 @@ CreateLazyScriptsForCompartment(JSContext *cx)
     // process with any newly exposed inner functions in created scripts.
     // A function cannot be delazified until its outer script exists.
     for (size_t i = 0; i < lazyFunctions.length(); i++) {
-        JSFunction *fun = &lazyFunctions[i]->as<JSFunction>();
+        JSFunction* fun = &lazyFunctions[i]->as<JSFunction>();
 
         // lazyFunctions may have been populated with multiple functions for
         // a lazy script.
         if (!fun->isInterpretedLazy())
             continue;
 
-        JSScript *script = fun->getOrCreateScript(cx);
+        LazyScript* lazy = fun->lazyScript();
+        bool lazyScriptHadNoScript = !lazy->maybeScript();
+
+        JSScript* script = fun->getOrCreateScript(cx);
         if (!script)
             return false;
-        if (!AddInnerLazyFunctionsFromScript(script, lazyFunctions))
+        if (lazyScriptHadNoScript && !AddInnerLazyFunctionsFromScript(script, lazyFunctions))
             return false;
     }
 
@@ -778,29 +774,51 @@ CreateLazyScriptsForCompartment(JSContext *cx)
 }
 
 bool
-JSCompartment::ensureDelazifyScriptsForDebugMode(JSContext *cx)
+JSCompartment::ensureDelazifyScriptsForDebugger(JSContext* cx)
 {
     MOZ_ASSERT(cx->compartment() == this);
-    if ((debugModeBits & DebugNeedDelazification) && !CreateLazyScriptsForCompartment(cx))
+    if (needsDelazificationForDebugger() && !CreateLazyScriptsForCompartment(cx))
         return false;
-    debugModeBits &= ~DebugNeedDelazification;
+    debugModeBits &= ~DebuggerNeedsDelazification;
     return true;
+}
+
+void
+JSCompartment::updateDebuggerObservesFlag(unsigned flag)
+{
+    MOZ_ASSERT(isDebuggee());
+    MOZ_ASSERT(flag == DebuggerObservesAllExecution ||
+               flag == DebuggerObservesAsmJS);
+
+    const GlobalObject::DebuggerVector* v = maybeGlobal()->getDebuggers();
+    for (Debugger * const* p = v->begin(); p != v->end(); p++) {
+        Debugger* dbg = *p;
+        if (flag == DebuggerObservesAllExecution
+            ? dbg->observesAllExecution()
+            : dbg->observesAsmJS())
+        {
+            debugModeBits |= flag;
+            return;
+        }
+    }
+
+    debugModeBits &= ~flag;
 }
 
 void
 JSCompartment::unsetIsDebuggee()
 {
     if (isDebuggee()) {
-        debugModeBits &= ~DebugExecutionMask;
+        debugModeBits &= ~DebuggerObservesMask;
         DebugScopes::onCompartmentUnsetIsDebuggee(this);
     }
 }
 
 void
-JSCompartment::clearBreakpointsIn(FreeOp *fop, js::Debugger *dbg, HandleObject handler)
+JSCompartment::clearBreakpointsIn(FreeOp* fop, js::Debugger* dbg, HandleObject handler)
 {
     for (gc::ZoneCellIter i(zone(), gc::FINALIZE_SCRIPT); !i.done(); i.next()) {
-        JSScript *script = i.get<JSScript>();
+        JSScript* script = i.get<JSScript>();
         if (script->compartment() == this && script->hasAnyBreakpointsOrStepMode())
             script->clearBreakpointsIn(fop, dbg, handler);
     }
@@ -808,24 +826,23 @@ JSCompartment::clearBreakpointsIn(FreeOp *fop, js::Debugger *dbg, HandleObject h
 
 void
 JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
-                                      size_t *tiAllocationSiteTables,
-                                      size_t *tiArrayTypeTables,
-                                      size_t *tiObjectTypeTables,
-                                      size_t *compartmentObject,
-                                      size_t *compartmentTables,
-                                      size_t *innerViewsArg,
-                                      size_t *lazyArrayBuffersArg,
-                                      size_t *crossCompartmentWrappersArg,
-                                      size_t *regexpCompartment,
-                                      size_t *savedStacksSet)
+                                      size_t* tiAllocationSiteTables,
+                                      size_t* tiArrayTypeTables,
+                                      size_t* tiObjectTypeTables,
+                                      size_t* compartmentObject,
+                                      size_t* compartmentTables,
+                                      size_t* innerViewsArg,
+                                      size_t* lazyArrayBuffersArg,
+                                      size_t* crossCompartmentWrappersArg,
+                                      size_t* regexpCompartment,
+                                      size_t* savedStacksSet)
 {
     *compartmentObject += mallocSizeOf(this);
-    types.addSizeOfExcludingThis(mallocSizeOf, tiAllocationSiteTables,
-                                 tiArrayTypeTables, tiObjectTypeTables);
+    objectGroups.addSizeOfExcludingThis(mallocSizeOf, tiAllocationSiteTables,
+                                        tiArrayTypeTables, tiObjectTypeTables,
+                                        compartmentTables);
     *compartmentTables += baseShapes.sizeOfExcludingThis(mallocSizeOf)
-                        + initialShapes.sizeOfExcludingThis(mallocSizeOf)
-                        + newTypeObjects.sizeOfExcludingThis(mallocSizeOf)
-                        + lazyTypeObjects.sizeOfExcludingThis(mallocSizeOf);
+                        + initialShapes.sizeOfExcludingThis(mallocSizeOf);
     *innerViewsArg += innerViews.sizeOfExcludingThis(mallocSizeOf);
     if (lazyArrayBuffers)
         *lazyArrayBuffersArg += lazyArrayBuffers->sizeOfIncludingThis(mallocSizeOf);
@@ -835,7 +852,28 @@ JSCompartment::addSizeOfIncludingThis(mozilla::MallocSizeOf mallocSizeOf,
 }
 
 void
-JSCompartment::adoptWorkerAllocator(Allocator *workerAllocator)
+JSCompartment::reportTelemetry()
 {
-    zone()->allocator.arenas.adoptArenas(runtimeFromMainThread(), &workerAllocator->arenas);
+    // Only report telemetry for web content, not add-ons or chrome JS.
+    if (addonId || isSystem)
+        return;
+
+    // Hazard analysis can't tell that the telemetry callbacks don't GC.
+    JS::AutoSuppressGCAnalysis nogc;
+
+    // Call back into Firefox's Telemetry reporter.
+    for (size_t i = 0; i < DeprecatedLanguageExtensionCount; i++) {
+        if (sawDeprecatedLanguageExtension[i])
+            runtime_->addTelemetry(JS_TELEMETRY_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT, i);
+    }
+}
+
+void
+JSCompartment::addTelemetry(const char* filename, DeprecatedLanguageExtension e)
+{
+    // Only report telemetry for web content, not add-ons or chrome JS.
+    if (addonId || isSystem || !filename || strncmp(filename, "http", 4) != 0)
+        return;
+
+    sawDeprecatedLanguageExtension[e] = true;
 }

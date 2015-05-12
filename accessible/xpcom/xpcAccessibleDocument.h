@@ -32,24 +32,27 @@ public:
                                            xpcAccessibleGeneric)
 
   // nsIAccessibleDocument
-  NS_IMETHOD GetURL(nsAString& aURL) MOZ_FINAL;
-  NS_IMETHOD GetTitle(nsAString& aTitle) MOZ_FINAL;
-  NS_IMETHOD GetMimeType(nsAString& aType) MOZ_FINAL;
-  NS_IMETHOD GetDocType(nsAString& aType) MOZ_FINAL;
-  NS_IMETHOD GetDOMDocument(nsIDOMDocument** aDOMDocument) MOZ_FINAL;
-  NS_IMETHOD GetWindow(nsIDOMWindow** aDOMWindow) MOZ_FINAL;
-  NS_IMETHOD GetParentDocument(nsIAccessibleDocument** aDocument) MOZ_FINAL;
-  NS_IMETHOD GetChildDocumentCount(uint32_t* aCount) MOZ_FINAL;
+  NS_IMETHOD GetURL(nsAString& aURL) final override;
+  NS_IMETHOD GetTitle(nsAString& aTitle) final override;
+  NS_IMETHOD GetMimeType(nsAString& aType) final override;
+  NS_IMETHOD GetDocType(nsAString& aType) final override;
+  NS_IMETHOD GetDOMDocument(nsIDOMDocument** aDOMDocument) final override;
+  NS_IMETHOD GetWindow(nsIDOMWindow** aDOMWindow) final override;
+  NS_IMETHOD GetParentDocument(nsIAccessibleDocument** aDocument)
+    final override;
+  NS_IMETHOD GetChildDocumentCount(uint32_t* aCount) final override;
   NS_IMETHOD GetChildDocumentAt(uint32_t aIndex,
-                                nsIAccessibleDocument** aDocument) MOZ_FINAL;
-  NS_IMETHOD GetVirtualCursor(nsIAccessiblePivot** aVirtualCursor) MOZ_FINAL;
+                                nsIAccessibleDocument** aDocument)
+    final override;
+  NS_IMETHOD GetVirtualCursor(nsIAccessiblePivot** aVirtualCursor)
+    final override;
 
   /**
    * Return XPCOM wrapper for the internal accessible.
    */
   xpcAccessibleGeneric* GetAccessible(Accessible* aAccessible);
 
-  virtual void Shutdown() MOZ_OVERRIDE;
+  virtual void Shutdown() override;
 
 protected:
   virtual ~xpcAccessibleDocument() {}

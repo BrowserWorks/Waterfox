@@ -7,6 +7,7 @@
 
 #include "mozilla/gfx/2D.h"
 #include "mozilla/gfx/Filters.h"
+#include "mozilla/gfx/Logging.h"
 #include "mozilla/PodOperations.h"
 
 #include "gfxContext.h"
@@ -399,8 +400,9 @@ ComputeColorMatrix(uint32_t aColorMatrixType, const nsTArray<float>& aValues,
 
     case SVG_FECOLORMATRIX_TYPE_MATRIX:
     {
-      if (aValues.Length() != 20)
+      if (aValues.Length() != 20) {
         return NS_ERROR_FAILURE;
+      }
 
       PodCopy(aOutMatrix, aValues.Elements(), 20);
       break;
@@ -1389,6 +1391,42 @@ FilterSupport::ComputeResultChangeRegion(const FilterDescription& aFilter,
   return resultChangeRegions[resultChangeRegions.Length() - 1];
 }
 
+static float
+ResultOfZeroUnderTransferFunction(const AttributeMap& aFunctionAttributes)
+{
+  switch (aFunctionAttributes.GetUint(eComponentTransferFunctionType)) {
+    case SVG_FECOMPONENTTRANSFER_TYPE_TABLE:
+    {
+      const nsTArray<float>& tableValues =
+        aFunctionAttributes.GetFloats(eComponentTransferFunctionTableValues);
+      if (tableValues.Length() < 2) {
+        return 0.0f;
+      }
+      return tableValues[0];
+    }
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_DISCRETE:
+    {
+      const nsTArray<float>& tableValues =
+        aFunctionAttributes.GetFloats(eComponentTransferFunctionTableValues);
+      if (tableValues.Length() < 1) {
+        return 0.0f;
+      }
+      return tableValues[0];
+    }
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_LINEAR:
+      return aFunctionAttributes.GetFloat(eComponentTransferFunctionIntercept);
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_GAMMA:
+      return aFunctionAttributes.GetFloat(eComponentTransferFunctionOffset);
+
+    case SVG_FECOMPONENTTRANSFER_TYPE_IDENTITY:
+    default:
+      return 0.0f;
+  }
+}
+
 nsIntRegion
 FilterSupport::PostFilterExtentsForPrimitive(const FilterPrimitiveDescription& aDescription,
                                              const nsTArray<nsIntRegion>& aInputExtents)
@@ -1437,6 +1475,27 @@ FilterSupport::PostFilterExtentsForPrimitive(const FilterPrimitiveDescription& a
         return nsIntRect();
       }
       return ThebesIntRect(aDescription.PrimitiveSubregion());
+    }
+
+    case PrimitiveType::ColorMatrix:
+    {
+      if (atts.GetUint(eColorMatrixType) == (uint32_t)SVG_FECOLORMATRIX_TYPE_MATRIX) {
+        const nsTArray<float>& values = atts.GetFloats(eColorMatrixValues);
+        if (values.Length() == 20 && values[19] > 0.0f) {
+          return ThebesIntRect(aDescription.PrimitiveSubregion());
+        }
+      }
+      return aInputExtents[0];
+    }
+
+    case PrimitiveType::ComponentTransfer:
+    {
+      AttributeMap functionAttributes =
+        atts.GetAttributeMap(eComponentTransferFunctionA);
+      if (ResultOfZeroUnderTransferFunction(functionAttributes) > 0.0f) {
+        return ThebesIntRect(aDescription.PrimitiveSubregion());
+      }
+      return aInputExtents[0];
     }
 
     case PrimitiveType::Turbulence:

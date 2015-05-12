@@ -15,7 +15,7 @@
 
 class nsIUnicharInputStream;
 
-class nsPersistentProperties MOZ_FINAL : public nsIPersistentProperties
+class nsPersistentProperties final : public nsIPersistentProperties
 {
 public:
   nsPersistentProperties();
@@ -32,12 +32,11 @@ private:
 protected:
   nsCOMPtr<nsIUnicharInputStream> mIn;
 
-  nsIPersistentProperties* mSubclass;
-  struct PLDHashTable mTable;
+  PLDHashTable mTable;
   PLArenaPool mArena;
 };
 
-class nsPropertyElement MOZ_FINAL : public nsIPropertyElement
+class nsPropertyElement final : public nsIPropertyElement
 {
 public:
   nsPropertyElement()

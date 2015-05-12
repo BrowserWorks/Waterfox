@@ -23,7 +23,9 @@ function testAboutURL() {
   });
 
   var p2 = fetch('about:config').then(function(res) {
-    is(res.type, "error", "about:config should fail");
+    ok(false, "about:config should fail");
+  }, function(e) {
+    ok(e instanceof TypeError, "about:config should fail");
   });
 
   return Promise.all([p1, p2]);
@@ -82,7 +84,6 @@ function runTest() {
     .then(testAboutURL)
     .then(testDataURL)
     .then(testSameOriginBlobURL)
-    //.then(testAboutURL)
     // Put more promise based tests here.
     .then(done)
     .catch(function(e) {

@@ -43,8 +43,7 @@ loop.conversation = (function(mozL10n) {
                               .isRequired,
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
       roomStore: React.PropTypes.instanceOf(loop.store.RoomStore),
-      feedbackStore:
-        React.PropTypes.instanceOf(loop.store.FeedbackStore).isRequired
+      mozLoop: React.PropTypes.object.isRequired
     },
 
     getInitialState: function() {
@@ -69,22 +68,20 @@ loop.conversation = (function(mozL10n) {
             conversation: this.props.conversation, 
             sdk: this.props.sdk, 
             isDesktop: true, 
-            conversationAppStore: this.props.conversationAppStore, 
-            feedbackStore: this.props.feedbackStore}
+            conversationAppStore: this.props.conversationAppStore}
           ));
         }
         case "outgoing": {
           return (React.createElement(OutgoingConversationView, {
             store: this.props.conversationStore, 
-            dispatcher: this.props.dispatcher, 
-            feedbackStore: this.props.feedbackStore}
+            dispatcher: this.props.dispatcher}
           ));
         }
         case "room": {
           return (React.createElement(DesktopRoomConversationView, {
             dispatcher: this.props.dispatcher, 
-            roomStore: this.props.roomStore, 
-            feedbackStore: this.props.feedbackStore}
+            mozLoop: this.props.mozLoop, 
+            roomStore: this.props.roomStore}
           ));
         }
         case "failed": {
@@ -126,7 +123,8 @@ loop.conversation = (function(mozL10n) {
     var sdkDriver = new loop.OTSdkDriver({
       isDesktop: true,
       dispatcher: dispatcher,
-      sdk: OT
+      sdk: OT,
+      mozLoop: navigator.mozLoop
     });
     var appVersionInfo = navigator.mozLoop.appVersionInfo;
     var feedbackClient = new loop.FeedbackAPIClient(
@@ -161,6 +159,8 @@ loop.conversation = (function(mozL10n) {
       feedbackClient: feedbackClient
     });
 
+    loop.store.StoreMixin.register({feedbackStore: feedbackStore});
+
     // XXX Old class creation for the incoming conversation view, whilst
     // we transition across (bug 1072323).
     var conversation = new sharedModels.ConversationModel({}, {
@@ -169,8 +169,7 @@ loop.conversation = (function(mozL10n) {
     });
 
     // Obtain the windowId and pass it through
-    var helper = new loop.shared.utils.Helper();
-    var locationHash = helper.locationData().hash;
+    var locationHash = loop.shared.utils.locationData().hash;
     var windowId;
 
     var hash = locationHash.match(/#(.*)/);
@@ -192,12 +191,12 @@ loop.conversation = (function(mozL10n) {
     React.render(React.createElement(AppControllerView, {
       conversationAppStore: conversationAppStore, 
       roomStore: roomStore, 
-      feedbackStore: feedbackStore, 
       conversationStore: conversationStore, 
       client: client, 
       conversation: conversation, 
       dispatcher: dispatcher, 
-      sdk: window.OT}
+      sdk: window.OT, 
+      mozLoop: navigator.mozLoop}
     ), document.querySelector('#main'));
 
     dispatcher.dispatch(new sharedActions.GetWindowData({

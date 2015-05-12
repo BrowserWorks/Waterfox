@@ -482,7 +482,13 @@
         "url": "/DOMEvents/tests/submissions/Microsoft/support/style01.css"
       },
       {
-        "url": "/FileAPI/FileReader-interface/support/blue-100x100.png"
+        "url": "/FileAPI/BlobURL/support/file_test1.js"
+      },
+      {
+        "url": "/FileAPI/BlobURL/support/file_test2.txt"
+      },
+      {
+        "url": "/FileAPI/FileReader/support/file_test1.txt"
       },
       {
         "url": "/FileAPI/filelist-section/support/upload.txt"
@@ -491,10 +497,16 @@
         "url": "/FileAPI/filelist-section/support/upload.zip"
       },
       {
+        "url": "/FileAPI/reading-data-section/support/blue-100x100.png"
+      },
+      {
         "url": "/FileAPI/support/Blob.js"
       },
       {
         "url": "/FileAPI/support/upload.txt"
+      },
+      {
+        "url": "/FileAPI/url/url_xmlhttprequest_img-ref.html"
       },
       {
         "url": "/IndexedDB/README.md"
@@ -503,334 +515,346 @@
         "url": "/IndexedDB/idbworker.js"
       },
       {
+        "url": "/IndexedDB/interfaces.idl"
+      },
+      {
         "url": "/IndexedDB/support.js"
       },
       {
         "url": "/WebCryptoAPI/README.md"
       },
       {
+        "url": "/WebIDL/ecmascript-binding/es-exceptions/constructor-object.js"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/enum.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/module.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/nonnullableany.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/nonnullableobjects.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/raises.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/scopedname.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/scopedname.widl~"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/sequenceAsAttribute.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/special-omittable.widl"
+      },
+      {
+        "url": "/WebIDL/invalid/idl/stringconstants.idl"
+      },
+      {
+        "url": "/WebIDL/readme.txt"
+      },
+      {
         "url": "/WebIDL/testable_assertions.txt"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/enum.widl"
+        "url": "/WebIDL/valid/idl/allowany.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/module.widl"
+        "url": "/WebIDL/valid/idl/array.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/nonnullableany.widl"
+        "url": "/WebIDL/valid/idl/attributes.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/nonnullableobjects.widl"
+        "url": "/WebIDL/valid/idl/callback.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/raises.widl"
+        "url": "/WebIDL/valid/idl/caller.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/scopedname.widl"
+        "url": "/WebIDL/valid/idl/constants.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/sequenceAsAttribute.widl"
+        "url": "/WebIDL/valid/idl/constructor.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/special-omittable.widl"
+        "url": "/WebIDL/valid/idl/dictionary-inherits.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/invalid/idl/stringconstants.idl"
+        "url": "/WebIDL/valid/idl/dictionary.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/readme.txt"
+        "url": "/WebIDL/valid/idl/documentation-dos.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/allowany.widl"
+        "url": "/WebIDL/valid/idl/documentation.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/array.widl"
+        "url": "/WebIDL/valid/idl/enum.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/attributes.widl"
+        "url": "/WebIDL/valid/idl/equivalent-decl.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/callback.widl"
+        "url": "/WebIDL/valid/idl/exception-inheritance.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/caller.widl"
+        "url": "/WebIDL/valid/idl/exception.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/constants.widl"
+        "url": "/WebIDL/valid/idl/getter-setter.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/constructor.widl"
+        "url": "/WebIDL/valid/idl/identifier-qualified-names.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/dictionary-inherits.widl"
+        "url": "/WebIDL/valid/idl/implements.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/dictionary.widl"
+        "url": "/WebIDL/valid/idl/indexed-properties.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/documentation-dos.widl"
+        "url": "/WebIDL/valid/idl/inherits-getter.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/documentation.widl"
+        "url": "/WebIDL/valid/idl/interface-inherits.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/enum.widl"
+        "url": "/WebIDL/valid/idl/iterator.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/equivalent-decl.widl"
+        "url": "/WebIDL/valid/idl/namedconstructor.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/exception-inheritance.widl"
+        "url": "/WebIDL/valid/idl/nointerfaceobject.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/exception.widl"
+        "url": "/WebIDL/valid/idl/nullable.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/getter-setter.widl"
+        "url": "/WebIDL/valid/idl/nullableobjects.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/identifier-qualified-names.widl"
+        "url": "/WebIDL/valid/idl/operation-optional-arg.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/implements.widl"
+        "url": "/WebIDL/valid/idl/overloading.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/indexed-properties.widl"
+        "url": "/WebIDL/valid/idl/overridebuiltins.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/inherits-getter.widl"
+        "url": "/WebIDL/valid/idl/partial-interface.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/interface-inherits.widl"
+        "url": "/WebIDL/valid/idl/primitives.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/iterator.widl"
+        "url": "/WebIDL/valid/idl/prototyperoot.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/namedconstructor.widl"
+        "url": "/WebIDL/valid/idl/putforwards.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/nointerfaceobject.widl"
+        "url": "/WebIDL/valid/idl/reg-operations.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/nullable.widl"
+        "url": "/WebIDL/valid/idl/replaceable.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/nullableobjects.widl"
+        "url": "/WebIDL/valid/idl/sequence.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/operation-optional-arg.widl"
+        "url": "/WebIDL/valid/idl/serializer.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/overloading.widl"
+        "url": "/WebIDL/valid/idl/static.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/overridebuiltins.widl"
+        "url": "/WebIDL/valid/idl/stringifier-attribute.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/partial-interface.widl"
+        "url": "/WebIDL/valid/idl/stringifier-custom.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/primitives.widl"
+        "url": "/WebIDL/valid/idl/stringifier.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/prototyperoot.widl"
+        "url": "/WebIDL/valid/idl/treatasnull.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/putforwards.widl"
+        "url": "/WebIDL/valid/idl/treatasundefined.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/reg-operations.widl"
+        "url": "/WebIDL/valid/idl/typedef.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/replaceable.widl"
+        "url": "/WebIDL/valid/idl/typesuffixes.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/sequence.widl"
+        "url": "/WebIDL/valid/idl/uniontype.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/serializer.widl"
+        "url": "/WebIDL/valid/idl/variadic-operations.widl"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/static.widl"
+        "url": "/WebIDL/valid/xml/allowany.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/stringifier-attribute.widl"
+        "url": "/WebIDL/valid/xml/array.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/stringifier-custom.widl"
+        "url": "/WebIDL/valid/xml/attributes.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/stringifier.widl"
+        "url": "/WebIDL/valid/xml/callback.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/treatasnull.widl"
+        "url": "/WebIDL/valid/xml/caller.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/treatasundefined.widl"
+        "url": "/WebIDL/valid/xml/constants.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/typedef.widl"
+        "url": "/WebIDL/valid/xml/constructor.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/typesuffixes.widl"
+        "url": "/WebIDL/valid/xml/dictionary-inherits.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/uniontype.widl"
+        "url": "/WebIDL/valid/xml/dictionary.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/idl/variadic-operations.widl"
+        "url": "/WebIDL/valid/xml/documentation-dos.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/allowany.widlprocxml"
+        "url": "/WebIDL/valid/xml/documentation.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/array.widlprocxml"
+        "url": "/WebIDL/valid/xml/enum.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/attributes.widlprocxml"
+        "url": "/WebIDL/valid/xml/equivalent-decl.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/callback.widlprocxml"
+        "url": "/WebIDL/valid/xml/exception-inheritance.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/caller.widlprocxml"
+        "url": "/WebIDL/valid/xml/exception.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/constants.widlprocxml"
+        "url": "/WebIDL/valid/xml/getter-setter.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/constructor.widlprocxml"
+        "url": "/WebIDL/valid/xml/identifier-qualified-names.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/dictionary-inherits.widlprocxml"
+        "url": "/WebIDL/valid/xml/implements.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/dictionary.widlprocxml"
+        "url": "/WebIDL/valid/xml/indexed-properties.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/documentation-dos.widlprocxml"
+        "url": "/WebIDL/valid/xml/inherits-getter.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/documentation.widlprocxml"
+        "url": "/WebIDL/valid/xml/interface-inherits.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/enum.widlprocxml"
+        "url": "/WebIDL/valid/xml/iterator.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/equivalent-decl.widlprocxml"
+        "url": "/WebIDL/valid/xml/module.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/exception-inheritance.widlprocxml"
+        "url": "/WebIDL/valid/xml/namedconstructor.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/exception.widlprocxml"
+        "url": "/WebIDL/valid/xml/namespaceobject.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/getter-setter.widlprocxml"
+        "url": "/WebIDL/valid/xml/nointerfaceobject.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/identifier-qualified-names.widlprocxml"
+        "url": "/WebIDL/valid/xml/nullable.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/implements.widlprocxml"
+        "url": "/WebIDL/valid/xml/nullableobjects.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/indexed-properties.widlprocxml"
+        "url": "/WebIDL/valid/xml/operation-optional-arg.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/inherits-getter.widlprocxml"
+        "url": "/WebIDL/valid/xml/overloading.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/interface-inherits.widlprocxml"
+        "url": "/WebIDL/valid/xml/overridebuiltins.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/iterator.widlprocxml"
+        "url": "/WebIDL/valid/xml/partial-interface.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/module.widlprocxml"
+        "url": "/WebIDL/valid/xml/primitives.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/namedconstructor.widlprocxml"
+        "url": "/WebIDL/valid/xml/prototyperoot.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/namespaceobject.widlprocxml"
+        "url": "/WebIDL/valid/xml/putforwards.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/nointerfaceobject.widlprocxml"
+        "url": "/WebIDL/valid/xml/reg-operations.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/nullable.widlprocxml"
+        "url": "/WebIDL/valid/xml/replaceable.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/nullableobjects.widlprocxml"
+        "url": "/WebIDL/valid/xml/sequence.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/operation-optional-arg.widlprocxml"
+        "url": "/WebIDL/valid/xml/serializer.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/overloading.widlprocxml"
+        "url": "/WebIDL/valid/xml/special-omittable.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/overridebuiltins.widlprocxml"
+        "url": "/WebIDL/valid/xml/static.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/partial-interface.widlprocxml"
+        "url": "/WebIDL/valid/xml/stringifier-attribute.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/primitives.widlprocxml"
+        "url": "/WebIDL/valid/xml/stringifier-custom.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/prototyperoot.widlprocxml"
+        "url": "/WebIDL/valid/xml/stringifier.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/putforwards.widlprocxml"
+        "url": "/WebIDL/valid/xml/treatasnull.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/reg-operations.widlprocxml"
+        "url": "/WebIDL/valid/xml/treatasundefined.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/replaceable.widlprocxml"
+        "url": "/WebIDL/valid/xml/typedef.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/sequence.widlprocxml"
+        "url": "/WebIDL/valid/xml/typesuffixes.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/serializer.widlprocxml"
+        "url": "/WebIDL/valid/xml/uniontype.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/special-omittable.widlprocxml"
+        "url": "/WebIDL/valid/xml/variadic-operations.widlprocxml"
       },
       {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/static.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/stringifier-attribute.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/stringifier-custom.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/stringifier.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/treatasnull.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/treatasundefined.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/typedef.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/typesuffixes.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/uniontype.widlprocxml"
-      },
-      {
-        "url": "/WebIDL/tests/submissions/W3C/valid/xml/variadic-operations.widlprocxml"
+        "url": "/XMLHttpRequest/XMLHttpRequest-withCredentials.js"
       },
       {
         "url": "/XMLHttpRequest/folder.txt"
@@ -1004,22 +1028,7 @@
         "url": "/app-uri/resources/icons/w3c-48.png"
       },
       {
-        "url": "/app-uri/resources/idlharness.js"
-      },
-      {
-        "url": "/app-uri/resources/testharness.css"
-      },
-      {
-        "url": "/app-uri/resources/testharness.js"
-      },
-      {
-        "url": "/app-uri/resources/testharnessreport.js"
-      },
-      {
         "url": "/battery-status/battery-interface.js"
-      },
-      {
-        "url": "/battery-status/countdown.js"
       },
       {
         "url": "/battery-status/prime.js"
@@ -1361,6 +1370,9 @@
         "url": "/dom/nodes/Document-createProcessingInstruction.js"
       },
       {
+        "url": "/dom/nodes/Element-matches.js"
+      },
+      {
         "url": "/dom/nodes/Node-contains.xml"
       },
       {
@@ -1428,6 +1440,9 @@
       },
       {
         "url": "/dom/traversal/unfinished/TODO"
+      },
+      {
+        "url": "/encoding/resources/encodings.js"
       },
       {
         "url": "/encoding/resources/single-byte-raw.py"
@@ -2480,6 +2495,9 @@
         "url": "/html/webappapis/scripting/processing-model-2/support/undefined-variable.js"
       },
       {
+        "url": "/html/webappapis/system-state-and-capabilities/the-navigator-object/NavigatorID.js"
+      },
+      {
         "url": "/html/webappapis/system-state-and-capabilities/the-navigator-object/contains.json"
       },
       {
@@ -2508,6 +2526,9 @@
       },
       {
         "url": "/images/blue.png"
+      },
+      {
+        "url": "/images/blue96x96.png"
       },
       {
         "url": "/images/broken.png"
@@ -2780,24 +2801,6 @@
         "url": "/old-tests/submission/Infraware/Session_History/contents/Session_History/css/result.css"
       },
       {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/WebIDLParser.js"
-      },
-      {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/idlharness.js"
-      },
-      {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/readme.md"
-      },
-      {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/testharness.css"
-      },
-      {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/testharness.js"
-      },
-      {
-        "url": "/old-tests/submission/Infraware/Session_History/resources/testharnessreport.js"
-      },
-      {
         "url": "/old-tests/submission/Microsoft/dragdrop/dragdrop_support.js"
       },
       {
@@ -2936,13 +2939,7 @@
         "url": "/resource-timing/test_resource_timing.js"
       },
       {
-        "url": "/selectors-api/tests/submissions/Opera/Element-matches.js"
-      },
-      {
-        "url": "/selectors-api/tests/submissions/Opera/ParentNode-find-findAll.js"
-      },
-      {
-        "url": "/selectors-api/tests/submissions/Opera/level2-lib.js"
+        "url": "/selectors-api/tests/submissions/Opera/ParentNode-query-queryAll.js"
       },
       {
         "url": "/service-workers/specgen.json"
@@ -3117,6 +3114,9 @@
       },
       {
         "url": "/webmessaging/README.md"
+      },
+      {
+        "url": "/webmessaging/support/compare.js"
       },
       {
         "url": "/webmessaging/without-ports/025-1.js"
@@ -4244,6 +4244,9 @@
         "url": "/workers/constructors/Worker/undefined"
       },
       {
+        "url": "/workers/interfaces.idl"
+      },
+      {
         "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/message-event.js"
       },
       {
@@ -4322,9 +4325,6 @@
         "url": "/workers/support/ErrorEvent.js"
       },
       {
-        "url": "/workers/support/EventListener.js"
-      },
-      {
         "url": "/workers/support/ImportScripts.js"
       },
       {
@@ -4349,19 +4349,10 @@
         "url": "/workers/support/WorkerNavigator.js"
       },
       {
-        "url": "/workers/support/WorkerNested.js"
-      },
-      {
         "url": "/workers/support/WorkerTerminate.js"
       },
       {
         "url": "/workers/support/WorkerText.txt"
-      },
-      {
-        "url": "/workers/support/XMLHttpRequest.js"
-      },
-      {
-        "url": "/workers/support/XMLHttpRequest.txt"
       },
       {
         "url": "/workers/workers.js"
@@ -4396,10 +4387,16 @@
         "url": "/2dcontext/shadows/2d.shadow.blur.low-manual.html"
       },
       {
-        "url": "/FileAPI/FileReader-interface/filereader_file-manual.html"
+        "url": "/FileAPI/BlobURL/test1-manual.html"
       },
       {
-        "url": "/FileAPI/FileReader-interface/filereader_file_img-manual.html"
+        "url": "/FileAPI/BlobURL/test2-manual.html"
+      },
+      {
+        "url": "/FileAPI/BlobURL/test3-manual.html"
+      },
+      {
+        "url": "/FileAPI/FileReader/test_errors-manual.html"
       },
       {
         "url": "/FileAPI/filelist-section/filelist_multiple_selected_files-manual.html"
@@ -4409,6 +4406,18 @@
       },
       {
         "url": "/FileAPI/idlharness-manual.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_file-manual.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_file_img-manual.html"
+      },
+      {
+        "url": "/FileAPI/url/url_createobjecturl_file-manual.html"
+      },
+      {
+        "url": "/FileAPI/url/url_createobjecturl_file_img-manual.html"
       },
       {
         "url": "/XMLHttpRequest/send-authentication-existing-session-manual.htm"
@@ -4432,10 +4441,10 @@
         "url": "/battery-status/battery-full-manual.html"
       },
       {
-        "url": "/battery-status/battery-plugged-in-manual.html"
+        "url": "/battery-status/battery-plugging-in-manual.html"
       },
       {
-        "url": "/battery-status/battery-unplugged-manual.html"
+        "url": "/battery-status/battery-unplugging-manual.html"
       },
       {
         "url": "/gamepad/events-manual.html"
@@ -4529,6 +4538,24 @@
       },
       {
         "url": "/html-longdesc/reflected-changing-longdesc-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_audio-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_audio_cancel-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_image-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_image_cancel-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_video-manual.html"
+      },
+      {
+        "url": "/html-media-capture/capture_video_cancel-manual.html"
       },
       {
         "url": "/html/browsers/offline/application-cache-api/api_status_checking-manual.html"
@@ -5142,11 +5169,6 @@
     ],
     "reftest": [
       {
-        "ref_type": "!=",
-        "ref_url": "/html/semantics/text-level-semantics/the-wbr-element/wbr-element-notref.html",
-        "url": "/html/semantics/text-level-semantics/the-wbr-element/wbr-element.html"
-      },
-      {
         "ref_type": "==",
         "ref_url": "/2dcontext/building-paths/canvas_complexshapes_arcto_001-ref.htm",
         "url": "/2dcontext/building-paths/canvas_complexshapes_arcto_001.htm"
@@ -5180,6 +5202,11 @@
         "ref_type": "==",
         "ref_url": "/2dcontext/transformations/canvas_transformations_scale_001-ref.htm",
         "url": "/2dcontext/transformations/canvas_transformations_scale_001.htm"
+      },
+      {
+        "ref_type": "==",
+        "ref_url": "/FileAPI/url/url_xmlhttprequest_img-ref.html",
+        "url": "/FileAPI/url/url_xmlhttprequest_img.html"
       },
       {
         "ref_type": "==",
@@ -9413,43 +9440,25 @@
         "url": "/DOMEvents/throwing-in-listener-when-all-have-not-run-yet.html"
       },
       {
-        "url": "/FileAPI/Blob-XHR-revoke.html"
+        "url": "/FileAPI/FileReaderSync.worker"
       },
       {
-        "url": "/FileAPI/Blob-close.html"
+        "url": "/FileAPI/blob/Blob-XHR-revoke.html"
       },
       {
-        "url": "/FileAPI/Blob-constructor.html"
+        "url": "/FileAPI/blob/Blob-close.html"
       },
       {
-        "url": "/FileAPI/Blob-slice.html"
+        "url": "/FileAPI/blob/Blob-constructor.html"
       },
       {
-        "url": "/FileAPI/File-constructor.html"
+        "url": "/FileAPI/blob/Blob-slice.html"
       },
       {
-        "url": "/FileAPI/FileReader-interface/filereader_abort.html"
+        "url": "/FileAPI/file/File-constructor.html"
       },
       {
-        "url": "/FileAPI/FileReader-interface/filereader_error.html"
-      },
-      {
-        "url": "/FileAPI/FileReader-interface/filereader_readAsArrayBuffer.html"
-      },
-      {
-        "url": "/FileAPI/FileReader-interface/filereader_readAsDataURL.html"
-      },
-      {
-        "url": "/FileAPI/FileReader-interface/filereader_readAsText.html"
-      },
-      {
-        "url": "/FileAPI/FileReader-interface/filereader_readystate.html"
-      },
-      {
-        "url": "/FileAPI/FileReader-interface/filereader_result.html"
-      },
-      {
-        "url": "/FileAPI/FileReader/Determining-Encoding.html"
+        "url": "/FileAPI/fileReader.html"
       },
       {
         "url": "/FileAPI/filelist-section/filelist.html"
@@ -9459,6 +9468,45 @@
       },
       {
         "url": "/FileAPI/idlharness.html"
+      },
+      {
+        "url": "/FileAPI/progress.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/Determining-Encoding.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/FileReader-event-handler-attributes.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/FileReader-multiple-reads.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_abort.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_error.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_readAsArrayBuffer.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_readAsDataURL.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_readAsText.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_readystate.html"
+      },
+      {
+        "url": "/FileAPI/reading-data-section/filereader_result.html"
+      },
+      {
+        "url": "/FileAPI/url/url_createobjecturl_blob.html"
+      },
+      {
+        "url": "/FileAPI/url/url_xmlhttprequest.html"
       },
       {
         "url": "/IndexedDB/abort-in-initial-upgradeneeded.html"
@@ -10127,6 +10175,9 @@
         "url": "/IndexedDB/interfaces.html"
       },
       {
+        "url": "/IndexedDB/interfaces.worker"
+      },
+      {
         "url": "/IndexedDB/key_invalid.htm"
       },
       {
@@ -10184,16 +10235,31 @@
         "url": "/IndexedDB/value_recursive.htm"
       },
       {
+        "url": "/WebCryptoAPI/test_getRandomValues.html"
+      },
+      {
         "url": "/WebIDL/ecmascript-binding/es-exceptions/DOMException-constants.html"
       },
       {
         "url": "/WebIDL/ecmascript-binding/es-exceptions/DOMException-constructor.html"
       },
       {
+        "url": "/WebIDL/ecmascript-binding/es-exceptions/constructor-object.html"
+      },
+      {
+        "url": "/WebIDL/ecmascript-binding/es-exceptions/constructor-object.worker"
+      },
+      {
         "url": "/WebIDL/ecmascript-binding/es-exceptions/exceptions.html"
       },
       {
         "url": "/XMLHttpRequest/FormData-append.html"
+      },
+      {
+        "url": "/XMLHttpRequest/XMLHttpRequest-withCredentials.html"
+      },
+      {
+        "url": "/XMLHttpRequest/XMLHttpRequest-withCredentials.worker"
       },
       {
         "url": "/XMLHttpRequest/abort-after-receive.htm"
@@ -10655,12 +10721,6 @@
         "url": "/XMLHttpRequest/timeout-sync.htm"
       },
       {
-        "url": "/XMLHttpRequest/withcredentials-set.htm"
-      },
-      {
-        "url": "/XMLHttpRequest/withcredentials-wrong-state.htm"
-      },
-      {
         "url": "/XMLHttpRequest/xmlhttprequest-basic.htm"
       },
       {
@@ -10988,6 +11048,9 @@
         "url": "/custom-elements/instantiating-custom-elements/prototype-is-interface-prototype-object.html"
       },
       {
+        "url": "/custom-elements/instantiating-custom-elements/unchanged-attribute.html"
+      },
+      {
         "url": "/custom-elements/registering-custom-elements/definition-construction-algorithm-default-namespace.html"
       },
       {
@@ -11165,9 +11228,6 @@
         "url": "/dom/nodes/Document-contentType/contentType/contenttype_mimeheader_02.html"
       },
       {
-        "url": "/dom/nodes/Document-contentType/contentType/contenttype_mimeheader_03.html"
-      },
-      {
         "url": "/dom/nodes/Document-contentType/contentType/contenttype_png.html"
       },
       {
@@ -11340,6 +11400,9 @@
       },
       {
         "url": "/dom/nodes/Element-lastElementChild.xhtml"
+      },
+      {
+        "url": "/dom/nodes/Element-matches.html"
       },
       {
         "url": "/dom/nodes/Element-nextElementSibling.html"
@@ -11612,16 +11675,55 @@
         "url": "/domxpath/evaluator-constructor.html"
       },
       {
+        "url": "/encoding/api-basics.html"
+      },
+      {
+        "url": "/encoding/api-replacement-encodings.html"
+      },
+      {
+        "url": "/encoding/api-surrogates-utf8.html"
+      },
+      {
         "url": "/encoding/gb18030-encoder.html"
       },
       {
         "url": "/encoding/gbk-encoder.html"
       },
       {
+        "url": "/encoding/idlharness.html"
+      },
+      {
         "url": "/encoding/iso-2022-jp-decoder.html"
       },
       {
         "url": "/encoding/iso-2022-jp-encoder.html"
+      },
+      {
+        "url": "/encoding/textdecoder-byte-order-marks.html"
+      },
+      {
+        "url": "/encoding/textdecoder-fatal-streaming.html"
+      },
+      {
+        "url": "/encoding/textdecoder-fatal.html"
+      },
+      {
+        "url": "/encoding/textdecoder-ignorebom.html"
+      },
+      {
+        "url": "/encoding/textdecoder-labels.html"
+      },
+      {
+        "url": "/encoding/textdecoder-streaming.html"
+      },
+      {
+        "url": "/encoding/textdecoder-utf16-surrogates.html"
+      },
+      {
+        "url": "/encoding/textencoder-constructor-non-utf.html"
+      },
+      {
+        "url": "/encoding/textencoder-utf16-surrogates.html"
       },
       {
         "url": "/eventsource/dedicated-worker/eventsource-close.htm"
@@ -11855,6 +11957,9 @@
         "url": "/html-media-capture/idlharness.html"
       },
       {
+        "url": "/html/browsers/browsing-the-web/history-traversal/PopStateEvent.html"
+      },
+      {
         "url": "/html/browsers/browsing-the-web/read-media/pageload-image.html"
       },
       {
@@ -11885,9 +11990,6 @@
         "url": "/html/browsers/history/the-history-interface/002.html"
       },
       {
-        "url": "/html/browsers/history/the-history-interface/003.html"
-      },
-      {
         "url": "/html/browsers/history/the-history-interface/004.html"
       },
       {
@@ -11912,7 +12014,91 @@
         "url": "/html/browsers/history/the-history-interface/012.html"
       },
       {
+        "url": "/html/browsers/history/the-history-interface/combination_history_001.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_002.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_003.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_004.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_005.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_006.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/combination_history_007.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_back.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_forward.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_go_minus.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_go_plus.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_pushstate.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_pushstate_err.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_pushstate_nooptionalparam.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_replacestate.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_replacestate_err.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_replacestate_nooptionalparam.html"
+      },
+      {
+        "url": "/html/browsers/history/the-history-interface/history_state.html"
+      },
+      {
         "url": "/html/browsers/history/the-location-interface/location-stringifier.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_assign.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_hash.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_host.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_hostname.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_href.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_pathname.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_port.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_protocol.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_replace.html"
+      },
+      {
+        "url": "/html/browsers/history/the-location-interface/location_search.html"
       },
       {
         "url": "/html/browsers/history/the-location-interface/security_location_0.sub.htm"
@@ -11958,6 +12144,9 @@
       },
       {
         "url": "/html/browsers/the-window-object/accessing-other-browsing-contexts/indexed-browsing-contexts-03.html"
+      },
+      {
+        "url": "/html/browsers/the-window-object/apis-for-creating-and-navigating-browsing-contexts-by-name/creating_browsing_context_test_01.html"
       },
       {
         "url": "/html/browsers/the-window-object/named-access-on-the-window-object/named-objects.html"
@@ -13592,6 +13781,9 @@
         "url": "/html/semantics/embedded-content/the-img-element/current-pixel-density/error.html"
       },
       {
+        "url": "/html/semantics/embedded-content/the-img-element/environment-changes/viewport-change.html"
+      },
+      {
         "url": "/html/semantics/embedded-content/the-img-element/img.complete.html"
       },
       {
@@ -13626,6 +13818,9 @@
       },
       {
         "url": "/html/semantics/forms/attributes-common-to-form-controls/dirname-ltr.html"
+      },
+      {
+        "url": "/html/semantics/forms/attributes-common-to-form-controls/disabled-elements-01.html"
       },
       {
         "url": "/html/semantics/forms/attributes-common-to-form-controls/formAction_document_address.html"
@@ -13766,6 +13961,9 @@
         "url": "/html/semantics/forms/the-input-element/email.html"
       },
       {
+        "url": "/html/semantics/forms/the-input-element/files.html"
+      },
+      {
         "url": "/html/semantics/forms/the-input-element/hidden.html"
       },
       {
@@ -13869,6 +14067,12 @@
       },
       {
         "url": "/html/semantics/forms/the-progress-element/progress.html"
+      },
+      {
+        "url": "/html/semantics/forms/the-select-element/common-HTMLOptionsCollection-namedItem.html"
+      },
+      {
+        "url": "/html/semantics/forms/the-select-element/common-HTMLOptionsCollection.html"
       },
       {
         "url": "/html/semantics/forms/the-select-element/select-named-getter.html"
@@ -14129,6 +14333,9 @@
         "url": "/html/semantics/tabular-data/the-tr-element/rowIndex.html"
       },
       {
+        "url": "/html/semantics/tabular-data/the-tr-element/sectionRowIndex.html"
+      },
+      {
         "url": "/html/semantics/text-level-semantics/the-a-element/a-stringifier.html"
       },
       {
@@ -14255,6 +14462,9 @@
         "url": "/html/syntax/parsing/template/creating-an-element-for-the-token/template-owner-document.html"
       },
       {
+        "url": "/html/syntax/parsing/the-end.html"
+      },
+      {
         "url": "/html/syntax/serializing-html-fragments/outerHTML.html"
       },
       {
@@ -14354,6 +14564,12 @@
         "url": "/html/webappapis/scripting/processing-model-2/window-onerror-runtime-error.html"
       },
       {
+        "url": "/html/webappapis/system-state-and-capabilities/the-navigator-object/NavigatorID.html"
+      },
+      {
+        "url": "/html/webappapis/system-state-and-capabilities/the-navigator-object/NavigatorID.worker"
+      },
+      {
         "url": "/html/webappapis/system-state-and-capabilities/the-navigator-object/content.html"
       },
       {
@@ -14405,6 +14621,9 @@
         "url": "/http/content_length.html"
       },
       {
+        "url": "/infrastructure/failing-test.html"
+      },
+      {
         "url": "/js/builtins/Array.DefineOwnProperty.html"
       },
       {
@@ -14417,7 +14636,19 @@
         "url": "/js/builtins/Math.min.html"
       },
       {
+        "url": "/js/builtins/Object.prototype.freeze.html"
+      },
+      {
         "url": "/js/builtins/Object.prototype.hasOwnProperty-order.html"
+      },
+      {
+        "url": "/js/builtins/Object.prototype.hasOwnProperty-prototype-chain.html"
+      },
+      {
+        "url": "/js/builtins/Object.prototype.preventExtensions.html"
+      },
+      {
+        "url": "/js/builtins/Object.prototype.seal.html"
       },
       {
         "url": "/js/builtins/WeakMap.prototype-properties.html"
@@ -14504,6 +14735,9 @@
         "url": "/media-source/mediasource-config-change-webm-v-framesize.html"
       },
       {
+        "url": "/media-source/mediasource-duration-boundaryconditions.html"
+      },
+      {
         "url": "/media-source/mediasource-duration.html"
       },
       {
@@ -14525,10 +14759,10 @@
         "url": "/media-source/mediasource-play.html"
       },
       {
-        "url": "/media-source/mediasource-redundant-seek.html"
+        "url": "/media-source/mediasource-remove.html"
       },
       {
-        "url": "/media-source/mediasource-remove.html"
+        "url": "/media-source/mediasource-removesourcebuffer.html"
       },
       {
         "url": "/media-source/mediasource-seek-beyond-duration.html"
@@ -14537,10 +14771,16 @@
         "url": "/media-source/mediasource-seek-during-pending-seek.html"
       },
       {
+        "url": "/media-source/mediasource-sequencemode-append-buffer.html"
+      },
+      {
         "url": "/media-source/mediasource-sourcebuffer-mode.html"
       },
       {
         "url": "/media-source/mediasource-sourcebufferlist.html"
+      },
+      {
+        "url": "/media-source/mediasource-timestamp-offset.html"
       },
       {
         "url": "/mediacapture-streams/obtaining-local-multimedia-content/navigatorusermedia/api-present.html"
@@ -14676,6 +14916,9 @@
       },
       {
         "url": "/notifications/event-onshow.html"
+      },
+      {
+        "url": "/notifications/instance.html"
       },
       {
         "url": "/notifications/interfaces.html"
@@ -15296,10 +15539,7 @@
         "url": "/resource-timing/test_resource_timing.html"
       },
       {
-        "url": "/selectors-api/tests/submissions/Opera/Element-matches.html"
-      },
-      {
-        "url": "/selectors-api/tests/submissions/Opera/ParentNode-find-findAll.html"
+        "url": "/selectors-api/tests/submissions/Opera/ParentNode-query-queryAll.html"
       },
       {
         "url": "/selectors/attribute-selectors/attribute-case/cssom.html"
@@ -16778,16 +17018,10 @@
         "url": "/webstorage/storage_local_removeitem_js.html"
       },
       {
-        "url": "/webstorage/storage_local_security.html"
-      },
-      {
         "url": "/webstorage/storage_local_setitem.html"
       },
       {
         "url": "/webstorage/storage_local_setitem_js.html"
-      },
-      {
-        "url": "/webstorage/storage_local_setitem_quotaexceedederr.html"
       },
       {
         "url": "/webstorage/storage_session_builtins.html"
@@ -16830,9 +17064,6 @@
       },
       {
         "url": "/webstorage/storage_session_setitem_js.html"
-      },
-      {
-        "url": "/webstorage/storage_session_setitem_quotaexceedederr.html"
       },
       {
         "url": "/webvtt/interfaces.html"
@@ -16889,15 +17120,6 @@
         "url": "/workers/WorkerGlobalScope_ErrorEvent_message.htm"
       },
       {
-        "url": "/workers/WorkerGlobalScope_EventTarget.htm"
-      },
-      {
-        "url": "/workers/WorkerGlobalScope_XMLHttpRequest.htm"
-      },
-      {
-        "url": "/workers/WorkerGlobalScope_addEventListener.htm"
-      },
-      {
         "url": "/workers/WorkerGlobalScope_close.htm"
       },
       {
@@ -16905,12 +17127,6 @@
       },
       {
         "url": "/workers/WorkerGlobalScope_importScripts_NetworkErr.htm"
-      },
-      {
-        "url": "/workers/WorkerGlobalScope_nested_Worker.htm"
-      },
-      {
-        "url": "/workers/WorkerGlobalScope_removeEventListener.htm"
       },
       {
         "url": "/workers/WorkerGlobalScope_setInterval.htm"
@@ -17093,7 +17309,13 @@
         "url": "/workers/constructors/Worker/unresolvable-url.html"
       },
       {
-        "url": "/workers/interfaces/DedicatedWorkerGlobalScope/onmessage.html"
+        "url": "/workers/interfaces.worker"
+      },
+      {
+        "url": "/workers/interfaces/DedicatedWorkerGlobalScope/EventTarget.worker"
+      },
+      {
+        "url": "/workers/interfaces/DedicatedWorkerGlobalScope/onmessage.worker"
       },
       {
         "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/event-ports-dedicated.html"
@@ -17105,7 +17327,7 @@
         "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/message-event.html"
       },
       {
-        "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/return-value.html"
+        "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/return-value.worker"
       },
       {
         "url": "/workers/interfaces/DedicatedWorkerGlobalScope/postMessage/second-argument-null-in-array.html"
@@ -17225,9 +17447,6 @@
         "url": "/workers/interfaces/WorkerUtils/importScripts/012.html"
       },
       {
-        "url": "/workers/interfaces/WorkerUtils/navigator/001.html"
-      },
-      {
         "url": "/workers/interfaces/WorkerUtils/navigator/002.html"
       },
       {
@@ -17247,6 +17466,9 @@
       },
       {
         "url": "/workers/interfaces/WorkerUtils/navigator/language.html"
+      },
+      {
+        "url": "/workers/nested_worker.worker"
       },
       {
         "url": "/workers/postMessage_DataCloneErr.htm"
@@ -17279,10 +17501,10 @@
         "url": "/workers/semantics/encodings/004.html"
       },
       {
-        "url": "/workers/semantics/interface-objects/001.html"
+        "url": "/workers/semantics/interface-objects/001.worker"
       },
       {
-        "url": "/workers/semantics/interface-objects/002.html"
+        "url": "/workers/semantics/interface-objects/002.worker"
       },
       {
         "url": "/workers/semantics/interface-objects/003.html"
@@ -17823,6 +18045,10 @@
       },
       {
         "timeout": "long",
+        "url": "/media-source/mediasource-redundant-seek.html"
+      },
+      {
+        "timeout": "long",
         "url": "/websockets/binary/002.html"
       },
       {
@@ -17840,6 +18066,10 @@
       {
         "timeout": "long",
         "url": "/websockets/cookies/007.html"
+      },
+      {
+        "timeout": "long",
+        "url": "/websockets/extended-payload-length.html"
       },
       {
         "timeout": "long",
@@ -17868,6 +18098,14 @@
       {
         "timeout": "long",
         "url": "/websockets/unload-a-document/005.html"
+      },
+      {
+        "timeout": "long",
+        "url": "/webstorage/storage_local_setitem_quotaexceedederr.html"
+      },
+      {
+        "timeout": "long",
+        "url": "/webstorage/storage_session_setitem_quotaexceedederr.html"
       }
     ],
     "wdspec": [
@@ -17926,8 +18164,67 @@
   },
   "local_changes": {
     "deleted": [],
-    "items": {}
+    "items": {
+      "testharness": {
+        "content-security-policy/media-src/media-src-7_1.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_1.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_1.html"
+          }
+        ],
+        "content-security-policy/media-src/media-src-7_1_2.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_1_2.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_1_2.html"
+          }
+        ],
+        "content-security-policy/media-src/media-src-7_2.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_2.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_2.html"
+          }
+        ],
+        "content-security-policy/media-src/media-src-7_2_2.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_2_2.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_2_2.html"
+          }
+        ],
+        "content-security-policy/media-src/media-src-7_3.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_3.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_3.html"
+          }
+        ],
+        "content-security-policy/media-src/media-src-7_3_2.html": [
+          {
+            "path": "content-security-policy/media-src/media-src-7_3_2.html",
+            "timeout": "long",
+            "url": "/content-security-policy/media-src/media-src-7_3_2.html"
+          }
+        ],
+        "content-security-policy/object-src/object-src-2_1.html": [
+          {
+            "path": "content-security-policy/object-src/object-src-2_1.html",
+            "timeout": "long",
+            "url": "/content-security-policy/object-src/object-src-2_1.html"
+          }
+        ],
+        "content-security-policy/object-src/object-src-2_2.html": [
+          {
+            "path": "content-security-policy/object-src/object-src-2_2.html",
+            "timeout": "long",
+            "url": "/content-security-policy/object-src/object-src-2_2.html"
+          }
+        ]
+      }
+    }
   },
-  "rev": "a84b794c43954b4465eb9b967cc934875952fc40",
+  "rev": "06dfcf88301bcc02ed25830f0d87c75f041dad4e",
   "url_base": "/"
 }

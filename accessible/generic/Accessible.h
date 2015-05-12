@@ -39,6 +39,7 @@ class HTMLLIAccessible;
 class HyperTextAccessible;
 class ImageAccessible;
 class KeyBinding;
+class ProxyAccessible;
 class Relation;
 class RootAccessible;
 class TableAccessible;
@@ -578,6 +579,7 @@ public:
   bool IsDoc() const { return HasGenericType(eDocument); }
   DocAccessible* AsDoc();
 
+  bool IsGenericHyperText() const { return mType == eHyperTextType; }
   bool IsHyperText() const { return HasGenericType(eHyperText); }
   HyperTextAccessible* AsHyperText();
 
@@ -606,6 +608,13 @@ public:
   bool IsMenuButton() const { return HasGenericType(eMenuButton); }
 
   bool IsMenuPopup() const { return mType == eMenuPopupType; }
+
+  bool IsProxy() const { return mType == eProxyType; }
+  ProxyAccessible* Proxy() const
+  {
+    MOZ_ASSERT(IsProxy());
+    return mBits.proxy;
+  }
 
   bool IsProgress() const { return mType == eProgressType; }
 
@@ -886,6 +895,13 @@ public:
   bool HasNameDependentParent() const
     { return mContextFlags & eHasNameDependentParent; }
 
+  /**
+   * Return true if aria-hidden="true" is applied to the accessible or inherited
+   * from the parent.
+   */
+  bool IsARIAHidden() const { return mContextFlags & eARIAHidden; }
+  void SetARIAHidden(bool aIsDefined);
+
 protected:
 
   virtual ~Accessible();
@@ -972,8 +988,9 @@ protected:
    */
   enum ContextFlags {
     eHasNameDependentParent = 1 << 0, // Parent's name depends on this accessible.
+    eARIAHidden = 1 << 1,
 
-    eLastContextFlag = eHasNameDependentParent
+    eLastContextFlag = eARIAHidden
   };
 
 protected:
@@ -1079,7 +1096,7 @@ protected:
 
   static const uint8_t kChildrenFlagsBits = 2;
   static const uint8_t kStateFlagsBits = 9;
-  static const uint8_t kContextFlagsBits = 1;
+  static const uint8_t kContextFlagsBits = 2;
   static const uint8_t kTypeBits = 6;
   static const uint8_t kGenericTypesBits = 13;
 
@@ -1103,7 +1120,11 @@ protected:
   int32_t mIndexOfEmbeddedChild;
   friend class EmbeddedObjCollector;
 
-  nsAutoPtr<AccGroupInfo> mGroupInfo;
+  union
+  {
+    AccGroupInfo* groupInfo;
+    ProxyAccessible* proxy;
+  } mBits;
   friend class AccGroupInfo;
 
   /**

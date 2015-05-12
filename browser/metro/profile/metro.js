@@ -59,7 +59,6 @@ pref("apz.min_skate_speed", "10.0");
 // 0 = free, 1 = standard, 2 = sticky
 pref("apz.axis_lock.mode", 2);
 pref("apz.cross_slide.enabled", true);
-pref("apz.subframe.enabled", true);
 
 // Enable Microsoft TSF support by default for imes.
 pref("intl.tsf.enable", true);
@@ -411,7 +410,7 @@ pref("privacy.sanitize.migrateFx3Prefs",    false);
 
 // enable geo
 pref("geo.enabled", true);
-pref("geo.wifi.uri", "https://www.googleapis.com/geolocation/v1/geolocate?key=%GOOGLE_API_KEY%");
+pref("geo.wifi.uri", "https://location.services.mozilla.com/v1/geolocate?key=%MOZILLA_API_KEY%");
 
 // snapped view
 pref("browser.ui.snapped.maxWidth", 600);

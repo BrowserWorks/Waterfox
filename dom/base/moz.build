@@ -9,6 +9,7 @@ TEST_DIRS += ['test']
 XPIDL_SOURCES += [
     'nsIConsoleAPIStorage.idl',
     'nsIContentPolicy.idl',
+    'nsIContentPolicyBase.idl',
     'nsIDocumentEncoder.idl',
     'nsIDOMDataChannel.idl',
     'nsIDOMDOMCursor.idl',
@@ -32,6 +33,7 @@ XPIDL_SOURCES += [
     'nsISelectionDisplay.idl',
     'nsISelectionListener.idl',
     'nsISelectionPrivate.idl',
+    'nsISimpleContentPolicy.idl',
     'nsISiteSpecificUserAgent.idl',
     'nsISlowScriptDebug.idl',
     'nsIXMLHttpRequest.idl',
@@ -71,7 +73,6 @@ EXPORTS += [
     'nsDOMJSUtils.h',
     'nsDOMNavigationTiming.h',
     'nsDOMString.h',
-    'nsElementFrameLoaderOwner.h',
     'nsFocusManager.h',
     'nsFrameMessageManager.h',
     'nsGenericDOMDataNode.h',
@@ -138,6 +139,7 @@ if CONFIG['MOZ_WEBRTC']:
 EXPORTS.mozilla += [
     'CORSMode.h',
     'FeedWriterEnabled.h',
+    'TextInputProcessor.h',
 ]
 
 EXPORTS.mozilla.dom += [
@@ -180,7 +182,10 @@ EXPORTS.mozilla.dom += [
     'NodeInfoInlines.h',
     'NodeIterator.h',
     'PerformanceEntry.h',
+    'PerformanceMark.h',
+    'PerformanceMeasure.h',
     'PerformanceResourceTiming.h',
+    'ProcessGlobal.h',
     'ResponsiveImageSelector.h',
     'ScreenOrientation.h',
     'ScriptSettings.h',
@@ -201,7 +206,6 @@ UNIFIED_SOURCES += [
     'BarProps.cpp',
     'ChildIterator.cpp',
     'Comment.cpp',
-    'CompositionStringSynthesizer.cpp',
     'Console.cpp',
     'Crypto.cpp',
     'DirectionalityUtils.cpp',
@@ -258,11 +262,9 @@ UNIFIED_SOURCES += [
     'nsDOMSettableTokenList.cpp',
     'nsDOMTokenList.cpp',
     'nsDOMWindowList.cpp',
-    'nsElementFrameLoaderOwner.cpp',
     'nsFocusManager.cpp',
     'nsFormData.cpp',
     'nsFrameLoader.cpp',
-    'nsFrameMessageManager.cpp',
     'nsGenConImageContent.cpp',
     'nsGenericDOMDataNode.cpp',
     'nsGkAtoms.cpp',
@@ -316,13 +318,17 @@ UNIFIED_SOURCES += [
     'nsXMLHttpRequest.cpp',
     'nsXMLNameSpaceMap.cpp',
     'PerformanceEntry.cpp',
+    'PerformanceMark.cpp',
+    'PerformanceMeasure.cpp',
     'PerformanceResourceTiming.cpp',
+    'ProcessGlobal.cpp',
     'ResponsiveImageSelector.cpp',
     'ScriptSettings.cpp',
     'ShadowRoot.cpp',
     'StyleSheetList.cpp',
     'SubtleCrypto.cpp',
     'Text.cpp',
+    'TextInputProcessor.cpp',
     'ThirdPartyUtil.cpp',
     'TreeWalker.cpp',
     'URL.cpp',
@@ -344,6 +350,8 @@ SOURCES += [
     'nsContentUtils.cpp',
     # this file doesn't like windows.h
     'nsDOMWindowUtils.cpp',
+    # Conflicts with windows.h's definition of SendMessage.
+    'nsFrameMessageManager.cpp',
     # This file has a #error "Never include windows.h in this file!"
     'nsGlobalWindow.cpp',
     # Conflicts with windows.h's definition of LoadImage.
@@ -372,6 +380,13 @@ EXTRA_COMPONENTS += [
     'SlowScriptDebug.js',
     'SlowScriptDebug.manifest',
 ]
+
+# Firefox for Android provides an alternate version of this component
+if CONFIG['MOZ_BUILD_APP'] != 'mobile/android':
+    EXTRA_COMPONENTS += [
+        'SiteSpecificUserAgent.js',
+        'SiteSpecificUserAgent.manifest',
+    ]
 
 EXTRA_JS_MODULES += [
     'DOMRequestHelper.jsm',
@@ -403,7 +418,6 @@ LOCAL_INCLUDES += [
     '/dom/xslt/xpath',
     '/dom/xul',
     '/image/src',
-    '/js/ipc',
     '/js/xpconnect/src',
     '/js/xpconnect/wrappers',
     '/layout/base',
@@ -411,7 +425,7 @@ LOCAL_INCLUDES += [
     '/layout/style',
     '/layout/svg',
     '/layout/xul',
-    '/netwerk/base/src',
+    '/netwerk/base',
     '/widget',
     '/xpcom/ds',
 ]

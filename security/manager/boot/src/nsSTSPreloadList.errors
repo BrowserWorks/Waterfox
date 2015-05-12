@@ -1,24 +1,33 @@
+56ct.com: could not connect to host
+9point6.com: could not connect to host
 admin.google.com: did not receive HSTS header (error ignored - included regardless)
 adsfund.org: could not connect to host
 airbnb.com: did not receive HSTS header
 aiticon.de: did not receive HSTS header
-amigogeek.net: did not receive HSTS header
+altmv.com: max-age too low: 7776000
+amigogeek.net: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 api.mega.co.nz: could not connect to host
 api.recurly.com: did not receive HSTS header
 apis.google.com: did not receive HSTS header (error ignored - included regardless)
 app.manilla.com: could not connect to host
 appengine.google.com: did not receive HSTS header (error ignored - included regardless)
 appseccalifornia.org: did not receive HSTS header
+astaxi.net: did not receive HSTS header
 at.search.yahoo.com: did not receive HSTS header
 atavio.at: could not connect to host
 atavio.ch: could not connect to host
+atavio.de: did not receive HSTS header
 au.search.yahoo.com: did not receive HSTS header
 auth.mail.ru: did not receive HSTS header
+auto4trade.nl: did not receive HSTS header
 az.search.yahoo.com: did not receive HSTS header
 azprep.us: could not connect to host
+baldwinkoo.com: did not receive HSTS header
 barcodeberlin.com: did not receive HSTS header
 bccx.com: could not connect to host
+bcm.com.au: max-age too low: 0
 be.search.yahoo.com: did not receive HSTS header
+bentertain.de: could not connect to host
 betnet.fr: could not connect to host
 bi.search.yahoo.com: did not receive HSTS header
 bigshinylock.minazo.net: could not connect to host
@@ -27,7 +36,6 @@ bitfarm-archiv.de: did not receive HSTS header
 bitgo.com: did not receive HSTS header
 bizon.sk: did not receive HSTS header
 blog.lookout.com: did not receive HSTS header
-blog.torproject.org: could not connect to host
 br.search.yahoo.com: did not receive HSTS header
 brainfork.ml: did not receive HSTS header
 braintreegateway.com: did not receive HSTS header
@@ -37,23 +45,24 @@ browserid.org: did not receive HSTS header
 business.medbank.com.mt: did not receive HSTS header
 ca.search.yahoo.com: did not receive HSTS header
 calibreapp.com: did not receive HSTS header
-calomel.org: did not receive HSTS header
 calyxinstitute.org: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 carlolly.co.uk: could not connect to host
 cd.search.yahoo.com: did not receive HSTS header
+celltek-server.de: did not receive HSTS header
 cert.se: max-age too low: 2628001
 cg.search.yahoo.com: did not receive HSTS header
 ch.search.yahoo.com: did not receive HSTS header
 chainmonitor.com: could not connect to host
+changelab.cc: max-age too low: 0
 chatbot.me: could not connect to host
 checkout.google.com: did not receive HSTS header (error ignored - included regardless)
 chfr.search.yahoo.com: did not receive HSTS header
 chit.search.yahoo.com: did not receive HSTS header
+chm.vn: did not receive HSTS header
 chrome-devtools-frontend.appspot.com: did not receive HSTS header (error ignored - included regardless)
 chrome.google.com: did not receive HSTS header (error ignored - included regardless)
 cimballa.com: did not receive HSTS header
 cl.search.yahoo.com: did not receive HSTS header
-cloud.google.com: did not receive HSTS header (error ignored - included regardless)
 cn.search.yahoo.com: did not receive HSTS header
 co.search.yahoo.com: did not receive HSTS header
 code.google.com: did not receive HSTS header (error ignored - included regardless)
@@ -66,6 +75,8 @@ crbug.com: did not receive HSTS header
 crowdcurity.com: did not receive HSTS header
 crowdjuris.com: could not connect to host
 crypto.is: max-age too low: 7776000
+cs50.harvard.edu: max-age too low: 1
+cs50.net: max-age too low: 1
 csawctf.poly.edu: could not connect to host
 ct.search.yahoo.com: did not receive HSTS header
 cujanovic.com: did not receive HSTS header
@@ -86,12 +97,12 @@ domaris.de: did not receive HSTS header
 download.jitsi.org: did not receive HSTS header
 drive.google.com: did not receive HSTS header (error ignored - included regardless)
 dropcam.com: did not receive HSTS header
-dynaloop.net: did not receive HSTS header
 dzlibs.io: could not connect to host
 e-aut.net: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
-ed.gs: did not receive HSTS header
+ecdn.cz: could not connect to host
 edmodo.com: did not receive HSTS header
 egit.co: could not connect to host
+elnutricionista.es: did not receive HSTS header
 email.lookout.com: could not connect to host
 en-maktoob.search.yahoo.com: did not receive HSTS header
 encrypted.google.com: did not receive HSTS header (error ignored - included regardless)
@@ -101,7 +112,9 @@ es.search.yahoo.com: did not receive HSTS header
 esec.rs: did not receive HSTS header
 espanol.search.yahoo.com: did not receive HSTS header
 espra.com: could not connect to host
+ethitter.com: did not receive HSTS header
 etsysecure.com: could not connect to host
+ezequiel-garzon.com: could not connect to host
 fabianfischer.de: did not receive HSTS header
 fatzebra.com.au: did not receive HSTS header
 fi.search.yahoo.com: did not receive HSTS header
@@ -112,6 +125,7 @@ fonetiq.io: could not connect to host
 fr.search.yahoo.com: did not receive HSTS header
 friendlink.jp: did not receive HSTS header
 gamesdepartment.co.uk: did not receive HSTS header
+geekandi.com: max-age too low: 7776000
 getlantern.org: did not receive HSTS header
 gl.search.yahoo.com: did not receive HSTS header
 glass.google.com: did not receive HSTS header (error ignored - included regardless)
@@ -126,12 +140,10 @@ gr.search.yahoo.com: did not receive HSTS header
 grandmascookieblog.com: did not receive HSTS header
 greplin.com: could not connect to host
 groups.google.com: did not receive HSTS header (error ignored - included regardless)
-gunnarhafdal.com: could not connect to host
-hachre.de: did not receive HSTS header
+guidetoiceland.is: did not receive HSTS header
 hackerone-user-content.com: could not connect to host
 haste.ch: could not connect to host
-hatoko.net: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
-helpadmin.net: could not connect to host
+hatoko.net: could not connect to host
 history.google.com: did not receive HSTS header (error ignored - included regardless)
 hk.search.yahoo.com: did not receive HSTS header
 hn.search.yahoo.com: did not receive HSTS header
@@ -145,36 +157,40 @@ hu.search.yahoo.com: did not receive HSTS header
 iban.is: could not connect to host
 id.fedoraproject.org: did not receive HSTS header
 id.search.yahoo.com: did not receive HSTS header
-ideaweb.de: could not connect to host
 ie.search.yahoo.com: did not receive HSTS header
 ilmconpm.de: did not receive HSTS header
 in.search.yahoo.com: did not receive HSTS header
 inertianetworks.com: did not receive HSTS header
+iniiter.com: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 intercom.io: did not receive HSTS header
+interserved.com: did not receive HSTS header
 iop.intuit.com: max-age too low: 86400
+iranianlawschool.com: could not connect to host
 irccloud.com: did not receive HSTS header
 it.search.yahoo.com: did not receive HSTS header
-itriskltd.com: did not receive HSTS header
-jmdekker.it: could not connect to host
-jonas-keidel.de: could not connect to host
-jonathan.ir: did not receive HSTS header
+janoberst.com: did not receive HSTS header
+jelmer.co.uk: could not connect to host
+jonathan.ir: could not connect to host
 jottit.com: could not connect to host
 k-dev.de: could not connect to host
+keepclean.me: could not connect to host
 keymaster.lookout.com: did not receive HSTS header
-kirkforcongress.com: did not receive HSTS header
-kirkforsenate.com: could not connect to host
+kirkforcongress.com: could not connect to host
+kirkforsenate.com: did not receive HSTS header
 kitsta.com: could not connect to host
 kiwiirc.com: max-age too low: 5256000
 klaxn.com: could not connect to host
 klaxn.org: could not connect to host
 koop-bremen.de: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 kr.search.yahoo.com: did not receive HSTS header
+krouzkyliduska.cz: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 kryptera.se: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 kz.search.yahoo.com: did not receive HSTS header
 labina.com.tr: did not receive HSTS header
 landscape.canonical.com: max-age too low: 2592000
 li.search.yahoo.com: did not receive HSTS header
 library.linode.com: did not receive HSTS header
+libraryfreedomproject.org: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 lifeguard.aecom.com: max-age too low: 86400
 lists.fedoraproject.org: did not receive HSTS header
 login.corp.google.com: max-age too low: 7776000 (error ignored - included regardless)
@@ -198,33 +214,40 @@ megashur.se: did not receive HSTS header
 megaxchange.com: did not receive HSTS header
 meinebo.it: could not connect to host
 minikneet.nl: did not receive HSTS header
-mirindadomo.ru: could not connect to host
+mirindadomo.ru: did not receive HSTS header
+mnemotiv.com: could not connect to host
 mobilethreat.net: could not connect to host
 mobilethreatnetwork.net: could not connect to host
 mocloud.eu: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
-movelaria.com.br: did not receive HSTS header
 mqas.net: could not connect to host
 mt.search.yahoo.com: did not receive HSTS header
 mu.search.yahoo.com: did not receive HSTS header
+mujadin.se: max-age too low: 86400
+munuc.org: could not connect to host
 mw.search.yahoo.com: did not receive HSTS header
 mx.search.yahoo.com: did not receive HSTS header
 my.alfresco.com: did not receive HSTS header
 mydigipass.com: did not receive HSTS header
 mykolab.com: did not receive HSTS header
 mykreuzfahrt.de: did not receive HSTS header
+myni.io: could not connect to host
 neftaly.com: did not receive HSTS header
 neonisi.com: could not connect to host
 netzpolitik.org: did not receive HSTS header
+netztest.at: did not receive HSTS header
 nexth.de: could not connect to host
 nexth.net: could not connect to host
 nexth.us: could not connect to host
+ng-security.com: could not connect to host
 ni.search.yahoo.com: did not receive HSTS header
 nl.search.yahoo.com: did not receive HSTS header
 no.search.yahoo.com: did not receive HSTS header
 noexpect.org: could not connect to host
 np.search.yahoo.com: did not receive HSTS header
 npw.net: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
+null-sec.ru: could not connect to host
 nz.search.yahoo.com: did not receive HSTS header
+opendesk.cc: did not receive HSTS header
 openshift.redhat.com: did not receive HSTS header
 otakurepublic.com: did not receive HSTS header
 ottospora.nl: could not connect to host
@@ -232,31 +255,32 @@ pa.search.yahoo.com: did not receive HSTS header
 passwordbox.com: did not receive HSTS header
 passwords.google.com: did not receive HSTS header (error ignored - included regardless)
 pe.search.yahoo.com: did not receive HSTS header
-petrolplus.ru: did not receive HSTS header
 ph.search.yahoo.com: did not receive HSTS header
 piratenlogin.de: could not connect to host
+pirateproxy.sx: did not receive HSTS header
 pisidia.de: did not receive HSTS header
 pk.search.yahoo.com: did not receive HSTS header
 pl.search.yahoo.com: did not receive HSTS header
 platform.lookout.com: could not connect to host
 play.google.com: did not receive HSTS header (error ignored - included regardless)
+polymathematician.com: could not connect to host
+popcorntime.ws: max-age too low: 2592000
 pr.search.yahoo.com: did not receive HSTS header
 pressfreedomfoundation.org: did not receive HSTS header
 prodpad.com: did not receive HSTS header
-profiles.google.com: did not receive HSTS header (error ignored - included regardless)
 promecon-gmbh.de: did not receive HSTS header
 proximato.com: could not connect to host
 py.search.yahoo.com: did not receive HSTS header
 qc.search.yahoo.com: did not receive HSTS header
 rapidresearch.me: could not connect to host
 redlatam.org: did not receive HSTS header
-redports.org: could not connect to host
+redports.org: did not receive HSTS header
 regar42.fr: could not connect to host
-riftnetwork.net: did not receive HSTS header
+reserve-online.net: did not receive HSTS header
+richiemail.net: could not connect to host
 riseup.net: did not receive HSTS header
 rme.li: did not receive HSTS header
 ro.search.yahoo.com: did not receive HSTS header
-robteix.com: did not receive HSTS header
 roddis.net: did not receive HSTS header
 ru.search.yahoo.com: did not receive HSTS header
 rw.search.yahoo.com: did not receive HSTS header
@@ -270,7 +294,6 @@ semenkovich.com: did not receive HSTS header
 seomobo.com: did not receive HSTS header
 seowarp.net: max-age too low: 1576800
 serverdensity.io: did not receive HSTS header
-seyahatsagliksigortalari.com: did not receive HSTS header
 sg.search.yahoo.com: did not receive HSTS header
 shops.neonisi.com: could not connect to host
 siammedia.co: did not receive HSTS header
@@ -278,7 +301,8 @@ silentcircle.org: could not connect to host
 simon.butcher.name: max-age too low: 2629743
 simplyfixit.co.uk: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 sites.google.com: did not receive HSTS header (error ignored - included regardless)
-skhosting.eu: did not receive HSTS header
+smartcleaningcenter.nl: could not connect to host
+smartlend.se: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 sol.io: could not connect to host
 souyar.de: could not connect to host
 souyar.net: could not connect to host
@@ -300,14 +324,17 @@ tablet.facebook.com: did not receive HSTS header
 talk.google.com: could not connect to host
 talk.google.com: could not connect to host (error ignored - included regardless)
 talkgadget.google.com: did not receive HSTS header (error ignored - included regardless)
+tandarts-haarlem.nl: did not receive HSTS header
 taxsquirrel.com: did not receive HSTS header
 tc-bonito.de: did not receive HSTS header
 tektoria.de: did not receive HSTS header
 temehu.com: did not receive HSTS header
 terrax.berlin: could not connect to host
 th.search.yahoo.com: did not receive HSTS header
-the-sky-of-valkyries.com: did not receive HSTS header
+the-sky-of-valkyries.com: could not connect to host
 thomasgriffin.io: did not receive HSTS header
+thorncreek.net: did not receive HSTS header
+toptexture.com: did not receive HSTS header
 tor2web.org: could not connect to host
 tr.search.yahoo.com: did not receive HSTS header
 translate.googleapis.com: did not receive HSTS header (error ignored - included regardless)
@@ -315,7 +342,6 @@ translatoruk.co.uk: did not receive HSTS header
 triop.se: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
 tv.search.yahoo.com: could not connect to host
 tw.search.yahoo.com: did not receive HSTS header
-twentymilliseconds.com: did not receive HSTS header
 ua.search.yahoo.com: did not receive HSTS header
 uk.search.yahoo.com: did not receive HSTS header
 uprotect.it: could not connect to host
@@ -323,12 +349,15 @@ ustr.gov: max-age too low: 86400
 uy.search.yahoo.com: did not receive HSTS header
 uz.search.yahoo.com: did not receive HSTS header
 ve.search.yahoo.com: did not receive HSTS header
+vhost.co.id: could not connect to host
 viennan.net: did not receive HSTS header
 vn.search.yahoo.com: did not receive HSTS header
+vyncke.org: did not receive HSTS header
 wallet.google.com: did not receive HSTS header (error ignored - included regardless)
 webmail.mayfirst.org: did not receive HSTS header
-whonix.org: did not receive HSTS header
+wideup.net: did not receive HSTS header
 wikidsystems.com: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
+withustrading.com: did not receive HSTS header
 wiz.biz: could not connect to host
 wohnungsbau-ludwigsburg.de: did not receive HSTS header
 www.apollo-auto.com: [Exception... "Component returned failure code: 0x80004005 (NS_ERROR_FAILURE) [nsISiteSecurityService.processHeader]"  nsresult: "0x80004005 (NS_ERROR_FAILURE)"  location: "JS frame :: /builds/slave/m-aurora-l64-periodicupdate-00/getHSTSPreloadList.js :: processStsHeader :: line 134"  data: no]
@@ -356,4 +385,3 @@ xtreamhosting.eu: could not connect to host
 za.search.yahoo.com: did not receive HSTS header
 zh.search.yahoo.com: did not receive HSTS header
 zoo24.de: could not connect to host
-zotero.org: did not receive HSTS header

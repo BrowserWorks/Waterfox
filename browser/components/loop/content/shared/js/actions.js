@@ -160,6 +160,9 @@ loop.shared.actions = (function() {
       publisherConfig: Object,
       // The local stream element
       getLocalElementFunc: Function,
+      // The screen share element; optional until all conversation
+      // types support it.
+      // getScreenShareElementFunc: Function,
       // The remote stream element
       getRemoteElementFunc: Function
     }),
@@ -177,6 +180,15 @@ loop.shared.actions = (function() {
     }),
 
     /**
+     * Used for notifying that the dimensions of a stream just changed. Also
+     * dispatched when a stream connects for the first time.
+     */
+    VideoDimensionsChanged: Action.define("videoDimensionsChanged", {
+      videoType: String,
+      dimensions: Object
+    }),
+
+    /**
      * Used to mute or unmute a stream
      */
     SetMute: Action.define("setMute", {
@@ -184,6 +196,35 @@ loop.shared.actions = (function() {
       type: String,
       // Whether or not to enable the stream.
       enabled: Boolean
+    }),
+
+    /**
+     * Used to start a screen share.
+     */
+    StartScreenShare: Action.define("startScreenShare", {
+      // The part of the screen to share, e.g. "window" or "browser".
+      type: String
+    }),
+
+    /**
+     * Used to end a screen share.
+     */
+    EndScreenShare: Action.define("endScreenShare", {
+    }),
+
+    /**
+     * Used to notifiy that screen sharing is active or not.
+     */
+    ScreenSharingState: Action.define("screenSharingState", {
+      // One of loop.shared.utils.SCREEN_SHARE_STATES.
+      state: String
+    }),
+
+    /**
+     * Used to notify that a shared screen is being received (or not).
+     */
+    ReceivingScreenShare: Action.define("receivingScreenShare", {
+      receiving: Boolean
     }),
 
     /**
@@ -316,7 +357,7 @@ loop.shared.actions = (function() {
      * @see https://wiki.mozilla.org/Loop/Architecture/Rooms#GET_.2Frooms.2F.7Btoken.7D
      */
     SetupRoomInfo: Action.define("setupRoomInfo", {
-      roomName: String,
+      // roomName: String - Optional.
       roomOwner: String,
       roomToken: String,
       roomUrl: String
@@ -329,7 +370,7 @@ loop.shared.actions = (function() {
      * @see https://wiki.mozilla.org/Loop/Architecture/Rooms#GET_.2Frooms.2F.7Btoken.7D
      */
     UpdateRoomInfo: Action.define("updateRoomInfo", {
-      roomName: String,
+      // roomName: String - Optional.
       roomOwner: String,
       roomUrl: String
     }),

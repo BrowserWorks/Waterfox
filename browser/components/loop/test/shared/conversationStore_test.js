@@ -8,7 +8,8 @@ describe("loop.store.ConversationStore", function () {
 
   var CALL_STATES = loop.store.CALL_STATES;
   var WS_STATES = loop.store.WS_STATES;
-  var FAILURE_REASONS = loop.shared.utils.FAILURE_REASONS;
+  var WEBSOCKET_REASONS = loop.shared.utils.WEBSOCKET_REASONS;
+  var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
   var sharedActions = loop.shared.actions;
   var sharedUtils = loop.shared.utils;
   var sandbox, dispatcher, client, store, fakeSessionData, sdkDriver;
@@ -140,7 +141,7 @@ describe("loop.store.ConversationStore", function () {
       store._isDesktop = true;
 
       store.connectionFailure(new sharedActions.ConnectionFailure({
-        reason: FAILURE_REASONS.UNABLE_TO_PUBLISH_MEDIA
+        reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
       }));
 
       sinon.assert.calledOnce(sdkDriver.retryPublishWithoutVideo);
@@ -150,7 +151,7 @@ describe("loop.store.ConversationStore", function () {
       store._isDesktop = true;
 
       store.connectionFailure(new sharedActions.ConnectionFailure({
-        reason: FAILURE_REASONS.UNABLE_TO_PUBLISH_MEDIA
+        reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
       }));
 
       expect(store.getStoreState().videoMuted).eql(true);
@@ -781,7 +782,7 @@ describe("loop.store.ConversationStore", function () {
       it("should dispatch a connection failure action on 'terminate'", function() {
         store._websocket.trigger("progress", {
           state: WS_STATES.TERMINATED,
-          reason: "reject"
+          reason: WEBSOCKET_REASONS.REJECT
         });
 
         sinon.assert.calledOnce(dispatcher.dispatch);
@@ -789,7 +790,7 @@ describe("loop.store.ConversationStore", function () {
         sinon.assert.calledWithMatch(dispatcher.dispatch,
           sinon.match.hasOwn("name", "connectionFailure"));
         sinon.assert.calledWithMatch(dispatcher.dispatch,
-          sinon.match.hasOwn("reason", "reject"));
+          sinon.match.hasOwn("reason", WEBSOCKET_REASONS.REJECT));
       });
 
       it("should dispatch a connection progress action on 'alerting'", function() {

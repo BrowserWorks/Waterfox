@@ -25,11 +25,11 @@ static const JSClass global_class = {
     JS_GlobalObjectTraceHook
 };
 
-static JS::Heap<JSObject *> trusted_glob;
-static JS::Heap<JSObject *> trusted_fun;
+static JS::PersistentRootedObject trusted_glob;
+static JS::PersistentRootedObject trusted_fun;
 
 static bool
-CallTrusted(JSContext *cx, unsigned argc, jsval *vp)
+CallTrusted(JSContext* cx, unsigned argc, jsval* vp)
 {
     JS::CallArgs args = JS::CallArgsFromVp(argc, vp);
 
@@ -50,11 +50,9 @@ BEGIN_TEST(testChromeBuffer)
 {
     JS_SetTrustedPrincipals(rt, &system_principals);
 
-    trusted_glob = JS_NewGlobalObject(cx, &global_class, &system_principals, JS::FireOnNewGlobalHook);
+    trusted_glob.init(cx, JS_NewGlobalObject(cx, &global_class, &system_principals,
+                                             JS::FireOnNewGlobalHook));
     CHECK(trusted_glob);
-
-    if (!JS::AddNamedObjectRoot(cx, &trusted_glob, "trusted-global"))
-        return false;
 
     JS::RootedFunction fun(cx);
 
@@ -66,25 +64,22 @@ BEGIN_TEST(testChromeBuffer)
     {
         {
             JSAutoCompartment ac(cx, trusted_glob);
-            const char *paramName = "x";
-            const char *bytes = "return x ? 1 + trusted(x-1) : 0";
-            JS::HandleObject global = JS::HandleObject::fromMarkedLocation(trusted_glob.unsafeGet());
+            const char* paramName = "x";
+            const char* bytes = "return x ? 1 + trusted(x-1) : 0";
             JS::CompileOptions options(cx);
             options.setFileAndLine("", 0);
             JS::AutoObjectVector emptyScopeChain(cx);
             CHECK(JS::CompileFunction(cx, emptyScopeChain, options, "trusted",
                                       1, &paramName, bytes, strlen(bytes), &fun));
-            CHECK(JS_DefineProperty(cx, global, "trusted", fun, JSPROP_ENUMERATE));
-            trusted_fun = JS_GetFunctionObject(fun);
-            if (!JS::AddNamedObjectRoot(cx, &trusted_fun, "trusted-function"))
-                return false;
+            CHECK(JS_DefineProperty(cx, trusted_glob, "trusted", fun, JSPROP_ENUMERATE));
+            trusted_fun.init(cx, JS_GetFunctionObject(fun));
         }
 
         JS::RootedValue v(cx, JS::ObjectValue(*trusted_fun));
         CHECK(JS_WrapValue(cx, &v));
 
-        const char *paramName = "trusted";
-        const char *bytes = "try {                                      "
+        const char* paramName = "trusted";
+        const char* bytes = "try {                                      "
                             "    return untrusted(trusted);             "
                             "} catch (e) {                              "
                             "    try {                                  "
@@ -112,8 +107,8 @@ BEGIN_TEST(testChromeBuffer)
     {
         {
             JSAutoCompartment ac(cx, trusted_glob);
-            const char *paramName = "untrusted";
-            const char *bytes = "try {                                  "
+            const char* paramName = "untrusted";
+            const char* bytes = "try {                                  "
                                 "  untrusted();                         "
                                 "} catch (e) {                          "
                                 "  /*                                   "
@@ -123,21 +118,20 @@ BEGIN_TEST(testChromeBuffer)
                                 "  return 'From trusted: ' +            "
                                 "         e.name + ': ' + e.message;    "
                                 "}                                      ";
-            JS::HandleObject global = JS::HandleObject::fromMarkedLocation(trusted_glob.unsafeGet());
             JS::CompileOptions options(cx);
             options.setFileAndLine("", 0);
             JS::AutoObjectVector emptyScopeChain(cx);
             CHECK(JS::CompileFunction(cx, emptyScopeChain, options, "trusted",
                                       1, &paramName, bytes, strlen(bytes), &fun));
-            CHECK(JS_DefineProperty(cx, global, "trusted", fun, JSPROP_ENUMERATE));
+            CHECK(JS_DefineProperty(cx, trusted_glob, "trusted", fun, JSPROP_ENUMERATE));
             trusted_fun = JS_GetFunctionObject(fun);
         }
 
         JS::RootedValue v(cx, JS::ObjectValue(*trusted_fun));
         CHECK(JS_WrapValue(cx, &v));
 
-        const char *paramName = "trusted";
-        const char *bytes = "try {                                      "
+        const char* paramName = "trusted";
+        const char* bytes = "try {                                      "
                             "  return untrusted(trusted);               "
                             "} catch (e) {                              "
                             "  return trusted(untrusted);               "
@@ -163,22 +157,21 @@ BEGIN_TEST(testChromeBuffer)
     {
         {
             JSAutoCompartment ac(cx, trusted_glob);
-            const char *bytes = "return 42";
-            JS::HandleObject global = JS::HandleObject::fromMarkedLocation(trusted_glob.unsafeGet());
+            const char* bytes = "return 42";
             JS::CompileOptions options(cx);
             options.setFileAndLine("", 0);
             JS::AutoObjectVector emptyScopeChain(cx);
             CHECK(JS::CompileFunction(cx, emptyScopeChain, options, "trusted",
                                       0, nullptr, bytes, strlen(bytes), &fun));
-            CHECK(JS_DefineProperty(cx, global, "trusted", fun, JSPROP_ENUMERATE));
+            CHECK(JS_DefineProperty(cx, trusted_glob, "trusted", fun, JSPROP_ENUMERATE));
             trusted_fun = JS_GetFunctionObject(fun);
         }
 
         JS::RootedFunction fun(cx, JS_NewFunction(cx, CallTrusted, 0, 0, global, "callTrusted"));
         JS::RootedObject callTrusted(cx, JS_GetFunctionObject(fun));
 
-        const char *paramName = "f";
-        const char *bytes = "try {                                      "
+        const char* paramName = "f";
+        const char* bytes = "try {                                      "
                             "  return untrusted(trusted);               "
                             "} catch (e) {                              "
                             "  return f();                              "
@@ -197,12 +190,5 @@ BEGIN_TEST(testChromeBuffer)
     }
 
     return true;
-}
-virtual void uninit() {
-    trusted_glob = nullptr;
-    trusted_fun = nullptr;
-    JS::RemoveObjectRoot(cx, &trusted_glob);
-    JS::RemoveObjectRoot(cx, &trusted_fun);
-    JSAPITest::uninit();
 }
 END_TEST(testChromeBuffer)

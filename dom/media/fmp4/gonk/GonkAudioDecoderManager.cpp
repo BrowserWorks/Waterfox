@@ -37,8 +37,10 @@ typedef android::MediaCodecProxy MediaCodecProxy;
 namespace mozilla {
 
 GonkAudioDecoderManager::GonkAudioDecoderManager(
+  MediaTaskQueue* aTaskQueue,
   const mp4_demuxer::AudioDecoderConfig& aConfig)
-  : mAudioChannels(aConfig.channel_count)
+  : GonkDecoderManager(aTaskQueue)
+  , mAudioChannels(aConfig.channel_count)
   , mAudioRate(aConfig.samples_per_second)
   , mAudioProfile(aConfig.aac_profile)
   , mUseAdts(true)
@@ -49,7 +51,7 @@ GonkAudioDecoderManager::GonkAudioDecoderManager(
   mUserData.AppendElements(aConfig.audio_specific_config->Elements(),
                            aConfig.audio_specific_config->Length());
   // Pass through mp3 without applying an ADTS header.
-  if (strcmp(aConfig.mime_type, "audio/mp4a-latm") != 0) {
+  if (!aConfig.mime_type.EqualsLiteral("audio/mp4a-latm")) {
       mUseAdts = false;
   }
 }
@@ -95,6 +97,34 @@ GonkAudioDecoderManager::Init(MediaDataDecoderCallback* aCallback)
     GADM_LOG("Failed to input codec specific data!");
     return nullptr;
   }
+}
+
+status_t
+GonkAudioDecoderManager::SendSampleToOMX(mp4_demuxer::MP4Sample* aSample)
+{
+  return mDecoder->Input(reinterpret_cast<const uint8_t*>(aSample->data),
+                         aSample->size,
+                         aSample->composition_timestamp,
+                         0);
+}
+
+bool
+GonkAudioDecoderManager::PerformFormatSpecificProcess(mp4_demuxer::MP4Sample* aSample)
+{
+  if (aSample && mUseAdts) {
+    int8_t frequency_index =
+        mp4_demuxer::Adts::GetFrequencyIndex(mAudioRate);
+    bool rv = mp4_demuxer::Adts::ConvertSample(mAudioChannels,
+                                               frequency_index,
+                                               mAudioProfile,
+                                               aSample);
+    if (!rv) {
+      GADM_LOG("Failed to apply ADTS header");
+      return false;
+    }
+  }
+
+  return true;
 }
 
 nsresult
@@ -163,11 +193,18 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
       return NS_OK;
     }
     case android::INFO_FORMAT_CHANGED:
-    case android::INFO_OUTPUT_BUFFERS_CHANGED:
     {
       // If the format changed, update our cached info.
       GADM_LOG("Decoder format changed");
       return Output(aStreamOffset, aOutData);
+    }
+    case android::INFO_OUTPUT_BUFFERS_CHANGED:
+    {
+      GADM_LOG("Info Output Buffers Changed");
+      if (mDecoder->UpdateOutputBuffers()) {
+        return Output(aStreamOffset, aOutData);
+      }
+      return NS_ERROR_FAILURE;
     }
     case -EAGAIN:
     {
@@ -203,12 +240,6 @@ GonkAudioDecoderManager::Output(int64_t aStreamOffset,
   return NS_OK;
 }
 
-nsresult
-GonkAudioDecoderManager::Flush()
-{
-  return NS_OK;
-}
-
 void GonkAudioDecoderManager::ReleaseAudioBuffer() {
   if (mAudioBuffer) {
     mDecoder->ReleaseMediaBuffer(mAudioBuffer);
@@ -217,35 +248,13 @@ void GonkAudioDecoderManager::ReleaseAudioBuffer() {
 }
 
 nsresult
-GonkAudioDecoderManager::Input(mp4_demuxer::MP4Sample* aSample)
+GonkAudioDecoderManager::Flush()
 {
-  if (mDecoder == nullptr) {
-    GADM_LOG("Decoder is not inited");
-    return NS_ERROR_UNEXPECTED;
+  GonkDecoderManager::Flush();
+  status_t err = mDecoder->flush();
+  if (err != OK) {
+    return NS_ERROR_FAILURE;
   }
-  if (aSample && mUseAdts) {
-    int8_t frequency_index =
-        mp4_demuxer::Adts::GetFrequencyIndex(mAudioRate);
-    bool rv = mp4_demuxer::Adts::ConvertSample(mAudioChannels,
-                                               frequency_index,
-                                               mAudioProfile,
-                                               aSample);
-    if (!rv) {
-      GADM_LOG("Failed to apply ADTS header");
-      return NS_ERROR_FAILURE;
-    }
-  }
-
-  status_t rv;
-  if (aSample) {
-    const uint8_t* data = reinterpret_cast<const uint8_t*>(aSample->data);
-    uint32_t length = aSample->size;
-    rv = mDecoder->Input(data, length, aSample->composition_timestamp, 0);
-  } else {
-    // Inputted data is null, so it is going to notify decoder EOS
-    rv = mDecoder->Input(0, 0, 0ll, 0);
-  }
-  return rv == OK ? NS_OK : NS_ERROR_UNEXPECTED;
+  return NS_OK;
 }
-
 } // namespace mozilla

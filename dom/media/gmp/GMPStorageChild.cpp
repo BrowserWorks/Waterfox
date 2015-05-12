@@ -247,7 +247,7 @@ GMPStorageChild::RecvOpenComplete(const nsCString& aRecordName,
 bool
 GMPStorageChild::RecvReadComplete(const nsCString& aRecordName,
                                   const GMPErr& aStatus,
-                                  const InfallibleTArray<uint8_t>& aBytes)
+                                  InfallibleTArray<uint8_t>&& aBytes)
 {
   if (mShutdown) {
     return true;
@@ -305,7 +305,7 @@ public:
     mRecordNames.Sort();
   }
 
-  virtual GMPErr GetName(const char** aOutName, uint32_t* aOutNameLength) MOZ_OVERRIDE {
+  virtual GMPErr GetName(const char** aOutName, uint32_t* aOutNameLength) override {
     if (!aOutName || !aOutNameLength) {
       return GMPInvalidArgErr;
     }
@@ -317,7 +317,7 @@ public:
     return GMPNoErr;
   }
 
-  virtual GMPErr NextRecord() MOZ_OVERRIDE {
+  virtual GMPErr NextRecord() override {
     if (mIndex < mRecordNames.Length()) {
       mIndex++;
     }
@@ -325,7 +325,7 @@ public:
                                             : GMPEndOfEnumeration;
   }
 
-  virtual void Close() MOZ_OVERRIDE {
+  virtual void Close() override {
     delete this;
   }
 
@@ -335,7 +335,7 @@ private:
 };
 
 bool
-GMPStorageChild::RecvRecordNames(const InfallibleTArray<nsCString>& aRecordNames,
+GMPStorageChild::RecvRecordNames(InfallibleTArray<nsCString>&& aRecordNames,
                                  const GMPErr& aStatus)
 {
   RecordIteratorContext ctx;

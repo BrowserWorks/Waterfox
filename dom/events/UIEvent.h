@@ -35,12 +35,12 @@ public:
 
   // Forward to Event
   NS_FORWARD_TO_EVENT_NO_SERIALIZATION_NO_DUPLICATION
-  NS_IMETHOD DuplicatePrivateData() MOZ_OVERRIDE;
-  NS_IMETHOD_(void) Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg, void** aIter) MOZ_OVERRIDE;
+  NS_IMETHOD DuplicatePrivateData() override;
+  NS_IMETHOD_(void) Serialize(IPC::Message* aMsg, bool aSerializeInterfaceType) override;
+  NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg, void** aIter) override;
 
-  static nsIntPoint CalculateScreenPoint(nsPresContext* aPresContext,
-                                         WidgetEvent* aEvent)
+  static LayoutDeviceIntPoint CalculateScreenPoint(nsPresContext* aPresContext,
+                                                   WidgetEvent* aEvent)
   {
     if (!aEvent ||
         (aEvent->mClass != eMouseEventClass &&
@@ -49,20 +49,19 @@ public:
          aEvent->mClass != eDragEventClass &&
          aEvent->mClass != ePointerEventClass &&
          aEvent->mClass != eSimpleGestureEventClass)) {
-      return nsIntPoint(0, 0);
+      return LayoutDeviceIntPoint(0, 0);
     }
 
     WidgetGUIEvent* event = aEvent->AsGUIEvent();
     if (!event->widget) {
-      return LayoutDeviceIntPoint::ToUntyped(aEvent->refPoint);
+      return aEvent->refPoint;
     }
 
-    LayoutDeviceIntPoint offset = aEvent->refPoint +
-      LayoutDeviceIntPoint::FromUntyped(event->widget->WidgetToScreenOffset());
+    LayoutDeviceIntPoint offset = aEvent->refPoint + event->widget->WidgetToScreenOffset();
     nscoord factor =
       aPresContext->DeviceContext()->AppUnitsPerDevPixelAtUnitFullZoom();
-    return nsIntPoint(nsPresContext::AppUnitsToIntCSSPixels(offset.x * factor),
-                      nsPresContext::AppUnitsToIntCSSPixels(offset.y * factor));
+    return LayoutDeviceIntPoint(nsPresContext::AppUnitsToIntCSSPixels(offset.x * factor),
+                                nsPresContext::AppUnitsToIntCSSPixels(offset.y * factor));
   }
 
   static CSSIntPoint CalculateClientPoint(nsPresContext* aPresContext,
@@ -102,7 +101,7 @@ public:
                                                const UIEventInit& aParam,
                                                ErrorResult& aRv);
 
-  virtual JSObject* WrapObjectInternal(JSContext* aCx) MOZ_OVERRIDE
+  virtual JSObject* WrapObjectInternal(JSContext* aCx) override
   {
     return UIEventBinding::Wrap(aCx, this);
   }
@@ -177,18 +176,18 @@ protected:
 #define NS_FORWARD_TO_UIEVENT                               \
   NS_FORWARD_NSIDOMUIEVENT(UIEvent::)                       \
   NS_FORWARD_TO_EVENT_NO_SERIALIZATION_NO_DUPLICATION       \
-  NS_IMETHOD DuplicatePrivateData() MOZ_OVERRIDE            \
+  NS_IMETHOD DuplicatePrivateData() override            \
   {                                                         \
     return UIEvent::DuplicatePrivateData();                 \
   }                                                         \
   NS_IMETHOD_(void) Serialize(IPC::Message* aMsg,           \
                               bool aSerializeInterfaceType) \
-    MOZ_OVERRIDE                                            \
+    override                                            \
   {                                                         \
     UIEvent::Serialize(aMsg, aSerializeInterfaceType);      \
   }                                                         \
   NS_IMETHOD_(bool) Deserialize(const IPC::Message* aMsg,   \
-                                void** aIter) MOZ_OVERRIDE  \
+                                void** aIter) override  \
   {                                                         \
     return UIEvent::Deserialize(aMsg, aIter);               \
   }

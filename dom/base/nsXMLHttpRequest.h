@@ -143,10 +143,10 @@ public:
   IMPL_EVENT_HANDLER(timeout)
   IMPL_EVENT_HANDLER(loadend)
   
-  virtual void DisconnectFromOwner() MOZ_OVERRIDE;
+  virtual void DisconnectFromOwner() override;
 };
 
-class nsXMLHttpRequestUpload MOZ_FINAL : public nsXHREventTarget,
+class nsXMLHttpRequestUpload final : public nsXHREventTarget,
                                          public nsIXMLHttpRequestUpload
 {
 public:
@@ -160,7 +160,7 @@ public:
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(nsXHREventTarget)
   NS_DECL_NSIXMLHTTPREQUESTUPLOAD
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
   nsISupports* GetParentObject()
   {
     return GetOwner();
@@ -179,7 +179,7 @@ class nsXMLHttpRequestXPCOMifier;
 
 // Make sure that any non-DOM interfaces added here are also added to
 // nsXMLHttpRequestXPCOMifier.
-class nsXMLHttpRequest MOZ_FINAL : public nsXHREventTarget,
+class nsXMLHttpRequest final : public nsXHREventTarget,
                                    public nsIXMLHttpRequest,
                                    public nsIJSXMLHttpRequest,
                                    public nsIStreamListener,
@@ -196,7 +196,7 @@ class nsXMLHttpRequest MOZ_FINAL : public nsXHREventTarget,
 public:
   nsXMLHttpRequest();
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE
+  virtual JSObject* WrapObject(JSContext *cx) override
   {
     return mozilla::dom::XMLHttpRequestBinding::Wrap(cx, this);
   }
@@ -291,7 +291,7 @@ public:
 
   // nsISizeOfEventTarget
   virtual size_t
-    SizeOfEventTargetIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE;
+    SizeOfEventTargetIncludingThis(mozilla::MallocSizeOf aMallocSizeOf) const override;
 
   NS_REALLY_FORWARD_NSIDOMEVENTTARGET(nsXHREventTarget)
 
@@ -549,7 +549,7 @@ public:
   void DispatchProgressEvent(mozilla::DOMEventTargetHelper* aTarget,
                              const nsAString& aType,
                              bool aLengthComputable,
-                             uint64_t aLoaded, uint64_t aTotal);
+                             int64_t aLoaded, int64_t aTotal);
 
   // Dispatch the "progress" event on the XHR or XHR.upload object if we've
   // received data since the last "progress" event. Also dispatches
@@ -571,7 +571,7 @@ public:
   bool AllowUploadProgress();
   void RootJSResultObjects();
 
-  virtual void DisconnectFromOwner() MOZ_OVERRIDE;
+  virtual void DisconnectFromOwner() override;
 
   static void SetDontWarnAboutSyncXHR(bool aVal)
   {
@@ -724,8 +724,8 @@ protected:
   uint32_t mState;
 
   nsRefPtr<nsXMLHttpRequestUpload> mUpload;
-  uint64_t mUploadTransferred;
-  uint64_t mUploadTotal;
+  int64_t mUploadTransferred;
+  int64_t mUploadTotal;
   bool mUploadLengthComputable;
   bool mUploadComplete;
   bool mProgressSinceLastProgressEvent;
@@ -744,7 +744,7 @@ protected:
   bool mWarnAboutMultipartHtml;
   bool mWarnAboutSyncHtml;
   bool mLoadLengthComputable;
-  uint64_t mLoadTotal; // 0 if not known.
+  int64_t mLoadTotal; // 0 if not known.
   // Amount of script-exposed (i.e. after undoing gzip compresion) data
   // received.
   uint64_t mDataAvailable;
@@ -755,7 +755,7 @@ protected:
   // mDataReceived except between the OnProgress that changes mLoadTransferred
   // and the corresponding OnDataAvailable (which changes mDataReceived).
   // Ordering of OnProgress and OnDataAvailable is undefined.
-  uint64_t mLoadTransferred;
+  int64_t mLoadTransferred;
   nsCOMPtr<nsITimer> mProgressNotifier;
   void HandleProgressTimerCallback();
 
@@ -820,7 +820,7 @@ private:
 
 // A shim class designed to expose the non-DOM interfaces of
 // XMLHttpRequest via XPCOM stuff.
-class nsXMLHttpRequestXPCOMifier MOZ_FINAL : public nsIStreamListener,
+class nsXMLHttpRequestXPCOMifier final : public nsIStreamListener,
                                              public nsIChannelEventSink,
                                              public nsIProgressEventSink,
                                              public nsIInterfaceRequestor,
@@ -859,7 +859,7 @@ class nsXHRParseEndListener : public nsIDOMEventListener
 {
 public:
   NS_DECL_ISUPPORTS
-  NS_IMETHOD HandleEvent(nsIDOMEvent *event) MOZ_OVERRIDE
+  NS_IMETHOD HandleEvent(nsIDOMEvent *event) override
   {
     nsCOMPtr<nsIXMLHttpRequest> xhr = do_QueryReferent(mXHR);
     if (xhr) {

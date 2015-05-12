@@ -117,19 +117,61 @@ SandboxBroker::SetSecurityLevelForContentProcess(bool aMoreStrict)
 #endif
 
 bool
-SandboxBroker::SetSecurityLevelForPluginProcess()
+SandboxBroker::SetSecurityLevelForPluginProcess(int32_t aSandboxLevel)
 {
   if (!mPolicy) {
     return false;
   }
 
-  auto result = mPolicy->SetJobLevel(sandbox::JOB_NONE,
+  sandbox::ResultCode result;
+  bool ret;
+  if (aSandboxLevel >= 2) {
+    result = mPolicy->SetJobLevel(sandbox::JOB_UNPROTECTED,
                                      0 /* ui_exceptions */);
-  bool ret = (sandbox::SBOX_ALL_OK == result);
+    ret = (sandbox::SBOX_ALL_OK == result);
 
-  result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
-                                  sandbox::USER_NON_ADMIN);
-  ret = ret && (sandbox::SBOX_ALL_OK == result);
+    sandbox::TokenLevel tokenLevel;
+    if (aSandboxLevel >= 3) {
+      tokenLevel = sandbox::USER_LIMITED;
+    } else {
+      tokenLevel = sandbox::USER_INTERACTIVE;
+    }
+
+    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
+                                    tokenLevel);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+    sandbox::MitigationFlags mitigations =
+      sandbox::MITIGATION_BOTTOM_UP_ASLR |
+      sandbox::MITIGATION_HEAP_TERMINATE |
+      sandbox::MITIGATION_SEHOP |
+      sandbox::MITIGATION_DEP_NO_ATL_THUNK |
+      sandbox::MITIGATION_DEP;
+
+    result = mPolicy->SetProcessMitigations(mitigations);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+    mitigations =
+      sandbox::MITIGATION_STRICT_HANDLE_CHECKS;
+
+    result = mPolicy->SetDelayedProcessMitigations(mitigations);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+    // The following is required for the Java plugin.
+    result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                              sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                              L"\\??\\pipe\\jpi2_pid*_pipe*");
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  } else {
+    result = mPolicy->SetJobLevel(sandbox::JOB_NONE,
+                                     0 /* ui_exceptions */);
+    ret = (sandbox::SBOX_ALL_OK == result);
+
+    result = mPolicy->SetTokenLevel(sandbox::USER_RESTRICTED_SAME_ACCESS,
+                                    sandbox::USER_NON_ADMIN);
+    ret = ret && (sandbox::SBOX_ALL_OK == result);
+  }
 
   result = mPolicy->SetDelayedIntegrityLevel(sandbox::INTEGRITY_LEVEL_MEDIUM);
   ret = ret && (sandbox::SBOX_ALL_OK == result);
@@ -208,6 +250,12 @@ SandboxBroker::SetSecurityLevelForGMPlugin()
   result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
                             sandbox::TargetPolicy::FILES_ALLOW_ANY,
                             L"\\??\\pipe\\chrome.*");
+  ret = ret && (sandbox::SBOX_ALL_OK == result);
+
+  // Add the policy for the client side of the crash server pipe.
+  result = mPolicy->AddRule(sandbox::TargetPolicy::SUBSYS_FILES,
+                            sandbox::TargetPolicy::FILES_ALLOW_ANY,
+                            L"\\??\\pipe\\gecko-crash-server-pipe.*");
   ret = ret && (sandbox::SBOX_ALL_OK == result);
 
 #ifdef DEBUG

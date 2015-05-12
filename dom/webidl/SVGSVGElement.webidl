@@ -14,24 +14,35 @@ interface SVGViewSpec;
 
 interface SVGSVGElement : SVGGraphicsElement {
 
+  [Constant]
   readonly attribute SVGAnimatedLength x;
+  [Constant]
   readonly attribute SVGAnimatedLength y;
+  [Constant]
   readonly attribute SVGAnimatedLength width;
+  [Constant]
   readonly attribute SVGAnimatedLength height;
   // readonly attribute SVGRect viewport;
+  [Constant]
   readonly attribute float pixelUnitToMillimeterX;
+  [Constant]
   readonly attribute float pixelUnitToMillimeterY;
+  [Constant]
   readonly attribute float screenPixelToMillimeterX;
+  [Constant]
   readonly attribute float screenPixelToMillimeterY;
   readonly attribute boolean useCurrentView;
   // readonly attribute SVGViewSpec currentView;
            attribute float currentScale;
   readonly attribute SVGPoint currentTranslate;
 
+  [DependsOn=Nothing, Affects=Nothing]
   unsigned long suspendRedraw(unsigned long maxWaitMilliseconds);
+  [DependsOn=Nothing, Affects=Nothing]
   void unsuspendRedraw(unsigned long suspendHandleID);
+  [DependsOn=Nothing, Affects=Nothing]
   void unsuspendRedrawAll();
-  [Throws]
+  [DependsOn=Nothing, Affects=Nothing]
   void forceRedraw();
   void pauseAnimations();
   void unpauseAnimations();
@@ -62,8 +73,6 @@ interface SVGSVGElement : SVGGraphicsElement {
   Element? getElementById(DOMString elementId);
 };
 
-/*SVGSVGElement implements ViewCSS;
-SVGSVGElement implements DocumentCSS;*/
 SVGSVGElement implements SVGFitToViewBox;
 SVGSVGElement implements SVGZoomAndPan;
 

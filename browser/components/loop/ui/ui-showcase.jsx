@@ -80,10 +80,11 @@
     sdkDriver: {}
   });
 
+  loop.store.StoreMixin.register({feedbackStore: feedbackStore});
+
   // Local mocks
 
   var mockMozLoopRooms = _.extend({}, navigator.mozLoop);
-  mockMozLoopRooms.roomsEnabled = true;
 
   var mockContact = {
     name: ["Mr Smith"],
@@ -93,7 +94,6 @@
   };
 
   var mockClient = {
-    requestCallUrl: noop,
     requestCallUrlInfo: noop
   };
 
@@ -124,35 +124,54 @@
 
   var SVGIcon = React.createClass({
     render: function() {
+      var sizeUnit = this.props.size.split("x")[0] + "px";
       return (
         <span className="svg-icon" style={{
-          "background-image": "url(/content/shared/img/icons-16x16.svg#" + this.props.shapeId + ")"
+          "backgroundImage": "url(../content/shared/img/icons-" + this.props.size +
+                              ".svg#" + this.props.shapeId + ")",
+          "backgroundSize": sizeUnit + " " + sizeUnit
         }} />
       );
     }
   });
 
   var SVGIcons = React.createClass({
-    shapes: [
-      "audio", "audio-hover", "audio-active", "block",
-      "block-red", "block-hover", "block-active", "contacts", "contacts-hover",
-      "contacts-active", "copy", "checkmark", "google", "google-hover",
-      "google-active", "history", "history-hover", "history-active", "leave",
-      "precall", "precall-hover", "precall-active", "settings", "settings-hover",
-      "settings-active", "tag", "tag-hover", "tag-active", "trash", "unblock",
-      "unblock-hover", "unblock-active", "video", "video-hover", "video-active"
-    ],
+    shapes: {
+      "10x10": ["close", "close-active", "close-disabled", "dropdown",
+        "dropdown-white", "dropdown-active", "dropdown-disabled", "expand",
+        "expand-active", "expand-disabled", "minimize", "minimize-active",
+        "minimize-disabled"
+      ],
+      "14x14": ["audio", "audio-active", "audio-disabled", "facemute",
+        "facemute-active", "facemute-disabled", "hangup", "hangup-active",
+        "hangup-disabled", "incoming", "incoming-active", "incoming-disabled",
+        "link", "link-active", "link-disabled", "mute", "mute-active",
+        "mute-disabled", "pause", "pause-active", "pause-disabled", "video",
+        "video-white", "video-active", "video-disabled", "volume", "volume-active",
+        "volume-disabled"
+      ],
+      "16x16": ["audio", "audio-hover", "audio-active", "block", "block-red",
+        "block-hover", "block-active", "contacts", "contacts-hover", "contacts-active",
+        "copy", "checkmark", "google", "google-hover", "google-active", "history",
+        "history-hover", "history-active", "leave", "precall", "precall-hover",
+        "precall-active", "screen-white", "screenmute-white", "settings",
+        "settings-hover", "settings-active", "tag", "tag-hover", "tag-active",
+        "trash", "unblock", "unblock-hover", "unblock-active", "video", "video-hover",
+        "video-active", "tour"
+      ]
+    },
 
     render: function() {
+      var icons = this.shapes[this.props.size].map(function(shapeId, i) {
+        return (
+          <li key={this.props.size + "-" + i} className="svg-icon-entry">
+            <p><SVGIcon shapeId={shapeId} size={this.props.size} /></p>
+            <p>{shapeId}</p>
+          </li>
+        );
+      }, this);
       return (
-        <div className="svg-icon-list">{
-          this.shapes.map(function(shapeId, i) {
-            return <div key={i} className="svg-icon-entry">
-              <p><SVGIcon shapeId={shapeId} /></p>
-              <p>{shapeId}</p>
-            </div>;
-          }, this)
-        }</div>
+        <ul className="svg-icon-list">{icons}</ul>
       );
     }
   });
@@ -171,7 +190,7 @@
             <a href={this.makeId("#")}>&nbsp;¶</a>
           </h3>
           <div className={cx({comp: true, dashed: this.props.dashed})}
-               style={this.props.style || {}}>
+               style={this.props.style}>
             {this.props.children}
           </div>
         </div>
@@ -182,7 +201,7 @@
   var Section = React.createClass({
     render: function() {
       return (
-        <section id={this.props.name}>
+        <section id={this.props.name} className={this.props.className}>
           <h1>{this.props.name}</h1>
           {this.props.children}
         </section>
@@ -220,33 +239,21 @@
             <p className="note">
               <strong>Note:</strong> 332px wide.
             </p>
-            <Example summary="Call URL retrieved" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         callUrl="http://invalid.example.url/"
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
-            </Example>
-            <Example summary="Call URL retrieved - authenticated" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         callUrl="http://invalid.example.url/"
-                         userProfile={{email: "test@example.com"}}
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
-            </Example>
-            <Example summary="Pending call url retrieval" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
-                         mozLoop={navigator.mozLoop}
-                         dispatcher={dispatcher}
-                         roomStore={roomStore} />
-            </Example>
-            <Example summary="Pending call url retrieval - authenticated" dashed="true" style={{width: "332px"}}>
+            <Example summary="Room list tab" dashed="true" style={{width: "332px"}}>
               <PanelView client={mockClient} notifications={notifications}
                          userProfile={{email: "test@example.com"}}
-                         mozLoop={navigator.mozLoop}
+                         mozLoop={mockMozLoopRooms}
                          dispatcher={dispatcher}
-                         roomStore={roomStore} />
+                         roomStore={roomStore}
+                         selectedTab="rooms" />
+            </Example>
+            <Example summary="Contact list tab" dashed="true" style={{width: "332px"}}>
+              <PanelView client={mockClient} notifications={notifications}
+                         userProfile={{email: "test@example.com"}}
+                         mozLoop={mockMozLoopRooms}
+                         dispatcher={dispatcher}
+                         roomStore={roomStore}
+                         selectedTab="contacts" />
             </Example>
             <Example summary="Error Notification" dashed="true" style={{width: "332px"}}>
               <PanelView client={mockClient} notifications={errNotifications}
@@ -261,13 +268,21 @@
                          dispatcher={dispatcher}
                          roomStore={roomStore} />
             </Example>
-            <Example summary="Room list tab" dashed="true" style={{width: "332px"}}>
-              <PanelView client={mockClient} notifications={notifications}
+            <Example summary="Contact import success" dashed="true" style={{width: "332px"}}>
+              <PanelView notifications={new loop.shared.models.NotificationCollection([{level: "success", message: "Import success"}])}
                          userProfile={{email: "test@example.com"}}
                          mozLoop={mockMozLoopRooms}
                          dispatcher={dispatcher}
                          roomStore={roomStore}
-                         selectedTab="rooms" />
+                         selectedTab="contacts" />
+            </Example>
+            <Example summary="Contact import error" dashed="true" style={{width: "332px"}}>
+              <PanelView notifications={new loop.shared.models.NotificationCollection([{level: "error", message: "Import error"}])}
+                         userProfile={{email: "test@example.com"}}
+                         mozLoop={mockMozLoopRooms}
+                         dispatcher={dispatcher}
+                         roomStore={roomStore}
+                         selectedTab="contacts" />
             </Example>
           </Section>
 
@@ -501,10 +516,10 @@
 
           <Section name="CallUrlExpiredView">
             <Example summary="Firefox User">
-              <CallUrlExpiredView helper={{isFirefox: returnTrue}} />
+              <CallUrlExpiredView isFirefox={true} />
             </Example>
             <Example summary="Non-Firefox User">
-              <CallUrlExpiredView helper={{isFirefox: returnFalse}} />
+              <CallUrlExpiredView isFirefox={false} />
             </Example>
           </Section>
 
@@ -551,7 +566,7 @@
           <Section name="UnsupportedBrowserView">
             <Example summary="Standalone Unsupported Browser">
               <div className="standalone">
-                <UnsupportedBrowserView helper={{isFirefox: returnFalse}}/>
+                <UnsupportedBrowserView isFirefox={false}/>
               </div>
             </Example>
           </Section>
@@ -559,7 +574,7 @@
           <Section name="UnsupportedDeviceView">
             <Example summary="Standalone Unsupported Device">
               <div className="standalone">
-                <UnsupportedDeviceView />
+                <UnsupportedDeviceView platform="ios"/>
               </div>
             </Example>
           </Section>
@@ -571,6 +586,7 @@
                 <DesktopRoomConversationView
                   roomStore={roomStore}
                   dispatcher={dispatcher}
+                  mozLoop={navigator.mozLoop}
                   roomState={ROOM_STATES.INIT} />
               </div>
             </Example>
@@ -581,6 +597,7 @@
                 <DesktopRoomConversationView
                   roomStore={roomStore}
                   dispatcher={dispatcher}
+                  mozLoop={navigator.mozLoop}
                   roomState={ROOM_STATES.HAS_PARTICIPANTS} />
               </div>
             </Example>
@@ -593,7 +610,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.READY}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -603,7 +620,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.JOINED}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -613,7 +630,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.HAS_PARTICIPANTS}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -623,7 +640,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FULL}
-                  helper={{isFirefox: returnTrue}} />
+                  isFirefox={true} />
               </div>
             </Example>
 
@@ -633,7 +650,7 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FULL}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
 
@@ -644,7 +661,7 @@
                   activeRoomStore={activeRoomStore}
                   feedbackStore={feedbackStore}
                   roomState={ROOM_STATES.ENDED}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
 
@@ -654,14 +671,20 @@
                   dispatcher={dispatcher}
                   activeRoomStore={activeRoomStore}
                   roomState={ROOM_STATES.FAILED}
-                  helper={{isFirefox: returnFalse}} />
+                  isFirefox={false} />
               </div>
             </Example>
           </Section>
 
-          <Section name="SVG icons preview">
+          <Section name="SVG icons preview" className="svg-icons">
+            <Example summary="10x10">
+              <SVGIcons size="10x10"/>
+            </Example>
+            <Example summary="14x14">
+              <SVGIcons size="14x14" />
+            </Example>
             <Example summary="16x16">
-              <SVGIcons />
+              <SVGIcons size="16x16"/>
             </Example>
           </Section>
 

@@ -90,23 +90,41 @@ interface MozNFC : EventTarget {
   attribute EventHandler onpeerready;
 
   /**
-   * This event will be fired when a NFCPeer is detected.
+   * This event will be fired when a NFCPeer is detected. The application has to
+   * be running on the foreground (decided by System app) to receive this event.
+   *
+   * The default action of this event is to dispatch the event in System app
+   * again, and System app will run the default UX behavior (like vibration).
+   * So if the application would like to cancel the event, the application
+   * should call event.preventDefault() or return false in this event handler.
    */
   attribute EventHandler onpeerfound;
 
   /**
    * This event will be fired when NFCPeer, earlier detected in onpeerready
-   * or onpeerfound, moves out of range.
+   * or onpeerfound, moves out of range, or if the application has been switched
+   * to the background (decided by System app).
    */
   attribute EventHandler onpeerlost;
 
   /**
-   * Ths event will be fired when a NFCTag is detected.
+   * This event will be fired when a NFCTag is detected. The application has to
+   * be running on the foreground (decided by System app) to receive this event.
+   *
+   * The default action of this event is to dispatch the event in System app
+   * again, and System app will run the default UX behavior (like vibration) and
+   * launch MozActivity to handle the content of the tag. (For example, System
+   * app will launch Browser if the tag contains URL). So if the application
+   * would like to cancel the event, i.e. in the above example, the application
+   * would process the URL by itself without launching Browser, the application
+   * should call event.preventDefault() or return false in this event handler.
    */
   attribute EventHandler ontagfound;
 
   /**
-   * This event will be fired if the tag detected in ontagfound has been removed.
+   * This event will be fired if the tag detected in ontagfound has been
+   * removed, or if the application has been switched to the background (decided
+   * by System app).
    */
   attribute EventHandler ontaglost;
 };

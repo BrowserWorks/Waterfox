@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.tests;
 
 import org.mozilla.gecko.Actions;
@@ -5,6 +9,8 @@ import org.mozilla.gecko.home.HomePager;
 
 import android.database.Cursor;
 import android.widget.ListView;
+
+import com.jayway.android.robotium.solo.Condition;
 
 
 public class testBookmarklets extends AboutHomeTest {
@@ -24,9 +30,9 @@ public class testBookmarklets extends AboutHomeTest {
         // verify that user-entered bookmarklets do *not* work
         enterUrl(js);
         mActions.sendSpecialKey(Actions.SpecialKey.ENTER);
-        alerted = waitForTest(new BooleanTest() {
+        alerted = waitForCondition(new Condition() {
             @Override
-            public boolean test() {
+            public boolean isSatisfied() {
                 return mSolo.searchButton("OK", true) || mSolo.searchText("12.34", true);
             }
         }, 3000);
@@ -64,9 +70,9 @@ public class testBookmarklets extends AboutHomeTest {
             mAsserter.is(found, true, "Found the bookmark: " + js + " and clicked on it");
         }
 
-        alerted = waitForTest(new BooleanTest() {
+        alerted = waitForCondition(new Condition() {
             @Override
-            public boolean test() {
+            public boolean isSatisfied() {
                 return mSolo.searchButton("OK", true) && mSolo.searchText("12.34", true);
             }
         }, 3000);

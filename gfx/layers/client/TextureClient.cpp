@@ -77,7 +77,7 @@ using namespace mozilla::gfx;
  * TextureClient's data until the compositor side confirmed that it is safe to
  * deallocte or recycle the it.
  */
-class TextureChild MOZ_FINAL : public PTextureChild
+class TextureChild final : public PTextureChild
 {
   ~TextureChild() {}
 public:
@@ -90,9 +90,9 @@ public:
   {
   }
 
-  bool Recv__delete__() MOZ_OVERRIDE;
+  bool Recv__delete__() override;
 
-  bool RecvCompositorRecycle() MOZ_OVERRIDE
+  bool RecvCompositorRecycle() override
   {
     RECYCLE_LOG("Receive recycle %p (%p)\n", mTextureClient, mWaitForRecycle.get());
     mWaitForRecycle = nullptr;
@@ -110,7 +110,7 @@ public:
 
   ISurfaceAllocator* GetAllocator() { return mForwarder; }
 
-  void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+  void ActorDestroy(ActorDestroyReason why) override;
 
   bool IPCOpen() const { return mIPCOpen; }
 
@@ -506,6 +506,7 @@ void TextureClient::ForceRemove(bool sync)
 {
   if (mValid && mActor) {
     if (sync || GetFlags() & TextureFlags::DEALLOCATE_CLIENT) {
+      MOZ_PERFORMANCE_WARNING("gfx", "TextureClient/Host pair requires synchronous deallocation");
       if (mActor->IPCOpen()) {
         mActor->SendClearTextureHostSync();
         mActor->SendRemoveTexture();
@@ -672,8 +673,7 @@ bool
 MemoryTextureClient::Allocate(uint32_t aSize)
 {
   MOZ_ASSERT(!mBuffer);
-  static const fallible_t fallible = fallible_t();
-  mBuffer = new(fallible) uint8_t[aSize];
+  mBuffer = new (fallible) uint8_t[aSize];
   if (!mBuffer) {
     NS_WARNING("Failed to allocate buffer");
     return false;
@@ -880,20 +880,6 @@ BufferTextureClient::GetLockedData() const
   MOZ_ASSERT(serializer.IsValid());
 
   return serializer.GetData();
-}
-
-TemporaryRef<gfx::DataSourceSurface>
-BufferTextureClient::GetAsSurface()
-{
-  ImageDataSerializer serializer(GetBuffer(), GetBufferSize());
-  MOZ_ASSERT(serializer.IsValid());
-
-  RefPtr<gfx::DataSourceSurface> wrappingSurf =
-    gfx::Factory::CreateWrappingDataSourceSurface(serializer.GetData(),
-                                                  serializer.GetStride(),
-                                                  serializer.GetSize(),
-                                                  serializer.GetFormat());
-  return gfx::CreateDataSourceSurfaceByCloning(wrappingSurf);
 }
 
 ////////////////////////////////////////////////////////////////////////

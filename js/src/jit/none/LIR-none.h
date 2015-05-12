@@ -15,36 +15,36 @@ class LUnboxFloatingPoint : public LInstruction
   public:
     static const size_t Input = 0;
 
-    MUnbox *mir() const { MOZ_CRASH(); }
+    MUnbox* mir() const { MOZ_CRASH(); }
 
-    const LDefinition *output() const { MOZ_CRASH(); }
+    const LDefinition* output() const { MOZ_CRASH(); }
     MIRType type() const { MOZ_CRASH(); }
 };
 
 class LTableSwitch : public LInstruction
 {
   public:
-    MTableSwitch *mir() { MOZ_CRASH(); }
+    MTableSwitch* mir() { MOZ_CRASH(); }
 
-    const LAllocation *index() { MOZ_CRASH(); }
-    const LDefinition *tempInt() { MOZ_CRASH(); }
-    const LDefinition *tempPointer() { MOZ_CRASH(); }
+    const LAllocation* index() { MOZ_CRASH(); }
+    const LDefinition* tempInt() { MOZ_CRASH(); }
+    const LDefinition* tempPointer() { MOZ_CRASH(); }
 };
 
 class LTableSwitchV : public LInstruction
 {
   public:
-    MTableSwitch *mir() { MOZ_CRASH(); }
+    MTableSwitch* mir() { MOZ_CRASH(); }
 
-    const LDefinition *tempInt() { MOZ_CRASH(); }
-    const LDefinition *tempFloat() { MOZ_CRASH(); }
-    const LDefinition *tempPointer() { MOZ_CRASH(); }
+    const LDefinition* tempInt() { MOZ_CRASH(); }
+    const LDefinition* tempFloat() { MOZ_CRASH(); }
+    const LDefinition* tempPointer() { MOZ_CRASH(); }
 
     static const size_t InputValue = 0;
 };
 
 class LGuardShape : public LInstruction {};
-class LGuardObjectType : public LInstruction {};
+class LGuardObjectGroup : public LInstruction {};
 class LMulI : public LInstruction {};
 
 } // namespace jit

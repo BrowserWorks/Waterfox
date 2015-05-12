@@ -45,6 +45,22 @@ interface TestJSImplInterface {
   readonly attribute byte cachedConstantByte;
   [Cached, Pure]
   attribute byte cachedWritableByte;
+  [Affects=Nothing]
+  attribute byte sideEffectFreeByte;
+  [Affects=Nothing, DependsOn=DOMState]
+  attribute byte domDependentByte;
+  [Affects=Nothing, DependsOn=Nothing]
+  readonly attribute byte constantByte;
+  [DependsOn=DeviceState, Affects=Nothing]
+  readonly attribute byte deviceStateDependentByte;
+  [Affects=Nothing]
+  byte returnByteSideEffectFree();
+  [Affects=Nothing, DependsOn=DOMState]
+  byte returnDOMDependentByte();
+  [Affects=Nothing, DependsOn=Nothing]
+  byte returnConstantByte();
+  [DependsOn=DeviceState, Affects=Nothing]
+  byte returnDeviceStateDependentByte();
 
   readonly attribute short readonlyShort;
   attribute short writableShort;
@@ -267,6 +283,7 @@ interface TestJSImplInterface {
   sequence<object?> receiveNullableObjectSequence();
 
   void passSequenceOfSequences(sequence<sequence<long>> arg);
+  void passSequenceOfSequencesOfSequences(sequence<sequence<sequence<long>>> arg);
   //XXXbz No support for sequence of sequence return values yet.
   //sequence<sequence<long>> receiveSequenceOfSequences();
 

@@ -28,6 +28,7 @@ WebGLFramebuffer::WebGLFramebuffer(WebGLContext* webgl, GLuint fbo)
     , mDepthAttachment(LOCAL_GL_DEPTH_ATTACHMENT)
     , mStencilAttachment(LOCAL_GL_STENCIL_ATTACHMENT)
     , mDepthStencilAttachment(LOCAL_GL_DEPTH_STENCIL_ATTACHMENT)
+    , mReadBufferMode(LOCAL_GL_COLOR_ATTACHMENT0)
 {
     mContext->mFramebuffers.insertBack(this);
 
@@ -455,7 +456,8 @@ WebGLFramebuffer::FramebufferRenderbuffer(FBAttachment attachPoint,
                                           RBTarget rbtarget,
                                           WebGLRenderbuffer* rb)
 {
-    MOZ_ASSERT(mContext->mBoundFramebuffer == this);
+    MOZ_ASSERT(mContext->mBoundDrawFramebuffer == this ||
+               mContext->mBoundReadFramebuffer == this);
 
     if (!mContext->ValidateObjectAllowNull("framebufferRenderbuffer: renderbuffer",
                                            rb))
@@ -496,7 +498,8 @@ WebGLFramebuffer::FramebufferTexture2D(FBAttachment attachPoint,
                                        TexImageTarget texImageTarget,
                                        WebGLTexture* tex, GLint level)
 {
-    MOZ_ASSERT(mContext->mBoundFramebuffer == this);
+    MOZ_ASSERT(mContext->mBoundDrawFramebuffer == this ||
+               mContext->mBoundReadFramebuffer == this);
 
     if (!mContext->ValidateObjectAllowNull("framebufferTexture2D: texture",
                                            tex))
@@ -564,7 +567,7 @@ WebGLFramebuffer::GetAttachmentOrNull(FBAttachment attachPoint)
         break;
     }
 
-    if (!mContext->ValidateFramebufferAttachment(attachPoint.get(),
+    if (!mContext->ValidateFramebufferAttachment(this, attachPoint.get(),
                                                  "getAttachmentOrNull"))
     {
         return nullptr;
@@ -593,7 +596,7 @@ WebGLFramebuffer::GetAttachment(FBAttachment attachPoint) const
         break;
     }
 
-    if (!mContext->ValidateFramebufferAttachment(attachPoint.get(),
+    if (!mContext->ValidateFramebufferAttachment(this, attachPoint.get(),
                                                  "getAttachment"))
     {
         MOZ_ASSERT(false);
@@ -766,7 +769,8 @@ WebGLFramebuffer::RectangleObject() const
 FBStatus
 WebGLFramebuffer::PrecheckFramebufferStatus() const
 {
-    MOZ_ASSERT(mContext->mBoundFramebuffer == this);
+    MOZ_ASSERT(mContext->mBoundDrawFramebuffer == this ||
+               mContext->mBoundReadFramebuffer == this);
 
     if (!HasDefinedAttachments())
         return LOCAL_GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT; // No attachments
@@ -809,7 +813,9 @@ WebGLFramebuffer::HasCompletePlanes(GLbitfield mask)
     if (CheckFramebufferStatus() != LOCAL_GL_FRAMEBUFFER_COMPLETE)
         return false;
 
-    MOZ_ASSERT(mContext->mBoundFramebuffer == this);
+    MOZ_ASSERT(mContext->mBoundDrawFramebuffer == this ||
+               mContext->mBoundReadFramebuffer == this);
+
     bool hasPlanes = true;
     if (mask & LOCAL_GL_COLOR_BUFFER_BIT) {
         hasPlanes &= ColorAttachmentCount() &&
@@ -832,7 +838,8 @@ WebGLFramebuffer::HasCompletePlanes(GLbitfield mask)
 bool
 WebGLFramebuffer::CheckAndInitializeAttachments()
 {
-    MOZ_ASSERT(mContext->mBoundFramebuffer == this);
+    MOZ_ASSERT(mContext->mBoundDrawFramebuffer == this ||
+               mContext->mBoundReadFramebuffer == this);
 
     if (CheckFramebufferStatus() != LOCAL_GL_FRAMEBUFFER_COMPLETE)
         return false;
@@ -969,6 +976,38 @@ WebGLFramebuffer::FinalizeAttachments() const
                                                 LOCAL_GL_DEPTH_STENCIL_ATTACHMENT);
 
     FinalizeDrawAndReadBuffers(gl, ColorAttachment(0).IsDefined());
+}
+
+bool
+WebGLFramebuffer::ValidateForRead(const char* info, TexInternalFormat* const out_format)
+{
+    if (mReadBufferMode == LOCAL_GL_NONE) {
+        mContext->ErrorInvalidOperation("%s: Read buffer mode must not be"
+                                        " NONE.", info);
+        return false;
+    }
+
+    const auto& attachment = GetAttachment(mReadBufferMode);
+
+    if (!CheckAndInitializeAttachments()) {
+        mContext->ErrorInvalidFramebufferOperation("readPixels: incomplete framebuffer");
+        return false;
+    }
+
+    GLenum readPlaneBits = LOCAL_GL_COLOR_BUFFER_BIT;
+    if (!HasCompletePlanes(readPlaneBits)) {
+        mContext->ErrorInvalidOperation("readPixels: Read source attachment doesn't have the"
+                                        " correct color/depth/stencil type.");
+        return false;
+    }
+
+    if (!attachment.IsDefined()) {
+        mContext->ErrorInvalidOperation("readPixels: ");
+        return false;
+    }
+
+    *out_format = attachment.EffectiveInternalFormat();
+    return true;
 }
 
 inline void

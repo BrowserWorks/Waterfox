@@ -155,7 +155,9 @@ enum EventNameType {
 
 struct EventNameMapping
 {
-  nsIAtom* mAtom;
+  // This holds pointers to nsGkAtoms members, and is therefore safe as a
+  // non-owning reference.
+  nsIAtom* MOZ_OWNING_REF mAtom;
   uint32_t mId;
   int32_t  mType;
   mozilla::EventClassID mEventClassID;
@@ -360,11 +362,6 @@ public:
    * Is the HTML local name a block element?
    */
   static bool IsHTMLBlock(nsIAtom* aLocalName);
-
-  /**
-   * Is the HTML local name a void element?
-   */
-  static bool IsHTMLVoid(nsIAtom* aLocalName);
 
   enum ParseHTMLIntegerResultFlags {
     eParseHTMLInteger_NoFlags               = 0,
@@ -996,7 +993,10 @@ public:
 
   /**
    * This method creates and dispatches a trusted event to the chrome
-   * event handler.
+   * event handler (the parent object of the DOM Window in the event target
+   * chain). Note, chrome event handler is used even if aTarget is a chrome
+   * object. Use DispatchEventOnlyToChrome if the normal event dispatching is
+   * wanted in case aTarget is a chrome object.
    * Works only with events which can be created by calling
    * nsIDOMDocument::CreateEvent() with parameter "Events".
    * @param aDocument      The document which will be used to create the event,
@@ -1015,6 +1015,32 @@ public:
                                       bool aCanBubble,
                                       bool aCancelable,
                                       bool *aDefaultAction = nullptr);
+
+
+  /**
+   * This method creates and dispatches a trusted event.
+   * If aTarget is not a chrome object, the nearest chrome object in the
+   * propagation path will be used as the start of the event target chain.
+   * This method is different than DispatchChromeEvent, which always dispatches
+   * events to chrome event handler. DispatchEventOnlyToChrome works like
+   * DispatchTrustedEvent in the case aTarget is a chrome object.
+   * Works only with events which can be created by calling
+   * nsIDOMDocument::CreateEvent() with parameter "Events".
+   * @param aDoc           The document which will be used to create the event.
+   * @param aTarget        The target of the event, should be QIable to
+   *                       nsIDOMEventTarget.
+   * @param aEventName     The name of the event.
+   * @param aCanBubble     Whether the event can bubble.
+   * @param aCancelable    Is the event cancelable.
+   * @param aDefaultAction Set to true if default action should be taken,
+   *                       see nsIDOMEventTarget::DispatchEvent.
+   */
+  static nsresult DispatchEventOnlyToChrome(nsIDocument* aDoc,
+                                            nsISupports* aTarget,
+                                            const nsAString& aEventName,
+                                            bool aCanBubble,
+                                            bool aCancelable,
+                                            bool *aDefaultAction = nullptr);
 
   /**
    * Determines if an event attribute name (such as onclick) is valid for
@@ -1261,7 +1287,7 @@ public:
    * @param aDiscoverMode Set to eRecurseIntoChildren to descend recursively
    * into children.
    */
-  enum TextContentDiscoverMode MOZ_ENUM_TYPE(uint8_t) {
+  enum TextContentDiscoverMode : uint8_t {
     eRecurseIntoChildren, eDontRecurseIntoChildren
   };
 
@@ -1615,7 +1641,7 @@ public:
 
   // Returns NS_OK for same origin, error (NS_ERROR_DOM_BAD_URI) if not.
   static nsresult CheckSameOrigin(nsIChannel *aOldChannel, nsIChannel *aNewChannel);
-  static nsIInterfaceRequestor* GetSameOriginChecker();
+  static nsIInterfaceRequestor* SameOriginChecker();
 
   /**
    * Get the Origin of the passed in nsIPrincipal or nsIURI. If the passed in
@@ -1721,6 +1747,8 @@ public:
    * @param aString the string to convert the newlines inside [in/out]
    */
   static void PlatformToDOMLineBreaks(nsString &aString);
+  static NS_WARN_UNUSED_RESULT bool PlatformToDOMLineBreaks(nsString &aString,
+                                                            const mozilla::fallible_t&);
 
   /**
    * Populates aResultString with the contents of the string-buffer aBuf, up
@@ -1859,11 +1887,28 @@ public:
   }
   
   /*
+   * Returns true if user timing API should print to console.
+   */
+  static bool IsUserTimingLoggingEnabled()
+  {
+    return sIsUserTimingLoggingEnabled;
+  }
+
+  /*
    * Returns true if the performance timing APIs are enabled.
    */
   static bool IsResourceTimingEnabled()
   {
     return sIsResourceTimingEnabled;
+  }
+
+  /*
+   * Returns true if URL setters should percent encode the Hash/Ref segment
+   * and getters should return the percent decoded value of the segment
+   */
+  static bool EncodeDecodeURLHash()
+  {
+    return sEncodeDecodeURLHash;
   }
 
   /**
@@ -2044,7 +2089,7 @@ public:
    */
   static bool IsAutocompleteEnabled(nsIDOMHTMLInputElement* aInput);
 
-  enum AutocompleteAttrState MOZ_ENUM_TYPE(uint8_t)
+  enum AutocompleteAttrState : uint8_t
   {
     eAutocompleteAttrState_Unknown = 1,
     eAutocompleteAttrState_Invalid,
@@ -2136,6 +2181,14 @@ public:
                                         Element* aRoot,
                                         int32_t& aOutStartOffset,
                                         int32_t& aOutEndOffset);
+
+  /**
+   * Takes a selection, and return selection's bounding rect which is relative
+   * to root frame.
+   *
+   * @param aSel      Selection to check
+   */
+  static nsRect GetSelectionBoundingRect(mozilla::dom::Selection* aSel);
 
   /**
    * Takes a frame for anonymous content within a text control (<input> or
@@ -2251,7 +2304,8 @@ private:
                                 bool aCanBubble,
                                 bool aCancelable,
                                 bool aTrusted,
-                                bool *aDefaultAction = nullptr);
+                                bool *aDefaultAction = nullptr,
+                                bool aOnlyChromeDispatch = false);
 
   static void InitializeModifierStrings();
 
@@ -2328,7 +2382,9 @@ private:
   static uint32_t sHandlingInputTimeout;
   static bool sIsPerformanceTimingEnabled;
   static bool sIsResourceTimingEnabled;
+  static bool sIsUserTimingLoggingEnabled;
   static bool sIsExperimentalAutocompleteEnabled;
+  static bool sEncodeDecodeURLHash;
 
   static nsHtml5StringParser* sHTMLFragmentParser;
   static nsIParser* sXMLFragmentParser;

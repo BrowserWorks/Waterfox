@@ -28,7 +28,6 @@
 #include "nsFrameList.h"
 #include "mozilla/layout/FrameChildList.h"
 #include "FramePropertyTable.h"
-#include "mozilla/TypedEnum.h"
 #include "nsDirection.h"
 #include "WritingModes.h"
 #include <algorithm>
@@ -316,10 +315,10 @@ void NS_MergeReflowStatusInto(nsReflowStatus* aPrimary,
 /**
  * DidReflow status values.
  */
-MOZ_BEGIN_ENUM_CLASS(nsDidReflowStatus, uint32_t)
+enum class nsDidReflowStatus : uint32_t {
   NOT_FINISHED,
   FINISHED
-MOZ_END_ENUM_CLASS(nsDidReflowStatus)
+};
 
 /**
  * When there is no scrollable overflow rect, the visual overflow rect
@@ -366,6 +365,20 @@ struct IntrinsicSize {
     return !(*this == rhs);
   }
 };
+}
+
+/// Generic destructor for frame properties. Calls delete.
+template<typename T>
+static void DeleteValue(void* aPropertyValue)
+{
+  delete static_cast<T*>(aPropertyValue);
+}
+
+/// Generic destructor for frame properties. Calls Release().
+template<typename T>
+static void ReleaseValue(void* aPropertyValue)
+{
+  static_cast<T*>(aPropertyValue)->Release();
 }
 
 //----------------------------------------------------------------------
@@ -738,6 +751,15 @@ public:
     SetRect(nsRect(mRect.TopLeft(), aSize));
   }
   void SetPosition(const nsPoint& aPt) { mRect.MoveTo(aPt); }
+  void SetPosition(mozilla::WritingMode aWritingMode,
+                   const mozilla::LogicalPoint& aPt,
+                   nscoord aContainerWidth) {
+    // We subtract mRect.width from the container width to account for
+    // the fact that logical origins in RTL coordinate systems are at
+    // the top right of the frame instead of the top left.
+    mRect.MoveTo(aPt.GetPhysicalPoint(aWritingMode,
+                                      aContainerWidth - mRect.width));
+  }
 
   /**
    * Move the frame, accounting for relative positioning. Use this when
@@ -787,30 +809,6 @@ public:
   
   nsPoint GetPositionIgnoringScrolling();
 
-  static void DestroyRegion(void* aPropertyValue);
-
-  static void DestroyMargin(void* aPropertyValue)
-  {
-    delete static_cast<nsMargin*>(aPropertyValue);
-  }
-
-  static void DestroyRect(void* aPropertyValue)
-  {
-    delete static_cast<nsRect*>(aPropertyValue);
-  }
-
-  static void DestroyPoint(void* aPropertyValue)
-  {
-    delete static_cast<nsPoint*>(aPropertyValue);
-  }
-
-  static void DestroyOverflowAreas(void* aPropertyValue)
-  {
-    delete static_cast<nsOverflowAreas*>(aPropertyValue);
-  }
-
-  static void DestroySurface(void* aPropertyValue);
-  static void DestroyDT(void* aPropertyValue);
   static void DestroyContentArray(void* aPropertyValue);
 
 #ifdef _MSC_VER
@@ -836,18 +834,19 @@ public:
   NS_DECLARE_FRAME_PROPERTY(IBSplitSibling, nullptr)
   NS_DECLARE_FRAME_PROPERTY(IBSplitPrevSibling, nullptr)
 
-  NS_DECLARE_FRAME_PROPERTY(NormalPositionProperty, DestroyPoint)
-  NS_DECLARE_FRAME_PROPERTY(ComputedOffsetProperty, DestroyMargin)
+  NS_DECLARE_FRAME_PROPERTY(NormalPositionProperty, DeleteValue<nsPoint>)
+  NS_DECLARE_FRAME_PROPERTY(ComputedOffsetProperty, DeleteValue<nsMargin>)
 
-  NS_DECLARE_FRAME_PROPERTY(OutlineInnerRectProperty, DestroyRect)
-  NS_DECLARE_FRAME_PROPERTY(PreEffectsBBoxProperty, DestroyRect)
+  NS_DECLARE_FRAME_PROPERTY(OutlineInnerRectProperty, DeleteValue<nsRect>)
+  NS_DECLARE_FRAME_PROPERTY(PreEffectsBBoxProperty, DeleteValue<nsRect>)
   NS_DECLARE_FRAME_PROPERTY(PreTransformOverflowAreasProperty,
-                            DestroyOverflowAreas)
+                            DeleteValue<nsOverflowAreas>)
 
   // The initial overflow area passed to FinishAndStoreOverflow. This is only set
   // on frames that Preserve3D() or HasPerspective() or IsTransformed(), and
   // when at least one of the overflow areas differs from the frame bound rect.
-  NS_DECLARE_FRAME_PROPERTY(InitialOverflowProperty, DestroyOverflowAreas)
+  NS_DECLARE_FRAME_PROPERTY(InitialOverflowProperty,
+                            DeleteValue<nsOverflowAreas>)
 
 #ifdef DEBUG
   // InitialOverflowPropertyDebug is added to the frame to indicate that either
@@ -856,18 +855,19 @@ public:
   NS_DECLARE_FRAME_PROPERTY(DebugInitialOverflowPropertyApplied, nullptr)
 #endif
 
-  NS_DECLARE_FRAME_PROPERTY(UsedMarginProperty, DestroyMargin)
-  NS_DECLARE_FRAME_PROPERTY(UsedPaddingProperty, DestroyMargin)
-  NS_DECLARE_FRAME_PROPERTY(UsedBorderProperty, DestroyMargin)
+  NS_DECLARE_FRAME_PROPERTY(UsedMarginProperty, DeleteValue<nsMargin>)
+  NS_DECLARE_FRAME_PROPERTY(UsedPaddingProperty, DeleteValue<nsMargin>)
+  NS_DECLARE_FRAME_PROPERTY(UsedBorderProperty, DeleteValue<nsMargin>)
 
   NS_DECLARE_FRAME_PROPERTY(ScrollLayerCount, nullptr)
 
   NS_DECLARE_FRAME_PROPERTY(LineBaselineOffset, nullptr)
 
-  NS_DECLARE_FRAME_PROPERTY(CachedBackgroundImage, DestroySurface)
-  NS_DECLARE_FRAME_PROPERTY(CachedBackgroundImageDT, DestroyDT)
+  NS_DECLARE_FRAME_PROPERTY(CachedBackgroundImage, ReleaseValue<gfxASurface>)
+  NS_DECLARE_FRAME_PROPERTY(CachedBackgroundImageDT,
+                            ReleaseValue<mozilla::gfx::DrawTarget>)
 
-  NS_DECLARE_FRAME_PROPERTY(InvalidationRect, DestroyRect)
+  NS_DECLARE_FRAME_PROPERTY(InvalidationRect, DeleteValue<nsRect>)
 
   NS_DECLARE_FRAME_PROPERTY(RefusedAsyncAnimation, nullptr)
 
@@ -2460,10 +2460,13 @@ public:
    *  @param aOutOffset [out] 0 indicates that we arrived at the beginning of the output frame;
    *                          -1 indicates that we arrived at its end.
    *  @param aOutJumpedLine [out] whether this frame and the returned frame are on different lines
+   *  @param aOutMovedOverNonSelectableText [out] whether we jumped over a non-selectable
+   *                                              frame during the search
    */
   nsresult GetFrameFromDirection(nsDirection aDirection, bool aVisual,
-                                 bool aJumpLines, bool aScrollViewStop, 
-                                 nsIFrame** aOutFrame, int32_t* aOutOffset, bool* aOutJumpedLine);
+                                 bool aJumpLines, bool aScrollViewStop,
+                                 nsIFrame** aOutFrame, int32_t* aOutOffset,
+                                 bool* aOutJumpedLine, bool* aOutMovedOverNonSelectableText);
 
   /**
    *  called to see if the children of the frame are visible from indexstart to index end.
@@ -3143,8 +3146,8 @@ protected:
 private:
   nsOverflowAreas* GetOverflowAreasProperty();
   nsRect GetVisualOverflowFromDeltas() const {
-    NS_ABORT_IF_FALSE(mOverflow.mType != NS_FRAME_OVERFLOW_LARGE,
-                      "should not be called when overflow is in a property");
+    MOZ_ASSERT(mOverflow.mType != NS_FRAME_OVERFLOW_LARGE,
+               "should not be called when overflow is in a property");
     // Calculate the rect using deltas from the frame's border rect.
     // Note that the mOverflow.mDeltas fields are unsigned, but we will often
     // need to return negative values for the left and top, so take care

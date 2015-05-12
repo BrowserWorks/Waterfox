@@ -13,6 +13,7 @@
 #endif
 #ifdef XP_WIN
 #include "mozilla/WindowsVersion.h"
+#include "WMFDecoderModule.h"
 #endif
 #include "nsContentCID.h"
 #include "nsServiceManagerUtils.h"
@@ -21,6 +22,7 @@
 #include "mozilla/Services.h"
 #include "nsIObserverService.h"
 #include "mozilla/EMEUtils.h"
+#include "GMPUtils.h"
 
 namespace mozilla {
 namespace dom {
@@ -104,6 +106,10 @@ EnsureMinCDMVersion(mozIGeckoMediaPluginService* aGMPService,
   nsAutoCString versionStr;
   if (NS_FAILED(aGMPService->GetPluginVersionForAPI(NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
                                                     &tags,
+                                                    versionStr)) &&
+      // XXX to be removed later in bug 1147692
+      NS_FAILED(aGMPService->GetPluginVersionForAPI(NS_LITERAL_CSTRING(GMP_API_DECRYPTOR_COMPAT),
+                                                    &tags,
                                                     versionStr))) {
     return MediaKeySystemStatus::Error;
   }
@@ -122,7 +128,7 @@ MediaKeySystemStatus
 MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
                                          int32_t aMinCdmVersion)
 {
-  MOZ_ASSERT(Preferences::GetBool("media.eme.enabled", false));  
+  MOZ_ASSERT(Preferences::GetBool("media.eme.enabled", false));
   nsCOMPtr<mozIGeckoMediaPluginService> mps =
     do_GetService("@mozilla.org/gecko-media-plugin-service;1");
   if (NS_WARN_IF(!mps)) {
@@ -151,9 +157,20 @@ MediaKeySystemAccess::GetKeySystemStatus(const nsAString& aKeySystem,
     if (!Preferences::GetBool("media.gmp-eme-adobe.enabled", false)) {
       return MediaKeySystemStatus::Cdm_disabled;
     }
+    if ((!WMFDecoderModule::HasH264() || !WMFDecoderModule::HasAAC()) ||
+        !EMEVoucherFileExists()) {
+      // The system doesn't have the codecs that Adobe EME relies
+      // on installed, or doesn't have a voucher for the plugin-container.
+      // Adobe EME isn't going to work, so don't advertise that it will.
+      return MediaKeySystemStatus::Cdm_not_supported;
+    }
     if (!HaveGMPFor(mps,
                     NS_ConvertUTF16toUTF8(aKeySystem),
-                    NS_LITERAL_CSTRING(GMP_API_DECRYPTOR))) {
+                    NS_LITERAL_CSTRING(GMP_API_DECRYPTOR)) &&
+        // XXX to be removed later in bug 1147692
+        !HaveGMPFor(mps,
+                    NS_ConvertUTF16toUTF8(aKeySystem),
+                    NS_LITERAL_CSTRING(GMP_API_DECRYPTOR_COMPAT))) {
       return MediaKeySystemStatus::Cdm_not_installed;
     }
     return EnsureMinCDMVersion(mps, aKeySystem, aMinCdmVersion);
@@ -197,14 +214,26 @@ IsPlayableWithGMP(mozIGeckoMediaPluginService* aGMPS,
       hasMP3) {
     return false;
   }
-  return (!hasAAC || !HaveGMPFor(aGMPS,
-                                 NS_ConvertUTF16toUTF8(aKeySystem),
-                                 NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
-                                 NS_LITERAL_CSTRING("aac"))) &&
-         (!hasH264 || !HaveGMPFor(aGMPS,
-                                  NS_ConvertUTF16toUTF8(aKeySystem),
-                                  NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
-                                  NS_LITERAL_CSTRING("h264")));
+  return (!hasAAC ||
+          !(HaveGMPFor(aGMPS,
+                       NS_ConvertUTF16toUTF8(aKeySystem),
+                       NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
+                       NS_LITERAL_CSTRING("aac")) ||
+            // XXX remove later in bug 1147692
+            HaveGMPFor(aGMPS,
+                       NS_ConvertUTF16toUTF8(aKeySystem),
+                       NS_LITERAL_CSTRING(GMP_API_DECRYPTOR_COMPAT),
+                       NS_LITERAL_CSTRING("aac")))) &&
+         (!hasH264 ||
+          !(HaveGMPFor(aGMPS,
+                       NS_ConvertUTF16toUTF8(aKeySystem),
+                       NS_LITERAL_CSTRING(GMP_API_DECRYPTOR),
+                       NS_LITERAL_CSTRING("h264")) ||
+            // XXX remove later in bug 1147692
+            HaveGMPFor(aGMPS,
+                       NS_ConvertUTF16toUTF8(aKeySystem),
+                       NS_LITERAL_CSTRING(GMP_API_DECRYPTOR_COMPAT),
+                       NS_LITERAL_CSTRING("h264"))));
 #else
   return false;
 #endif

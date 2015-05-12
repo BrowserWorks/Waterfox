@@ -26,7 +26,7 @@ BEGIN_WORKERS_NAMESPACE
 
 class URLProxy;
 
-class URL MOZ_FINAL : public mozilla::dom::URLSearchParamsObserver
+class URL final : public mozilla::dom::URLSearchParamsObserver
 {
   typedef mozilla::dom::URLSearchParams URLSearchParams;
 
@@ -45,8 +45,8 @@ public:
     return nullptr;
   }
 
-  JSObject*
-  WrapObject(JSContext* aCx);
+  bool
+  WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector);
 
   // Methods for WebIDL
 
@@ -56,11 +56,6 @@ public:
   static already_AddRefed<URL>
   Constructor(const GlobalObject& aGlobal, const nsAString& aUrl,
               const nsAString& aBase, ErrorResult& aRv);
-
-  static void
-  CreateObjectURL(const GlobalObject& aGlobal,
-                  JSObject* aArg, const objectURLOptions& aOptions,
-                  nsString& aResult, ErrorResult& aRv);
 
   static void
   CreateObjectURL(const GlobalObject& aGlobal,
@@ -122,7 +117,7 @@ public:
   }
 
   // IURLSearchParamsObserver
-  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) MOZ_OVERRIDE;
+  void URLSearchParamsUpdated(URLSearchParams* aSearchParams) override;
 
 private:
   URLProxy* GetURLProxy() const

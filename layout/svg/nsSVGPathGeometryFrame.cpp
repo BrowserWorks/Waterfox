@@ -62,7 +62,7 @@ public:
     : nsDisplayItem(aBuilder, aFrame)
   {
     MOZ_COUNT_CTOR(nsDisplaySVGPathGeometry);
-    NS_ABORT_IF_FALSE(aFrame, "Must have a frame!");
+    MOZ_ASSERT(aFrame, "Must have a frame!");
   }
 #ifdef NS_BUILD_REFCNT_LOGGING
   virtual ~nsDisplaySVGPathGeometry() {
@@ -73,9 +73,9 @@ public:
   NS_DISPLAY_DECL_NAME("nsDisplaySVGPathGeometry", TYPE_SVG_PATH_GEOMETRY)
 
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
-                       HitTestState* aState, nsTArray<nsIFrame*> *aOutFrames) MOZ_OVERRIDE;
+                       HitTestState* aState, nsTArray<nsIFrame*> *aOutFrames) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE;
+                     nsRenderingContext* aCtx) override;
 };
 
 void
@@ -360,8 +360,8 @@ nsSVGPathGeometryFrame::ReflowSVG()
   NS_ASSERTION(nsSVGUtils::OuterSVGIsCallingReflowSVG(this),
                "This call is probably a wasteful mistake");
 
-  NS_ABORT_IF_FALSE(!(GetStateBits() & NS_FRAME_IS_NONDISPLAY),
-                    "ReflowSVG mechanism not designed for this");
+  MOZ_ASSERT(!(GetStateBits() & NS_FRAME_IS_NONDISPLAY),
+             "ReflowSVG mechanism not designed for this");
 
   if (!nsSVGUtils::NeedsReflowSVG(this)) {
     return;
@@ -411,8 +411,8 @@ nsSVGPathGeometryFrame::ReflowSVG()
 void
 nsSVGPathGeometryFrame::NotifySVGChanged(uint32_t aFlags)
 {
-  NS_ABORT_IF_FALSE(aFlags & (TRANSFORM_CHANGED | COORD_CONTEXT_CHANGED),
-                    "Invalidation logic may need adjusting");
+  MOZ_ASSERT(aFlags & (TRANSFORM_CHANGED | COORD_CONTEXT_CHANGED),
+             "Invalidation logic may need adjusting");
 
   // Changes to our ancestors may affect how we render when we are rendered as
   // part of our ancestor (specifically, if our coordinate context changes size
@@ -471,9 +471,16 @@ nsSVGPathGeometryFrame::GetBBoxContribution(const Matrix &aToBBoxUserspace,
 
   bool gotSimpleBounds = false;
   if (!StyleSVGReset()->HasNonScalingStroke()) {
-    Float strokeWidth = getStroke ? nsSVGUtils::GetStrokeWidth(this) : 0.f;
+    SVGContentUtils::AutoStrokeOptions strokeOptions;
+    strokeOptions.mLineWidth = 0.f;
+    if (getStroke) {
+      SVGContentUtils::GetStrokeOptions(&strokeOptions, element,
+        StyleContext(), nullptr,
+        SVGContentUtils::eIgnoreStrokeDashing);
+    }
     Rect simpleBounds;
-    gotSimpleBounds = element->GetGeometryBounds(&simpleBounds, strokeWidth,
+    gotSimpleBounds = element->GetGeometryBounds(&simpleBounds,
+                                                 strokeOptions,
                                                  aToBBoxUserspace);
     if (gotSimpleBounds) {
       bbox = simpleBounds;

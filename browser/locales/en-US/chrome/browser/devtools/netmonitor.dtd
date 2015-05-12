@@ -42,8 +42,14 @@
   -  in the network table toolbar, above the "type" column. -->
 <!ENTITY netmonitorUI.toolbar.type        "Type">
 
+<!-- LOCALIZATION NOTE (netmonitorUI.toolbar.transferred): This is the label displayed
+  -  in the network table toolbar, above the "transferred" column, which is the
+  -  compressed / encoded size. -->
+<!ENTITY netmonitorUI.toolbar.transferred "Transferred">
+
 <!-- LOCALIZATION NOTE (netmonitorUI.toolbar.size): This is the label displayed
-  -  in the network table toolbar, above the "size" column. -->
+  -  in the network table toolbar, above the "size" column, which is the
+  -  uncompressed / decoded size. -->
 <!ENTITY netmonitorUI.toolbar.size        "Size">
 
 <!-- LOCALIZATION NOTE (netmonitorUI.toolbar.waterfall): This is the label displayed
@@ -195,6 +201,14 @@
   -  in the network details timings tab identifying the amount of time spent
   -  in a "receive" state. -->
 <!ENTITY netmonitorUI.timings.receive     "Receiving:">
+
+<!-- LOCALIZATION NOTE (netmonitorUI.security.warning.protocol): A tooltip
+  -  for warning icon that indicates a connection uses insecure protocol. -->
+<!ENTITY netmonitorUI.security.warning.sslv3      "The protocol SSL 3.0 is deprecated and insecure.">
+
+<!-- LOCALIZATION NOTE (netmonitorUI.security.warning.cipher): A tooltip
+  -  for warning icon that indicates a connection uses insecure cipher suite. -->
+<!ENTITY netmonitorUI.security.warning.cipher     "The cipher used for encryption is deprecated and insecure.">
 
 <!-- LOCALIZATION NOTE (netmonitorUI.security.error): This is the label displayed
   -  in the security tab if a security error prevented the connection. -->

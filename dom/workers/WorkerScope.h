@@ -10,6 +10,7 @@
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/Headers.h"
 #include "mozilla/dom/RequestBinding.h"
+#include "nsWeakReference.h"
 
 namespace mozilla {
 namespace dom {
@@ -37,7 +38,8 @@ class WorkerNavigator;
 class Performance;
 
 class WorkerGlobalScope : public DOMEventTargetHelper,
-                          public nsIGlobalObject
+                          public nsIGlobalObject,
+                          public nsSupportsWeakReference
 {
   typedef mozilla::dom::indexedDB::IDBFactory IDBFactory;
 
@@ -55,13 +57,13 @@ protected:
 
 public:
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx) override;
+
+  virtual bool
+  WrapGlobalObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector) = 0;
 
   virtual JSObject*
-  WrapGlobalObject(JSContext* aCx) = 0;
-
-  virtual JSObject*
-  GetGlobalJSObject(void) MOZ_OVERRIDE
+  GetGlobalJSObject(void) override
   {
     return GetWrapper();
   }
@@ -141,15 +143,16 @@ public:
   GetIndexedDB(ErrorResult& aErrorResult);
 };
 
-class DedicatedWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
+class DedicatedWorkerGlobalScope final : public WorkerGlobalScope
 {
   ~DedicatedWorkerGlobalScope() { }
 
 public:
   explicit DedicatedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate);
 
-  virtual JSObject*
-  WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual bool
+  WrapGlobalObject(JSContext* aCx,
+                   JS::MutableHandle<JSObject*> aReflector) override;
 
   void
   PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
@@ -159,7 +162,7 @@ public:
   IMPL_EVENT_HANDLER(message)
 };
 
-class SharedWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
+class SharedWorkerGlobalScope final : public WorkerGlobalScope
 {
   const nsCString mName;
 
@@ -169,8 +172,9 @@ public:
   SharedWorkerGlobalScope(WorkerPrivate* aWorkerPrivate,
                           const nsCString& aName);
 
-  virtual JSObject*
-  WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual bool
+  WrapGlobalObject(JSContext* aCx,
+                   JS::MutableHandle<JSObject*> aReflector) override;
 
   void GetName(DOMString& aName) const
   {
@@ -180,7 +184,7 @@ public:
   IMPL_EVENT_HANDLER(connect)
 };
 
-class ServiceWorkerGlobalScope MOZ_FINAL : public WorkerGlobalScope
+class ServiceWorkerGlobalScope final : public WorkerGlobalScope
 {
   const nsString mScope;
   nsRefPtr<ServiceWorkerClients> mClients;
@@ -194,13 +198,14 @@ public:
 
   ServiceWorkerGlobalScope(WorkerPrivate* aWorkerPrivate, const nsACString& aScope);
 
-  virtual JSObject*
-  WrapGlobalObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual bool
+  WrapGlobalObject(JSContext* aCx,
+                   JS::MutableHandle<JSObject*> aReflector) override;
 
   void
-  GetScope(DOMString& aScope) const
+  GetScope(nsString& aScope) const
   {
-    aScope.AsAString() = mScope;
+    aScope = mScope;
   }
 
   void

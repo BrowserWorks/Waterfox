@@ -20,14 +20,16 @@ describe("loop.webapp", function() {
       stubGetPermsAndCacheMedia,
       fakeAudioXHR,
       dispatcher,
-      feedbackStore;
+      WEBSOCKET_REASONS = loop.shared.utils.WEBSOCKET_REASONS;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
     dispatcher = new loop.Dispatcher();
     notifications = new sharedModels.NotificationCollection();
-    feedbackStore = new loop.store.FeedbackStore(dispatcher, {
-      feedbackClient: {}
+    loop.store.StoreMixin.register({
+      feedbackStore: new loop.store.FeedbackStore(dispatcher, {
+        feedbackClient: {}
+      })
     });
 
     stubGetPermsAndCacheMedia = sandbox.stub(
@@ -70,7 +72,7 @@ describe("loop.webapp", function() {
     });
 
     it("should dispatch a ExtractTokenInfo action with the hash", function() {
-      sandbox.stub(loop.shared.utils.Helper.prototype, "locationData").returns({
+      sandbox.stub(loop.shared.utils, "locationData").returns({
         hash: "#call/faketoken",
         pathname: "invalid"
       });
@@ -86,7 +88,7 @@ describe("loop.webapp", function() {
 
     it("should dispatch a ExtractTokenInfo action with the path if there is no hash",
       function() {
-        sandbox.stub(loop.shared.utils.Helper.prototype, "locationData").returns({
+        sandbox.stub(loop.shared.utils, "locationData").returns({
           hash: "",
           pathname: "/c/faketoken"
         });
@@ -121,14 +123,13 @@ describe("loop.webapp", function() {
       });
       conversation.set("loopToken", "fakeToken");
       ocView = mountTestComponent({
-        helper: new sharedUtils.Helper(),
         client: client,
         conversation: conversation,
         notifications: notifications,
         sdk: {
           on: sandbox.stub()
         },
-        feedbackStore: feedbackStore
+        dispatcher: dispatcher
       });
     });
 
@@ -244,7 +245,7 @@ describe("loop.webapp", function() {
             it("should display the FailedConversationView", function() {
               ocView._websocket.trigger("progress", {
                 state: "terminated",
-                reason: "reject"
+                reason: WEBSOCKET_REASONS.REJECT
               });
 
               TestUtils.findRenderedComponentWithType(ocView,
@@ -259,17 +260,17 @@ describe("loop.webapp", function() {
 
                 ocView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "reject"
+                  reason: WEBSOCKET_REASONS.REJECT
                 });
 
                 sinon.assert.calledOnce(multiplexGum.reset);
               });
 
-            it("should display an error message if the reason is not 'cancel'",
+            it("should display an error message if the reason is not WEBSOCKET_REASONS.CANCEL",
               function() {
                 ocView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "reject"
+                  reason: WEBSOCKET_REASONS.REJECT
                 });
 
                 sinon.assert.calledOnce(notifications.errorL10n);
@@ -277,11 +278,11 @@ describe("loop.webapp", function() {
                   "call_timeout_notification_text");
               });
 
-            it("should not display an error message if the reason is 'cancel'",
+            it("should not display an error message if the reason is WEBSOCKET_REASONS.CANCEL",
               function() {
                 ocView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "cancel"
+                  reason: WEBSOCKET_REASONS.CANCEL
                 });
 
                 sinon.assert.notCalled(notifications.errorL10n);
@@ -644,7 +645,7 @@ describe("loop.webapp", function() {
   });
 
   describe("WebappRootView", function() {
-    var helper, sdk, conversationModel, client, props, standaloneAppStore;
+    var sdk, conversationModel, client, props, standaloneAppStore;
     var activeRoomStore;
 
     function mountTestComponent() {
@@ -652,18 +653,16 @@ describe("loop.webapp", function() {
         React.createElement(
           loop.webapp.WebappRootView, {
             client: client,
-            helper: helper,
+            dispatcher: dispatcher,
             notifications: notifications,
             sdk: sdk,
             conversation: conversationModel,
             standaloneAppStore: standaloneAppStore,
-            activeRoomStore: activeRoomStore,
-            feedbackStore: feedbackStore
+            activeRoomStore: activeRoomStore
           }));
     }
 
     beforeEach(function() {
-      helper = new sharedUtils.Helper();
       sdk = {
         checkSystemRequirements: function() { return true; }
       };
@@ -680,7 +679,6 @@ describe("loop.webapp", function() {
       standaloneAppStore = new loop.store.StandaloneAppStore({
         dispatcher: dispatcher,
         sdk: sdk,
-        helper: helper,
         conversation: conversationModel
       });
       // Stub this to stop the StartConversationView kicking in the request and
@@ -1086,7 +1084,6 @@ describe("loop.webapp", function() {
           loop.webapp.EndedConversationView, {
             conversation: conversation,
             sdk: {},
-            feedbackStore: feedbackStore,
             onAfterFeedbackReceived: function(){}
           }));
     });
@@ -1105,7 +1102,7 @@ describe("loop.webapp", function() {
       it("should not render when using Firefox", function() {
         var comp = TestUtils.renderIntoDocument(
           React.createElement(loop.webapp.PromoteFirefoxView, {
-            helper: {isFirefox: function() { return true; }}
+            isFirefox: true
           }));
 
         expect(comp.getDOMNode().querySelectorAll("h3").length).eql(0);
@@ -1115,7 +1112,7 @@ describe("loop.webapp", function() {
         var comp = TestUtils.renderIntoDocument(
           React.createElement(
             loop.webapp.PromoteFirefoxView, {
-              helper: {isFirefox: function() { return false; }}
+              isFirefox: false
             }));
 
         expect(comp.getDOMNode().querySelectorAll("h3").length).eql(1);

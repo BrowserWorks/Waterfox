@@ -94,7 +94,7 @@ void SandboxFilterImpl::AllowThreadClone() {
 #ifdef MOZ_CONTENT_SANDBOX
 class SandboxFilterImplContent : public SandboxFilterImpl {
 protected:
-  virtual void Build() MOZ_OVERRIDE;
+  virtual void Build() override;
 };
 
 void
@@ -351,7 +351,7 @@ SandboxFilterImplContent::Build() {
 #ifdef MOZ_GMP_SANDBOX
 class SandboxFilterImplGMP : public SandboxFilterImpl {
 protected:
-  virtual void Build() MOZ_OVERRIDE;
+  virtual void Build() override;
 };
 
 void SandboxFilterImplGMP::Build() {
@@ -368,6 +368,7 @@ void SandboxFilterImplGMP::Build() {
   Allow(SOCKETCALL(recvmsg, RECVMSG));
   Allow(SOCKETCALL(sendmsg, SENDMSG));
   Allow(SYSCALL(time));
+  Allow(SYSCALL(sched_yield));
 
   // Nothing after this line is performance-critical.
 

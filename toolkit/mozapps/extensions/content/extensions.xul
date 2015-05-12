@@ -177,6 +177,7 @@
       </menupopup>
     </toolbarbutton>
     <textbox id="header-search" type="search" searchbutton="true"
+             searchbuttonlabel="&search.buttonlabel;"
              placeholder="&search.placeholder;"/>
   </hbox>
 
@@ -446,7 +447,8 @@
         </vbox>
 
         <!-- detail view -->
-        <scrollbox id="detail-view" flex="1" class="view-pane addon-view" orient="vertical" tabindex="0">
+        <scrollbox id="detail-view" flex="1" class="view-pane addon-view" orient="vertical" tabindex="0"
+                   role="document">
           <!-- global warnings -->
           <hbox class="global-warning-container global-warning">
             <hbox class="global-warning-safemode" flex="1" align="center"

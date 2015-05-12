@@ -400,8 +400,8 @@ UpdateCommonJSGCMemoryOption(RuntimeService* aRuntimeService,
 }
 
 void
-UpdatOtherJSGCMemoryOption(RuntimeService* aRuntimeService,
-                           JSGCParamKey aKey, uint32_t aValue)
+UpdateOtherJSGCMemoryOption(RuntimeService* aRuntimeService,
+                            JSGCParamKey aKey, uint32_t aValue)
 {
   AssertIsOnMainThread();
 
@@ -466,14 +466,14 @@ LoadJSGCMemoryOptions(const char* aPrefName, void* /* aClosure */)
       uint32_t value = (prefValue <= 0 || prefValue >= 0x1000) ?
                        uint32_t(-1) :
                        uint32_t(prefValue) * 1024 * 1024;
-      UpdatOtherJSGCMemoryOption(rts, JSGC_MAX_BYTES, value);
+      UpdateOtherJSGCMemoryOption(rts, JSGC_MAX_BYTES, value);
       continue;
     }
 
     matchName.RebindLiteral(PREF_MEM_OPTIONS_PREFIX "high_water_mark");
     if (memPrefName == matchName || (gRuntimeServiceDuringInit && index == 1)) {
       int32_t prefValue = GetWorkerPref(matchName, 128);
-      UpdatOtherJSGCMemoryOption(rts, JSGC_MAX_MALLOC_BYTES,
+      UpdateOtherJSGCMemoryOption(rts, JSGC_MAX_MALLOC_BYTES,
                                  uint32_t(prefValue) * 1024 * 1024);
       continue;
     }
@@ -538,7 +538,7 @@ LoadJSGCMemoryOptions(const char* aPrefName, void* /* aClosure */)
       int32_t prefValue = GetWorkerPref(matchName, -1);
       uint32_t value =
         (prefValue <= 0 || prefValue >= 100000) ? 0 : uint32_t(prefValue);
-      UpdatOtherJSGCMemoryOption(rts, JSGC_SLICE_TIME_BUDGET, value);
+      UpdateOtherJSGCMemoryOption(rts, JSGC_SLICE_TIME_BUDGET, value);
       continue;
     }
 
@@ -546,7 +546,7 @@ LoadJSGCMemoryOptions(const char* aPrefName, void* /* aClosure */)
     if (memPrefName == matchName ||
         (gRuntimeServiceDuringInit && index == 10)) {
       bool prefValue = GetWorkerPref(matchName, false);
-      UpdatOtherJSGCMemoryOption(rts, JSGC_DYNAMIC_HEAP_GROWTH,
+      UpdateOtherJSGCMemoryOption(rts, JSGC_DYNAMIC_HEAP_GROWTH,
                                  prefValue ? 0 : 1);
       continue;
     }
@@ -555,7 +555,7 @@ LoadJSGCMemoryOptions(const char* aPrefName, void* /* aClosure */)
     if (memPrefName == matchName ||
         (gRuntimeServiceDuringInit && index == 11)) {
       bool prefValue = GetWorkerPref(matchName, false);
-      UpdatOtherJSGCMemoryOption(rts, JSGC_DYNAMIC_MARK_SLICE,
+      UpdateOtherJSGCMemoryOption(rts, JSGC_DYNAMIC_MARK_SLICE,
                                  prefValue ? 0 : 1);
       continue;
     }
@@ -571,6 +571,15 @@ LoadJSGCMemoryOptions(const char* aPrefName, void* /* aClosure */)
     if (memPrefName == matchName ||
         (gRuntimeServiceDuringInit && index == 13)) {
       UpdateCommonJSGCMemoryOption(rts, matchName, JSGC_MAX_EMPTY_CHUNK_COUNT);
+      continue;
+    }
+
+    matchName.RebindLiteral(PREF_MEM_OPTIONS_PREFIX "gc_compacting");
+    if (memPrefName == matchName ||
+        (gRuntimeServiceDuringInit && index == 14)) {
+      bool prefValue = GetWorkerPref(matchName, false);
+      UpdateOtherJSGCMemoryOption(rts, JSGC_COMPACTING_ENABLED,
+                                 prefValue ? 0 : 1);
       continue;
     }
 
@@ -604,7 +613,7 @@ InterruptCallback(JSContext* aCx)
   return worker->InterruptCallback(aCx);
 }
 
-class LogViolationDetailsRunnable MOZ_FINAL : public nsRunnable
+class LogViolationDetailsRunnable final : public nsRunnable
 {
   WorkerPrivate* mWorkerPrivate;
   nsCOMPtr<nsIEventTarget> mSyncLoopTarget;
@@ -863,22 +872,22 @@ public:
   }
 
   virtual void
-  PrepareForForgetSkippable() MOZ_OVERRIDE
+  PrepareForForgetSkippable() override
   {
   }
 
   virtual void
-  BeginCycleCollectionCallback() MOZ_OVERRIDE
+  BeginCycleCollectionCallback() override
   {
   }
 
   virtual void
-  EndCycleCollectionCallback(CycleCollectorResults &aResults) MOZ_OVERRIDE
+  EndCycleCollectionCallback(CycleCollectorResults &aResults) override
   {
   }
 
   void
-  DispatchDeferredDeletion(bool aContinuation) MOZ_OVERRIDE
+  DispatchDeferredDeletion(bool aContinuation) override
   {
     MOZ_ASSERT(!aContinuation);
 
@@ -886,7 +895,7 @@ public:
     nsCycleCollector_doDeferredDeletion();
   }
 
-  virtual void CustomGCCallback(JSGCStatus aStatus) MOZ_OVERRIDE
+  virtual void CustomGCCallback(JSGCStatus aStatus) override
   {
     if (!mWorkerPrivate) {
       // We're shutting down, no need to do anything.
@@ -906,20 +915,20 @@ private:
 
 #ifdef ENABLE_TESTS
 
-class TestPBackgroundCreateCallback MOZ_FINAL :
+class TestPBackgroundCreateCallback final :
   public nsIIPCBackgroundChildCreateCallback
 {
 public:
   NS_DECL_ISUPPORTS
 
   virtual void
-  ActorCreated(PBackgroundChild* aActor) MOZ_OVERRIDE
+  ActorCreated(PBackgroundChild* aActor) override
   {
     MOZ_RELEASE_ASSERT(aActor);
   }
 
   virtual void
-  ActorFailed() MOZ_OVERRIDE
+  ActorFailed() override
   {
     MOZ_CRASH("TestPBackground() should not fail "
               "GetOrCreateForCurrentThread()");
@@ -956,7 +965,7 @@ TestPBackground()
 
 #endif // ENABLE_TESTS
 
-class WorkerBackgroundChildCallback MOZ_FINAL :
+class WorkerBackgroundChildCallback final :
   public nsIIPCBackgroundChildCreateCallback
 {
   bool* mDone;
@@ -976,25 +985,25 @@ private:
   { }
 
   virtual void
-  ActorCreated(PBackgroundChild* aActor) MOZ_OVERRIDE
+  ActorCreated(PBackgroundChild* aActor) override
   {
     *mDone = true;
   }
 
   virtual void
-  ActorFailed() MOZ_OVERRIDE
+  ActorFailed() override
   {
     *mDone = true;
   }
 };
 
-class WorkerThreadPrimaryRunnable MOZ_FINAL : public nsRunnable
+class WorkerThreadPrimaryRunnable final : public nsRunnable
 {
   WorkerPrivate* mWorkerPrivate;
   nsRefPtr<WorkerThread> mThread;
   JSRuntime* mParentRuntime;
 
-  class FinishedRunnable MOZ_FINAL : public nsRunnable
+  class FinishedRunnable final : public nsRunnable
   {
     nsRefPtr<WorkerThread> mThread;
 
@@ -1036,7 +1045,7 @@ private:
   NS_DECL_NSIRUNNABLE
 };
 
-class WorkerTaskRunnable MOZ_FINAL : public WorkerRunnable
+class WorkerTaskRunnable final : public WorkerRunnable
 {
   nsRefPtr<WorkerTask> mTask;
 
@@ -1049,7 +1058,7 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // May be called on any thread!
     return true;
@@ -1057,13 +1066,13 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     // May be called on any thread!
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return mTask->RunTask(aCx);
   }
@@ -1125,7 +1134,7 @@ PlatformOverrideChanged(const char* /* aPrefName */, void* /* aClosure */)
   }
 }
 
-class BackgroundChildCallback MOZ_FINAL
+class BackgroundChildCallback final
   : public nsIIPCBackgroundChildCreateCallback
 {
 public:
@@ -1143,14 +1152,14 @@ private:
   }
 
   virtual void
-  ActorCreated(PBackgroundChild* aActor) MOZ_OVERRIDE
+  ActorCreated(PBackgroundChild* aActor) override
   {
     AssertIsOnMainThread();
     MOZ_ASSERT(aActor);
   }
 
   virtual void
-  ActorFailed() MOZ_OVERRIDE
+  ActorFailed() override
   {
     AssertIsOnMainThread();
     MOZ_CRASH("Unable to connect PBackground actor for the main thread!");
@@ -2203,7 +2212,6 @@ RuntimeService::CreateServiceWorker(const GlobalObject& aGlobal,
     new ServiceWorker(window, sharedWorker);
 
   serviceWorker->mURL = aScriptURL;
-  serviceWorker->mScope = NS_ConvertUTF8toUTF16(aScope);
 
   serviceWorker.forget(aServiceWorker);
   return rv;
@@ -2230,7 +2238,6 @@ RuntimeService::CreateServiceWorkerFromLoadInfo(JSContext* aCx,
     new ServiceWorker(nullptr, sharedWorker);
 
   serviceWorker->mURL = aScriptURL;
-  serviceWorker->mScope = NS_ConvertUTF8toUTF16(aScope);
 
   serviceWorker.forget(aServiceWorker);
   return rv;
@@ -2253,7 +2260,9 @@ RuntimeService::CreateSharedWorkerInternal(const GlobalObject& aGlobal,
 
   WorkerPrivate::LoadInfo loadInfo;
   nsresult rv = WorkerPrivate::GetLoadInfo(cx, window, nullptr, aScriptURL,
-                                           false, &loadInfo);
+                                           false,
+                                           WorkerPrivate::OverrideLoadGroup,
+                                           &loadInfo);
   NS_ENSURE_SUCCESS(rv, rv);
 
   return CreateSharedWorkerFromLoadInfo(cx, &loadInfo, aScriptURL, aName, aType,
@@ -2307,6 +2316,11 @@ RuntimeService::CreateSharedWorkerFromLoadInfo(JSContext* aCx,
     NS_ENSURE_TRUE(workerPrivate, rv.ErrorCode());
 
     created = true;
+  } else {
+    // If we're attaching to an existing SharedWorker private, then we
+    // must update the overriden load group to account for our document's
+    // load group.
+    workerPrivate->UpdateOverridenLoadGroup(aLoadInfo->mLoadGroup);
   }
 
   nsRefPtr<SharedWorker> sharedWorker = new SharedWorker(window, workerPrivate);

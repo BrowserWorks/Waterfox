@@ -121,20 +121,20 @@ TamperOnce(/*in/out*/ ByteString& item, const ByteString& from,
 
 // Given a tag and a value, generates a DER-encoded tag-length-value item.
 ByteString
-TLV(uint8_t tag, const ByteString& value)
+TLV(uint8_t tag, size_t length, const ByteString& value)
 {
   ByteString result;
   result.push_back(tag);
 
   if (value.length() < 128) {
-    result.push_back(value.length());
+    result.push_back(static_cast<uint8_t>(length));
   } else if (value.length() < 256) {
     result.push_back(0x81u);
-    result.push_back(value.length());
+    result.push_back(static_cast<uint8_t>(length));
   } else if (value.length() < 65536) {
     result.push_back(0x82u);
-    result.push_back(static_cast<uint8_t>(value.length() / 256));
-    result.push_back(static_cast<uint8_t>(value.length() % 256));
+    result.push_back(static_cast<uint8_t>(length / 256));
+    result.push_back(static_cast<uint8_t>(length % 256));
   } else {
     // It is MUCH more convenient for TLV to be infallible than for it to have
     // "proper" error handling.
@@ -158,7 +158,7 @@ OCSPResponseContext::OCSPResponseContext(const CertID& certID, time_t time)
   , certStatus(good)
   , revocationTime(0)
   , thisUpdate(time)
-  , nextUpdate(time + Time::ONE_DAY_IN_SECONDS)
+  , nextUpdate(time + static_cast<time_t>(Time::ONE_DAY_IN_SECONDS))
   , includeNextUpdate(true)
 {
 }
@@ -171,6 +171,22 @@ static ByteString KeyHash(const ByteString& subjectPublicKeyInfo);
 static ByteString SingleResponse(OCSPResponseContext& context);
 static ByteString CertID(OCSPResponseContext& context);
 static ByteString CertStatus(OCSPResponseContext& context);
+
+static ByteString
+SHA1(const ByteString& toHash)
+{
+  uint8_t digestBuf[20];
+  Input input;
+  if (input.Init(toHash.data(), toHash.length()) != Success) {
+    abort();
+  }
+  Result rv = TestDigestBuf(input, DigestAlgorithm::sha1, digestBuf,
+                            sizeof(digestBuf));
+  if (rv != Success) {
+    abort();
+  }
+  return ByteString(digestBuf, sizeof(digestBuf));
+}
 
 static ByteString
 HashedOctetString(const ByteString& bytes)
@@ -202,7 +218,7 @@ ByteString
 Boolean(bool value)
 {
   ByteString encodedValue;
-  encodedValue.push_back(value ? 0xff : 0x00);
+  encodedValue.push_back(value ? 0xffu : 0x00u);
   return TLV(der::BOOLEAN, encodedValue);
 }
 
@@ -266,22 +282,22 @@ TimeToEncodedTime(time_t time, TimeEncoding encoding)
   ByteString value;
 
   if (encoding == GeneralizedTime) {
-    value.push_back('0' + (year / 1000));
-    value.push_back('0' + ((year % 1000) / 100));
+    value.push_back(static_cast<uint8_t>('0' + (year / 1000)));
+    value.push_back(static_cast<uint8_t>('0' + ((year % 1000) / 100)));
   }
 
-  value.push_back('0' + ((year % 100) / 10));
-  value.push_back('0' + (year % 10));
-  value.push_back('0' + ((exploded.tm_mon + 1) / 10));
-  value.push_back('0' + ((exploded.tm_mon + 1) % 10));
-  value.push_back('0' + (exploded.tm_mday / 10));
-  value.push_back('0' + (exploded.tm_mday % 10));
-  value.push_back('0' + (exploded.tm_hour / 10));
-  value.push_back('0' + (exploded.tm_hour % 10));
-  value.push_back('0' + (exploded.tm_min / 10));
-  value.push_back('0' + (exploded.tm_min % 10));
-  value.push_back('0' + (exploded.tm_sec / 10));
-  value.push_back('0' + (exploded.tm_sec % 10));
+  value.push_back(static_cast<uint8_t>('0' + ((year % 100) / 10)));
+  value.push_back(static_cast<uint8_t>('0' + (year % 10)));
+  value.push_back(static_cast<uint8_t>('0' + ((exploded.tm_mon + 1) / 10)));
+  value.push_back(static_cast<uint8_t>('0' + ((exploded.tm_mon + 1) % 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_mday / 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_mday % 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_hour / 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_hour % 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_min / 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_min % 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_sec / 10)));
+  value.push_back(static_cast<uint8_t>('0' + (exploded.tm_sec % 10)));
   value.push_back('Z');
 
   return TLV(encoding == GeneralizedTime ? der::GENERALIZED_TIME : der::UTCTime,
@@ -315,18 +331,15 @@ TimeToTimeChoice(time_t time)
 }
 
 Time
-YMDHMS(int16_t year, int16_t month, int16_t day,
-       int16_t hour, int16_t minutes, int16_t seconds)
+YMDHMS(uint16_t year, uint16_t month, uint16_t day,
+       uint16_t hour, uint16_t minutes, uint16_t seconds)
 {
   assert(year <= 9999);
   assert(month >= 1);
   assert(month <= 12);
   assert(day >= 1);
-  assert(hour >= 0);
   assert(hour < 24);
-  assert(minutes >= 0);
   assert(minutes < 60);
-  assert(seconds >= 0);
   assert(seconds < 60);
 
   uint64_t days = DaysBeforeYear(year);
@@ -439,6 +452,31 @@ EmptyExtension(Input extnID, Critical critical)
   return TLV(der::SEQUENCE, encoded);
 }
 
+std::string
+GetEnv(const char* name)
+{
+  std::string result;
+
+#ifndef _MSC_VER
+  // XXX: Not thread safe.
+  const char* value = getenv(name);
+  if (value) {
+    result = value;
+  }
+#else
+  char* value = nullptr;
+  size_t valueLength = 0;
+  if (_dupenv_s(&value, &valueLength, name) != 0) {
+    abort();
+  }
+  if (value) {
+    result = value;
+    free(value);
+  }
+#endif
+  return result;
+}
+
 void
 MaybeLogOutput(const ByteString& result, const char* suffix)
 {
@@ -447,8 +485,8 @@ MaybeLogOutput(const ByteString& result, const char* suffix)
   // This allows us to more easily debug the generated output, by creating a
   // file in the directory given by MOZILLA_PKIX_TEST_LOG_DIR for each
   // NOT THREAD-SAFE!!!
-  const char* logPath = getenv("MOZILLA_PKIX_TEST_LOG_DIR");
-  if (logPath) {
+  std::string logPath(GetEnv("MOZILLA_PKIX_TEST_LOG_DIR"));
+  if (!logPath.empty()) {
     static int counter = 0;
 
     std::ostringstream counterStream;
@@ -635,7 +673,7 @@ CN(const ByteString& value, uint8_t encodingTag)
 }
 
 ByteString
-OU(const ByteString& value)
+OU(const ByteString& value, uint8_t encodingTag)
 {
   // id-at OBJECT IDENTIFIER ::= { joint-iso-ccitt(2) ds(5) 4 }
   // id-at-organizationalUnitName AttributeType ::= { id-at 11 }
@@ -644,7 +682,19 @@ OU(const ByteString& value)
     0x06, 0x03, 0x55, 0x04, 0x0b
   };
 
-  return AVA(tlv_id_at_organizationalUnitName, der::UTF8String, value);
+  return AVA(tlv_id_at_organizationalUnitName, encodingTag, value);
+}
+
+ByteString
+emailAddress(const ByteString& value)
+{
+  // id-emailAddress AttributeType ::= { pkcs-9 1 }
+  // python DottedOIDToCode.py --tlv id-emailAddress 1.2.840.113549.1.9.1
+  static const uint8_t tlv_id_emailAddress[] = {
+    0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x01
+  };
+
+  return AVA(tlv_id_emailAddress, der::IA5String, value);
 }
 
 // RelativeDistinguishedName ::=
@@ -829,7 +879,7 @@ BasicOCSPResponse(OCSPResponseContext& context)
 //   value            OCTET STRING
 // }
 static ByteString
-OCSPExtension(OCSPResponseContext& context, OCSPResponseExtension& extension)
+OCSPExtension(OCSPResponseExtension& extension)
 {
   ByteString encoded;
   encoded.append(extension.id);
@@ -850,7 +900,7 @@ Extensions(OCSPResponseContext& context)
   ByteString value;
   for (OCSPResponseExtension* extension = context.extensions;
        extension; extension = extension->next) {
-    ByteString extensionEncoded(OCSPExtension(context, *extension));
+    ByteString extensionEncoded(OCSPExtension(*extension));
     if (ENCODING_FAILED(extensionEncoded)) {
       return ByteString();
     }
@@ -915,8 +965,11 @@ ResponderID(OCSPResponseContext& context)
     responderIDType = 2; // byKey
   }
 
-  return TLV(der::CONSTRUCTED | der::CONTEXT_SPECIFIC | responderIDType,
-             contents);
+  // XXX: MSVC 2015 wrongly warns about signed/unsigned conversion without the
+  // static_cast.
+  uint8_t tag = static_cast<uint8_t>(der::CONSTRUCTED | der::CONTEXT_SPECIFIC |
+                                     responderIDType);
+  return TLV(tag, contents);
 }
 
 // KeyHash ::= OCTET STRING -- SHA-1 hash of responder's public key
@@ -1047,7 +1100,10 @@ CertStatus(OCSPResponseContext& context)
     case 0:
     case 2:
     {
-      return TLV(der::CONTEXT_SPECIFIC | context.certStatus, ByteString());
+      // XXX: MSVC 2015 wrongly warns about signed/unsigned conversion without
+      // the static cast.
+      return TLV(static_cast<uint8_t>(der::CONTEXT_SPECIFIC |
+                                      context.certStatus), ByteString());
     }
     case 1:
     {

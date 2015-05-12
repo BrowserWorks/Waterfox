@@ -7,9 +7,11 @@
 
 #include "mozilla/Types.h"
 #include "mozilla/Vector.h"
-#include "nsTArray.h"
 #include "nsAutoPtr.h"
 #include "nsRefPtr.h"
+#include "nsString.h"
+#include "nsString.h"
+#include "nsTArray.h"
 
 namespace stagefright
 {
@@ -76,13 +78,14 @@ public:
   nsTArray<uint16_t> plain_sizes;
   nsTArray<uint32_t> encrypted_sizes;
   nsTArray<uint8_t> iv;
+  nsTArray<nsCString> session_ids;
 };
 
 class TrackConfig
 {
 public:
-  TrackConfig() : mime_type(nullptr), mTrackId(0), duration(0), media_time(0) {}
-  const char* mime_type;
+  TrackConfig() : mTrackId(0), duration(0), media_time(0) {}
+  nsAutoCString mime_type;
   uint32_t mTrackId;
   int64_t duration;
   int64_t media_time;

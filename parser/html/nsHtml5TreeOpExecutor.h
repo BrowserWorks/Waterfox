@@ -31,7 +31,7 @@ class nsHtml5StreamParser;
 class nsIContent;
 class nsIDocument;
 
-class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
+class nsHtml5TreeOpExecutor final : public nsHtml5DocumentBuilder,
                                         public nsIContentSink,
                                         public nsAHtml5TreeOpSink,
                                         public mozilla::LinkedListElement<nsHtml5TreeOpExecutor>
@@ -109,42 +109,42 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
     /**
      * Unimplemented. For interface compat only.
      */
-    NS_IMETHOD WillParse() MOZ_OVERRIDE;
+    NS_IMETHOD WillParse() override;
 
     /**
      * 
      */
-    NS_IMETHOD WillBuildModel(nsDTDMode aDTDMode) MOZ_OVERRIDE;
+    NS_IMETHOD WillBuildModel(nsDTDMode aDTDMode) override;
 
     /**
      * Emits EOF.
      */
-    NS_IMETHOD DidBuildModel(bool aTerminated) MOZ_OVERRIDE;
+    NS_IMETHOD DidBuildModel(bool aTerminated) override;
 
     /**
      * Forwards to nsContentSink
      */
-    NS_IMETHOD WillInterrupt() MOZ_OVERRIDE;
+    NS_IMETHOD WillInterrupt() override;
 
     /**
      * Unimplemented. For interface compat only.
      */
-    NS_IMETHOD WillResume() MOZ_OVERRIDE;
+    NS_IMETHOD WillResume() override;
 
     /**
      * Sets the parser.
      */
-    NS_IMETHOD SetParser(nsParserBase* aParser) MOZ_OVERRIDE;
+    NS_IMETHOD SetParser(nsParserBase* aParser) override;
 
     /**
      * No-op for backwards compat.
      */
-    virtual void FlushPendingNotifications(mozFlushType aType) MOZ_OVERRIDE;
+    virtual void FlushPendingNotifications(mozFlushType aType) override;
 
     /**
      * Don't call. For interface compat only.
      */
-    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) MOZ_OVERRIDE {
+    NS_IMETHOD SetDocumentCharset(nsACString& aCharset) override {
     	NS_NOTREACHED("No one should call this.");
     	return NS_ERROR_NOT_IMPLEMENTED;
     }
@@ -152,11 +152,11 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
     /**
      * Returns the document.
      */
-    virtual nsISupports *GetTarget() MOZ_OVERRIDE;
+    virtual nsISupports *GetTarget() override;
   
-    virtual void ContinueInterruptedParsingAsync() MOZ_OVERRIDE;
+    virtual void ContinueInterruptedParsingAsync() override;
 
-    bool IsScriptExecuting() MOZ_OVERRIDE
+    bool IsScriptExecuting() override
     {
       return IsScriptExecutingImpl();
     }
@@ -172,7 +172,7 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
 
     bool IsScriptEnabled();
 
-    virtual nsresult MarkAsBroken(nsresult aReason) MOZ_OVERRIDE;
+    virtual nsresult MarkAsBroken(nsresult aReason) override;
 
     void StartLayout();
     
@@ -224,7 +224,7 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
      * Flush the operations from the tree operations from the argument
      * queue unconditionally. (This is for the main thread case.)
      */
-    virtual void MoveOpsFrom(nsTArray<nsHtml5TreeOperation>& aOpQueue) MOZ_OVERRIDE;
+    virtual void MoveOpsFrom(nsTArray<nsHtml5TreeOperation>& aOpQueue) override;
     
     nsHtml5TreeOpStage* GetStage()
     {
@@ -254,15 +254,27 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
                        bool aScriptFromHead);
 
     void PreloadStyle(const nsAString& aURL, const nsAString& aCharset,
-		      const nsAString& aCrossOrigin);
+                      const nsAString& aCrossOrigin);
 
-    void PreloadImage(const nsAString& aURL, const nsAString& aCrossOrigin);
+    void PreloadImage(const nsAString& aURL,
+                      const nsAString& aCrossOrigin,
+                      const nsAString& aSrcset,
+                      const nsAString& aSizes);
+
+    void PreloadOpenPicture();
+
+    void PreloadEndPicture();
+
+    void PreloadPictureSource(const nsAString& aSrcset,
+                              const nsAString& aSizes,
+                              const nsAString& aType,
+                              const nsAString& aMedia);
 
     void SetSpeculationBase(const nsAString& aURL);
 
     void SetSpeculationReferrerPolicy(ReferrerPolicy aReferrerPolicy);
     void SetSpeculationReferrerPolicy(const nsAString& aReferrerPolicy);
-    
+
     void AddBase(const nsAString& aURL);
 
     static void InitializeStatics();
@@ -277,6 +289,16 @@ class nsHtml5TreeOpExecutor MOZ_FINAL : public nsHtml5DocumentBuilder,
      */
     already_AddRefed<nsIURI> ConvertIfNotPreloadedYet(const nsAString& aURL);
 
+    /**
+     * The base URI we would use for current preload operations
+     */
+    nsIURI* BaseURIForPreload();
+
+    /**
+     * Returns true if we haven't preloaded this URI yet, and adds it to the
+     * list of preloaded URIs
+     */
+    bool ShouldPreloadURI(nsIURI *aURI);
 };
 
 #endif // nsHtml5TreeOpExecutor_h

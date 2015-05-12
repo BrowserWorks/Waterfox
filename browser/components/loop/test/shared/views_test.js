@@ -12,10 +12,11 @@ var TestUtils = React.addons.TestUtils;
 describe("loop.shared.views", function() {
   "use strict";
 
-  var sharedModels = loop.shared.models,
-      sharedViews = loop.shared.views,
-      getReactElementByClass = TestUtils.findRenderedDOMComponentWithClass,
-      sandbox, fakeAudioXHR;
+  var sharedModels = loop.shared.models;
+  var sharedViews = loop.shared.views;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
+  var getReactElementByClass = TestUtils.findRenderedDOMComponentWithClass;
+  var sandbox, fakeAudioXHR, dispatcher, OS, OSVersion;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
@@ -23,6 +24,10 @@ describe("loop.shared.views", function() {
     sandbox.stub(l10n, "get", function(x) {
       return "translated:" + x;
     });
+
+    dispatcher = new loop.Dispatcher();
+    sandbox.stub(dispatcher, "dispatch");
+
     fakeAudioXHR = {
       open: sinon.spy(),
       send: function() {},
@@ -35,6 +40,15 @@ describe("loop.shared.views", function() {
       response: new ArrayBuffer(10),
       onload: null
     };
+
+    OS = "mac";
+    OSVersion = { major: 10, minor: 10 };
+    sandbox.stub(loop.shared.utils, "getOS", function() {
+      return OS;
+    });
+    sandbox.stub(loop.shared.utils, "getOSVersion", function() {
+      return OSVersion;
+    });
   });
 
   afterEach(function() {
@@ -90,6 +104,154 @@ describe("loop.shared.views", function() {
 
       expect(comp.getDOMNode().classList.contains("muted")).eql(true);
     });
+  });
+
+  describe("ScreenShareControlButton", function() {
+    it("should render a visible share button", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      expect(comp.getDOMNode().classList.contains("active")).eql(false);
+      expect(comp.getDOMNode().classList.contains("disabled")).eql(false);
+    });
+
+    it("should render a disabled share button when share is pending", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.PENDING
+        }));
+
+      var node = comp.getDOMNode().querySelector(".btn-screen-share");
+      expect(node.classList.contains("active")).eql(false);
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should render an active share button", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.ACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".btn-screen-share");
+      expect(node.classList.contains("active")).eql(true);
+      expect(node.classList.contains("disabled")).eql(false);
+    });
+
+    it("should show the screenshare dropdown on click when the state is not active",
+       function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        expect(comp.state.showMenu).eql(false);
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(".btn-screen-share"));
+
+        expect(comp.state.showMenu).eql(true);
+      });
+
+    it("should dispatch a 'browser' StartScreenShare action on option click",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(
+          ".conversation-window-dropdown > li"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.StartScreenShare({ type: "browser" }));
+      });
+
+    it("should dispatch a 'window' StartScreenShare action on option click",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(
+          ".conversation-window-dropdown > li:last-child"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.StartScreenShare({ type: "window" }));
+      });
+
+    it("should have the 'window' option enabled", function() {
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(false);
+    });
+
+    it("should disable the 'window' option on Windows XP", function() {
+      OS = "win";
+      OSVersion = { major: 5, minor: 1 };
+
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should disable the 'window' option on OSX 10.6", function() {
+      OS = "mac";
+      OSVersion = { major: 10, minor: 6 };
+
+      var comp = TestUtils.renderIntoDocument(
+        React.createElement(sharedViews.ScreenShareControlButton, {
+          dispatcher: dispatcher,
+          visible: true,
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+
+      var node = comp.getDOMNode().querySelector(".conversation-window-dropdown > li:last-child");
+      expect(node.classList.contains("disabled")).eql(true);
+    });
+
+    it("should dispatch a EndScreenShare action on click when the state is active",
+      function() {
+        var comp = TestUtils.renderIntoDocument(
+          React.createElement(sharedViews.ScreenShareControlButton, {
+            dispatcher: dispatcher,
+            visible: true,
+            state: SCREEN_SHARE_STATES.ACTIVE
+          }));
+
+        TestUtils.Simulate.click(comp.getDOMNode().querySelector(".btn-screen-share"));
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.EndScreenShare({}));
+      });
   });
 
   describe("ConversationToolbar", function() {
@@ -265,18 +427,6 @@ describe("loop.shared.views", function() {
         });
 
         sinon.assert.notCalled(model.startSession);
-      });
-
-      it("should set the correct stream publish options", function() {
-
-        var component = mountTestComponent({
-          sdk: fakeSDK,
-          model: model,
-          video: {enabled: false}
-        });
-
-        expect(component.publisherConfig.publishVideo).to.eql(false);
-
       });
     });
 

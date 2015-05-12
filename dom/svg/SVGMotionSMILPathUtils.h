@@ -86,12 +86,12 @@ public:
         mPointDistances(aPointDistances),
         mDistanceSoFar(0.0)
     {
-      NS_ABORT_IF_FALSE(mPointDistances->IsEmpty(),
-                        "expecting point distances array to start empty");
+      MOZ_ASSERT(mPointDistances->IsEmpty(),
+                 "expecting point distances array to start empty");
     }
 
     // nsSMILParserUtils::GenericValueParser interface
-    virtual bool Parse(const nsAString& aValueStr) MOZ_OVERRIDE;
+    virtual bool Parse(const nsAString& aValueStr) override;
 
   protected:
     PathGenerator*          mPathGenerator;

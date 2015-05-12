@@ -44,7 +44,12 @@ var gContentPane = {
     let drmInfoURL =
       Services.urlFormatter.formatURLPref("app.support.baseURL") + "drm-content";
     document.getElementById("playDRMContentLink").setAttribute("href", drmInfoURL);
-    if (!Services.prefs.getBoolPref("browser.eme.ui.enabled")) {
+    let emeUIEnabled = Services.prefs.getBoolPref("browser.eme.ui.enabled");
+    // Force-disable/hide on WinXP:
+    if (navigator.platform.toLowerCase().startsWith("win")) {
+      emeUIEnabled = emeUIEnabled && parseFloat(Services.sysinfo.get("version")) >= 6;
+    }
+    if (!emeUIEnabled) {
       // Don't want to rely on .hidden for the toplevel groupbox because
       // of the pane hiding/showing code potentially interfering:
       document.getElementById("drmGroup").setAttribute("style", "display: none !important");
@@ -99,6 +104,11 @@ var gContentPane = {
    */
   _rebuildFonts: function ()
   {
+    var preferences = document.getElementById("contentPreferences");
+    // Ensure preferences are "visible" to ensure bindings work.
+    preferences.hidden = false;
+    // Force flush:
+    preferences.clientHeight;
     var langGroupPref = document.getElementById("font.language.group");
     this._selectDefaultLanguageGroup(langGroupPref.value,
                                      this._readDefaultFontTypeForLanguage(langGroupPref.value) == "serif");
@@ -115,6 +125,7 @@ var gContentPane = {
     const kFontNameListFmtSansSerif = "font.name-list.sans-serif.%LANG%";
     const kFontSizeFmtVariable      = "font.size.variable.%LANG%";
 
+    var preferences = document.getElementById("contentPreferences");
     var prefs = [{ format   : aIsSerif ? kFontNameFmtSerif : kFontNameFmtSansSerif,
                    type     : "fontname",
                    element  : "defaultFont",
@@ -127,11 +138,6 @@ var gContentPane = {
                    type     : "int",
                    element  : "defaultFontSize",
                    fonttype : null }];
-    var preferences = document.getElementById("contentPreferences");
-    // Ensure preferences are "visible" to ensure bindings work.
-    preferences.hidden = false;
-    // Force flush:
-    preferences.clientHeight;
     for (var i = 0; i < prefs.length; ++i) {
       var preference = document.getElementById(prefs[i].format.replace(/%LANG%/, aLanguageGroup));
       if (!preference) {
@@ -184,7 +190,7 @@ var gContentPane = {
    */  
   configureFonts: function ()
   {
-    gSubDialog.open("chrome://browser/content/preferences/fonts.xul");
+    gSubDialog.open("chrome://browser/content/preferences/fonts.xul", "resizable=no");
   },
 
   /**
@@ -193,7 +199,7 @@ var gContentPane = {
    */
   configureColors: function ()
   {
-    gSubDialog.open("chrome://browser/content/preferences/colors.xul");
+    gSubDialog.open("chrome://browser/content/preferences/colors.xul", "resizable=no");
   },
 
   // LANGUAGES

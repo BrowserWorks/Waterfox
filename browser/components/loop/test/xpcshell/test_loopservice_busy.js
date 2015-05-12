@@ -34,6 +34,7 @@ add_task(function* test_busy_2guest_calls() {
   Chat.open = function(contentWindow, origin, title, url) {
     opened++;
     windowId = url.match(/about:loopconversation\#(\d+)$/)[1];
+    return windowId;
   };
 
   mockPushHandler.notify(1, MozLoopService.channelIDs.callsGuest);
@@ -58,6 +59,7 @@ add_task(function* test_busy_1fxa_1guest_calls() {
   Chat.open = function(contentWindow, origin, title, url) {
     opened++;
     windowId = url.match(/about:loopconversation\#(\d+)$/)[1];
+    return windowId;
   };
 
   mockPushHandler.notify(1, MozLoopService.channelIDs.callsFxA);
@@ -82,6 +84,7 @@ add_task(function* test_busy_2fxa_calls() {
   Chat.open = function(contentWindow, origin, title, url) {
     opened++;
     windowId = url.match(/about:loopconversation\#(\d+)$/)[1];
+    return windowId;
   };
 
   mockPushHandler.notify(1, MozLoopService.channelIDs.callsFxA);
@@ -106,6 +109,7 @@ add_task(function* test_busy_1guest_1fxa_calls() {
   Chat.open = function(contentWindow, origin, title, url) {
     opened++;
     windowId = url.match(/about:loopconversation\#(\d+)$/)[1];
+    return windowId;
   };
 
   mockPushHandler.notify(1, MozLoopService.channelIDs.callsGuest);

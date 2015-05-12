@@ -32,14 +32,14 @@ private:
   void* mArray[Count];
 public:
   void*& operator[](nsStyleStructID aIndex) {
-    NS_ABORT_IF_FALSE(MinIndex <= aIndex && aIndex < (MinIndex + Count),
-                      "out of range");
+    MOZ_ASSERT(MinIndex <= aIndex && aIndex < (MinIndex + Count),
+               "out of range");
     return mArray[aIndex - MinIndex];
   }
 
   const void* operator[](nsStyleStructID aIndex) const {
-    NS_ABORT_IF_FALSE(MinIndex <= aIndex && aIndex < (MinIndex + Count),
-                      "out of range");
+    MOZ_ASSERT(MinIndex <= aIndex && aIndex < (MinIndex + Count),
+               "out of range");
     return mArray[aIndex - MinIndex];
   }
 };
@@ -124,8 +124,8 @@ struct nsCachedStyleData
   nsResetStyleData* mResetData;
 
   static bool IsReset(const nsStyleStructID aSID) {
-    NS_ABORT_IF_FALSE(0 <= aSID && aSID < nsStyleStructID_Length,
-                      "must be an inherited or reset SID");
+    MOZ_ASSERT(0 <= aSID && aSID < nsStyleStructID_Length,
+               "must be an inherited or reset SID");
     return nsStyleStructID_Reset_Start <= aSID;
   }
 
@@ -643,15 +643,6 @@ protected:
                              uint8_t aGenericFontID,
                              nsStyleFont* aFont);
 
-  void AdjustLogicalBoxProp(nsStyleContext* aContext,
-                            const nsCSSValue& aLTRSource,
-                            const nsCSSValue& aRTLSource,
-                            const nsCSSValue& aLTRLogicalValue,
-                            const nsCSSValue& aRTLLogicalValue,
-                            mozilla::css::Side aSide,
-                            nsCSSRect& aValueRect,
-                            bool& aCanStoreInRuleTree);
-
   inline RuleDetail CheckSpecifiedProperties(const nsStyleStructID aSID,
                                              const nsRuleData* aRuleData);
 
@@ -725,9 +716,33 @@ public:
                            nsStyleContext* aContext,
                            bool aComputeData);
 
+
+  // See comments in GetStyleData for an explanation of what the
+  // code below does.
   #define STYLE_STRUCT(name_, checkdata_cb_)                                  \
-    const nsStyle##name_* GetStyle##name_(nsStyleContext* aContext,           \
-                                          bool aComputeData);
+  template<bool aComputeData>                                                 \
+  const nsStyle##name_*                                                       \
+  GetStyle##name_(nsStyleContext* aContext)                                   \
+  {                                                                           \
+    NS_ASSERTION(IsUsedDirectly(),                                            \
+                 "if we ever call this on rule nodes that aren't used "       \
+                 "directly, we should adjust handling of mDependentBits "     \
+                 "in some way.");                                             \
+                                                                              \
+    const nsStyle##name_ *data;                                               \
+    data = mStyleData.GetStyle##name_();                                      \
+    if (MOZ_LIKELY(data != nullptr))                                          \
+      return data;                                                            \
+                                                                              \
+    if (!aComputeData)                                                        \
+      return nullptr;                                                         \
+                                                                              \
+    data = static_cast<const nsStyle##name_ *>                                \
+             (WalkRuleTree(eStyleStruct_##name_, aContext));                  \
+                                                                              \
+    MOZ_ASSERT(data, "should have aborted on out-of-memory");                 \
+    return data;                                                              \
+  }
   #include "nsStyleStructList.h"
   #undef STYLE_STRUCT
 

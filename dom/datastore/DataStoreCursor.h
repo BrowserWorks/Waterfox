@@ -22,7 +22,7 @@ class DataStore;
 class GlobalObject;
 class DataStoreCursorImpl;
 
-class DataStoreCursor MOZ_FINAL : public nsISupports
+class DataStoreCursor final : public nsISupports
 {
 public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
@@ -33,7 +33,7 @@ public:
   static already_AddRefed<DataStoreCursor> Constructor(GlobalObject& aGlobal,
                                                        ErrorResult& aRv);
 
-  JSObject* WrapObject(JSContext *aCx);
+  bool WrapObject(JSContext *aCx, JS::MutableHandle<JSObject*> aReflector);
 
   // WebIDL (public APIs)
 

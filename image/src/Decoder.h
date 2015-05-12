@@ -13,9 +13,12 @@
 #include "ImageMetadata.h"
 #include "Orientation.h"
 #include "SourceBuffer.h"
-#include "mozilla/Telemetry.h"
 
 namespace mozilla {
+
+namespace Telemetry {
+  enum ID : uint32_t;
+}
 
 namespace image {
 
@@ -108,10 +111,10 @@ public:
   }
 
   // We're not COM-y, so we don't get refcounts by default
-  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Decoder)
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(Decoder, override)
 
   // Implement IResumable.
-  virtual void Resume() MOZ_OVERRIDE;
+  virtual void Resume() override;
 
   /*
    * State.
@@ -263,8 +266,7 @@ public:
     return mImageMetadata.GetSize();
   }
 
-  // Use HistogramCount as an invalid Histogram ID
-  virtual Telemetry::ID SpeedHistogram() { return Telemetry::HistogramCount; }
+  virtual Telemetry::ID SpeedHistogram();
 
   ImageMetadata& GetImageMetadata() { return mImageMetadata; }
 

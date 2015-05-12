@@ -98,6 +98,70 @@ function TypedArrayFill(value, start = 0, end = undefined) {
     return O;
 }
 
+// ES6 draft 32 (2015-02-02) 22.2.3.9 %TypedArray%.prototype.filter(callbackfn[, thisArg])
+function TypedArrayFilter(callbackfn, thisArg = undefined) {
+    // Step 1.
+    var O = this;
+
+    // Steps 2-3.
+    // This function is not generic.
+    if (!IsObject(O) || !IsTypedArray(O)) {
+        return callFunction(CallTypedArrayMethodIfWrapped, this, callbackfn, thisArg,
+                           "TypedArrayFilter");
+    }
+
+    // Step 4.
+    var len = TypedArrayLength(O);
+
+    // Step 5.
+    if (arguments.length === 0)
+        ThrowError(JSMSG_MISSING_FUN_ARG, 0, "%TypedArray%.prototype.filter");
+    if (!IsCallable(callbackfn))
+        ThrowError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
+
+    // Step 6.
+    var T = thisArg;
+
+    // Step 7.
+    var defaultConstructor = _ConstructorForTypedArray(O);
+
+    // Steps 8-9.
+    var C = SpeciesConstructor(O, defaultConstructor);
+
+    // Step 10.
+    var kept = new List();
+
+    // Step 12.
+    var captured = 0;
+
+    // Steps 11, 13 and 13.g.
+    for (var k = 0; k < len; k++) {
+        // Steps 13.b-c.
+        var kValue = O[k];
+        // Steps 13.d-e.
+        var selected = ToBoolean(callFunction(callbackfn, T, kValue, k, O));
+        // Step 13.f.
+        if (selected) {
+            // Step 13.f.i.
+            kept.push(kValue);
+            // Step 13.f.ii.
+            captured++;
+        }
+    }
+
+    // Steps 14-15.
+    var A = new C(captured);
+
+    // Steps 16 and 17.c.
+    for (var n = 0; n < captured; n++) {
+        // Steps 17.a-b.
+        A[n] = kept[n];
+    }
+
+    // Step 18.
+    return A;
+}
+
 // ES6 draft rev28 (2014/10/14) 22.2.3.10 %TypedArray%.prototype.find(predicate[, thisArg]).
 function TypedArrayFind(predicate, thisArg = undefined) {
     // This function is not generic.
@@ -168,6 +232,41 @@ function TypedArrayFindIndex(predicate, thisArg = undefined) {
 
     // Step 10.
     return -1;
+}
+
+// ES6 draft rev31 (2015-01-15) 22.1.3.10 %TypedArray%.prototype.forEach(callbackfn[,thisArg])
+function TypedArrayForEach(callbackfn, thisArg = undefined) {
+    // This function is not generic.
+    if (!IsObject(this) || !IsTypedArray(this)) {
+	return callFunction(CallTypedArrayMethodIfWrapped, this, callbackfn, thisArg,
+			    "TypedArrayForEach");
+    }
+
+    // Step 1-2.
+    var O = this;
+
+    // Step 3-4.
+    var len = TypedArrayLength(O);
+
+    // Step 5.
+    if (arguments.length === 0)
+	ThrowError(JSMSG_MISSING_FUN_ARG, 0, 'TypedArray.prototype.forEach');
+    if (!IsCallable(callbackfn))
+	ThrowError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
+
+    // Step 6.
+    var T = thisArg;
+
+    // Step 7-8.
+    // Step 7, 8a (implicit) and 8e.
+    for (var k = 0; k < len; k++) {
+	// Step 8b-8c are unnecessary since the condition always holds true for TypedArray.
+	// Step 8d.
+	callFunction(callbackfn, T, O[k], k, O);
+    }
+
+    // Step 9.
+    return undefined;
 }
 
 // ES6 draft rev29 (2014/12/06) 22.2.3.13 %TypedArray%.prototype.indexOf(searchElement[, fromIndex]).
@@ -318,6 +417,51 @@ function TypedArrayLastIndexOf(searchElement, fromIndex = undefined) {
     return -1;
 }
 
+// ES6 draft rev32 (2015-02-02) 22.2.3.18 %TypedArray%.prototype.map(callbackfn [, thisArg]).
+function TypedArrayMap(callbackfn, thisArg = undefined) {
+    // Step 1.
+    var O = this;
+
+    // Steps 2-3.
+    // This function is not generic.
+    if (!IsObject(O) || !IsTypedArray(O)) {
+        return callFunction(CallTypedArrayMethodIfWrapped, this, callbackfn, thisArg,
+                            "TypedArrayMap");
+    }
+
+    // Step 4.
+    var len = TypedArrayLength(O);
+
+    // Step 5.
+    if (arguments.length === 0)
+        ThrowError(JSMSG_MISSING_FUN_ARG, 0, '%TypedArray%.prototype.map');
+    if (!IsCallable(callbackfn))
+        ThrowError(JSMSG_NOT_FUNCTION, DecompileArg(0, callbackfn));
+
+    // Step 6.
+    var T = thisArg;
+
+    // Step 7.
+    var defaultConstructor = _ConstructorForTypedArray(O);
+
+    // Steps 8-9.
+    var C = SpeciesConstructor(O, defaultConstructor);
+
+    // Steps 10-11.
+    var A = new C(len);
+
+    // Steps 12, 13.a (implicit) and 13.h.
+    for (var k = 0; k < len; k++) {
+        // Steps 13.d-e.
+        var mappedValue = callFunction(callbackfn, T, O[k], k, O);
+        // Steps 13.f-g.
+        A[k] = mappedValue;
+    }
+
+    // Step 14.
+    return A;
+}
+
 // ES6 draft rev30 (2014/12/24) 22.2.3.19 %TypedArray%.prototype.reduce(callbackfn[, initialValue]).
 function TypedArrayReduce(callbackfn/*, initialValue*/) {
     // This function is not generic.
@@ -434,6 +578,65 @@ function TypedArrayReverse() {
     return O;
 }
 
+// ES6 draft rev32 (2015-02-02) 22.2.3.23 %TypedArray%.prototype.slice(start, end).
+function TypedArraySlice(start, end) {
+
+    // Step 1.
+    var O = this;
+
+    // Step 2-3.
+    if (!IsObject(O) || !IsTypedArray(O)) {
+        return callFunction(CallTypedArrayMethodIfWrapped, O, start, end, "TypedArraySlice");
+    }
+
+    // Step 4.
+    var len = TypedArrayLength(O);
+
+    // Steps 5-6.
+    var relativeStart = ToInteger(start);
+
+    // Step 7.
+    var k = relativeStart < 0
+            ? std_Math_max(len + relativeStart, 0)
+            : std_Math_min(relativeStart, len);
+
+    // Steps 8-9.
+    var relativeEnd = end === undefined ? len : ToInteger(end);
+
+    // Step 10.
+    var final = relativeEnd < 0
+                ? std_Math_max(len + relativeEnd, 0)
+                : std_Math_min(relativeEnd, len);
+
+    // Step 11.
+    var count = std_Math_max(final - k, 0);
+
+    // Step 12.
+    var defaultConstructor = _ConstructorForTypedArray(O);
+
+    // Steps 13-14.
+    var C = SpeciesConstructor(O, defaultConstructor);
+
+    // Steps 15-16.
+    var A = new C(count);
+
+    // Step 17.
+    var n = 0;
+
+    // Step 18.
+    while (k < final) {
+        // Steps 18.a-e.
+        A[n] = O[k];
+        // Step 18f.
+        k++;
+        // Step 18g.
+        n++;
+    }
+
+    // Step 19.
+    return A;
+}
+
 // ES6 draft rev30 (2014/12/24) 22.2.3.25 %TypedArray%.prototype.some(callbackfn[, thisArg]).
 function TypedArraySome(callbackfn, thisArg = undefined) {
     // This function is not generic.
@@ -539,4 +742,156 @@ function TypedArrayIncludes(searchElement, fromIndex = 0) {
 
     // Step 11.
     return false;
+}
+
+// ES6 draft rev30 (2014/12/24) 22.2.2.1 %TypedArray%.from(source[, mapfn[, thisArg]]).
+function TypedArrayStaticFrom(source, mapfn = undefined, thisArg = undefined) {
+    // Step 1.
+    var C = this;
+
+    // Step 2.
+    if (!IsConstructor(C))
+        ThrowError(JSMSG_NOT_CONSTRUCTOR, DecompileArg(1, C));
+
+    // Step 3.
+    var f = mapfn;
+
+    // Step 4.
+    if (f !== undefined && !IsCallable(f))
+        ThrowError(JSMSG_NOT_FUNCTION, DecompileArg(1, f));
+
+    // Steps 5-6.
+    return TypedArrayFrom(C, undefined, source, f, thisArg);
+}
+
+// ES6 draft rev30 (2014/12/24) 22.2.2.1.1 TypedArrayFrom().
+function TypedArrayFrom(constructor, target, items, mapfn, thisArg) {
+    // Step 1.
+    var C = constructor;
+
+    // Step 2.
+    assert(C === undefined || target === undefined,
+           "Neither of 'constructor' and 'target' is undefined");
+
+    // Step 3.
+    assert(IsConstructor(C) || C === undefined,
+           "'constructor' is neither an constructor nor undefined");
+
+    // Step 4.
+    assert(target === undefined || IsTypedArray(target),
+           "'target' is neither a typed array nor undefined");
+
+    // Step 5.
+    assert(IsCallable(mapfn) || mapfn === undefined,
+           "'target' is neither a function nor undefined");
+
+    // Steps 6-7.
+    var mapping = mapfn !== undefined;
+    var T = thisArg;
+
+    // Steps 8-9.
+    var usingIterator = GetMethod(items, std_iterator);
+
+    // Step 10.
+    if (usingIterator !== undefined) {
+        // Steps 10.a-b.
+        var iterator = GetIterator(items, usingIterator);
+
+        // Step 10.c.
+        var values = new List();
+
+        // Steps 10.d-e.
+        while (true) {
+            // Steps 10.e.i-ii.
+            var next = iterator.next();
+            if (!IsObject(next))
+                ThrowError(JSMSG_NEXT_RETURNED_PRIMITIVE);
+
+            // Steps 10.e.iii-vi.
+            if (next.done)
+                break;
+            values.push(next.value);
+        }
+
+        // Step 10.f.
+        var len = values.length;
+
+        // Steps 10.g-h.
+        // There is no need to implement the 22.2.2.1.2 - TypedArrayAllocOrInit() method,
+        // since `%TypedArray%(object)` currently doesn't call this self-hosted TypedArrayFrom().
+        var targetObj = new C(len);
+
+        // Steps 10.i-j.
+        for (var k = 0; k < len; k++) {
+            // Steps 10.j.i-ii.
+            var kValue = values[k];
+
+            // Steps 10.j.iii-iv.
+            var mappedValue = mapping ? callFunction(mapfn, T, kValue, k) : kValue;
+
+            // Steps 10.j.v-vi.
+            targetObj[k] = mappedValue;
+        }
+
+        // Step 10.k.
+        // asserting that `values` is empty here would require removing them one by one from
+        // the list's start in the loop above. That would introduce unacceptable overhead.
+        // Additionally, the loop's logic is simple enough not to require the assert.
+
+        // Step 10.l.
+        return targetObj;
+    }
+
+    // Step 11 is an assertion: items is not an Iterator. Testing this is
+    // literally the very last thing we did, so we don't assert here.
+
+    // Steps 12-13.
+    var arrayLike = ToObject(items);
+
+    // Steps 14-16.
+    var len = ToLength(arrayLike.length);
+
+    // Steps 17-18.
+    // See comment for steps 10.g-h.
+    var targetObj = new C(len);
+
+    // Steps 19-20.
+    for (var k = 0; k < len; k++) {
+        // Steps 20.a-c.
+        var kValue = arrayLike[k];
+
+        // Steps 20.d-e.
+        var mappedValue = mapping ? callFunction(mapfn, T, kValue, k) : kValue;
+
+        // Steps 20.f-g.
+        targetObj[k] = mappedValue;
+    }
+
+    // Step 21.
+    return targetObj;
+}
+
+// ES6 draft rev30 (2014/12/24) 22.2.2.2 %TypedArray%.of(...items).
+function TypedArrayStaticOf(/*...items*/) {
+    // Step 1.
+    var len = arguments.length;
+
+    // Step 2.
+    var items = arguments;
+
+    // Step 3.
+    var C = this;
+
+    // Steps 4-5.
+    if (!IsConstructor(C))
+        ThrowError(JSMSG_NOT_CONSTRUCTOR, typeof C);
+
+    var newObj = new C(len);
+
+    // Steps 6-7.
+    for (var k = 0; k < len; k++)
+        newObj[k] = items[k]
+
+    // Step 8.
+    return newObj;
 }

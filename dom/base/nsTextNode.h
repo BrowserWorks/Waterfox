@@ -26,8 +26,8 @@ class nsTextNode : public mozilla::dom::Text,
 private:
   void Init()
   {
-    NS_ABORT_IF_FALSE(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE,
-                      "Bad NodeType in aNodeInfo");
+    MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::TEXT_NODE,
+               "Bad NodeType in aNodeInfo");
   }
 
 public:
@@ -57,31 +57,31 @@ public:
   NS_FORWARD_NSIDOMTEXT(nsGenericDOMDataNode::)
 
   // nsINode
-  virtual bool IsNodeOfType(uint32_t aFlags) const MOZ_OVERRIDE;
+  virtual bool IsNodeOfType(uint32_t aFlags) const override;
 
   virtual nsGenericDOMDataNode* CloneDataNode(mozilla::dom::NodeInfo *aNodeInfo,
-                                              bool aCloneText) const MOZ_OVERRIDE;
+                                              bool aCloneText) const override;
 
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
 
   nsresult AppendTextForNormalize(const char16_t* aBuffer, uint32_t aLength,
                                   bool aNotify, nsIContent* aNextSibling);
 
-  virtual nsIDOMNode* AsDOMNode() MOZ_OVERRIDE { return this; }
+  virtual nsIDOMNode* AsDOMNode() override { return this; }
 
 #ifdef DEBUG
-  virtual void List(FILE* out, int32_t aIndent) const MOZ_OVERRIDE;
-  virtual void DumpContent(FILE* out, int32_t aIndent, bool aDumpAll) const MOZ_OVERRIDE;
+  virtual void List(FILE* out, int32_t aIndent) const override;
+  virtual void DumpContent(FILE* out, int32_t aIndent, bool aDumpAll) const override;
 #endif
 
 protected:
   virtual ~nsTextNode();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx) override;
 };
 
 #endif // nsTextNode_h

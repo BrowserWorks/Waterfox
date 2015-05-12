@@ -53,8 +53,8 @@ GetCyclicCounterText(CounterValue aOrdinal,
                      nsSubstring& aResult,
                      const nsTArray<nsString>& aSymbols)
 {
-  NS_ABORT_IF_FALSE(aSymbols.Length() >= 1,
-                    "No symbol available for cyclic counter.");
+  MOZ_ASSERT(aSymbols.Length() >= 1,
+             "No symbol available for cyclic counter.");
   auto n = aSymbols.Length();
   CounterValue index = (aOrdinal - 1) % n;
   aResult = aSymbols[index >= 0 ? index : index + n];
@@ -81,9 +81,9 @@ GetSymbolicCounterText(CounterValue aOrdinal,
                        nsSubstring& aResult,
                        const nsTArray<nsString>& aSymbols)
 {
-  NS_ABORT_IF_FALSE(aSymbols.Length() >= 1,
-                    "No symbol available for symbolic counter.");
-  NS_ABORT_IF_FALSE(aOrdinal >= 0, "Invalid ordinal.");
+  MOZ_ASSERT(aSymbols.Length() >= 1,
+             "No symbol available for symbolic counter.");
+  MOZ_ASSERT(aOrdinal >= 0, "Invalid ordinal.");
   if (aOrdinal == 0) {
     return false;
   }
@@ -110,9 +110,9 @@ GetAlphabeticCounterText(CounterValue aOrdinal,
                          nsSubstring& aResult,
                          const nsTArray<nsString>& aSymbols)
 {
-  NS_ABORT_IF_FALSE(aSymbols.Length() >= 2,
-                    "Too few symbols for alphabetic counter.");
-  NS_ABORT_IF_FALSE(aOrdinal >= 0, "Invalid ordinal.");
+  MOZ_ASSERT(aSymbols.Length() >= 2,
+             "Too few symbols for alphabetic counter.");
+  MOZ_ASSERT(aOrdinal >= 0, "Invalid ordinal.");
   if (aOrdinal == 0) {
     return false;
   }
@@ -140,9 +140,9 @@ GetNumericCounterText(CounterValue aOrdinal,
                       nsSubstring& aResult,
                       const nsTArray<nsString>& aSymbols)
 {
-  NS_ABORT_IF_FALSE(aSymbols.Length() >= 2,
-                    "Too few symbols for numeric counter.");
-  NS_ABORT_IF_FALSE(aOrdinal >= 0, "Invalid ordinal.");
+  MOZ_ASSERT(aSymbols.Length() >= 2,
+             "Too few symbols for numeric counter.");
+  MOZ_ASSERT(aOrdinal >= 0, "Invalid ordinal.");
 
   if (aOrdinal == 0) {
     aResult = aSymbols[0];
@@ -168,7 +168,7 @@ GetAdditiveCounterText(CounterValue aOrdinal,
                        nsSubstring& aResult,
                        const nsTArray<AdditiveSymbol>& aSymbols)
 {
-  NS_ABORT_IF_FALSE(aOrdinal >= 0, "Invalid ordinal.");
+  MOZ_ASSERT(aOrdinal >= 0, "Invalid ordinal.");
 
   if (aOrdinal == 0) {
     const AdditiveSymbol& last = aSymbols.LastElement();
@@ -339,7 +339,7 @@ CJKIdeographicToText(CounterValue aOrdinal, nsSubstring& aResult,
     if (unitidx == 0) {
       unit10Kidx = pos / 4;
     }
-    int32_t cur = aOrdinal % 10;
+    auto cur = static_cast<MakeUnsigned<CounterValue>::Type>(aOrdinal) % 10;
     if (cur == 0) {
       if (needZero) {
         needZero = false;
@@ -545,8 +545,8 @@ EthiopicToText(CounterValue aOrdinal, nsSubstring& aResult)
 static uint8_t
 GetDefaultSpeakAsForSystem(uint8_t aSystem)
 {
-  NS_ABORT_IF_FALSE(aSystem != NS_STYLE_COUNTER_SYSTEM_EXTENDS,
-                    "Extends system does not have static default speak-as");
+  MOZ_ASSERT(aSystem != NS_STYLE_COUNTER_SYSTEM_EXTENDS,
+             "Extends system does not have static default speak-as");
   switch (aSystem) {
     case NS_STYLE_COUNTER_SYSTEM_ALPHABETIC:
       return NS_STYLE_COUNTER_SPEAKAS_SPELL_OUT;
@@ -560,8 +560,8 @@ GetDefaultSpeakAsForSystem(uint8_t aSystem)
 static bool
 SystemUsesNegativeSign(uint8_t aSystem)
 {
-  NS_ABORT_IF_FALSE(aSystem != NS_STYLE_COUNTER_SYSTEM_EXTENDS,
-                    "Cannot check this for extending style");
+  MOZ_ASSERT(aSystem != NS_STYLE_COUNTER_SYSTEM_EXTENDS,
+             "Cannot check this for extending style");
   switch (aSystem) {
     case NS_STYLE_COUNTER_SYSTEM_SYMBOLIC:
     case NS_STYLE_COUNTER_SYSTEM_ALPHABETIC:
@@ -591,30 +591,30 @@ protected:
   }
 
 public:
-  virtual void GetPrefix(nsSubstring& aResult) MOZ_OVERRIDE;
-  virtual void GetSuffix(nsSubstring& aResult) MOZ_OVERRIDE;
+  virtual void GetPrefix(nsSubstring& aResult) override;
+  virtual void GetSuffix(nsSubstring& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
                                     WritingMode aWritingMode,
                                     nsSubstring& aResult,
-                                    bool& aIsBullet) MOZ_OVERRIDE;
-  virtual bool IsBullet() MOZ_OVERRIDE;
+                                    bool& aIsBullet) override;
+  virtual bool IsBullet() override;
 
-  virtual void GetNegative(NegativeType& aResult) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual void GetPad(PadType& aResult) MOZ_OVERRIDE;
-  virtual CounterStyle* GetFallback() MOZ_OVERRIDE;
-  virtual uint8_t GetSpeakAs() MOZ_OVERRIDE;
-  virtual bool UseNegativeSign() MOZ_OVERRIDE;
+  virtual void GetNegative(NegativeType& aResult) override;
+  virtual bool IsOrdinalInRange(CounterValue aOrdinal) override;
+  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) override;
+  virtual void GetPad(PadType& aResult) override;
+  virtual CounterStyle* GetFallback() override;
+  virtual uint8_t GetSpeakAs() override;
+  virtual bool UseNegativeSign() override;
 
   virtual bool GetInitialCounterText(CounterValue aOrdinal,
                                      WritingMode aWritingMode,
                                      nsSubstring& aResult,
-                                     bool& aIsRTL) MOZ_OVERRIDE;
+                                     bool& aIsRTL) override;
 
   // Builtin counter style does not need refcount at all
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() MOZ_OVERRIDE { return 2; }
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE { return 2; }
+  NS_IMETHOD_(MozExternalRefCountType) AddRef() override { return 2; }
+  NS_IMETHOD_(MozExternalRefCountType) Release() override { return 2; }
 };
 
 /* virtual */ void
@@ -636,6 +636,7 @@ BuiltinCounterStyle::GetSuffix(nsSubstring& aResult)
     case NS_STYLE_LIST_STYLE_SQUARE:
     case NS_STYLE_LIST_STYLE_DISCLOSURE_CLOSED:
     case NS_STYLE_LIST_STYLE_DISCLOSURE_OPEN:
+    case NS_STYLE_LIST_STYLE_ETHIOPIC_NUMERIC:
       aResult = ' ';
       break;
 
@@ -949,7 +950,7 @@ BuiltinCounterStyle::GetInitialCounterText(CounterValue aOrdinal,
   }
 }
 
-class DependentBuiltinCounterStyle MOZ_FINAL : public BuiltinCounterStyle
+class DependentBuiltinCounterStyle final : public BuiltinCounterStyle
 {
 private:
   ~DependentBuiltinCounterStyle() {}
@@ -959,15 +960,15 @@ public:
       mManager(aManager)
   {
     NS_ASSERTION(IsDependentStyle(), "Not a dependent builtin style");
-    NS_ABORT_IF_FALSE(!IsCustomStyle(), "Not a builtin style");
+    MOZ_ASSERT(!IsCustomStyle(), "Not a builtin style");
   }
 
-  virtual CounterStyle* GetFallback() MOZ_OVERRIDE;
+  virtual CounterStyle* GetFallback() override;
 
   // DependentBuiltinCounterStyle is managed in the same way as
   // CustomCounterStyle.
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() MOZ_OVERRIDE;
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) AddRef() override;
+  NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
   {
@@ -1016,7 +1017,7 @@ DependentBuiltinCounterStyle::GetFallback()
   }
 }
 
-class CustomCounterStyle MOZ_FINAL : public CounterStyle
+class CustomCounterStyle final : public CounterStyle
 {
 private:
   ~CustomCounterStyle() {}
@@ -1051,30 +1052,30 @@ public:
   nsCSSCounterStyleRule* GetRule() const { return mRule; }
   uint32_t GetRuleGeneration() const { return mRuleGeneration; }
 
-  virtual void GetPrefix(nsSubstring& aResult) MOZ_OVERRIDE;
-  virtual void GetSuffix(nsSubstring& aResult) MOZ_OVERRIDE;
+  virtual void GetPrefix(nsSubstring& aResult) override;
+  virtual void GetSuffix(nsSubstring& aResult) override;
   virtual void GetSpokenCounterText(CounterValue aOrdinal,
                                     WritingMode aWritingMode,
                                     nsSubstring& aResult,
-                                    bool& aIsBullet) MOZ_OVERRIDE;
-  virtual bool IsBullet() MOZ_OVERRIDE;
+                                    bool& aIsBullet) override;
+  virtual bool IsBullet() override;
 
-  virtual void GetNegative(NegativeType& aResult) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) MOZ_OVERRIDE;
-  virtual void GetPad(PadType& aResult) MOZ_OVERRIDE;
-  virtual CounterStyle* GetFallback() MOZ_OVERRIDE;
-  virtual uint8_t GetSpeakAs() MOZ_OVERRIDE;
-  virtual bool UseNegativeSign() MOZ_OVERRIDE;
+  virtual void GetNegative(NegativeType& aResult) override;
+  virtual bool IsOrdinalInRange(CounterValue aOrdinal) override;
+  virtual bool IsOrdinalInAutoRange(CounterValue aOrdinal) override;
+  virtual void GetPad(PadType& aResult) override;
+  virtual CounterStyle* GetFallback() override;
+  virtual uint8_t GetSpeakAs() override;
+  virtual bool UseNegativeSign() override;
 
   virtual void CallFallbackStyle(CounterValue aOrdinal,
                                  WritingMode aWritingMode,
                                  nsSubstring& aResult,
-                                 bool& aIsRTL) MOZ_OVERRIDE;
+                                 bool& aIsRTL) override;
   virtual bool GetInitialCounterText(CounterValue aOrdinal,
                                      WritingMode aWritingMode,
                                      nsSubstring& aResult,
-                                     bool& aIsRTL) MOZ_OVERRIDE;
+                                     bool& aIsRTL) override;
 
   bool IsExtendsSystem()
   {
@@ -1084,8 +1085,8 @@ public:
   // CustomCounterStyle should be reference-counted because it may be
   // dereferenced from the manager but still referenced by nodes and
   // frames before the style change is propagated.
-  NS_IMETHOD_(MozExternalRefCountType) AddRef() MOZ_OVERRIDE;
-  NS_IMETHOD_(MozExternalRefCountType) Release() MOZ_OVERRIDE;
+  NS_IMETHOD_(MozExternalRefCountType) AddRef() override;
+  NS_IMETHOD_(MozExternalRefCountType) Release() override;
 
   void* operator new(size_t sz, nsPresContext* aPresContext) CPP_THROW_NEW
   {
@@ -1260,8 +1261,8 @@ CustomCounterStyle::GetSpokenCounterText(CounterValue aOrdinal,
     CounterStyle::GetSpokenCounterText(
         aOrdinal, aWritingMode, aResult, aIsBullet);
   } else {
-    NS_ABORT_IF_FALSE(mSpeakAsCounter,
-                      "mSpeakAsCounter should have been initialized.");
+    MOZ_ASSERT(mSpeakAsCounter,
+               "mSpeakAsCounter should have been initialized.");
     mSpeakAsCounter->GetSpokenCounterText(
         aOrdinal, aWritingMode, aResult, aIsBullet);
   }
@@ -1960,7 +1961,7 @@ CounterStyleManager::CounterStyleManager(nsPresContext* aPresContext)
 
 CounterStyleManager::~CounterStyleManager()
 {
-  NS_ABORT_IF_FALSE(!mPresContext, "Disconnect should have been called");
+  MOZ_ASSERT(!mPresContext, "Disconnect should have been called");
 }
 
 /* static */ void
@@ -2036,10 +2037,10 @@ CounterStyleManager::BuildCounterStyle(const nsCSSValue::Array* aParams)
 /* static */ CounterStyle*
 CounterStyleManager::GetBuiltinStyle(int32_t aStyle)
 {
-  NS_ABORT_IF_FALSE(0 <= aStyle && aStyle < NS_STYLE_LIST_STYLE__MAX,
-                    "Require a valid builtin style constant");
-  NS_ABORT_IF_FALSE(!gBuiltinStyleTable[aStyle].IsDependentStyle(),
-                    "Cannot get dependent builtin style");
+  MOZ_ASSERT(0 <= aStyle && aStyle < NS_STYLE_LIST_STYLE__MAX,
+             "Require a valid builtin style constant");
+  MOZ_ASSERT(!gBuiltinStyleTable[aStyle].IsDependentStyle(),
+             "Cannot get dependent builtin style");
   return &gBuiltinStyleTable[aStyle];
 }
 

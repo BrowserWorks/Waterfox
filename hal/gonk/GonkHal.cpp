@@ -113,16 +113,44 @@ using namespace mozilla::dom;
 namespace mozilla {
 namespace hal_impl {
 
+/**
+ * These are defined by libhardware, specifically, hardware/libhardware/include/hardware/lights.h
+ * in the gonk subsystem.
+ * If these change and are exposed to JS, make sure nsIHal.idl is updated as well.
+ */
+enum LightType {
+  eHalLightID_Backlight     = 0,
+  eHalLightID_Keyboard      = 1,
+  eHalLightID_Buttons       = 2,
+  eHalLightID_Battery       = 3,
+  eHalLightID_Notifications = 4,
+  eHalLightID_Attention     = 5,
+  eHalLightID_Bluetooth     = 6,
+  eHalLightID_Wifi          = 7,
+  eHalLightID_Count  // This should stay at the end
+};
+enum LightMode {
+  eHalLightMode_User   = 0,  // brightness is managed by user setting
+  eHalLightMode_Sensor = 1,  // brightness is managed by a light sensor
+  eHalLightMode_Count
+};
+enum FlashMode {
+  eHalLightFlash_None     = 0,
+  eHalLightFlash_Timed    = 1,  // timed flashing.  Use flashOnMS and flashOffMS for timing
+  eHalLightFlash_Hardware = 2,  // hardware assisted flashing
+  eHalLightFlash_Count
+};
+
 struct LightConfiguration {
-  hal::LightType light;
-  hal::LightMode mode;
-  hal::FlashMode flash;
+  LightType light;
+  LightMode mode;
+  FlashMode flash;
   uint32_t flashOnMS;
   uint32_t flashOffMS;
   uint32_t color;
 };
 
-static light_device_t* sLights[hal::eHalLightID_Count]; // will be initialized to nullptr
+static light_device_t* sLights[eHalLightID_Count]; // will be initialized to nullptr
 
 static light_device_t*
 GetDevice(hw_module_t* module, char const* name)
@@ -142,27 +170,27 @@ InitLights()
 {
   // assume that if backlight is nullptr, nothing has been set yet
   // if this is not true, the initialization will occur everytime a light is read or set!
-  if (!sLights[hal::eHalLightID_Backlight]) {
+  if (!sLights[eHalLightID_Backlight]) {
     int err;
     hw_module_t* module;
 
     err = hw_get_module(LIGHTS_HARDWARE_MODULE_ID, (hw_module_t const**)&module);
     if (err == 0) {
-      sLights[hal::eHalLightID_Backlight]
+      sLights[eHalLightID_Backlight]
              = GetDevice(module, LIGHT_ID_BACKLIGHT);
-      sLights[hal::eHalLightID_Keyboard]
+      sLights[eHalLightID_Keyboard]
              = GetDevice(module, LIGHT_ID_KEYBOARD);
-      sLights[hal::eHalLightID_Buttons]
+      sLights[eHalLightID_Buttons]
              = GetDevice(module, LIGHT_ID_BUTTONS);
-      sLights[hal::eHalLightID_Battery]
+      sLights[eHalLightID_Battery]
              = GetDevice(module, LIGHT_ID_BATTERY);
-      sLights[hal::eHalLightID_Notifications]
+      sLights[eHalLightID_Notifications]
              = GetDevice(module, LIGHT_ID_NOTIFICATIONS);
-      sLights[hal::eHalLightID_Attention]
+      sLights[eHalLightID_Attention]
              = GetDevice(module, LIGHT_ID_ATTENTION);
-      sLights[hal::eHalLightID_Bluetooth]
+      sLights[eHalLightID_Bluetooth]
              = GetDevice(module, LIGHT_ID_BLUETOOTH);
-      sLights[hal::eHalLightID_Wifi]
+      sLights[eHalLightID_Wifi]
              = GetDevice(module, LIGHT_ID_WIFI);
         }
     }
@@ -172,7 +200,7 @@ InitLights()
  * The state last set for the lights until liblights supports
  * getting the light state.
  */
-static light_state_t sStoredLightState[hal::eHalLightID_Count];
+static light_state_t sStoredLightState[eHalLightID_Count];
 
 /**
 * Set the value of a light to a particular color, with a specific flash pattern.
@@ -185,13 +213,13 @@ static light_state_t sStoredLightState[hal::eHalLightID_Count];
 * returns true if successful and false if failed.
 */
 static bool
-SetLight(hal::LightType light, const LightConfiguration& aConfig)
+SetLight(LightType light, const LightConfiguration& aConfig)
 {
   light_state_t state;
 
   InitLights();
 
-  if (light < 0 || light >= hal::eHalLightID_Count ||
+  if (light < 0 || light >= eHalLightID_Count ||
       sLights[light] == nullptr) {
     return false;
   }
@@ -213,11 +241,11 @@ SetLight(hal::LightType light, const LightConfiguration& aConfig)
 * returns true if successful and false if failed.
 */
 static bool
-GetLight(hal::LightType light, LightConfiguration* aConfig)
+GetLight(LightType light, LightConfiguration* aConfig)
 {
   light_state_t state;
 
-  if (light < 0 || light >= hal::eHalLightID_Count ||
+  if (light < 0 || light >= eHalLightID_Count ||
       sLights[light] == nullptr) {
     return false;
   }
@@ -227,10 +255,10 @@ GetLight(hal::LightType light, LightConfiguration* aConfig)
 
   aConfig->light = light;
   aConfig->color = state.color;
-  aConfig->flash = hal::FlashMode(state.flashMode);
+  aConfig->flash = FlashMode(state.flashMode);
   aConfig->flashOnMS = state.flashOnMS;
   aConfig->flashOffMS = state.flashOffMS;
-  aConfig->mode = hal::LightMode(state.brightnessMode);
+  aConfig->mode = LightMode(state.brightnessMode);
 
   return true;
 }
@@ -241,7 +269,7 @@ namespace {
  * This runnable runs for the lifetime of the program, once started.  It's
  * responsible for "playing" vibration patterns.
  */
-class VibratorRunnable MOZ_FINAL
+class VibratorRunnable final
   : public nsIRunnable
   , public nsIObserver
 {
@@ -409,13 +437,13 @@ public:
     } // else turn off battery indicator.
 
     LightConfiguration aConfig;
-    aConfig.light = hal::eHalLightID_Battery;
-    aConfig.mode = hal::eHalLightMode_User;
-    aConfig.flash = hal::eHalLightFlash_None;
+    aConfig.light = eHalLightID_Battery;
+    aConfig.mode = eHalLightMode_User;
+    aConfig.flash = eHalLightFlash_None;
     aConfig.flashOnMS = aConfig.flashOffMS = 0;
     aConfig.color = color;
 
-    SetLight(hal::eHalLightID_Battery, aConfig);
+    SetLight(eHalLightID_Battery, aConfig);
 
     hal::NotifyBatteryChange(info);
 
@@ -655,7 +683,7 @@ bool
 GetKeyLightEnabled()
 {
   LightConfiguration config;
-  GetLight(hal::eHalLightID_Buttons, &config);
+  GetLight(eHalLightID_Buttons, &config);
   return (config.color != 0x00000000);
 }
 
@@ -663,8 +691,8 @@ void
 SetKeyLightEnabled(bool aEnabled)
 {
   LightConfiguration config;
-  config.mode = hal::eHalLightMode_User;
-  config.flash = hal::eHalLightFlash_None;
+  config.mode = eHalLightMode_User;
+  config.flash = eHalLightFlash_None;
   config.flashOnMS = config.flashOffMS = 0;
   config.color = 0x00000000;
 
@@ -679,15 +707,15 @@ SetKeyLightEnabled(bool aEnabled)
     config.color = color;
   }
 
-  SetLight(hal::eHalLightID_Buttons, config);
-  SetLight(hal::eHalLightID_Keyboard, config);
+  SetLight(eHalLightID_Buttons, config);
+  SetLight(eHalLightID_Keyboard, config);
 }
 
 double
 GetScreenBrightness()
 {
   LightConfiguration config;
-  hal::LightType light = hal::eHalLightID_Backlight;
+  LightType light = eHalLightID_Backlight;
 
   GetLight(light, &config);
   // backlight is brightness only, so using one of the RGB elements as value.
@@ -711,14 +739,14 @@ SetScreenBrightness(double brightness)
   uint32_t color = (0xff<<24) + (val<<16) + (val<<8) + val;
 
   LightConfiguration config;
-  config.mode = hal::eHalLightMode_User;
-  config.flash = hal::eHalLightFlash_None;
+  config.mode = eHalLightMode_User;
+  config.flash = eHalLightFlash_None;
   config.flashOnMS = config.flashOffMS = 0;
   config.color = color;
-  SetLight(hal::eHalLightID_Backlight, config);
+  SetLight(eHalLightID_Backlight, config);
   if (GetKeyLightEnabled()) {
-    SetLight(hal::eHalLightID_Buttons, config);
-    SetLight(hal::eHalLightID_Keyboard, config);
+    SetLight(eHalLightID_Buttons, config);
+    SetLight(eHalLightID_Keyboard, config);
   }
 }
 
@@ -1130,7 +1158,7 @@ RoundOomScoreAdjUpWithBackroundLRU(int& aOomScoreAdj, uint32_t aBackgroundLRU)
 }
 
 #define OOM_LOG(level, args...) __android_log_print(level, "OomLogger", ##args)
-class OomVictimLogger MOZ_FINAL
+class OomVictimLogger final
   : public nsIObserver
 {
 public:
@@ -1323,7 +1351,8 @@ private:
   ProcessPriority mPriority;
   int32_t mOomScoreAdj;
   int32_t mKillUnderKB;
-  int mCGroupProcsFd;
+  int mCpuCGroupProcsFd;
+  int mMemCGroupProcsFd;
   nsCString mGroup;
 
   /**
@@ -1340,7 +1369,7 @@ private:
   /**
    * Get the full path of the cgroup.procs file associated with the group.
    */
-  nsCString CGroupProcsFilename()
+  nsCString CpuCGroupProcsFilename()
   {
     nsCString cgroupName = mGroup;
 
@@ -1356,9 +1385,30 @@ private:
            NS_LITERAL_CSTRING("cgroup.procs");
   }
 
-  int OpenCGroupProcs()
+  nsCString MemCGroupProcsFilename()
   {
-    return open(CGroupProcsFilename().get(), O_WRONLY);
+    nsCString cgroupName = mGroup;
+
+    /* If mGroup is empty, our cgroup.procs file is the root procs file,
+     * located at /sys/fs/cgroup/memory/cgroup.procs.  Otherwise our procs 
+     * file is /sys/fs/cgroup/memory/NAME/cgroup.procs. */
+
+    if (!mGroup.IsEmpty()) {
+      cgroupName.AppendLiteral("/");
+    }
+
+    return NS_LITERAL_CSTRING("/sys/fs/cgroup/memory/") + cgroupName +
+           NS_LITERAL_CSTRING("cgroup.procs");
+  }
+
+  int OpenCpuCGroupProcs()
+  {
+    return open(CpuCGroupProcsFilename().get(), O_WRONLY);
+  }
+
+  int OpenMemCGroupProcs()
+  {
+    return open(MemCGroupProcsFilename().get(), O_WRONLY);
   }
 };
 
@@ -1373,10 +1423,13 @@ private:
  * exists.  Otherwise, return false.
  */
 static bool
-EnsureCGroupExists(const nsACString &aGroup)
+EnsureCpuCGroupExists(const nsACString &aGroup)
 {
   NS_NAMED_LITERAL_CSTRING(kDevCpuCtl, "/dev/cpuctl/");
   NS_NAMED_LITERAL_CSTRING(kSlash, "/");
+
+  nsAutoCString groupName(aGroup);
+  HAL_LOG("EnsureCpuCGroupExists for group '%s'", groupName.get());
 
   nsAutoCString prefPrefix("hal.processPriorityManager.gonk.cgroups.");
 
@@ -1408,6 +1461,7 @@ EnsureCGroupExists(const nsACString &aGroup)
 
     offset++;
   }
+  HAL_LOG("EnsureCpuCGroupExists created group '%s'", groupName.get());
 
   nsAutoCString pathPrefix(kDevCpuCtl + aGroup + kSlash);
   nsAutoCString cpuSharesPath(pathPrefix + NS_LITERAL_CSTRING("cpu.shares"));
@@ -1429,11 +1483,61 @@ EnsureCGroupExists(const nsACString &aGroup)
   return true;
 }
 
+static bool
+EnsureMemCGroupExists(const nsACString &aGroup)
+{
+  NS_NAMED_LITERAL_CSTRING(kMemCtl, "/sys/fs/cgroup/memory/");
+  NS_NAMED_LITERAL_CSTRING(kSlash, "/");
+
+  nsAutoCString groupName(aGroup);
+  HAL_LOG("EnsureMemCGroupExists for group '%s'", groupName.get());
+
+  nsAutoCString prefPrefix("hal.processPriorityManager.gonk.cgroups.");
+
+  /* If cgroup is not empty, append the cgroup name and a dot to obtain the
+   * group specific preferences. */
+  if (!aGroup.IsEmpty()) {
+    prefPrefix += aGroup + NS_LITERAL_CSTRING(".");
+  }
+
+  nsAutoCString memSwappinessPref(prefPrefix + NS_LITERAL_CSTRING("memory_swappiness"));
+  int memSwappiness = Preferences::GetInt(memSwappinessPref.get());
+
+  // Create mCGroup and its parent directories, as necessary.
+  nsCString cgroupIter = aGroup + kSlash;
+
+  int32_t offset = 0;
+  while ((offset = cgroupIter.FindChar('/', offset)) != -1) {
+    nsAutoCString path = kMemCtl + Substring(cgroupIter, 0, offset);
+    int rv = mkdir(path.get(), 0744);
+
+    if (rv == -1 && errno != EEXIST) {
+      HAL_LOG("Could not create the %s control group.", path.get());
+      return false;
+    }
+
+    offset++;
+  }
+  HAL_LOG("EnsureMemCGroupExists created group '%s'", groupName.get());
+
+  nsAutoCString pathPrefix(kMemCtl + aGroup + kSlash);
+  nsAutoCString memSwappinessPath(pathPrefix + NS_LITERAL_CSTRING("memory.swappiness"));
+  if (!WriteToFile(memSwappinessPath.get(),
+                   nsPrintfCString("%d", memSwappiness).get())) {
+    HAL_LOG("Could not set the memory.swappiness for group %s", memSwappinessPath.get());
+    return false;
+  }
+  HAL_LOG("Set memory.swappiness for group %s to %d", memSwappinessPath.get(), memSwappiness);
+
+  return true;
+}
+
 PriorityClass::PriorityClass(ProcessPriority aPriority)
   : mPriority(aPriority)
   , mOomScoreAdj(0)
   , mKillUnderKB(0)
-  , mCGroupProcsFd(-1)
+  , mCpuCGroupProcsFd(-1)
+  , mMemCGroupProcsFd(-1)
 {
   DebugOnly<nsresult> rv;
 
@@ -1447,14 +1551,18 @@ PriorityClass::PriorityClass(ProcessPriority aPriority)
   rv = Preferences::GetCString(PriorityPrefName("cgroup").get(), &mGroup);
   MOZ_ASSERT(NS_SUCCEEDED(rv), "Missing control group preference");
 
-  if (EnsureCGroupExists(mGroup)) {
-    mCGroupProcsFd = OpenCGroupProcs();
+  if (EnsureCpuCGroupExists(mGroup)) {
+    mCpuCGroupProcsFd = OpenCpuCGroupProcs();
+  }
+  if (EnsureMemCGroupExists(mGroup)) {
+    mMemCGroupProcsFd = OpenMemCGroupProcs();
   }
 }
 
 PriorityClass::~PriorityClass()
 {
-  close(mCGroupProcsFd);
+  close(mCpuCGroupProcsFd);
+  close(mMemCGroupProcsFd);
 }
 
 PriorityClass::PriorityClass(const PriorityClass& aOther)
@@ -1463,7 +1571,8 @@ PriorityClass::PriorityClass(const PriorityClass& aOther)
   , mKillUnderKB(aOther.mKillUnderKB)
   , mGroup(aOther.mGroup)
 {
-  mCGroupProcsFd = OpenCGroupProcs();
+  mCpuCGroupProcsFd = OpenCpuCGroupProcs();
+  mMemCGroupProcsFd = OpenMemCGroupProcs();
 }
 
 PriorityClass& PriorityClass::operator=(const PriorityClass& aOther)
@@ -1472,20 +1581,26 @@ PriorityClass& PriorityClass::operator=(const PriorityClass& aOther)
   mOomScoreAdj = aOther.mOomScoreAdj;
   mKillUnderKB = aOther.mKillUnderKB;
   mGroup = aOther.mGroup;
-  mCGroupProcsFd = OpenCGroupProcs();
+  mCpuCGroupProcsFd = OpenCpuCGroupProcs();
+  mMemCGroupProcsFd = OpenMemCGroupProcs();
   return *this;
 }
 
 void PriorityClass::AddProcess(int aPid)
 {
-  if (mCGroupProcsFd < 0) {
-    return;
+  if (mCpuCGroupProcsFd >= 0) {
+    nsPrintfCString str("%d", aPid);
+
+    if (write(mCpuCGroupProcsFd, str.get(), strlen(str.get())) < 0) {
+      HAL_ERR("Couldn't add PID %d to the %s cpu control group", aPid, mGroup.get());
+    }
   }
+  if (mMemCGroupProcsFd >= 0) {
+    nsPrintfCString str("%d", aPid);
 
-  nsPrintfCString str("%d", aPid);
-
-  if (write(mCGroupProcsFd, str.get(), strlen(str.get())) < 0) {
-    HAL_ERR("Couldn't add PID %d to the %s control group", aPid, mGroup.get());
+    if (write(mMemCGroupProcsFd, str.get(), strlen(str.get())) < 0) {
+      HAL_ERR("Couldn't add PID %d to the %s memory control group", aPid, mGroup.get());
+    }
   }
 }
 

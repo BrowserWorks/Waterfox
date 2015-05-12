@@ -35,7 +35,7 @@ class ChannelEvent
 
 class AutoEventEnqueuerBase;
 
-class ChannelEventQueue MOZ_FINAL
+class ChannelEventQueue final
 {
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ChannelEventQueue)
 
@@ -105,8 +105,8 @@ ChannelEventQueue::ShouldEnqueue()
 {
   bool answer =  mForced || mSuspended || mFlushing;
 
-  NS_ABORT_IF_FALSE(answer == true || mEventQueue.IsEmpty(),
-                    "Should always enqueue if ChannelEventQueue not empty");
+  MOZ_ASSERT(answer == true || mEventQueue.IsEmpty(),
+             "Should always enqueue if ChannelEventQueue not empty");
 
   return answer;
 }

@@ -43,6 +43,7 @@ DIRS += [
     'base',
     'activities',
     'archivereader',
+    'requestsync',
     'bindings',
     'battery',
     'browser-element',
@@ -92,6 +93,7 @@ DIRS += [
     'workers',
     'camera',
     'audiochannel',
+    'broadcastchannel',
     'promise',
     'smil',
     'telephony',
@@ -133,6 +135,9 @@ if CONFIG['MOZ_GAMEPAD']:
 if CONFIG['MOZ_NFC']:
     DIRS += ['nfc']
 
+if CONFIG['MOZ_SECUREELEMENT']:
+    DIRS += ['secureelement']
+
 if CONFIG['MOZ_B2G']:
     DIRS += [
         'downloads',
@@ -144,6 +149,8 @@ if CONFIG['MOZ_B2G_BT_API_V2']:
     DIRS += ['bluetooth2']
 else:
     DIRS += ['bluetooth']
+
+DIRS += ['presentation']
 
 TEST_DIRS += [
     'tests',

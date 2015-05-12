@@ -36,8 +36,15 @@ WMFH264Decoder::Init()
   HRESULT hr;
 
   hr = CreateMFT(__uuidof(CMSH264DecoderMFT),
-                 "msmpeg2vdec.dll",
+                 WMFDecoderDllNameFor(H264),
                  mDecoder);
+  if (FAILED(hr)) {
+    // Windows 7 Enterprise Server N (which is what Mozilla's mochitests run
+    // on) need a different CLSID to instantiate the H.264 decoder.
+    hr = CreateMFT(CLSID_CMSH264DecMFT,
+                   WMFDecoderDllNameFor(H264),
+                   mDecoder);
+  }
   ENSURE(SUCCEEDED(hr), hr);
 
   hr = SetDecoderInputType();
@@ -151,7 +158,10 @@ WMFH264Decoder::SetDecoderOutputType()
     if (FAILED(hr)) {
       continue;
     }
-    if (subtype == MFVideoFormat_I420) {
+    if (subtype == MFVideoFormat_I420 || subtype == MFVideoFormat_IYUV) {
+      // On Windows 7 Enterprise N the MFT reports it reports IYUV instead
+      // of I420. Other Windows' report I420. The formats are the same, so
+      // support both.
       hr = mDecoder->SetOutputType(0, type, 0);
       ENSURE(SUCCEEDED(hr), hr);
 

@@ -38,19 +38,13 @@ public:
   // Returns the description of the shared surface.
   const D3DSURFACE_DESC& GetDesc() const;
 
-  // Returns the HANDLE that can be used to open the image as a shared resource.
-  // If the operation to copy the original resource to the shared resource
-  // hasn't finished yet, this function blocks until the synchronization is
-  // complete.
-  HANDLE GetShareHandle();
+  gfx::IntSize GetSize() override;
 
-  gfx::IntSize GetSize() MOZ_OVERRIDE;
+  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() override;
 
-  virtual TemporaryRef<gfx::SourceSurface> GetAsSourceSurface() MOZ_OVERRIDE;
+  virtual TextureClient* GetTextureClient(CompositableClient* aClient) override;
 
-  virtual TextureClient* GetTextureClient(CompositableClient* aClient) MOZ_OVERRIDE;
-
-  virtual bool IsValid() MOZ_OVERRIDE;
+  virtual bool IsValid() override;
 
 private:
 

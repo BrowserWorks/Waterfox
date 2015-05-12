@@ -7,6 +7,19 @@
 JAR_MANIFESTS += ['jar.mn']
 
 EXTRA_JS_MODULES += [
-  'AboutReader.jsm',
   'ReaderMode.jsm'
 ]
+
+EXTRA_PP_JS_MODULES += [
+  'AboutReader.jsm',
+]
+
+EXTRA_JS_MODULES.reader = [
+  'JSDOMParser.js',
+  'Readability.js',
+  'ReaderWorker.js',
+  'ReaderWorker.jsm'
+]
+
+if CONFIG['MOZ_BUILD_APP'] == 'mobile/android':
+    DEFINES['MOZ_FENNEC'] = True

@@ -482,37 +482,12 @@ XPCOMUtils.defineLazyGetter(this, "gRadioEnabledController", function() {
       return false;
     },
 
-    _isValidStateForSetRadioEnabled: function(radioState) {
-      return radioState == Ci.nsIMobileConnection.MOBILE_RADIO_STATE_ENABLED ||
-             radioState == Ci.nsIMobileConnection.MOBILE_RADIO_STATE_DISABLED;
-    },
-
-    _isDummyForSetRadioEnabled: function(radioState, data) {
-      return (radioState == Ci.nsIMobileConnection.MOBILE_RADIO_STATE_ENABLED &&
-              data.enabled) ||
-             (radioState == Ci.nsIMobileConnection.MOBILE_RADIO_STATE_DISABLED &&
-              !data.enabled);
-    },
-
     _handleMessage: function(message) {
       if (DEBUG) debug("RadioControl: handleMessage: " + JSON.stringify(message));
       let clientId = message.clientId || 0;
       let connection =
         gMobileConnectionService.getItemByServiceId(clientId);
       let radioState = connection && connection.radioState;
-
-      if (!this._isValidStateForSetRadioEnabled(radioState)) {
-        message.data.errorMsg = "InvalidStateError";
-        message.callback(message.data);
-        this._processNextMessage();
-        return;
-      }
-
-      if (this._isDummyForSetRadioEnabled(radioState, message.data)) {
-        message.callback(message.data);
-        this._processNextMessage();
-        return;
-      }
 
       if (message.data.enabled) {
         if (this._isRadioAbleToEnableAtClient(clientId)) {
@@ -531,10 +506,20 @@ XPCOMUtils.defineLazyGetter(this, "gRadioEnabledController", function() {
         // for more details). Therefore we should hangup all active voice calls
         // first. And considering some DSDS architecture, toggling one radio may
         // toggle both, so we send hangUpAll to all clients.
-        for (let i = 0, N = _ril.numRadioInterfaces; i < N; ++i) {
-          let iface = _ril.getRadioInterface(i);
-          iface.workerMessenger.send("hangUpAll");
-        }
+        let hangUpCallback = {
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsITelephonyCallback]),
+          notifySuccess: function() {},
+          notifyError: function() {}
+        };
+
+        gTelephonyService.enumerateCalls({
+          QueryInterface: XPCOMUtils.generateQI([Ci.nsITelephonyListener]),
+          enumerateCallState: function(aInfo) {
+            gTelephonyService.hangUpCall(aInfo.clientId, aInfo.callIndex,
+                                         hangUpCallback);
+          },
+          enumerateCallStateComplete: function() {}
+        });
 
         // In some DSDS architecture with only one modem, toggling one radio may
         // toggle both. Therefore, for safely turning off, we should first
@@ -553,19 +538,15 @@ XPCOMUtils.defineLazyGetter(this, "gRadioEnabledController", function() {
       let enabled = message.data.enabled || false;
       let radioInterface = _ril.getRadioInterface(clientId);
 
-      this.notifyRadioStateChanged(clientId,
-                                   enabled ? Ci.nsIMobileConnection.MOBILE_RADIO_STATE_ENABLING
-                                           : Ci.nsIMobileConnection.MOBILE_RADIO_STATE_DISABLING);
       radioInterface.workerMessenger.send("setRadioEnabled", message.data,
                                           (function(response) {
         if (response.errorMsg) {
-          // Request fails. Rollback to the original radioState.
+          // If request fails, set current radio state to unknown, since we will
+          // handle it in |mobileConnectionService|.
           this.notifyRadioStateChanged(clientId,
-                                       enabled ? Ci.nsIMobileConnection.MOBILE_RADIO_STATE_DISABLED
-                                               : Ci.nsIMobileConnection.MOBILE_RADIO_STATE_ENABLED);
+                                       Ci.nsIMobileConnection.MOBILE_RADIO_STATE_UNKNOWN);
         }
-        message.callback(response);
-        return false;
+        return message.callback(response);
       }).bind(this));
     },
 

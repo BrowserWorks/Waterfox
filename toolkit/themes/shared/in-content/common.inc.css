@@ -7,7 +7,8 @@
 @namespace xul "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
 
 html|body,
-xul|page {
+xul|page,
+xul|window {
   font: message-box;
   -moz-appearance: none;
   background-color: #fbfbfb;
@@ -24,8 +25,14 @@ html|h1 {
   font-size: 2.5em;
   font-weight: lighter;
   line-height: 1.2;
+  color: #333;
   margin: 0;
   margin-bottom: .5em;
+}
+
+html|hr {
+  border-style: solid none none none;
+  border-color: #c1c1c1;
 }
 
 xul|caption {
@@ -33,6 +40,7 @@ xul|caption {
   margin: 0;
 }
 
+xul|caption > xul|checkbox,
 xul|caption > xul|label {
   font-size: 1.3rem;
   font-weight: bold;
@@ -61,7 +69,7 @@ xul|prefpane > xul|*.content-box {
 xul|groupbox {
   -moz-appearance: none;
   border: none;
-  margin: 15px 0;
+  margin: 15px 0 0;
   -moz-padding-start: 0;
   -moz-padding-end: 0;
   font-size: 1.25rem;
@@ -198,7 +206,7 @@ xul|menulist > xul|*.menulist-label-box {
   padding-left: 10px !important;
 }
 
-xul|menulist > xul|*.menulist-label-box > xul|*.menulist-icon {
+xul|menulist > xul|*.menulist-label-box > xul|*.menulist-icon[src] {
   -moz-margin-end: 5px;
 }
 
@@ -357,7 +365,6 @@ xul|button[type="menu"] > xul|menupopup xul|menuseparator {
   height: 30px;
   color: #333;
   line-height: 20px;
-  text-shadow: 0 1px 1px #fefffe;
   padding-right: 10px;
   padding-left: 10px;
   border: 1px solid #c1c1c1;
@@ -382,34 +389,52 @@ xul|textbox[disabled="true"] {
 /* Links */
 
 html|a,
-xul|*.text-link,
-xul|*.inline-link {
+.text-link,
+.inline-link {
   line-height: 22px;
   color: #0095dd;
   text-decoration: none;
 }
 
 html|a:hover,
-xul|*.text-link:hover,
-xul|*.inline-link:hover {
-  color: #4cb1ff;
-  text-decoration: none;
+.text-link:hover,
+.inline-link:hover {
+  color: #178ce5;
+  text-decoration: underline;
 }
 
 html|a:hover:active,
-xul|*.text-link:hover:active,
-xul|*.inline-link:hover:active {
+.text-link:hover:active,
+.inline-link:hover:active {
   color: #ff9500;
   text-decoration: none;
 }
 
 /* Checkboxes and radio buttons */
 
+/* Hide the actual checkbox */
+html|input[type="checkbox"] {
+  opacity: 0;
+  position: absolute;
+}
+
+/* Create a box to style as the checkbox */
+html|input[type="checkbox"] + html|label:before {
+  display: inline-block;
+  content: "";
+  vertical-align: middle;
+}
+
+html|input[type="checkbox"] + html|label {
+  line-height: 0px;
+}
+
 xul|checkbox {
   -moz-margin-start: 0;
 }
 
-xul|*.checkbox-check {
+xul|*.checkbox-check,
+html|input[type="checkbox"] + html|label:before {
   -moz-appearance: none;
   width: 23px;
   height: 23px;
@@ -424,7 +449,8 @@ xul|*.checkbox-check {
   box-shadow: 0 1px 1px 0 #fff, inset 0 2px 0 0 rgba(0,0,0,0.03);
 }
 
-xul|checkbox:not([disabled="true"]):hover > xul|*.checkbox-check {
+xul|checkbox:not([disabled="true"]):hover > xul|*.checkbox-check,
+html|input[type="checkbox"]:not(:disabled) + html|label:hover:before {
   border-color: #0095dd;
 }
 
@@ -432,7 +458,12 @@ xul|*.checkbox-check[checked] {
   list-style-image: url("chrome://global/skin/in-content/check.svg#check");
 }
 
-xul|checkbox[disabled="true"] > xul|*.checkbox-check {
+html|input[type="checkbox"]:checked + html|label:before {
+  background-image: url("chrome://global/skin/in-content/check.svg#check"), linear-gradient(#fff, rgba(255,255,255,0.8)) !important;
+}
+
+xul|checkbox[disabled="true"] > xul|*.checkbox-check,
+html|input[type="checkbox"]:disabled + html|label {
   opacity: 0.5;
 }
 
@@ -443,6 +474,10 @@ xul|*.checkbox-label-box {
 
 xul|richlistitem > xul|*.checkbox-check {
   margin: 3px 6px;
+}
+
+xul|radio {
+  -moz-margin-start: 0;
 }
 
 xul|*.radio-check {
@@ -517,6 +552,7 @@ xul|*#categories[keyboard-navigation="true"]:-moz-focusring > xul|*.category[cur
   padding-bottom: 2px;
   -moz-padding-start: 9px;
   margin: 0;
+  -moz-user-select: none;
 }
 
 *|*.category-icon {
@@ -538,6 +574,7 @@ xul|*#categories[keyboard-navigation="true"]:-moz-focusring > xul|*.category[cur
   font-weight: normal;
   line-height: 40px;
   margin: 0;
+  -moz-user-select: none;
 }
 
 /* File fields */
@@ -623,6 +660,11 @@ xul|tree {
   border: 1px solid #c1c1c1;
 }
 
+xul|tree:-moz-focusring,
+xul|richlistbox:-moz-focusring {
+  border: 1px dotted #0095dd;
+}
+
 xul|listheader,
 xul|treecols {
   -moz-appearance: none;
@@ -640,7 +682,7 @@ xul|treecolpicker {
   padding: 5px 10px;
 }
 
-xul|treecol:not([hideheader="true"]):hover,
+xul|treecol:not([hideheader="true"]):not([sortable="false"]):hover,
 xul|treecolpicker:hover {
   background-color: #dadada;
   color: #333;
@@ -654,19 +696,13 @@ xul|treecolpicker {
 }
 
 xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection] {
-  list-style-image: url("chrome://global/skin/in-content/sorter.png");
-  width: 12px;
-  height: 8px;
+  list-style-image: url("chrome://global/skin/in-content/dropdown.svg#dropdown");
+  width: 18px;
+  height: 18px;
 }
 
-xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection="descending"] {
+xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection="ascending"] {
   transform: scaleY(-1);
-}
-
-@media (min-resolution: 2dppx) {
-  xul|treecol:not([hideheader="true"]) > xul|*.treecol-sortdirection[sortDirection] {
-    list-style-image: url("chrome://global/skin/in-content/sorter@2x.png");
-  }
 }
 
 /* This is the only way to increase the height of a tree row unfortunately */

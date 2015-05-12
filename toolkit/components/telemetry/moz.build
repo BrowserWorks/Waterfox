@@ -37,6 +37,7 @@ EXTRA_JS_MODULES += [
 
 EXTRA_PP_JS_MODULES += [
     'TelemetryPing.jsm',
+    'TelemetrySession.jsm',
 ]
 
 FAIL_ON_WARNINGS = True
@@ -59,3 +60,4 @@ LOCAL_INCLUDES += [
     '/xpcom/threads',
 ]
 
+SPHINX_TREES['telemetry'] = 'docs'

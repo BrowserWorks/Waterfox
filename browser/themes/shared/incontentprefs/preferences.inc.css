@@ -25,78 +25,54 @@ treecol {
 
 /* Category List */
 
-.category-icon {
-  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.png");
+#categories {
+  max-height: 100vh;
+}
+
+#categories > scrollbox {
+  overflow-x: hidden !important;
+}
+
+/**
+ * We want the last category to always have non-0 getBoundingClientRect().bottom
+ * so we can use the value to figure out the max-height of the list in
+ * preferences.js, so use collapse instead of display: none; if it's hidden
+ */
+#categories > .category[hidden="true"] {
+  display: -moz-box;
+  visibility: collapse;
 }
 
 #category-general > .category-icon {
-  -moz-image-region: rect(0, 24px, 24px, 0);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#general");
 }
 
 #category-search > .category-icon {
-  -moz-image-region: rect(0, 192px, 24px, 168px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#search");
 }
 
 #category-content > .category-icon {
-  -moz-image-region: rect(0, 48px, 24px, 24px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#content");
 }
 
 #category-application > .category-icon {
-  -moz-image-region: rect(0, 72px, 24px, 48px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#applications");
 }
 
 #category-privacy > .category-icon {
-  -moz-image-region: rect(0, 96px, 24px, 72px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#privacy");
 }
 
 #category-security > .category-icon {
-  -moz-image-region: rect(0, 120px, 24px, 96px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#security");
 }
 
 #category-sync > .category-icon {
-  -moz-image-region: rect(0, 144px, 24px, 120px);
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#sync");
 }
 
 #category-advanced > .category-icon {
-  -moz-image-region: rect(0, 168px, 24px, 144px);
-}
-
-@media (min-resolution: 2dppx) {
-  .category-icon {
-    list-style-image: url("chrome://browser/skin/preferences/in-content/icons@2x.png");
-  }
-
-  #category-general > .category-icon {
-    -moz-image-region: rect(0, 48px, 48px, 0);
-  }
-
-  #category-search > .category-icon {
-    -moz-image-region: rect(0, 384px, 48px, 336px);
-  }
-
-  #category-content > .category-icon {
-    -moz-image-region: rect(0, 96px, 48px, 48px);
-  }
-
-  #category-application > .category-icon {
-    -moz-image-region: rect(0, 144px, 48px, 96px);
-  }
-
-  #category-privacy > .category-icon {
-    -moz-image-region: rect(0, 192px, 48px, 144px);
-  }
-
-  #category-security > .category-icon {
-    -moz-image-region: rect(0, 240px, 48px, 192px);
-  }
-
-  #category-sync > .category-icon {
-    -moz-image-region: rect(0, 288px, 48px, 240px);
-  }
-
-  #category-advanced > .category-icon {
-    -moz-image-region: rect(0, 336px, 48px, 288px);
-  }
+  list-style-image: url("chrome://browser/skin/preferences/in-content/icons.svg#advanced");
 }
 
 @media (max-width: 800px) {
@@ -113,6 +89,43 @@ treecol {
 }
 
 /* General Pane */
+
+#startupTable {
+  border-collapse: collapse;
+}
+
+#startupTable > tr > td {
+  padding: 0; /* remove the padding from html.css */
+}
+
+#startupTable > tr:not(:first-child) > td {
+  padding-top: 0.5em; /* add a spacing between the rows */
+}
+
+#startupTable > tr > .label-cell {
+  text-align: end;
+  width: 0; /* make the column as small as possible */
+}
+
+#startupTable > tr > .label-cell > label {
+  white-space: nowrap;
+}
+
+#startupTable > tr > .content-cell > menulist,
+#startupTable > tr > .content-cell > textbox {
+  width: calc(100% - 8px);
+  margin-left: 4px;
+  margin-right: 4px;
+}
+
+#startupTable > tr > .homepage-buttons {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#startupTable > tr > .homepage-buttons > .content-cell-item {
+  flex-grow: 1;
+}
 
 #useFirefoxSync  {
   font-size: 90%;
@@ -148,6 +161,10 @@ treecol {
   -moz-margin-start: 0;
 }
 
+#handlersView {
+  height: 25em;
+}
+
 #handlersView > richlistitem {
   min-height: 36px !important;
 }
@@ -174,6 +191,20 @@ treecol {
   -moz-margin-end: 8px !important;
 }
 
+/* Collapse the non-active vboxes in decks to use only the height the
+   active vbox needs */
+#historyPane:not([selectedIndex="1"]) > #historyDontRememberPane,
+#historyPane:not([selectedIndex="2"]) > #historyCustomPane,
+#weavePrefsDeck:not([selectedIndex="1"]) > #hasAccount,
+#weavePrefsDeck:not([selectedIndex="2"]) > #needsUpdate,
+#weavePrefsDeck:not([selectedIndex="3"]) > #fxaDeterminingStatus,
+#weavePrefsDeck:not([selectedIndex="4"]) > #noFxaAccount,
+#weavePrefsDeck:not([selectedIndex="5"]) > #hasFxaAccount,
+#fxaLoginStatus:not([selectedIndex="1"]) > #fxaLoginUnverified,
+#fxaLoginStatus:not([selectedIndex="2"]) > #fxaLoginRejected {
+  visibility: collapse;
+}
+
 /* XXX This style is for bug 740213 and should be removed once that
    bug has a solution. */
 description > html|a {
@@ -197,21 +228,16 @@ description > html|a {
   -moz-margin-start: 0;
 }
 
-#advancedPrefs {
-  padding-bottom: 0; /* no padding needed in inContent prefs */
-}
-
 #tabsElement {
   -moz-margin-end: 4px; /* add the 4px end-margin of other elements */
-}
-
-#encryptionPanel {
-  margin-top: 15px;
 }
 
 #telemetryLearnMore,
 #FHRLearnMore,
 #crashReporterLearnMore {
+  /* provide some margin between the links and the label text */
+  /* !important is needed to override the rules defined in common.css */
+  -moz-margin-start: 20px !important;
   /* center the links */
   margin-top: 8px;
   margin-bottom: 8px;
@@ -231,6 +257,10 @@ description > html|a {
   #trackingProtectionImage {
     list-style-image: url(chrome://browser/skin/bad-content-blocked-16@2x.png);
   }
+}
+
+#showUpdateHistory {
+  -moz-margin-start: 0;
 }
 
 /**
@@ -295,9 +325,25 @@ description > html|a {
   width: 66ch;
 }
 
+.largeDialogContainer.doScroll {
+  overflow-y: auto;
+  -moz-box-flex: 1;
+}
+
 /**
  * End Dialog
  */
+
+/**
+ * Font dialog menulist fixes
+ */
+
+#defaultFontType,
+#serif,
+#sans-serif,
+#monospace {
+  min-width: 30ch;
+}
 
 /**
  * Sync migration

@@ -50,8 +50,8 @@ friend class nsWindowMediator;
 public:
   nsAppShellWindowEnumerator(const char16_t* aTypeString,
                              nsWindowMediator& inMediator);
-  NS_IMETHOD GetNext(nsISupports **retval) = 0;
-  NS_IMETHOD HasMoreElements(bool *retval);
+  NS_IMETHOD GetNext(nsISupports **retval) override = 0;
+  NS_IMETHOD HasMoreElements(bool *retval) override;
 
   NS_DECL_ISUPPORTS
 

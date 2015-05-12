@@ -20,13 +20,13 @@ GivesAndTakesCells(JS::GCCellPtr cell)
 
 BEGIN_TEST(testGCCellPtr)
 {
-    JS::RootedObject obj(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject obj(cx, JS_NewPlainObject(cx));
     CHECK(obj);
 
     JS::RootedString str(cx, JS_NewStringCopyZ(cx, "probably foobar"));
     CHECK(str);
 
-    const char *code = "function foo() { return 'bar'; }";
+    const char* code = "function foo() { return 'bar'; }";
     JS::CompileOptions opts(cx);
     JS::RootedScript script(cx);
     CHECK(JS_CompileScript(cx, obj, code, strlen(code), opts, &script));

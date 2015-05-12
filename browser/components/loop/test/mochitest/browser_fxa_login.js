@@ -24,7 +24,7 @@ function* checkFxA401() {
 
   let loopPanel = document.getElementById("loop-notification-panel");
   yield loadLoopPanel();
-  let loopDoc = document.getElementById("loop").contentDocument;
+  let loopDoc = document.getElementById("loop-panel-iframe").contentDocument;
   is(loopDoc.querySelector(".alert-error .message").textContent,
      getLoopString("could_not_authenticate"),
      "Check error bar message");
@@ -288,7 +288,7 @@ add_task(function* basicAuthorizationAndRegistration() {
   let statusChangedPromise = promiseObserverNotified("loop-status-changed");
   yield loadLoopPanel({stayOnline: true});
   yield statusChangedPromise;
-  let loopDoc = document.getElementById("loop").contentDocument;
+  let loopDoc = document.getElementById("loop-panel-iframe").contentDocument;
   let visibleEmail = loopDoc.getElementsByClassName("user-identity")[0];
   is(visibleEmail.textContent, "Guest", "Guest should be displayed on the panel when not logged in");
   is(MozLoopService.userProfile, null, "profile should be null before log-in");
@@ -296,8 +296,9 @@ add_task(function* basicAuthorizationAndRegistration() {
   is(loopButton.getAttribute("state"), "", "state of loop button should be empty when not logged in");
 
   info("Login");
+  statusChangedPromise = promiseObserverNotified("loop-status-changed", "login");
   let tokenData = yield MozLoopService.logInToFxA();
-  yield promiseObserverNotified("loop-status-changed", "login");
+  yield statusChangedPromise;
   ise(tokenData.access_token, "code1_access_token", "Check access_token");
   ise(tokenData.scope, "profile", "Check scope");
   ise(tokenData.token_type, "bearer", "Check token_type");

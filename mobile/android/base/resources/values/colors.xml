@@ -4,6 +4,30 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 <resources>
+  <!-- Fennec color palette (bug 1127517) -->
+  <color name="fennec_ui_orange">#FF9500</color>
+  <color name="action_orange">#E66000</color>
+  <color name="action_orange_pressed">#DC5600</color>
+  <color name="link_blue">#0096DD</color>
+  <color name="private_browsing_purple">#CF68FF</color>
+
+  <color name="placeholder_active_grey">#222222</color>
+  <color name="placeholder_grey">#777777</color>
+  <color name="private_toolbar_grey">#292C29</color>
+  <color name="text_and_tabs_tray_grey">#363B40</color>
+  <color name="tabs_tray_grey_pressed">#45494E</color>
+  <color name="toolbar_icon_grey">#5F6368</color>
+
+  <color name="tabs_tray_icon_grey">#AFB1B3</color>
+  <color name="disabled_grey">#BFBFBF</color>
+  <color name="toolbar_grey_pressed">#D7D7DC</color>
+  <color name="toolbar_menu_dark_grey">#E1E1E6</color>
+  <color name="toolbar_grey">#EBEBF0</color>
+  <color name="about_page_header_grey">#F5F5F5</color>
+
+  <!-- Non-palette colors -->
+  <color name="primary">#363B40</color>
+
   <color name="background_light">#FFF5F5F5</color>
 
   <!-- If you update one, update the other. -->
@@ -36,21 +60,18 @@
   <!-- highlight-focused on shaped button: 10% white over background_tabs -->
   <color name="highlight_shaped_focused">#FF565B60</color>
 
-  <!-- highlight on nav button: 20% black over background_normal -->
-  <color name="highlight_nav">#FFA5ACB2</color>
-
-  <!-- highlight-focused on nav button: 10% black over background_normal -->
-  <color name="highlight_nav_focused">#FFB9C1C7</color>
-
   <!-- highlight on private nav button: 20% white over background_private -->
   <color name="highlight_nav_pb">#FF545654</color>
 
   <!-- highlight-focused on private nav button: 10% white over background_private -->
   <color name="highlight_nav_focused_pb">#FF3F423F</color>
 
-  <!-- Onboarding start pane -->
-  <color name="onboard_start">#EAEAEA</color>
-  <color name="onboard_start_highlight">#D8D8D8</color>
+  <!-- Firstrun tour-->
+  <color name="firstrun_background">#99000000</color>
+  <color name="firstrun_tabstrip">#1193CB</color>
+  <color name="firstrun_pager_background">#16A3DF</color>
+  <color name="firstrun_pager_button">#E66000</color>
+  <color name="firstrun_pager_button_pressed">#DC5600</color>
 
   <!--
       Application theme colors
@@ -64,16 +85,6 @@
   <color name="text_color_primary_inverse">#F5F5F5</color>
   <color name="text_color_secondary_inverse">#DDDDDD</color>
   <color name="text_color_tertiary_inverse">#A4A7A9</color>
-
-  <!-- Colour used for share overlay button labels -->
-  <color name="text_color_overlaybtn">#666666</color>
-  <color name="text_color_overlaybtn_disabled">#AFB1B3</color>
-
-  <color name="overlay_share_header_background">#FFFFFFFF</color>
-
-  <!-- Colours used for share overlay button background -->
-  <color name="overlay_share_background">#FFEBEBF0</color>
-  <color name="overlay_share_selected">#FFF5F5F5</color>
 
   <!-- Disabled colors -->
   <color name="text_color_primary_disable_only">#999999</color>

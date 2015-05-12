@@ -34,7 +34,7 @@ do_GetService(const char* aContractID, nsresult* aError)
   return nsGetServiceByContractIDWithError(aContractID, aError);
 }
 
-class nsGetServiceFromCategory : public nsCOMPtr_helper
+class MOZ_STACK_CLASS nsGetServiceFromCategory : public nsCOMPtr_helper
 {
 public:
   nsGetServiceFromCategory(const char* aCategory, const char* aEntry,
@@ -45,7 +45,8 @@ public:
   {
   }
 
-  virtual nsresult NS_FASTCALL operator()(const nsIID&, void**) const;
+  virtual nsresult NS_FASTCALL operator()(const nsIID&, void**) const
+    override;
 protected:
   const char*                 mCategory;
   const char*                 mEntry;

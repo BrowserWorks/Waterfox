@@ -233,9 +233,25 @@ MediaSource::AddSourceBuffer(const nsAString& aType, ErrorResult& aRv)
     return nullptr;
   }
   mSourceBuffers->Append(sourceBuffer);
-  mActiveSourceBuffers->Append(sourceBuffer);
   MSE_DEBUG("sourceBuffer=%p", sourceBuffer.get());
   return sourceBuffer.forget();
+}
+
+void
+MediaSource::SourceBufferIsActive(SourceBuffer* aSourceBuffer)
+{
+  MOZ_ASSERT(NS_IsMainThread());
+  mActiveSourceBuffers->ClearSimple();
+  bool found = false;
+  for (uint32_t i = 0; i < mSourceBuffers->Length(); i++) {
+    SourceBuffer* sourceBuffer = mSourceBuffers->IndexedGetter(i, found);
+    MOZ_ALWAYS_TRUE(found);
+    if (sourceBuffer == aSourceBuffer) {
+      mActiveSourceBuffers->Append(aSourceBuffer);
+    } else if (sourceBuffer->IsActive()) {
+      mActiveSourceBuffers->AppendSimple(sourceBuffer);
+    }
+  }
 }
 
 void
@@ -281,15 +297,14 @@ MediaSource::EndOfStream(const Optional<MediaSourceEndOfStreamError>& aError, Er
 
   SetReadyState(MediaSourceReadyState::Ended);
   mSourceBuffers->Ended();
-  mDecoder->Ended();
   if (!aError.WasPassed()) {
     mDecoder->SetMediaSourceDuration(mSourceBuffers->GetHighestBufferedEndTime(),
                                      MSRangeRemovalAction::SKIP);
     if (aRv.Failed()) {
       return;
     }
-    // TODO:
-    //   Notify media element that all data is now available.
+    // Notify reader that all data is now available.
+    mDecoder->Ended(true);
     return;
   }
   switch (aError.Value()) {
@@ -334,8 +349,8 @@ MediaSource::Enabled(JSContext* cx, JSObject* aGlobal)
     return false;
   }
 
-  // Check whether it's enabled everywhere or just YouTube.
-  bool restrict = Preferences::GetBool("media.mediasource.youtubeonly", false);
+  // Check whether it's enabled everywhere or just whitelisted sites.
+  bool restrict = Preferences::GetBool("media.mediasource.whitelist", false);
   if (!restrict) {
     return true;
   }
@@ -359,7 +374,8 @@ MediaSource::Enabled(JSContext* cx, JSObject* aGlobal)
    }
 
    return eTLDplusOne.EqualsLiteral("youtube.com") ||
-          eTLDplusOne.EqualsLiteral("youtube-nocookie.com");
+          eTLDplusOne.EqualsLiteral("youtube-nocookie.com") ||
+          eTLDplusOne.EqualsLiteral("netflix.com");
 }
 
 bool
@@ -439,6 +455,10 @@ MediaSource::SetReadyState(MediaSourceReadyState aState)
       (oldState == MediaSourceReadyState::Closed ||
        oldState == MediaSourceReadyState::Ended)) {
     QueueAsyncSimpleEvent("sourceopen");
+    if (oldState == MediaSourceReadyState::Ended) {
+      // Notify reader that more data may come.
+      mDecoder->Ended(false);
+    }
     return;
   }
 

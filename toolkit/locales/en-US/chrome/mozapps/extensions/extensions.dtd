@@ -4,6 +4,7 @@
 <!ENTITY addons.windowTitle                   "Add-ons Manager">
 
 <!ENTITY search.placeholder                   "Search all add-ons">
+<!ENTITY search.buttonlabel                   "Search">
 <!-- LOCALIZATION NOTE (search.commandKey):
      The search command key should match findOnCmd.commandkey from browser.dtd -->
 <!ENTITY search.commandkey                    "f">
@@ -228,3 +229,5 @@
 <!ENTITY experiment.info.learnmore.accesskey "L">
 <!ENTITY experiment.info.changetelemetry "Telemetry Settings">
 <!ENTITY experiment.info.changetelemetry.accesskey "T">
+
+<!ENTITY setting.learnmore "Learn More…">

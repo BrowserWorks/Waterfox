@@ -186,7 +186,7 @@ public:
   int32_t mOrdinal;
 };
 
-class nsDisplayBullet MOZ_FINAL : public nsDisplayItem {
+class nsDisplayBullet final : public nsDisplayItem {
 public:
   nsDisplayBullet(nsDisplayListBuilder* aBuilder, nsBulletFrame* aFrame) :
     nsDisplayItem(aBuilder, aFrame) {
@@ -199,34 +199,34 @@ public:
 #endif
 
   virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder,
-                           bool* aSnap) MOZ_OVERRIDE
+                           bool* aSnap) override
   {
     *aSnap = false;
     return mFrame->GetVisualOverflowRectRelativeToSelf() + ToReferenceFrame();
   }
   virtual void HitTest(nsDisplayListBuilder* aBuilder, const nsRect& aRect,
                        HitTestState* aState,
-                       nsTArray<nsIFrame*> *aOutFrames) MOZ_OVERRIDE {
+                       nsTArray<nsIFrame*> *aOutFrames) override {
     aOutFrames->AppendElement(mFrame);
   }
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE;
+                     nsRenderingContext* aCtx) override;
   NS_DISPLAY_DECL_NAME("Bullet", TYPE_BULLET)
 
-  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE
+  virtual nsRect GetComponentAlphaBounds(nsDisplayListBuilder* aBuilder) override
   {
     bool snap;
     return GetBounds(aBuilder, &snap);
   }
 
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE
+  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override
   {
     return new nsDisplayBulletGeometry(this, aBuilder);
   }
 
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) MOZ_OVERRIDE
+                                         nsRegion *aInvalidRegion) override
   {
     const nsDisplayBulletGeometry* geometry = static_cast<const nsDisplayBulletGeometry*>(aGeometry);
     nsBulletFrame* f = static_cast<nsBulletFrame*>(mFrame);
@@ -420,13 +420,19 @@ nsBulletFrame::PaintBullet(nsRenderingContext& aRenderingContext, nsPoint aPt,
       nscoord ascent = wm.IsLineInverted()
                          ? fm->MaxDescent() : fm->MaxAscent();
       aPt.MoveBy(padding.left, padding.top);
+      gfxContext *ctx = aRenderingContext.ThebesContext();
       if (wm.IsVertical()) {
-        // XXX what about baseline snapping?
-        aPt.x += (wm.IsVerticalLR() ? ascent
-                                    : mRect.width - ascent);
+        if (wm.IsVerticalLR()) {
+          aPt.x = NSToCoordRound(nsLayoutUtils::GetSnappedBaselineX(
+                                   this, ctx, aPt.x, ascent));
+        } else {
+          aPt.x = NSToCoordRound(nsLayoutUtils::GetSnappedBaselineX(
+                                   this, ctx, aPt.x + mRect.width,
+                                   -ascent));
+        }
       } else {
         aPt.y = NSToCoordRound(nsLayoutUtils::GetSnappedBaselineY(
-                this, aRenderingContext.ThebesContext(), aPt.y, ascent));
+                                 this, ctx, aPt.y, ascent));
       }
       nsPresContext* presContext = PresContext();
       if (!presContext->BidiEnabled() && HasRTLChars(text)) {
@@ -657,6 +663,7 @@ nsBulletFrame::GetMinISize(nsRenderingContext *aRenderingContext)
   nsHTMLReflowMetrics metrics(wm);
   DISPLAY_MIN_WIDTH(this, metrics.ISize(wm));
   GetDesiredSize(PresContext(), aRenderingContext, metrics, 1.0f);
+  metrics.ISize(wm) += mPadding.IStartEnd(wm);
   return metrics.ISize(wm);
 }
 
@@ -667,6 +674,7 @@ nsBulletFrame::GetPrefISize(nsRenderingContext *aRenderingContext)
   nsHTMLReflowMetrics metrics(wm);
   DISPLAY_PREF_WIDTH(this, metrics.ISize(wm));
   GetDesiredSize(PresContext(), aRenderingContext, metrics, 1.0f);
+  metrics.ISize(wm) += mPadding.IStartEnd(wm);
   return metrics.ISize(wm);
 }
 

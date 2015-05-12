@@ -68,29 +68,29 @@ protected:
   InitWithService(BluetoothService* aService);
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual bool
-  RecvRegisterSignalHandler(const nsString& aNode) MOZ_OVERRIDE;
+  RecvRegisterSignalHandler(const nsString& aNode) override;
 
   virtual bool
-  RecvUnregisterSignalHandler(const nsString& aNode) MOZ_OVERRIDE;
+  RecvUnregisterSignalHandler(const nsString& aNode) override;
 
   virtual bool
-  RecvStopNotifying() MOZ_OVERRIDE;
+  RecvStopNotifying() override;
 
   virtual bool
   RecvPBluetoothRequestConstructor(PBluetoothRequestParent* aActor,
-                                   const Request& aRequest) MOZ_OVERRIDE;
+                                   const Request& aRequest) override;
 
   virtual PBluetoothRequestParent*
-  AllocPBluetoothRequestParent(const Request& aRequest) MOZ_OVERRIDE;
+  AllocPBluetoothRequestParent(const Request& aRequest) override;
 
   virtual bool
-  DeallocPBluetoothRequestParent(PBluetoothRequestParent* aActor) MOZ_OVERRIDE;
+  DeallocPBluetoothRequestParent(PBluetoothRequestParent* aActor) override;
 
   virtual void
-  Notify(const BluetoothSignal& aSignal) MOZ_OVERRIDE;
+  Notify(const BluetoothSignal& aSignal) override;
 
 private:
   void
@@ -120,7 +120,7 @@ protected:
   virtual ~BluetoothRequestParent();
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   void
   RequestComplete();
@@ -216,6 +216,15 @@ protected:
 
   bool
   DoRequest(const SendPlayStatusRequest& aRequest);
+
+  bool
+  DoRequest(const ConnectGattClientRequest& aRequest);
+
+  bool
+  DoRequest(const DisconnectGattClientRequest& aRequest);
+
+  bool
+  DoRequest(const UnregisterGattClientRequest& aRequest);
 };
 
 END_BLUETOOTH_NAMESPACE

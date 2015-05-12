@@ -66,7 +66,7 @@ WyciwygChannelChild::~WyciwygChannelChild()
 void
 WyciwygChannelChild::AddIPDLReference()
 {
-  NS_ABORT_IF_FALSE(!mIPCOpen, "Attempt to retain more than one IPDL reference");
+  MOZ_ASSERT(!mIPCOpen, "Attempt to retain more than one IPDL reference");
   mIPCOpen = true;
   AddRef();
 }
@@ -74,7 +74,7 @@ WyciwygChannelChild::AddIPDLReference()
 void
 WyciwygChannelChild::ReleaseIPDLReference()
 {
-  NS_ABORT_IF_FALSE(mIPCOpen, "Attempt to release nonexistent IPDL reference");
+  MOZ_ASSERT(mIPCOpen, "Attempt to release nonexistent IPDL reference");
   mIPCOpen = false;
   Release();
 }
@@ -254,7 +254,7 @@ WyciwygChannelChild::OnDataAvailable(const nsCString& data,
 
   if (mProgressSink && NS_SUCCEEDED(rv)) {
     mProgressSink->OnProgress(this, nullptr, offset + data.Length(),
-                              uint64_t(mContentLength));
+                              mContentLength);
   }
 }
 
@@ -649,8 +649,9 @@ WyciwygChannelChild::AsyncOpen(nsIStreamListener *aListener, nsISupports *aConte
   mListenerContext = aContext;
   mIsPending = true;
 
-  if (mLoadGroup)
+  if (mLoadGroup) {
     mLoadGroup->AddRequest(this, nullptr);
+  }
 
   URIParams originalURI;
   SerializeURI(mOriginalURI, originalURI);
@@ -660,7 +661,10 @@ WyciwygChannelChild::AsyncOpen(nsIStreamListener *aListener, nsISupports *aConte
     return NS_ERROR_ILLEGAL_VALUE;
   }
 
-  SendAsyncOpen(originalURI, mLoadFlags, IPC::SerializedLoadContext(this), tabChild);
+  PBrowserOrId browser = static_cast<ContentChild*>(Manager()->Manager())
+                         ->GetBrowserOrId(tabChild);
+
+  SendAsyncOpen(originalURI, mLoadFlags, IPC::SerializedLoadContext(this), browser);
 
   mSentAppData = true;
   mState = WCC_OPENED;

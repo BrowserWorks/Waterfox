@@ -24,71 +24,56 @@ var makePC = (config, expected_error) => {
 
 // This is a test of the iceServers parsing code + readable errors
 runNetworkTest(() => {
-<!DOCTYPE HTML>
-<html>
-<head>
-  <script type="application/javascript" src="pc.js"></script>
-</head>
-<body>
-<pre id="test">
-<script type="application/javascript">
-  createHTML({
-    bug: "825703",
-    title: "RTCConfiguration valid/invalid permutations"
-  });
+  var exception = null;
 
-  var makePC = (config, expectSuccess) => {
-    var exception;
-    try {
-      new mozRTCPeerConnection(config).close();
-    } catch (e) {
-      exception = e;
-    }
-    ok(expectSuccess ? !exception : !!exception,
-       "mozRTCPeerConnection(" + JSON.stringify(config) + ")");
-  };
+  try {
+    new mozRTCPeerConnection().close();
+  } catch (e) {
+    exception = e;
+  }
+  ok(!exception, "mozRTCPeerConnection() succeeds");
+  exception = null;
 
-  // This is a test of the iceServers parsing code + readable errors
-  runNetworkTest(() => {
-    var pcs = null;
-    var exception = null;
-    var config;
+  makePC();
 
-    makePC(undefined, true);
+  makePC(1, "TypeError");
 
-    makePC(1, false);
+  makePC({});
 
-    makePC({}, true);
+  makePC({ iceServers: [] });
 
-    makePC({ iceServers: [] }, true);
+  makePC({ iceServers: [{ urls:"" }] }, "SyntaxError");
 
-    makePC({ iceServers: [{ url:"" }] }, false);
+  makePC({ iceServers: [
+    { urls:"stun:127.0.0.1" },
+    { urls:"stun:localhost", foo:"" },
+    { urls: ["stun:127.0.0.1", "stun:localhost"] },
+    { urls:"stuns:localhost", foo:"" },
+    { urls:"turn:[::1]:3478", username:"p", credential:"p" },
+    { urls:"turn:localhost:3478?transport=udp", username:"p", credential:"p" },
+    { urls: ["turn:[::1]:3478", "turn:localhost"], username:"p", credential:"p" },
+    { urls:"turns:localhost:3478?transport=udp", username:"p", credential:"p" },
+    { url:"stun:localhost", foo:"" },
+    { url:"turn:localhost", username:"p", credential:"p" }
+  ]});
 
-    makePC({ iceServers: [
-      { url:"stun:127.0.0.1" },
-      { url:"stuns:localhost", foo:"" },
-      { url:"turn:[::1]:3478", username:"p", credential:"p" },
-      { url:"turns:localhost:3478?transport=udp", username:"p", credential:"p" }
-    ]}, true);
+  makePC({ iceServers: [{ urls: ["stun:127.0.0.1", ""] }] }, "SyntaxError");
 
-    makePC({ iceServers: [{ url:"turns:localhost:3478", username:"p" }] }, false);
+  makePC({ iceServers: [{ urls:"turns:localhost:3478", username:"p" }] }, "InvalidAccessError");
 
-    makePC({ iceServers: [{ url:"turns:localhost:3478", credential:"p" }] }, false);
+  makePC({ iceServers: [{ url:"turns:localhost:3478", credential:"p" }] }, "InvalidAccessError");
 
-    makePC({ iceServers: [{ url:"http:0.0.0.0" }] }, false);
-    try {
-      pcs = new mozRTCPeerConnection({ iceServers: [{ url:"http:0.0.0.0" }] });
-    } catch (e) {
-      ok(e.message.indexOf("http") > 0,
-         "mozRTCPeerConnection() constructor has readable exceptions");
-    }
-    if (pcs !== null) {
-      pcs.close();
-    }
-    pcs = null;
+  makePC({ iceServers: [{ urls:"http:0.0.0.0" }] }, "SyntaxError");
 
-    networkTestFinished();
-  });
+  try {
+    new mozRTCPeerConnection({ iceServers: [{ url:"http:0.0.0.0" }] }).close();
+  } catch (e) {
+    ok(e.message.indexOf("http") > 0,
+       "mozRTCPeerConnection() constructor has readable exceptions");
+  }
+
+  networkTestFinished();
+});
 </script>
 </pre>
 </body>

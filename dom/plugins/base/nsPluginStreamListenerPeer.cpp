@@ -572,8 +572,8 @@ nsPluginStreamListenerPeer::OnStartRequest(nsIRequest *request,
 
 NS_IMETHODIMP nsPluginStreamListenerPeer::OnProgress(nsIRequest *request,
                                                      nsISupports* aContext,
-                                                     uint64_t aProgress,
-                                                     uint64_t aProgressMax)
+                                                     int64_t aProgress,
+                                                     int64_t aProgressMax)
 {
   nsresult rv = NS_OK;
   return rv;
@@ -1289,7 +1289,7 @@ public:
 
   NS_DECL_ISUPPORTS
 
-  NS_IMETHODIMP OnRedirectVerifyCallback(nsresult aResult) MOZ_OVERRIDE
+  NS_IMETHODIMP OnRedirectVerifyCallback(nsresult aResult) override
   {
     if (NS_SUCCEEDED(aResult)) {
       nsCOMPtr<nsIStreamListener> listener = do_QueryReferent(mWeakListener);

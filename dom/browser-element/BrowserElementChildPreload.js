@@ -113,7 +113,8 @@ BrowserElementChild.prototype = {
             .addProgressListener(this._progressListener,
                                  Ci.nsIWebProgress.NOTIFY_LOCATION |
                                  Ci.nsIWebProgress.NOTIFY_SECURITY |
-                                 Ci.nsIWebProgress.NOTIFY_STATE_WINDOW);
+                                 Ci.nsIWebProgress.NOTIFY_STATE_WINDOW |
+                                 Ci.nsIWebProgress.NOTIFY_PROGRESS);
 
     docShell.QueryInterface(Ci.nsIWebNavigation)
             .sessionHistory = Cc["@mozilla.org/browser/shistory;1"]
@@ -171,12 +172,6 @@ BrowserElementChild.prototype = {
                      this._ScrollViewChangeHandler.bind(this),
                      /* useCapture = */ true,
                      /* wantsUntrusted = */ false);
-
-    addEventListener('touchcarettap',
-                     this._touchCaretTapHandler.bind(this),
-                     /* useCapture = */ true,
-                     /* wantsUntrusted = */ false);
-
 
     // This listens to unload events from our message manager, but /not/ from
     // the |content| window.  That's because the window's unload event doesn't
@@ -577,11 +572,6 @@ BrowserElementChild.prototype = {
     sendAsyncMsg('metachange', meta);
   },
 
-  _touchCaretTapHandler: function(e) {
-    e.stopPropagation();
-    sendAsyncMsg('touchcarettap');
-  },
-
   _ScrollViewChangeHandler: function(e) {
     e.stopPropagation();
     let detail = {
@@ -625,6 +615,8 @@ BrowserElementChild.prototype = {
           // copied content easily
         } else if (e.states.indexOf('blur') == 0) {
           // Always dispatch to notify the blur for the focus content
+        } else if (e.states.indexOf('taponcaret') == 0) {
+          // Always dispatch to notify the caret be touched
         } else {
           return;
         }
@@ -637,6 +629,8 @@ BrowserElementChild.prototype = {
     // that the parent side can hide the text dialog.
     // We clear selectionStateChangedTarget if selection carets are invisible.
     if (e.visible && !isCollapsed) {
+      this._selectionStateChangedTarget = e.target;
+    } else if (canPaste && isCollapsed) {
       this._selectionStateChangedTarget = e.target;
     } else {
       this._selectionStateChangedTarget = null;
@@ -808,10 +802,10 @@ BrowserElementChild.prototype = {
       }
     }
 
-    // The value returned by the contextmenu sync call is true iff the embedder
+    // The value returned by the contextmenu sync call is true if the embedder
     // called preventDefault() on its contextmenu event.
     //
-    // We call preventDefault() on our contextmenu event iff the embedder called
+    // We call preventDefault() on our contextmenu event if the embedder called
     // preventDefault() on /its/ contextmenu event.  This way, if the embedder
     // ignored the contextmenu event, TabChild will fire a click.
     if (sendSyncMsg('contextmenu', menuData)[0]) {
@@ -837,6 +831,29 @@ BrowserElementChild.prototype = {
       let hasVideo = !(elem.readyState >= elem.HAVE_METADATA &&
                        (elem.videoWidth == 0 || elem.videoHeight == 0));
       return {uri: elem.currentSrc || elem.src, hasVideo: hasVideo};
+    }
+    if (elem instanceof Ci.nsIDOMHTMLInputElement &&
+        elem.hasAttribute("name")) {
+      // For input elements, we look for a parent <form> and if there is
+      // one we return the form's method and action uri.
+      let parent = elem.parentNode;
+      while (parent) {
+        if (parent instanceof Ci.nsIDOMHTMLFormElement &&
+            parent.hasAttribute("action")) {
+          let actionHref = docShell.QueryInterface(Ci.nsIWebNavigation)
+                                   .currentURI
+                                   .resolve(parent.getAttribute("action"));
+          let method = parent.hasAttribute("method")
+            ? parent.getAttribute("method").toLowerCase()
+            : "get";
+          return {
+            action: actionHref,
+            method: method,
+            name: elem.getAttribute("name"),
+          }
+        }
+        parent = parent.parentNode;
+      }
     }
     return false;
   },
@@ -1144,6 +1161,7 @@ BrowserElementChild.prototype = {
 
   _recvDoCommand: function(data) {
     if (this._isCommandEnabled(data.json.command)) {
+      this._selectionStateChangedTarget = null;
       docShell.doCommand(COMMAND_MAP[data.json.command]);
     }
   },
@@ -1354,8 +1372,12 @@ BrowserElementChild.prototype = {
     },
 
     onStatusChange: function(webProgress, request, status, message) {},
+
     onProgressChange: function(webProgress, request, curSelfProgress,
-                               maxSelfProgress, curTotalProgress, maxTotalProgress) {},
+                               maxSelfProgress, curTotalProgress, maxTotalProgress) {
+      sendAsyncMsg('loadprogresschanged', { curTotalProgress: curTotalProgress,
+                                            maxTotalProgress: maxTotalProgress });
+    },
   },
 
   // Expose the message manager for WebApps and others.

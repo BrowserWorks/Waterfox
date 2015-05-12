@@ -59,8 +59,14 @@ FINAL_LIBRARY = 'xul'
 GENERATED_FILES = [
     'etld_data.inc',
 ]
+etld_data = GENERATED_FILES['etld_data.inc']
+etld_data.script = 'prepare_tlds.py'
+etld_data.inputs = ['effective_tld_names.dat']
 
 # need to include etld_data.inc
 LOCAL_INCLUDES += [
-    '../base/src',
+    '/netwerk/base',
 ]
+
+if CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk' and CONFIG['ANDROID_VERSION'] > '19':
+    CXXFLAGS += ['-I%s/bionic/libc/dns/include' % CONFIG['ANDROID_SOURCE']]

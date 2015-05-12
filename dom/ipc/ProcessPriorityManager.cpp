@@ -107,7 +107,7 @@ class ParticularProcessPriorityManager;
  * any process, are handled separately, by the ProcessPriorityManagerChild
  * class.
  */
-class ProcessPriorityManagerImpl MOZ_FINAL
+class ProcessPriorityManagerImpl final
   : public nsIObserver
   , public WakeLockObserver
 {
@@ -162,7 +162,7 @@ public:
    * Implements WakeLockObserver, used to monitor wake lock changes in the
    * main process.
    */
-  virtual void Notify(const WakeLockInformation& aInfo) MOZ_OVERRIDE;
+  virtual void Notify(const WakeLockInformation& aInfo) override;
 
 private:
   static bool sPrefListenersRegistered;
@@ -195,7 +195,7 @@ private:
  * This singleton class implements the parts of the process priority manager
  * that are available from all processes.
  */
-class ProcessPriorityManagerChild MOZ_FINAL
+class ProcessPriorityManagerChild final
   : public nsIObserver
 {
 public:
@@ -224,7 +224,7 @@ private:
  * This class manages the priority of one particular process.  It is
  * main-process only.
  */
-class ParticularProcessPriorityManager MOZ_FINAL
+class ParticularProcessPriorityManager final
   : public WakeLockObserver
   , public nsIObserver
   , public nsITimerCallback
@@ -238,7 +238,7 @@ public:
   NS_DECL_NSIOBSERVER
   NS_DECL_NSITIMERCALLBACK
 
-  virtual void Notify(const WakeLockInformation& aInfo) MOZ_OVERRIDE;
+  virtual void Notify(const WakeLockInformation& aInfo) override;
   void Init();
 
   int32_t Pid() const;
@@ -311,7 +311,7 @@ private:
   nsCOMPtr<nsITimer> mResetPriorityTimer;
 };
 
-class BackgroundProcessLRUPool MOZ_FINAL
+class BackgroundProcessLRUPool final
 {
 public:
   static BackgroundProcessLRUPool* Singleton();
@@ -471,6 +471,13 @@ already_AddRefed<ParticularProcessPriorityManager>
 ProcessPriorityManagerImpl::GetParticularProcessPriorityManager(
   ContentParent* aContentParent)
 {
+#ifdef MOZ_NUWA_PROCESS
+  // Do not attempt to change the priority of the Nuwa process
+  if (aContentParent->IsNuwaProcess()) {
+    return nullptr;
+  }
+#endif
+
   nsRefPtr<ParticularProcessPriorityManager> pppm;
   uint64_t cpId = aContentParent->ChildID();
   mParticularManagers.Get(cpId, &pppm);
@@ -494,7 +501,9 @@ ProcessPriorityManagerImpl::SetProcessPriority(ContentParent* aContentParent,
   MOZ_ASSERT(aContentParent);
   nsRefPtr<ParticularProcessPriorityManager> pppm =
     GetParticularProcessPriorityManager(aContentParent);
-  pppm->SetPriorityNow(aPriority, aBackgroundLRU);
+  if (pppm) {
+    pppm->SetPriorityNow(aPriority, aBackgroundLRU);
+  }
 }
 
 void
@@ -532,18 +541,17 @@ ProcessPriorityManagerImpl::ObserveContentParentDestroyed(nsISupports* aSubject)
 
   nsRefPtr<ParticularProcessPriorityManager> pppm;
   mParticularManagers.Get(childID, &pppm);
-  MOZ_ASSERT(pppm);
   if (pppm) {
     pppm->ShutDown();
-  }
 
-  mParticularManagers.Remove(childID);
+    mParticularManagers.Remove(childID);
 
-  if (mHighPriorityChildIDs.Contains(childID)) {
-    mHighPriorityChildIDs.RemoveEntry(childID);
+    if (mHighPriorityChildIDs.Contains(childID)) {
+      mHighPriorityChildIDs.RemoveEntry(childID);
 
-    // We just lost a high-priority process; reset everyone's CPU priorities.
-    ResetAllCPUPriorities();
+      // We just lost a high-priority process; reset everyone's CPU priorities.
+      ResetAllCPUPriorities();
+    }
   }
 }
 
@@ -806,23 +814,25 @@ ParticularProcessPriorityManager::OnRemoteBrowserFrameShown(nsISupports* aSubjec
   nsCOMPtr<nsIFrameLoader> fl = do_QueryInterface(aSubject);
   NS_ENSURE_TRUE_VOID(fl);
 
-  // Ignore notifications that aren't from a BrowserOrApp
-  bool isBrowserOrApp;
-  fl->GetOwnerIsBrowserOrAppFrame(&isBrowserOrApp);
-  if (!isBrowserOrApp) {
-    return;
-  }
-
-  nsCOMPtr<nsITabParent> tp;
-  fl->GetTabParent(getter_AddRefs(tp));
+  TabParent* tp = TabParent::GetFrom(fl);
   NS_ENSURE_TRUE_VOID(tp);
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (tp->Manager() != mContentParent) {
     return;
   }
 
-  ResetPriority();
+  // Ignore notifications that aren't from a BrowserOrApp
+  bool isBrowserOrApp;
+  fl->GetOwnerIsBrowserOrAppFrame(&isBrowserOrApp);
+  if (isBrowserOrApp) {
+    ResetPriority();
+  }
+
+  nsCOMPtr<nsIObserverService> os = services::GetObserverService();
+  if (os) {
+    os->RemoveObserver(this, "remote-browser-shown");
+  }
 }
 
 void
@@ -832,7 +842,7 @@ ParticularProcessPriorityManager::OnTabParentDestroyed(nsISupports* aSubject)
   NS_ENSURE_TRUE_VOID(tp);
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (TabParent::GetFrom(tp)->Manager() != mContentParent) {
     return;
   }
 
@@ -845,14 +855,13 @@ ParticularProcessPriorityManager::OnFrameloaderVisibleChanged(nsISupports* aSubj
   nsCOMPtr<nsIFrameLoader> fl = do_QueryInterface(aSubject);
   NS_ENSURE_TRUE_VOID(fl);
 
-  nsCOMPtr<nsITabParent> tp;
-  fl->GetTabParent(getter_AddRefs(tp));
+  TabParent* tp = TabParent::GetFrom(fl);
   if (!tp) {
     return;
   }
 
   MOZ_ASSERT(XRE_GetProcessType() == GeckoProcessType_Default);
-  if (static_cast<TabParent*>(tp.get())->Manager() != mContentParent) {
+  if (tp->Manager() != mContentParent) {
     return;
   }
 
@@ -932,7 +941,7 @@ ParticularProcessPriorityManager::HasAppType(const char* aAppType)
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
     nsAutoString appType;
-    static_cast<TabParent*>(browsers[i])->GetAppType(appType);
+    TabParent::GetFrom(browsers[i])->GetAppType(appType);
     if (appType.EqualsASCII(aAppType)) {
       return true;
     }
@@ -947,7 +956,7 @@ ParticularProcessPriorityManager::IsExpectingSystemMessage()
   const InfallibleTArray<PBrowserParent*>& browsers =
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
-    TabParent* tp = static_cast<TabParent*>(browsers[i]);
+    TabParent* tp = TabParent::GetFrom(browsers[i]);
     nsCOMPtr<nsIMozBrowserFrame> bf = do_QueryInterface(tp->GetOwnerElement());
     if (!bf) {
       continue;
@@ -979,7 +988,7 @@ ParticularProcessPriorityManager::ComputePriority()
   const InfallibleTArray<PBrowserParent*>& browsers =
     mContentParent->ManagedPBrowserParent();
   for (uint32_t i = 0; i < browsers.Length(); i++) {
-    if (static_cast<TabParent*>(browsers[i])->IsVisible()) {
+    if (TabParent::GetFrom(browsers[i])->IsVisible()) {
       isVisible = true;
       break;
     }
@@ -1041,13 +1050,6 @@ ParticularProcessPriorityManager::SetPriorityNow(ProcessPriority aPriority,
                                                  ProcessCPUPriority aCPUPriority,
                                                  uint32_t aBackgroundLRU)
 {
-#ifdef MOZ_NUWA_PROCESS
-  // Do not attempt to change the priority of the Nuwa process
-  if (mContentParent->IsNuwaProcess()) {
-    return;
-  }
-#endif
-
   if (aPriority == PROCESS_PRIORITY_UNKNOWN) {
     MOZ_ASSERT(false);
     return;

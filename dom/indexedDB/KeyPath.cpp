@@ -118,7 +118,7 @@ GetJSValFromKeyPathString(JSContext* aCx,
         IDB_ENSURE_TRUE(ok, NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR);
 
         // Treat explicitly undefined as an error.
-        if (intermediate == JSVAL_VOID) {
+        if (intermediate.isUndefined()) {
           return NS_ERROR_DOM_INDEXEDDB_DATA_ERR;
         }
         if (tokenizer.hasMoreTokens()) {
@@ -149,13 +149,12 @@ GetJSValFromKeyPathString(JSContext* aCx,
       // We have started inserting new objects or are about to just insert
       // the first one.
 
-      *aKeyJSVal = JSVAL_VOID;
+      aKeyJSVal->setUndefined();
 
       if (tokenizer.hasMoreTokens()) {
         // If we're not at the end, we need to add a dummy object to the
         // chain.
-        JS::Rooted<JSObject*> dummy(aCx, JS_NewObject(aCx, nullptr, JS::NullPtr(),
-                                                      JS::NullPtr()));
+        JS::Rooted<JSObject*> dummy(aCx, JS_NewPlainObject(aCx));
         if (!dummy) {
           IDB_REPORT_INTERNAL_ERR();
           rv = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;
@@ -173,8 +172,7 @@ GetJSValFromKeyPathString(JSContext* aCx,
       }
       else {
         JS::Rooted<JSObject*> dummy(aCx,
-          JS_NewObject(aCx, IDBObjectStore::DummyPropClass(), JS::NullPtr(),
-                       JS::NullPtr()));
+          JS_NewObject(aCx, IDBObjectStore::DummyPropClass()));
         if (!dummy) {
           IDB_REPORT_INTERNAL_ERR();
           rv = NS_ERROR_DOM_INDEXEDDB_UNKNOWN_ERR;

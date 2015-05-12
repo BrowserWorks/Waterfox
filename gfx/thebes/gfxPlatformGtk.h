@@ -30,22 +30,23 @@ public:
 
     virtual already_AddRefed<gfxASurface>
       CreateOffscreenSurface(const IntSize& size,
-                             gfxContentType contentType) MOZ_OVERRIDE;
+                             gfxContentType contentType) override;
 
-    mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
-      GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont);
+    virtual mozilla::TemporaryRef<mozilla::gfx::ScaledFont>
+      GetScaledFontForFont(mozilla::gfx::DrawTarget* aTarget, gfxFont *aFont) override;
 
-    nsresult GetFontList(nsIAtom *aLangGroup,
-                         const nsACString& aGenericFamily,
-                         nsTArray<nsString>& aListOfFonts);
+    virtual nsresult GetFontList(nsIAtom *aLangGroup,
+                                 const nsACString& aGenericFamily,
+                                 nsTArray<nsString>& aListOfFonts) override;
 
-    nsresult UpdateFontList();
+    virtual nsresult UpdateFontList() override;
 
-    nsresult GetStandardFamilyName(const nsAString& aFontName, nsAString& aFamilyName);
+    virtual nsresult GetStandardFamilyName(const nsAString& aFontName,
+                                           nsAString& aFamilyName) override;
 
-    gfxFontGroup *CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
-                                  const gfxFontStyle *aStyle,
-                                  gfxUserFontSet *aUserFontSet);
+    virtual gfxFontGroup* CreateFontGroup(const mozilla::FontFamilyList& aFontFamilyList,
+                                          const gfxFontStyle *aStyle,
+                                          gfxUserFontSet *aUserFontSet) override;
 
     /**
      * Look up a local platform font using the full font face name (needed to
@@ -54,7 +55,7 @@ public:
     virtual gfxFontEntry* LookupLocalFont(const nsAString& aFontName,
                                           uint16_t aWeight,
                                           int16_t aStretch,
-                                          bool aItalic);
+                                          bool aItalic) override;
 
     /**
      * Activate a platform font (needed to support @font-face src url() )
@@ -65,14 +66,14 @@ public:
                                            int16_t aStretch,
                                            bool aItalic,
                                            const uint8_t* aFontData,
-                                           uint32_t aLength);
+                                           uint32_t aLength) override;
 
     /**
      * Check whether format is supported on a platform or not (if unclear,
      * returns true).
      */
     virtual bool IsFontFormatSupported(nsIURI *aFontURI,
-                                         uint32_t aFormatFlags);
+                                         uint32_t aFormatFlags) override;
 
 #if (MOZ_WIDGET_GTK == 2)
     static void SetGdkDrawable(cairo_surface_t *target,
@@ -81,6 +82,7 @@ public:
 #endif
 
     static int32_t GetDPI();
+    static double  GetDPIScale();
 
     bool UseXRender() {
 #if defined(MOZ_X11)
@@ -104,15 +106,16 @@ public:
 #endif
     }
 
-    virtual gfxImageFormat GetOffscreenFormat();
+    virtual gfxImageFormat GetOffscreenFormat() override;
 
-    virtual int GetScreenDepth() const;
+    virtual int GetScreenDepth() const override;
 
 protected:
     static gfxFontconfigUtils *sFontconfigUtils;
 
 private:
-    virtual void GetPlatformCMSOutputProfile(void *&mem, size_t &size);
+    virtual void GetPlatformCMSOutputProfile(void *&mem,
+                                             size_t &size) override;
 
 #ifdef MOZ_X11
     static bool sUseXRender;

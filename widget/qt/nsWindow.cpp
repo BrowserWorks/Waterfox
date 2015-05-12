@@ -89,6 +89,8 @@ static bool sAltGrModifier = false;
 static void find_first_visible_parent(QWindow* aItem, QWindow*& aVisibleItem);
 static bool is_mouse_in_window (MozQWidget* aWindow, double aMouseX, double aMouseY);
 
+NS_IMPL_ISUPPORTS_INHERITED0(nsWindow, nsBaseWidget)
+
 nsWindow::nsWindow()
 {
     LOG(("%s [%p]\n", __PRETTY_FUNCTION__, (void *)this));
@@ -134,7 +136,6 @@ nsresult
 nsWindow::Create(nsIWidget        *aParent,
                  nsNativeWidget    aNativeParent,
                  const nsIntRect  &aRect,
-                 nsDeviceContext *aContext,
                  nsWidgetInitData *aInitData)
 {
     // only set the base parent if we're not going to be a dialog or a
@@ -142,7 +143,7 @@ nsWindow::Create(nsIWidget        *aParent,
     nsIWidget *baseParent = aParent;
 
     // initialize all the common bits of this class
-    BaseCreate(baseParent, aRect, aContext, aInitData);
+    BaseCreate(baseParent, aRect, aInitData);
 
     mVisible = true;
 
@@ -626,7 +627,7 @@ nsWindow::Invalidate(const nsIntRect &aRect)
     return NS_OK;
 }
 
-nsIntPoint
+LayoutDeviceIntPoint
 nsWindow::WidgetToScreenOffset()
 {
     NS_ENSURE_TRUE(mWidget, nsIntPoint(0,0));
@@ -634,7 +635,7 @@ nsWindow::WidgetToScreenOffset()
     QPoint origin(0, 0);
     origin = mWidget->mapToGlobal(origin);
 
-    return nsIntPoint(origin.x(), origin.y());
+    return LayoutDeviceIntPoint(origin.x(), origin.y());
 }
 
 void*
@@ -1377,10 +1378,6 @@ nsWindow::DispatchResizeEvent(nsIntRect &aRect, nsEventStatus &aStatus)
 }
 
 ///////////////////////////////////// OLD GECKO ECENTS need to Sort ///////////////////
-
-NS_IMPL_ISUPPORTS_INHERITED(nsWindow, nsBaseWidget, nsISupportsWeakReference)
-
-
 
 void
 nsWindow::ClearCachedResources()

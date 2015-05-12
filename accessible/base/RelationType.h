@@ -7,12 +7,10 @@
 #ifndef mozilla_a11y_relationtype_h_
 #define mozilla_a11y_relationtype_h_
 
-#include "mozilla/TypedEnum.h"
-
 namespace mozilla {
 namespace a11y {
 
-MOZ_BEGIN_ENUM_CLASS(RelationType)
+enum class RelationType {
 
   /**
    * This object is labelled by a target object.
@@ -131,7 +129,7 @@ MOZ_BEGIN_ENUM_CLASS(RelationType)
 
   LAST = CONTAINING_APPLICATION
 
-MOZ_END_ENUM_CLASS(RelationType)
+};
 
 } // namespace a11y
 } // namespace mozilla

@@ -23,6 +23,8 @@
 
 #include "mozilla/plugins/PluginInstanceParent.h"
 using mozilla::plugins::PluginInstanceParent;
+#include "mozilla/plugins/PluginWidgetParent.h"
+using mozilla::plugins::PluginWidgetParent;
 
 #include "nsWindowGfx.h"
 #include "nsAppRunner.h"
@@ -44,12 +46,6 @@ using mozilla::plugins::PluginInstanceParent;
 #include "nsDebug.h"
 #include "nsIXULRuntime.h"
 
-#ifdef MOZ_ENABLE_D3D9_LAYER
-#include "LayerManagerD3D9.h"
-#endif
-#ifdef MOZ_ENABLE_D3D10_LAYER
-#include "LayerManagerD3D10.h"
-#endif
 #include "mozilla/layers/CompositorParent.h"
 #include "ClientLayerManager.h"
 
@@ -61,10 +57,18 @@ extern "C" {
 #include "pixman.h"
 }
 
+namespace mozilla {
+namespace plugins {
+// For plugins with e10s
+extern const wchar_t* kPluginWidgetParentProperty;
+}
+}
+
 using namespace mozilla;
 using namespace mozilla::gfx;
 using namespace mozilla::layers;
 using namespace mozilla::widget;
+using namespace mozilla::plugins;
 
 /**************************************************************
  **************************************************************
@@ -199,12 +203,6 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
   // dummy paint so that Windows stops dispatching WM_PAINT in an inifinite
   // loop. See bug 543788.
   if (IsPlugin()) {
-    // XXX Ignore for now when we're running with full blown e10s
-    if (mozilla::BrowserTabsRemoteAutostart()) {
-      printf_stderr("nsWindow::OnPaint() bailing on paint!\n");
-      ValidateRect(mWnd, nullptr);
-      return true;
-    }
     RECT updateRect;
     if (!GetUpdateRect(mWnd, &updateRect, FALSE) ||
         (updateRect.left == updateRect.right &&
@@ -212,6 +210,13 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
       PAINTSTRUCT ps;
       BeginPaint(mWnd, &ps);
       EndPaint(mWnd, &ps);
+      return true;
+    }
+
+    if (mWindowType == eWindowType_plugin_ipc_chrome) {
+      // Fire off an async request to the plugin to paint its window
+      PluginWidgetParent::SendAsyncUpdate(this);
+      ValidateRect(mWnd, nullptr);
       return true;
     }
 
@@ -521,37 +526,6 @@ bool nsWindow::OnPaint(HDC aDC, uint32_t aNestingLevel)
           }
         }
         break;
-#ifdef MOZ_ENABLE_D3D9_LAYER
-      case LayersBackend::LAYERS_D3D9:
-        {
-          nsRefPtr<LayerManagerD3D9> layerManagerD3D9 =
-            static_cast<mozilla::layers::LayerManagerD3D9*>(GetLayerManager());
-          layerManagerD3D9->SetClippingRegion(region);
-          result = listener->PaintWindow(this, region);
-          if (layerManagerD3D9->DeviceWasRemoved()) {
-            mLayerManager->Destroy();
-            mLayerManager = nullptr;
-            // When our device was removed, we should have gfxWindowsPlatform
-            // check if its render mode is up to date!
-            gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
-            Invalidate();
-          }
-        }
-        break;
-#endif
-#ifdef MOZ_ENABLE_D3D10_LAYER
-      case LayersBackend::LAYERS_D3D10:
-        {
-          gfxWindowsPlatform::GetPlatform()->UpdateRenderMode();
-          LayerManagerD3D10 *layerManagerD3D10 = static_cast<mozilla::layers::LayerManagerD3D10*>(GetLayerManager());
-          if (layerManagerD3D10->device() != gfxWindowsPlatform::GetPlatform()->GetD3D10Device()) {
-            Invalidate();
-          } else {
-            result = listener->PaintWindow(this, region);
-          }
-        }
-        break;
-#endif
       case LayersBackend::LAYERS_CLIENT:
         result = listener->PaintWindow(this, region);
         break;

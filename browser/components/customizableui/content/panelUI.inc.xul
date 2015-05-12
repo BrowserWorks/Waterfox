@@ -42,11 +42,11 @@
           <toolbarseparator/>
           <toolbarbutton id="PanelUI-quit"
 #ifdef XP_WIN
-                         label="&quitApplicationCmdWin.label;"
-                         tooltiptext="&quitApplicationCmdWin.tooltip;"
+                         label="&quitApplicationCmdWin2.label;"
+                         tooltiptext="&quitApplicationCmdWin2.tooltip;"
 #else
 #ifdef XP_MACOSX
-                         label="&quitApplicationCmdMac.label;"
+                         label="&quitApplicationCmdMac2.label;"
 #else
                          label="&quitApplicationCmd.label;"
 #endif
@@ -64,7 +64,7 @@
                        type="checkbox"
                        class="subviewbutton"
                        key="key_gotoHistory"
-                       oncommand="toggleSidebar('viewHistorySidebar'); PanelUI.hide();">
+                       oncommand="SidebarUI.toggle('viewHistorySidebar'); PanelUI.hide();">
           <observes element="viewHistorySidebar" attribute="checked"/>
         </toolbarbutton>
         <toolbarbutton id="appMenuClearRecentHistory"
@@ -108,7 +108,7 @@
                        label="&viewBookmarksSidebar2.label;"
                        class="subviewbutton"
                        key="viewBookmarksSidebarKb"
-                       oncommand="toggleSidebar('viewBookmarksSidebar'); PanelUI.hide();">
+                       oncommand="SidebarUI.toggle('viewBookmarksSidebar'); PanelUI.hide();">
           <observes element="viewBookmarksSidebar" attribute="checked"/>
         </toolbarbutton>
         <toolbarbutton id="panelMenu_viewBookmarksToolbar"
@@ -126,6 +126,17 @@
                        label="&unsortedBookmarksCmd.label;"
                        class="subviewbutton cui-withicon"
                        oncommand="PlacesCommandHook.showPlacesOrganizer('UnfiledBookmarks'); PanelUI.hide();"/>
+        <toolbarseparator>
+          <observes element="readingListSidebar" attribute="hidden"/>
+        </toolbarseparator>
+        <toolbarbutton id="panelMenu_viewReadingListSidebar"
+                       label="&readingList.showSidebar.label;"
+                       class="subviewbutton"
+                       key="key_readingListSidebar"
+                       oncommand="SidebarUI.toggle('readingListSidebar'); PanelUI.hide();">
+          <observes element="readingListSidebar" attribute="checked"/>
+          <observes element="readingListSidebar" attribute="hidden"/>
+        </toolbarbutton>
         <toolbarseparator class="small-separator"/>
         <toolbaritem id="panelMenu_bookmarksMenu"
                      orient="vertical"

@@ -101,7 +101,7 @@ class VCSFileInfo:
     def GetCleanRoot(self):
         """ This method should return the repository root for the file or 'None'
             on failure. """
-        raise NotImplementedErrors
+        raise NotImplementedError
 
     def GetRevision(self):
         """ This method should return the revision number for the file or 'None'
@@ -669,7 +669,7 @@ class Dumper:
                         self.CopyDebug(file, debug_file, guid)
             except StopIteration:
                 pass
-            except e:
+            except Exception as e:
                 self.output(sys.stderr, "Unexpected error: %s" % (str(e),))
                 raise
             if result['status']:
@@ -781,7 +781,7 @@ class Dumper_Linux(Dumper):
                                                       rel_path))
             shutil.move(file_dbg, full_path)
             # gzip the shipped debug files
-            os.system("gzip %s" % full_path)
+            os.system("gzip -f %s" % full_path)
             self.output(sys.stdout, rel_path + ".gz")
         else:
             if os.path.isfile(file_dbg):

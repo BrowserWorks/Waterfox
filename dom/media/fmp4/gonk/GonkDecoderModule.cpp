@@ -26,12 +26,6 @@ GonkDecoderModule::Init()
   MOZ_ASSERT(NS_IsMainThread(), "Must be on main thread.");
 }
 
-nsresult
-GonkDecoderModule::Shutdown()
-{
-  return NS_OK;
-}
-
 already_AddRefed<MediaDataDecoder>
 GonkDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
                                      mozilla::layers::LayersBackend aLayersBackend,
@@ -40,7 +34,8 @@ GonkDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aCo
                                      MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder =
-  new GonkMediaDataDecoder(new GonkVideoDecoderManager(aImageContainer,aConfig),
+  new GonkMediaDataDecoder(new GonkVideoDecoderManager(aVideoTaskQueue,
+                                                       aImageContainer, aConfig),
                            aVideoTaskQueue, aCallback);
   return decoder.forget();
 }
@@ -51,8 +46,8 @@ GonkDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aCo
                                       MediaDataDecoderCallback* aCallback)
 {
   nsRefPtr<MediaDataDecoder> decoder =
-  new GonkMediaDataDecoder(new GonkAudioDecoderManager(aConfig), aAudioTaskQueue,
-                           aCallback);
+  new GonkMediaDataDecoder(new GonkAudioDecoderManager(aAudioTaskQueue, aConfig),
+                           aAudioTaskQueue, aCallback);
   return decoder.forget();
 }
 

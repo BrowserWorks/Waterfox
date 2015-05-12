@@ -40,6 +40,9 @@ void LossyCopyUTF16toASCII(const char16_t* aSource, nsACString& aDest);
 void CopyASCIItoUTF16(const char* aSource, nsAString& aDest);
 
 void CopyUTF16toUTF8(const nsAString& aSource, nsACString& aDest);
+NS_WARN_UNUSED_RESULT bool CopyUTF16toUTF8(const nsAString& aSource,
+                                           nsACString& aDest,
+                                           const mozilla::fallible_t&);
 void CopyUTF8toUTF16(const nsACString& aSource, nsAString& aDest);
 
 void CopyUTF16toUTF8(const char16_t* aSource, nsACString& aDest);
@@ -52,6 +55,9 @@ NS_WARN_UNUSED_RESULT bool AppendASCIItoUTF16(const nsACString& aSource,
                                               const mozilla::fallible_t&);
 
 void LossyAppendUTF16toASCII(const char16_t* aSource, nsACString& aDest);
+NS_WARN_UNUSED_RESULT bool AppendASCIItoUTF16(const char* aSource,
+                                              nsAString& aDest,
+                                              const mozilla::fallible_t&);
 void AppendASCIItoUTF16(const char* aSource, nsAString& aDest);
 
 void AppendUTF16toUTF8(const nsAString& aSource, nsACString& aDest);

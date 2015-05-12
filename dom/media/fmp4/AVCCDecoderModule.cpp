@@ -9,6 +9,7 @@
 #include "MediaTaskQueue.h"
 #include "mp4_demuxer/DecoderData.h"
 #include "mp4_demuxer/AnnexB.h"
+#include "mp4_demuxer/H264.h"
 
 namespace mozilla
 {
@@ -25,16 +26,15 @@ public:
 
   virtual ~AVCCMediaDataDecoder();
 
-  virtual nsresult Init() MOZ_OVERRIDE;
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Flush() MOZ_OVERRIDE;
-  virtual nsresult Drain() MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
-  virtual bool IsWaitingMediaResources() MOZ_OVERRIDE;
-  virtual bool IsDormantNeeded() MOZ_OVERRIDE;
-  virtual void AllocateMediaResources() MOZ_OVERRIDE;
-  virtual void ReleaseMediaResources() MOZ_OVERRIDE;
-  virtual void ReleaseDecoder() MOZ_OVERRIDE;
+  virtual nsresult Init() override;
+  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual nsresult Flush() override;
+  virtual nsresult Drain() override;
+  virtual nsresult Shutdown() override;
+  virtual bool IsWaitingMediaResources() override;
+  virtual bool IsDormantNeeded() override;
+  virtual void AllocateMediaResources() override;
+  virtual void ReleaseMediaResources() override;
 
 private:
   // Will create the required MediaDataDecoder if we have a AVC SPS.
@@ -42,6 +42,8 @@ private:
   // will set mError accordingly.
   nsresult CreateDecoder();
   nsresult CreateDecoderAndInit(mp4_demuxer::MP4Sample* aSample);
+  nsresult CheckForSPSChange(mp4_demuxer::MP4Sample* aSample);
+  void UpdateConfigFromExtraData(mp4_demuxer::ByteBuffer* aExtraData);
 
   nsRefPtr<PlatformDecoderModule> mPDM;
   mp4_demuxer::VideoDecoderConfig mCurrentConfig;
@@ -90,18 +92,21 @@ AVCCMediaDataDecoder::Input(mp4_demuxer::MP4Sample* aSample)
   if (!mp4_demuxer::AnnexB::ConvertSampleToAVCC(aSample)) {
     return NS_ERROR_FAILURE;
   }
+  nsresult rv;
   if (!mDecoder) {
     // It is not possible to create an AVCC H264 decoder without SPS.
     // As such, creation will fail if the extra_data just extracted doesn't
     // contain a SPS.
-    nsresult rv = CreateDecoderAndInit(aSample);
+    rv = CreateDecoderAndInit(aSample);
     if (rv == NS_ERROR_NOT_INITIALIZED) {
       // We are missing the required SPS to create the decoder.
       // Ignore for the time being, the MP4Sample will be dropped.
       return NS_OK;
     }
-    NS_ENSURE_SUCCESS(rv, rv);
+  } else {
+    rv = CheckForSPSChange(aSample);
   }
+  NS_ENSURE_SUCCESS(rv, rv);
 
   aSample->extra_data = mCurrentConfig.extra_data;
 
@@ -147,33 +152,21 @@ AVCCMediaDataDecoder::IsWaitingMediaResources()
 bool
 AVCCMediaDataDecoder::IsDormantNeeded()
 {
-  if (mDecoder) {
-    return mDecoder->IsDormantNeeded();
-  }
-  return MediaDataDecoder::IsDormantNeeded();
+  return true;
 }
 
 void
 AVCCMediaDataDecoder::AllocateMediaResources()
 {
-  if (mDecoder) {
-    mDecoder->AllocateMediaResources();
-  }
+  // Nothing to do, decoder will be allocated on the fly when required.
 }
 
 void
 AVCCMediaDataDecoder::ReleaseMediaResources()
 {
   if (mDecoder) {
-    mDecoder->ReleaseMediaResources();
-  }
-}
-
-void
-AVCCMediaDataDecoder::ReleaseDecoder()
-{
-  if (mDecoder) {
-    mDecoder->ReleaseDecoder();
+    mDecoder->Shutdown();
+    mDecoder = nullptr;
   }
 }
 
@@ -184,6 +177,8 @@ AVCCMediaDataDecoder::CreateDecoder()
     // nothing found yet, will try again later
     return NS_ERROR_NOT_INITIALIZED;
   }
+  UpdateConfigFromExtraData(mCurrentConfig.extra_data);
+
   mDecoder = mPDM->CreateVideoDecoder(mCurrentConfig,
                                       mLayersBackend,
                                       mImageContainer,
@@ -204,11 +199,43 @@ AVCCMediaDataDecoder::CreateDecoderAndInit(mp4_demuxer::MP4Sample* aSample)
   if (!mp4_demuxer::AnnexB::HasSPS(extra_data)) {
     return NS_ERROR_NOT_INITIALIZED;
   }
-  mCurrentConfig.extra_data = extra_data;
+  UpdateConfigFromExtraData(extra_data);
 
   nsresult rv = CreateDecoder();
   NS_ENSURE_SUCCESS(rv, rv);
   return Init();
+}
+
+nsresult
+AVCCMediaDataDecoder::CheckForSPSChange(mp4_demuxer::MP4Sample* aSample)
+{
+  nsRefPtr<mp4_demuxer::ByteBuffer> extra_data =
+    mp4_demuxer::AnnexB::ExtractExtraData(aSample);
+  if (!mp4_demuxer::AnnexB::HasSPS(extra_data) ||
+      mp4_demuxer::AnnexB::CompareExtraData(extra_data,
+                                            mCurrentConfig.extra_data)) {
+    return NS_OK;
+  }
+  // The SPS has changed, signal to flush the current decoder and create a
+  // new one.
+  mDecoder->Flush();
+  ReleaseMediaResources();
+  return CreateDecoderAndInit(aSample);
+}
+
+void
+AVCCMediaDataDecoder::UpdateConfigFromExtraData(mp4_demuxer::ByteBuffer* aExtraData)
+{
+  mp4_demuxer::SPSData spsdata;
+  if (mp4_demuxer::H264::DecodeSPSFromExtraData(aExtraData, spsdata) &&
+      spsdata.pic_width > 0 && spsdata.pic_height > 0) {
+    mp4_demuxer::H264::EnsureSPSIsSane(spsdata);
+    mCurrentConfig.image_width = spsdata.pic_width;
+    mCurrentConfig.image_height = spsdata.pic_height;
+    mCurrentConfig.display_width = spsdata.display_width;
+    mCurrentConfig.display_height = spsdata.display_height;
+  }
+  mCurrentConfig.extra_data = aExtraData;
 }
 
 // AVCCDecoderModule
@@ -229,12 +256,6 @@ AVCCDecoderModule::Startup()
   return mPDM->Startup();
 }
 
-nsresult
-AVCCDecoderModule::Shutdown()
-{
-  return mPDM->Shutdown();
-}
-
 already_AddRefed<MediaDataDecoder>
 AVCCDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
                                       layers::LayersBackend aLayersBackend,
@@ -244,7 +265,8 @@ AVCCDecoderModule::CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aCo
 {
   nsRefPtr<MediaDataDecoder> decoder;
 
-  if (strcmp(aConfig.mime_type, "video/avc") ||
+  if ((!aConfig.mime_type.EqualsLiteral("video/avc") &&
+       !aConfig.mime_type.EqualsLiteral("video/mp4")) ||
       !mPDM->DecoderNeedsAVCC(aConfig)) {
     // There is no need for an AVCC wrapper for non-AVC content.
     decoder = mPDM->CreateVideoDecoder(aConfig,
@@ -274,13 +296,13 @@ AVCCDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aCo
 }
 
 bool
-AVCCDecoderModule::SupportsAudioMimeType(const char* aMimeType)
+AVCCDecoderModule::SupportsAudioMimeType(const nsACString& aMimeType)
 {
   return mPDM->SupportsAudioMimeType(aMimeType);
 }
 
 bool
-AVCCDecoderModule::SupportsVideoMimeType(const char* aMimeType)
+AVCCDecoderModule::SupportsVideoMimeType(const nsACString& aMimeType)
 {
   return mPDM->SupportsVideoMimeType(aMimeType);
 }

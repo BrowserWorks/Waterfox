@@ -11,7 +11,7 @@ let gBookmarksObserver = {
     let args = this.expected.shift().args;
     do_check_eq(aArguments.length, args.length);
     for (let i = 0; i < aArguments.length; i++) {
-      do_log_info(aMethodName + "(args[" + i + "]: " + args[i].name + ")");
+      do_print(aMethodName + "(args[" + i + "]: " + args[i].name + ")");
       do_check_true(args[i].check(aArguments[i]));
     }
 
@@ -273,7 +273,7 @@ add_test(function onItemMoved_bookmark() {
         { name: "parentGuid", check: function (v) typeof(v) == "string" && /^[a-zA-Z0-9\-_]{12}$/.test(v) },
       ] },
   ];
-  promiseAddVisits({ uri: uri, transition: TRANSITION_TYPED });
+  PlacesTestUtils.addVisits({ uri: uri, transition: TRANSITION_TYPED });
 });
 
 add_test(function onItemRemoved_bookmark() {

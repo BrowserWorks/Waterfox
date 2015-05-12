@@ -47,7 +47,7 @@ class CacheFileOutputStream;
 class CacheOutputCloseListener;
 class CacheEntryHandle;
 
-class CacheEntry MOZ_FINAL : public nsICacheEntry
+class CacheEntry final : public nsICacheEntry
                            , public nsIRunnable
                            , public CacheFileListener
 {
@@ -113,7 +113,7 @@ public:
 
   // Accessed only on the service management thread
   double mFrecency;
-  uint32_t mSortingExpirationTime;
+  ::mozilla::Atomic<uint32_t, ::mozilla::Relaxed> mSortingExpirationTime;
 
   // Memory reporting
   size_t SizeOfExcludingThis(mozilla::MallocSizeOf mallocSizeOf) const;
@@ -123,8 +123,8 @@ private:
   virtual ~CacheEntry();
 
   // CacheFileListener
-  NS_IMETHOD OnFileReady(nsresult aResult, bool aIsNew) MOZ_OVERRIDE;
-  NS_IMETHOD OnFileDoomed(nsresult aResult) MOZ_OVERRIDE;
+  NS_IMETHOD OnFileReady(nsresult aResult, bool aIsNew) override;
+  NS_IMETHOD OnFileDoomed(nsresult aResult) override;
 
   // Keep the service alive during life-time of an entry
   nsRefPtr<CacheStorageService> mService;
@@ -265,7 +265,11 @@ private:
   nsCOMPtr<nsICacheEntryDoomCallback> mDoomCallback;
 
   nsRefPtr<CacheFile> mFile;
-  nsresult mFileStatus;
+
+  // Using ReleaseAcquire since we only control access to mFile with this.
+  // When mFileStatus is read and found success it is ensured there is mFile and
+  // that it is after a successful call to Init().
+  ::mozilla::Atomic<nsresult, ::mozilla::ReleaseAcquire> mFileStatus;
   nsCOMPtr<nsIURI> mURI;
   nsCString mEnhanceID;
   nsCString mStorageID;
@@ -366,7 +370,7 @@ private:
 };
 
 
-class CacheOutputCloseListener MOZ_FINAL : public nsRunnable
+class CacheOutputCloseListener final : public nsRunnable
 {
 public:
   void OnOutputClosed();

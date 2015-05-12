@@ -146,6 +146,8 @@
 #include "nsHtml5TreeOpExecutor.h"
 #include "mozilla/dom/HTMLLinkElement.h"
 #include "mozilla/dom/HTMLMediaElement.h"
+#include "mozilla/dom/HTMLImageElement.h"
+#include "mozilla/dom/MediaSource.h"
 
 #include "mozAutoDocUpdate.h"
 #include "nsGlobalWindow.h"
@@ -457,7 +459,7 @@ CustomElementCallback::Call()
 
       // If ELEMENT is in a document and this document has a browsing context,
       // enqueue attached callback for ELEMENT.
-      nsIDocument* document = mThisObject->GetUncomposedDoc();
+      nsIDocument* document = mThisObject->GetComposedDoc();
       if (document && document->GetDocShell()) {
         document->EnqueueLifecycleCallback(nsIDocument::eAttached, mThisObject);
       }
@@ -1055,8 +1057,8 @@ void
 TransferZoomLevels(nsIDocument* aFromDoc,
                    nsIDocument* aToDoc)
 {
-  NS_ABORT_IF_FALSE(aFromDoc && aToDoc,
-                    "transferring zoom levels from/to null doc");
+  MOZ_ASSERT(aFromDoc && aToDoc,
+             "transferring zoom levels from/to null doc");
 
   nsIPresShell* fromShell = aFromDoc->GetShell();
   if (!fromShell)
@@ -1082,8 +1084,8 @@ TransferZoomLevels(nsIDocument* aFromDoc,
 void
 TransferShowingState(nsIDocument* aFromDoc, nsIDocument* aToDoc)
 {
-  NS_ABORT_IF_FALSE(aFromDoc && aToDoc,
-                    "transferring showing state from/to null doc");
+  MOZ_ASSERT(aFromDoc && aToDoc,
+             "transferring showing state from/to null doc");
 
   if (aFromDoc->IsShowing()) {
     aToDoc->OnPageShow(true, nullptr);
@@ -1337,8 +1339,7 @@ nsExternalResourceMap::PendingLoad::StartLoad(nsIURI* aURI,
 
   nsIDocument* doc = aRequestingNode->OwnerDoc();
 
-  nsCOMPtr<nsIInterfaceRequestor> req = nsContentUtils::GetSameOriginChecker();
-  NS_ENSURE_TRUE(req, NS_ERROR_OUT_OF_MEMORY);
+  nsCOMPtr<nsIInterfaceRequestor> req = nsContentUtils::SameOriginChecker();
 
   nsCOMPtr<nsILoadGroup> loadGroup = doc->GetDocumentLoadGroup();
   nsCOMPtr<nsIChannel> channel;
@@ -1428,7 +1429,7 @@ nsExternalResourceMap::ExternalResource::~ExternalResource()
 // If we ever have an nsIDocumentObserver notification for stylesheet title
 // changes we should update the list from that instead of overriding
 // EnsureFresh.
-class nsDOMStyleSheetSetList MOZ_FINAL : public DOMStringList
+class nsDOMStyleSheetSetList final : public DOMStringList
 {
 public:
   explicit nsDOMStyleSheetSetList(nsIDocument* aDocument);
@@ -1438,7 +1439,7 @@ public:
     mDocument = nullptr;
   }
 
-  virtual void EnsureFresh() MOZ_OVERRIDE;
+  virtual void EnsureFresh() override;
 
 protected:
   nsIDocument* mDocument;  // Our document; weak ref.  It'll let us know if it
@@ -1488,7 +1489,7 @@ void nsIDocument::SelectorCache::CacheList(const nsAString& aSelector,
   AddObject(key);
 }
 
-class nsIDocument::SelectorCacheKeyDeleter MOZ_FINAL : public nsRunnable
+class nsIDocument::SelectorCacheKeyDeleter final : public nsRunnable
 {
 public:
   explicit SelectorCacheKeyDeleter(SelectorCacheKey* aToDelete)
@@ -1606,6 +1607,9 @@ nsDocument::nsDocument(const char* aContentType)
   // Start out mLastStyleSheetSet as null, per spec
   SetDOMStringToNull(mLastStyleSheetSet);
 
+  // void state used to differentiate an empty source from an unselected source
+  mPreloadPictureFoundSource.SetIsVoid(true);
+
   if (!sProcessingStack) {
     sProcessingStack.emplace();
     // Add the base queue sentinel to the processing stack.
@@ -1624,8 +1628,8 @@ ClearAllBoxObjects(nsIContent* aKey, nsPIBoxObject* aBoxObject, void* aUserArg)
 
 nsIDocument::~nsIDocument()
 {
-  NS_ABORT_IF_FALSE(PR_CLIST_IS_EMPTY(&mDOMMediaQueryLists),
-                    "must not have media query lists left");
+  MOZ_ASSERT(PR_CLIST_IS_EMPTY(&mDOMMediaQueryLists),
+             "must not have media query lists left");
 
   if (mNodeInfoManager) {
     mNodeInfoManager->DropDocumentReference();
@@ -2032,7 +2036,7 @@ NS_IMPL_CYCLE_COLLECTION_TRAVERSE_BEGIN_INTERNAL(nsDocument)
     tmp->mAnimationController->Traverse(&cb);
   }
 
-  if (tmp->mSubDocuments && tmp->mSubDocuments->ops) {
+  if (tmp->mSubDocuments && tmp->mSubDocuments->IsInitialized()) {
     PL_DHashTableEnumerate(tmp->mSubDocuments, SubDocTraverser, &cb);
   }
 
@@ -2210,8 +2214,8 @@ nsDocument::Init()
   // mNodeInfo keeps NodeInfoManager alive!
   mNodeInfo = mNodeInfoManager->GetDocumentNodeInfo();
   NS_ENSURE_TRUE(mNodeInfo, NS_ERROR_OUT_OF_MEMORY);
-  NS_ABORT_IF_FALSE(mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_NODE,
-                    "Bad NodeType in aNodeInfo");
+  MOZ_ASSERT(mNodeInfo->NodeType() == nsIDOMNode::DOCUMENT_NODE,
+             "Bad NodeType in aNodeInfo");
 
   NS_ASSERTION(OwnerDoc() == this, "Our nodeinfo is busted!");
 
@@ -2290,6 +2294,11 @@ nsDocument::Reset(nsIChannel* aChannel, nsILoadGroup* aLoadGroup)
   }
 
   ResetToURI(uri, aLoadGroup, principal);
+
+  // Note that, since mTiming does not change during a reset, the
+  // navigationStart time remains unchanged and therefore any future new
+  // timeline will have the same global clock time as the old one.
+  mAnimationTimeline = nullptr;
 
   nsCOMPtr<nsIPropertyBag2> bag = do_QueryInterface(aChannel);
   if (bag) {
@@ -3098,15 +3107,32 @@ nsDocument::GetLastModified(nsAString& aLastModified)
   return NS_OK;
 }
 
+static void
+GetFormattedTimeString(PRTime aTime, nsAString& aFormattedTimeString)
+{
+  PRExplodedTime prtime;
+  PR_ExplodeTime(aTime, PR_LocalTimeParameters, &prtime);
+  // "MM/DD/YYYY hh:mm:ss"
+  char formatedTime[24];
+  if (PR_snprintf(formatedTime, sizeof(formatedTime),
+                  "%02ld/%02ld/%04hd %02ld:%02ld:%02ld",
+                  prtime.tm_month + 1, prtime.tm_mday, prtime.tm_year,
+                  prtime.tm_hour     ,  prtime.tm_min,  prtime.tm_sec)) {
+    CopyASCIItoUTF16(nsDependentCString(formatedTime), aFormattedTimeString);
+  } else {
+    // If we for whatever reason failed to find the last modified time
+    // (or even the current time), fall back to what NS4.x returned.
+    aFormattedTimeString.AssignLiteral(MOZ_UTF16("01/01/1970 00:00:00"));
+  }
+}
+
 void
 nsIDocument::GetLastModified(nsAString& aLastModified) const
 {
   if (!mLastModified.IsEmpty()) {
     aLastModified.Assign(mLastModified);
   } else {
-    // If we for whatever reason failed to find the last modified time
-    // (or even the current time), fall back to what NS4.x returned.
-    aLastModified.AssignLiteral(MOZ_UTF16("01/01/1970 00:00:00"));
+    GetFormattedTimeString(PR_Now(), aLastModified);
   }
 }
 
@@ -3793,8 +3819,7 @@ nsDocument::SetHeaderData(nsIAtom* aHeaderField, const nsAString& aData)
   }
 
   // Referrer policy spec says to ignore any empty referrer policies.
-  // Disabled for now.
-  if (false && aHeaderField == nsGkAtoms::referrer && !aData.IsEmpty()) {
+  if (aHeaderField == nsGkAtoms::referrer && !aData.IsEmpty()) {
     ReferrerPolicy policy = mozilla::net::ReferrerPolicyFromString(aData);
 
     // Referrer policy spec (section 6.1) says that once the referrer policy
@@ -3936,8 +3961,8 @@ SubDocClearEntry(PLDHashTable *table, PLDHashEntryHdr *entry)
   }
 }
 
-static bool
-SubDocInitEntry(PLDHashTable *table, PLDHashEntryHdr *entry, const void *key)
+static void
+SubDocInitEntry(PLDHashEntryHdr *entry, const void *key)
 {
   SubDocMapEntry *e =
     const_cast<SubDocMapEntry *>
@@ -3947,7 +3972,6 @@ SubDocInitEntry(PLDHashTable *table, PLDHashEntryHdr *entry, const void *key)
   NS_ADDREF(e->mKey);
 
   e->mSubDocument = nullptr;
-  return true;
 }
 
 nsresult
@@ -3961,9 +3985,9 @@ nsDocument::SetSubDocumentFor(Element* aElement, nsIDocument* aSubDoc)
     if (mSubDocuments) {
       SubDocMapEntry *entry =
         static_cast<SubDocMapEntry*>
-                   (PL_DHashTableLookup(mSubDocuments, aElement));
+                   (PL_DHashTableSearch(mSubDocuments, aElement));
 
-      if (PL_DHASH_ENTRY_IS_BUSY(entry)) {
+      if (entry) {
         PL_DHashTableRawRemove(mSubDocuments, entry);
       }
     }
@@ -3973,27 +3997,22 @@ nsDocument::SetSubDocumentFor(Element* aElement, nsIDocument* aSubDoc)
 
       static const PLDHashTableOps hash_table_ops =
       {
-        PL_DHashAllocTable,
-        PL_DHashFreeTable,
         PL_DHashVoidPtrKeyStub,
         PL_DHashMatchEntryStub,
         PL_DHashMoveEntryStub,
         SubDocClearEntry,
-        PL_DHashFinalizeStub,
         SubDocInitEntry
       };
 
-      mSubDocuments = PL_NewDHashTable(&hash_table_ops, nullptr,
-                                       sizeof(SubDocMapEntry));
+      mSubDocuments = PL_NewDHashTable(&hash_table_ops, sizeof(SubDocMapEntry));
       if (!mSubDocuments) {
         return NS_ERROR_OUT_OF_MEMORY;
       }
     }
 
     // Add a mapping to the hash table
-    SubDocMapEntry *entry =
-      static_cast<SubDocMapEntry*>
-                 (PL_DHashTableAdd(mSubDocuments, aElement));
+    SubDocMapEntry *entry = static_cast<SubDocMapEntry*>
+      (PL_DHashTableAdd(mSubDocuments, aElement, fallible));
 
     if (!entry) {
       return NS_ERROR_OUT_OF_MEMORY;
@@ -4021,9 +4040,9 @@ nsDocument::GetSubDocumentFor(nsIContent *aContent) const
   if (mSubDocuments && aContent->IsElement()) {
     SubDocMapEntry *entry =
       static_cast<SubDocMapEntry*>
-                 (PL_DHashTableLookup(mSubDocuments, aContent->AsElement()));
+                 (PL_DHashTableSearch(mSubDocuments, aContent->AsElement()));
 
-    if (PL_DHASH_ENTRY_IS_BUSY(entry)) {
+    if (entry) {
       return entry->mSubDocument;
     }
   }
@@ -4568,6 +4587,31 @@ nsDocument::ContainsEMEContent()
 #endif // MOZ_EME
 
 static void
+CheckIfContainsMSEContent(nsISupports* aSupports, void* aContainsMSE)
+{
+  nsCOMPtr<nsIDOMHTMLMediaElement> domMediaElem(do_QueryInterface(aSupports));
+  if (domMediaElem) {
+    nsCOMPtr<nsIContent> content(do_QueryInterface(domMediaElem));
+    MOZ_ASSERT(content, "aSupports is not a content");
+    HTMLMediaElement* mediaElem = static_cast<HTMLMediaElement*>(content.get());
+    bool* contains = static_cast<bool*>(aContainsMSE);
+    nsRefPtr<MediaSource> ms = mediaElem->GetMozMediaSourceObject();
+    if (ms) {
+      *contains = true;
+    }
+  }
+}
+
+bool
+nsDocument::ContainsMSEContent()
+{
+  bool containsMSE = false;
+  EnumerateActivityObservers(CheckIfContainsMSEContent,
+                             static_cast<void*>(&containsMSE));
+  return containsMSE;
+}
+
+static void
 NotifyActivityChanged(nsISupports *aSupports, void *aUnused)
 {
   nsCOMPtr<nsIDOMHTMLMediaElement> domMediaElem(do_QueryInterface(aSupports));
@@ -4632,11 +4676,11 @@ nsDocument::SetScriptGlobalObject(nsIScriptGlobalObject *aScriptGlobalObject)
                  "Script global object must be an inner window!");
   }
 #endif
-  NS_ABORT_IF_FALSE(aScriptGlobalObject || !mAnimationController ||
-                    mAnimationController->IsPausedByType(
-                        nsSMILTimeContainer::PAUSE_PAGEHIDE |
-                        nsSMILTimeContainer::PAUSE_BEGIN),
-                    "Clearing window pointer while animations are unpaused");
+  MOZ_ASSERT(aScriptGlobalObject || !mAnimationController ||
+             mAnimationController->IsPausedByType(
+               nsSMILTimeContainer::PAUSE_PAGEHIDE |
+               nsSMILTimeContainer::PAUSE_BEGIN),
+             "Clearing window pointer while animations are unpaused");
 
   if (mScriptGlobalObject && !aScriptGlobalObject) {
     // We're detaching from the window.  We need to grab a pointer to
@@ -5081,7 +5125,7 @@ nsDocument::DispatchContentLoadedEvents()
   // document).
   nsContentUtils::DispatchTrustedEvent(this, static_cast<nsIDocument*>(this),
                                        NS_LITERAL_STRING("DOMContentLoaded"),
-                                       true, true);
+                                       true, false);
 
   if (mTiming) {
     mTiming->NotifyDOMContentLoadedEnd(nsIDocument::GetDocumentURI());
@@ -5273,6 +5317,7 @@ nsIDocument::InsertAnonymousContent(Element& aElement, ErrorResult& aRv)
     return nullptr;
   }
 
+  nsAutoScriptBlocker scriptBlocker;
   nsCOMPtr<Element> container = shell->GetCanvasFrame()
                                      ->GetCustomContentContainer();
   if (!container) {
@@ -5297,6 +5342,8 @@ nsIDocument::InsertAnonymousContent(Element& aElement, ErrorResult& aRv)
     new AnonymousContent(clonedElement->AsElement());
   mAnonymousContents.AppendElement(anonymousContent);
 
+  shell->GetCanvasFrame()->ShowCustomContentContainer();
+
   return anonymousContent.forget();
 }
 
@@ -5310,6 +5357,7 @@ nsIDocument::RemoveAnonymousContent(AnonymousContent& aContent,
     return;
   }
 
+  nsAutoScriptBlocker scriptBlocker;
   nsCOMPtr<Element> container = shell->GetCanvasFrame()
                                      ->GetCustomContentContainer();
   if (!container) {
@@ -5317,8 +5365,8 @@ nsIDocument::RemoveAnonymousContent(AnonymousContent& aContent,
     return;
   }
 
-  // Iterate over know customContents to get and remove the right one
-  for (int32_t i = mAnonymousContents.Length() - 1; i >= 0; --i) {
+  // Iterate over mAnonymousContents to find and remove the given node.
+  for (size_t i = 0, len = mAnonymousContents.Length(); i < len; ++i) {
     if (mAnonymousContents[i] == &aContent) {
       // Get the node from the customContent
       nsCOMPtr<Element> node = aContent.GetContentNode();
@@ -5334,6 +5382,9 @@ nsIDocument::RemoveAnonymousContent(AnonymousContent& aContent,
 
       break;
     }
+  }
+  if (mAnonymousContents.IsEmpty()) {
+    shell->GetCanvasFrame()->HideCustomContentContainer();
   }
 }
 
@@ -5861,13 +5912,14 @@ nsDocument::RegisterUnresolvedElement(Element* aElement, nsIAtom* aTypeName)
 
   nsRefPtr<Element>* elem = unresolved->AppendElement();
   *elem = aElement;
+  aElement->AddStates(NS_EVENT_STATE_UNRESOLVED);
 
   return NS_OK;
 }
 
 namespace {
 
-class ProcessStackRunner MOZ_FINAL : public nsIRunnable
+class ProcessStackRunner final : public nsIRunnable
 {
   ~ProcessStackRunner() {}
 public:
@@ -5876,7 +5928,7 @@ public:
   {
   }
   NS_DECL_ISUPPORTS
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     nsDocument::ProcessTopElementQueue(mIsBaseQueue);
     return NS_OK;
@@ -6147,7 +6199,7 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     }
 
     if (!aOptions.mPrototype) {
-      protoObject = JS_NewObject(aCx, nullptr, htmlProto, JS::NullPtr());
+      protoObject = JS_NewObjectWithGivenProto(aCx, nullptr, htmlProto, JS::NullPtr());
       if (!protoObject) {
         rv.Throw(NS_ERROR_UNEXPECTED);
         return;
@@ -6291,11 +6343,17 @@ nsDocument::RegisterElement(JSContext* aCx, const nsAString& aType,
     for (size_t i = 0; i < candidates->Length(); ++i) {
       Element *elem = candidates->ElementAt(i);
 
+      elem->RemoveStates(NS_EVENT_STATE_UNRESOLVED);
+
       // Make sure that the element name matches the name in the definition.
       // (e.g. a definition for x-button extending button should match
       // <button is="x-button"> but not <x-button>.
-      if (elem->NodeInfo()->NameAtom() != nameAtom) {
-        // Skip over this element because definition does not apply.
+      // Note: we also check the tag name, because if it's not the above
+      // mentioned case, it can be that only the |is| property has been
+      // changed, which we should ignore by the spec.
+      if (elem->NodeInfo()->NameAtom() != nameAtom &&
+          elem->Tag() == nameAtom) {
+        //Skip over this element because definition does not apply.
         continue;
       }
 
@@ -8558,25 +8616,9 @@ nsDocument::RetrieveRelevantHeaders(nsIChannel *aChannel)
     }
   }
 
-  if (modDate == 0) {
-    // We got nothing from our attempt to ask nsIFileChannel and
-    // nsIHttpChannel for the last modified time. Return the current
-    // time.
-    modDate = PR_Now();
-  }
-
   mLastModified.Truncate();
   if (modDate != 0) {
-    PRExplodedTime prtime;
-    PR_ExplodeTime(modDate, PR_LocalTimeParameters, &prtime);
-    // "MM/DD/YYYY hh:mm:ss"
-    char formatedTime[24];
-    if (PR_snprintf(formatedTime, sizeof(formatedTime),
-                    "%02ld/%02ld/%04hd %02ld:%02ld:%02ld",
-                    prtime.tm_month + 1, prtime.tm_mday, prtime.tm_year,
-                    prtime.tm_hour     ,  prtime.tm_min,  prtime.tm_sec)) {
-      CopyASCIItoUTF16(nsDependentCString(formatedTime), mLastModified);
-    }
+    GetFormattedTimeString(modDate, mLastModified);
   }
 }
 
@@ -8823,6 +8865,12 @@ nsDocument::CanSavePresentation(nsIRequest *aNewRequest)
     return false;
   }
 #endif
+
+  // Don't save presentations for documents containing MSE content, to
+  // reduce memory usage.
+  if (ContainsMSEContent()) {
+    return false;
+  }
 
   bool canCache = true;
   if (mSubDocuments)
@@ -9626,6 +9674,87 @@ FireOrClearDelayedEvents(nsTArray<nsCOMPtr<nsIDocument> >& aDocuments,
 }
 
 void
+nsDocument::PreloadPictureOpened()
+{
+  mPreloadPictureDepth++;
+}
+
+void
+nsDocument::PreloadPictureClosed()
+{
+  mPreloadPictureDepth--;
+  if (mPreloadPictureDepth == 0) {
+    mPreloadPictureFoundSource.SetIsVoid(true);
+  } else {
+    MOZ_ASSERT(mPreloadPictureDepth >= 0);
+  }
+}
+
+void
+nsDocument::PreloadPictureImageSource(const nsAString& aSrcsetAttr,
+                                      const nsAString& aSizesAttr,
+                                      const nsAString& aTypeAttr,
+                                      const nsAString& aMediaAttr)
+{
+  // Nested pictures are not valid syntax, so while we'll eventually load them,
+  // it's not worth tracking sources mixed between nesting levels to preload
+  // them effectively.
+  if (mPreloadPictureDepth == 1 && mPreloadPictureFoundSource.IsVoid()) {
+    // <picture> selects the first matching source, so if this returns a URI we
+    // needn't consider new sources until a new <picture> is encountered.
+    bool found =
+      HTMLImageElement::SelectSourceForTagWithAttrs(this, true, NullString(),
+                                                    aSrcsetAttr, aSizesAttr,
+                                                    aTypeAttr, aMediaAttr,
+                                                    mPreloadPictureFoundSource);
+    if (found && mPreloadPictureFoundSource.IsVoid()) {
+      // Found an empty source, which counts
+      mPreloadPictureFoundSource.SetIsVoid(false);
+    }
+  }
+}
+
+already_AddRefed<nsIURI>
+nsDocument::ResolvePreloadImage(nsIURI *aBaseURI,
+                                const nsAString& aSrcAttr,
+                                const nsAString& aSrcsetAttr,
+                                const nsAString& aSizesAttr)
+{
+  nsString sourceURL;
+  if (mPreloadPictureDepth == 1 && !mPreloadPictureFoundSource.IsVoid()) {
+    // We're in a <picture> element and found a URI from a source previous to
+    // this image, use it.
+    sourceURL = mPreloadPictureFoundSource;
+  } else {
+    // Otherwise try to use this <img> as a source
+    HTMLImageElement::SelectSourceForTagWithAttrs(this, false, aSrcAttr,
+                                                  aSrcsetAttr, aSizesAttr,
+                                                  NullString(), NullString(),
+                                                  sourceURL);
+  }
+
+  // Empty sources are not loaded by <img> (i.e. not resolved to the baseURI)
+  if (sourceURL.IsEmpty()) {
+    return nullptr;
+  }
+
+  // Construct into URI using passed baseURI (the parser may know of base URI
+  // changes that have not reached us)
+  nsresult rv;
+  nsCOMPtr<nsIURI> uri;
+  rv = nsContentUtils::NewURIWithDocumentCharset(getter_AddRefs(uri), sourceURL,
+                                                 this, aBaseURI);
+  if (NS_FAILED(rv)) {
+    return nullptr;
+  }
+
+  // We don't clear mPreloadPictureFoundSource because subsequent <img> tags in
+  // this this <picture> share the same <sources> (though this is not valid per
+  // spec)
+  return uri.forget();
+}
+
+void
 nsDocument::MaybePreLoadImage(nsIURI* uri, const nsAString &aCrossOriginAttr,
                               ReferrerPolicy aReferrerPolicy)
 {
@@ -9716,11 +9845,11 @@ namespace {
  * Stub for LoadSheet(), since all we want is to get the sheet into
  * the CSSLoader's style cache
  */
-class StubCSSLoaderObserver MOZ_FINAL : public nsICSSLoaderObserver {
+class StubCSSLoaderObserver final : public nsICSSLoaderObserver {
   ~StubCSSLoaderObserver() {}
 public:
   NS_IMETHOD
-  StyleSheetLoaded(CSSStyleSheet*, bool, nsresult) MOZ_OVERRIDE
+  StyleSheetLoaded(CSSStyleSheet*, bool, nsresult) override
   {
     return NS_OK;
   }
@@ -10362,8 +10491,8 @@ nsDocument::RemoveImage(imgIRequest* aImage, uint32_t aFlags)
   // Get the old count. It should exist and be > 0.
   uint32_t count = 0;
   DebugOnly<bool> found = mImageTracker.Get(aImage, &count);
-  NS_ABORT_IF_FALSE(found, "Removing image that wasn't in the tracker!");
-  NS_ABORT_IF_FALSE(count > 0, "Entry in the cache tracker with count 0!");
+  MOZ_ASSERT(found, "Removing image that wasn't in the tracker!");
+  MOZ_ASSERT(count > 0, "Entry in the cache tracker with count 0!");
 
   // We're removing, so decrement the count.
   count--;
@@ -11860,7 +11989,7 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_NSICONTENTPERMISSIONREQUEST
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     nsCOMPtr<Element> e = do_QueryReferent(mElement);
     nsCOMPtr<nsIDocument> d = do_QueryReferent(mDocument);

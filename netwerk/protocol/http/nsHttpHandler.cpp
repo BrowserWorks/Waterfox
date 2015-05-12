@@ -194,6 +194,7 @@ nsHttpHandler::nsHttpHandler()
     , mSpdySendingChunkSize(ASpdySession::kSendingChunkSize)
     , mSpdySendBufferSize(ASpdySession::kTCPSendBufferSize)
     , mSpdyPushAllowance(32768)
+    , mDefaultSpdyConcurrent(ASpdySession::kDefaultMaxConcurrent)
     , mSpdyPingThreshold(PR_SecondsToInterval(58))
     , mSpdyPingTimeout(PR_SecondsToInterval(8))
     , mConnectTimeout(90000)
@@ -284,7 +285,7 @@ nsHttpHandler::Init()
 
     mMisc.AssignLiteral("rv:" MOZILLA_UAVERSION);
 
-    mCompatFirefox.AssignLiteral("Waterfox/" MOZILLA_UAVERSION);
+    mCompatFirefox.AssignLiteral("Waterfox/" MOZ_APP_UA_VERSION);
 
     nsCOMPtr<nsIXULAppInfo> appInfo =
         do_GetService("@mozilla.org/xre/app-info;1");
@@ -299,7 +300,7 @@ nsHttpHandler::Init()
         appInfo->GetVersion(mAppVersion);
         mAppName.StripChars(" ()<>@,;:\\\"/[]?={}");
     } else {
-        mAppVersion.AssignLiteral(MOZILLA_UAVERSION);
+        mAppVersion.AssignLiteral(MOZ_APP_UA_VERSION);
     }
 
     mSessionStartTime = NowInSeconds();
@@ -653,9 +654,9 @@ nsHttpHandler::BuildUserAgent()
     mUserAgent += '/';
     mUserAgent += mProductSub;
 
-    bool isFirefox = mAppName.EqualsLiteral("Waterfox");
+    bool isFirefox = mAppName.EqualsLiteral("Firefox");
     if (isFirefox || mCompatFirefoxEnabled) {
-        // App portion
+		// App portion
         mUserAgent += ' ';
         mUserAgent += mAppName;
         mUserAgent += '/';
@@ -695,7 +696,9 @@ nsHttpHandler::InitUserAgentComponents()
     );
 #endif
 
-#if defined(ANDROID) || defined(MOZ_B2G)
+   // Add the `Mobile` or `Tablet` token when running on device or in the
+   // b2g desktop simulator.
+#if defined(ANDROID) || defined(FXOS_SIMULATOR)
     nsCOMPtr<nsIPropertyBag2> infoService = do_GetService("@mozilla.org/system-info;1");
     MOZ_ASSERT(infoService, "Could not find a system info service");
 
@@ -1282,6 +1285,14 @@ nsHttpHandler::PrefsChanged(nsIPrefBranch *prefs, const char *pref)
             mSpdyPushAllowance =
                 static_cast<uint32_t>
                 (clamped(val, 1024, static_cast<int32_t>(ASpdySession::kInitialRwin)));
+        }
+    }
+
+    if (PREF_CHANGED(HTTP_PREF("spdy.default-concurrent"))) {
+        rv = prefs->GetIntPref(HTTP_PREF("spdy.default-concurrent"), &val);
+        if (NS_SUCCEEDED(rv)) {
+            mDefaultSpdyConcurrent =
+                static_cast<uint32_t>(std::max<int32_t>(std::min<int32_t>(val, 9999), 1));
         }
     }
 

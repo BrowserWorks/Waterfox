@@ -38,6 +38,21 @@ add_task(function* test_no_data() {
   }
 });
 
+function checkCorrectStateRecorded(provider, state) {
+  // Wait for storage to complete.
+  yield m.storage.enqueueOperation(() => {
+    return Promise.resolve();
+  });
+
+  let m = provider.getMeasurement("migration", 1);
+  let values = yield m.getValues();
+  Assert.equal(values.days.size, 1);
+  Assert.ok(values.days.hasDay(now));
+  let day = values.days.getDay(now);
+
+  Assert.ok(day.has("state"));
+  Assert.equal(day.get("state"), state);
+}
 
 add_task(function* test_state() {
   let storage = yield Metrics.Storage("collect");
@@ -48,41 +63,16 @@ add_task(function* test_state() {
     // Initially nothing should be configured.
     let now = new Date();
 
-    let m = provider.getMeasurement("migration", 1);
-
     // We record both a "user" and "internal" state in the same field.
     // So simulate a "user" state first.
     Services.obs.notifyObservers(null, "fxa-migration:state-changed",
                                  fxaMigrator.STATE_USER_FXA_VERIFIED);
+    checkCorrectStateRecorded(provider, fxaMigrator.STATE_USER_FXA_VERIFIED);
 
-    // Wait for storage to complete.
-    yield m.storage.enqueueOperation(() => {
-      return Promise.resolve();
-    });
-
-    let values = yield m.getValues();
-    Assert.equal(values.days.size, 1);
-    Assert.ok(values.days.hasDay(now));
-    let day = values.days.getDay(now);
-
-    Assert.ok(day.has("state"));
-    Assert.equal(day.get("state"), fxaMigrator.STATE_USER_FXA_VERIFIED);
-
-    // And an  internal state.
+    // And an internal state.
     Services.obs.notifyObservers(null, "fxa-migration:internal-state-changed",
                                  fxaMigrator.STATE_INTERNAL_WAITING_SYNC_COMPLETE);
-
-    // Wait for storage to complete.
-    yield m.storage.enqueueOperation(() => {
-      return Promise.resolve();
-    });
-
-    values = yield m.getValues();
-    Assert.equal(values.days.size, 1);
-    Assert.ok(values.days.hasDay(now));
-    day = values.days.getDay(now);
-    Assert.ok(day.has("state"));
-    Assert.equal(day.get("state"), fxaMigrator.STATE_INTERNAL_WAITING_SYNC_COMPLETE);
+    checkCorrectStateRecorded(provider, fxaMigrator.STATE_INTERNAL_WAITING_SYNC_COMPLETE);
   } finally {
     yield provider.shutdown();
     yield storage.close();

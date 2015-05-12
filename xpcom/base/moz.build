@@ -54,7 +54,6 @@ EXPORTS += [
     'nsInterfaceRequestorAgg.h',
     'nsISizeOf.h',
     'nsISupportsBase.h',
-    'nsISupportsObsolete.h',
     'nsObjCExceptions.h',
     'nsRefPtr.h',
     'nsStackWalk.h',
@@ -144,10 +143,6 @@ elif CONFIG['MOZ_WIDGET_TOOLKIT'] == 'windows':
         'nsCrashOnException.cpp',
     ]
 
-UNIFIED_SOURCES += [
-    'nsErrorAssertsC.c',
-]
-
 MSVC_ENABLE_PGO = True
 
 include('/ipc/chromium/chromium-config.mozbuild')
@@ -162,5 +157,4 @@ LOCAL_INCLUDES += [
 if CONFIG['MOZ_WIDGET_GTK']:
     CXXFLAGS += CONFIG['TK_CFLAGS']
 
-if CONFIG['_MSC_VER']:
-    FAIL_ON_WARNINGS = True
+FAIL_ON_WARNINGS = True

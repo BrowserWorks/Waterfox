@@ -107,15 +107,51 @@ MediaEngineGonkVideoSource::NotifyPull(MediaStreamGraph* aGraph,
   }
 }
 
-void
-MediaEngineGonkVideoSource::ChooseCapability(const VideoTrackConstraintsN& aConstraints,
-                                             const MediaEnginePrefs& aPrefs)
+size_t
+MediaEngineGonkVideoSource::NumCapabilities()
 {
-  return GuessCapability(aConstraints, aPrefs);
+  // TODO: Stop hardcoding. Use GetRecorderProfiles+GetProfileInfo (Bug 1128550)
+  //
+  // The camera-selecting constraints algorithm needs a set of capabilities to
+  // work on. In lieu of something better, here are some generic values based on
+  // http://en.wikipedia.org/wiki/Comparison_of_Firefox_OS_devices on Jan 2015.
+  // When unknown, better overdo it with choices to not block legitimate asks.
+  // TODO: Match with actual hardware or add code to query hardware.
+
+  if (mHardcodedCapabilities.IsEmpty()) {
+    const struct { int width, height; } hardcodes[] = {
+      { 800, 1280 },
+      { 720, 1280 },
+      { 600, 1024 },
+      { 540, 960 },
+      { 480, 854 },
+      { 480, 800 },
+      { 320, 480 },
+      { 240, 320 }, // sole mode supported by emulator on try
+    };
+    const int framerates[] = { 15, 30 };
+
+    for (auto& hardcode : hardcodes) {
+      webrtc::CaptureCapability c;
+      c.width = hardcode.width;
+      c.height = hardcode.height;
+      for (int framerate : framerates) {
+        c.maxFPS = framerate;
+        mHardcodedCapabilities.AppendElement(c); // portrait
+      }
+      c.width = hardcode.height;
+      c.height = hardcode.width;
+      for (int framerate : framerates) {
+        c.maxFPS = framerate;
+        mHardcodedCapabilities.AppendElement(c); // landscape
+      }
+    }
+  }
+  return mHardcodedCapabilities.Length();
 }
 
 nsresult
-MediaEngineGonkVideoSource::Allocate(const VideoTrackConstraintsN& aConstraints,
+MediaEngineGonkVideoSource::Allocate(const dom::MediaTrackConstraints& aConstraints,
                                      const MediaEnginePrefs& aPrefs)
 {
   LOG((__FUNCTION__));
@@ -182,7 +218,6 @@ MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
   }
 
   aStream->AddTrack(aID, 0, new VideoSegment());
-  aStream->AdvanceKnownTracksTime(STREAM_TIME_MAX);
 
   ReentrantMonitorAutoEnter sync(mCallbackMonitor);
 
@@ -198,6 +233,16 @@ MediaEngineGonkVideoSource::Start(SourceMediaStream* aStream, TrackID aID)
   mCallbackMonitor.Wait();
   if (mState != kStarted) {
     return NS_ERROR_FAILURE;
+  }
+
+  nsTArray<nsString> focusModes;
+  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_FOCUSMODES, focusModes);
+  for (nsTArray<nsString>::index_type i = 0; i < focusModes.Length(); ++i) {
+    if (focusModes[i].EqualsASCII("continuous-video")) {
+      mCameraControl->Set(CAMERA_PARAM_FOCUSMODE, focusModes[i]);
+      mCameraControl->ResumeContinuousFocus();
+      break;
+    }
   }
 
   if (NS_FAILED(InitDirectMediaBuffer())) {
@@ -423,15 +468,6 @@ MediaEngineGonkVideoSource::StartImpl(webrtc::CaptureCapability aCapability) {
   config.mPreviewSize.height = aCapability.height;
   mCameraControl->Start(&config);
   mCameraControl->Set(CAMERA_PARAM_PICTURE_SIZE, config.mPreviewSize);
-
-  nsTArray<nsString> focusModes;
-  mCameraControl->Get(CAMERA_PARAM_SUPPORTED_FOCUSMODES, focusModes);
-  for (nsTArray<nsString>::index_type i = 0; i < focusModes.Length(); ++i) {
-    if (focusModes[i].EqualsASCII("continuous-video")) {
-      mCameraControl->Set(CAMERA_PARAM_FOCUSMODE, focusModes[i]);
-      break;
-    }
-  }
 
   hal::RegisterScreenConfigurationObserver(this);
 }

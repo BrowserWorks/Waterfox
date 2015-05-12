@@ -99,6 +99,7 @@ PluginAsyncSurrogate::PluginAsyncSurrogate(PluginModuleParent* aParent)
   , mInstantiated(false)
   , mAsyncSetWindow(false)
   , mInitCancelled(false)
+  , mDestroyPending(false)
   , mAsyncCallsInFlight(0)
 {
   MOZ_ASSERT(aParent);
@@ -172,16 +173,34 @@ PluginAsyncSurrogate::NP_GetEntryPoints(NPPluginFuncs* aFuncs)
   aFuncs->setwindow = &NPP_SetWindow;
   aFuncs->writeready = &NPP_WriteReady;
   aFuncs->event = &NPP_HandleEvent;
+  aFuncs->destroystream = &NPP_DestroyStream;
   // We need to set these so that content code doesn't make assumptions
   // about these operations not being supported
   aFuncs->write = &PluginModuleParent::NPP_Write;
   aFuncs->asfile = &PluginModuleParent::NPP_StreamAsFile;
-  aFuncs->destroystream = &PluginModuleParent::NPP_DestroyStream;
+}
+
+/* static */ void
+PluginAsyncSurrogate::NotifyDestroyPending(NPP aInstance)
+{
+  PluginAsyncSurrogate* surrogate = Cast(aInstance);
+  if (!surrogate) {
+    return;
+  }
+  surrogate->NotifyDestroyPending();
+}
+
+void
+PluginAsyncSurrogate::NotifyDestroyPending()
+{
+  mDestroyPending = true;
+  nsJSNPRuntime::OnPluginDestroyPending(mInstance);
 }
 
 NPError
 PluginAsyncSurrogate::NPP_Destroy(NPSavedData** aSave)
 {
+  NotifyDestroyPending();
   if (!WaitForInit()) {
     return NPERR_GENERIC_ERROR;
   }
@@ -267,6 +286,19 @@ PluginAsyncSurrogate::NPP_WriteReady(NPStream* aStream)
   return 0;
 }
 
+NPError
+PluginAsyncSurrogate::NPP_DestroyStream(NPStream* aStream, NPReason aReason)
+{
+  for (uint32_t idx = 0, len = mPendingNewStreamCalls.Length(); idx < len; ++idx) {
+    PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[idx];
+    if (curPendingCall.mStream == aStream) {
+      mPendingNewStreamCalls.RemoveElementAt(idx);
+      break;
+    }
+  }
+  return NPERR_NO_ERROR;
+}
+
 /* static */ NPError
 PluginAsyncSurrogate::NPP_Destroy(NPP aInstance, NPSavedData** aSave)
 {
@@ -350,6 +382,16 @@ PluginAsyncSurrogate::NPP_WriteReady(NPP aInstance, NPStream* aStream)
   return surrogate->NPP_WriteReady(aStream);
 }
 
+/* static */ NPError
+PluginAsyncSurrogate::NPP_DestroyStream(NPP aInstance,
+                                        NPStream* aStream,
+                                        NPReason aReason)
+{
+  PluginAsyncSurrogate* surrogate = Cast(aInstance);
+  MOZ_ASSERT(surrogate);
+  return surrogate->NPP_DestroyStream(aStream, aReason);
+}
+
 PluginAsyncSurrogate::PendingNewStreamCall::PendingNewStreamCall(
     NPMIMEType aType, NPStream* aStream, NPBool aSeekable)
   : mType(NullableString(aType))
@@ -358,15 +400,33 @@ PluginAsyncSurrogate::PendingNewStreamCall::PendingNewStreamCall(
 {
 }
 
-/* static */ bool
-PluginAsyncSurrogate::SetStreamType(NPStream* aStream, uint16_t aStreamType)
+/* static */ nsNPAPIPluginStreamListener*
+PluginAsyncSurrogate::GetStreamListener(NPStream* aStream)
 {
   nsNPAPIStreamWrapper* wrapper =
     reinterpret_cast<nsNPAPIStreamWrapper*>(aStream->ndata);
   if (!wrapper) {
-    return false;
+    return nullptr;
   }
-  nsNPAPIPluginStreamListener* streamListener = wrapper->GetStreamListener();
+  return wrapper->GetStreamListener();
+}
+
+void
+PluginAsyncSurrogate::DestroyAsyncStream(NPStream* aStream)
+{
+  MOZ_ASSERT(aStream);
+  nsNPAPIPluginStreamListener* streamListener = GetStreamListener(aStream);
+  MOZ_ASSERT(streamListener);
+  // streamListener was suspended during async init. We must resume the stream
+  // request prior to calling _destroystream for cleanup to work correctly.
+  streamListener->ResumeRequest();
+  parent::_destroystream(mInstance, aStream, NPRES_DONE);
+}
+
+/* static */ bool
+PluginAsyncSurrogate::SetStreamType(NPStream* aStream, uint16_t aStreamType)
+{
+  nsNPAPIPluginStreamListener* streamListener = GetStreamListener(aStream);
   if (!streamListener) {
     return false;
   }
@@ -385,7 +445,7 @@ PluginAsyncSurrogate::OnInstanceCreated(PluginInstanceParent* aInstance)
                     &streamType);
     if (curError != NPERR_NO_ERROR) {
       // If we failed here then the send failed and we need to clean up
-      parent::_destroystream(mInstance, curPendingCall.mStream, NPRES_DONE);
+      DestroyAsyncStream(curPendingCall.mStream);
     }
   }
   mPendingNewStreamCalls.Clear();
@@ -433,6 +493,12 @@ PluginAsyncSurrogate::WaitForInit()
     mozilla::ipc::MessageChannel* contentChannel = cp->GetIPCChannel();
     MOZ_ASSERT(contentChannel);
     while (!mParent->mNPInitialized) {
+      if (mParent->mShutdown) {
+        // Since we are pumping the message channel for events, it may be
+        // possible for module initialization to fail during this loop. We must
+        // return false if this happens or else we'll be permanently stuck.
+        return false;
+      }
       result = contentChannel->WaitForIncomingMessage();
       if (!result) {
         return result;
@@ -442,6 +508,12 @@ PluginAsyncSurrogate::WaitForInit()
   mozilla::ipc::MessageChannel* channel = mParent->GetIPCChannel();
   MOZ_ASSERT(channel);
   while (!mAcceptCalls) {
+    if (mInitCancelled) {
+      // Since we are pumping the message channel for events, it may be
+      // possible for plugin instantiation to fail during this loop. We must
+      // return false if this happens or else we'll be permanently stuck.
+      return false;
+    }
     result = channel->WaitForIncomingMessage();
     if (!result) {
       break;
@@ -474,7 +546,7 @@ PluginAsyncSurrogate::NotifyAsyncInitFailed()
   // Clean up any pending NewStream requests
   for (uint32_t i = 0, len = mPendingNewStreamCalls.Length(); i < len; ++i) {
     PendingNewStreamCall& curPendingCall = mPendingNewStreamCalls[i];
-    parent::_destroystream(mInstance, curPendingCall.mStream, NPRES_DONE);
+    DestroyAsyncStream(curPendingCall.mStream);
   }
   mPendingNewStreamCalls.Clear();
 
@@ -603,10 +675,15 @@ PluginAsyncSurrogate::GetPropertyHelper(NPObject* aObject, NPIdentifier aName,
     return false;
   }
 
-  WaitForInit();
+  if (!WaitForInit()) {
+    return false;
+  }
 
   AsyncNPObject* object = static_cast<AsyncNPObject*>(aObject);
   NPObject* realObject = object->GetRealObject();
+  if (!realObject) {
+    return false;
+  }
   if (realObject->_class != PluginScriptableObjectParent::GetClass()) {
     NS_ERROR("Don't know what kind of object this is!");
     return false;
@@ -614,6 +691,9 @@ PluginAsyncSurrogate::GetPropertyHelper(NPObject* aObject, NPIdentifier aName,
 
   PluginScriptableObjectParent* actor =
     static_cast<ParentNPObject*>(realObject)->parent;
+  if (!actor) {
+    return false;
+  }
   bool success = actor->GetPropertyHelper(aName, aHasProperty, aHasMethod, aResult);
   if (!success) {
     const NPNetscapeFuncs* npn = mParent->GetNetscapeFuncs();

@@ -5,6 +5,8 @@
 
 <resources>
 
+    <dimen name="button_corner_radius">3dp</dimen>
+
     <dimen name="autocomplete_min_width">200dp</dimen>
     <dimen name="autocomplete_row_height">32dp</dimen>
 
@@ -29,7 +31,6 @@
     <dimen name="new_tablet_tab_strip_height">48dp</dimen>
     <dimen name="new_tablet_tab_strip_item_width">208dp</dimen>
     <dimen name="new_tablet_tab_strip_item_margin">-28dp</dimen>
-    <dimen name="new_tablet_tab_strip_favicon_size">16dp</dimen>
     <dimen name="new_tablet_tab_strip_fading_edge_size">15dp</dimen>
     <dimen name="new_tablet_site_security_height">60dp</dimen>
     <dimen name="new_tablet_site_security_width">34dp</dimen>
@@ -38,7 +39,6 @@
     <dimen name="new_tablet_site_security_padding_horizontal">8dp</dimen>
     <dimen name="new_tablet_site_security_right_margin">1dp</dimen>
     <dimen name="new_tablet_browser_toolbar_height">60dp</dimen>
-    <dimen name="new_tablet_browser_toolbar_menu_right_margin">6dp</dimen>
     <dimen name="new_tablet_browser_toolbar_menu_item_width">56dp</dimen>
     <!-- Padding combines with an 18dp image to form the menu item width and height. -->
     <dimen name="new_tablet_browser_toolbar_menu_item_padding_horizontal">19dp</dimen>
@@ -61,6 +61,9 @@
          database. The largest available size is always stored in the database, regardless of this
          value.-->
     <dimen name="favicon_largest_interesting_size">32dp</dimen>
+
+    <dimen name="firstrun_content_width">300dp</dimen>
+    <dimen name="firstrun_min_height">180dp</dimen>
 
     <!-- Site security icon -->
     <!-- If one of these values changes, they all should. -->
@@ -94,6 +97,8 @@
     <dimen name="doorhanger_input_width">250dp</dimen>
     <dimen name="doorhanger_spinner_textsize">9sp</dimen>
     <dimen name="doorhanger_padding">15dp</dimen>
+
+    <dimen name="context_menu_item_horizontal_padding">10dp</dimen>
 
     <dimen name="flow_layout_spacing">6dp</dimen>
     <dimen name="menu_item_icon">21dp</dimen>
@@ -176,6 +181,7 @@
     <dimen name="arrow_popup_arrow_width">40dip</dimen>
     <dimen name="arrow_popup_arrow_height">12dip</dimen>
     <dimen name="arrow_popup_arrow_offset">8dp</dimen>
+    <dimen name="arrow_popup_container_width">@dimen/custom_match_parent</dimen>
 
     <!-- TabHistoryItemRow dimensions. -->
     <dimen name="tab_history_timeline_width">3dp</dimen>
@@ -192,6 +198,8 @@
     <dimen name="tab_history_bg_width">2dp</dimen>
     <dimen name="tab_history_border_padding">2dp</dimen>
 
+    <dimen name="horizontal_drag_area">256dp</dimen>
+
     <!-- Find-In-Page dialog dimensions. -->
     <dimen name="find_in_page_text_margin_left">5dip</dimen>
     <dimen name="find_in_page_text_margin_right">12dip</dimen>
@@ -200,5 +208,13 @@
     <dimen name="find_in_page_status_margin_right">10dip</dimen>
     <dimen name="find_in_page_matchcase_padding">10dip</dimen>
     <dimen name="find_in_page_control_margin_top">2dip</dimen>
+
+    <!-- The share icon asset has no padding while the other action bar items do
+         so we dynamically add padding to compensate. To be removed in bug 1122752. -->
+    <dimen name="ab_share_padding">12dp</dimen>
+
+    <!-- Use android attr in dimens, via http://stackoverflow.com/a/19043952 -->
+    <dimen name="custom_match_parent">-2px</dimen>
+    <dimen name="custom_wrap_content">-1px</dimen>
 
 </resources>

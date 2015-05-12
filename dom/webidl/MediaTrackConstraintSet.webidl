@@ -22,24 +22,17 @@ enum SupportedAudioConstraints {
     "other"
 };
 
-
 dictionary MediaTrackConstraintSet {
-    ConstrainLongRange width;
-    ConstrainLongRange height;
-    ConstrainDoubleRange frameRate;
-    ConstrainVideoFacingMode facingMode;
-    ConstrainMediaSource mediaSource = "camera";
+    ConstrainLong width;
+    ConstrainLong height;
+    ConstrainDouble frameRate;
+    ConstrainDOMString facingMode;
+    DOMString mediaSource = "camera";
     long long browserWindow;
     boolean scrollWithPage;
 };
 
-// TODO: Bug 995352 can't nest unions
-//typedef (long or ConstrainLongRange) ConstrainLong;
-//typedef (double or ConstrainDoubleRange) ConstrainDouble;
-
-typedef VideoFacingModeEnum ConstrainVideoFacingMode;
-typedef MediaSourceEnum ConstrainMediaSource;
-
-// TODO: Bug 767924 sequences in unions
-//typedef (VideoFacingModeEnum or sequence<VideoFacingModeEnum>) ConstrainVideoFacingMode;
-//typedef (MediaSourceEnum or sequence<MediaSourceEnum>) ConstrainMediaSource;
+typedef (long or ConstrainLongRange) ConstrainLong;
+typedef (double or ConstrainDoubleRange) ConstrainDouble;
+typedef (boolean or ConstrainBooleanParameters) ConstrainBoolean;
+typedef (DOMString or sequence<DOMString> or ConstrainDOMStringParameters) ConstrainDOMString;

@@ -177,7 +177,8 @@ public:
   static void Shutdown();
 
   void Init(nsDisplayListBuilder* aBuilder, LayerManager* aManager,
-            PaintedLayerData* aLayerData = nullptr);
+            PaintedLayerData* aLayerData = nullptr,
+            ContainerState* aContainingContainerState = nullptr);
 
   /**
    * Call this to notify that we have just started a transaction on the
@@ -317,15 +318,9 @@ public:
                             nsDisplayItem* aItem,
                             const DisplayItemClip& aClip,
                             const nsIntRect& aItemVisibleRect,
-                            const ContainerState& aContainerState,
+                            ContainerState& aContainerState,
                             LayerState aLayerState,
                             const nsPoint& aTopLeft);
-
-  /**
-   * Gets the frame property descriptor for the given manager, or for the current
-   * widget layer manager if nullptr is passed.
-   */
-  static const FramePropertyDescriptor* GetDescriptorForManager(LayerManager* aManager);
 
   /**
    * Calls GetOldLayerForFrame on the underlying frame of the display item,
@@ -408,7 +403,7 @@ public:
   /**
    * Retained data for a display item.
    */
-  class DisplayItemData MOZ_FINAL {
+  class DisplayItemData final {
   public:
     friend class FrameLayerBuilder;
 
@@ -648,6 +643,11 @@ public:
     return !mContainingPaintedLayer && mRetainingManager;
   }
 
+  ContainerState* GetContainingContainerState()
+  {
+    return mContainingContainerState;
+  }
+
   /**
    * Attempt to build the most compressed layer tree possible, even if it means
    * throwing away existing retained buffers.
@@ -658,10 +658,6 @@ public:
   void ComputeGeometryChangeForItem(DisplayItemData* aData);
 
 protected:
-  void RemoveThebesItemsAndOwnerDataForLayerSubtree(Layer* aLayer,
-                                                    bool aRemoveThebesItems,
-                                                    bool aRemoveOwnerData);
-
   static PLDHashOperator ProcessRemovedDisplayItems(nsRefPtrHashKey<DisplayItemData>* aEntry,
                                                     void* aUserArg);
   static PLDHashOperator RestoreDisplayItemData(nsRefPtrHashKey<DisplayItemData>* aEntry,
@@ -701,7 +697,9 @@ protected:
    * When building layers for an inactive layer, this is where the
    * inactive layer will be placed.
    */
-  PaintedLayerData*                    mContainingPaintedLayer;
+  PaintedLayerData*                   mContainingPaintedLayer;
+
+  ContainerState*                     mContainingContainerState;
 
   /**
    * Saved generation counter so we can detect DOM changes.

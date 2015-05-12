@@ -152,9 +152,6 @@ function onCheckboxClick(aPartId)
   var checkbox = document.getElementById(aPartId + "Def");
   if (checkbox.checked) {
     SitePermissions.remove(gPermURI, aPartId);
-    if (aPartId == "indexedDB") {
-      SitePermissions.remove(gPermURI, "indexedDB-unlimited");
-    }
     command.setAttribute("disabled", "true");
     var perm = SitePermissions.getDefault(aPartId);
     setRadioState(aPartId, perm);
@@ -210,7 +207,6 @@ function onIndexedDBClear()
             .clearStoragesForURI(gPermURI);
 
   SitePermissions.remove(gPermURI, "indexedDB");
-  SitePermissions.remove(gPermURI, "indexedDB-unlimited");
   initIndexedDBRow();
 }
 
@@ -270,7 +266,7 @@ function initPluginsRow() {
   let vulnerableLabel = document.getElementById("browserBundle").getString("pluginActivateVulnerable.label");
   let pluginHost = Components.classes["@mozilla.org/plugin/host;1"].getService(Components.interfaces.nsIPluginHost);
 
-  let permissionMap = Map();
+  let permissionMap = new Map();
 
   for (let plugin of pluginHost.getPluginTags()) {
     if (plugin.disabled) {

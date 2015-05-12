@@ -39,7 +39,7 @@ public:
   virtual void ProcessBlock(AudioNodeStream* aStream,
                             const AudioChunk& aInput,
                             AudioChunk* aOutput,
-                            bool* aFinished) MOZ_OVERRIDE
+                            bool* aFinished) override
   {
     *aOutput = aInput;
     StreamBuffer::Track* track = mOutputStream->EnsureTrack(MEDIA_STREAM_DEST_TRACK_ID);
@@ -47,7 +47,7 @@ public:
     segment->AppendAndConsumeChunk(aOutput);
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -68,8 +68,7 @@ MediaStreamAudioDestinationNode::MediaStreamAudioDestinationNode(AudioContext* a
               ChannelCountMode::Explicit,
               ChannelInterpretation::Speakers)
   , mDOMStream(DOMAudioNodeMediaStream::CreateTrackUnionStream(GetOwner(),
-                                                               this,
-                                                               DOMMediaStream::HINT_CONTENTS_AUDIO))
+                                                               this))
 {
   TrackUnionStream* tus = static_cast<TrackUnionStream*>(mDOMStream->GetStream());
   MOZ_ASSERT(tus == mDOMStream->GetStream()->AsProcessedStream());

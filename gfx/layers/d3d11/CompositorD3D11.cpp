@@ -298,20 +298,24 @@ CompositorD3D11::Initialize()
       return false;
     }
 
-    CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM, 1, 1, 1, 1,
-                                D3D11_BIND_SHADER_RESOURCE |
-                                D3D11_BIND_RENDER_TARGET);
-    desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    if (!gfxWindowsPlatform::GetPlatform()->IsWARP()) {
+      // It's okay to do this on Windows 8. But for now we'll just bail
+      // whenever we're using WARP.
+      CD3D11_TEXTURE2D_DESC desc(DXGI_FORMAT_B8G8R8A8_UNORM, 1, 1, 1, 1,
+                                 D3D11_BIND_SHADER_RESOURCE |
+                                 D3D11_BIND_RENDER_TARGET);
+      desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-    RefPtr<ID3D11Texture2D> texture;
-    hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
-    if (FAILED(hr)) {
-      return false;
-    }
+      RefPtr<ID3D11Texture2D> texture;
+      hr = mDevice->CreateTexture2D(&desc, nullptr, byRef(texture));
+      if (FAILED(hr)) {
+        return false;
+      }
 
-    hr = texture->QueryInterface((IDXGIResource**)byRef(mAttachments->mSyncTexture));
-    if (FAILED(hr)) {
-      return false;
+      hr = texture->QueryInterface((IDXGIResource**)byRef(mAttachments->mSyncTexture));
+      if (FAILED(hr)) {
+        return false;
+      }
     }
     
     //
@@ -1045,7 +1049,7 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // this is important because resizing our buffers when mimised will fail and
   // cause a crash when we're restored.
   NS_ASSERTION(mHwnd, "Couldn't find an HWND when initialising?");
-  if (::IsIconic(mHwnd) || gfxPlatform::GetPlatform()->DidRenderingDeviceReset()) {
+  if (::IsIconic(mHwnd) || mDevice->GetDeviceRemovedReason() != S_OK) {
     *aRenderBoundsOut = Rect();
     return;
   }
@@ -1101,21 +1105,27 @@ CompositorD3D11::BeginFrame(const nsIntRegion& aInvalidRegion,
   // ClearRect will set the correct blend state for us.
   ClearRect(Rect(invalidRect.x, invalidRect.y, invalidRect.width, invalidRect.height));
 
-  RefPtr<IDXGIKeyedMutex> mutex;
-  mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)byRef(mutex));
+  if (mAttachments->mSyncTexture) {
+    RefPtr<IDXGIKeyedMutex> mutex;
+    mAttachments->mSyncTexture->QueryInterface((IDXGIKeyedMutex**)byRef(mutex));
 
-  MOZ_ASSERT(mutex);
-  HRESULT hr = mutex->AcquireSync(0, 10000);
-  if (hr == WAIT_TIMEOUT) {
-    MOZ_CRASH();
+    MOZ_ASSERT(mutex);
+    HRESULT hr = mutex->AcquireSync(0, 10000);
+    if (hr == WAIT_TIMEOUT) {
+      MOZ_CRASH();
+    }
+
+    mutex->ReleaseSync(0);
   }
-
-  mutex->ReleaseSync(0);
 }
 
 void
 CompositorD3D11::EndFrame()
 {
+  if (!mDefaultRT) {
+    return;
+  }
+
   mContext->Flush();
 
   nsIntSize oldSize = mSize;
@@ -1256,6 +1266,13 @@ CompositorD3D11::UpdateRenderTarget()
   nsRefPtr<ID3D11Texture2D> backBuf;
 
   hr = mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)backBuf.StartAssignment());
+  if (hr == DXGI_ERROR_INVALID_CALL) {
+    // This happens on some GPUs/drivers when there's a TDR.
+    if (mDevice->GetDeviceRemovedReason() != S_OK) {
+      gfxCriticalError() << "GetBuffer returned invalid call!";
+      return;
+    }
+  }
   if (Failed(hr)) {
     return;
   }

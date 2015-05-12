@@ -20,12 +20,8 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PorterDuff.Mode;
-import android.graphics.PorterDuffXfermode;
 import android.graphics.Region;
-import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -75,7 +71,7 @@ public class TabStripItemView extends ThemedLinearLayout
         backgroundDrawable = new ResizablePathDrawable(new TabCurveShape(), tabColors);
         setBackgroundDrawable(backgroundDrawable);
 
-        faviconSize = res.getDimensionPixelSize(R.dimen.new_tablet_tab_strip_favicon_size);
+        faviconSize = res.getDimensionPixelSize(R.dimen.browser_toolbar_favicon_size);
 
         LayoutInflater.from(context).inflate(R.layout.tab_strip_item_view, this);
         setOnClickListener(new View.OnClickListener() {
@@ -213,7 +209,7 @@ public class TabStripItemView extends ThemedLinearLayout
     private void updateFavicon(final Bitmap favicon) {
         if (favicon == null) {
             lastFavicon = null;
-            faviconView.setImageResource(R.drawable.new_tablet_default_favicon);
+            faviconView.setImageResource(R.drawable.toolbar_favicon_default);
             return;
         }
         if (favicon == lastFavicon) {

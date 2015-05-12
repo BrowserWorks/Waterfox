@@ -9,6 +9,7 @@
 #include "AsyncPanZoomController.h"                     // for AsyncPanZoomController
 #include "LayersLogging.h"                              // for Stringify
 #include "mozilla/gfx/Point.h"                          // for Point4D
+#include "mozilla/layers/APZThreadUtils.h"              // for AssertOnCompositorThread
 #include "mozilla/layers/AsyncCompositionManager.h"     // for ViewTransform::operator Matrix4x4()
 #include "nsPrintfCString.h"                            // for nsPrintfCString
 #include "UnitTransforms.h"                             // for ViewAs
@@ -20,6 +21,7 @@ HitTestingTreeNode::HitTestingTreeNode(AsyncPanZoomController* aApzc,
                                        bool aIsPrimaryHolder)
   : mApzc(aApzc)
   , mIsPrimaryApzcHolder(aIsPrimaryHolder)
+  , mOverride(EventRegionsOverride::NoOverride)
 {
   if (mIsPrimaryApzcHolder) {
     MOZ_ASSERT(mApzc);
@@ -43,7 +45,7 @@ HitTestingTreeNode::~HitTestingTreeNode()
 void
 HitTestingTreeNode::Destroy()
 {
-  AsyncPanZoomController::AssertOnCompositorThread();
+  APZThreadUtils::AssertOnCompositorThread();
 
   mPrevSibling = nullptr;
   mLastChild = nullptr;
@@ -154,11 +156,13 @@ HitTestingTreeNode::IsPrimaryHolder() const
 void
 HitTestingTreeNode::SetHitTestData(const EventRegions& aRegions,
                                    const gfx::Matrix4x4& aTransform,
-                                   const Maybe<nsIntRegion>& aClipRegion)
+                                   const Maybe<nsIntRegion>& aClipRegion,
+                                   const EventRegionsOverride& aOverride)
 {
   mEventRegions = aRegions;
   mTransform = aTransform;
   mClipRegion = aClipRegion;
+  mOverride = aOverride;
 }
 
 bool
@@ -174,7 +178,7 @@ HitTestingTreeNode::Untransform(const ParentLayerPoint& aPoint) const
   // convert into Layer coordinate space
   gfx::Matrix4x4 localTransform = mTransform;
   if (mApzc) {
-    localTransform = localTransform * gfx::Matrix4x4(mApzc->GetCurrentAsyncTransform());
+    localTransform = localTransform * mApzc->GetCurrentAsyncTransformWithOverscroll();
   }
   gfx::Point4D point = localTransform.Inverse().ProjectPoint(aPoint.ToUnknownPoint());
   return point.HasPositiveWCoord()
@@ -188,6 +192,10 @@ HitTestingTreeNode::HitTest(const ParentLayerPoint& aPoint) const
   // This should only ever get called if the point is inside the clip region
   // for this node.
   MOZ_ASSERT(!IsOutsideClip(aPoint));
+
+  if (mOverride & EventRegionsOverride::ForceEmptyHitRegion) {
+    return HitTestResult::HitNothing;
+  }
 
   // When event regions are disabled and we have an APZC on this node, we are
   // actually storing the touch-sensitive section of the composition bounds in
@@ -209,10 +217,18 @@ HitTestingTreeNode::HitTest(const ParentLayerPoint& aPoint) const
   if (!mEventRegions.mHitRegion.Contains(point.x, point.y)) {
     return HitTestResult::HitNothing;
   }
-  if (mEventRegions.mDispatchToContentHitRegion.Contains(point.x, point.y)) {
+  if ((mOverride & EventRegionsOverride::ForceDispatchToContent) ||
+      mEventRegions.mDispatchToContentHitRegion.Contains(point.x, point.y))
+  {
     return HitTestResult::HitDispatchToContentRegion;
   }
   return HitTestResult::HitLayer;
+}
+
+EventRegionsOverride
+HitTestingTreeNode::GetEventRegionsOverride() const
+{
+  return mOverride;
 }
 
 void
@@ -221,8 +237,10 @@ HitTestingTreeNode::Dump(const char* aPrefix) const
   if (mPrevSibling) {
     mPrevSibling->Dump(aPrefix);
   }
-  printf_stderr("%sHitTestingTreeNode (%p) APZC (%p) g=(%s) r=(%s) t=(%s) c=(%s)\n",
+  printf_stderr("%sHitTestingTreeNode (%p) APZC (%p) g=(%s) %s%sr=(%s) t=(%s) c=(%s)\n",
     aPrefix, this, mApzc.get(), mApzc ? Stringify(mApzc->GetGuid()).c_str() : "",
+    (mOverride & EventRegionsOverride::ForceDispatchToContent) ? "fdtc " : "",
+    (mOverride & EventRegionsOverride::ForceEmptyHitRegion) ? "fehr " : "",
     Stringify(mEventRegions).c_str(), Stringify(mTransform).c_str(),
     mClipRegion ? Stringify(mClipRegion.ref()).c_str() : "none");
   if (mLastChild) {

@@ -35,8 +35,8 @@
 using namespace js;
 using namespace js::irregexp;
 
-RegExpStackScope::RegExpStackScope(JSRuntime *rt)
-  : regexp_stack(&rt->mainThread.regexpStack)
+RegExpStackScope::RegExpStackScope(JSRuntime* rt)
+  : regexp_stack(&rt->regexpStack)
 {}
 
 RegExpStackScope::~RegExpStackScope()
@@ -45,9 +45,9 @@ RegExpStackScope::~RegExpStackScope()
 }
 
 int
-irregexp::GrowBacktrackStack(JSRuntime *rt)
+irregexp::GrowBacktrackStack(JSRuntime* rt)
 {
-    return rt->mainThread.regexpStack.grow();
+    return rt->regexpStack.grow();
 }
 
 RegExpStack::RegExpStack()
@@ -90,7 +90,7 @@ RegExpStack::grow()
     if (newSize > kMaximumStackSize)
         return false;
 
-    void *newBase = js_realloc(base_, newSize);
+    void* newBase = js_realloc(base_, newSize);
     if (!newBase)
         return false;
 

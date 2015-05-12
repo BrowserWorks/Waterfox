@@ -16,7 +16,7 @@ const KNOWN_SOURCE_GROUPS = {
   "Add-on SDK": "resource://gre/modules/commonjs/",
 };
 
-KNOWN_SOURCE_GROUPS['evals'] = "eval";
+KNOWN_SOURCE_GROUPS[L10N.getStr("evalGroupLabel")] = "eval";
 
 /**
  * Functions handling the sources UI.
@@ -3332,15 +3332,10 @@ LineResults.prototype = {
 
 /**
  * A generator-iterator over the global, source or line results.
- *
- * The method name depends on whether symbols are enabled in
- * this build. If so, use Symbol.iterator; otherwise "@@iterator".
  */
-const JS_HAS_SYMBOLS = typeof Symbol === "function";
-const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
-GlobalResults.prototype[ITERATOR_SYMBOL] =
-SourceResults.prototype[ITERATOR_SYMBOL] =
-LineResults.prototype[ITERATOR_SYMBOL] = function*() {
+GlobalResults.prototype[Symbol.iterator] =
+SourceResults.prototype[Symbol.iterator] =
+LineResults.prototype[Symbol.iterator] = function*() {
   yield* this._store;
 };
 

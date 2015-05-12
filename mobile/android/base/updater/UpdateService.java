@@ -27,6 +27,8 @@ import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.net.wifi.WifiManager;
+import android.net.wifi.WifiManager.WifiLock;
 import android.os.Environment;
 import android.support.v4.net.ConnectivityManagerCompat;
 import android.support.v4.app.NotificationCompat;
@@ -78,6 +80,8 @@ public class UpdateService extends IntentService {
     private NotificationManager mNotificationManager;
     private ConnectivityManager mConnectivityManager;
     private Builder mBuilder;
+
+    private volatile WifiLock mWifiLock;
 
     private boolean mDownloading;
     private boolean mCancelDownload;
@@ -140,6 +144,8 @@ public class UpdateService extends IntentService {
         mPrefs = getSharedPreferences(PREFS_NAME, 0);
         mNotificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mConnectivityManager = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        mWifiLock = ((WifiManager)getSystemService(Context.WIFI_SERVICE))
+                    .createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, PREFS_NAME);
         mCancelDownload = false;
     }
 
@@ -147,6 +153,10 @@ public class UpdateService extends IntentService {
     public void onDestroy() {
         mCrashHandler.unregister();
         mCrashHandler = null;
+
+        if (mWifiLock.isHeld()) {
+            mWifiLock.release();
+        }
     }
 
     @Override
@@ -162,11 +172,6 @@ public class UpdateService extends IntentService {
         } else if (UpdateServiceHelper.ACTION_CANCEL_DOWNLOAD.equals(intent.getAction())) {
             mCancelDownload = true;
         } else {
-            if (!UpdateServiceHelper.ACTION_APPLY_UPDATE.equals(intent.getAction())) {
-                // Delete the update package used to install the current version.
-                deleteUpdatePackage(getLastFileName());
-            }
-
             super.onStartCommand(intent, flags, startId);
         }
 
@@ -528,6 +533,11 @@ public class UpdateService extends IntentService {
             }
         }
 
+        if (!info.buildID.equals(getLastBuildID())) {
+            // Delete the previous package when a new version becomes available.
+            deleteUpdatePackage(getLastFileName());
+        }
+
         Log.i(LOGTAG, "downloading update package");
         sendCheckUpdateResult(CheckUpdateResult.DOWNLOADING);
 
@@ -539,6 +549,12 @@ public class UpdateService extends IntentService {
         showDownloadNotification(downloadFile);
 
         try {
+            NetworkInfo netInfo = mConnectivityManager.getActiveNetworkInfo();
+            if (netInfo != null && netInfo.isConnected() &&
+                netInfo.getType() == ConnectivityManager.TYPE_WIFI) {
+                mWifiLock.acquire();
+            }
+
             URLConnection conn = openConnectionWithProxy(info.uri);
             int length = conn.getContentLength();
 
@@ -593,6 +609,10 @@ public class UpdateService extends IntentService {
             } catch (java.io.IOException e) {}
 
             mDownloading = false;
+
+            if (mWifiLock.isHeld()) {
+                mWifiLock.release();
+            }
         }
     }
 

@@ -13,11 +13,11 @@
 #include "nsWrapperCache.h"
 #include "AccessCheck.h"
 #include "nsJSUtils.h"
-#include "JavaScriptParent.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/dom/BindingUtils.h"
 #include "mozilla/dom/DOMException.h"
 #include "mozilla/dom/DOMExceptionBinding.h"
+#include "mozilla/jsipc/CrossProcessObjectWrappers.h"
 
 #include "jsapi.h"
 #include "jsfriendapi.h"
@@ -86,7 +86,7 @@ bool xpc_IsReportableErrorCode(nsresult code)
 // PendingResult.
 class MOZ_STACK_CLASS AutoSavePendingResult {
 public:
-    explicit AutoSavePendingResult(XPCContext *xpcc) :
+    explicit AutoSavePendingResult(XPCContext* xpcc) :
         mXPCContext(xpcc)
     {
         // Save any existing pending result and reset to NS_OK for this invocation.
@@ -97,7 +97,7 @@ public:
         mXPCContext->SetPendingResult(mSavedResult);
     }
 private:
-    XPCContext *mXPCContext;
+    XPCContext* mXPCContext;
     nsresult mSavedResult;
 };
 
@@ -253,7 +253,7 @@ nsXPCWrappedJSClass::CallQueryInterfaceOnJSObject(JSContext* cx,
                 if (jsexception.isObject()) {
                     // XPConnect may have constructed an object to represent a
                     // C++ QI failure. See if that is the case.
-                    Exception *e = nullptr;
+                    Exception* e = nullptr;
                     UNWRAP_OBJECT(Exception, &jsexception.toObject(), e);
 
                     if (e &&
@@ -508,8 +508,13 @@ nsXPCWrappedJSClass::DelegatedQueryInterface(nsXPCWrappedJS* self,
 
     // QI on an XPCWrappedJS can run script, so we need an AutoEntryScript.
     // This is inherently Gecko-specific.
+    // We check both nativeGlobal and nativeGlobal->GetGlobalJSObject() even
+    // though we have derived nativeGlobal from the JS global, because we know
+    // there are cases where this can happen. See bug 1094953.
     nsIGlobalObject* nativeGlobal =
       NativeGlobal(js::GetGlobalForObjectCrossCompartment(self->GetJSObject()));
+    NS_ENSURE_TRUE(nativeGlobal, NS_ERROR_FAILURE);
+    NS_ENSURE_TRUE(nativeGlobal->GetGlobalJSObject(), NS_ERROR_FAILURE);
     AutoEntryScript aes(nativeGlobal, /* aIsMainThread = */ true);
     XPCCallContext ccx(NATIVE_CALLER, aes.cx());
     if (!ccx.IsValid()) {
@@ -587,7 +592,7 @@ nsXPCWrappedJSClass::GetRootJSObject(JSContext* cx, JSObject* aJSObjArg)
     JSObject* result = CallQueryInterfaceOnJSObject(cx, aJSObj,
                                                     NS_GET_IID(nsISupports));
     if (!result)
-        return aJSObj;
+        result = aJSObj;
     JSObject* inner = js::UncheckedUnwrap(result);
     if (inner)
         return inner;
@@ -913,8 +918,8 @@ nsXPCWrappedJSClass::CallMethod(nsXPCWrappedJS* wrapper, uint16_t methodIndex,
     if (!ccx.IsValid())
         return retval;
 
-    XPCContext *xpcc = ccx.GetXPCContext();
-    JSContext *cx = ccx.GetJSContext();
+    XPCContext* xpcc = ccx.GetXPCContext();
+    JSContext* cx = ccx.GetJSContext();
 
     if (!cx || !xpcc || !IsReflectable(methodIndex))
         return NS_ERROR_FAILURE;
@@ -922,7 +927,7 @@ nsXPCWrappedJSClass::CallMethod(nsXPCWrappedJS* wrapper, uint16_t methodIndex,
     // [implicit_jscontext] and [optional_argc] have a different calling
     // convention, which we don't support for JS-implemented components.
     if (info->WantsOptArgc() || info->WantsContext()) {
-        const char *str = "IDL methods marked with [implicit_jscontext] "
+        const char* str = "IDL methods marked with [implicit_jscontext] "
                           "or [optional_argc] may not be implemented in JS";
         // Throw and warn for good measure.
         JS_ReportError(cx, str);
@@ -1119,7 +1124,7 @@ nsXPCWrappedJSClass::CallMethod(nsXPCWrappedJS* wrapper, uint16_t methodIndex,
 
         if (param.IsOut() || param.IsDipper()) {
             // create an 'out' object
-            RootedObject out_obj(cx, NewOutObject(cx, obj));
+            RootedObject out_obj(cx, NewOutObject(cx));
             if (!out_obj) {
                 retval = NS_ERROR_OUT_OF_MEMORY;
                 goto pre_call_clean_up;
@@ -1436,7 +1441,7 @@ nsXPCWrappedJSClass::GetInterfaceName()
 }
 
 static void
-FinalizeStub(JSFreeOp *fop, JSObject *obj)
+FinalizeStub(JSFreeOp* fop, JSObject* obj)
 {
 }
 
@@ -1464,10 +1469,9 @@ xpc::IsOutObject(JSContext* cx, JSObject* obj)
 }
 
 JSObject*
-xpc::NewOutObject(JSContext* cx, JSObject* scope)
+xpc::NewOutObject(JSContext* cx)
 {
-    RootedObject global(cx, JS_GetGlobalForObject(cx, scope));
-    return JS_NewObject(cx, nullptr, NullPtr(), global);
+    return JS_NewObject(cx, &XPCOutParamClass);
 }
 
 

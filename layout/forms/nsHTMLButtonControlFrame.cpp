@@ -314,11 +314,11 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
   nsHTMLReflowMetrics contentsDesiredSize(aButtonReflowState);
   childPos.B(wm) = focusPadding.BStart(wm) + clbp.BStart(wm);
 
-  // We just pass 0 for coordinates here, as the child will be repositioned
+  // We just pass 0 for containerWidth here, as the child will be repositioned
   // later by FinishReflowChild.
   ReflowChild(aFirstKid, aPresContext,
               contentsDesiredSize, contentsReflowState,
-              0, 0, NS_FRAME_NO_MOVE_FRAME, contentsReflowStatus);
+              wm, childPos, 0, 0, contentsReflowStatus);
   MOZ_ASSERT(NS_FRAME_IS_COMPLETE(contentsReflowStatus),
              "We gave button-contents frame unconstrained available height, "
              "so it should be complete");
@@ -361,11 +361,9 @@ nsHTMLButtonControlFrame::ReflowButtonContents(nsPresContext* aPresContext,
     clbp.LeftRight(wm) + focusPadding.LeftRight(wm);
 
   // Place the child
-  nsPoint physicalPos =
-    childPos.GetPhysicalPoint(wm, containerWidth - contentsDesiredSize.Width());
   FinishReflowChild(aFirstKid, aPresContext,
                     contentsDesiredSize, &contentsReflowState,
-                    physicalPos.x, physicalPos.y, 0);
+                    wm, childPos, containerWidth, 0);
 
   // Make sure we have a useful 'ascent' value for the child
   if (contentsDesiredSize.BlockStartAscent() ==

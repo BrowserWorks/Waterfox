@@ -2202,7 +2202,7 @@ public:
 
   bool ToString(nsAString& aOut)
   {
-    if (!aOut.SetCapacity(mLength, fallible_t())) {
+    if (!aOut.SetCapacity(mLength, fallible)) {
       return false;
     }
 
@@ -2548,16 +2548,12 @@ ShouldEscape(nsIContent* aParent)
 }
 
 static inline bool
-IsVoidTag(Element* aElement)
+IsVoidTag(nsIAtom* aTag)
 {
-  if (!aElement->IsHTML()) {
-    return false;
-  }
-
   static const nsIAtom* voidElements[] = {
     nsGkAtoms::area, nsGkAtoms::base, nsGkAtoms::basefont,
     nsGkAtoms::bgsound, nsGkAtoms::br, nsGkAtoms::col,
-    nsGkAtoms::command, nsGkAtoms::embed, nsGkAtoms::frame,
+    nsGkAtoms::embed, nsGkAtoms::frame,
     nsGkAtoms::hr, nsGkAtoms::img, nsGkAtoms::input,
     nsGkAtoms::keygen, nsGkAtoms::link, nsGkAtoms::meta,
     nsGkAtoms::param, nsGkAtoms::source, nsGkAtoms::track,
@@ -2572,16 +2568,31 @@ IsVoidTag(Element* aElement)
       sFilter.add(voidElements[i]);
     }
   }
-  
-  nsIAtom* tag = aElement->Tag();
-  if (sFilter.mightContain(tag)) {
+
+  if (sFilter.mightContain(aTag)) {
     for (uint32_t i = 0; i < ArrayLength(voidElements); ++i) {
-      if (tag == voidElements[i]) {
+      if (aTag == voidElements[i]) {
         return true;
       }
     }
   }
   return false;
+}
+
+static inline bool
+IsVoidTag(Element* aElement)
+{
+  if (!aElement->IsHTML()) {
+    return false;
+  }
+  return IsVoidTag(aElement->Tag());
+}
+
+/* static */
+bool
+FragmentOrElement::IsHTMLVoid(nsIAtom* aLocalName)
+{
+  return aLocalName && IsVoidTag(aLocalName);
 }
 
 static bool

@@ -130,16 +130,10 @@ static nsresult ReportParseError(nsIFrame* aFrame, const char16_t* aAttribute,
 // stored in the property table. Row/Cell frames query the property table
 // to see what values apply to them.
 
-static void
-DestroyStylePropertyList(void* aPropertyValue)
-{
-  delete static_cast<nsTArray<int8_t>*>(aPropertyValue);
-}
-
-NS_DECLARE_FRAME_PROPERTY(RowAlignProperty, DestroyStylePropertyList)
-NS_DECLARE_FRAME_PROPERTY(RowLinesProperty, DestroyStylePropertyList)
-NS_DECLARE_FRAME_PROPERTY(ColumnAlignProperty, DestroyStylePropertyList)
-NS_DECLARE_FRAME_PROPERTY(ColumnLinesProperty, DestroyStylePropertyList)
+NS_DECLARE_FRAME_PROPERTY(RowAlignProperty, DeleteValue<nsTArray<int8_t>>)
+NS_DECLARE_FRAME_PROPERTY(RowLinesProperty, DeleteValue<nsTArray<int8_t>>)
+NS_DECLARE_FRAME_PROPERTY(ColumnAlignProperty, DeleteValue<nsTArray<int8_t>>)
+NS_DECLARE_FRAME_PROPERTY(ColumnLinesProperty, DeleteValue<nsTArray<int8_t>>)
 
 static const FramePropertyDescriptor*
 AttributeToProperty(nsIAtom* aAttribute)
@@ -273,7 +267,7 @@ public:
   {
   }
 
-  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) MOZ_OVERRIDE
+  virtual nsRect GetBounds(nsDisplayListBuilder* aBuilder, bool* aSnap) override
   {
     *aSnap = true;
     nsStyleBorder styleBorder = *mFrame->StyleBorder();
@@ -285,7 +279,7 @@ public:
     return bounds;
   }
 
-  virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) MOZ_OVERRIDE
+  virtual void Paint(nsDisplayListBuilder* aBuilder, nsRenderingContext* aCtx) override
   {
     nsStyleBorder styleBorder = *mFrame->StyleBorder();
     nsMathMLmtdFrame* frame = static_cast<nsMathMLmtdFrame*>(mFrame);

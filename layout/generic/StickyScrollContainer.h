@@ -22,7 +22,7 @@ class nsIScrollableFrame;
 
 namespace mozilla {
 
-class StickyScrollContainer MOZ_FINAL : public nsIScrollPositionListener
+class StickyScrollContainer final : public nsIScrollPositionListener
 {
 public:
   /**
@@ -83,12 +83,13 @@ public:
   void UpdatePositions(nsPoint aScrollPosition, nsIFrame* aSubtreeRoot);
 
   // nsIScrollPositionListener
-  virtual void ScrollPositionWillChange(nscoord aX, nscoord aY) MOZ_OVERRIDE;
-  virtual void ScrollPositionDidChange(nscoord aX, nscoord aY) MOZ_OVERRIDE;
+  virtual void ScrollPositionWillChange(nscoord aX, nscoord aY) override;
+  virtual void ScrollPositionDidChange(nscoord aX, nscoord aY) override;
+
+  ~StickyScrollContainer();
 
 private:
   explicit StickyScrollContainer(nsIScrollableFrame* aScrollFrame);
-  ~StickyScrollContainer();
 
   /**
    * Compute two rectangles that determine sticky positioning: |aStick|, based
@@ -98,8 +99,6 @@ private:
    */
   void ComputeStickyLimits(nsIFrame* aFrame, nsRect* aStick,
                            nsRect* aContain) const;
-
-  friend void DestroyStickyScrollContainer(void* aPropertyValue);
 
   nsIScrollableFrame* const mScrollFrame;
   nsTArray<nsIFrame*> mFrames;

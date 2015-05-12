@@ -183,7 +183,7 @@ this.Utils = {
    */
   deferGetSet: function Utils_deferGetSet(obj, defer, prop) {
     if (Array.isArray(prop))
-      return prop.map(function(prop) Utils.deferGetSet(obj, defer, prop));
+      return prop.map(prop => Utils.deferGetSet(obj, defer, prop));
 
     let prot = obj.prototype;
 
@@ -204,7 +204,7 @@ this.Utils = {
 
   lazyStrings: function Weave_lazyStrings(name) {
     let bundle = "chrome://weave/locale/services/" + name + ".properties";
-    return function() new StringBundle(bundle);
+    return () => new StringBundle(bundle);
   },
 
   deepEquals: function eq(a, b) {
@@ -507,7 +507,7 @@ this.Utils = {
   arraySub: function arraySub(minuend, subtrahend) {
     if (!minuend.length || !subtrahend.length)
       return minuend;
-    return minuend.filter(function(i) subtrahend.indexOf(i) == -1);
+    return minuend.filter(i => subtrahend.indexOf(i) == -1);
   },
 
   /**
@@ -640,6 +640,39 @@ this.Utils = {
     }
     return this._syncCredentialsHostsFxA = result;
   },
+
+  getDefaultDeviceName() {
+    // Generate a client name if we don't have a useful one yet
+    let env = Cc["@mozilla.org/process/environment;1"]
+                .getService(Ci.nsIEnvironment);
+    let user = env.get("USER") || env.get("USERNAME") ||
+               Svc.Prefs.get("account") || Svc.Prefs.get("username");
+    // A little hack for people using the the moz-build environment on Windows
+    // which sets USER to the literal "%USERNAME%" (yes, really)
+    if (user == "%USERNAME%" && env.get("USERNAME")) {
+      user = env.get("USERNAME");
+    }
+
+    let brand = new StringBundle("chrome://branding/locale/brand.properties");
+    let brandName = brand.get("brandShortName");
+
+    let appName;
+    try {
+      let syncStrings = new StringBundle("chrome://browser/locale/sync.properties");
+      appName = syncStrings.getFormattedString("sync.defaultAccountApplication", [brandName]);
+    } catch (ex) {}
+    appName = appName || brandName;
+
+    let system =
+      // 'device' is defined on unix systems
+      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("device") ||
+      // hostname of the system, usually assigned by the user or admin
+      Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).get("host") ||
+      // fall back on ua info string
+      Cc["@mozilla.org/network/protocol;1?name=http"].getService(Ci.nsIHttpProtocolHandler).oscpu;
+
+    return Str.sync.get("client.name2", [user, appName, system]);
+  }
 };
 
 XPCOMUtils.defineLazyGetter(Utils, "_utf8Converter", function() {

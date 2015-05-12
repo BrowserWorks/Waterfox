@@ -27,7 +27,7 @@ add_task(function () {
     });
   });
 
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 
    // Ensure we wait for the default bookmarks import.
   let bookmarksDeferred = Promise.defer();
@@ -38,7 +38,7 @@ add_task(function () {
   yield bookmarksDeferred.promise;
 
   // Create a handful of history items with various visit types
-  yield promiseAddVisits([
+  yield PlacesTestUtils.addVisits([
     { uri: visitedURIs[0], transition: TRANSITION_LINK },
     { uri: visitedURIs[1], transition: TRANSITION_TYPED },
     { uri: visitedURIs[2], transition: TRANSITION_BOOKMARK },

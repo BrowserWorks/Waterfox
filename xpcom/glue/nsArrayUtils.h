@@ -11,7 +11,7 @@
 #include "nsIArray.h"
 
 // helper class for do_QueryElementAt
-class nsQueryArrayElementAt : public nsCOMPtr_helper
+class MOZ_STACK_CLASS nsQueryArrayElementAt : public nsCOMPtr_helper
 {
 public:
   nsQueryArrayElementAt(nsIArray* aArray, uint32_t aIndex,
@@ -22,10 +22,11 @@ public:
   {
   }
 
-  virtual nsresult NS_FASTCALL operator()(const nsIID& aIID, void**) const;
+  virtual nsresult NS_FASTCALL operator()(const nsIID& aIID, void**) const
+    override;
 
 private:
-  nsIArray*  mArray;
+  nsIArray* MOZ_NON_OWNING_REF mArray;
   uint32_t   mIndex;
   nsresult*  mErrorPtr;
 };

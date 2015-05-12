@@ -127,7 +127,7 @@ class RestoreSelectionState;
 
 class nsTextEditorState : public mozilla::SupportsWeakPtr<nsTextEditorState> {
 public:
-  MOZ_DECLARE_REFCOUNTED_TYPENAME(nsTextEditorState)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(nsTextEditorState)
   explicit nsTextEditorState(nsITextControlElement* aOwningElement);
   ~nsTextEditorState();
 
@@ -142,8 +142,9 @@ public:
   nsresult PrepareEditor(const nsAString *aValue = nullptr);
   void InitializeKeyboardEventListeners();
 
-  void SetValue(const nsAString& aValue, bool aUserInput,
-                bool aSetValueAsChanged);
+  MOZ_WARN_UNUSED_RESULT bool SetValue(const nsAString& aValue,
+                                       bool aUserInput,
+                                       bool aSetValueAsChanged);
   void GetValue(nsAString& aValue, bool aIgnoreWrap) const;
   void EmptyValue() { if (mValue) mValue->Truncate(); }
   bool IsEmpty() const { return mValue ? mValue->IsEmpty() : true; }
@@ -275,7 +276,7 @@ private:
   nsCOMPtr<mozilla::dom::Element> mRootNode;
   nsCOMPtr<mozilla::dom::Element> mPlaceholderDiv;
   nsTextControlFrame* mBoundFrame;
-  nsTextInputListener* mTextListener;
+  nsRefPtr<nsTextInputListener> mTextListener;
   nsAutoPtr<nsCString> mValue;
   nsRefPtr<nsAnonDivObserver> mMutationObserver;
   mutable nsString mCachedValue; // Caches non-hard-wrapped value on a multiline control.

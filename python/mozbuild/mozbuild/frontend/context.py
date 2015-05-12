@@ -444,12 +444,37 @@ VARIABLES = {
         and reduce the debug info size.
         """, None),
 
-    'GENERATED_FILES': (StrictOrderingOnAppendList, list,
+    'GENERATED_FILES': (StrictOrderingOnAppendListWithFlagsFactory({
+                'script': unicode,
+                'inputs': list }), list,
         """Generic generated files.
 
-        This variable contains a list of generate files for the build system
-        to generate at export time. The rules for those files still live in
-        Makefile.in.
+        This variable contains a list of files for the build system to
+        generate at export time. The generation method may be declared
+        with optional ``script`` and ``inputs`` flags on individual entries.
+        If the optional ``script`` flag is not present on an entry, it
+        is assumed that rules for generating the file are present in
+        the associated Makefile.in.
+
+        Example::
+
+           GENERATED_FILES += ['bar.c', 'baz.c', 'foo.c']
+           bar = GENERATED_FILES['bar.c']
+           bar.script = 'generate.py'
+           bar.inputs = ['datafile-for-bar']
+           foo = GENERATED_FILES['foo.c']
+           foo.script = 'generate.py'
+           foo.inputs = ['datafile-for-foo']
+
+        This definition will generate bar.c by calling the main method of
+        generate.py with a open (for writing) file object for bar.c, and
+        the string ``datafile-for-bar``. In a similar fashion, the main
+        method of generate.py will also be called with an open
+        (for writing) file object for foo.c and the string
+        ``datafile-for-foo``. Please note that only string arguments are
+        supported for passing to scripts, and that all arguments provided
+        to the script should be filenames relative to the directory in which
+        the moz.build file is located.
         """, 'export'),
 
     'DEFINES': (OrderedDict, dict,
@@ -646,6 +671,13 @@ VARIABLES = {
 
         This variable should not be populated directly. Instead, it should
         populated by calling add_java_jar().
+        """, 'libs'),
+
+    'JS_PREFERENCE_FILES': (StrictOrderingOnAppendList, list,
+        """Exported javascript files.
+
+        A list of files copied into the dist directory for packaging and installation.
+        Path will be defined for gre or application prefs dir based on what is building.
         """, 'libs'),
 
     'LIBRARY_DEFINES': (OrderedDict, dict,
@@ -889,7 +921,7 @@ VARIABLES = {
         This is a list of files that define XPCOM interface definitions.
         Entries must be files that exist. Entries are almost certainly ``.idl``
         files.
-        """, 'misc'),
+        """, 'export'),
 
     'XPIDL_MODULE': (unicode, unicode,
         """XPCOM Interface Definition Module Name.

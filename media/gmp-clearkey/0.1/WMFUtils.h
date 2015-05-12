@@ -42,6 +42,8 @@ void LOG(const char* format, ...);
 extern "C" const CLSID CLSID_CMSAACDecMFT;
 #endif
 
+extern "C" const CLSID CLSID_CMSH264DecMFT;
+
 namespace wmf {
 
 // Reimplementation of CComPtr to reduce dependence on system
@@ -120,7 +122,7 @@ typedef int64_t Microseconds;
 #define GMP_SUCCEEDED(x) ((x) == GMPNoErr)
 #define GMP_FAILED(x) ((x) != GMPNoErr)
 
-#define MFPLAT_FUNC(_func) \
+#define MFPLAT_FUNC(_func, _dllname) \
   extern decltype(::_func)* _func;
 #include "WMFSymbols.h"
 #undef MFPLAT_FUNC
@@ -262,6 +264,15 @@ HRESULT
 CreateMFT(const CLSID& clsid,
           const char* aDllName,
           CComPtr<IMFTransform>& aOutMFT);
+
+enum CodecType {
+  H264,
+  AAC,
+};
+
+// Returns the name of the DLL that is needed to decode H.264 or AAC on
+// the given windows version we're running on.
+const char* WMFDecoderDllNameFor(CodecType aCodec);
 
 } // namespace wmf
 

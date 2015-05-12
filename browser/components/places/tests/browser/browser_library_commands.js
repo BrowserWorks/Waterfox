@@ -12,14 +12,14 @@ const TEST_URI = NetUtil.newURI("http://www.mozilla.org/");
 
 registerCleanupFunction(function* () {
   yield PlacesUtils.bookmarks.eraseEverything();
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function* test_date_container() {
   let library = yield promiseLibrary();
   info("Ensure date containers under History cannot be cut but can be deleted");
 
-  yield promiseAddVisits(TEST_URI);
+  yield PlacesTestUtils.addVisits(TEST_URI);
 
   // Select and open the left pane "History" query.
   let PO = library.PlacesOrganizer;

@@ -11,11 +11,11 @@ BEGIN_TEST(testIsInsideNursery)
 {
     /* Non-GC things are never inside the nursery. */
     CHECK(!rt->gc.nursery.isInside(rt));
-    CHECK(!rt->gc.nursery.isInside((void *)nullptr));
+    CHECK(!rt->gc.nursery.isInside((void*)nullptr));
 
     JS_GC(rt);
 
-    JS::RootedObject object(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject object(cx, JS_NewPlainObject(cx));
 
     /* Objects are initially allocated in the nursery. */
     CHECK(js::gc::IsInsideNursery(object));

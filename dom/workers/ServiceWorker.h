@@ -21,7 +21,10 @@ namespace workers {
 
 class SharedWorker;
 
-class ServiceWorker MOZ_FINAL : public DOMEventTargetHelper
+bool
+ServiceWorkerVisible(JSContext* aCx, JSObject* aObj);
+
+class ServiceWorker final : public DOMEventTargetHelper
 {
   friend class RuntimeService;
 public:
@@ -32,7 +35,7 @@ public:
   IMPL_EVENT_HANDLER(error)
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx) override;
 
   ServiceWorkerState
   State() const
@@ -41,16 +44,31 @@ public:
   }
 
   void
-  GetScope(nsString& aScope) const
+  SetState(ServiceWorkerState aState)
   {
-    aScope = mScope;
+    mState = aState;
   }
 
   void
-  GetUrl(nsString& aURL) const
+  GetScriptURL(nsString& aURL) const
   {
     aURL = mURL;
   }
+
+  void
+  DispatchStateChange()
+  {
+    DOMEventTargetHelper::DispatchTrustedEvent(NS_LITERAL_STRING("statechange"));
+  }
+
+#ifdef XP_WIN
+#undef PostMessage
+#endif
+
+  void
+  PostMessage(JSContext* aCx, JS::Handle<JS::Value> aMessage,
+              const Optional<Sequence<JS::Value>>& aTransferable,
+              ErrorResult& aRv);
 
   WorkerPrivate*
   GetWorkerPrivate() const;
@@ -63,7 +81,6 @@ private:
   ~ServiceWorker();
 
   ServiceWorkerState mState;
-  nsString mScope;
   nsString mURL;
 
   // To allow ServiceWorkers to potentially drop the backing DOMEventTargetHelper and

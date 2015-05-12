@@ -91,15 +91,14 @@ static nsRefPtr<GLContext> sPluginContext = nullptr;
 static bool EnsureGLContext()
 {
   if (!sPluginContext) {
-    gfxIntSize dummySize(16, 16);
-    sPluginContext = GLContextProvider::CreateOffscreen(dummySize,
-                                                        SurfaceCaps::Any());
+    bool requireCompatProfile = true;
+    sPluginContext = GLContextProvider::CreateHeadless(requireCompatProfile);
   }
 
   return sPluginContext != nullptr;
 }
 
-class SharedPluginTexture MOZ_FINAL {
+class SharedPluginTexture final {
 public:
   NS_INLINE_DECL_REFCOUNTING(SharedPluginTexture)
 
@@ -535,8 +534,10 @@ nsresult nsNPAPIPluginInstance::SetWindow(NPWindow* window)
 #if MOZ_WIDGET_GTK
   // bug 108347, flash plugin on linux doesn't like window->width <=
   // 0, but Java needs wants this call.
-  if (!nsPluginHost::IsJavaMIMEType(mMIMEType) && window->type == NPWindowTypeWindow &&
-      (window->width <= 0 || window->height <= 0)) {
+  if (window && window->type == NPWindowTypeWindow &&
+      (window->width <= 0 || window->height <= 0) &&
+      (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) !=
+       nsPluginHost::eSpecialType_Java)) {
     return NS_OK;
   }
 #endif
@@ -749,8 +750,8 @@ NPError nsNPAPIPluginInstance::SetWindowless(bool aWindowless)
     // property. (Last tested version: sl 4.0).
     // Changes to this code should be matched with changes in
     // PluginInstanceChild::InitQuirksMode.
-    NS_NAMED_LITERAL_CSTRING(silverlight, "application/x-silverlight");
-    if (!PL_strncasecmp(mMIMEType, silverlight.get(), silverlight.Length())) {
+    if (nsPluginHost::GetSpecialType(nsDependentCString(mMIMEType)) ==
+        nsPluginHost::eSpecialType_Silverlight) {
       mTransparent = true;
     }
   }
@@ -926,7 +927,7 @@ void nsNPAPIPluginInstance::SetWakeLock(bool aLocked)
     return;
 
   mWakeLocked = aLocked;
-  hal::ModifyWakeLock(NS_LITERAL_STRING("nsNPAPIPluginInstance"),
+  hal::ModifyWakeLock(NS_LITERAL_STRING("screen"),
                       mWakeLocked ? hal::WAKE_LOCK_ADD_ONE : hal::WAKE_LOCK_REMOVE_ONE,
                       hal::WAKE_LOCK_NO_CHANGE);
 }

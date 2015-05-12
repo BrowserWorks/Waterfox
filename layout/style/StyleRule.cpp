@@ -706,8 +706,8 @@ nsCSSSelector::AppendToStringWithoutCombinatorsOrNegations
   if (mClassList) {
     if (isPseudoElement) {
 #ifdef MOZ_XUL
-      NS_ABORT_IF_FALSE(nsCSSAnonBoxes::IsTreePseudoElement(mLowercaseTag),
-                        "must be tree pseudo-element");
+      MOZ_ASSERT(nsCSSAnonBoxes::IsTreePseudoElement(mLowercaseTag),
+                 "must be tree pseudo-element");
 
       aString.Append(char16_t('('));
       for (nsAtomList* list = mClassList; list; list = list->mNext) {
@@ -1007,19 +1007,19 @@ protected:
 public:
   explicit DOMCSSDeclarationImpl(css::StyleRule *aRule);
 
-  NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) MOZ_OVERRIDE;
+  NS_IMETHOD GetParentRule(nsIDOMCSSRule **aParent) override;
   void DropReference(void);
-  virtual css::Declaration* GetCSSDeclaration(bool aAllocate) MOZ_OVERRIDE;
-  virtual nsresult SetCSSDeclaration(css::Declaration* aDecl) MOZ_OVERRIDE;
-  virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) MOZ_OVERRIDE;
-  virtual nsIDocument* DocToUpdate() MOZ_OVERRIDE;
+  virtual css::Declaration* GetCSSDeclaration(bool aAllocate) override;
+  virtual nsresult SetCSSDeclaration(css::Declaration* aDecl) override;
+  virtual void GetCSSParsingEnvironment(CSSParsingEnvironment& aCSSParseEnv) override;
+  virtual nsIDocument* DocToUpdate() override;
 
   // Override |AddRef| and |Release| for being a member of
   // |DOMCSSStyleRule|.  Also, we need to forward QI for cycle
   // collection things to DOMCSSStyleRule.
   NS_DECL_ISUPPORTS_INHERITED
 
-  virtual nsINode *GetParentObject() MOZ_OVERRIDE
+  virtual nsINode *GetParentObject() override
   {
     return mRule ? mRule->GetDocument() : nullptr;
   }
@@ -1054,7 +1054,7 @@ public:
   NS_DECL_NSIDOMCSSSTYLERULE
 
   // nsICSSStyleRuleDOMWrapper
-  NS_IMETHOD GetCSSStyleRule(StyleRule **aResult) MOZ_OVERRIDE;
+  NS_IMETHOD GetCSSStyleRule(StyleRule **aResult) override;
 
   DOMCSSDeclarationImpl* DOMDeclaration() { return &mDOMDeclaration; }
 
@@ -1396,7 +1396,7 @@ void
 StyleRule::RuleMatched()
 {
   if (!mWasMatched) {
-    NS_ABORT_IF_FALSE(!mImportantRule, "should not have important rule yet");
+    MOZ_ASSERT(!mImportantRule, "should not have important rule yet");
 
     mWasMatched = true;
     mDeclaration->SetImmutable();
@@ -1465,8 +1465,8 @@ StyleRule::DeclarationChanged(Declaration* aDecl,
 /* virtual */ void
 StyleRule::MapRuleInfoInto(nsRuleData* aRuleData)
 {
-  NS_ABORT_IF_FALSE(mWasMatched,
-                    "somebody forgot to call css::StyleRule::RuleMatched");
+  MOZ_ASSERT(mWasMatched,
+             "somebody forgot to call css::StyleRule::RuleMatched");
   mDeclaration->MapNormalRuleInfoInto(aRuleData);
 }
 
@@ -1480,18 +1480,32 @@ StyleRule::List(FILE* out, int32_t aIndent) const
     str.AppendLiteral("  ");
   }
 
-  nsAutoString buffer;
   if (mSelector) {
+    nsAutoString buffer;
     mSelector->ToString(buffer, GetStyleSheet());
     AppendUTF16toUTF8(buffer, str);
     str.Append(' ');
   }
 
   if (nullptr != mDeclaration) {
+    nsAutoString buffer;
     str.AppendLiteral("{ ");
     mDeclaration->ToString(buffer);
     AppendUTF16toUTF8(buffer, str);
     str.Append('}');
+    CSSStyleSheet* sheet = GetStyleSheet();
+    if (sheet) {
+      nsIURI* uri = sheet->GetSheetURI();
+      if (uri) {
+        nsAutoCString uristr;
+        str.Append(" /* ");
+        uri->GetSpec(uristr);
+        str.Append(uristr);
+        str.Append(':');
+        str.AppendInt(mLineNumber);
+        str.Append(" */");
+      }
+    }
   }
   else {
     str.AppendLiteral("{ null declaration }");

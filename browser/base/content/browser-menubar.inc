@@ -107,11 +107,11 @@
                           oncommand="BrowserOffline.toggleOfflineStatus();"/>
                 <menuitem id="menu_FileQuitItem"
 #ifdef XP_WIN
-                          label="&quitApplicationCmdWin.label;"
-                          accesskey="&quitApplicationCmdWin.accesskey;"
+                          label="&quitApplicationCmdWin2.label;"
+                          accesskey="&quitApplicationCmdWin2.accesskey;"
 #else
 #ifdef XP_MACOSX
-                          label="&quitApplicationCmdMac.label;"
+                          label="&quitApplicationCmdMac2.label;"
 #else
                           label="&quitApplicationCmd.label;"
                           accesskey="&quitApplicationCmd.accesskey;"
@@ -223,6 +223,11 @@
                               key="key_gotoHistory"
                               observes="viewHistorySidebar"
                               label="&historyButton.label;"/>
+                    <menuitem id="menu_readingListSidebar"
+                              key="key_readingListSidebar"
+                              observes="readingListSidebar"
+                              label="&readingList.label;"/>
+
                     <!-- Service providers with sidebars are inserted between these two menuseperators -->
                     <menuseparator hidden="true"/>
                     <menuseparator class="social-provider-menu" hidden="true"/>
@@ -301,6 +306,9 @@
                           type="checkbox"
                           observes="View:FullScreen"/>
 #endif
+                <menuitem id="menu_readerModeItem"
+                          observes="View:ReaderView"
+                          hidden="true"/>
                 <menuitem id="menu_showAllTabs"
                           hidden="true"
                           accesskey="&showAllTabsCmd.accesskey;"
@@ -439,6 +447,30 @@
                    onpopupshowing="if (!this.parentNode._placesView)
                                      new PlacesMenu(event, 'place:folder=TOOLBAR');"/>
       </menu>
+#ifndef XP_MACOSX
+# Disabled on Mac because we can't fill native menupopups asynchronously
+      <menuseparator id="menu_readingListSeparator">
+        <observes element="readingListSidebar" attribute="hidden"/>
+      </menuseparator>
+      <menu id="menu_readingList"
+            class="menu-iconic bookmark-item"
+            label="&readingList.label;"
+            container="true">
+        <observes element="readingListSidebar" attribute="hidden"/>
+        <menupopup id="readingListPopup"
+#ifndef XP_MACOSX
+                   placespopup="true"
+#endif
+                   onpopupshowing="ReadingListUI.onReadingListPopupShowing(this);">
+          <menuseparator id="viewReadingListSidebarSeparator"/>
+          <menuitem id="viewReadingListSidebar" class="subviewbutton"
+                    oncommand="SidebarUI.toggle('readingListSidebar');"
+                    label="&readingList.showSidebar.label;">
+            <observes element="readingListSidebar" attribute="checked"/>
+          </menuitem>
+        </menupopup>
+      </menu>
+#endif
       <menuseparator id="bookmarksMenuItemsSeparator"/>
       <!-- Bookmarks menu items -->
       <menuseparator builder="end"

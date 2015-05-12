@@ -21,10 +21,6 @@ class nsLineLayout;
 class nsIPercentHeightObserver;
 struct nsHypotheticalBox;
 
-namespace mozilla {
-class RubyReflowState;
-}
-
 /**
  * @return aValue clamped to [aMinValue, aMaxValue].
  *
@@ -261,9 +257,6 @@ struct nsHTMLReflowState : public nsCSSOffsetState {
 
   // LineLayout object (only for inline reflow; set to nullptr otherwise)
   nsLineLayout*    mLineLayout;
-
-  // RubyReflowState object (only for ruby reflow; set to nullptr otherwise)
-  mozilla::RubyReflowState* mRubyReflowState;
 
   // The appropriate reflow state for the containing block (for
   // percentage widths, etc.) of this reflow state's frame.
@@ -823,6 +816,34 @@ public:
 
   void ApplyRelativePositioning(nsPoint* aPosition) const {
     ApplyRelativePositioning(frame, ComputedPhysicalOffsets(), aPosition);
+  }
+
+  static void
+  ApplyRelativePositioning(nsIFrame* aFrame,
+                           mozilla::WritingMode aWritingMode,
+                           const mozilla::LogicalMargin& aComputedOffsets,
+                           mozilla::LogicalPoint* aPosition,
+                           nscoord aContainerWidth) {
+    // Subtract the width of the frame from the container width that we
+    // use for converting between the logical and physical origins of
+    // the frame. This accounts for the fact that logical origins in RTL
+    // coordinate systems are at the top right of the frame instead of
+    // the top left.
+    nscoord frameWidth = aFrame->GetSize().width;
+    nsPoint pos = aPosition->GetPhysicalPoint(aWritingMode,
+                                              aContainerWidth - frameWidth);
+    ApplyRelativePositioning(aFrame,
+                             aComputedOffsets.GetPhysicalMargin(aWritingMode),
+                             &pos);
+    *aPosition = mozilla::LogicalPoint(aWritingMode, pos,
+                                       aContainerWidth - frameWidth);
+  }
+
+  void ApplyRelativePositioning(mozilla::LogicalPoint* aPosition,
+                                nscoord aContainerWidth) const {
+    ApplyRelativePositioning(frame, mWritingMode,
+                             ComputedLogicalOffsets(), aPosition,
+                             aContainerWidth);
   }
 
 #ifdef DEBUG

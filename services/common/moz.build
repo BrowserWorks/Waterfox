@@ -13,6 +13,7 @@ EXTRA_COMPONENTS += [
 EXTRA_JS_MODULES['services-common'] += [
     'hawkclient.js',
     'hawkrequest.js',
+    'logmanager.js',
     'storageservice.js',
     'stringbundle.js',
     'tokenserverclient.js',
@@ -32,3 +33,8 @@ TESTING_JS_MODULES.services.common += [
     'modules-testing/storageserver.js',
     'modules-testing/utils.js',
 ]
+
+JS_PREFERENCE_FILES += [
+    'services-common.js',
+]
+

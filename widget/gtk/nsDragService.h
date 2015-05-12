@@ -48,7 +48,7 @@ class nsAutoRefTraits<GdkDragContext> :
  * Native GTK DragService wrapper
  */
 
-class nsDragService MOZ_FINAL : public nsBaseDragService,
+class nsDragService final : public nsBaseDragService,
                                 public nsIObserver
 {
 public:
@@ -62,17 +62,18 @@ public:
     NS_IMETHOD InvokeDragSession (nsIDOMNode *aDOMNode,
                                   nsISupportsArray * anArrayTransferables,
                                   nsIScriptableRegion * aRegion,
-                                  uint32_t aActionType);
-    NS_IMETHOD StartDragSession();
-    NS_IMETHOD EndDragSession(bool aDoneDrag);
+                                  uint32_t aActionType) override;
+    NS_IMETHOD StartDragSession() override;
+    NS_IMETHOD EndDragSession(bool aDoneDrag) override;
 
     // nsIDragSession
-    NS_IMETHOD SetCanDrop            (bool             aCanDrop);
-    NS_IMETHOD GetCanDrop            (bool            *aCanDrop);
-    NS_IMETHOD GetNumDropItems       (uint32_t * aNumItems);
+    NS_IMETHOD SetCanDrop            (bool             aCanDrop) override;
+    NS_IMETHOD GetCanDrop            (bool            *aCanDrop) override;
+    NS_IMETHOD GetNumDropItems       (uint32_t * aNumItems) override;
     NS_IMETHOD GetData               (nsITransferable * aTransferable,
-                                      uint32_t aItemIndex);
-    NS_IMETHOD IsDataFlavorSupported (const char *aDataFlavor, bool *_retval);
+                                      uint32_t aItemIndex) override;
+    NS_IMETHOD IsDataFlavorSupported (const char *aDataFlavor,
+                                      bool *_retval) override;
 
     // Methods called from nsWindow to handle responding to GTK drag
     // destination signals

@@ -13,12 +13,12 @@
 namespace mozilla {
 namespace dom {
 
-class HTMLModElement MOZ_FINAL : public nsGenericHTMLElement
+class HTMLModElement final : public nsGenericHTMLElement
 {
 public:
   explicit HTMLModElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo);
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   void GetCite(nsString& aCite)
   {
@@ -28,7 +28,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::cite, aCite, aRv);
   }
-  void GetDateTime(nsAString& aDateTime)
+  void GetDateTime(DOMString& aDateTime)
   {
     GetHTMLAttr(nsGkAtoms::datetime, aDateTime);
   }
@@ -40,7 +40,7 @@ public:
 protected:
   virtual ~HTMLModElement();
 
-  virtual JSObject* WrapNode(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext* aCx) override;
 };
 
 } // namespace dom

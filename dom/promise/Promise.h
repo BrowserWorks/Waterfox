@@ -19,6 +19,7 @@
 #include "nsWrapperCache.h"
 #include "nsAutoPtr.h"
 #include "js/TypeDecls.h"
+#include "jspubtd.h"
 
 #include "mozilla/dom/workers/bindings/WorkerFeature.h"
 
@@ -49,7 +50,7 @@ public:
   }
 
   virtual bool
-  Notify(JSContext* aCx, workers::Status aStatus) MOZ_OVERRIDE;
+  Notify(JSContext* aCx, workers::Status aStatus) override;
 };
 
 #define NS_PROMISE_IID \
@@ -75,7 +76,7 @@ public:
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_PROMISE_IID)
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(Promise)
-  MOZ_DECLARE_REFCOUNTED_TYPENAME(Promise)
+  MOZ_DECLARE_WEAKREFERENCE_TYPENAME(Promise)
 
   // Promise creation tries to create a JS reflector for the Promise, so is
   // fallible.  Furthermore, we don't want to do JS-wrapping on a 0-refcount
@@ -137,7 +138,7 @@ public:
   }
 
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx) override;
 
   static already_AddRefed<Promise>
   Constructor(const GlobalObject& aGlobal, PromiseInit& aInit,
@@ -175,6 +176,10 @@ public:
        const Sequence<JS::Value>& aIterable, ErrorResult& aRv);
 
   void AppendNativeHandler(PromiseNativeHandler* aRunnable);
+
+  JSObject* GlobalJSObject() const;
+
+  JSCompartment* Compartment() const;
 
 protected:
   // Do NOT call this unless you're Promise::Create.  I wish we could enforce
@@ -244,7 +249,7 @@ private:
   void MaybeReportRejectedOnce() {
     MaybeReportRejected();
     RemoveFeature();
-    mResult = JS::UndefinedValue();
+    mResult.setUndefined();
   }
 
   void MaybeResolveInternal(JSContext* aCx,

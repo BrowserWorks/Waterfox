@@ -30,12 +30,15 @@ AudioDecoder::AudioDecoder(GMPAudioHost *aHostAPI)
   , mWorkerThread(nullptr)
   , mMutex(nullptr)
   , mNumInputTasks(0)
+  , mHasShutdown(false)
 {
 }
 
 AudioDecoder::~AudioDecoder()
 {
-  mMutex->Destroy();
+  if (mMutex) {
+    mMutex->Destroy();
+  }
 }
 
 void
@@ -118,7 +121,7 @@ AudioDecoder::DecodeTask(GMPAudioSamples* aInput)
 
     if (GMP_FAILED(rv)) {
       CK_LOGE("Failed to decrypt with key id %08x...", *(uint32_t*)crypto->KeyId());
-      GetPlatform()->runonmainthread(WrapTask(mCallback, &GMPAudioDecoderCallback::Error, rv));
+      MaybeRunOnMainThread(WrapTask(mCallback, &GMPAudioDecoderCallback::Error, rv));
       return;
     }
   }
@@ -150,7 +153,7 @@ AudioDecoder::DecodeTask(GMPAudioSamples* aInput)
       if (mNumInputTasks == 0) {
         // We have run all input tasks. We *must* notify Gecko so that it will
         // send us more data.
-        GetPlatform()->runonmainthread(WrapTask(mCallback, &GMPAudioDecoderCallback::InputDataExhausted));
+        MaybeRunOnMainThread(WrapTask(mCallback, &GMPAudioDecoderCallback::InputDataExhausted));
       }
     } else if (FAILED(hr)) {
       LOG("AudioDecoder::DecodeTask() output failed hr=0x%x\n", hr);
@@ -181,7 +184,7 @@ AudioDecoder::ReturnOutput(IMFSample* aSample)
   }
   ENSURE(SUCCEEDED(hr), /*void*/);
 
-  GetPlatform()->runonmainthread(WrapTask(mCallback, &GMPAudioDecoderCallback::Decoded, samples));
+  MaybeRunOnMainThread(WrapTask(mCallback, &GMPAudioDecoderCallback::Decoded, samples));
 }
 
 HRESULT
@@ -222,16 +225,18 @@ AudioDecoder::MFToGMPSample(IMFSample* aInput,
 void
 AudioDecoder::Reset()
 {
-  mDecoder->Reset();
-  mCallback->ResetComplete();
+  if (mDecoder) {
+    mDecoder->Reset();
+  }
+  if (mCallback) {
+    mCallback->ResetComplete();
+  }
 }
 
 void
 AudioDecoder::DrainTask()
 {
-  if (FAILED(mDecoder->Drain())) {
-    GetPlatform()->syncrunonmainthread(WrapTask(mCallback, &GMPAudioDecoderCallback::DrainComplete));
-  }
+  mDecoder->Drain();
 
   // Return any pending output.
   HRESULT hr = S_OK;
@@ -243,12 +248,15 @@ AudioDecoder::DrainTask()
       ReturnOutput(output);
     }
   }
-  GetPlatform()->syncrunonmainthread(WrapTask(mCallback, &GMPAudioDecoderCallback::DrainComplete));
+  MaybeRunOnMainThread(WrapTask(mCallback, &GMPAudioDecoderCallback::DrainComplete));
 }
 
 void
 AudioDecoder::Drain()
 {
+  if (!mDecoder) {
+    return;
+  }
   EnsureWorker();
   mWorkerThread->Post(WrapTask(this,
                                &AudioDecoder::DrainTask));
@@ -260,5 +268,48 @@ AudioDecoder::DecodingComplete()
   if (mWorkerThread) {
     mWorkerThread->Join();
   }
+  mHasShutdown = true;
+
+  // Worker thread might have dispatched more tasks to the main thread that need this object.
+  // Append another task to delete |this|.
+  GetPlatform()->runonmainthread(WrapTask(this, &AudioDecoder::Destroy));
+}
+
+void
+AudioDecoder::Destroy()
+{
   delete this;
+}
+
+void
+AudioDecoder::MaybeRunOnMainThread(gmp_task_args_base* aTask)
+{
+  class MaybeRunTask : public GMPTask
+  {
+  public:
+    MaybeRunTask(AudioDecoder* aDecoder, gmp_task_args_base* aTask)
+      : mDecoder(aDecoder), mTask(aTask)
+    { }
+
+    virtual void Run(void) {
+      if (mDecoder->HasShutdown()) {
+        CK_LOGD("Trying to dispatch to main thread after AudioDecoder has shut down");
+        return;
+      }
+
+      mTask->Run();
+    }
+
+    virtual void Destroy()
+    {
+      mTask->Destroy();
+      delete this;
+    }
+
+  private:
+    AudioDecoder* mDecoder;
+    gmp_task_args_base* mTask;
+  };
+
+  GetPlatform()->runonmainthread(new MaybeRunTask(this, aTask));
 }

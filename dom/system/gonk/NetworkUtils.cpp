@@ -132,6 +132,8 @@ const CommandFunc NetworkUtils::sWifiEnableChain[] = {
   NetworkUtils::startSoftAP,
   NetworkUtils::setInterfaceUp,
   NetworkUtils::tetherInterface,
+  NetworkUtils::addInterfaceToLocalNetwork,
+  NetworkUtils::addRouteToLocalNetwork,
   NetworkUtils::setIpForwardingEnabled,
   NetworkUtils::tetheringStatus,
   NetworkUtils::startTethering,
@@ -146,6 +148,7 @@ const CommandFunc NetworkUtils::sWifiDisableChain[] = {
   NetworkUtils::stopAccessPointDriver,
   NetworkUtils::wifiFirmwareReload,
   NetworkUtils::untetherInterface,
+  NetworkUtils::removeInterfaceFromLocalNetwork,
   NetworkUtils::preTetherInterfaceList,
   NetworkUtils::postTetherInterfaceList,
   NetworkUtils::disableNat,
@@ -173,6 +176,8 @@ const CommandFunc NetworkUtils::sWifiRetryChain[] = {
   NetworkUtils::startSoftAP,
   NetworkUtils::setInterfaceUp,
   NetworkUtils::tetherInterface,
+  NetworkUtils::addInterfaceToLocalNetwork,
+  NetworkUtils::addRouteToLocalNetwork,
   NetworkUtils::setIpForwardingEnabled,
   NetworkUtils::tetheringStatus,
   NetworkUtils::startTethering,
@@ -191,6 +196,8 @@ const CommandFunc NetworkUtils::sUSBEnableChain[] = {
   NetworkUtils::enableNat,
   NetworkUtils::setIpForwardingEnabled,
   NetworkUtils::tetherInterface,
+  NetworkUtils::addInterfaceToLocalNetwork,
+  NetworkUtils::addRouteToLocalNetwork,
   NetworkUtils::tetheringStatus,
   NetworkUtils::startTethering,
   NetworkUtils::setDnsForwarders,
@@ -199,6 +206,7 @@ const CommandFunc NetworkUtils::sUSBEnableChain[] = {
 
 const CommandFunc NetworkUtils::sUSBDisableChain[] = {
   NetworkUtils::untetherInterface,
+  NetworkUtils::removeInterfaceFromLocalNetwork,
   NetworkUtils::preTetherInterfaceList,
   NetworkUtils::postTetherInterfaceList,
   NetworkUtils::disableNat,
@@ -246,11 +254,6 @@ const CommandFunc NetworkUtils::sNetworkInterfaceDisableAlarmChain[] = {
 const CommandFunc NetworkUtils::sNetworkInterfaceSetAlarmChain[] = {
   NetworkUtils::setAlarm,
   NetworkUtils::networkInterfaceAlarmSuccess
-};
-
-const CommandFunc NetworkUtils::sSetDnsChain[] = {
-  NetworkUtils::setDefaultInterface,
-  NetworkUtils::setInterfaceDns
 };
 
 /**
@@ -739,6 +742,48 @@ void NetworkUtils::tetherInterface(CommandChain* aChain,
   doCommand(command, aChain, aCallback);
 }
 
+void NetworkUtils::addInterfaceToLocalNetwork(CommandChain* aChain,
+                                              CommandCallback aCallback,
+                                              NetworkResultOptions& aResult)
+{
+  // Skip the command for sdk version < 20.
+  if (SDK_VERSION < 20) {
+    aResult.mResultCode = 0;
+    aResult.mResultReason = NS_ConvertUTF8toUTF16("");
+    aCallback(aChain, false, aResult);
+    return;
+  }
+
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network interface add local %s",
+           GET_CHAR(mInternalIfname));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::addRouteToLocalNetwork(CommandChain* aChain,
+                                          CommandCallback aCallback,
+                                          NetworkResultOptions& aResult)
+{
+  // Skip the command for sdk version < 20.
+  if (SDK_VERSION < 20) {
+    aResult.mResultCode = 0;
+    aResult.mResultReason = NS_ConvertUTF8toUTF16("");
+    aCallback(aChain, false, aResult);
+    return;
+  }
+
+  char command[MAX_COMMAND_SIZE];
+  uint32_t prefix = atoi(GET_CHAR(mPrefix));
+  uint32_t ip = inet_addr(GET_CHAR(mIp));
+  char* networkAddr = getNetworkAddr(ip, prefix);
+
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route add local %s %s/%s",
+           GET_CHAR(mInternalIfname), networkAddr, GET_CHAR(mPrefix));
+
+  doCommand(command, aChain, aCallback);
+}
+
 void NetworkUtils::preTetherInterfaceList(CommandChain* aChain,
                                           CommandCallback aCallback,
                                           NetworkResultOptions& aResult)
@@ -852,12 +897,38 @@ void NetworkUtils::untetherInterface(CommandChain* aChain,
   doCommand(command, aChain, aCallback);
 }
 
+void NetworkUtils::removeInterfaceFromLocalNetwork(CommandChain* aChain,
+                                                   CommandCallback aCallback,
+                                                   NetworkResultOptions& aResult)
+{
+  // Skip the command for sdk version < 20.
+  if (SDK_VERSION < 20) {
+    aResult.mResultCode = 0;
+    aResult.mResultReason = NS_ConvertUTF8toUTF16("");
+    aCallback(aChain, false, aResult);
+    return;
+  }
+
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network interface remove local %s",
+           GET_CHAR(mIfname));
+
+  doCommand(command, aChain, aCallback);
+}
+
 void NetworkUtils::setDnsForwarders(CommandChain* aChain,
                                     CommandCallback aCallback,
                                     NetworkResultOptions& aResult)
 {
   char command[MAX_COMMAND_SIZE];
-  snprintf(command, MAX_COMMAND_SIZE - 1, "tether dns set %s %s", GET_CHAR(mDns1), GET_CHAR(mDns2));
+
+  if (SDK_VERSION >= 20) {
+    snprintf(command, MAX_COMMAND_SIZE - 1, "tether dns set %d %s %s",
+             GET_FIELD(mNetId), GET_CHAR(mDns1), GET_CHAR(mDns2));
+  } else {
+    snprintf(command, MAX_COMMAND_SIZE - 1, "tether dns set %s %s",
+             GET_CHAR(mDns1), GET_CHAR(mDns2));
+  }
 
   doCommand(command, aChain, aCallback);
 }
@@ -917,13 +988,34 @@ void NetworkUtils::setDefaultInterface(CommandChain* aChain,
   doCommand(command, aChain, aCallback);
 }
 
+void NetworkUtils::removeDefaultRoute(CommandChain* aChain,
+                                      CommandCallback aCallback,
+                                      NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  // FIXME: (Bug 1121795) We only remove the first gateway to the default route.
+  //        For dual stack (ipv4/ipv6) device, one of the gateway would
+  //        not be added to the default route.
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route remove %d %s 0.0.0.0/0 %s",
+                    GET_FIELD(mNetId), GET_CHAR(mIfname), GET_CHAR(mGateways[0]));
+
+  doCommand(command, aChain, aCallback);
+}
+
 void NetworkUtils::setInterfaceDns(CommandChain* aChain,
                                    CommandCallback aCallback,
                                    NetworkResultOptions& aResult)
 {
   char command[MAX_COMMAND_SIZE];
-  int written = snprintf(command, sizeof command, "resolver setifdns %s %s",
-                         GET_CHAR(mIfname), GET_CHAR(mDomain));
+  int written;
+
+  if (SDK_VERSION >= 20) {
+    written = snprintf(command, sizeof command, "resolver setnetdns %d %s",
+                                                GET_FIELD(mNetId), GET_CHAR(mDomain));
+  } else {
+    written = snprintf(command, sizeof command, "resolver setifdns %s %s",
+                                                GET_CHAR(mIfname), GET_CHAR(mDomain));
+  }
 
   nsTArray<nsString>& dnses = GET_FIELD(mDnses);
   uint32_t length = dnses.Length();
@@ -946,6 +1038,239 @@ void NetworkUtils::setInterfaceDns(CommandChain* aChain,
   }
 
   doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::clearAddrForInterface(CommandChain* aChain,
+                                         CommandCallback aCallback,
+                                         NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "interface clearaddrs %s", GET_CHAR(mIfname));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::createNetwork(CommandChain* aChain,
+                                 CommandCallback aCallback,
+                                 NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network create %d", GET_FIELD(mNetId));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::destroyNetwork(CommandChain* aChain,
+                                  CommandCallback aCallback,
+                                  NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network destroy %d", GET_FIELD(mNetId));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::addInterfaceToNetwork(CommandChain* aChain,
+                                         CommandCallback aCallback,
+                                         NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network interface add %d %s",
+                    GET_FIELD(mNetId), GET_CHAR(mIfname));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::addRouteToInterface(CommandChain* aChain,
+                                       CommandCallback aCallback,
+                                       NetworkResultOptions& aResult)
+{
+  struct MyCallback {
+    static void callback(CommandCallback::CallbackType aOriginalCallback,
+                         CommandChain* aChain,
+                         bool aError,
+                         mozilla::dom::NetworkResultOptions& aResult)
+    {
+      NS_ConvertUTF16toUTF8 reason(aResult.mResultReason);
+      NU_DBG("addRouteToInterface's reason: %s", reason.get());
+      if (aError && reason.EqualsASCII("addRoute() failed (File exists)")) {
+        NU_DBG("Ignore \"File exists\" error when adding host route.");
+        return aOriginalCallback(aChain, false, aResult);
+      }
+      aOriginalCallback(aChain, aError, aResult);
+    }
+  };
+
+  CommandCallback wrappedCallback(MyCallback::callback, aCallback);
+  modifyRouteOnInterface(aChain, wrappedCallback, aResult, true);
+}
+
+void NetworkUtils::removeRouteFromInterface(CommandChain* aChain,
+                                            CommandCallback aCallback,
+                                            NetworkResultOptions& aResult)
+{
+  modifyRouteOnInterface(aChain, aCallback, aResult, false);
+}
+
+void NetworkUtils::modifyRouteOnInterface(CommandChain* aChain,
+                                          CommandCallback aCallback,
+                                          NetworkResultOptions& aResult,
+                                          bool aDoAdd)
+{
+  char command[MAX_COMMAND_SIZE];
+
+  // AOSP adds host route to its interface table but it doesn't work for
+  // B2G because we cannot set fwmark per application. So, we add
+  // all host routes to legacy_system table except scope link route.
+
+  nsCString ipOrSubnetIp = NS_ConvertUTF16toUTF8(GET_FIELD(mIp));
+  nsCString gatewayOrEmpty;
+  const char* legacyOrEmpty = "legacy 0 "; // Add to legacy by default.
+  if (GET_FIELD(mGateway).IsEmpty()) {
+    ipOrSubnetIp = getSubnetIp(ipOrSubnetIp, GET_FIELD(mPrefixLength));
+    legacyOrEmpty = ""; // Add to interface table for scope link route.
+  } else {
+    gatewayOrEmpty = nsCString(" ") + NS_ConvertUTF16toUTF8(GET_FIELD(mGateway));
+  }
+
+  const char* action = aDoAdd ? "add" : "remove";
+
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route %s%s %d %s %s/%d%s",
+           legacyOrEmpty, action,
+           GET_FIELD(mNetId), GET_CHAR(mIfname), ipOrSubnetIp.get(),
+           GET_FIELD(mPrefixLength), gatewayOrEmpty.get());
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::addDefaultRouteToNetwork(CommandChain* aChain,
+                                            CommandCallback aCallback,
+                                            NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+
+  // FIXME: (Bug 1121795) We only add the first gateway to the default route.
+  //        For dual stack (ipv4/ipv6) device, one of the gateway would
+  //        not be added to the default route.
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network route add %d %s 0.0.0.0/0 %s",
+                    GET_FIELD(mNetId), GET_CHAR(mIfname), GET_CHAR(mGateways[0]));
+
+  struct MyCallback {
+    static void callback(CommandCallback::CallbackType aOriginalCallback,
+                         CommandChain* aChain,
+                         bool aError,
+                         mozilla::dom::NetworkResultOptions& aResult)
+    {
+      NS_ConvertUTF16toUTF8 reason(aResult.mResultReason);
+      NU_DBG("addDefaultRouteToNetwork's reason: %s", reason.get());
+      if (aError && reason.EqualsASCII("addRoute() failed (File exists)")) {
+        NU_DBG("Ignore \"File exists\" error when adding host route.");
+        return aOriginalCallback(aChain, false, aResult);
+      }
+      aOriginalCallback(aChain, aError, aResult);
+    }
+  };
+
+  CommandCallback wrappedCallback(MyCallback::callback, aCallback);
+  doCommand(command, aChain, wrappedCallback);
+}
+
+void NetworkUtils::setDefaultNetwork(CommandChain* aChain,
+                                     CommandCallback aCallback,
+                                     NetworkResultOptions& aResult)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "network default set %d", GET_FIELD(mNetId));
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::addRouteToSecondaryTable(CommandChain* aChain,
+                                            CommandCallback aCallback,
+                                            NetworkResultOptions& aResult) {
+
+  char command[MAX_COMMAND_SIZE];
+
+  if (SDK_VERSION >= 20) {
+    snprintf(command, MAX_COMMAND_SIZE - 1,
+             "network route add %d %s %s/%s %s",
+             GET_FIELD(mNetId),
+             GET_CHAR(mIfname),
+             GET_CHAR(mIp),
+             GET_CHAR(mPrefix),
+             GET_CHAR(mGateway));
+  } else {
+    snprintf(command, MAX_COMMAND_SIZE - 1,
+             "interface route add %s secondary %s %s %s",
+             GET_CHAR(mIfname),
+             GET_CHAR(mIp),
+             GET_CHAR(mPrefix),
+             GET_CHAR(mGateway));
+  }
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::removeRouteFromSecondaryTable(CommandChain* aChain,
+                                                 CommandCallback aCallback,
+                                                 NetworkResultOptions& aResult) {
+  char command[MAX_COMMAND_SIZE];
+
+  if (SDK_VERSION >= 20) {
+    snprintf(command, MAX_COMMAND_SIZE - 1,
+             "network route remove %d %s %s/%s %s",
+             GET_FIELD(mNetId),
+             GET_CHAR(mIfname),
+             GET_CHAR(mIp),
+             GET_CHAR(mPrefix),
+             GET_CHAR(mGateway));
+  } else {
+    snprintf(command, MAX_COMMAND_SIZE - 1,
+             "interface route remove %s secondary %s %s %s",
+             GET_CHAR(mIfname),
+             GET_CHAR(mIp),
+             GET_CHAR(mPrefix),
+             GET_CHAR(mGateway));
+  }
+
+  doCommand(command, aChain, aCallback);
+}
+
+void NetworkUtils::setIpv6Enabled(CommandChain* aChain,
+                                  CommandCallback aCallback,
+                                  NetworkResultOptions& aResult,
+                                  bool aEnabled)
+{
+  char command[MAX_COMMAND_SIZE];
+  snprintf(command, MAX_COMMAND_SIZE - 1, "interface ipv6 %s %s",
+           GET_CHAR(mIfname), aEnabled ? "enable" : "disable");
+
+  struct MyCallback {
+    static void callback(CommandCallback::CallbackType aOriginalCallback,
+                         CommandChain* aChain,
+                         bool aError,
+                         mozilla::dom::NetworkResultOptions& aResult)
+    {
+      aOriginalCallback(aChain, false, aResult);
+    }
+  };
+
+  CommandCallback wrappedCallback(MyCallback::callback, aCallback);
+  doCommand(command, aChain, wrappedCallback);
+}
+
+void NetworkUtils::enableIpv6(CommandChain* aChain,
+                              CommandCallback aCallback,
+                              NetworkResultOptions& aResult)
+{
+  setIpv6Enabled(aChain, aCallback, aResult, true);
+}
+
+void NetworkUtils::disableIpv6(CommandChain* aChain,
+                               CommandCallback aCallback,
+                               NetworkResultOptions& aResult)
+{
+  setIpv6Enabled(aChain, aCallback, aResult, false);
 }
 
 #undef GET_CHAR
@@ -1098,6 +1423,22 @@ void NetworkUtils::setDnsFail(NetworkParams& aOptions, NetworkResultOptions& aRe
   postMessage(aOptions, aResult);
 }
 
+void NetworkUtils::defaultAsyncSuccessHandler(CommandChain* aChain,
+                                              CommandCallback aCallback,
+                                              NetworkResultOptions& aResult)
+{
+  NU_DBG("defaultAsyncSuccessHandler");
+  aResult.mRet = true;
+  postMessage(aChain->getParams(), aResult);
+  finalizeSuccess(aChain, aResult);
+}
+
+void NetworkUtils::defaultAsyncFailureHandler(NetworkParams& aOptions, NetworkResultOptions& aResult)
+{
+  aResult.mRet = false;
+  postMessage(aOptions, aResult);
+}
+
 #undef ASSIGN_FIELD
 #undef ASSIGN_FIELD_VALUE
 
@@ -1144,7 +1485,6 @@ void NetworkUtils::ExecuteCommand(NetworkParams aOptions)
     BUILD_ENTRY(removeDefaultRoute),
     BUILD_ENTRY(addHostRoute),
     BUILD_ENTRY(removeHostRoute),
-    BUILD_ENTRY(removeHostRoutes),
     BUILD_ENTRY(addSecondaryRoute),
     BUILD_ENTRY(removeSecondaryRoute),
     BUILD_ENTRY(setNetworkInterfaceAlarm),
@@ -1161,6 +1501,8 @@ void NetworkUtils::ExecuteCommand(NetworkParams aOptions)
     BUILD_ENTRY(enableInterface),
     BUILD_ENTRY(disableInterface),
     BUILD_ENTRY(resetConnections),
+    BUILD_ENTRY(createNetwork),
+    BUILD_ENTRY(destroyNetwork),
 
     #undef BUILD_ENTRY
   };
@@ -1257,14 +1599,14 @@ void NetworkUtils::onNetdMessage(NetdCommand* aCommand)
     gPending = false;
   }
 
-  if (gCurrentCommand.callback) {
+  {
     char buf[BUF_SIZE];
     join(gReason, INTERFACE_DELIMIT, BUF_SIZE, buf);
 
     NetworkResultOptions result;
     result.mResultCode = code;
     result.mResultReason = NS_ConvertUTF8toUTF16(buf);
-    (*gCurrentCommand.callback)(gCurrentCommand.chain, isError(code), result);
+    (gCurrentCommand.callback)(gCurrentCommand.chain, isError(code), result);
     gReason.Clear();
   }
 
@@ -1326,8 +1668,28 @@ CommandResult NetworkUtils::setDNS(NetworkParams& aOptions)
   property_set("net.dnschange", num);
 
   // DNS needs to be set through netd since JellyBean (4.3).
+  if (SDK_VERSION >= 20) {
+    // Lollipop.
+    static CommandFunc COMMAND_CHAIN[] = {
+      setInterfaceDns,
+      defaultAsyncSuccessHandler
+    };
+    NetIdManager::NetIdInfo netIdInfo;
+    if (!mNetIdManager.lookup(aOptions.mIfname, &netIdInfo)) {
+      return -1;
+    }
+    aOptions.mNetId = netIdInfo.mNetId;
+    runChain(aOptions, COMMAND_CHAIN, setDnsFail);
+    return CommandResult::Pending();
+  }
   if (SDK_VERSION >= 18) {
-    runChain(aOptions, sSetDnsChain, setDnsFail);
+    // JB, KK.
+    static CommandFunc COMMAND_CHAIN[] = {
+      setDefaultInterface,
+      setInterfaceDns,
+      defaultAsyncSuccessHandler
+    };
+    runChain(aOptions, COMMAND_CHAIN, setDnsFail);
     return CommandResult::Pending();
   }
 
@@ -1431,6 +1793,33 @@ CommandResult NetworkUtils::resetConnections(NetworkParams& aOptions) {
  */
 CommandResult NetworkUtils::setDefaultRoute(NetworkParams& aOptions)
 {
+  if (SDK_VERSION < 20) {
+    return setDefaultRouteLegacy(aOptions);
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    addDefaultRouteToNetwork,
+    setDefaultNetwork,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("No such interface");
+    return -1;
+  }
+
+  aOptions.mNetId = netIdInfo.mNetId;
+
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+  return CommandResult::Pending();
+}
+
+/**
+ * Set default route and DNS servers for given network interface by obsoleted libnetutils.
+ */
+CommandResult NetworkUtils::setDefaultRouteLegacy(NetworkParams& aOptions)
+{
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
 
   if (!aOptions.mOldIfname.IsEmpty()) {
@@ -1484,6 +1873,37 @@ CommandResult NetworkUtils::setDefaultRoute(NetworkParams& aOptions)
  */
 CommandResult NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
 {
+  NU_DBG("Calling NetworkUtils::removeDefaultRoute");
+
+  if (SDK_VERSION < 20) {
+    return removeDefaultRouteLegacy(aOptions);
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    removeDefaultRoute,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("No such interface: %s", GET_CHAR(mIfname));
+    return -1;
+  }
+
+  NU_DBG("Obtained netid %d for interface %s", netIdInfo.mNetId, GET_CHAR(mIfname));
+
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
+  return CommandResult::Pending();
+}
+
+/**
+ * Remove default route for given network interface by obsoleted libnetutils.
+ */
+CommandResult NetworkUtils::removeDefaultRouteLegacy(NetworkParams& aOptions)
+{
+  // Legacy libnetutils calls before Lollipop.
   uint32_t length = aOptions.mGateways.Length();
   for (uint32_t i = 0; i < length; i++) {
     NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateways[i]);
@@ -1506,6 +1926,39 @@ CommandResult NetworkUtils::removeDefaultRoute(NetworkParams& aOptions)
  */
 CommandResult NetworkUtils::addHostRoute(NetworkParams& aOptions)
 {
+  if (SDK_VERSION < 20) {
+    return addHostRouteLegacy(aOptions);
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    addRouteToInterface,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("No such interface: %s", GET_CHAR(mIfname));
+    return -1;
+  }
+
+  NU_DBG("Obtained netid %d for interface %s", netIdInfo.mNetId, GET_CHAR(mIfname));
+
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
+  return CommandResult::Pending();
+}
+
+/**
+ * Add host route for given network interface.
+ */
+CommandResult NetworkUtils::addHostRouteLegacy(NetworkParams& aOptions)
+{
+  if (aOptions.mGateway.IsEmpty()) {
+    ERROR("addHostRouteLegacy does not support empty gateway.");
+    return EINVAL;
+  }
+
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
   NS_ConvertUTF16toUTF8 autoHostname(aOptions.mIp);
   NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateway);
@@ -1530,6 +1983,34 @@ CommandResult NetworkUtils::addHostRoute(NetworkParams& aOptions)
  */
 CommandResult NetworkUtils::removeHostRoute(NetworkParams& aOptions)
 {
+  if (SDK_VERSION < 20) {
+    return removeHostRouteLegacy(aOptions);
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    removeRouteFromInterface,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("No such interface: %s", GET_CHAR(mIfname));
+    return -1;
+  }
+
+  NU_DBG("Obtained netid %d for interface %s", netIdInfo.mNetId, GET_CHAR(mIfname));
+
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
+  return CommandResult::Pending();
+}
+
+/**
+ * Remove host route for given network interface.
+ */
+CommandResult NetworkUtils::removeHostRouteLegacy(NetworkParams& aOptions)
+{
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
   NS_ConvertUTF16toUTF8 autoHostname(aOptions.mIp);
   NS_ConvertUTF16toUTF8 autoGateway(aOptions.mGateway);
@@ -1549,15 +2030,72 @@ CommandResult NetworkUtils::removeHostRoute(NetworkParams& aOptions)
                                         prefix, autoGateway.get());
 }
 
-/**
- * Remove the routes associated with the named interface.
- */
-CommandResult NetworkUtils::removeHostRoutes(NetworkParams& aOptions)
+CommandResult NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 {
-  return mNetUtils->do_ifc_remove_host_routes(GET_CHAR(mIfname));
+  if (SDK_VERSION < 20) {
+    return removeNetworkRouteLegacy(aOptions);
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    clearAddrForInterface,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.lookup(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("interface %s is not present in any network", GET_CHAR(mIfname));
+    return -1;
+  }
+
+  NU_DBG("Obtained netid %d for interface %s", netIdInfo.mNetId, GET_CHAR(mIfname));
+
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
+  return CommandResult::Pending();
 }
 
-CommandResult NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
+nsCString NetworkUtils::getSubnetIp(const nsCString& aIp, int aPrefixLength)
+{
+  int type = getIpType(aIp.get());
+
+  if (AF_INET6 == type) {
+    struct in6_addr in6;
+    if (inet_pton(AF_INET6, aIp.get(), &in6) != 1) {
+      return nsCString();
+    }
+
+    uint32_t p, i, p1, mask;
+    p = aPrefixLength;
+    i = 0;
+    while (i < 4) {
+      p1 = p > 32 ? 32 : p;
+      p -= p1;
+      mask = p1 ? ~0x0 << (32 - p1) : 0;
+      in6.s6_addr32[i++] &= htonl(mask);
+    }
+
+    char subnetStr[INET6_ADDRSTRLEN];
+    if (!inet_ntop(AF_INET6, &in6, subnetStr, sizeof subnetStr)) {
+      return nsCString();
+    }
+
+    return nsCString(subnetStr);
+  }
+
+  if (AF_INET == type) {
+    uint32_t ip = inet_addr(aIp.get());
+    uint32_t netmask = makeMask(aPrefixLength);
+    uint32_t subnet = ip & netmask;
+    struct in_addr addr;
+    addr.s_addr = subnet;
+    return nsCString(inet_ntoa(addr));
+  }
+
+  return nsCString();
+}
+
+CommandResult NetworkUtils::removeNetworkRouteLegacy(NetworkParams& aOptions)
 {
   NS_ConvertUTF16toUTF8 autoIfname(aOptions.mIfname);
   NS_ConvertUTF16toUTF8 autoIp(aOptions.mIp);
@@ -1615,30 +2153,40 @@ CommandResult NetworkUtils::removeNetworkRoute(NetworkParams& aOptions)
 
 CommandResult NetworkUtils::addSecondaryRoute(NetworkParams& aOptions)
 {
-  char command[MAX_COMMAND_SIZE];
-  snprintf(command, MAX_COMMAND_SIZE - 1,
-           "interface route add %s secondary %s %s %s",
-           GET_CHAR(mIfname),
-           GET_CHAR(mIp),
-           GET_CHAR(mPrefix),
-           GET_CHAR(mGateway));
+  static CommandFunc COMMAND_CHAIN[] = {
+    addRouteToSecondaryTable,
+    defaultAsyncSuccessHandler
+  };
 
-  doCommand(command, nullptr, nullptr);
-  return SUCCESS;
+  if (SDK_VERSION >= 20) {
+    NetIdManager::NetIdInfo netIdInfo;
+    if (!mNetIdManager.lookup(aOptions.mIfname, &netIdInfo)) {
+      return -1;
+    }
+    aOptions.mNetId = netIdInfo.mNetId;
+  }
+
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+  return CommandResult::Pending();
 }
 
 CommandResult NetworkUtils::removeSecondaryRoute(NetworkParams& aOptions)
 {
-  char command[MAX_COMMAND_SIZE];
-  snprintf(command, MAX_COMMAND_SIZE - 1,
-           "interface route remove %s secondary %s %s %s",
-           GET_CHAR(mIfname),
-           GET_CHAR(mIp),
-           GET_CHAR(mPrefix),
-           GET_CHAR(mGateway));
+  static CommandFunc COMMAND_CHAIN[] = {
+    removeRouteFromSecondaryTable,
+    defaultAsyncSuccessHandler
+  };
 
-  doCommand(command, nullptr, nullptr);
-  return SUCCESS;
+  if (SDK_VERSION >= 20) {
+    NetIdManager::NetIdInfo netIdInfo;
+    if (!mNetIdManager.lookup(aOptions.mIfname, &netIdInfo)) {
+      return -1;
+    }
+    aOptions.mNetId = netIdInfo.mNetId;
+  }
+
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+  return CommandResult::Pending();
 }
 
 CommandResult NetworkUtils::setNetworkInterfaceAlarm(NetworkParams& aOptions)
@@ -1695,6 +2243,15 @@ CommandResult NetworkUtils::setWifiTethering(NetworkParams& aOptions)
   }
   dumpParams(aOptions, "WIFI");
 
+  if (SDK_VERSION >= 20) {
+    NetIdManager::NetIdInfo netIdInfo;
+    if (!mNetIdManager.lookup(aOptions.mExternalIfname, &netIdInfo)) {
+      ERROR("No such interface: %s", GET_CHAR(mExternalIfname));
+      return -1;
+    }
+    aOptions.mNetId = netIdInfo.mNetId;
+  }
+
   if (enable) {
     NU_DBG("Starting Wifi Tethering on %s <-> %s",
            GET_CHAR(mInternalIfname), GET_CHAR(mExternalIfname));
@@ -1726,6 +2283,15 @@ CommandResult NetworkUtils::setUSBTethering(NetworkParams& aOptions)
     }
   }
   dumpParams(aOptions, "USB");
+
+  if (SDK_VERSION >= 20) {
+    NetIdManager::NetIdInfo netIdInfo;
+    if (!mNetIdManager.lookup(aOptions.mExternalIfname, &netIdInfo)) {
+      ERROR("No such interface: %s", GET_CHAR(mExternalIfname));
+      return -1;
+    }
+    aOptions.mNetId = netIdInfo.mNetId;
+  }
 
   if (enable) {
     NU_DBG("Starting USB Tethering on %s <-> %s",
@@ -1845,6 +2411,74 @@ CommandResult NetworkUtils::enableUsbRndis(NetworkParams& aOptions)
 CommandResult NetworkUtils::updateUpStream(NetworkParams& aOptions)
 {
   runChain(aOptions, sUpdateUpStreamChain, updateUpStreamFail);
+  return CommandResult::Pending();
+}
+
+/**
+ * handling upstream interface change event.
+ */
+CommandResult NetworkUtils::createNetwork(NetworkParams& aOptions)
+{
+  if (SDK_VERSION < 20) {
+    return SUCCESS;
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    createNetwork,
+    enableIpv6,
+    addInterfaceToNetwork,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  mNetIdManager.acquire(GET_FIELD(mIfname), &netIdInfo);
+  if (netIdInfo.mRefCnt > 1) {
+    // Already created. Just return.
+    NU_DBG("Interface %s (%d) has been created.", GET_CHAR(mIfname),
+                                                  netIdInfo.mNetId);
+    return SUCCESS;
+  }
+
+  NU_DBG("Request netd to create a network with netid %d", netIdInfo.mNetId);
+  // Newly created netid. Ask netd to create network.
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
+
+  return CommandResult::Pending();
+}
+
+/**
+ * handling upstream interface change event.
+ */
+CommandResult NetworkUtils::destroyNetwork(NetworkParams& aOptions)
+{
+  if (SDK_VERSION < 20) {
+    return SUCCESS;
+  }
+
+  static CommandFunc COMMAND_CHAIN[] = {
+    disableIpv6,
+    destroyNetwork,
+    defaultAsyncSuccessHandler,
+  };
+
+  NetIdManager::NetIdInfo netIdInfo;
+  if (!mNetIdManager.release(GET_FIELD(mIfname), &netIdInfo)) {
+    ERROR("No existing netid for %s", GET_CHAR(mIfname));
+    return -1;
+  }
+
+  if (netIdInfo.mRefCnt > 0) {
+    // Still be referenced. Just return.
+    NU_DBG("Someone is still using this interface.");
+    return SUCCESS;
+  }
+
+  NU_DBG("Interface %s (%d) is no longer used. Tell netd to destroy.",
+         GET_CHAR(mIfname), netIdInfo.mNetId);
+
+  aOptions.mNetId = netIdInfo.mNetId;
+  runChain(aOptions, COMMAND_CHAIN, defaultAsyncFailureHandler);
   return CommandResult::Pending();
 }
 

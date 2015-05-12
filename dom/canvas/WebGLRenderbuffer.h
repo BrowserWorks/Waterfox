@@ -14,7 +14,7 @@
 
 namespace mozilla {
 
-class WebGLRenderbuffer MOZ_FINAL
+class WebGLRenderbuffer final
     : public nsWrapperCache
     , public WebGLBindable<RBTarget>
     , public WebGLRefCountedObject<WebGLRenderbuffer>
@@ -38,6 +38,9 @@ public:
         mImageDataStatus = x;
     }
 
+    GLsizei Samples() const { return mSamples; }
+    void SetSamples(GLsizei samples) { mSamples = samples; }
+
     GLenum InternalFormat() const { return mInternalFormat; }
     void SetInternalFormat(GLenum internalFormat) {
         mInternalFormat = internalFormat;
@@ -55,13 +58,13 @@ public:
     }
 
     void BindRenderbuffer() const;
-    void RenderbufferStorage(GLenum internalFormat, GLsizei width,
-                             GLsizei height) const;
+    void RenderbufferStorage(GLsizei samples, GLenum internalFormat,
+                             GLsizei width, GLsizei height) const;
     void FramebufferRenderbuffer(FBAttachment attachment) const;
     // Only handles a subset of `pname`s.
     GLint GetRenderbufferParameter(RBTarget target, RBParam pname) const;
 
-    virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+    virtual JSObject* WrapObject(JSContext* cx) override;
 
     NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(WebGLRenderbuffer)
     NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(WebGLRenderbuffer)
@@ -76,6 +79,7 @@ protected:
     GLenum mInternalFormat;
     GLenum mInternalFormatForGL;
     WebGLImageDataStatus mImageDataStatus;
+    GLsizei mSamples;
 
     friend class WebGLFramebuffer;
 };

@@ -16,7 +16,7 @@ namespace gl {
 
 const size_t kMAX_EXTENSION_GROUP_SIZE = 5;
 
-MOZ_BEGIN_ENUM_CLASS(GLVersion, uint32_t)
+enum class GLVersion : uint32_t {
     NONE  = 0,   // Feature is not supported natively by GL
     GL1_2 = 120,
     GL1_3 = 130,
@@ -30,14 +30,14 @@ MOZ_BEGIN_ENUM_CLASS(GLVersion, uint32_t)
     GL4_1 = 410,
     GL4_2 = 420,
     GL4_3 = 430,
-MOZ_END_ENUM_CLASS(GLVersion)
+};
 
-MOZ_BEGIN_ENUM_CLASS(GLESVersion, uint32_t)
+enum class GLESVersion : uint32_t {
     NONE  = 0,   // Feature is not support natively by GL ES
     ES2   = 200,
     ES3   = 300,
     ES3_1 = 310,
-MOZ_END_ENUM_CLASS(GLESVersion)
+};
 
 // ARB_ES2_compatibility is natively supported in OpenGL 4.1.
 static const GLVersion kGLCoreVersionForES2Compat = GLVersion::GL4_1;
@@ -275,6 +275,16 @@ static const FeatureInfo sFeatureInfoArr[] = {
          */
     },
     {
+        "get_string_indexed",
+        GLVersion::GL3,
+        GLESVersion::ES3,
+        GLContext::Extension_None,
+        {
+            GLContext::Extensions_End
+        }
+        // glGetStringi
+    },
+    {
         "gpu_shader4",
         GLVersion::GL3,
         GLESVersion::ES3,
@@ -397,6 +407,15 @@ static const FeatureInfo sFeatureInfoArr[] = {
          * ARB_occlusion_query (added in OpenGL 2.0) and EXT_occlusion_query_boolean
          * (added in OpenGL ES 3.0)
          */
+    },
+    {
+        "read_buffer",
+        GLVersion::GL2,
+        GLESVersion::ES3,
+        GLContext::Extension_None,
+        {
+            GLContext::Extensions_End
+        }
     },
     {
         "renderbuffer_color_float",

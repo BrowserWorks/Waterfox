@@ -5,7 +5,6 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 #include "ContentHelper.h"
-#include "LayerManagerD3D10.h"
 #include "MetroWidget.h"
 #include "MetroApp.h"
 #include "mozilla/Preferences.h"
@@ -206,7 +205,6 @@ NS_IMETHODIMP
 MetroWidget::Create(nsIWidget *aParent,
                     nsNativeWidget aNativeParent,
                     const nsIntRect &aRect,
-                    nsDeviceContext *aContext,
                     nsWidgetInitData *aInitData)
 {
   LogFunction();
@@ -220,7 +218,7 @@ MetroWidget::Create(nsIWidget *aParent,
   // Ensure that the toolkit is created.
   nsToolkit::GetToolkit();
 
-  BaseCreate(aParent, aRect, aContext, aInitData);
+  BaseCreate(aParent, aRect, aInitData);
 
   if (mWindowType != eWindowType_toplevel) {
     switch(mWindowType) {
@@ -594,7 +592,7 @@ MetroWidget::SynthesizeNativeKeyEvent(int32_t aNativeKeyboardLayout,
 }
 
 nsresult
-MetroWidget::SynthesizeNativeMouseEvent(nsIntPoint aPoint,
+MetroWidget::SynthesizeNativeMouseEvent(LayoutDeviceIntPoint aPoint,
                                         uint32_t aNativeMessage,
                                         uint32_t aModifierFlags)
 {
@@ -618,7 +616,7 @@ MetroWidget::SynthesizeNativeMouseEvent(nsIntPoint aPoint,
 }
 
 nsresult
-MetroWidget::SynthesizeNativeMouseScrollEvent(nsIntPoint aPoint,
+MetroWidget::SynthesizeNativeMouseScrollEvent(LayoutDeviceIntPoint aPoint,
                                               uint32_t aNativeMessage,
                                               double aDeltaX,
                                               double aDeltaY,
@@ -1006,17 +1004,6 @@ MetroWidget::ShouldUseOffMainThreadCompositing()
 }
 
 bool
-MetroWidget::ShouldUseMainThreadD3D10Manager()
-{
-  // Either we're not initialized yet, or this is the toolkit widget
-  if (!mView) {
-    return false;
-  }
-  return !gfxPlatform::UsesOffMainThreadCompositing() &&
-         mWindowType == eWindowType_toplevel;
-}
-
-bool
 MetroWidget::ShouldUseBasicManager()
 {
   // toolkit or test widgets fall back on empty shadow layers
@@ -1158,22 +1145,6 @@ MetroWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
     retaining = false;
   }
 
-  // If the backend device has changed, create a new manager (pulled from nswindow)
-  if (mLayerManager) {
-    if (mLayerManager->GetBackendType() == LayersBackend::LAYERS_D3D10) {
-      LayerManagerD3D10 *layerManagerD3D10 =
-        static_cast<LayerManagerD3D10*>(mLayerManager.get());
-      if (layerManagerD3D10->device() !=
-          gfxWindowsPlatform::GetPlatform()->GetD3D10Device()) {
-        MOZ_ASSERT(!mLayerManager->IsInTransaction());
-
-        mLayerManager->Destroy();
-        mLayerManager = nullptr;
-        retaining = false;
-      }
-    }
-  }
-
   HRESULT hr = S_OK;
 
   // Create a layer manager: try to use an async compositor first, if enabled.
@@ -1182,13 +1153,7 @@ MetroWidget::GetLayerManager(PLayerTransactionChild* aShadowManager,
     if (ShouldUseOffMainThreadCompositing()) {
       NS_ASSERTION(aShadowManager == nullptr, "Async Compositor not supported with e10s");
       CreateCompositor();
-    } else if (ShouldUseMainThreadD3D10Manager()) {
-      nsRefPtr<mozilla::layers::LayerManagerD3D10> layerManager =
-        new mozilla::layers::LayerManagerD3D10(this);
-      if (layerManager->Initialize(true, &hr)) {
-        mLayerManager = layerManager;
-      }
-    } else if (ShouldUseBasicManager()) {
+    } else {
       mLayerManager = CreateBasicLayerManager();
     }
     // Either we're not ready to initialize yet due to a missing view pointer,
@@ -1526,10 +1491,10 @@ MetroWidget::SetTitle(const nsAString& aTitle)
   return NS_OK;
 }
 
-nsIntPoint
+LayoutDeviceIntPoint
 MetroWidget::WidgetToScreenOffset()
 {
-  return nsIntPoint(0,0);
+  return LayoutDeviceIntPoint(0,0);
 }
 
 NS_IMETHODIMP
@@ -1561,8 +1526,8 @@ MetroWidget::GetInputContext()
   return mInputContext;
 }
 
-NS_IMETHODIMP
-MetroWidget::NotifyIME(const IMENotification& aIMENotification)
+nsresult
+MetroWidget::NotifyIMEInternal(const IMENotification& aIMENotification)
 {
   switch (aIMENotification.mMessage) {
     case REQUEST_TO_COMMIT_COMPOSITION:

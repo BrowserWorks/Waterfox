@@ -25,12 +25,14 @@ XPCOMUtils.defineLazyServiceGetter(this,
                                    "nsIAppsService");
 
 function NfcCallback(aWindow) {
+  this._window = aWindow;
   this.initDOMRequestHelper(aWindow, null);
   this._createPromise();
 }
 NfcCallback.prototype = {
   __proto__: DOMRequestIpcHelper.prototype,
 
+  _window: null,
   promise: null,
   _requestId: null,
 
@@ -80,7 +82,7 @@ NfcCallback.prototype = {
       debug("can not find promise resolver for id: " + this._requestId);
       return;
     }
-    resolver.resolve(aArray);
+    resolver.resolve(Cu.cloneInto(aArray, this._window));
   },
 
   notifyError: function notifyError(aErrorMsg) {
@@ -90,12 +92,21 @@ NfcCallback.prototype = {
            ", errormsg: " + aErrorMsg);
       return;
     }
-    resolver.reject(aErrorMsg);
+    resolver.reject(new this._window.Error(aErrorMsg));
   },
 
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupportsWeakReference,
                                          Ci.nsIObserver,
                                          Ci.nsINfcRequestCallback]),
+};
+
+// Should be mapped to the NFCTagType defined in MozNFCTag.webidl.
+let TagType = {
+  TYPE1: "Type1",
+  TYPE2: "Type2",
+  TYPE3: "Type3",
+  TYPE4: "Type4",
+  MIFARE_CLASSIC: "MIFARE-Classic"
 };
 
 /**
@@ -120,8 +131,9 @@ function MozNFCTagImpl(window, sessionToken, tagInfo, ndefInfo) {
     this.maxNDEFSize = ndefInfo.maxNDEFSize;
     this.isReadOnly = ndefInfo.isReadOnly;
     this.isFormatable = ndefInfo.isFormatable;
-    this.canBeMadeReadOnly = this.type == "type1" || this.type == "type2" ||
-                             this.type == "mifare_classic";
+    this.canBeMadeReadOnly = this.type == TagType.TYPE1 ||
+                             this.type == TagType.TYPE2 ||
+                             this.type == TagType.MIFARE_CLASSIC;
   }
 }
 MozNFCTagImpl.prototype = {
@@ -136,6 +148,9 @@ MozNFCTagImpl.prototype = {
   isFormatable: null,
   canBeMadeReadOnly: null,
   isLost: false,
+
+  createTech: { "ISO-DEP": (win, tag) => { return new win.MozIsoDepTech(tag); }
+              },
 
   // NFCTag interface:
   readNDEF: function readNDEF() {
@@ -199,6 +214,24 @@ MozNFCTagImpl.prototype = {
     let callback = new NfcCallback(this._window);
     this._nfcContentHelper.format(this.session, callback);
     return callback.promise;
+  },
+
+  selectTech: function selectTech(tech) {
+    if (this.isLost) {
+      throw new this._window.DOMError("InvalidStateError", "NFCTag object is invalid");
+    }
+
+    if (this.techList.indexOf(tech) == -1) {
+      throw new this._window.DOMError("InvalidAccessError",
+        "NFCTag does not contain selected tag technology");
+    }
+
+    if (this.createTech[tech] === undefined) {
+      throw new this._window.DOMError("InvalidAccessError",
+        "Technology is not supported now");
+    }
+
+    return this.createTech[tech](this._window, this._contentObj);
   },
 
   transceive: function transceive(tech, cmd) {
@@ -293,17 +326,17 @@ function MozNFCImpl() {
     this._nfcContentHelper = Cc["@mozilla.org/nfc/content-helper;1"]
                                .getService(Ci.nsINfcContentHelper);
   } catch(e) {
-    debug("No NFC support.")
+    debug("No NFC support.");
   }
 
   this.eventService = Cc["@mozilla.org/eventlistenerservice;1"]
                         .getService(Ci.nsIEventListenerService);
-  this._nfcContentHelper.addEventListener(this);
 }
 MozNFCImpl.prototype = {
   _nfcContentHelper: null,
   _window: null,
   _rfState: null,
+  _contentObj: null,
   nfcPeer: null,
   nfcTag: null,
   eventService: null,
@@ -319,6 +352,7 @@ MozNFCImpl.prototype = {
 
     if (this._nfcContentHelper) {
       this._nfcContentHelper.init(aWindow);
+      this._nfcContentHelper.addEventListener(this);
       this._rfState = this._nfcContentHelper.queryRFState();
     }
   },
@@ -397,25 +431,35 @@ MozNFCImpl.prototype = {
   },
 
   notifyTagFound: function notifyTagFound(sessionToken, tagInfo, ndefInfo, records) {
+    if (!this.handleTagFound(sessionToken, tagInfo, ndefInfo, records)) {
+      this._nfcContentHelper.callDefaultFoundHandler(sessionToken, false, records);
+    };
+  },
+
+  /**
+   * Handles Tag Found event.
+   *
+   * returns true if the app could process this event, false otherwise.
+   */
+  handleTagFound: function handleTagFound(sessionToken, tagInfo, ndefInfo, records) {
     if (this.hasDeadWrapper()) {
       dump("this._window or this.__DOM_IMPL__ is a dead wrapper.");
-      return;
+      return false;
     }
 
     if (!this.eventService.hasListenersFor(this.__DOM_IMPL__, "tagfound")) {
       debug("ontagfound is not registered.");
-      return;
+      return false;
     }
 
     if (!this.checkPermissions(["nfc"])) {
-      return;
+      return false;
     }
-
-    this.eventService.addSystemEventListener(this._window, "visibilitychange",
-      this, /* useCapture */false);
 
     let tagImpl = new MozNFCTagImpl(this._window, sessionToken, tagInfo, ndefInfo);
     let tag = this._window.MozNFCTag._create(this._window, tagImpl);
+
+    tagImpl._contentObj = tag;
     this.nfcTag = tag;
 
     let length = records ? records.length : 0;
@@ -429,6 +473,7 @@ MozNFCImpl.prototype = {
     }
 
     let eventData = {
+      "cancelable": true,
       "tag": tag,
       "ndefRecords": ndefRecords
     };
@@ -436,27 +481,36 @@ MozNFCImpl.prototype = {
     debug("fire ontagfound " + sessionToken);
     let tagEvent = new this._window.MozNFCTagEvent("tagfound", eventData);
     this.__DOM_IMPL__.dispatchEvent(tagEvent);
+
+    // If defaultPrevented is false, means we need to take the default action
+    // for this event - redirect this event to System app. Before redirecting to
+    // System app, we need revoke the tag object first.
+    if (!tagEvent.defaultPrevented) {
+      this.notifyTagLost(sessionToken);
+    }
+
+    return tagEvent.defaultPrevented;
   },
 
   notifyTagLost: function notifyTagLost(sessionToken) {
+    if (!this.handleTagLost(sessionToken)) {
+      this._nfcContentHelper.callDefaultLostHandler(sessionToken, false);
+    }
+  },
+
+  handleTagLost: function handleTagLost(sessionToken) {
     if (this.hasDeadWrapper()) {
       dump("this._window or this.__DOM_IMPL__ is a dead wrapper.");
-      return;
+      return false;
     }
 
     if (!this.checkPermissions(["nfc"])) {
-      return;
+      return false;
     }
 
     if (!this.nfcTag) {
       debug("No NFCTag object existing.");
-      return;
-    }
-
-    // Remove system event listener only when tag and peer are both lost.
-    if (!this.nfcPeer) {
-      this.eventService.removeSystemEventListener(this._window, "visibilitychange",
-        this, /* useCapture */false);
+      return false;
     }
 
     this.nfcTag.notifyLost();
@@ -465,57 +519,91 @@ MozNFCImpl.prototype = {
     debug("fire ontaglost " + sessionToken);
     let event = new this._window.Event("taglost");
     this.__DOM_IMPL__.dispatchEvent(event);
+
+    return true;
   },
 
   notifyPeerFound: function notifyPeerFound(sessionToken, isPeerReady) {
+    if (!this.handlePeerFound(sessionToken, isPeerReady)) {
+      this._nfcContentHelper.callDefaultFoundHandler(sessionToken, true, null);
+    }
+  },
+
+  /**
+   * Handles Peer Found/Peer Ready event.
+   *
+   * returns true if the app could process this event, false otherwise.
+   */
+  handlePeerFound: function handlePeerFound(sessionToken, isPeerReady) {
     if (this.hasDeadWrapper()) {
       dump("this._window or this.__DOM_IMPL__ is a dead wrapper.");
-      return;
+      return false;
     }
 
     if (!isPeerReady &&
         !this.eventService.hasListenersFor(this.__DOM_IMPL__, "peerfound")) {
       debug("onpeerfound is not registered.");
-      return;
+      return false;
     }
 
     let perm = isPeerReady ? ["nfc-share"] : ["nfc"];
     if (!this.checkPermissions(perm)) {
-      return;
+      return false;
     }
 
-    this.eventService.addSystemEventListener(this._window, "visibilitychange",
-      this, /* useCapture */false);
-
     let peerImpl = new MozNFCPeerImpl(this._window, sessionToken);
-    this.nfcPeer = this._window.MozNFCPeer._create(this._window, peerImpl)
-    let eventData = { "peer": this.nfcPeer };
-    let type = (isPeerReady) ? "peerready" : "peerfound";
+    this.nfcPeer = this._window.MozNFCPeer._create(this._window, peerImpl);
 
-    debug("fire on" + type + " " + sessionToken);
-    let event = new this._window.MozNFCPeerEvent(type, eventData);
+    let eventType;
+    let eventData = {
+      "peer": this.nfcPeer
+    };
+
+    if (isPeerReady) {
+      eventType = "peerready";
+    } else {
+      eventData.cancelable = true;
+      eventType = "peerfound";
+    }
+
+    debug("fire on" + eventType + " " + sessionToken);
+    let event = new this._window.MozNFCPeerEvent(eventType, eventData);
     this.__DOM_IMPL__.dispatchEvent(event);
+
+    // For peerready we don't take the default action.
+    if (isPeerReady) {
+      return true;
+    }
+
+    // If defaultPrevented is false, means we need to take the default action
+    // for this event - redirect this event to System app. Before redirecting to
+    // System app, we need revoke the peer object first.
+    if (!event.defaultPrevented) {
+      this.notifyPeerLost(sessionToken);
+    }
+
+    return event.defaultPrevented;
   },
 
   notifyPeerLost: function notifyPeerLost(sessionToken) {
+    if (!this.handlePeerLost(sessionToken)) {
+      this._nfcContentHelper.callDefaultLostHandler(sessionToken, true);
+    }
+  },
+
+  handlePeerLost: function handlePeerLost(sessionToken) {
     if (this.hasDeadWrapper()) {
       dump("this._window or this.__DOM_IMPL__ is a dead wrapper.");
-      return;
+      return false;
     }
 
     if (!this.checkPermissions(["nfc", "nfc-share"])) {
-      return;
+      return false;
     }
 
     if (!this.nfcPeer) {
       debug("No NFCPeer object existing.");
-      return;
-    }
-
-    // Remove system event listener only when tag and peer are both lost.
-    if (!this.nfcTag) {
-      this.eventService.removeSystemEventListener(this._window, "visibilitychange",
-        this, /* useCapture */false);
+      return false;
     }
 
     this.nfcPeer.notifyLost();
@@ -524,26 +612,28 @@ MozNFCImpl.prototype = {
     debug("fire onpeerlost");
     let event = new this._window.Event("peerlost");
     this.__DOM_IMPL__.dispatchEvent(event);
+
+    return true;
   },
 
-  handleEvent: function handleEvent (event) {
-    if (!this._window.document.hidden) {
+  notifyRFStateChanged: function notifyRFStateChanged(rfState) {
+    this._rfState = rfState;
+  },
+
+  notifyFocusChanged: function notifyFocusChanged(focus) {
+    if (focus) {
       return;
     }
 
     if (this.nfcTag) {
-      debug("handleEvent notifyTagLost");
+      debug("losing focus, call taglost.");
       this.notifyTagLost(this.nfcTag.session);
     }
 
     if (this.nfcPeer) {
-      debug("handleEvent notifyPeerLost");
+      debug("losing focus, call peerlost.");
       this.notifyPeerLost(this.nfcPeer.session);
     }
-  },
-
-  notifyRFStateChange: function notifyRFStateChange(rfState) {
-    this._rfState = rfState;
   },
 
   checkPermissions: function checkPermissions(perms) {
@@ -569,8 +659,7 @@ MozNFCImpl.prototype = {
   contractID: "@mozilla.org/nfc/manager;1",
   QueryInterface: XPCOMUtils.generateQI([Ci.nsISupports,
                                          Ci.nsIDOMGlobalPropertyInitializer,
-                                         Ci.nsINfcEventListener,
-                                         Ci.nsIDOMEventListener]),
+                                         Ci.nsINfcEventListener]),
 };
 
 function NFCSendFileWrapper() {

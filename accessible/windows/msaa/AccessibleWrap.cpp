@@ -14,6 +14,7 @@
 #include "nsCoreUtils.h"
 #include "nsIAccessibleEvent.h"
 #include "nsWinUtils.h"
+#include "mozilla/a11y/ProxyAccessible.h"
 #include "ServiceProvider.h"
 #include "Relation.h"
 #include "Role.h"
@@ -80,7 +81,13 @@ AccessibleWrap::QueryInterface(REFIID iid, void** ppv)
 
   *ppv = nullptr;
 
-  if (IID_IUnknown == iid || IID_IDispatch == iid || IID_IAccessible == iid)
+  if (IID_IUnknown == iid)
+    *ppv = static_cast<IAccessible*>(this);
+
+  if (!*ppv && IsProxy())
+    return E_NOINTERFACE;
+
+  if (IID_IDispatch == iid || IID_IAccessible == iid)
     *ppv = static_cast<IAccessible*>(this);
   else if (IID_IEnumVARIANT == iid) {
     // Don't support this interface for leaf elements.
@@ -147,6 +154,16 @@ AccessibleWrap::get_accParent( IDispatch __RPC_FAR *__RPC_FAR *ppdispParent)
   if (IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  if (IsProxy()) {
+    ProxyAccessible* proxy = Proxy();
+    ProxyAccessible* parent = proxy->Parent();
+    if (!parent)
+      return S_FALSE;
+
+    *ppdispParent = NativeAccessible(WrapperFor(parent));
+    return S_OK;
+  }
+
   DocAccessible* doc = AsDoc();
   if (doc) {
     // Return window system accessible object for root document and tab document
@@ -185,6 +202,15 @@ AccessibleWrap::get_accChildCount( long __RPC_FAR *pcountChildren)
 
   if (IsDefunct())
     return CO_E_OBJNOTCONNECTED;
+
+  if (IsProxy()) {
+    ProxyAccessible* proxy = Proxy();
+    if (proxy->MustPruneChildren())
+      return S_OK;
+
+    *pcountChildren = proxy->ChildrenCount();
+    return S_OK;
+  }
 
   if (nsAccUtils::MustPrune(this))
     return S_OK;
@@ -250,7 +276,10 @@ AccessibleWrap::get_accName(
     return CO_E_OBJNOTCONNECTED;
 
   nsAutoString name;
-  xpAccessible->Name(name);
+  if (xpAccessible->IsProxy())
+    xpAccessible->Proxy()->Name(name);
+  else
+    xpAccessible->Name(name);
 
   // The name was not provided, e.g. no alt attribute for an image. A screen
   // reader may choose to invent its own accessible name, e.g. from an image src
@@ -288,6 +317,10 @@ AccessibleWrap::get_accValue(
 
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
+
+  // TODO make this work with proxies.
+  if (IsProxy())
+    return E_NOTIMPL;
 
   if (xpAccessible->NativeRole() == roles::PASSWORD_TEXT)
     return E_ACCESSDENIED;
@@ -331,7 +364,10 @@ AccessibleWrap::get_accDescription(VARIANT varChild,
     return CO_E_OBJNOTCONNECTED;
 
   nsAutoString description;
-  xpAccessible->Description(description);
+  if (IsProxy())
+    xpAccessible->Proxy()->Description(description);
+  else
+    xpAccessible->Description(description);
 
   *pszDescription = ::SysAllocStringLen(description.get(),
                                         description.Length());
@@ -362,12 +398,18 @@ AccessibleWrap::get_accRole(
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  a11y::role geckoRole;
+  if (xpAccessible->IsProxy()) {
+    geckoRole = xpAccessible->Proxy()->Role();
+  } else {
 #ifdef DEBUG
-  NS_ASSERTION(nsAccUtils::IsTextInterfaceSupportCorrect(xpAccessible),
-               "Does not support Text when it should");
+    NS_ASSERTION(nsAccUtils::IsTextInterfaceSupportCorrect(xpAccessible),
+                 "Does not support Text when it should");
 #endif
 
-  a11y::role geckoRole = xpAccessible->Role();
+    geckoRole = xpAccessible->Role();
+  }
+
   uint32_t msaaRole = 0;
 
 #define ROLE(_geckoRole, stringRole, atkRole, macRole, \
@@ -387,10 +429,16 @@ AccessibleWrap::get_accRole(
   // Special case, if there is a ROLE_ROW inside of a ROLE_TREE_TABLE, then call the MSAA role
   // a ROLE_OUTLINEITEM for consistency and compatibility.
   // We need this because ARIA has a role of "row" for both grid and treegrid
-  if (geckoRole == roles::ROW) {
-    Accessible* xpParent = Parent();
-    if (xpParent && xpParent->Role() == roles::TREE_TABLE)
-      msaaRole = ROLE_SYSTEM_OUTLINEITEM;
+  if (xpAccessible->IsProxy()) {
+      if (geckoRole == roles::ROW
+          && xpAccessible->Proxy()->Parent()->Role() == roles::TREE_TABLE)
+        msaaRole = ROLE_SYSTEM_OUTLINEITEM;
+  } else {
+    if (geckoRole == roles::ROW) {
+      Accessible* xpParent = Parent();
+      if (xpParent && xpParent->Role() == roles::TREE_TABLE)
+        msaaRole = ROLE_SYSTEM_OUTLINEITEM;
+    }
   }
   
   // -- Try enumerated role
@@ -399,6 +447,10 @@ AccessibleWrap::get_accRole(
     pvarRole->lVal = msaaRole;  // Normal enumerated role
     return S_OK;
   }
+
+  // XXX bug 798492 make this work with proxies?
+  if (IsProxy())
+  return E_FAIL;
 
   // -- Try BSTR role
   // Could not map to known enumerated MSAA role like ROLE_BUTTON
@@ -470,8 +522,14 @@ AccessibleWrap::get_accState(
   //   INVALID -> ALERT_HIGH
   //   CHECKABLE -> MARQUEED
 
+  uint64_t state;
+  if (xpAccessible->IsProxy())
+    state = xpAccessible->Proxy()->State();
+  else
+    state = State();
+
   uint32_t msaaState = 0;
-  nsAccUtils::To32States(xpAccessible->State(), &msaaState, nullptr);
+  nsAccUtils::To32States(state, &msaaState, nullptr);
   pvarState->lVal = msaaState;
   return S_OK;
 
@@ -534,6 +592,10 @@ AccessibleWrap::get_accKeyboardShortcut(
   if (acc->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (acc->IsProxy())
+    return E_NOTIMPL;
+
   KeyBinding keyBinding = acc->AccessKey();
   if (keyBinding.IsEmpty())
     keyBinding = acc->KeyboardShortcut();
@@ -568,6 +630,10 @@ AccessibleWrap::get_accFocus(
   if (IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (IsProxy())
+    return E_NOTIMPL;
+
   // Return the current IAccessible child that has focus
   Accessible* focusedAccessible = FocusedChild();
   if (focusedAccessible == this) {
@@ -591,7 +657,7 @@ AccessibleWrap::get_accFocus(
  * This helper class implements IEnumVARIANT for a nsTArray containing
  * accessible objects.
  */
-class AccessibleEnumerator MOZ_FINAL : public IEnumVARIANT
+class AccessibleEnumerator final : public IEnumVARIANT
 {
 public:
   AccessibleEnumerator(const nsTArray<Accessible*>& aArray) :
@@ -730,6 +796,10 @@ AccessibleWrap::get_accSelection(VARIANT __RPC_FAR *pvarChildren)
   if (IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (IsProxy())
+    return E_NOTIMPL;
+
   if (IsSelect()) {
     nsAutoTArray<Accessible*, 10> selectedItems;
     SelectedItems(&selectedItems);
@@ -766,6 +836,10 @@ AccessibleWrap::get_accDefaultAction(
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (xpAccessible->IsProxy())
+    return E_NOTIMPL;
+
   nsAutoString defaultAction;
   xpAccessible->ActionNameAt(0, defaultAction);
   *pszDefaultAction = ::SysAllocStringLen(defaultAction.get(),
@@ -792,6 +866,10 @@ AccessibleWrap::accSelect(
 
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
+
+  // TODO make this work with proxies.
+  if (xpAccessible->IsProxy())
+    return E_NOTIMPL;
 
   if (flagsSelect & (SELFLAG_TAKEFOCUS|SELFLAG_TAKESELECTION|SELFLAG_REMOVESELECTION))
   {
@@ -846,6 +924,10 @@ AccessibleWrap::accLocation(
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (xpAccessible->IsProxy())
+    return E_NOTIMPL;
+
   nsIntRect rect = xpAccessible->Bounds();
   *pxLeft = rect.x;
   *pyTop = rect.y;
@@ -878,6 +960,10 @@ AccessibleWrap::accNavigate(
 
   if (accessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
+
+  // TODO make this work with proxies.
+  if (IsProxy())
+    return E_NOTIMPL;
 
   Accessible* navAccessible = nullptr;
   Maybe<RelationType> xpRelation;
@@ -950,6 +1036,10 @@ AccessibleWrap::accHitTest(
   if (IsDefunct())
     return CO_E_OBJNOTCONNECTED;
 
+  // TODO make this work with proxies.
+  if (IsProxy())
+    return E_NOTIMPL;
+
   Accessible* accessible = ChildAtPoint(xLeft, yTop, eDirectChild);
 
   // if we got a child
@@ -987,6 +1077,10 @@ AccessibleWrap::accDoDefaultAction(
 
   if (xpAccessible->IsDefunct())
     return CO_E_OBJNOTCONNECTED;
+
+  // TODO make this work with proxies.
+  if (xpAccessible->IsProxy())
+    return E_NOTIMPL;
 
   return xpAccessible->DoAction(0) ? S_OK : E_INVALIDARG;
 
@@ -1135,7 +1229,7 @@ AccessibleWrap::HandleAccEvent(AccEvent* aEvent)
 
 #ifdef A11Y_LOG
   if (logging::IsEnabled(logging::ePlatforms)) {
-    printf("\n\nMSAA event: event: %d, target: %s@id='%s', childid: %d, hwnd: %d\n\n",
+    printf("\n\nMSAA event: event: %d, target: %s@id='%s', childid: %d, hwnd: %p\n\n",
            eventType, NS_ConvertUTF16toUTF8(tag).get(), id.get(),
            childID, hWnd);
   }
@@ -1229,6 +1323,18 @@ AccessibleWrap::GetXPAccessibleFor(const VARIANT& aVarChild)
   // if its us real easy - this seems to always be the case
   if (aVarChild.lVal == CHILDID_SELF)
     return this;
+
+  if (IsProxy()) {
+    if (Proxy()->MustPruneChildren())
+      return nullptr;
+
+    if (aVarChild.lVal > 0)
+      return WrapperFor(Proxy()->ChildAt(aVarChild.lVal - 1));
+
+    // XXX Don't implement negative child ids for now because annoying, and
+    // doesn't seem to be speced.
+    return nullptr;
+  }
 
   if (nsAccUtils::MustPrune(this))
     return nullptr;

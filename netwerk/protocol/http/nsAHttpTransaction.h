@@ -23,6 +23,7 @@ class nsHttpTransaction;
 class nsHttpPipeline;
 class nsHttpRequestHead;
 class nsHttpConnectionInfo;
+class NullHttpTransaction;
 class SpdyConnectTransaction;
 
 //----------------------------------------------------------------------------
@@ -55,7 +56,7 @@ public:
 
     // called to report socket status (see nsITransportEventSink)
     virtual void OnTransportStatus(nsITransport* transport,
-                                   nsresult status, uint64_t progress) = 0;
+                                   nsresult status, int64_t progress) = 0;
 
     // called to check the transaction status.
     virtual bool     IsDone() = 0;
@@ -119,7 +120,7 @@ public:
 
     // Occasionally the abstract interface has to give way to base implementations
     // to respect differences between spdy, pipelines, etc..
-    // These Query* (and IsNUllTransaction()) functions provide a way to do
+    // These Query* (and IsNullTransaction()) functions provide a way to do
     // that without using xpcom or rtti. Any calling code that can't deal with
     // a null response from one of them probably shouldn't be using nsAHttpTransaction
 
@@ -132,6 +133,7 @@ public:
     // A null transaction is expected to return BASE_STREAM_CLOSED on all of
     // its IO functions all the time.
     virtual bool IsNullTransaction() { return false; }
+    virtual NullHttpTransaction *QueryNullTransaction() { return nullptr; }
 
     // If we used rtti this would be the result of doing
     // dynamic_cast<nsHttpTransaction *>(this).. i.e. it can be nullptr for
@@ -194,28 +196,28 @@ public:
 NS_DEFINE_STATIC_IID_ACCESSOR(nsAHttpTransaction, NS_AHTTPTRANSACTION_IID)
 
 #define NS_DECL_NSAHTTPTRANSACTION \
-    void SetConnection(nsAHttpConnection *) MOZ_OVERRIDE; \
-    nsAHttpConnection *Connection() MOZ_OVERRIDE; \
-    void GetSecurityCallbacks(nsIInterfaceRequestor **) MOZ_OVERRIDE;       \
+    void SetConnection(nsAHttpConnection *) override; \
+    nsAHttpConnection *Connection() override; \
+    void GetSecurityCallbacks(nsIInterfaceRequestor **) override;       \
     void OnTransportStatus(nsITransport* transport, \
-                           nsresult status, uint64_t progress) MOZ_OVERRIDE; \
-    bool     IsDone() MOZ_OVERRIDE; \
-    nsresult Status() MOZ_OVERRIDE; \
-    uint32_t Caps() MOZ_OVERRIDE;   \
-    void     SetDNSWasRefreshed() MOZ_OVERRIDE; \
-    uint64_t Available() MOZ_OVERRIDE; \
-    virtual nsresult ReadSegments(nsAHttpSegmentReader *, uint32_t, uint32_t *) MOZ_OVERRIDE; \
-    virtual nsresult WriteSegments(nsAHttpSegmentWriter *, uint32_t, uint32_t *) MOZ_OVERRIDE; \
-    virtual void Close(nsresult reason) MOZ_OVERRIDE;                                \
-    nsHttpConnectionInfo *ConnectionInfo() MOZ_OVERRIDE;                             \
-    void     SetProxyConnectFailed() MOZ_OVERRIDE;                                   \
-    virtual nsHttpRequestHead *RequestHead() MOZ_OVERRIDE;                                   \
-    uint32_t Http1xTransactionCount() MOZ_OVERRIDE;                                  \
-    nsresult TakeSubTransactions(nsTArray<nsRefPtr<nsAHttpTransaction> > &outTransactions) MOZ_OVERRIDE; \
-    nsresult AddTransaction(nsAHttpTransaction *) MOZ_OVERRIDE;                      \
-    uint32_t PipelineDepth() MOZ_OVERRIDE;                                           \
-    nsresult SetPipelinePosition(int32_t) MOZ_OVERRIDE;                              \
-    int32_t  PipelinePosition() MOZ_OVERRIDE;
+                           nsresult status, int64_t progress) override; \
+    bool     IsDone() override; \
+    nsresult Status() override; \
+    uint32_t Caps() override;   \
+    void     SetDNSWasRefreshed() override; \
+    uint64_t Available() override; \
+    virtual nsresult ReadSegments(nsAHttpSegmentReader *, uint32_t, uint32_t *) override; \
+    virtual nsresult WriteSegments(nsAHttpSegmentWriter *, uint32_t, uint32_t *) override; \
+    virtual void Close(nsresult reason) override;                                \
+    nsHttpConnectionInfo *ConnectionInfo() override;                             \
+    void     SetProxyConnectFailed() override;                                   \
+    virtual nsHttpRequestHead *RequestHead() override;                                   \
+    uint32_t Http1xTransactionCount() override;                                  \
+    nsresult TakeSubTransactions(nsTArray<nsRefPtr<nsAHttpTransaction> > &outTransactions) override; \
+    nsresult AddTransaction(nsAHttpTransaction *) override;                      \
+    uint32_t PipelineDepth() override;                                           \
+    nsresult SetPipelinePosition(int32_t) override;                              \
+    int32_t  PipelinePosition() override;
 
 //-----------------------------------------------------------------------------
 // nsAHttpSegmentReader
@@ -246,7 +248,7 @@ public:
 };
 
 #define NS_DECL_NSAHTTPSEGMENTREADER \
-    nsresult OnReadSegment(const char *, uint32_t, uint32_t *) MOZ_OVERRIDE;
+    nsresult OnReadSegment(const char *, uint32_t, uint32_t *) override;
 
 //-----------------------------------------------------------------------------
 // nsAHttpSegmentWriter
@@ -262,7 +264,7 @@ public:
 };
 
 #define NS_DECL_NSAHTTPSEGMENTWRITER \
-    nsresult OnWriteSegment(char *, uint32_t, uint32_t *) MOZ_OVERRIDE;
+    nsresult OnWriteSegment(char *, uint32_t, uint32_t *) override;
 
 }} // namespace mozilla::net
 

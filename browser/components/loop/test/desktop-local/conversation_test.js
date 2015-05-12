@@ -53,7 +53,9 @@ describe("loop.conversation", function() {
 
     fakeWindow = {
       navigator: { mozLoop: navigator.mozLoop },
-      close: sandbox.stub(),
+      close: sinon.stub(),
+      addEventListener: function() {},
+      removeEventListener: function() {}
     };
     loop.shared.mixins.setRootObject(fakeWindow);
 
@@ -81,7 +83,7 @@ describe("loop.conversation", function() {
 
       sandbox.stub(loop.Dispatcher.prototype, "dispatch");
 
-      sandbox.stub(loop.shared.utils.Helper.prototype,
+      sandbox.stub(loop.shared.utils,
         "locationData").returns({
           hash: "#42",
           pathname: "/"
@@ -139,7 +141,8 @@ describe("loop.conversation", function() {
           sdk: {},
           conversationStore: conversationStore,
           conversationAppStore: conversationAppStore,
-          dispatcher: dispatcher
+          dispatcher: dispatcher,
+          mozLoop: navigator.mozLoop
         }));
     }
 

@@ -48,7 +48,7 @@ GenerateRequest(IDBIndex* aIndex)
 
 IDBIndex::IDBIndex(IDBObjectStore* aObjectStore, const IndexMetadata* aMetadata)
   : mObjectStore(aObjectStore)
-  , mCachedKeyPath(JSVAL_VOID)
+  , mCachedKeyPath(JS::UndefinedValue())
   , mMetadata(aMetadata)
   , mId(aMetadata->id())
   , mRooted(false)
@@ -63,7 +63,7 @@ IDBIndex::~IDBIndex()
   AssertIsOnOwningThread();
 
   if (mRooted) {
-    mCachedKeyPath = JSVAL_VOID;
+    mCachedKeyPath.setUndefined();
     mozilla::DropJSObjects(this);
   }
 }
@@ -292,9 +292,7 @@ IDBIndex::GetInternal(bool aKeyOnly,
                  IDB_LOG_STRINGIFY(keyRange));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  transaction->StartRequest(actor, params);
+  transaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -375,9 +373,7 @@ IDBIndex::GetAllInternal(bool aKeysOnly,
                  IDB_LOG_STRINGIFY(aLimit));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  transaction->StartRequest(actor, params);
+  transaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -527,9 +523,7 @@ IDBIndex::Count(JSContext* aCx,
                IDB_LOG_STRINGIFY(this),
                IDB_LOG_STRINGIFY(keyRange));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  transaction->StartRequest(actor, params);
+  transaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -559,7 +553,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBIndex)
 
   // Don't unlink mObjectStore!
 
-  tmp->mCachedKeyPath = JSVAL_VOID;
+  tmp->mCachedKeyPath.setUndefined();
 
   if (tmp->mRooted) {
     mozilla::DropJSObjects(tmp);

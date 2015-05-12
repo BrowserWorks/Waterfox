@@ -82,6 +82,7 @@ var iframe3 = document.getElementById("iframe3");
 var input = document.getElementById("input");
 var textareaInFrame;
 
+const nsITextInputProcessorCallback = Components.interfaces.nsITextInputProcessorCallback;
 const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
 const nsIEditorIMESupport = Components.interfaces.nsIEditorIMESupport;
 const nsIInterfaceRequestor = Components.interfaces.nsIInterfaceRequestor;
@@ -190,16 +191,13 @@ function runUndoRedoTest()
   textarea.value = "";
   textarea.focus();
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input raw characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -210,7 +208,7 @@ function runUndoRedoTest()
       { "string": "\u306D\u3053",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -223,7 +221,7 @@ function runUndoRedoTest()
         "clauses":
         [
           { "length": 1,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -232,16 +230,13 @@ function runUndoRedoTest()
   // commit
   synthesizeComposition({ type: "compositioncommitasis" });
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input raw characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u307E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -250,16 +245,13 @@ function runUndoRedoTest()
   // cancel the composition
   synthesizeComposition({ type: "compositioncommit", data: "" });
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input raw characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3080",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -270,7 +262,7 @@ function runUndoRedoTest()
       { "string": "\u3080\u3059",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -281,7 +273,7 @@ function runUndoRedoTest()
       { "string": "\u3080\u3059\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -294,7 +286,7 @@ function runUndoRedoTest()
         "clauses":
         [
           { "length": 1,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -336,16 +328,13 @@ function runUndoRedoTest()
   synthesizeKey("a", {});
   synthesizeKey(" ", {});
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input raw characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3088",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -356,7 +345,7 @@ function runUndoRedoTest()
       { "string": "\u3088\u3046",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -367,7 +356,7 @@ function runUndoRedoTest()
       { "string": "\u3088\u3046\u304b",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -378,7 +367,7 @@ function runUndoRedoTest()
       { "string": "\u3088\u3046\u304b\u3044",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -390,7 +379,7 @@ function runUndoRedoTest()
       { "string": "\u5996\u602a",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+          { "length": 2, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -588,13 +577,12 @@ function runCompositionCommitAsIsTest()
 
   // compositioncommitasis with composing string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -612,13 +600,12 @@ function runCompositionCommitAsIsTest()
 
   // compositioncommitasis with committed string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -647,13 +634,12 @@ function runCompositionCommitAsIsTest()
 
   // compositioncommitasis with committed string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -708,13 +694,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with different composing string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -732,13 +717,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with different committed string when there is already committed string
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -767,13 +751,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with empty composition string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -802,13 +785,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with non-empty composition string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -824,9 +806,8 @@ function runCompositionCommitTest()
   is(result.input, true, "runCompositionCommitTest: input should be fired after dispatching compositioncommit #4");
   is(textarea.value, "", "runCompositionCommitTest: textarea should be empty #4");
 
-  // compositioncommit immediately after compositionstart
+  // compositioncommit immediately without compositionstart
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
 
   clearResult();
   synthesizeComposition({ type: "compositioncommit", data: "\u3042" });
@@ -839,13 +820,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with same composition string.
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -863,13 +843,12 @@ function runCompositionCommitTest()
 
   // compositioncommit with same composition string when there is committed string
   textarea.value = "";
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -916,16 +895,13 @@ function runCompositionTest()
   }
   caretRects[0] = caretRect;
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input first character
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -949,7 +925,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -982,7 +958,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -1015,7 +991,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -1049,7 +1025,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1082,7 +1058,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -1100,7 +1076,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -1117,7 +1093,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -1133,7 +1109,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055",
         "clauses":
         [
-          { "length": 5, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 5, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 5, "length": 0 }
@@ -1149,7 +1125,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
         "clauses":
         [
-          { "length": 6, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 6, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 6, "length": 0 }
@@ -1165,7 +1141,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
         "clauses":
         [
-          { "length": 7, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 7, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 7, "length": 0 }
@@ -1181,7 +1157,7 @@ function runCompositionTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
         "clauses":
         [
-          { "length": 8, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 8, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 8, "length": 0 }
@@ -1200,9 +1176,9 @@ function runCompositionTest()
         "clauses":
         [
           { "length": 4,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
           { "length": 2,
-            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -1221,9 +1197,9 @@ function runCompositionTest()
         "clauses":
         [
           { "length": 4,
-            "attr": COMPOSITION_ATTR_CONVERTEDTEXT },
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE },
           { "length": 2,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 6, "length": 0 }
@@ -1242,9 +1218,9 @@ function runCompositionTest()
         "clauses":
         [
           { "length": 5,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
           { "length": 3,
-            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE }
         ]
       },
       "caret": { "start": 5, "length": 0 }
@@ -1288,16 +1264,13 @@ function runCompositionTest()
   checkRect(textRect3, textRect1, "runCompositionTest: textRect #1-13-1");
   checkRect(textRect4, textRect2, "runCompositionTest: textRect #1-13-2");
 
-  // restart composition
-  synthesizeComposition({ type: "compositionstart" });
-
-  // input characters
+  // restart composition and input characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3057",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1314,7 +1287,7 @@ function runCompositionTest()
       { "string": "\u3058",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1331,7 +1304,7 @@ function runCompositionTest()
       { "string": "\u3058\u3087",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -1348,7 +1321,7 @@ function runCompositionTest()
       { "string": "\u3058\u3087\u3046",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -1378,14 +1351,12 @@ function runCompositionTest()
   }
 
   // start composition with selection
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u304A",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1421,7 +1392,7 @@ function runCompositionTest()
       { "string": "\u3046",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1445,8 +1416,6 @@ function runCompositionTest()
   // bug 271815, some Chinese IMEs for Linux make empty composition string
   // and compty clause information when it lists up Chinese characters on
   // its candidate window.
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "",
@@ -1489,8 +1458,6 @@ function runCompositionTest()
   }
 
   // testing the canceling case
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "",
@@ -1518,8 +1485,6 @@ function runCompositionTest()
 
   // testing whether the empty composition string deletes selected string.
   synthesizeKey("VK_LEFT", { shiftKey: true });
-
-  synthesizeComposition({ type: "compositionstart" });
 
   synthesizeCompositionChange(
     { "composition":
@@ -1554,14 +1519,12 @@ function runCompositionTest()
 
   // bug 23558, ancient Japanese IMEs on Window may send empty text event
   // twice at canceling composition.
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u6700",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1727,13 +1690,12 @@ function runCompositionEventTest()
   // test for normal case
   initResults();
 
-  synthesizeComposition({ type: "compositionstart" });
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1784,7 +1746,7 @@ function runCompositionEventTest()
       { "string": "\u3089\u30FC",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -1862,14 +1824,12 @@ function runCompositionEventTest()
   initResults();
   synthesizeKey("VK_LEFT", { shiftKey: true });
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -1931,14 +1891,12 @@ function runCompositionEventTest()
   initResults();
   synthesizeKey("A", { accelKey: true }); // Select All
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306D",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2002,14 +1960,12 @@ function runCompositionEventTest()
   initResults();
   synthesizeKey("A", { accelKey: true }); // Select All
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2376,14 +2332,12 @@ function runForceCommitTest()
   textarea.value = "";
 
   events = [];
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2429,14 +2383,12 @@ function runForceCommitTest()
   textarea.value = "";
   input.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2474,14 +2426,12 @@ function runForceCommitTest()
   textarea.focus();
   textarea.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2516,14 +2466,12 @@ function runForceCommitTest()
   textarea.value = "";
   input.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2562,14 +2510,12 @@ function runForceCommitTest()
   textarea.value = "";
   textareaInFrame.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2608,14 +2554,12 @@ function runForceCommitTest()
   textarea.value = "";
   textareaInFrame.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2655,14 +2599,12 @@ function runForceCommitTest()
   iframe2.contentDocument.body.innerHTML = "Text in the Body";
   var iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2701,14 +2643,12 @@ function runForceCommitTest()
   iframe2.contentDocument.body.innerHTML = "Text in the Body";
   iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
 
-  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2745,14 +2685,12 @@ function runForceCommitTest()
   iframe2.contentDocument.body.innerHTML = "Text in the Body";
   iframe2BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
 
-  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2794,14 +2732,12 @@ function runForceCommitTest()
   iframe3.contentDocument.body.innerHTML = "Text in the Body";
   iframe3BodyInnerHTML = iframe2.contentDocument.body.innerHTML;
 
-  synthesizeComposition({ type: "compositionstart" }, iframe2.contentWindow);
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -2841,6 +2777,106 @@ function runForceCommitTest()
   window.removeEventListener("compositionend", eventHandler, true);
   window.removeEventListener("input", eventHandler, true);
   window.removeEventListener("text", eventHandler, true);
+}
+
+function runAsyncForceCommitTest(aNextTest)
+{
+  var events;
+  function eventHandler(aEvent)
+  {
+    events.push(aEvent);
+  };
+
+  // If IME commits composition for a request, TextComposition commits
+  // composition automatically because most web apps must expect that active
+  // composition should be committed synchronously.  Therefore, in this case,
+  // a click during composition should cause committing composition
+  // synchronously and delayed commit shouldn't cause composition events.
+  var commitRequested = false;
+  function callback(aTIP, aNotification)
+  {
+    ok(true, aNotification.type);
+    if (aNotification.type != "request-to-commit") {
+      return true;
+    }
+    commitRequested = true;
+    setTimeout(function () {
+      events = [];
+      aTIP.commitComposition();
+
+      is(events.length, 0,
+         "runAsyncForceCommitTest: composition events shouldn't been fired by asynchronous call of nsITextInputProcessor.commitComposition()");
+
+      window.removeEventListener("compositionstart", eventHandler, true);
+      window.removeEventListener("compositionupdate", eventHandler, true);
+      window.removeEventListener("compositionend", eventHandler, true);
+      window.removeEventListener("input", eventHandler, true);
+      window.removeEventListener("text", eventHandler, true);
+
+      SimpleTest.executeSoon(aNextTest);
+    }, 1);
+    return true;
+  };
+
+  window.addEventListener("compositionstart", eventHandler, true);
+  window.addEventListener("compositionupdate", eventHandler, true);
+  window.addEventListener("compositionend", eventHandler, true);
+  window.addEventListener("input", eventHandler, true);
+  window.addEventListener("text", eventHandler, true);
+
+  // Make the composition in textarea commit by click in the textarea
+  textarea.focus();
+  textarea.value = "";
+
+  events = [];
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "\u306E",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    }, window, callback);
+
+  is(events.length, 4,
+     "runAsyncForceCommitTest: wrong event count #1");
+  is(events[0].type, "compositionstart",
+     "runAsyncForceCommitTest: the 1st event must be compositionstart #1");
+  is(events[1].type, "compositionupdate",
+     "runAsyncForceCommitTest: the 2nd event must be compositionupdate #1");
+  is(events[2].type, "text",
+     "runAsyncForceCommitTest: the 3rd event must be text #1");
+  is(events[3].type, "input",
+     "runAsyncForceCommitTest: the 4th event must be input #1");
+
+  events = [];
+  commitRequested = false;
+  synthesizeMouseAtCenter(textarea, {});
+
+  ok(commitRequested,
+     "runAsyncForceCommitTest: \"request-to-commit\" should've been notified");
+  is(events.length, 3,
+     "runAsyncForceCommitTest: wrong event count #2");
+  is(events[0].type, "text",
+     "runAsyncForceCommitTest: the 1st event must be text #2");
+  is(events[1].type, "compositionend",
+     "runAsyncForceCommitTest: the 2nd event must be compositionend #2");
+  is(events[2].type, "input",
+     "runAsyncForceCommitTest: the 3rd event must be input #2");
+  is(events[1].data, "\u306E",
+     "runAsyncForceCommitTest: compositionend has wrong data #2");
+  is(events[0].target, textarea,
+     "runAsyncForceCommitTest: The 1st event was fired on wrong event target #2");
+  is(events[1].target, textarea,
+     "runAsyncForceCommitTest: The 2nd event was fired on wrong event target #2");
+  is(events[2].target, textarea,
+     "runAsyncForceCommitTest: The 3rd event was fired on wrong event target #2");
+  ok(!getEditorIMESupport(textarea).isComposing,
+     "runAsyncForceCommitTest: the textarea still has composition #2");
+  is(textarea.value, "\u306E",
+     "runAsyncForceCommitTest: the textarea doesn't have the committed text #2");
 }
 
 function runBug811755Test()
@@ -2902,36 +2938,37 @@ function runIsComposingTest()
 
   // XXX These cases shouldn't occur in actual native key events because we
   //     don't dispatch key events while composition (bug 354358).
+  SpecialPowers.setBoolPref("dom.keyboardevent.dispatch_during_composition", true);
   description = "events before dispatching compositionstart";
   synthesizeKey("VK_LEFT", {});
 
-  synthesizeKey("a", { type: "keydown" });
-  synthesizeComposition({ type: "compositionstart" });
-  description = "events after dispatching compositionstart";
+  description = "events after dispatching compositionchange";
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3042",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
-      "caret": { "start": 1, "length": 0 }
+      "caret": { "start": 1, "length": 0 },
+      "key": { key: "a", code: "KeyA", keyCode: KeyboardEvent.DOM_VK_A },
     });
-  synthesizeKey("a", { type: "keyup" });
 
   // Although, firing keypress event during composition is a bug.
   synthesizeKey("VK_INSERT", {});
 
   description = "events for committing composition string";
-  synthesizeKey("VK_RETURN", { type: "keydown" });
 
-  synthesizeComposition({ type: "compositioncommitasis" });
+  synthesizeComposition({ type: "compositioncommitasis",
+                          key: { key: "KEY_Enter", code: "Enter", type: "keydown" } });
 
   // input event will be fired by synthesizing compositionend event.
   // Then, its isComposing should be false.
   description = "events after dispatching compositioncommitasis";
   synthesizeKey("VK_RETURN", { type: "keyup" });
+
+  SpecialPowers.clearUserPref("dom.keyboardevent.dispatch_during_composition");
 
   textarea.removeEventListener("keydown", eventHandler, true);
   textarea.removeEventListener("keypress", eventHandler, true);
@@ -2941,6 +2978,178 @@ function runIsComposingTest()
   textarea.removeEventListener("compositionend", onComposition, true);
 
   textarea.value = "";
+}
+
+function runRedundantChangeTest()
+{
+  textarea.focus();
+
+  var result = {};
+  function clearResult()
+  {
+    result = { compositionupdate: false, compositionend: false, text: false, input: false };
+  }
+
+  function handler(aEvent)
+  {
+    result[aEvent.type] = true;
+  }
+
+  textarea.addEventListener("compositionupdate", handler, true);
+  textarea.addEventListener("compositionend", handler, true);
+  textarea.addEventListener("input", handler, true);
+  textarea.addEventListener("text", handler, true);
+
+  textarea.value = "";
+
+  // synthesize change event
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "\u3042",
+        "clauses":
+        [
+          { "length": 1, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
+        ]
+      },
+      "caret": { "start": 1, "length": 0 }
+    });
+
+  is(result.compositionupdate, true, "runRedundantChangeTest: compositionupdate should be fired after synthesizing composition change #1");
+  is(result.compositionend, false, "runRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change #1");
+  is(result.text, true, "runRedundantChangeTest: text should be fired after synthesizing composition change because it's dispatched when there is composing string #1");
+  is(result.input, true, "runRedundantChangeTest: input should be fired after synthesizing composition change #1");
+  is(textarea.value, "\u3042", "runRedundantChangeTest: textarea has uncommitted string #1");
+
+  // synthesize another change event
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "\u3042\u3044",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  is(result.compositionupdate, true, "runRedundantChangeTest: compositionupdate should be fired after synthesizing composition change #2");
+  is(result.compositionend, false, "runRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change #2");
+  is(result.text, true, "runRedundantChangeTest: text should be fired after synthesizing composition change because it's dispatched when there is composing string #2");
+  is(result.input, true, "runRedundantChangeTest: input should be fired after synthesizing composition change #2");
+  is(textarea.value, "\u3042\u3044", "runRedundantChangeTest: textarea has uncommitted string #2");
+
+  // synthesize same change event again
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "\u3042\u3044",
+        "clauses":
+        [
+          { "length": 2, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
+        ]
+      },
+      "caret": { "start": 2, "length": 0 }
+    });
+
+  is(result.compositionupdate, false, "runRedundantChangeTest: compositionupdate shouldn't be fired after synthesizing composition change again");
+  is(result.compositionend, false, "runRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change again");
+  is(result.text, false, "runRedundantChangeTest: text shouldn't be fired after synthesizing composition change again because it's dispatched when there is composing string");
+  is(result.input, false, "runRedundantChangeTest: input shouldn't be fired after synthesizing composition change again");
+  is(textarea.value, "\u3042\u3044", "runRedundantChangeTest: textarea has uncommitted string #3");
+
+  synthesizeComposition({ type: "compositioncommit" });
+
+  textarea.removeEventListener("compositionupdate", handler, true);
+  textarea.removeEventListener("compositionend", handler, true);
+  textarea.removeEventListener("input", handler, true);
+  textarea.removeEventListener("text", handler, true);
+}
+
+function runNotRedundantChangeTest()
+{
+  textarea.focus();
+
+  var result = {};
+  function clearResult()
+  {
+    result = { compositionupdate: false, compositionend: false, text: false, input: false };
+  }
+
+  function handler(aEvent)
+  {
+    result[aEvent.type] = true;
+  }
+
+  textarea.addEventListener("compositionupdate", handler, true);
+  textarea.addEventListener("compositionend", handler, true);
+  textarea.addEventListener("input", handler, true);
+  textarea.addEventListener("text", handler, true);
+
+  textarea.value = "abcde";
+
+  // synthesize change event with non-null ranges
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "ABCDE",
+        "clauses":
+        [
+          { "length": 5, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
+        ]
+      },
+      "caret": { "start": 5, "length": 0 }
+    });
+
+  is(result.compositionupdate, true, "runNotRedundantChangeTest: compositionupdate should be fired after synthesizing composition change with non-null ranges");
+  is(result.compositionend, false, "runNotRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change with non-null ranges");
+  is(result.text, true, "runNotRedundantChangeTest: text should be fired after synthesizing composition change because it's dispatched when there is composing string with non-null ranges");
+  is(result.input, true, "runNotRedundantChangeTest: input should be fired after synthesizing composition change with non-null ranges");
+  is(textarea.value, "abcdeABCDE", "runNotRedundantChangeTest: textarea has uncommitted string #1");
+
+  // synthesize change event with null ranges
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "",
+        "clauses":
+        [
+          { "length": 0, "attr": 0 }
+        ]
+      },
+    });
+  is(result.compositionupdate, true, "runNotRedundantChangeTest: compositionupdate should be fired after synthesizing composition change with null ranges after non-null ranges");
+  is(result.compositionend, false, "runNotRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change with null ranges after non-null ranges");
+  is(result.text, true, "runNotRedundantChangeTest: text should be fired after synthesizing composition change because it's dispatched when there is composing string with null ranges after non-null ranges");
+  is(result.input, false, "runNotRedundantChangeTest: input shouldn't be fired after synthesizing composition change with null ranges after non-null ranges");
+  is(textarea.value, "abcde", "runNotRedundantChangeTest: textarea doesn't have uncommitted string");
+
+  // synthesize change event with non-null ranges
+  clearResult();
+  synthesizeCompositionChange(
+    { "composition":
+      { "string": "ABCDE",
+        "clauses":
+        [
+          { "length": 5, "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
+        ]
+      },
+      "caret": { "start": 5, "length": 0 }
+    });
+
+  is(result.compositionupdate, true, "runNotRedundantChangeTest: compositionupdate should be fired after synthesizing composition change with non-null ranges after null ranges");
+  is(result.compositionend, false, "runNotRedundantChangeTest: compositionend shouldn't be fired after synthesizing composition change with non-null ranges after null ranges");
+  is(result.text, true, "runNotRedundantChangeTest: text should be fired after synthesizing composition change because it's dispatched when there is composing string with non-null ranges after null ranges");
+  is(result.input, true, "runNotRedundantChangeTest: input should be fired after synthesizing composition change with non-null ranges after null ranges");
+  is(textarea.value, "abcdeABCDE", "runNotRedundantChangeTest: textarea has uncommitted string #2");
+
+  synthesizeComposition({ type: "compositioncommit", data: "" });
+
+  textarea.removeEventListener("compositionupdate", handler, true);
+  textarea.removeEventListener("compositionend", handler, true);
+  textarea.removeEventListener("input", handler, true);
+  textarea.removeEventListener("text", handler, true);
 }
 
 function runRemoveContentTest(aCallback)
@@ -2959,14 +3168,12 @@ function runRemoveContentTest(aCallback)
   textarea.focus();
   textarea.value = "";
 
-  synthesizeComposition({ type: "compositionstart" });
-
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u306E",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -3056,16 +3263,13 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
   checkRectContainsRect(editorRect, parentRect, aTestName +
                         ": the editor rect coordinates are wrong");
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3078\u3093\u3057\u3093",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -3083,7 +3287,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
         "clauses":
         [
           { "length": 2,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -3101,7 +3305,7 @@ function runTestOnAnotherContext(aPanelOrFrame, aFocusedEditor, aTestName)
         "clauses":
         [
           { "length": 2,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -3197,16 +3401,13 @@ function runMaxLengthTest()
 
   var kDesc ="runMaxLengthTest";
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input first character
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3089",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -3223,7 +3424,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -3240,7 +3441,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -3257,7 +3458,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -3275,7 +3476,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081",
         "clauses":
         [
-          { "length": 3, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 3, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 3, "length": 0 }
@@ -3292,7 +3493,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093",
         "clauses":
         [
-          { "length": 4, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 4, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -3308,7 +3509,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055",
         "clauses":
         [
-          { "length": 5, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 5, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 5, "length": 0 }
@@ -3324,7 +3525,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044",
         "clauses":
         [
-          { "length": 6, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 6, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 6, "length": 0 }
@@ -3340,7 +3541,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053",
         "clauses":
         [
-          { "length": 7, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 7, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 7, "length": 0 }
@@ -3357,7 +3558,7 @@ function runMaxLengthTest()
       { "string": "\u3089\u30FC\u3081\u3093\u3055\u3044\u3053\u3046",
         "clauses":
         [
-          { "length": 8, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 8, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 8, "length": 0 }
@@ -3376,9 +3577,9 @@ function runMaxLengthTest()
         "clauses":
         [
           { "length": 4,
-            "attr": COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT },
+            "attr": COMPOSITION_ATTR_SELECTED_CLAUSE },
           { "length": 2,
-            "attr": COMPOSITION_ATTR_CONVERTEDTEXT }
+            "attr": COMPOSITION_ATTR_CONVERTED_CLAUSE }
         ]
       },
       "caret": { "start": 4, "length": 0 }
@@ -3396,16 +3597,13 @@ function runMaxLengthTest()
     return;
   }
 
-  // restart composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u3057",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -3458,16 +3656,13 @@ function runMaxLengthTest()
   input.value = "X";
   input.selectionStart = input.selectionEnd = 0;
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54",
         "clauses":
         [
-          { "length": 1, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 1, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 1, "length": 0 }
@@ -3488,16 +3683,13 @@ function runMaxLengthTest()
     return;
   }
 
-  // start composition
-  synthesizeComposition({ type: "compositionstart" });
-
   // input characters
   synthesizeCompositionChange(
     { "composition":
       { "string": "\u9B54\u6CD5",
         "clauses":
         [
-          { "length": 2, "attr": COMPOSITION_ATTR_RAWINPUT }
+          { "length": 2, "attr": COMPOSITION_ATTR_RAW_CLAUSE }
         ]
       },
       "caret": { "start": 2, "length": 0 }
@@ -3532,10 +3724,14 @@ function runTest()
   runForceCommitTest();
   runBug811755Test();
   runIsComposingTest();
-  runRemoveContentTest(function () {
-    runFrameTest();
-    runPanelTest();
-    runMaxLengthTest();
+  runRedundantChangeTest();
+  runNotRedundantChangeTest();
+  runAsyncForceCommitTest(function () {
+    runRemoveContentTest(function () {
+      runFrameTest();
+      runPanelTest();
+      runMaxLengthTest();
+    });
   });
 }
 

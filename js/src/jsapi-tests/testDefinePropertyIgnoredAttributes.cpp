@@ -17,7 +17,7 @@ static const unsigned AllowWritable  = IgnoreAll & ~JSPROP_IGNORE_READONLY;
 static const unsigned ValueWithConfigurable = IgnoreWithValue & ~JSPROP_IGNORE_PERMANENT;
 
 static bool
-Getter(JSContext *cx, unsigned argc, JS::Value *vp)
+Getter(JSContext* cx, unsigned argc, JS::Value* vp)
 {
     JS::CallArgs args = CallArgsFromVp(argc, vp);
     args.rval().setBoolean(true);
@@ -41,7 +41,7 @@ CheckDescriptor(JS::Handle<JSPropertyDescriptor> desc, bool enumerable,
 
 BEGIN_TEST(testDefinePropertyIgnoredAttributes)
 {
-    JS::RootedObject obj(cx, JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject obj(cx, JS_NewPlainObject(cx));
     JS::Rooted<JSPropertyDescriptor> desc(cx);
     JS::RootedValue defineValue(cx);
 

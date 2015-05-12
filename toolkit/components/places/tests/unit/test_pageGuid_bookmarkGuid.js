@@ -92,7 +92,7 @@ add_task(function test_addVisitAndCheckGuid() {
   // add a visit and test page guid and non-existing bookmark guids.
   let now = Date.now() * 1000;
   let sourceURI = uri("http://test4.com/");
-  yield promiseAddVisits({ uri: sourceURI });
+  yield PlacesTestUtils.addVisits({ uri: sourceURI });
   do_check_eq(bmsvc.getBookmarkedURIFor(sourceURI), null);
 
   let options = histsvc.getNewQueryOptions();
@@ -106,7 +106,7 @@ add_task(function test_addVisitAndCheckGuid() {
   do_check_eq(root.getChild(0).bookmarkGuid, "");
   root.containerOpen = false;
 
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function test_addItemsWithInvalidGUIDsFails() {

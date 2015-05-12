@@ -38,12 +38,6 @@
 #define ERROR_CLASP(type)           (&ErrorObject::classes[type])
 #define SHARED_TYPED_ARRAY_CLASP(type) (&SharedTypedArrayObject::classes[Scalar::type])
 
-#ifdef ENABLE_PARALLEL_JS
-#define IF_PJS(real,imaginary) real
-#else
-#define IF_PJS(real,imaginary) imaginary
-#endif
-
 #ifdef EXPOSE_INTL_API
 #define IF_INTL(real,imaginary) real
 #else
@@ -60,12 +54,6 @@
 #define IF_SAB(real,imaginary) real
 #else
 #define IF_SAB(real,imaginary) imaginary
-#endif
-
-#ifdef JS_HAS_SYMBOLS
-#define IF_SYMBOLS(real,imaginary) real
-#else
-#define IF_SYMBOLS(real,imaginary) imaginary
 #endif
 
 #define JS_FOR_PROTOTYPES(real,imaginary) \
@@ -105,7 +93,7 @@
     real(Map,                   33,     js_InitMapClass,           OCLASP(Map)) \
     real(Set,                   34,     js_InitSetClass,           OCLASP(Set)) \
     real(DataView,              35,     js_InitDataViewClass,      OCLASP(DataView)) \
-IF_SYMBOLS(real,imaginary)(Symbol,              36,     js_InitSymbolClass,        &js::SymbolObject::class_) \
+    real(Symbol,                36,     js_InitSymbolClass,        OCLASP(Symbol)) \
 IF_SAB(real,imaginary)(SharedArrayBuffer,       37,     js_InitSharedArrayBufferClass, &js::SharedArrayBufferObject::protoClass) \
 IF_INTL(real,imaginary) (Intl,                  38,     js_InitIntlClass,          CLASP(Intl)) \
 IF_BDATA(real,imaginary)(TypedObject,           39,     js_InitTypedObjectModuleObject,   OCLASP(TypedObjectModule)) \
@@ -123,6 +111,8 @@ IF_SAB(real,imaginary)(SharedFloat64Array,      50,     js_InitViaClassSpec,    
 IF_SAB(real,imaginary)(SharedUint8ClampedArray, 51,     js_InitViaClassSpec,       SHARED_TYPED_ARRAY_CLASP(Uint8Clamped)) \
     real(TypedArray,            52,      js_InitViaClassSpec,      &js::TypedArrayObject::sharedTypedArrayPrototypeClass) \
 IF_SAB(real,imaginary)(Atomics,                 53,     js_InitAtomicsClass, OCLASP(Atomics)) \
+    real(SavedFrame,            54,      js_InitViaClassSpec,      &js::SavedFrame::class_) \
+
 
 #define JS_FOR_EACH_PROTOTYPE(macro) JS_FOR_PROTOTYPES(macro,macro)
 

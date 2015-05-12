@@ -35,7 +35,7 @@ class SVGSVGElement;
 
 namespace image {
 
-class SVGDocumentWrapper MOZ_FINAL : public nsIStreamListener,
+class SVGDocumentWrapper final : public nsIStreamListener,
                                      public nsIObserver,
                                      nsSupportsWeakReference
 {
@@ -51,21 +51,6 @@ public:
     eWidth,
     eHeight
   };
-
-  /**
-   * Looks up the value of the wrapped SVG document's |width| or |height|
-   * attribute in CSS pixels, and returns it by reference.  If the document has
-   * a percent value for the queried attribute, then this method fails
-   * (returns false).
-   *
-   * @param aDimension    Indicates whether the width or height is desired.
-   * @param[out] aResult  If this method succeeds, then this outparam will be
-                          populated with the width or height in CSS pixels.
-   * @return false to indicate failure, if the queried attribute has a
-   *         percent value.  Otherwise, true.
-   *
-   */
-  bool      GetWidthOrHeight(Dimension aDimension, int32_t& aResult);
 
   /**
    * Returns the wrapped document, or nullptr on failure. (No AddRef.)

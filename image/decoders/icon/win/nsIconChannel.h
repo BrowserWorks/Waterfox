@@ -25,7 +25,7 @@
 
 class nsIFile;
 
-class nsIconChannel MOZ_FINAL : public nsIChannel, public nsIStreamListener
+class nsIconChannel final : public nsIChannel, public nsIStreamListener
 {
   ~nsIconChannel();
 
@@ -43,7 +43,6 @@ public:
 protected:
   nsCOMPtr<nsIURI> mUrl;
   nsCOMPtr<nsIURI> mOriginalURI;
-  int64_t          mContentLength;
   nsCOMPtr<nsILoadGroup> mLoadGroup;
   nsCOMPtr<nsIInterfaceRequestor> mCallbacks;
   nsCOMPtr<nsISupports>  mOwner;

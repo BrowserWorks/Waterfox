@@ -321,7 +321,7 @@ WebBrowserChrome2Stub::GetInterface(const nsIID & aIID, void **aSink)
 // This is the "stub" we return from CreateWindowlessBrowser - it exists
 // purely to keep a strong reference to the browser and the container to
 // prevent the container being collected while the stub remains alive.
-class WindowlessBrowserStub MOZ_FINAL : public nsIWebNavigation,
+class WindowlessBrowserStub final : public nsIWebNavigation,
                                         public nsIInterfaceRequestor {
 public:
   WindowlessBrowserStub(nsIWebBrowser *aBrowser, nsISupports *aContainer) {
@@ -393,7 +393,7 @@ nsAppShellService::CreateWindowlessBrowser(bool aIsChrome, nsIWebNavigation **aR
     return NS_ERROR_FAILURE;
   }
   widget->Create(nullptr, 0, nsIntRect(nsIntPoint(0, 0), nsIntSize(0, 0)),
-                 nullptr, nullptr);
+                 nullptr);
   nsCOMPtr<nsIBaseWindow> window = do_QueryInterface(navigation);
   window->InitWindow(0, widget, 0, 0, 0, 0);
   window->Create();

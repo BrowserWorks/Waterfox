@@ -124,7 +124,7 @@ NS_IMETHODIMP nsDeviceContextSpecQt::GetSurfaceForPrinter(
         return NS_ERROR_NOT_IMPLEMENTED;
     }
 
-    NS_ABORT_IF_FALSE(surface, "valid address expected");
+    MOZ_ASSERT(surface, "valid address expected");
 
     surface.swap(*aSurface);
     return NS_OK;
@@ -148,12 +148,6 @@ NS_IMETHODIMP nsDeviceContextSpecQt::Init(nsIWidget* aWidget,
     nsCOMPtr<nsPrintSettingsQt> printSettingsQt(do_QueryInterface(aPS));
     if (!printSettingsQt)
         return NS_ERROR_NO_INTERFACE;
-    return NS_OK;
-}
-
-NS_IMETHODIMP nsDeviceContextSpecQt::GetPath(const char** aPath)
-{
-    *aPath = mPath;
     return NS_OK;
 }
 

@@ -130,11 +130,18 @@ assertThrowsValue(() => Array.from.call(C, arrayish, () => { throw exc; }), exc)
 assertEq(log, "lC0");
 assertEq(obj instanceof C, true);
 
+// It's a TypeError if the @@iterator property is a primitive (except null and undefined).
+for (var primitive of ["foo", 17, Symbol(), true]) {
+    assertThrowsInstanceOf(() => Array.from({[Symbol.iterator] : primitive}), TypeError);
+}
+assertDeepEq(Array.from({[Symbol.iterator]: null}), []);
+assertDeepEq(Array.from({[Symbol.iterator]: undefined}), []);
+
 // It's a TypeError if the iterator's .next() method returns a primitive.
 for (var primitive of [undefined, null, 17]) {
     assertThrowsInstanceOf(
         () => Array.from({
-            [std_iterator]() {
+            [Symbol.iterator]() {
                 return {next() { return primitive; }};
             }
         }),

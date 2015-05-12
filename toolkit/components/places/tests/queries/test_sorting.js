@@ -414,7 +414,7 @@ tests.push({
     // This function in head_queries.js creates our database with the above data
     yield task_populateDB(this._unsortedData);
     // add visits to increase visit count
-    yield promiseAddVisits([
+    yield PlacesTestUtils.addVisits([
       { uri: uri("http://example.com/a"), transition: TRANSITION_TYPED, visitDate: timeInMicroseconds },
       { uri: uri("http://example.com/b1"), transition: TRANSITION_TYPED, visitDate: timeInMicroseconds },
       { uri: uri("http://example.com/b1"), transition: TRANSITION_TYPED, visitDate: timeInMicroseconds },
@@ -1266,12 +1266,12 @@ add_task(function test_sorting()
 {
   for (let [, test] in Iterator(tests)) {
     yield test.setup();
-    yield promiseAsyncUpdates();
+    yield PlacesTestUtils.promiseAsyncUpdates();
     test.check();
     // sorting reversed, usually SORT_BY have ASC and DESC
     test.check_reverse();
     // Execute cleanup tasks
     remove_all_bookmarks();
-    yield promiseClearHistory();
+    yield PlacesTestUtils.clearHistory();
   }
 });

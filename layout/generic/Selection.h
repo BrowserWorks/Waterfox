@@ -27,6 +27,7 @@ struct SelectionDetails;
 
 namespace mozilla {
 class ErrorResult;
+struct AutoPrepareFocusRange;
 }
 
 struct RangeData
@@ -47,7 +48,7 @@ struct RangeData
 namespace mozilla {
 namespace dom {
 
-class Selection MOZ_FINAL : public nsISelectionPrivate,
+class Selection final : public nsISelectionPrivate,
                             public nsWrapperCache,
                             public nsSupportsWeakReference
 {
@@ -141,7 +142,7 @@ public:
 
   nsresult     StopAutoScrollTimer();
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx) override;
 
   // WebIDL methods
   nsINode*     GetAnchorNode();
@@ -226,7 +227,7 @@ public:
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
   };
 private:
-
+  friend struct mozilla::AutoPrepareFocusRange;
   class ScrollSelectionIntoViewEvent;
   friend class ScrollSelectionIntoViewEvent;
 
@@ -311,6 +312,28 @@ private:
    * It determines whether we exclude -moz-user-select:none nodes or not.
    */
   bool mApplyUserSelectStyle;
+};
+
+// Stack-class to turn on/off selection batching.
+class MOZ_STACK_CLASS SelectionBatcher final
+{
+private:
+  nsRefPtr<Selection> mSelection;
+public:
+  explicit SelectionBatcher(Selection* aSelection)
+  {
+    mSelection = aSelection;
+    if (mSelection) {
+      mSelection->StartBatchChanges();
+    }
+  }
+
+  ~SelectionBatcher()
+  {
+    if (mSelection) {
+      mSelection->EndBatchChanges();
+    }
+  }
 };
 
 } // namespace dom

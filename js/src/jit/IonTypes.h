@@ -8,8 +8,8 @@
 #define jit_IonTypes_h
 
 #include "mozilla/HashFunctions.h"
-#include "mozilla/TypedEnum.h"
 
+#include "jsfriendapi.h"
 #include "jstypes.h"
 
 #include "js/Value.h"
@@ -101,11 +101,9 @@ enum BailoutKind
     Bailout_NonStringInput,
     Bailout_NonSymbolInput,
 
-    // PJS bailout when writing to a non-thread local object.
-    Bailout_GuardThreadExclusive,
-
-    // PJS bailout when encountering MIR unsafe for parallel execution.
-    Bailout_ParallelUnsafe,
+    // SIMD Unbox expects a given type, bails out if it doesn't match.
+    Bailout_NonSimdInt32x4Input,
+    Bailout_NonSimdFloat32x4Input,
 
     // For the initial snapshot when entering a function.
     Bailout_InitialState,
@@ -153,7 +151,7 @@ enum BailoutKind
     Bailout_IonExceptionDebugMode,
 };
 
-inline const char *
+inline const char*
 BailoutKindString(BailoutKind kind)
 {
     switch (kind) {
@@ -200,8 +198,10 @@ BailoutKindString(BailoutKind kind)
         return "Bailout_NonStringInput";
       case Bailout_NonSymbolInput:
         return "Bailout_NonSymbolInput";
-      case Bailout_GuardThreadExclusive:
-        return "Bailout_GuardThreadExclusive";
+      case Bailout_NonSimdInt32x4Input:
+        return "Bailout_NonSimdInt32x4Input";
+      case Bailout_NonSimdFloat32x4Input:
+        return "Bailout_NonSimdFloat32x4Input";
       case Bailout_InitialState:
         return "Bailout_InitialState";
       case Bailout_Debugger:
@@ -284,7 +284,7 @@ class SimdConstant {
         cst.fillInt32x4(x, y, z, w);
         return cst;
     }
-    static SimdConstant CreateX4(int32_t *array) {
+    static SimdConstant CreateX4(int32_t* array) {
         SimdConstant cst;
         cst.fillInt32x4(array[0], array[1], array[2], array[3]);
         return cst;
@@ -299,7 +299,7 @@ class SimdConstant {
         cst.fillFloat32x4(x, y, z, w);
         return cst;
     }
-    static SimdConstant CreateX4(float *array) {
+    static SimdConstant CreateX4(float* array) {
         SimdConstant cst;
         cst.fillFloat32x4(array[0], array[1], array[2], array[3]);
         return cst;
@@ -327,16 +327,16 @@ class SimdConstant {
         return type_;
     }
 
-    const int32_t *asInt32x4() const {
+    const int32_t* asInt32x4() const {
         MOZ_ASSERT(defined() && type_ == Int32x4);
         return u.i32x4;
     }
-    const float *asFloat32x4() const {
+    const float* asFloat32x4() const {
         MOZ_ASSERT(defined() && type_ == Float32x4);
         return u.f32x4;
     }
 
-    bool operator==(const SimdConstant &rhs) const {
+    bool operator==(const SimdConstant& rhs) const {
         MOZ_ASSERT(defined() && rhs.defined());
         if (type() != rhs.type())
             return false;
@@ -345,11 +345,11 @@ class SimdConstant {
 
     // SimdConstant is a HashPolicy
     typedef SimdConstant Lookup;
-    static HashNumber hash(const SimdConstant &val) {
+    static HashNumber hash(const SimdConstant& val) {
         uint32_t hash = mozilla::HashBytes(&val.u, sizeof(val.u));
         return mozilla::AddToHash(hash, val.type_);
     }
-    static bool match(const SimdConstant &lhs, const SimdConstant &rhs) {
+    static bool match(const SimdConstant& lhs, const SimdConstant& rhs) {
         return lhs == rhs;
     }
 };
@@ -380,8 +380,8 @@ enum MIRType
     MIRType_Elements,                  // An elements vector
     MIRType_Pointer,                   // An opaque pointer that receives no special treatment
     MIRType_Shape,                     // A Shape pointer.
-    MIRType_TypeObject,                // A TypeObject pointer.
-    MIRType_Last = MIRType_TypeObject,
+    MIRType_ObjectGroup,               // An ObjectGroup pointer.
+    MIRType_Last = MIRType_ObjectGroup,
     MIRType_Float32x4 = MIRType_Float32 | (2 << VECTOR_SCALE_SHIFT),
     MIRType_Int32x4   = MIRType_Int32   | (2 << VECTOR_SCALE_SHIFT),
     MIRType_Doublex2  = MIRType_Double  | (1 << VECTOR_SCALE_SHIFT)
@@ -453,7 +453,7 @@ MIRTypeToTag(MIRType type)
     return JSVAL_TYPE_TO_TAG(ValueTypeFromMIRType(type));
 }
 
-static inline const char *
+static inline const char*
 StringFromMIRType(MIRType type)
 {
   switch (type) {
@@ -553,6 +553,29 @@ SimdTypeToLength(MIRType type)
     return 1 << ((type >> VECTOR_SCALE_SHIFT) & VECTOR_SCALE_MASK);
 }
 
+static inline unsigned
+ScalarTypeToLength(Scalar::Type type)
+{
+    switch (type) {
+      case Scalar::Int8:
+      case Scalar::Uint8:
+      case Scalar::Int16:
+      case Scalar::Uint16:
+      case Scalar::Int32:
+      case Scalar::Uint32:
+      case Scalar::Float32:
+      case Scalar::Float64:
+      case Scalar::Uint8Clamped:
+        return 1;
+      case Scalar::Float32x4:
+      case Scalar::Int32x4:
+        return 4;
+      case Scalar::MaxTypedArrayViewType:
+        break;
+    }
+    MOZ_CRASH("unexpected SIMD kind");
+}
+
 static inline MIRType
 SimdTypeToScalarType(MIRType type)
 {
@@ -637,10 +660,17 @@ enum ABIFunctionType
     // int f(int, double)
     Args_Int_IntDouble = Args_General0 |
         (ArgType_Double << (ArgType_Shift * 1)) |
-        (ArgType_General << (ArgType_Shift * 2))
+        (ArgType_General << (ArgType_Shift * 2)),
+
+    // double f(double, double, double)
+    Args_Double_DoubleDoubleDouble = Args_Double_DoubleDouble | (ArgType_Double << (ArgType_Shift * 3)),
+
+    // double f(double, double, double, double)
+    Args_Double_DoubleDoubleDoubleDouble = Args_Double_DoubleDoubleDouble | (ArgType_Double << (ArgType_Shift * 4))
+
 };
 
-MOZ_BEGIN_ENUM_CLASS(BarrierKind, uint32_t)
+enum class BarrierKind : uint32_t {
     // No barrier is needed.
     NoBarrier,
 
@@ -651,7 +681,7 @@ MOZ_BEGIN_ENUM_CLASS(BarrierKind, uint32_t)
     // Check if the value is in the TypeSet, including the object type if it's
     // an object.
     TypeSet
-MOZ_END_ENUM_CLASS(BarrierKind)
+};
 
 } // namespace jit
 } // namespace js

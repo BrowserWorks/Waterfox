@@ -134,12 +134,51 @@ function defineLazyRegExp(obj, name, pattern) {
   });
 }
 
+function NetworkInterfaceLinks()
+{
+  this.resetLinks();
+}
+NetworkInterfaceLinks.prototype = {
+  linkRoutes: null,
+  gateways: null,
+  interfaceName: null,
+  extraRoutes: null,
+
+  setLinks: function(linkRoutes, gateways, interfaceName) {
+    this.linkRoutes = linkRoutes;
+    this.gateways = gateways;
+    this.interfaceName = interfaceName;
+  },
+
+  resetLinks: function() {
+    this.linkRoutes = [];
+    this.gateways = [];
+    this.interfaceName = "";
+    this.extraRoutes = [];
+  },
+
+  compareGateways: function(gateways) {
+    if (this.gateways.length != gateways.length) {
+      return false;
+    }
+
+    for (let i = 0; i < this.gateways.length; i++) {
+      if (this.gateways[i] != gateways[i]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+};
+
 /**
  * This component watches for network interfaces changing state and then
  * adjusts routes etc. accordingly.
  */
 function NetworkManager() {
   this.networkInterfaces = {};
+  this.networkInterfaceLinks = {};
   Services.obs.addObserver(this, TOPIC_XPCOM_SHUTDOWN, false);
   Services.obs.addObserver(this, TOPIC_MOZSETTINGS_CHANGED, false);
 
@@ -303,9 +342,29 @@ NetworkManager.prototype = {
                                  Cr.NS_ERROR_INVALID_ARG);
     }
     this.networkInterfaces[networkId] = network;
+    this.networkInterfaceLinks[networkId] = new NetworkInterfaceLinks();
+
+    if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
+      debug("Force setting " + SETTINGS_DUN_REQUIRED + " to true.");
+      this.tetheringSettings[SETTINGS_DUN_REQUIRED] = true;
+    }
 
     Services.obs.notifyObservers(network, TOPIC_INTERFACE_REGISTERED, null);
     debug("Network '" + networkId + "' registered.");
+  },
+
+  _addSubnetRoutes: function(network) {
+    let ips = {};
+    let prefixLengths = {};
+    let length = network.getAddresses(ips, prefixLengths);
+    for (let i = 0; i < length; i++) {
+      debug('Adding subnet routes: ' + ips.value[i] + '/' + prefixLengths.value[i]);
+      gNetworkService.modifyRoute(Ci.nsINetworkService.MODIFY_ROUTE_ADD,
+                                  network.name, ips.value[i], prefixLengths.value[i])
+        .catch((aError) => {
+          debug("_addSubnetRoutes error: " + aError);
+        });
+    }
   },
 
   updateNetworkInterface: function(network) {
@@ -320,40 +379,65 @@ NetworkManager.prototype = {
     }
     debug("Network " + network.type + "/" + network.name +
           " changed state to " + network.state);
+
+    // Note that since Lollipop we need to allocate and initialize
+    // something through netd, so we add createNetwork/destroyNetwork
+    // to deal with that explicitly.
+
     switch (network.state) {
       case Ci.nsINetworkInterface.NETWORK_STATE_CONNECTED:
-        // Add host route for data calls
-        if (this.isNetworkTypeMobile(network.type)) {
-          gNetworkService.removeHostRoutes(network.name);
-          this.setHostRoutes(network);
-        }
-        // Dun type is a special case where we add the default route to a
-        // secondary table.
-        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
-          this.setSecondaryDefaultRoute(network);
-        }
-        // Remove pre-created default route and let setAndConfigureActive()
-        // to set default route only on preferred network
-        gNetworkService.removeDefaultRoute(network);
-        this.setAndConfigureActive();
-
-        // Update data connection when Wifi connected/disconnected
-        if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI && this.mRil) {
-          for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
-            this.mRil.getRadioInterface(i).updateRILNetworkInterface();
+        gNetworkService.createNetwork(network.name, () => {
+          // Add host route for data calls
+          if (this.isNetworkTypeMobile(network.type)) {
+            let currentInterfaceLinks = this.networkInterfaceLinks[networkId];
+            let newLinkRoutes = network.getDnses().concat(network.httpProxyHost);
+            // If gateways have changed, remove all old routes first.
+            this._handleGateways(networkId, network.getGateways())
+              .then(() => this._updateRoutes(currentInterfaceLinks.linkRoutes,
+                                             newLinkRoutes,
+                                             network.getGateways(), network.name))
+              .then(() => currentInterfaceLinks.setLinks(newLinkRoutes,
+                                                         network.getGateways(),
+                                                         network.name));
           }
-        }
 
-        this.onConnectionChanged(network);
+          // Remove pre-created default route and let setAndConfigureActive()
+          // to set default route only on preferred network
+          gNetworkService.removeDefaultRoute(network);
 
-        // Probing the public network accessibility after routing table is ready
-        CaptivePortalDetectionHelper
-          .notify(CaptivePortalDetectionHelper.EVENT_CONNECT, this.active);
+          // Dun type is a special case where we add the default route to a
+          // secondary table.
+          if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
+            this.setSecondaryDefaultRoute(network);
+          }
+
+          this._addSubnetRoutes(network);
+          this.setAndConfigureActive();
+
+          // Update data connection when Wifi connected/disconnected
+          if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_WIFI && this.mRil) {
+            for (let i = 0; i < this.mRil.numRadioInterfaces; i++) {
+              this.mRil.getRadioInterface(i).updateRILNetworkInterface();
+            }
+          }
+
+          this.onConnectionChanged(network);
+
+          // Probing the public network accessibility after routing table is ready
+          CaptivePortalDetectionHelper
+            .notify(CaptivePortalDetectionHelper.EVENT_CONNECT, this.active);
+
+          // Notify outer modules like MmsService to start the transaction after
+          // the configuration of the network interface is done.
+          Services.obs.notifyObservers(network, TOPIC_CONNECTION_STATE_CHANGED,
+                                       this.convertConnectionType(network));
+        });
+
         break;
       case Ci.nsINetworkInterface.NETWORK_STATE_DISCONNECTED:
         // Remove host route for data calls
         if (this.isNetworkTypeMobile(network.type)) {
-          this.removeHostRoutes(network);
+          this._cleanupAllHostRoutes(networkId);
         }
         // Remove secondary default route for dun.
         if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
@@ -364,6 +448,10 @@ NetworkManager.prototype = {
           gNetworkService.resetRoutingTable(network);
         } else if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE) {
           gNetworkService.removeDefaultRoute(network);
+        }
+        // Clear http proxy on active network.
+        if (this.active && network.type == this.active.type) {
+          gNetworkService.clearNetworkProxy();
         }
 
         // Abort ongoing captive portal detection on the wifi interface
@@ -378,13 +466,14 @@ NetworkManager.prototype = {
           }
         }
 
+        gNetworkService.destroyNetwork(network.name, () => {
+          // Notify outer modules like MmsService to start the transaction after
+          // the configuration of the network interface is done.
+          Services.obs.notifyObservers(network, TOPIC_CONNECTION_STATE_CHANGED,
+                                       this.convertConnectionType(network));
+        });
         break;
     }
-
-    // Notify outer modules like MmsService to start the transaction after
-    // the configuration of the network interface is done.
-    Services.obs.notifyObservers(network, TOPIC_CONNECTION_STATE_CHANGED,
-                                 this.convertConnectionType(network));
   },
 
   unregisterNetworkInterface: function(network) {
@@ -397,7 +486,19 @@ NetworkManager.prototype = {
       throw Components.Exception("No network with that type registered.",
                                  Cr.NS_ERROR_INVALID_ARG);
     }
+
+    // This is for in case a network gets unregistered without being
+    // DISCONNECTED.
+    if (this.isNetworkTypeMobile(network.type)) {
+      this._cleanupAllHostRoutes(networkId);
+    }
+
     delete this.networkInterfaces[networkId];
+
+    if (network.type == Ci.nsINetworkInterface.NETWORK_TYPE_MOBILE_DUN) {
+      this.tetheringSettings[SETTINGS_DUN_REQUIRED] =
+        libcutils.property_get("ro.tethering.dun_required") === "1";
+    }
 
     Services.obs.notifyObservers(network, TOPIC_INTERFACE_UNREGISTERED, null);
     debug("Network '" + networkId + "' unregistered.");
@@ -406,6 +507,8 @@ NetworkManager.prototype = {
   _manageOfflineStatus: true,
 
   networkInterfaces: null,
+
+  networkInterfaceLinks: null,
 
   _dataDefaultServiceId: null,
 
@@ -434,15 +537,40 @@ NetworkManager.prototype = {
     this.setAndConfigureActive();
   },
 
-  _updateRoutes: function(doAdd, ipAddresses, networkName, gateways) {
+  _updateRoutes: function(oldLinks, newLinks, gateways, interfaceName) {
+    // Returns items that are in base but not in target.
+    function getDifference(base, target) {
+      return base.filter(function(i) { return target.indexOf(i) < 0; });
+    }
+
+    let addedLinks = getDifference(newLinks, oldLinks);
+    let removedLinks = getDifference(oldLinks, newLinks);
+
+    if (addedLinks.length === 0 && removedLinks.length === 0) {
+      return Promise.resolve();
+    }
+
+    return this._setHostRoutes(false, removedLinks, interfaceName, gateways)
+      .then(this._setHostRoutes(true, addedLinks, interfaceName, gateways));
+  },
+
+  _setHostRoutes: function(doAdd, ipAddresses, networkName, gateways) {
+    let getMaxPrefixLength = (aIp) => {
+      return aIp.match(this.REGEXP_IPV4) ? IPV4_MAX_PREFIX_LENGTH : IPV6_MAX_PREFIX_LENGTH;
+    }
+
     let promises = [];
 
     ipAddresses.forEach((aIpAddress) => {
       let gateway = this.selectGateway(gateways, aIpAddress);
       if (gateway) {
         promises.push((doAdd)
-          ? gNetworkService.addHostRoute(networkName, gateway, aIpAddress)
-          : gNetworkService.removeHostRoute(networkName, gateway, aIpAddress));
+          ? gNetworkService.modifyRoute(Ci.nsINetworkService.MODIFY_ROUTE_ADD,
+                                        networkName, aIpAddress,
+                                        getMaxPrefixLength(aIpAddress), gateway)
+          : gNetworkService.modifyRoute(Ci.nsINetworkService.MODIFY_ROUTE_REMOVE,
+                                        networkName, aIpAddress,
+                                        getMaxPrefixLength(aIpAddress), gateway));
       }
     });
 
@@ -466,10 +594,20 @@ NetworkManager.prototype = {
     }
 
     return this.resolveHostname(network, host)
-      .then((ipAddresses) => this._updateRoutes(true,
-                                                ipAddresses,
-                                                network.name,
-                                                network.getGateways()));
+      .then((ipAddresses) => {
+        let promises = [];
+        let networkId = this.getNetworkId(network);
+
+        ipAddresses.forEach((aIpAddress) => {
+          let promise =
+            this._setHostRoutes(true, [aIpAddress], network.name, network.getGateways())
+              .then(() => this.networkInterfaceLinks[networkId].extraRoutes.push(aIpAddress));
+
+          promises.push(promise);
+        });
+
+        return Promise.all(promises);
+      });
   },
 
   removeHostRoute: function(network, host) {
@@ -478,10 +616,29 @@ NetworkManager.prototype = {
     }
 
     return this.resolveHostname(network, host)
-      .then((ipAddresses) => this._updateRoutes(false,
-                                                ipAddresses,
-                                                network.name,
-                                                network.getGateways()));
+      .then((ipAddresses) => {
+        let promises = [];
+        let networkId = this.getNetworkId(network);
+
+        ipAddresses.forEach((aIpAddress) => {
+          let found = this.networkInterfaceLinks[networkId].extraRoutes.indexOf(aIpAddress);
+          if (found < 0) {
+            return; // continue
+          }
+
+          let promise =
+            this._setHostRoutes(false, [aIpAddress], network.name, network.getGateways())
+              .then(() => {
+                this.networkInterfaceLinks[networkId].extraRoutes.splice(found, 1);
+              }, () => {
+                // We should remove it even if the operation failed.
+                this.networkInterfaceLinks[networkId].extraRoutes.splice(found, 1);
+              });
+          promises.push(promise);
+        });
+
+        return Promise.all(promises);
+      });
   },
 
   isNetworkTypeSecondaryMobile: function(type) {
@@ -496,16 +653,46 @@ NetworkManager.prototype = {
             this.isNetworkTypeSecondaryMobile(type));
   },
 
-  setHostRoutes: function(network) {
-    let hosts = network.getDnses().concat(network.httpProxyHost);
+  _handleGateways: function(networkId, gateways) {
+    let currentNetworkLinks = this.networkInterfaceLinks[networkId];
+    if (currentNetworkLinks.gateways.length == 0 ||
+        currentNetworkLinks.compareGateways(gateways)) {
+      return Promise.resolve();
+    }
 
-    return this._updateRoutes(true, hosts, network.name, network.getGateways());
+    let currentExtraRoutes = currentNetworkLinks.extraRoutes;
+    return this._cleanupAllHostRoutes(networkId)
+      .then(() => {
+        // If gateways have changed, re-add extra host routes with new gateways.
+        if (currentExtraRoutes.length > 0) {
+          this._setHostRoutes(true,
+                              currentExtraRoutes,
+                              currentNetworkLinks.interfaceName,
+                              gateways)
+          .then(() => {
+            currentNetworkLinks.extraRoutes = currentExtraRoutes;
+          });
+        }
+      });
   },
 
-  removeHostRoutes: function(network) {
-    let hosts = network.getDnses().concat(network.httpProxyHost);
+  _cleanupAllHostRoutes: function(networkId) {
+    let currentNetworkLinks = this.networkInterfaceLinks[networkId];
+    let hostRoutes = currentNetworkLinks.linkRoutes.concat(
+      currentNetworkLinks.extraRoutes);
 
-    return this._updateRoutes(false, hosts, network.name, network.getGateways());
+    if (hostRoutes.length === 0) {
+      return Promise.resolve();
+    }
+
+    return this._setHostRoutes(false,
+                               hostRoutes,
+                               currentNetworkLinks.interfaceName,
+                               currentNetworkLinks.gateways)
+      .catch((aError) => {
+        debug("Error (" + aError + ") on _cleanupAllHostRoutes, keep proceeding.");
+      })
+      .then(() => currentNetworkLinks.resetLinks());
   },
 
   selectGateway: function(gateways, host) {
@@ -1271,6 +1458,10 @@ NetworkManager.prototype = {
 
   _setDefaultRouteAndDNS: function(network, oldInterface) {
     gNetworkService.setDefaultRoute(network, oldInterface, function(success) {
+      if (!success) {
+        gNetworkService.destroyNetwork(network, function() {});
+        return;
+      }
       gNetworkService.setDNS(network, function(result) {
         gNetworkService.setNetworkProxy(network);
       });

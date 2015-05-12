@@ -1,281 +1,207 @@
 /* Any copyright is dedicated to the Public Domain.
-   http://creativecommons.org/publicdomain/zero/1.0/ */
+ * http://creativecommons.org/publicdomain/zero/1.0/ */
 
-MARIONETTE_HEAD_JS = "stk_helper.js";
+MARIONETTE_TIMEOUT = 60000;
+MARIONETTE_HEAD_JS = "head.js";
 
-function testSendSMS(command, expect) {
-  log("STK CMD " + JSON.stringify(command));
-  is(command.typeOfCommand, iccManager.STK_CMD_SEND_SMS, expect.name);
-  is(command.commandQualifier, expect.commandQualifier, expect.name);
-  is(command.options.text, expect.title, expect.name);
-
-  let icons = command.options.icons;
-  if (icons) {
-    isIcons(icons, expect.icons, expect.name);
-
-    let iconSelfExplanatory = command.options.iconSelfExplanatory;
-    is(iconSelfExplanatory, expect.iconSelfExplanatory, expect.name);
-  }
-
-  runNextTest();
-}
-
-let tests = [
-  {command: "d037810301130082028183850753656e6420534d86099111223344556677f88b180100099110325476f840f40c54657374204d657373616765",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_1_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Send SM"}},
-  {command: "d02e81030113008202818386099111223344556677f88b180100099110325476f840f40c54657374204d657373616765",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_1_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d032810301130182028183850753656e6420534d86099111223344556677f88b130100099110325476f840f40753656e6420534d",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_2_with_alpha_identifier",
-            commandQualifier: 0x01,
-            title: "Send SM"}},
-  {command: "d02981030113018202818386099111223344556677f88b130100099110325476f840f40753656e6420534d",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_2_without_alpha_identifier",
-            commandQualifier: 0x01}},
-  {command: "d03d810301130082028183850d53686f7274204d65737361676586099111223344556677f88b180100099110325476f840f00d53f45b4e0735cbf379f85c06",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_3_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Short Message"}},
-  {command: "d02e81030113008202818386099111223344556677f88b180100099110325476f840f00d53f45b4e0735cbf379f85c06",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_3_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d081fd810301130182028183853854686520616464726573732064617461206f626a65637420686f6c6473207468652052501144657374696e6174696f6e114164647265737386099111223344556677f88b81ac0100099110325476f840f4a054776f2074797065732061726520646566696e65643a202d20412073686f7274206d65737361676520746f2062652073656e7420746f20746865206e6574776f726b20696e20616e20534d532d5355424d4954206d6573736167652c206f7220616e20534d532d434f4d4d414e44206d6573736167652c20776865726520746865207573657220646174612063616e20626520706173736564207472616e7370",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_4_with_alpha_identifier",
-            commandQualifier: 0x01,
-            title: "The address data object holds the RP_Destination_Address"}},
-  {command: "d081c381030113018202818386099111223344556677f88b81ac0100099110325476f840f4a054776f2074797065732061726520646566696e65643a202d20412073686f7274206d65737361676520746f2062652073656e7420746f20746865206e6574776f726b20696e20616e20534d532d5355424d4954206d6573736167652c206f7220616e20534d532d434f4d4d414e44206d6573736167652c20776865726520746865207573657220646174612063616e20626520706173736564207472616e7370",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_4_without_alpha_identifier",
-            commandQualifier: 0x01}},
-  {command: "d081e9810301130082028183853854686520616464726573732064617461206f626a65637420686f6c6473207468652052502044657374696e6174696f6e204164647265737386099111223344556677f88b81980100099110325476f840f0a0d4fb1b44cfc3cb7350585e0691cbe6b4bb4cd6815aa020688e7ecbe9a076793e0f9fcb20fa1b242e83e665371d447f83e8e832c85da6dfdff23528ed0685dda06973da9a5685cd2415d42ecfe7e17399057acb41613768da9cb686cf6633e82482dae5f93c7c2eb3407774595e06d1d165507d5e9683c8617a18340ebb41e232081e9ecfcb64105d1e76cfe1",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_5_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "The address data object holds the RP Destination Address"}},
-  {command: "d081af81030113008202818386099111223344556677f88b81980100099110325476f840f0a0d4fb1b44cfc3cb7350585e0691cbe6b4bb4cd6815aa020688e7ecbe9a076793e0f9fcb20fa1b242e83e665371d447f83e8e832c85da6dfdff23528ed0685dda06973da9a5685cd2415d42ecfe7e17399057acb41613768da9cb686cf6633e82482dae5f93c7c2eb3407774595e06d1d165507d5e9683c8617a18340ebb41e232081e9ecfcb64105d1e76cfe1",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_5_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d081fd8103011300820281838581e654776f2074797065732061726520646566696e65643a202d20412073686f7274206d65737361676520746f2062652073656e7420746f20746865206e6574776f726b20696e20616e20534d532d5355424d4954206d6573736167652c206f7220616e20534d532d434f4d4d414e44206d6573736167652c20776865726520746865207573657220646174612063616e20626520706173736564207472616e73706172656e746c793b202d20412073686f7274206d65737361676520746f2062652073656e7420746f20746865206e6574776f726b20696e20616e20534d532d5355424d4954208b09010002911040f00120",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_6_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Two types are defined: - A short message to be sent to the network in an SMS-SUBMIT message, or an SMS-COMMAND message, where the user data can be passed transparently; - A short message to be sent to the network in an SMS-SUBMIT "}},
-  {command: "d0148103011300820281838b09010002911040f00120",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_6_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d030810301130082028183850086099111223344556677f88b180100099110325476f840f40c54657374204d657373616765",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_7_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: ""}},
-  // send_sms_cmd_7_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_1_without_alpha_identifier.
-  {command: "d05581030113008202818385198004170414042004100412042104220412042304190422041586099111223344556677f88b240100099110325476f8400818041704140420041004120421042204120423041904220415",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_8_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "ЗДРАВСТВУЙТЕ"}},
-  {command: "d03a81030113008202818386099111223344556677f88b240100099110325476f8400818041704140420041004120421042204120423041904220415",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_8_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d04b810301130082028183850f810c089794a09092a1a292a399a29586099111223344556677f88b240100099110325476f8400818041704140420041004120421042204120423041904220415",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_9_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "ЗДРАВСТВУЙТЕ"}},
-  // send_sms_cmd_9_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_8_without_alpha_identifier.
-  {command: "d03b81030113008202818385074e4f2049434f4e86099111223344556677f88b180100099110325476f840f40c54657374204d6573736167659e020002",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_10_with_alpha_identifier",
-            commandQualifier: 0x00,
+const TEST_DATA = [
+  {command: "D02E" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F40C54657374204D657373616765", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00}},
+  {command: "D03D" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "850D53686F7274204D657373616765" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F00D53F45B4E0735CBF379F85C06", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00,
+            text: "Short Message"}},
+  {command: "D081FD" + // Length
+            "8103011301" + // Command details
+            "82028183" + // Device identities
+            "853854686520616464726573732064617461206F62" + // Alpha identifier
+            "6A65637420686F6C64732074686520525011446573" +
+            "74696E6174696F6E1141646472657373" +
+            "86099111223344556677F8" + // Address
+            "8B81AC0100099110325476F840F4A054776F20747970" + // 3GPP-SMS TPDU
+            "65732061726520646566696E65643A202D2041207368" +
+            "6F7274206D65737361676520746F2062652073656E74" +
+            "20746F20746865206E6574776F726B20696E20616E20" +
+            "534D532D5355424D4954206D6573736167652C206F72" +
+            "20616E20534D532D434F4D4D414E44206D6573736167" +
+            "652C2077686572652074686520757365722064617461" +
+            "2063616E20626520706173736564207472616E7370",
+   expect: {commandQualifier: 0x01,
+            text: "The address data object holds the RP_Destination_Address"}},
+  {command: "D081C3" + // Length
+            "8103011301" + // Command details
+            "82028183" + // Device identities
+            "86099111223344556677F8" + // Address
+            "8B81AC0100099110325476F840F4A054776F20747970" + // 3GPP-SMS TPDU
+            "65732061726520646566696E65643A202D2041207368" +
+            "6F7274206D65737361676520746F2062652073656E74" +
+            "20746F20746865206E6574776F726B20696E20616E20" +
+            "534D532D5355424D4954206D6573736167652C206F72" +
+            "20616E20534D532D434F4D4D414E44206D6573736167" +
+            "652C2077686572652074686520757365722064617461" +
+            "2063616E20626520706173736564207472616E7370",
+   expect: {commandQualifier: 0x01}},
+  {command: "D081FD" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "8581E654776F207479706573206172652064656669" + // Alpha identifier
+            "6E65643A202D20412073686F7274206D6573736167" +
+            "6520746F2062652073656E7420746F20746865206E" +
+            "6574776F726B20696E20616E20534D532D5355424D" +
+            "4954206D6573736167652C206F7220616E20534D53" +
+            "2D434F4D4D414E44206D6573736167652C20776865" +
+            "726520746865207573657220646174612063616E20" +
+            "626520706173736564207472616E73706172656E74" +
+            "6C793B202D20412073686F7274206D657373616765" +
+            "20746F2062652073656E7420746F20746865206E65" +
+            "74776F726B20696E20616E20534D532D5355424D49" +
+            "5420" +
+            "8B09010002911040F00120", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00,
+            text: "Two types are defined: - A short message to be sent to " +
+                  "the network in an SMS-SUBMIT message, or an SMS-COMMAND " +
+                  "message, where the user data can be passed transparently; " +
+                  "- A short message to be sent to the network in an " +
+                  "SMS-SUBMIT "}},
+  {command: "D030" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "8500" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F40C54657374204D657373616765", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00,
+            text: ""}},
+  {command: "D055" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "851980041704140420041004120421042204120423041904220415" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B240100099110325476F8400818041704140420041004120421042204120423041904220415", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00,
+            text: "ЗДРАВСТВУЙТЕ"}},
+  {command: "D04B" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "850F810C089794A09092A1A292A399A295" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B240100099110325476F8400818041704140420041004120421042204120423041904220415", // 3GPP-SMS TPDU
+   expect: {commandQualifier: 0x00,
+            text: "ЗДРАВСТВУЙТЕ"}},
+  {command: "D03B" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "85074E4F2049434F4E" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F40C54657374204D657373616765" + // 3GPP-SMS TPDU
+            "9E020002", // Icon identifier
+   expect: {commandQualifier: 0x00,
             // The record number 02 in EFimg is not defined, so no icon will be
             // shown, but the text string should still be displayed.
-            title: "NO ICON"}},
-  {command: "d03281030113008202818386099111223344556677f88b180100099110325476f840f40c54657374204d6573736167659e020001",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_10_without_alpha_identifier",
-            commandQualifier: 0x00,
+            text: "NO ICON"}},
+  {command: "D032" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F40C54657374204D657373616765" + // 3GPP-SMS TPDU
+            "9E020001", // Icon identifier
+   expect: {commandQualifier: 0x00,
             iconSelfExplanatory: true,
-            icons: [basicIcon]}},
-  {command: "d03b810301130082028183850753656e6420534d86099111223344556677f88b180100099110325476f840f40c54657374204d6573736167651e020101",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_11_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Send SM",
+            icons: [BASIC_ICON]}},
+  {command: "D03B" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "850753656E6420534D" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B180100099110325476F840F40C54657374204D657373616765" + // 3GPP-SMS TPDU
+            "1E020101", // Icon identifier
+   expect: {commandQualifier: 0x00,
+            text: "Send SM",
             iconSelfExplanatory: false,
-            icons: [basicIcon]}},
-  {command: "d03281030113008202818386099111223344556677f88b180100099110325476f840f40c54657374204d6573736167651e020101",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_11_without_alpha_identifier",
-            commandQualifier: 0x00,
-            iconSelfExplanatory: false,
-            icons: [basicIcon]}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001000b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_12_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001000b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_12_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d0268103011300820281838510546578742041747472696275746520328b09010002911040f00120",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_13_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 2"}},
-  // send_sms_cmd_18_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_6_without_alpha_identifier.
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001001b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_14_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001001b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_14_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001002b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_15_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001002b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_15_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001004b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_16_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001004b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_16_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520328b09010002911040f00120d004001000b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_17_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 2"}},
-  // send_sms_cmd_17_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_12_without_alpha_identifier.
-  {command: "d0268103011300820281838510546578742041747472696275746520338b09010002911040f00120",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_18_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 3"}},
-  // send_sms_cmd_18_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_6_without_alpha_identifier.
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001008b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_19_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001008b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_19_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001010b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_20_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001010b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_20_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001020b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_21_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001020b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_21_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001040b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_22_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001040b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_22_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02c8103011300820281838510546578742041747472696275746520318b09010002911040f00120d004001080b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_23_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "Text Attribute 1"}},
-  {command: "d01a8103011300820281838b09010002911040f00120d004001080b4",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_23_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02d8103011300820281838505804e2d4e0086099111223344556677f88b100100099110325476f84008044e2d4e00",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_24_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "中一"}},
-  {command: "d02681030113008202818386099111223344556677f88b100100099110325476f84008044e2d4e00",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_24_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d02d810301130082028183850581029cad8086099111223344556677f88b100100099110325476f84008044e2d4e00",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_25_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "中一"}},
-  // send_sms_cmd_25_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_24_without_alpha_identifier.
-  {command: "d02e810301130082028183850682024e00ad8086099111223344556677f88b100100099110325476f84008044e2d4e00",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_26_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "中一"}},
-  // send_sms_cmd_26_without_alpha_identifier has the same pdu as
-  // send_sms_cmd_24_without_alpha_identifier.
-  {command: "d0358103011300820281838509800038003030eb003086099111223344556677f88b140100099110325476f84008080038003030eb0031",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_27_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "80ル0"}},
-  {command: "d02a81030113008202818386099111223344556677f88b140100099110325476f84008080038003030eb0031",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_27_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d03381030113008202818385078104613831eb3186099111223344556677f88b140100099110325476f84008080038003030eb0032",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_28_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "81ル1"}},
-  {command: "d02a81030113008202818386099111223344556677f88b140100099110325476f84008080038003030eb0032",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_28_without_alpha_identifier",
-            commandQualifier: 0x00}},
-  {command: "d0348103011300820281838508820430a03832cb3286099111223344556677f88b140100099110325476f84008080038003030eb0033",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_29_with_alpha_identifier",
-            commandQualifier: 0x00,
-            title: "82ル2"}},
-  {command: "d02a81030113008202818386099111223344556677f88b140100099110325476f84008080038003030eb0033",
-   func: testSendSMS,
-   expect: {name: "send_sms_cmd_29_without_alpha_identifier",
-            commandQualifier: 0x00}}
+            icons: [BASIC_ICON]}},
+  {command: "D02C" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "851054657874204174747269627574652031" + // Alpha identifier
+            "8B09010002911040F00120" + // 3GPP-SMS TPDU
+            "D004001000B4", // Text attribute
+   expect: {commandQualifier: 0x00,
+            text: "Text Attribute 1"}},
+  {command: "D035" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "8509800038003030EB0030" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B140100099110325476F84008080038003030EB0031",
+   expect: {commandQualifier: 0x00, // 3GPP-SMS TPDU
+            text: "80ル0"}},
+  {command: "D033" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "85078104613831EB31" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B140100099110325476F84008080038003030EB0032",
+   expect: {commandQualifier: 0x00, // 3GPP-SMS TPDU
+            text: "81ル1"}},
+  {command: "D034" + // Length
+            "8103011300" + // Command details
+            "82028183" + // Device identities
+            "8508820430A03832CB32" + // Alpha identifier
+            "86099111223344556677F8" + // Address
+            "8B140100099110325476F84008080038003030EB0033",
+   expect: {commandQualifier: 0x00, // 3GPP-SMS TPDU
+            text: "82ル2"}},
 ];
 
-runNextTest();
+function testSendSMS(aCommand, aExpect) {
+  is(aCommand.commandNumber, 0x01, "commandNumber");
+  is(aCommand.typeOfCommand, MozIccManager.STK_CMD_SEND_SMS, "typeOfCommand");
+  is(aCommand.commandQualifier, aExpect.commandQualifier, "commandQualifier");
+
+  // text is optional.
+  if ("text" in aExpect) {
+    is(aCommand.options.text, aExpect.text, "options.text");
+  }
+
+  // icons is optional.
+  if ("icons" in aExpect) {
+    isIcons(aCommand.options.icons, aExpect.icons);
+    is(aCommand.options.iconSelfExplanatory, aExpect.iconSelfExplanatory,
+       "options.iconSelfExplanatory");
+  }
+}
+
+// Start tests
+startTestCommon(function() {
+  let icc = getMozIcc();
+  let promise = Promise.resolve();
+  for (let i = 0; i < TEST_DATA.length; i++) {
+    let data = TEST_DATA[i];
+    promise = promise.then(() => {
+      log("send_sms_cmd: " + data.command);
+
+      let promises = [];
+      // Wait onstkcommand event.
+      promises.push(waitForTargetEvent(icc, "stkcommand")
+        .then((aEvent) => testSendSMS(aEvent.command, data.expect)));
+      // Wait icc-stkcommand system message.
+      promises.push(waitForSystemMessage("icc-stkcommand")
+        .then((aMessage) => {
+          is(aMessage.iccId, icc.iccInfo.iccid, "iccId");
+          testSendSMS(aMessage.command, data.expect);
+        }));
+      // Send emulator command to generate stk unsolicited event.
+      promises.push(sendEmulatorStkPdu(data.command));
+
+      return Promise.all(promises);
+    });
+  }
+  return promise;
+});

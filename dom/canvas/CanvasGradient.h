@@ -23,10 +23,10 @@ public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(CanvasGradient)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(CanvasGradient)
 
-  MOZ_BEGIN_NESTED_ENUM_CLASS(Type, uint8_t)
+  enum class Type : uint8_t {
     LINEAR = 0,
     RADIAL
-  MOZ_END_NESTED_ENUM_CLASS(Type)
+  };
 
   Type GetType()
   {
@@ -51,7 +51,7 @@ public:
   // WebIDL
   void AddColorStop(float offset, const nsAString& colorstr, ErrorResult& rv);
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  JSObject* WrapObject(JSContext* aCx) override
   {
     return CanvasGradientBinding::Wrap(aCx, this);
   }
@@ -74,8 +74,6 @@ protected:
   Type mType;
   virtual ~CanvasGradient() {}
 };
-
-MOZ_FINISH_NESTED_ENUM_CLASS(CanvasGradient::Type)
 
 } // namespace dom
 } // namespace mozilla

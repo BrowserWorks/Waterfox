@@ -60,7 +60,7 @@ class MessageListener
     public mozilla::SupportsWeakPtr<MessageListener>
 {
   public:
-    MOZ_DECLARE_REFCOUNTED_TYPENAME(MessageListener)
+    MOZ_DECLARE_WEAKREFERENCE_TYPENAME(MessageListener)
     typedef IPC::Message Message;
 
     virtual ~MessageListener() { }
@@ -70,7 +70,7 @@ class MessageListener
     virtual Result OnMessageReceived(const Message& aMessage) = 0;
     virtual Result OnMessageReceived(const Message& aMessage, Message *& aReply) = 0;
     virtual Result OnCallReceived(const Message& aMessage, Message *& aReply) = 0;
-    virtual void OnProcessingError(Result aError) = 0;
+    virtual void OnProcessingError(Result aError, const char* aMsgName) = 0;
     virtual void OnChannelConnected(int32_t peer_pid) {}
     virtual bool OnReplyTimeout() {
         return false;
@@ -96,6 +96,11 @@ class MessageListener
                                                      const Message& child)
     {
         return RIPChildWins;
+    }
+
+    virtual void OnEnteredSyncSend() {
+    }
+    virtual void OnExitedSyncSend() {
     }
 
     virtual void ProcessRemoteNativeEventsInInterruptCall() {
@@ -138,8 +143,8 @@ class ProcessLink
 
     void AssertIOThread() const
     {
-        NS_ABORT_IF_FALSE(mIOLoop == MessageLoop::current(),
-                          "not on I/O thread!");
+        MOZ_ASSERT(mIOLoop == MessageLoop::current(),
+                   "not on I/O thread!");
     }
 
   public:
@@ -159,16 +164,16 @@ class ProcessLink
     // These methods acquire the monitor and forward to the
     // similarly named methods in AsyncChannel below
     // (OnMessageReceivedFromLink(), etc)
-    virtual void OnMessageReceived(const Message& msg) MOZ_OVERRIDE;
-    virtual void OnChannelConnected(int32_t peer_pid) MOZ_OVERRIDE;
-    virtual void OnChannelError() MOZ_OVERRIDE;
+    virtual void OnMessageReceived(const Message& msg) override;
+    virtual void OnChannelConnected(int32_t peer_pid) override;
+    virtual void OnChannelError() override;
 
-    virtual void EchoMessage(Message *msg) MOZ_OVERRIDE;
-    virtual void SendMessage(Message *msg) MOZ_OVERRIDE;
-    virtual void SendClose() MOZ_OVERRIDE;
+    virtual void EchoMessage(Message *msg) override;
+    virtual void SendMessage(Message *msg) override;
+    virtual void SendClose() override;
 
-    virtual bool Unsound_IsClosed() const MOZ_OVERRIDE;
-    virtual uint32_t Unsound_NumQueuedMessages() const MOZ_OVERRIDE;
+    virtual bool Unsound_IsClosed() const override;
+    virtual uint32_t Unsound_NumQueuedMessages() const override;
 
   protected:
     Transport* mTransport;
@@ -185,12 +190,12 @@ class ThreadLink : public MessageLink
     ThreadLink(MessageChannel *aChan, MessageChannel *aTargetChan);
     virtual ~ThreadLink();
 
-    virtual void EchoMessage(Message *msg) MOZ_OVERRIDE;
-    virtual void SendMessage(Message *msg) MOZ_OVERRIDE;
-    virtual void SendClose() MOZ_OVERRIDE;
+    virtual void EchoMessage(Message *msg) override;
+    virtual void SendMessage(Message *msg) override;
+    virtual void SendClose() override;
 
-    virtual bool Unsound_IsClosed() const MOZ_OVERRIDE;
-    virtual uint32_t Unsound_NumQueuedMessages() const MOZ_OVERRIDE;
+    virtual bool Unsound_IsClosed() const override;
+    virtual uint32_t Unsound_NumQueuedMessages() const override;
 
   protected:
     MessageChannel* mTargetChan;

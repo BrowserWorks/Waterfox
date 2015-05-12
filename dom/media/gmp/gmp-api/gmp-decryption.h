@@ -19,6 +19,16 @@
 
 #include "gmp-platform.h"
 
+class GMPStringList {
+public:
+  virtual const uint32_t Size() const = 0;
+
+  virtual void StringAt(uint32_t aIndex,
+                        const char** aOutString, uint32_t* aOutLength) const = 0;
+
+  virtual ~GMPStringList() { }
+};
+
 class GMPEncryptedBufferMetadata {
 public:
   // Key ID to identify the decryption key.
@@ -41,6 +51,10 @@ public:
   virtual const uint32_t* CipherBytes() const = 0;
 
   virtual ~GMPEncryptedBufferMetadata() {}
+
+  // The set of MediaKeySession IDs associated with this decryption key in
+  // the current stream.
+  virtual const GMPStringList* SessionIds() const = 0;
 };
 
 class GMPBuffer {
@@ -99,7 +113,7 @@ typedef int64_t GMPTimestamp;
 //
 // Note: Gecko does not currently support the caps changing at runtime.
 // Set them once per plugin initialization, during the startup of
-// the GMPdecryptor.
+// the GMPDecryptor.
 
 // Capability; CDM can decrypt encrypted buffers and return still
 // compressed buffers back to Gecko for decompression there.
@@ -224,7 +238,10 @@ enum GMPSessionType {
   kGMPSessionInvalid = 2 // Must always be last.
 };
 
-#define GMP_API_DECRYPTOR "eme-decrypt-v6"
+#define GMP_API_DECRYPTOR "eme-decrypt-v7"
+
+// XXX remove in bug 1147692
+#define GMP_API_DECRYPTOR_COMPAT "eme-decrypt-v6"
 
 // API exposed by plugin library to manage decryption sessions.
 // When the Host requests this by calling GMPGetAPIFunc().

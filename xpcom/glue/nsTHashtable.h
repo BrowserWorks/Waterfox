@@ -10,6 +10,7 @@
 #include "nscore.h"
 #include "pldhash.h"
 #include "nsDebug.h"
+#include "mozilla/Assertions.h"
 #include "mozilla/MemoryChecking.h"
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Move.h"
@@ -125,12 +126,12 @@ public:
    */
   EntryType* GetEntry(KeyType aKey) const
   {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
-    EntryType* entry = reinterpret_cast<EntryType*>(
-      PL_DHashTableLookup(const_cast<PLDHashTable*>(&mTable),
+    return static_cast<EntryType*>(
+      PL_DHashTableSearch(const_cast<PLDHashTable*>(&mTable),
                           EntryType::KeyToPointer(aKey)));
-    return PL_DHASH_ENTRY_IS_BUSY(entry) ? entry : nullptr;
   }
 
   /**
@@ -148,18 +149,21 @@ public:
    */
   EntryType* PutEntry(KeyType aKey)
   {
-    EntryType* e = PutEntry(aKey, fallible_t());
-    if (!e) {
-      NS_ABORT_OOM(mTable.EntrySize() * mTable.EntryCount());
-    }
-    return e;
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
+
+    return static_cast<EntryType*>  // infallible add
+      (PL_DHashTableAdd(&mTable, EntryType::KeyToPointer(aKey)));
   }
 
-  EntryType* PutEntry(KeyType aKey, const fallible_t&) NS_WARN_UNUSED_RESULT {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+  EntryType* PutEntry(KeyType aKey, const fallible_t&) NS_WARN_UNUSED_RESULT
+  {
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
-    return static_cast<EntryType*>(PL_DHashTableAdd(
-      &mTable, EntryType::KeyToPointer(aKey)));
+    return static_cast<EntryType*>
+      (PL_DHashTableAdd(&mTable, EntryType::KeyToPointer(aKey),
+                        mozilla::fallible));
   }
 
   /**
@@ -168,7 +172,8 @@ public:
    */
   void RemoveEntry(KeyType aKey)
   {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
     PL_DHashTableRemove(&mTable,
                         EntryType::KeyToPointer(aKey));
@@ -208,7 +213,8 @@ public:
    */
   uint32_t EnumerateEntries(Enumerator aEnumFunc, void* aUserArg)
   {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
     s_EnumArgs args = { aEnumFunc, aUserArg };
     return PL_DHashTableEnumerate(&mTable, s_EnumStub, &args);
@@ -219,7 +225,8 @@ public:
    */
   void Clear()
   {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
     PL_DHashTableEnumerate(&mTable, PL_DHashStubEnumRemove, nullptr);
   }
@@ -289,6 +296,16 @@ public:
     return SizeOfIncludingThis(BasicSizeOfEntryExcludingThisFun, aMallocSizeOf);
   }
 
+  /**
+   * Swap the elements in this hashtable with the elements in aOther.
+   */
+  void SwapElements(nsTHashtable<EntryType>& aOther)
+  {
+    MOZ_ASSERT_IF(this->mTable.Ops() && aOther.mTable.Ops(),
+                  this->mTable.Ops() == aOther.mTable.Ops());
+    mozilla::Swap(this->mTable, aOther.mTable);
+  }
+
 #ifdef DEBUG
   /**
    * Mark the table as constant after initialization.
@@ -298,7 +315,8 @@ public:
    */
   void MarkImmutable()
   {
-    NS_ASSERTION(mTable.ops, "nsTHashtable was not initialized properly.");
+    NS_ASSERTION(mTable.IsInitialized(),
+                 "nsTHashtable was not initialized properly.");
 
     PL_DHashMarkTableImmutable(&mTable);
   }
@@ -319,8 +337,7 @@ protected:
 
   static void s_ClearEntry(PLDHashTable* aTable, PLDHashEntryHdr* aEntry);
 
-  static bool s_InitEntry(PLDHashTable* aTable, PLDHashEntryHdr* aEntry,
-                          const void* aKey);
+  static void s_InitEntry(PLDHashEntryHdr* aEntry, const void* aKey);
 
   /**
    * passed internally during enumeration.  Allocated on the stack.
@@ -391,13 +408,13 @@ nsTHashtable<EntryType>::nsTHashtable(nsTHashtable<EntryType>&& aOther)
 
   // Indicate that aOther is not initialized.  This will make its destructor a
   // nop, which is what we want.
-  aOther.mTable.ops = nullptr;
+  aOther.mTable.SetOps(nullptr);
 }
 
 template<class EntryType>
 nsTHashtable<EntryType>::~nsTHashtable()
 {
-  if (mTable.ops) {
+  if (mTable.IsInitialized()) {
     PL_DHashTableFinish(&mTable);
   }
 }
@@ -408,17 +425,14 @@ nsTHashtable<EntryType>::Init(uint32_t aInitLength)
 {
   static const PLDHashTableOps sOps =
   {
-    ::PL_DHashAllocTable,
-    ::PL_DHashFreeTable,
     s_HashKey,
     s_MatchEntry,
     EntryType::ALLOW_MEMMOVE ? ::PL_DHashMoveEntryStub : s_CopyEntry,
     s_ClearEntry,
-    ::PL_DHashFinalizeStub,
     s_InitEntry
   };
 
-  PL_DHashTableInit(&mTable, &sOps, nullptr, sizeof(EntryType), aInitLength);
+  PL_DHashTableInit(&mTable, &sOps, sizeof(EntryType), aInitLength);
 }
 
 // static
@@ -469,17 +483,15 @@ void
 nsTHashtable<EntryType>::s_ClearEntry(PLDHashTable* aTable,
                                       PLDHashEntryHdr* aEntry)
 {
-  reinterpret_cast<EntryType*>(aEntry)->~EntryType();
+  static_cast<EntryType*>(aEntry)->~EntryType();
 }
 
 template<class EntryType>
-bool
-nsTHashtable<EntryType>::s_InitEntry(PLDHashTable* aTable,
-                                     PLDHashEntryHdr* aEntry,
+void
+nsTHashtable<EntryType>::s_InitEntry(PLDHashEntryHdr* aEntry,
                                      const void* aKey)
 {
   new (aEntry) EntryType(reinterpret_cast<KeyTypePointer>(aKey));
-  return true;
 }
 
 template<class EntryType>
@@ -491,7 +503,7 @@ nsTHashtable<EntryType>::s_EnumStub(PLDHashTable* aTable,
 {
   // dereferences the function-pointer to the user's enumeration function
   return (*reinterpret_cast<s_EnumArgs*>(aArg)->userFunc)(
-    reinterpret_cast<EntryType*>(aEntry),
+    static_cast<EntryType*>(aEntry),
     reinterpret_cast<s_EnumArgs*>(aArg)->userArg);
 }
 
@@ -503,7 +515,7 @@ nsTHashtable<EntryType>::s_SizeOfStub(PLDHashEntryHdr* aEntry,
 {
   // dereferences the function-pointer to the user's enumeration function
   return (*reinterpret_cast<s_SizeOfArgs*>(aArg)->userFunc)(
-    reinterpret_cast<EntryType*>(aEntry),
+    static_cast<EntryType*>(aEntry),
     aMallocSizeOf,
     reinterpret_cast<s_SizeOfArgs*>(aArg)->userArg);
 }

@@ -112,8 +112,10 @@ class MachCommands(MachCommandBase):
 
         srcdir('app/build.gradle', 'mobile/android/gradle/app/build.gradle')
         objdir('app/src/main/AndroidManifest.xml', 'mobile/android/base/AndroidManifest.xml')
-        objdir('app/src/main/assets', 'dist/fennec/assets')
-        objdir('app/src/main/jniLibs', 'dist/fennec/lib')
+        srcdir('app/src/androidTest/res', 'build/mobile/robocop/res')
+        srcdir('app/src/androidTest/assets', 'mobile/android/base/tests/assets')
+        objdir('app/src/debug/assets', 'dist/fennec/assets')
+        objdir('app/src/debug/jniLibs', 'dist/fennec/lib')
         # Test code.
         srcdir('app/src/robocop_harness/org/mozilla/gecko', 'build/mobile/robocop')
         srcdir('app/src/robocop/org/mozilla/gecko/tests', 'mobile/android/base/tests')

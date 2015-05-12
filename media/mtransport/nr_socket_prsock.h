@@ -133,33 +133,33 @@ public:
   NrSocket() : fd_(nullptr) {}
 
   // Implement nsASocket
-  virtual void OnSocketReady(PRFileDesc *fd, int16_t outflags) MOZ_OVERRIDE;
-  virtual void OnSocketDetached(PRFileDesc *fd) MOZ_OVERRIDE;
-  virtual void IsLocal(bool *aIsLocal) MOZ_OVERRIDE;
-  virtual uint64_t ByteCountSent() MOZ_OVERRIDE { return 0; }
-  virtual uint64_t ByteCountReceived() MOZ_OVERRIDE { return 0; }
+  virtual void OnSocketReady(PRFileDesc *fd, int16_t outflags) override;
+  virtual void OnSocketDetached(PRFileDesc *fd) override;
+  virtual void IsLocal(bool *aIsLocal) override;
+  virtual uint64_t ByteCountSent() override { return 0; }
+  virtual uint64_t ByteCountReceived() override { return 0; }
 
   // nsISupports methods
   NS_DECL_THREADSAFE_ISUPPORTS
 
   // Implementations of the async_event APIs
   virtual int async_wait(int how, NR_async_cb cb, void *cb_arg,
-                         char *function, int line) MOZ_OVERRIDE;
-  virtual int cancel(int how) MOZ_OVERRIDE;
+                         char *function, int line) override;
+  virtual int cancel(int how) override;
 
 
   // Implementations of the nr_socket APIs
-  virtual int create(nr_transport_addr *addr) MOZ_OVERRIDE; // (really init, but it's called create)
+  virtual int create(nr_transport_addr *addr) override; // (really init, but it's called create)
   virtual int sendto(const void *msg, size_t len,
-                     int flags, nr_transport_addr *to) MOZ_OVERRIDE;
+                     int flags, nr_transport_addr *to) override;
   virtual int recvfrom(void * buf, size_t maxlen,
                        size_t *len, int flags,
-                       nr_transport_addr *from) MOZ_OVERRIDE;
-  virtual int getaddr(nr_transport_addr *addrp) MOZ_OVERRIDE;
-  virtual void close() MOZ_OVERRIDE;
-  virtual int connect(nr_transport_addr *addr) MOZ_OVERRIDE;
-  virtual int write(const void *msg, size_t len, size_t *written) MOZ_OVERRIDE;
-  virtual int read(void* buf, size_t maxlen, size_t *len) MOZ_OVERRIDE;
+                       nr_transport_addr *from) override;
+  virtual int getaddr(nr_transport_addr *addrp) override;
+  virtual void close() override;
+  virtual int connect(nr_transport_addr *addr) override;
+  virtual int write(const void *msg, size_t len, size_t *written) override;
+  virtual int read(void* buf, size_t maxlen, size_t *len) override;
 
 private:
   virtual ~NrSocket() {
@@ -188,8 +188,7 @@ private:
   DISALLOW_COPY_ASSIGN(nr_udp_message);
 };
 
-class NrSocketIpc : public NrSocketBase,
-                    public nsIUDPSocketInternal {
+class NrSocketIpc : public NrSocketBase {
 public:
 
   enum NrSocketIpcState {
@@ -200,23 +199,32 @@ public:
     NR_CLOSED,
   };
 
-  NS_DECL_THREADSAFE_ISUPPORTS
-  NS_DECL_NSIUDPSOCKETINTERNAL
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(NrSocketIpc)
+
+  NS_IMETHODIMP CallListenerError(const nsACString &message,
+                                  const nsACString &filename,
+                                  uint32_t line_number);
+  NS_IMETHODIMP CallListenerReceivedData(const nsACString &host,
+                                         uint16_t port,
+                                         const uint8_t *data,
+                                         uint32_t data_length);
+  NS_IMETHODIMP CallListenerOpened();
+  NS_IMETHODIMP CallListenerClosed();
 
   explicit NrSocketIpc(const nsCOMPtr<nsIEventTarget> &main_thread);
 
   // Implementations of the NrSocketBase APIs
-  virtual int create(nr_transport_addr *addr) MOZ_OVERRIDE;
+  virtual int create(nr_transport_addr *addr) override;
   virtual int sendto(const void *msg, size_t len,
-                     int flags, nr_transport_addr *to) MOZ_OVERRIDE;
+                     int flags, nr_transport_addr *to) override;
   virtual int recvfrom(void * buf, size_t maxlen,
                        size_t *len, int flags,
-                       nr_transport_addr *from) MOZ_OVERRIDE;
-  virtual int getaddr(nr_transport_addr *addrp) MOZ_OVERRIDE;
-  virtual void close() MOZ_OVERRIDE;
-  virtual int connect(nr_transport_addr *addr) MOZ_OVERRIDE;
-  virtual int write(const void *msg, size_t len, size_t *written) MOZ_OVERRIDE;
-  virtual int read(void* buf, size_t maxlen, size_t *len) MOZ_OVERRIDE;
+                       nr_transport_addr *from) override;
+  virtual int getaddr(nr_transport_addr *addrp) override;
+  virtual void close() override;
+  virtual int connect(nr_transport_addr *addr) override;
+  virtual int write(const void *msg, size_t len, size_t *written) override;
+  virtual int read(void* buf, size_t maxlen, size_t *len) override;
 
 private:
   virtual ~NrSocketIpc() {};
@@ -238,6 +246,22 @@ private:
   nsCOMPtr<nsIEventTarget> sts_thread_;
   const nsCOMPtr<nsIEventTarget> main_thread_;
   ReentrantMonitor monitor_;
+};
+
+// The socket child holds onto one of these, which just passes callbacks
+// through and makes sure the ref to the NrSocketIpc is released on STS.
+class NrSocketIpcProxy : public nsIUDPSocketInternal {
+public:
+  NS_DECL_THREADSAFE_ISUPPORTS
+  NS_DECL_NSIUDPSOCKETINTERNAL
+
+  nsresult Init(const nsRefPtr<NrSocketIpc>& socket);
+
+private:
+  virtual ~NrSocketIpcProxy();
+
+  nsRefPtr<NrSocketIpc> socket_;
+  nsCOMPtr<nsIEventTarget> sts_thread_;
 };
 
 int nr_netaddr_to_transport_addr(const net::NetAddr *netaddr,

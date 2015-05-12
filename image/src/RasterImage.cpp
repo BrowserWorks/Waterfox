@@ -167,7 +167,7 @@ public:
     return true;
   }
 
-  NS_IMETHOD Run() MOZ_OVERRIDE
+  NS_IMETHOD Run() override
   {
     if (mState == eReady) {
       // Collect information from the frames that we need to scale.
@@ -1009,7 +1009,7 @@ RasterImage::StartAnimation()
   if (mError)
     return NS_ERROR_FAILURE;
 
-  NS_ABORT_IF_FALSE(ShouldAnimate(), "Should not animate!");
+  MOZ_ASSERT(ShouldAnimate(), "Should not animate!");
 
   // If we don't have mAnim yet, then we're not ready to animate.  Setting
   // mPendingAnimation will cause us to start animating as soon as we have a
@@ -1037,7 +1037,7 @@ RasterImage::StartAnimation()
 nsresult
 RasterImage::StopAnimation()
 {
-  NS_ABORT_IF_FALSE(mAnimating, "Should be animating!");
+  MOZ_ASSERT(mAnimating, "Should be animating!");
 
   nsresult rv = NS_OK;
   if (mError) {
@@ -1210,7 +1210,7 @@ RasterImage::OnImageDataAvailable(nsIRequest*,
   uint32_t bytesRead;
   rv = aInStr->ReadSegments(WriteToSourceBuffer, this, aCount, &bytesRead);
 
-  NS_ABORT_IF_FALSE(bytesRead == aCount || HasError() || NS_FAILED(rv),
+  MOZ_ASSERT(bytesRead == aCount || HasError() || NS_FAILED(rv),
     "WriteToSourceBuffer should consume everything if ReadSegments succeeds or "
     "the image must be in error!");
 
@@ -1860,8 +1860,8 @@ RasterImage::UnlockImage()
     return NS_ERROR_FAILURE;
 
   // It's an error to call this function if the lock count is 0
-  NS_ABORT_IF_FALSE(mLockCount > 0,
-                    "Calling UnlockImage with mLockCount == 0!");
+  MOZ_ASSERT(mLockCount > 0,
+             "Calling UnlockImage with mLockCount == 0!");
   if (mLockCount == 0)
     return NS_ERROR_ABORT;
 

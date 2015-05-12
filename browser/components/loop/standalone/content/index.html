@@ -13,6 +13,26 @@
     <link rel="stylesheet" type="text/css" href="shared/css/conversation.css">
     <link rel="stylesheet" type="text/css" href="css/webapp.css">
     <link rel="localization" href="l10n/{locale}/loop.properties">
+
+    <script>
+      // window.navigator.doNotTrack "yes" is for old versions of FF
+      // window.navigator.doNotTrack "1" is for current versions of FF + Chrome + Opera
+      // window.doNotTrack is safari
+      // window.navigator.msDoNotTrack
+      if (window.navigator.doNotTrack !== "yes" &&
+          window.navigator.doNotTrack !== "1" &&
+          window.doNotTrack !== "1" &&
+          window.navigator.msDoNotTrack !== "1") {
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+          (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+          m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-36116321-15', 'auto');
+        ga('send', 'pageview');
+      }
+    </script>
+
   </head>
   <body class="standalone">
 
@@ -90,7 +110,6 @@
     <script type="text/javascript" src="shared/js/utils.js"></script>
     <script type="text/javascript" src="shared/js/models.js"></script>
     <script type="text/javascript" src="shared/js/mixins.js"></script>
-    <script type="text/javascript" src="shared/js/views.js"></script>
     <script type="text/javascript" src="shared/js/feedbackApiClient.js"></script>
     <script type="text/javascript" src="shared/js/actions.js"></script>
     <script type="text/javascript" src="shared/js/validate.js"></script>
@@ -102,6 +121,7 @@
     <script type="text/javascript" src="shared/js/fxOSActiveRoomStore.js"></script>
     <script type="text/javascript" src="shared/js/activeRoomStore.js"></script>
     <script type="text/javascript" src="shared/js/feedbackStore.js"></script>
+    <script type="text/javascript" src="shared/js/views.js"></script>
     <script type="text/javascript" src="shared/js/feedbackViews.js"></script>
     <script type="text/javascript" src="js/standaloneAppStore.js"></script>
     <script type="text/javascript" src="js/standaloneClient.js"></script>

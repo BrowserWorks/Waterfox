@@ -20,7 +20,7 @@ namespace dom {
 
 class EventTarget;
 
-class Touch MOZ_FINAL : public nsISupports
+class Touch final : public nsISupports
                       , public nsWrapperCache
                       , public WidgetPointerHelper
 {
@@ -40,7 +40,7 @@ public:
         float aRotationAngle,
         float aForce);
   Touch(int32_t aIdentifier,
-        nsIntPoint aPoint,
+        LayoutDeviceIntPoint aPoint,
         nsIntPoint aRadius,
         float aRotationAngle,
         float aForce);
@@ -54,7 +54,7 @@ public:
 
   bool Equals(Touch* aTouch);
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   EventTarget* GetParentObject();
 
@@ -73,13 +73,13 @@ public:
   float Force() const { return mForce; }
 
   nsCOMPtr<EventTarget> mTarget;
-  nsIntPoint mRefPoint;
+  LayoutDeviceIntPoint mRefPoint;
   bool mChanged;
   uint32_t mMessage;
   int32_t mIdentifier;
   CSSIntPoint mPagePoint;
   CSSIntPoint mClientPoint;
-  nsIntPoint mScreenPoint;
+  LayoutDeviceIntPoint mScreenPoint;
   nsIntPoint mRadius;
   float mRotationAngle;
   float mForce;

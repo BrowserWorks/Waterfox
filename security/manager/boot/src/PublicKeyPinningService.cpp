@@ -13,7 +13,7 @@
 #include "nsSiteSecurityService.h"
 #include "nsString.h"
 #include "nsTArray.h"
-#include "pkix/nullptr.h"
+#include "pkix/stdkeywords.h"
 #include "pkix/pkixtypes.h"
 #include "prlog.h"
 #include "RootCertificateTelemetryUtils.h"
@@ -128,11 +128,9 @@ EvalChainWithHashType(const CERTCertList* certList, SECOidTag hashType,
        node = CERT_LIST_NEXT(node)) {
     currentCert = node->cert;
     PR_LOG(gPublicKeyPinningLog, PR_LOG_DEBUG,
-           ("pkpin: certArray subject: '%s'\n",
-            currentCert->subjectName));
+           ("pkpin: certArray subject: '%s'\n", currentCert->subjectName));
     PR_LOG(gPublicKeyPinningLog, PR_LOG_DEBUG,
-           ("pkpin: certArray common_name: '%s'\n",
-            CERT_GetCommonName(&(currentCert->issuer))));
+           ("pkpin: certArray issuer: '%s'\n", currentCert->issuerName));
     if (EvalCertWithHashType(currentCert, hashType, fingerprints,
                              dynamicFingerprints)) {
       return true;

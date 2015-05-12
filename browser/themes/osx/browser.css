@@ -113,7 +113,7 @@
  * tabstrip can overlap it.
  */
 #main-window[tabsintitlebar] > #titlebar {
-  min-height: calc(@tabMinHeight@ + var(--space-above-tabbar) - @tabToolbarNavbarOverlap@);
+  min-height: calc(var(--tab-min-height) + var(--space-above-tabbar) - var(--tab-toolbar-navbar-overlap));
 }
 
 /**
@@ -187,7 +187,7 @@ toolbarseparator {
 #TabsToolbar:not([collapsed="true"]) + #nav-bar:-moz-lwtheme {
   border-top: 1px solid hsla(0,0%,0%,.3);
   background-clip: padding-box;
-  margin-top: -@tabToolbarNavbarOverlap@;
+  margin-top: calc(-1 * var(--tab-toolbar-navbar-overlap));
   /* Position the toolbar above the bottom of background tabs */
   position: relative;
   z-index: 1;
@@ -199,7 +199,7 @@ toolbarseparator {
   #main-window[tabsintitlebar] #TabsToolbar:not([collapsed="true"]) + #nav-bar:not(:-moz-lwtheme) {
     border-top: 1px solid hsla(0,0%,0%,.2);
     background-clip: padding-box;
-    margin-top: -@tabToolbarNavbarOverlap@;
+    margin-top: calc(-1 * var(--tab-toolbar-navbar-overlap));
     /* Position the toolbar above the bottom of background tabs */
     position: relative;
     z-index: 1;
@@ -561,6 +561,11 @@ toolbarpaletteitem[place="palette"] > #personal-bookmarks > #bookmarks-toolbar-p
   #BMB_unsortedBookmarks {
     list-style-image: url("chrome://browser/skin/places/unfiledBookmarks@2x.png");
   }
+}
+
+/* #menu_readingList, svg icons don't work in the mac native menubar */
+#BMB_readingList {
+  list-style-image: url("chrome://browser/skin/readinglist/readinglist-icon.svg");
 }
 
 /* ----- PRIMARY TOOLBAR BUTTONS ----- */
@@ -2518,6 +2523,23 @@ richlistitem[type~="action"][actiontype="switchtab"][selected="true"] > .ac-url-
   }
 }
 
+%include ../shared/readinglist/readinglist.inc.css
+
+/* Reader mode button */
+
+#reader-mode-button {
+  list-style-image: url("chrome://browser/skin/readerMode.svg");
+  -moz-image-region: rect(0, 16px, 16px, 0);
+}
+
+#reader-mode-button:hover:active {
+  -moz-image-region: rect(0, 32px, 16px, 16px);
+}
+
+#reader-mode-button[readeractive] {
+  -moz-image-region: rect(0, 48px, 16px, 32px);
+}
+
 /* social share panel */
 .social-share-frame {
   border-top: 1px solid #f8f8f8;
@@ -3066,6 +3088,14 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
   opacity: .9;
 }
 
+/*
+ * Force the overlay to create a new stacking context so it always appears on
+ * top of the icon.
+ */
+.tab-icon-overlay {
+  opacity: 0.9999;
+}
+
 .tab-label:not([selected="true"]) {
   opacity: .7;
 }
@@ -3180,7 +3210,7 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
 .tabbrowser-arrowscrollbox > .scrollbutton-up,
 .tabbrowser-arrowscrollbox > .scrollbutton-down {
   -moz-image-region: rect(0, 13px, 20px, 0);
-  margin: 0 0 @tabToolbarNavbarOverlap@;
+  margin: 0 0 var(--tab-toolbar-navbar-overlap);
   padding: 0 4px;
   border: none;
 }
@@ -3306,7 +3336,7 @@ toolbarbutton.chevron > .toolbarbutton-menu-dropmarker {
 }
 
 #TabsToolbar .toolbarbutton-1 {
-  margin-bottom: @tabToolbarNavbarOverlap@;
+  margin-bottom: var(--tab-toolbar-navbar-overlap);
 }
 
 #TabsToolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
@@ -4068,6 +4098,27 @@ menulist.translate-infobar-element > .menulist-dropmarker {
   }
 }
 
+/* Loop/ Hello browser styles */
+
+notification[value="loop-sharing-notification"] .notification-button {
+  padding: 1px 5px;
+}
+
+notification[value="loop-sharing-notification"] .button-menubutton-button {
+  -moz-appearance: none;
+  min-width: 0;
+  margin: 0;
+}
+
+notification[value="loop-sharing-notification"] .messageImage {
+  list-style-image: url(chrome://browser/skin/webRTC-sharingScreen-menubar.png);
+}
+@media (min-resolution: 2dppx) {
+  notification[value="loop-sharing-notification"] .messageImage {
+    list-style-image: url(chrome://browser/skin/webRTC-sharingScreen-menubar@2x.png);
+  }
+}
+
 
 .popup-notification-icon {
   width: 64px;
@@ -4140,7 +4191,6 @@ menulist.translate-infobar-element > .menulist-dropmarker {
 }
 
 .popup-notification-icon[popupid="indexedDB-permissions-prompt"],
-.popup-notification-icon[popupid="indexedDB-quota-prompt"],
 .popup-notification-icon[popupid*="offline-app-requested"],
 .popup-notification-icon[popupid="offline-app-usage"] {
   list-style-image: url(chrome://global/skin/icons/question-64.png);
@@ -4590,6 +4640,17 @@ window > chatbox {
   list-style-image: url("chrome://browser/skin/drm-icon.svg#chains-pressed");
 }
 
+#eme-notification-icon[firstplay=true] {
+  animation: emeTeachingMoment 0.2s linear 0s 5 normal;
+}
+
+@keyframes emeTeachingMoment {
+  0% {transform: translateX(0); }
+  25% {transform: translateX(3px) }
+  75% {transform: translateX(-3px) }
+  100% { transform: translateX(0); }
+}
+
 /* Customization mode */
 
 %include ../shared/customizableui/customizeMode.inc.css
@@ -4736,7 +4797,7 @@ window > chatbox {
 
 @media (-moz-mac-lion-theme) {
   #TabsToolbar > .private-browsing-indicator {
-    transform: translateY(calc(0px - var(--space-above-tabbar)));
+    transform: translateY(calc(-1 * var(--space-above-tabbar)));
     /* We offset by 38px for mask graphic, plus 4px to account for the
      * margin-left, which sums to 42px.
      */

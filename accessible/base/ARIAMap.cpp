@@ -366,6 +366,16 @@ static nsRoleMapEntry sWAIRoleMaps[] =
     kNoReqStates,
     eARIACheckableBool
   },
+  { // none
+    &nsGkAtoms::none,
+    roles::NOTHING,
+    kUseMapRole,
+    eNoValue,
+    eNoAction,
+    eNoLiveAttr,
+    kGenericAccType,
+    kNoReqStates
+  },
   { // note
     &nsGkAtoms::note_,
     roles::NOTE,
@@ -711,7 +721,7 @@ static const AttrCharacteristics gWAIUnivAttrMap[] = {
   {&nsGkAtoms::aria_flowto,            ATTR_BYPASSOBJ                 | ATTR_GLOBAL },
   {&nsGkAtoms::aria_grabbed,                            ATTR_VALTOKEN | ATTR_GLOBAL },
   {&nsGkAtoms::aria_haspopup,          ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL },
-  {&nsGkAtoms::aria_hidden,   ATTR_BYPASSOBJ_IF_FALSE | ATTR_VALTOKEN | ATTR_GLOBAL },
+  {&nsGkAtoms::aria_hidden,            ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL }, /* handled special way */
   {&nsGkAtoms::aria_invalid,           ATTR_BYPASSOBJ | ATTR_VALTOKEN | ATTR_GLOBAL },
   {&nsGkAtoms::aria_label,             ATTR_BYPASSOBJ                 | ATTR_GLOBAL },
   {&nsGkAtoms::aria_labelledby,        ATTR_BYPASSOBJ                 | ATTR_GLOBAL },
@@ -796,6 +806,15 @@ aria::AttrCharacteristicsFor(nsIAtom* aAtom)
       return gWAIUnivAttrMap[i].characteristics;
 
   return 0;
+}
+
+bool
+aria::HasDefinedARIAHidden(nsIContent* aContent)
+{
+  return aContent &&
+    nsAccUtils::HasDefinedARIAToken(aContent, nsGkAtoms::aria_hidden) &&
+    !aContent->AttrValueIs(kNameSpaceID_None, nsGkAtoms::aria_hidden,
+                           nsGkAtoms::_false, eCaseMatters);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

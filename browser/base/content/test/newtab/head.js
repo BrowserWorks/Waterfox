@@ -10,11 +10,12 @@ let tmp = {};
 Cu.import("resource://gre/modules/Promise.jsm", tmp);
 Cu.import("resource://gre/modules/NewTabUtils.jsm", tmp);
 Cu.import("resource:///modules/DirectoryLinksProvider.jsm", tmp);
+Cu.import("resource://testing-common/PlacesTestUtils.jsm", tmp);
 Cc["@mozilla.org/moz/jssubscript-loader;1"]
   .getService(Ci.mozIJSSubScriptLoader)
   .loadSubScript("chrome://browser/content/sanitize.js", tmp);
 Cu.import("resource://gre/modules/Timer.jsm", tmp);
-let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider} = tmp;
+let {Promise, NewTabUtils, Sanitizer, clearTimeout, setTimeout, DirectoryLinksProvider, PlacesTestUtils} = tmp;
 
 let uri = Services.io.newURI("about:newtab", null, null);
 let principal = Services.scriptSecurityManager.getNoAppCodebasePrincipal(uri);
@@ -50,25 +51,28 @@ Object.keys(requiredSize).forEach(prop => {
     gBrowser.contentWindow[prop] = requiredSize[prop];
   }
 });
-let (screenHeight = {}, screenWidth = {}) {
-  Cc["@mozilla.org/gfx/screenmanager;1"].
-    getService(Ci.nsIScreenManager).
-    primaryScreen.
-    GetAvailRectDisplayPix({}, {}, screenWidth, screenHeight);
-  screenHeight = screenHeight.value;
-  screenWidth = screenWidth.value;
-  if (screenHeight < gBrowser.contentWindow.outerHeight) {
-    info("Warning: Browser outer height is now " +
-         gBrowser.contentWindow.outerHeight + ", which is larger than the " +
-         "available screen height, " + screenHeight +
-         ". That may cause problems.");
-  }
-  if (screenWidth < gBrowser.contentWindow.outerWidth) {
-    info("Warning: Browser outer width is now " +
-         gBrowser.contentWindow.outerWidth + ", which is larger than the " +
-         "available screen width, " + screenWidth +
-         ". That may cause problems.");
-  }
+
+let screenHeight = {};
+let screenWidth = {};
+Cc["@mozilla.org/gfx/screenmanager;1"].
+  getService(Ci.nsIScreenManager).
+  primaryScreen.
+  GetAvailRectDisplayPix({}, {}, screenWidth, screenHeight);
+screenHeight = screenHeight.value;
+screenWidth = screenWidth.value;
+
+if (screenHeight < gBrowser.contentWindow.outerHeight) {
+  info("Warning: Browser outer height is now " +
+       gBrowser.contentWindow.outerHeight + ", which is larger than the " +
+       "available screen height, " + screenHeight +
+       ". That may cause problems.");
+}
+
+if (screenWidth < gBrowser.contentWindow.outerWidth) {
+  info("Warning: Browser outer width is now " +
+       gBrowser.contentWindow.outerWidth + ", which is larger than the " +
+       "available screen width, " + screenWidth +
+       ". That may cause problems.");
 }
 
 registerCleanupFunction(function () {
@@ -154,7 +158,7 @@ let TestRunner = {
    */
   finish: function () {
     function cleanupAndFinish() {
-      clearHistory(function () {
+      PlacesTestUtils.clearHistory().then(() => {
         whenPagesUpdated(finish);
         NewTabUtils.restore();
       });
@@ -229,7 +233,7 @@ function setLinks(aLinks, aCallback = TestRunner.next) {
   // given entries and call populateCache() now again to make sure the cache
   // has the desired contents.
   NewTabUtils.links.populateCache(function () {
-    clearHistory(function () {
+    PlacesTestUtils.clearHistory().then(() => {
       fillHistory(links, function () {
         NewTabUtils.links.populateCache(function () {
           NewTabUtils.allPages.update();
@@ -238,15 +242,6 @@ function setLinks(aLinks, aCallback = TestRunner.next) {
       });
     });
   });
-}
-
-function clearHistory(aCallback) {
-  Services.obs.addObserver(function observe(aSubject, aTopic, aData) {
-    Services.obs.removeObserver(observe, aTopic);
-    executeSoon(aCallback);
-  }, PlacesUtils.TOPIC_EXPIRATION_FINISHED, false);
-
-  PlacesUtils.history.removeAllPages();
 }
 
 function fillHistory(aLinks, aCallback = TestRunner.next) {
@@ -683,4 +678,35 @@ function whenSearchInitDone() {
     }
   });
   return deferred.promise;
+}
+
+/**
+ * Changes the newtab customization option and waits for the panel to open and close
+ *
+ * @param {string} aTheme
+ *        Can be any of("blank"|"classic"|"enhanced")
+ */
+function customizeNewTabPage(aTheme) {
+  let document = getContentDocument();
+  let panel = document.getElementById("newtab-customize-panel");
+  let customizeButton = document.getElementById("newtab-customize-button");
+
+  // Attache onShown the listener on panel
+  panel.addEventListener("popupshown", function onShown() {
+    panel.removeEventListener("popupshown", onShown);
+
+    // Get the element for the specific option and click on it,
+    // then trigger an escape to close the panel
+    document.getElementById("newtab-customize-" + aTheme).click();
+    executeSoon(() => { panel.hidePopup(); });
+  });
+
+  // Attache the listener for panel closing, this will resolve the promise
+  panel.addEventListener("popuphidden", function onHidden() {
+    panel.removeEventListener("popuphidden", onHidden);
+    executeSoon(TestRunner.next);
+  });
+
+  // Click on the customize button to display the panel
+  customizeButton.click();
 }

@@ -4,6 +4,8 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+CFLAGS += ['-O2']
+
 EXPORTS += [
     'BackstagePass.h',
     'qsObjectHelper.h',
@@ -12,7 +14,7 @@ EXPORTS += [
     'xpcpublic.h',
 ]
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'ExportHelpers.cpp',
     'nsScriptError.cpp',
     'nsXPConnect.cpp',
@@ -66,7 +68,6 @@ LOCAL_INCLUDES += [
     '/dom/html',
     '/dom/svg',
     '/dom/workers',
-    '/js/ipc',
     '/layout/base',
     '/layout/style',
     '/xpcom/reflect/xptinfo',

@@ -10,12 +10,14 @@ if CONFIG['JS_SHELL_NAME']:
         USE_LIBS += ['editline']
     USE_LIBS += ['static:js']
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'js.cpp',
     'jsheaptools.cpp',
     'jsoptparse.cpp',
     'OSObject.cpp'
 ]
+
+CFLAGS += ['-O2']
 
 # Building against js_static requires that we declare mfbt sybols "exported"
 # on its behalf.

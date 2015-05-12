@@ -14,6 +14,8 @@
 #include "GMPCallbackBase.h"
 #include "GMPUtils.h"
 
+class nsCString;
+
 class GMPVideoDecoderCallbackProxy : public GMPCallbackBase,
                                      public GMPVideoDecoderCallback
 {
@@ -49,6 +51,8 @@ public:
   // Call to tell GMP/plugin the consumer will no longer use this
   // interface/codec.
   virtual void Close() = 0;
+
+  virtual const nsCString& GetDisplayName() const = 0;
 };
 
 #endif

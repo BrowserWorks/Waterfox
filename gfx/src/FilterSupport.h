@@ -8,7 +8,6 @@
 
 #include "mozilla/Attributes.h"
 #include "mozilla/RefPtr.h"
-#include "mozilla/TypedEnum.h"
 #include "mozilla/gfx/Rect.h"
 #include "mozilla/gfx/Matrix.h"
 #include "mozilla/gfx/2D.h"
@@ -162,7 +161,7 @@ class SourceSurface;
 class FilterNode;
 struct FilterAttribute;
 
-MOZ_BEGIN_ENUM_CLASS(AttributeType)
+enum class AttributeType {
   eBool,
   eUint,
   eFloat,
@@ -176,7 +175,7 @@ MOZ_BEGIN_ENUM_CLASS(AttributeType)
   eAttributeMap,
   eFloats,
   Max
-MOZ_END_ENUM_CLASS(AttributeType)
+};
 
 // Limits
 const float kMaxStdDeviation = 500;
@@ -185,7 +184,7 @@ const float kMaxStdDeviation = 500;
 // The Get*() methods assert that they're called for the same type that the
 // attribute was Set() with.
 // AttributeMaps can be nested because AttributeMap is a valid attribute type.
-class AttributeMap MOZ_FINAL {
+class AttributeMap final {
 public:
   AttributeMap();
   AttributeMap(const AttributeMap& aOther);
@@ -231,16 +230,16 @@ private:
   mutable nsClassHashtable<nsUint32HashKey, FilterAttribute>  mMap;
 };
 
-MOZ_BEGIN_ENUM_CLASS(ColorSpace)
+enum class ColorSpace {
   SRGB,
   LinearRGB,
   Max
-MOZ_END_ENUM_CLASS(ColorSpace)
+};
 
-MOZ_BEGIN_ENUM_CLASS(AlphaModel)
+enum class AlphaModel {
   Unpremultiplied,
   Premultiplied
-MOZ_END_ENUM_CLASS(AlphaModel)
+};
 
 class ColorModel {
 public:
@@ -268,7 +267,7 @@ public:
   AlphaModel mAlphaModel;
 };
 
-MOZ_BEGIN_ENUM_CLASS(PrimitiveType)
+enum class PrimitiveType {
   Empty = 0,
   Blend,
   Morphology,
@@ -289,7 +288,7 @@ MOZ_BEGIN_ENUM_CLASS(PrimitiveType)
   SpecularLighting,
   ToAlpha,
   Max
-MOZ_END_ENUM_CLASS(PrimitiveType)
+};
 
 /**
  * A data structure to carry attributes for a given primitive that's part of a
@@ -297,7 +296,7 @@ MOZ_END_ENUM_CLASS(PrimitiveType)
  * functionality.
  * Used as part of a FilterDescription.
  */
-class FilterPrimitiveDescription MOZ_FINAL {
+class FilterPrimitiveDescription final {
 public:
   enum {
     kPrimitiveIndexSourceGraphic = -1,
@@ -389,7 +388,7 @@ private:
  * Designed to be serializable via IPDL, so it must not contain complex
  * functionality.
  */
-struct FilterDescription MOZ_FINAL {
+struct FilterDescription final {
   FilterDescription() {}
   explicit FilterDescription(const nsTArray<FilterPrimitiveDescription>& aPrimitives)
    : mPrimitives(aPrimitives)

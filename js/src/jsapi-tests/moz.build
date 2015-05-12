@@ -6,7 +6,7 @@
 
 GeckoProgram('jsapi-tests', linkage=None)
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'selfTest.cpp',
     'testAddPropertyPropcache.cpp',
     'testArgumentsObject.cpp',
@@ -43,6 +43,7 @@ UNIFIED_SOURCES += [
     'testGCNursery.cpp',
     'testGCOutOfMemory.cpp',
     'testGCStoreBufferRemoval.cpp',
+    'testGetPropertyDescriptor.cpp',
     'testHashTable.cpp',
     'testHashTableInit.cpp',
     'testIndexToString.cpp',
@@ -88,7 +89,7 @@ UNIFIED_SOURCES += [
 ]
 
 if CONFIG['ENABLE_ION']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'testJitDCEinGVN.cpp',
         'testJitFoldsTo.cpp',
         'testJitGVN.cpp',

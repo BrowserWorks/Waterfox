@@ -76,6 +76,7 @@ typedef struct nr_ice_cand_pair_ nr_ice_cand_pair;
 typedef struct nr_ice_stun_server_ nr_ice_stun_server;
 typedef struct nr_ice_turn_server_ nr_ice_turn_server;
 typedef struct nr_resolver_ nr_resolver;
+typedef struct nr_proxy_tunnel_config_ nr_proxy_tunnel_config;
 
 typedef void* NR_SOCKET;
 
@@ -171,6 +172,25 @@ class NrIceTurnServer : public NrIceStunServer {
   std::string transport_;
 };
 
+class NrIceProxyServer {
+ public:
+  NrIceProxyServer() :
+    host_(), port_(0) {
+  }
+
+  NrIceProxyServer(const std::string& host, uint16_t port) :
+    host_(host), port_(port) {
+  }
+
+  const std::string& host() const { return host_; }
+  uint16_t port() const { return port_; }
+
+ private:
+  std::string host_;
+  uint16_t port_;
+};
+
+
 class NrIceCtx {
  public:
   enum ConnectionState { ICE_CTX_INIT,
@@ -205,13 +225,24 @@ class NrIceCtx {
 
   // Create a media stream
   RefPtr<NrIceMediaStream> CreateStream(const std::string& name,
-                                                 int components);
+                                        int components);
 
   RefPtr<NrIceMediaStream> GetStream(size_t index) {
     if (index < streams_.size()) {
       return streams_[index];
     }
     return nullptr;
+  }
+
+  void RemoveStream(size_t index)
+  {
+    streams_[index] = nullptr;
+  }
+
+  // Some might be null
+  size_t GetStreamCount() const
+  {
+    return streams_.size();
   }
 
   // The name of the ctx
@@ -253,6 +284,10 @@ class NrIceCtx {
   // Provide the resolution provider. Must be called before
   // StartGathering.
   nsresult SetResolver(nr_resolver *resolver);
+
+  // Provide the proxy address. Must be called before
+  // StartGathering.
+  nsresult SetProxyServer(const NrIceProxyServer& proxy_server);
 
   // Start ICE gathering
   nsresult StartGathering();
@@ -301,7 +336,7 @@ class NrIceCtx {
   DISALLOW_COPY_ASSIGN(NrIceCtx);
 
   // Callbacks for nICEr
-  static void initialized_cb(NR_SOCKET s, int h, void *arg);  // ICE initialized
+  static void gather_cb(NR_SOCKET s, int h, void *arg);  // ICE gather complete
 
   // Handler implementation
   static int select_pair(void *obj,nr_ice_media_stream *stream,

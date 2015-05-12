@@ -11,9 +11,9 @@
 !define BrandFullNameInternal "Waterfox"
 !define CompanyName           "Waterfox Ltd"
 !define URLInfoAbout          "https://www.waterfoxproject.org"
-!define HelpLink              "https://www.waterfoxproject.org/support"
+!define HelpLink              "https://www.waterfoxproject.org"
 
-!define URLStubDownload "https://waterfox.codeplex.com"
+!define URLStubDownload "https://www.waterfoxproject.org"
 !define URLManualDownload "https://www.waterfoxproject.org"
 !define Channel "release"
 

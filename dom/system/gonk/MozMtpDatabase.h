@@ -24,7 +24,7 @@ class RefCountedMtpServer;
 
 using namespace android;
 
-class MozMtpDatabase MOZ_FINAL : public MtpDatabase
+class MozMtpDatabase final : public MtpDatabase
 {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(MozMtpDatabase)
@@ -238,6 +238,9 @@ private:
   mozilla::TemporaryRef<DbEntry> GetEntry(MtpObjectHandle aHandle);
   void RemoveEntry(MtpObjectHandle aHandle);
   void RemoveEntryAndNotify(MtpObjectHandle aHandle, RefCountedMtpServer* aMtpServer);
+  void UpdateEntry(MtpObjectHandle aHandle, DeviceStorageFile* aFile);
+  void UpdateEntryAndNotify(MtpObjectHandle aHandle, DeviceStorageFile* aFile,
+                            RefCountedMtpServer* aMtpServer);
   void QueryEntries(MatchType aMatchType, uint32_t aMatchField1,
                     uint32_t aMatchField2, UnprotectedDbArray& aResult);
 

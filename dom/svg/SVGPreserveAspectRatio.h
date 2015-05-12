@@ -7,7 +7,6 @@
 #define MOZILLA_CONTENT_SVGPRESERVEASPECTRATIO_H_
 
 #include "mozilla/HashFunctions.h"  // for HashGeneric
-#include "mozilla/TypedEnum.h"
 
 #include "nsWrapperCache.h"
 #include "nsAutoPtr.h"
@@ -17,7 +16,7 @@
 
 namespace mozilla {
 // Alignment Types
-enum SVGAlign MOZ_ENUM_TYPE(uint8_t) {
+enum SVGAlign : uint8_t {
   SVG_PRESERVEASPECTRATIO_UNKNOWN = 0,
   SVG_PRESERVEASPECTRATIO_NONE = 1,
   SVG_PRESERVEASPECTRATIO_XMINYMIN = 2,
@@ -37,7 +36,7 @@ const uint16_t SVG_ALIGN_MIN_VALID = SVG_PRESERVEASPECTRATIO_NONE;
 const uint16_t SVG_ALIGN_MAX_VALID = SVG_PRESERVEASPECTRATIO_XMAXYMAX;
 
 // Meet-or-slice Types
-enum SVGMeetOrSlice MOZ_ENUM_TYPE(uint8_t) {
+enum SVGMeetOrSlice : uint8_t {
   SVG_MEETORSLICE_UNKNOWN = 0,
   SVG_MEETORSLICE_MEET = 1,
   SVG_MEETORSLICE_SLICE = 2
@@ -50,7 +49,7 @@ const uint16_t SVG_MEETORSLICE_MAX_VALID = SVG_MEETORSLICE_SLICE;
 
 class SVGAnimatedPreserveAspectRatio;
 
-class SVGPreserveAspectRatio MOZ_FINAL
+class SVGPreserveAspectRatio final
 {
   friend class SVGAnimatedPreserveAspectRatio;
 public:
@@ -113,7 +112,7 @@ private:
 
 namespace dom {
 
-class DOMSVGPreserveAspectRatio MOZ_FINAL : public nsISupports,
+class DOMSVGPreserveAspectRatio final : public nsISupports,
                                             public nsWrapperCache
 {
 public:
@@ -129,7 +128,7 @@ public:
 
   // WebIDL
   nsSVGElement* GetParentObject() const { return mSVGElement; }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   uint16_t Align();
   void SetAlign(uint16_t aAlign, ErrorResult& rv);

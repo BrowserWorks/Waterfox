@@ -18,6 +18,7 @@
     locale/browser/aboutHealthReport.dtd           (%chrome/browser/aboutHealthReport.dtd)
 #endif
     locale/browser/aboutSessionRestore.dtd         (%chrome/browser/aboutSessionRestore.dtd)
+    locale/browser/aboutTabCrashed.dtd             (%chrome/browser/aboutTabCrashed.dtd)
 #ifdef MOZ_SERVICES_SYNC
     locale/browser/syncProgress.dtd                (%chrome/browser/syncProgress.dtd)
     locale/browser/syncCustomize.dtd               (%chrome/browser/syncCustomize.dtd)
@@ -32,6 +33,7 @@
     locale/browser/devtools/appcacheutils.properties  (%chrome/browser/devtools/appcacheutils.properties)
     locale/browser/devtools/debugger.dtd              (%chrome/browser/devtools/debugger.dtd)
     locale/browser/devtools/debugger.properties       (%chrome/browser/devtools/debugger.properties)
+    locale/browser/devtools/device.properties         (%chrome/browser/devtools/device.properties)
     locale/browser/devtools/netmonitor.dtd            (%chrome/browser/devtools/netmonitor.dtd)
     locale/browser/devtools/netmonitor.properties     (%chrome/browser/devtools/netmonitor.properties)
     locale/browser/devtools/shadereditor.dtd          (%chrome/browser/devtools/shadereditor.dtd)
@@ -45,6 +47,7 @@
     locale/browser/devtools/webconsole.properties     (%chrome/browser/devtools/webconsole.properties)
     locale/browser/devtools/inspector.properties      (%chrome/browser/devtools/inspector.properties)
     locale/browser/devtools/tilt.properties           (%chrome/browser/devtools/tilt.properties)
+    locale/browser/devtools/shared.properties         (%chrome/browser/devtools/shared.properties)
     locale/browser/devtools/scratchpad.properties     (%chrome/browser/devtools/scratchpad.properties)
     locale/browser/devtools/scratchpad.dtd            (%chrome/browser/devtools/scratchpad.dtd)
     locale/browser/devtools/storage.properties        (%chrome/browser/devtools/storage.properties)

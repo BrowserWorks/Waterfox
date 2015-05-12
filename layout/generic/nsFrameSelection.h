@@ -68,6 +68,7 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
                      bool aScrollViewStop,
                      bool aIsKeyboardSelect,
                      bool aVisual,
+                     bool aExtend,
                      mozilla::EWordMovementType aWordMovementType = mozilla::eDefaultBehavior);
 
   // Note: Most arguments (input and output) are only used with certain values
@@ -123,6 +124,9 @@ struct MOZ_STACK_CLASS nsPeekOffsetStruct
   //          Used with: eSelectCharacter, eSelectWord, eSelectBeginLine, eSelectEndLine.
   bool mVisual;
 
+  // mExtend: Whether the selection is being extended or moved.
+  bool mExtend;
+
   /*** Output arguments ***/
 
   // mResultContent: Content reached as a result of the peek.
@@ -174,7 +178,7 @@ class nsIScrollableFrame;
  * or they may cause other objects to be deleted.
  */
 
-class nsFrameSelection MOZ_FINAL {
+class nsFrameSelection final {
 public:
   typedef mozilla::CaretAssociationHint CaretAssociateHint;
 
@@ -638,6 +642,7 @@ private:
   }
 
   friend class mozilla::dom::Selection;
+  friend struct mozilla::AutoPrepareFocusRange;
 #ifdef DEBUG
   void printSelection();       // for debugging
 #endif /* DEBUG */

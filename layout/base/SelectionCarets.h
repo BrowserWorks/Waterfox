@@ -55,7 +55,7 @@ class Selection;
  *          UX spec, when selection carets are overlapping, the image of
  *          caret becomes tilt.
  */
-class SelectionCarets MOZ_FINAL : public nsIReflowObserver,
+class SelectionCarets final : public nsIReflowObserver,
                                   public nsISelectionListener,
                                   public nsIScrollObserver,
                                   public nsSupportsWeakReference
@@ -80,11 +80,11 @@ public:
   void NotifyBlur(bool aIsLeavingDocument);
 
   // nsIScrollObserver
-  virtual void ScrollPositionChanged() MOZ_OVERRIDE;
+  virtual void ScrollPositionChanged() override;
 
   // AsyncPanZoom started/stopped callbacks from nsIScrollObserver
-  virtual void AsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos) MOZ_OVERRIDE;
-  virtual void AsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos) MOZ_OVERRIDE;
+  virtual void AsyncPanZoomStarted(const mozilla::CSSIntPoint aScrollPos) override;
+  virtual void AsyncPanZoomStopped(const mozilla::CSSIntPoint aScrollPos) override;
 
   void Init();
   void Terminate();
@@ -208,7 +208,6 @@ private:
   void DispatchSelectionStateChangedEvent(dom::Selection* aSelection,
                                           const dom::Sequence<dom::SelectionState>& aStates);
   void DispatchCustomEvent(const nsAString& aEvent);
-  nsRect GetSelectionBoundingRect(dom::Selection* aSel);
 
   /**
    * Detecting long tap using timer
@@ -218,6 +217,7 @@ private:
   static void FireLongTap(nsITimer* aTimer, void* aSelectionCarets);
 
   void LaunchScrollEndDetector();
+  void CancelScrollEndDetector();
   static void FireScrollEnd(nsITimer* aTimer, void* aSelectionCarets);
 
   nsIPresShell* mPresShell;
@@ -260,6 +260,8 @@ private:
 
   // True if AsyncPanZoom is enabled
   bool mAsyncPanZoomEnabled;
+  // True if AsyncPanZoom is started
+  bool mInAsyncPanZoomGesture;
 
   bool mEndCaretVisible;
   bool mStartCaretVisible;

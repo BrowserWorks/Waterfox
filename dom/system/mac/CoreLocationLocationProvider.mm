@@ -12,6 +12,7 @@
 #include "CoreLocationLocationProvider.h"
 #include "nsCocoaFeatures.h"
 #include "prtime.h"
+#include "mozilla/Telemetry.h"
 
 #include <CoreLocation/CLError.h>
 #include <CoreLocation/CLLocation.h>
@@ -31,29 +32,41 @@ static const CLLocationAccuracy kDEFAULT_ACCURACY = kCLLocationAccuracyNearestTe
 @interface LocationDelegate : NSObject <CLLocationManagerDelegate>
 {
   CoreLocationLocationProvider* mProvider;
+  NSTimer* mHandoffTimer;
 }
 
 - (id)init:(CoreLocationLocationProvider*)aProvider;
 - (void)locationManager:(CLLocationManager*)aManager
   didFailWithError:(NSError *)aError;
+- (void)locationManager:(CLLocationManager*)aManager didUpdateLocations:(NSArray*)locations;
 
-/* XXX (ggp) didUpdateToLocation is supposedly deprecated in favor of
- * locationManager:didUpdateLocations, which is undocumented and didn't seem to
- * work for me. This should be changed in the future, though.
- */
-- (void)locationManager:(CLLocationManager*)aManager
-  didUpdateToLocation:(CLLocation *)aNewLocation
-  fromLocation:(CLLocation *)aOldLocation;
 @end
 
 @implementation LocationDelegate
 - (id) init:(CoreLocationLocationProvider*) aProvider
 {
-  if (self = [super init]) {
+  if ((self = [super init])) {
     mProvider = aProvider;
   }
 
   return self;
+}
+
+- (void)shutdownHandoffTimer
+{
+  if (!mHandoffTimer) {
+    return;
+  }
+
+  [mHandoffTimer invalidate];
+  [mHandoffTimer release];
+  mHandoffTimer = nil;
+}
+
+- (void)handoffToGeoIPProvider
+{
+  [self shutdownHandoffTimer];
+  mProvider->CreateMLSFallbackProvider();
 }
 
 - (void)locationManager:(CLLocationManager*)aManager
@@ -69,31 +82,87 @@ static const CLLocationAccuracy kDEFAULT_ACCURACY = kCLLocationAccuracyNearestTe
 
   console->LogStringMessage(NS_ConvertUTF8toUTF16([message UTF8String]).get());
 
-  uint16_t err = nsIDOMGeoPositionError::POSITION_UNAVAILABLE;
   if ([aError code] == kCLErrorDenied) {
-    err = nsIDOMGeoPositionError::PERMISSION_DENIED;
+    mProvider->NotifyError(nsIDOMGeoPositionError::PERMISSION_DENIED);
+    return;
   }
 
-  mProvider->NotifyError(err);
+  if (!mHandoffTimer) {
+    // The CL provider does not fallback to GeoIP, so use NetworkGeolocationProvider for this.
+    // The concept here is: on error, hand off geolocation to MLS, which will then report
+    // back a location or error. We can't call this with no delay however, as this method
+    // is called with an error code of 0 in both failed geolocation cases, and also when
+    // geolocation is not immediately available.
+    // The 2 sec delay is arbitrarily large enough that CL has a reasonable head start and
+    // if it is likely to succeed, it should complete before the MLS provider.
+    // Take note that in locationManager:didUpdateLocations: the handoff to MLS is stopped.
+    mHandoffTimer = [[NSTimer scheduledTimerWithTimeInterval:2.0
+                                                     target:self
+                                                   selector:@selector(handoffToGeoIPProvider)
+                                                   userInfo:nil
+                                                    repeats:NO] retain];
+  }
 }
 
-- (void)locationManager:(CLLocationManager*)aManager
-  didUpdateToLocation:(CLLocation *)aNewLocation
-  fromLocation:(CLLocation *)aOldLocation
+- (void)locationManager:(CLLocationManager*)aManager didUpdateLocations:(NSArray*)aLocations
 {
+  if (aLocations.count < 1) {
+    return;
+  }
+
+  [self shutdownHandoffTimer];
+  mProvider->CancelMLSFallbackProvider();
+
+  CLLocation* location = [aLocations objectAtIndex:0];
+
   nsCOMPtr<nsIDOMGeoPosition> geoPosition =
-    new nsGeoPosition(aNewLocation.coordinate.latitude,
-                      aNewLocation.coordinate.longitude,
-                      aNewLocation.altitude,
-                      aNewLocation.horizontalAccuracy,
-                      aNewLocation.verticalAccuracy,
-                      aNewLocation.course,
-                      aNewLocation.speed,
+    new nsGeoPosition(location.coordinate.latitude,
+                      location.coordinate.longitude,
+                      location.altitude,
+                      location.horizontalAccuracy,
+                      location.verticalAccuracy,
+                      location.course,
+                      location.speed,
                       PR_Now());
 
   mProvider->Update(geoPosition);
+  Telemetry::Accumulate(Telemetry::GEOLOCATION_OSX_SOURCE_IS_MLS, false);
 }
 @end
+
+NS_IMPL_ISUPPORTS(CoreLocationLocationProvider::MLSUpdate, nsIGeolocationUpdate);
+
+CoreLocationLocationProvider::MLSUpdate::MLSUpdate(CoreLocationLocationProvider& parentProvider)
+  : mParentLocationProvider(parentProvider)
+{
+}
+
+NS_IMETHODIMP
+CoreLocationLocationProvider::MLSUpdate::Update(nsIDOMGeoPosition *position)
+{
+  nsCOMPtr<nsIDOMGeoPositionCoords> coords;
+  position->GetCoords(getter_AddRefs(coords));
+  if (!coords) {
+    return NS_ERROR_FAILURE;
+  }
+
+  mParentLocationProvider.Update(position);
+  Telemetry::Accumulate(Telemetry::GEOLOCATION_OSX_SOURCE_IS_MLS, true);
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+CoreLocationLocationProvider::MLSUpdate::LocationUpdatePending()
+{
+  return NS_OK;
+}
+
+NS_IMETHODIMP
+CoreLocationLocationProvider::MLSUpdate::NotifyError(uint16_t error)
+{
+  mParentLocationProvider.NotifyError(error);
+  return NS_OK;
+}
 
 class CoreLocationObjects {
 public:
@@ -127,7 +196,7 @@ public:
 NS_IMPL_ISUPPORTS(CoreLocationLocationProvider, nsIGeolocationProvider)
 
 CoreLocationLocationProvider::CoreLocationLocationProvider()
-  : mCLObjects(nullptr)
+  : mCLObjects(nullptr), mMLSFallbackProvider(nullptr)
 {
 }
 
@@ -143,6 +212,8 @@ CoreLocationLocationProvider::Startup()
     mCLObjects = clObjs.forget();
   }
 
+  // Must be stopped before starting or response (success or failure) is not guaranteed
+  [mCLObjects->mLocationManager stopUpdatingLocation];
   [mCLObjects->mLocationManager startUpdatingLocation];
   return NS_OK;
 }
@@ -163,10 +234,17 @@ CoreLocationLocationProvider::Shutdown()
 {
   NS_ENSURE_STATE(mCLObjects);
 
+  [mCLObjects->mLocationDelegate shutdownHandoffTimer];
   [mCLObjects->mLocationManager stopUpdatingLocation];
 
   delete mCLObjects;
   mCLObjects = nullptr;
+
+  if (mMLSFallbackProvider) {
+    mMLSFallbackProvider->Shutdown();
+    mMLSFallbackProvider = nullptr;
+  }
+
   return NS_OK;
 }
 
@@ -193,4 +271,31 @@ void
 CoreLocationLocationProvider::NotifyError(uint16_t aErrorCode)
 {
   mCallback->NotifyError(aErrorCode);
+}
+
+void
+CoreLocationLocationProvider::CreateMLSFallbackProvider()
+{
+  if (mMLSFallbackProvider) {
+    return;
+  }
+
+  mMLSFallbackProvider = do_CreateInstance("@mozilla.org/geolocation/mls-provider;1");
+  if (mMLSFallbackProvider) {
+    nsresult rv = mMLSFallbackProvider->Startup();
+    if (NS_SUCCEEDED(rv)) {
+      mMLSFallbackProvider->Watch(new CoreLocationLocationProvider::MLSUpdate(*this));
+    }
+  }
+}
+
+void
+CoreLocationLocationProvider::CancelMLSFallbackProvider()
+{
+  if (!mMLSFallbackProvider) {
+    return;
+  }
+
+  mMLSFallbackProvider->Shutdown();
+  mMLSFallbackProvider = nullptr;
 }

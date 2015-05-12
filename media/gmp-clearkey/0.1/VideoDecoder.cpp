@@ -34,12 +34,15 @@ VideoDecoder::VideoDecoder(GMPVideoHost *aHostAPI)
   , mMutex(nullptr)
   , mNumInputTasks(0)
   , mSentExtraData(false)
+  , mHasShutdown(false)
 {
 }
 
 VideoDecoder::~VideoDecoder()
 {
-  mMutex->Destroy();
+  if (mMutex) {
+    mMutex->Destroy();
+  }
 }
 
 void
@@ -54,12 +57,14 @@ VideoDecoder::InitDecode(const GMPVideoCodec& aCodecSettings,
   mDecoder = new WMFH264Decoder();
   HRESULT hr = mDecoder->Init();
   if (FAILED(hr)) {
+    CK_LOGD("VideoDecoder::InitDecode failed to init WMFH264Decoder");
     mCallback->Error(GMPGenericErr);
     return;
   }
 
   auto err = GetPlatform()->createmutex(&mMutex);
   if (GMP_FAILED(err)) {
+    CK_LOGD("VideoDecoder::InitDecode failed to create GMPMutex");
     mCallback->Error(GMPGenericErr);
     return;
   }
@@ -160,7 +165,7 @@ VideoDecoder::DecodeTask(GMPVideoEncodedFrame* aInput)
       ClearKeyDecryptionManager::Get()->Decrypt(&buffer[0], buffer.size(), crypto);
 
     if (GMP_FAILED(rv)) {
-      GetPlatform()->runonmainthread(WrapTask(mCallback, &GMPVideoDecoderCallback::Error, rv));
+      MaybeRunOnMainThread(WrapTask(mCallback, &GMPVideoDecoderCallback::Error, rv));
       return;
     }
   }
@@ -192,7 +197,7 @@ VideoDecoder::DecodeTask(GMPVideoEncodedFrame* aInput)
     hr = mDecoder->Output(&output);
     CK_LOGD("VideoDecoder::DecodeTask() output ret=0x%x\n", hr);
     if (hr == S_OK) {
-      GetPlatform()->runonmainthread(
+      MaybeRunOnMainThread(
         WrapTask(this,
                  &VideoDecoder::ReturnOutput,
                  CComPtr<IMFSample>(mozilla::Move(output)),
@@ -206,7 +211,7 @@ VideoDecoder::DecodeTask(GMPVideoEncodedFrame* aInput)
       if (mNumInputTasks == 0) {
         // We have run all input tasks. We *must* notify Gecko so that it will
         // send us more data.
-        GetPlatform()->runonmainthread(
+        MaybeRunOnMainThread(
           WrapTask(mCallback,
                    &GMPVideoDecoderCallback::InputDataExhausted));
       }
@@ -331,8 +336,12 @@ VideoDecoder::SampleToVideoFrame(IMFSample* aSample,
 void
 VideoDecoder::Reset()
 {
-  mDecoder->Reset();
-  mCallback->ResetComplete();
+  if (mDecoder) {
+    mDecoder->Reset();
+  }
+  if (mCallback) {
+    mCallback->ResetComplete();
+  }
 }
 
 void
@@ -347,7 +356,7 @@ VideoDecoder::DrainTask()
     hr = mDecoder->Output(&output);
     CK_LOGD("VideoDecoder::DrainTask() output ret=0x%x\n", hr);
     if (hr == S_OK) {
-      GetPlatform()->runonmainthread(
+      MaybeRunOnMainThread(
         WrapTask(this,
                  &VideoDecoder::ReturnOutput,
                  CComPtr<IMFSample>(mozilla::Move(output)),
@@ -357,12 +366,18 @@ VideoDecoder::DrainTask()
       assert(!output.Get());
     }
   }
-  GetPlatform()->runonmainthread(WrapTask(mCallback, &GMPVideoDecoderCallback::DrainComplete));
+  MaybeRunOnMainThread(WrapTask(mCallback, &GMPVideoDecoderCallback::DrainComplete));
 }
 
 void
 VideoDecoder::Drain()
 {
+  if (!mDecoder) {
+    if (mCallback) {
+      mCallback->DrainComplete();
+    }
+    return;
+  }
   EnsureWorker();
   mWorkerThread->Post(WrapTask(this,
                                &VideoDecoder::DrainTask));
@@ -374,5 +389,48 @@ VideoDecoder::DecodingComplete()
   if (mWorkerThread) {
     mWorkerThread->Join();
   }
+  mHasShutdown = true;
+
+  // Worker thread might have dispatched more tasks to the main thread that need this object.
+  // Append another task to delete |this|.
+  GetPlatform()->runonmainthread(WrapTask(this, &VideoDecoder::Destroy));
+}
+
+void
+VideoDecoder::Destroy()
+{
   delete this;
+}
+
+void
+VideoDecoder::MaybeRunOnMainThread(gmp_task_args_base* aTask)
+{
+  class MaybeRunTask : public GMPTask
+  {
+  public:
+    MaybeRunTask(VideoDecoder* aDecoder, gmp_task_args_base* aTask)
+      : mDecoder(aDecoder), mTask(aTask)
+    { }
+
+    virtual void Run(void) {
+      if (mDecoder->HasShutdown()) {
+        CK_LOGD("Trying to dispatch to main thread after VideoDecoder has shut down");
+        return;
+      }
+
+      mTask->Run();
+    }
+
+    virtual void Destroy()
+    {
+      mTask->Destroy();
+      delete this;
+    }
+
+  private:
+    VideoDecoder* mDecoder;
+    gmp_task_args_base* mTask;
+  };
+
+  GetPlatform()->runonmainthread(new MaybeRunTask(this, aTask));
 }

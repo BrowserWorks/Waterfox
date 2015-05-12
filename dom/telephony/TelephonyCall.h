@@ -17,7 +17,7 @@ class nsPIDOMWindow;
 namespace mozilla {
 namespace dom {
 
-class TelephonyCall MOZ_FINAL : public DOMEventTargetHelper
+class TelephonyCall final : public DOMEventTargetHelper
 {
   nsRefPtr<Telephony> mTelephony;
   nsRefPtr<TelephonyCallGroup> mGroup;
@@ -51,7 +51,7 @@ public:
 
   // WrapperCache
   virtual JSObject*
-  WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  WrapObject(JSContext* aCx) override;
 
   // WebIDL
   already_AddRefed<TelephonyCallId>
@@ -105,13 +105,9 @@ public:
   IMPL_EVENT_HANDLER(statechange)
   IMPL_EVENT_HANDLER(dialing)
   IMPL_EVENT_HANDLER(alerting)
-  IMPL_EVENT_HANDLER(connecting)
   IMPL_EVENT_HANDLER(connected)
-  IMPL_EVENT_HANDLER(disconnecting)
   IMPL_EVENT_HANDLER(disconnected)
-  IMPL_EVENT_HANDLER(holding)
   IMPL_EVENT_HANDLER(held)
-  IMPL_EVENT_HANDLER(resuming)
   IMPL_EVENT_HANDLER(error)
   IMPL_EVENT_HANDLER(groupchange)
 
@@ -183,6 +179,9 @@ private:
   nsresult
   DispatchCallEvent(const nsAString& aType,
                     TelephonyCall* aCall);
+
+  already_AddRefed<Promise>
+  CreatePromise(ErrorResult& aRv);
 };
 
 } // namespace dom

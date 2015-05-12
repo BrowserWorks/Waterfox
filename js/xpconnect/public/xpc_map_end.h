@@ -34,17 +34,8 @@ XPC_MAP_CLASSNAME::GetScriptableFlags()
 #ifdef XPC_MAP_WANT_PRECREATE
     nsIXPCScriptable::WANT_PRECREATE |
 #endif
-#ifdef XPC_MAP_WANT_CREATE
-    nsIXPCScriptable::WANT_CREATE |
-#endif
-#ifdef XPC_MAP_WANT_POSTCREATE
-    nsIXPCScriptable::WANT_POSTCREATE |
-#endif
 #ifdef XPC_MAP_WANT_ADDPROPERTY
     nsIXPCScriptable::WANT_ADDPROPERTY |
-#endif
-#ifdef XPC_MAP_WANT_DELPROPERTY
-    nsIXPCScriptable::WANT_DELPROPERTY |
 #endif
 #ifdef XPC_MAP_WANT_GETPROPERTY
     nsIXPCScriptable::WANT_GETPROPERTY |
@@ -60,9 +51,6 @@ XPC_MAP_CLASSNAME::GetScriptableFlags()
 #endif
 #ifdef XPC_MAP_WANT_RESOLVE
     nsIXPCScriptable::WANT_RESOLVE |
-#endif
-#ifdef XPC_MAP_WANT_CONVERT
-    nsIXPCScriptable::WANT_CONVERT |
 #endif
 #ifdef XPC_MAP_WANT_FINALIZE
     nsIXPCScriptable::WANT_FINALIZE |
@@ -86,85 +74,62 @@ XPC_MAP_CLASSNAME::GetScriptableFlags()
 
 #ifndef XPC_MAP_WANT_PRECREATE
 /* void preCreate (in nsISupports nativeObj, in JSContextPtr cx, in JSObjectPtr globalObj, out JSObjectPtr parentObj); */
-NS_IMETHODIMP XPC_MAP_CLASSNAME::PreCreate(nsISupports *nativeObj, JSContext * cx, JSObject * globalObj, JSObject * *parentObj)
-    {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
-#endif
-
-#ifndef XPC_MAP_WANT_CREATE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Create(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj)
-    {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
-#endif
-
-#ifndef XPC_MAP_WANT_POSTCREATE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::PostCreate(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj)
-    {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
-
-NS_IMETHODIMP XPC_MAP_CLASSNAME::PostTransplant(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::PreCreate(nsISupports* nativeObj, JSContext * cx, JSObject * globalObj, JSObject * *parentObj)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_ADDPROPERTY
-NS_IMETHODIMP XPC_MAP_CLASSNAME::AddProperty(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool *_retval)
-    {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
-#endif
-
-#ifndef XPC_MAP_WANT_DELPROPERTY
-NS_IMETHODIMP XPC_MAP_CLASSNAME::DelProperty(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsid id, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::AddProperty(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_GETPROPERTY
-NS_IMETHODIMP XPC_MAP_CLASSNAME::GetProperty(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::GetProperty(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool* _retval)
     {NS_WARNING("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_SETPROPERTY
-NS_IMETHODIMP XPC_MAP_CLASSNAME::SetProperty(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::SetProperty(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, JS::Value * vp, bool* _retval)
     {NS_WARNING("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_NEWENUMERATE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::NewEnumerate(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, JS::AutoIdVector &properties, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::NewEnumerate(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, JS::AutoIdVector& properties, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_ENUMERATE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Enumerate(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::Enumerate(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_RESOLVE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Resolve(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, jsid id, bool *resolvedp, bool *_retval)
-    {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
-#endif
-
-#ifndef XPC_MAP_WANT_CONVERT
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Convert(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, uint32_t type, JS::Value * vp, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::Resolve(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, jsid id, bool* resolvedp, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_FINALIZE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Finalize(nsIXPConnectWrappedNative *wrapper, JSFreeOp * fop, JSObject * obj)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::Finalize(nsIXPConnectWrappedNative* wrapper, JSFreeOp * fop, JSObject * obj)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_CALL
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Call(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, const JS::CallArgs &args, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::Call(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, const JS::CallArgs& args, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_CONSTRUCT
-NS_IMETHODIMP XPC_MAP_CLASSNAME::Construct(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, const JS::CallArgs &args, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::Construct(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, const JS::CallArgs& args, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_HASINSTANCE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::HasInstance(nsIXPConnectWrappedNative *wrapper, JSContext * cx, JSObject * obj, JS::HandleValue val, bool *bp, bool *_retval)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::HasInstance(nsIXPConnectWrappedNative* wrapper, JSContext * cx, JSObject * obj, JS::HandleValue val, bool* bp, bool* _retval)
     {NS_ERROR("never called"); return NS_ERROR_NOT_IMPLEMENTED;}
 #endif
 
 #ifndef XPC_MAP_WANT_POST_CREATE_PROTOTYPE
-NS_IMETHODIMP XPC_MAP_CLASSNAME::PostCreatePrototype(JSContext *cx, JSObject *proto)
+NS_IMETHODIMP XPC_MAP_CLASSNAME::PostCreatePrototype(JSContext* cx, JSObject* proto)
     {return NS_OK;}
 #endif
 
@@ -177,20 +142,8 @@ NS_IMETHODIMP XPC_MAP_CLASSNAME::PostCreatePrototype(JSContext *cx, JSObject *pr
 #undef XPC_MAP_WANT_PRECREATE
 #endif
 
-#ifdef XPC_MAP_WANT_CREATE
-#undef XPC_MAP_WANT_CREATE
-#endif
-
-#ifdef XPC_MAP_WANT_POSTCREATE
-#undef XPC_MAP_WANT_POSTCREATE
-#endif
-
 #ifdef XPC_MAP_WANT_ADDPROPERTY
 #undef XPC_MAP_WANT_ADDPROPERTY
-#endif
-
-#ifdef XPC_MAP_WANT_DELPROPERTY
-#undef XPC_MAP_WANT_DELPROPERTY
 #endif
 
 #ifdef XPC_MAP_WANT_GETPROPERTY
@@ -211,10 +164,6 @@ NS_IMETHODIMP XPC_MAP_CLASSNAME::PostCreatePrototype(JSContext *cx, JSObject *pr
 
 #ifdef XPC_MAP_WANT_RESOLVE
 #undef XPC_MAP_WANT_RESOLVE
-#endif
-
-#ifdef XPC_MAP_WANT_CONVERT
-#undef XPC_MAP_WANT_CONVERT
 #endif
 
 #ifdef XPC_MAP_WANT_FINALIZE

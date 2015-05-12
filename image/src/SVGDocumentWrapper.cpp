@@ -68,45 +68,6 @@ SVGDocumentWrapper::DestroyViewer()
   }
 }
 
-bool
-SVGDocumentWrapper::GetWidthOrHeight(Dimension aDimension,
-                                     int32_t& aResult)
-{
-  SVGSVGElement* rootElem = GetRootSVGElem();
-  NS_ABORT_IF_FALSE(rootElem, "root elem missing or of wrong type");
-
-  // Get the width or height SVG object
-  nsRefPtr<SVGAnimatedLength> domAnimLength;
-  if (aDimension == eWidth) {
-    domAnimLength = rootElem->Width();
-  } else {
-    NS_ABORT_IF_FALSE(aDimension == eHeight, "invalid dimension");
-    domAnimLength = rootElem->Height();
-  }
-  NS_ENSURE_TRUE(domAnimLength, false);
-
-  // Get the animated value from the object
-  nsRefPtr<DOMSVGLength> domLength = domAnimLength->AnimVal();
-  NS_ENSURE_TRUE(domLength, false);
-
-  // Check if it's a percent value (and fail if so)
-  uint16_t unitType;
-  nsresult rv = domLength->GetUnitType(&unitType);
-  NS_ENSURE_SUCCESS(rv, false);
-  if (unitType == nsIDOMSVGLength::SVG_LENGTHTYPE_PERCENTAGE) {
-    return false;
-  }
-
-  // Non-percent value - woot! Grab it & return it.
-  float floatLength;
-  rv = domLength->GetValue(&floatLength);
-  NS_ENSURE_SUCCESS(rv, false);
-
-  aResult = nsSVGUtils::ClampToInt(floatLength);
-
-  return true;
-}
-
 nsIFrame*
 SVGDocumentWrapper::GetRootLayoutFrame()
 {
@@ -117,7 +78,7 @@ SVGDocumentWrapper::GetRootLayoutFrame()
 void
 SVGDocumentWrapper::UpdateViewportBounds(const nsIntSize& aViewportSize)
 {
-  NS_ABORT_IF_FALSE(!mIgnoreInvalidation, "shouldn't be reentrant");
+  MOZ_ASSERT(!mIgnoreInvalidation, "shouldn't be reentrant");
   mIgnoreInvalidation = true;
 
   nsIntRect currentBounds;
@@ -135,7 +96,7 @@ SVGDocumentWrapper::UpdateViewportBounds(const nsIntSize& aViewportSize)
 void
 SVGDocumentWrapper::FlushImageTransformInvalidation()
 {
-  NS_ABORT_IF_FALSE(!mIgnoreInvalidation, "shouldn't be reentrant");
+  MOZ_ASSERT(!mIgnoreInvalidation, "shouldn't be reentrant");
 
   SVGSVGElement* svgElem = GetRootSVGElem();
   if (!svgElem)
@@ -385,8 +346,8 @@ SVGDocumentWrapper::SetupViewer(nsIRequest* aRequest,
 void
 SVGDocumentWrapper::RegisterForXPCOMShutdown()
 {
-  NS_ABORT_IF_FALSE(!mRegisteredForXPCOMShutdown,
-                    "re-registering for XPCOM shutdown");
+  MOZ_ASSERT(!mRegisteredForXPCOMShutdown,
+             "re-registering for XPCOM shutdown");
   // Listen for xpcom-shutdown so that we can drop references to our
   // helper-document at that point. (Otherwise, we won't get cleaned up
   // until imgLoader::Shutdown, which can happen after the JAR service
@@ -405,8 +366,8 @@ SVGDocumentWrapper::RegisterForXPCOMShutdown()
 void
 SVGDocumentWrapper::UnregisterForXPCOMShutdown()
 {
-  NS_ABORT_IF_FALSE(mRegisteredForXPCOMShutdown,
-                    "unregistering for XPCOM shutdown w/out being registered");
+  MOZ_ASSERT(mRegisteredForXPCOMShutdown,
+             "unregistering for XPCOM shutdown w/out being registered");
 
   nsresult rv;
   nsCOMPtr<nsIObserverService> obsSvc = do_GetService(OBSERVER_SVC_CID, &rv);

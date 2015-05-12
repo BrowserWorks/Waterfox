@@ -31,13 +31,13 @@ static const FloatRegisterSet NonVolatileFloatRegs =
                      (1ULL << FloatRegisters::d15));
 
 static void
-GenerateReturn(MacroAssembler &masm, int returnCode, SPSProfiler *prof)
+GenerateReturn(MacroAssembler& masm, int returnCode, SPSProfiler* prof)
 {
     // Restore non-volatile floating point registers.
     masm.transferMultipleByRuns(NonVolatileFloatRegs, IsLoad, StackPointer, IA);
 
-    // Unwind the sps mark.
-    masm.spsUnmarkJit(prof, r8);
+    // Get rid of padding word.
+    masm.addPtr(Imm32(sizeof(void*)), sp);
 
     // Set up return value
     masm.ma_mov(Imm32(returnCode), r0);
@@ -69,19 +69,20 @@ struct EnterJITStack
     double d14;
     double d15;
 
-    size_t hasSPSMark;
+    // Padding.
+    void* padding;
 
     // Non-volatile registers.
-    void *r4;
-    void *r5;
-    void *r6;
-    void *r7;
-    void *r8;
-    void *r9;
-    void *r10;
-    void *r11;
+    void* r4;
+    void* r5;
+    void* r6;
+    void* r7;
+    void* r8;
+    void* r9;
+    void* r10;
+    void* r11;
     // The abi does not expect r12 (ip) to be preserved
-    void *lr;
+    void* lr;
 
     // Arguments.
     // code == r0
@@ -89,20 +90,20 @@ struct EnterJITStack
     // argv == r2
     // frame == r3
     CalleeToken token;
-    JSObject *scopeChain;
+    JSObject* scopeChain;
     size_t numStackValues;
-    Value *vp;
+    Value* vp;
 };
 
 /*
  * This method generates a trampoline for a c++ function with the following
  * signature:
- *   void enter(void *code, int argc, Value *argv, InterpreterFrame *fp, CalleeToken
- *              calleeToken, JSObject *scopeChain, Value *vp)
+ *   void enter(void* code, int argc, Value* argv, InterpreterFrame* fp, CalleeToken
+ *              calleeToken, JSObject* scopeChain, Value* vp)
  *   ...using standard EABI calling convention
  */
-JitCode *
-JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
+JitCode*
+JitRuntime::generateEnterJIT(JSContext* cx, EnterJitType type)
 {
     const Address slot_token(sp, offsetof(EnterJITStack, token));
     const Address slot_vp(sp, offsetof(EnterJITStack, vp));
@@ -110,7 +111,7 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
     MOZ_ASSERT(OsrFrameReg == r3);
 
     MacroAssembler masm(cx);
-    Assembler *aasm = &masm;
+    Assembler* aasm = &masm;
 
     // Save non-volatile registers. These must be saved by the trampoline,
     // rather than the JIT'd code, because they are scanned by the conservative
@@ -129,9 +130,8 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
     // The 5th argument is located at [sp, 36]
     masm.finishDataTransfer();
 
-    // Push the EnterJIT sps mark. "Frame pointer" = start of saved core regs.
-    masm.movePtr(sp, r8);
-    masm.spsMarkJit(&cx->runtime()->spsProfiler, r8, r9);
+    // Add padding word.
+    masm.subPtr(Imm32(sizeof(void*)), sp);
 
     // Push the float registers.
     masm.transferMultipleByRuns(NonVolatileFloatRegs, IsStore, sp, DB);
@@ -150,11 +150,25 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
     masm.loadPtr(slot_vp, r10);
     masm.unboxInt32(Address(r10, 0), r10);
 
-    // Subtract off the size of the arguments from the stack pointer, store
-    // elsewhere.
-    aasm->as_sub(r4, sp, O2RegImmShift(r1, LSL, 3)); //r4 = sp - argc*8
-    // Get the final position of the stack pointer into the stack pointer.
-    aasm->as_sub(sp, r4, Imm8(16)); // sp' = sp - argc*8 - 16
+    // Guarantee stack alignment of Jit frames.
+    //
+    // This code moves the stack pointer to the location where it should be when
+    // we enter the Jit frame.  It moves the stack pointer such that we have
+    // enough space reserved for pushing the arguments, and the JitFrameLayout.
+    // The stack pointer is also aligned on the alignment expected by the Jit
+    // frames.
+    //
+    // At the end the register r4, is a pointer to the stack where the first
+    // argument is expected by the Jit frame.
+    //
+    aasm->as_sub(r4, sp, O2RegImmShift(r1, LSL, 3));    // r4 = sp - argc*8
+    masm.ma_and(Imm32(~(JitStackAlignment - 1)), r4, r4);
+    // r4 is now the aligned on the bottom of the list of arguments.
+    static_assert(sizeof(JitFrameLayout) % JitStackAlignment == 0,
+      "No need to consider the JitFrameLayout for aligning the stack");
+    // sp' = ~(JitStackAlignment - 1) & (sp - argc * sizeof(Value)) - sizeof(JitFrameLayout)
+    aasm->as_sub(sp, r4, Imm8(sizeof(JitFrameLayout)));
+
     // Get a copy of the number of args to use as a decrement counter, also set
     // the zero condition code.
     aasm->as_mov(r5, O2Reg(r1), SetCond);
@@ -270,7 +284,7 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
         masm.passABIArg(r11); // BaselineFrame
         masm.passABIArg(OsrFrameReg); // InterpreterFrame
         masm.passABIArg(numStackValues);
-        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, jit::InitBaselineFrameForOsr));
+        masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, jit::InitBaselineFrameForOsr));
 
         Register jitcode = regs.takeAny();
         masm.pop(jitcode);
@@ -282,6 +296,19 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
         masm.addPtr(Imm32(ExitFrameLayout::SizeWithFooter()), sp);
         masm.addPtr(Imm32(BaselineFrame::Size()), framePtr);
         masm.branchIfFalseBool(ReturnReg, &error);
+
+        // If OSR-ing, then emit instrumentation for setting lastProfilerFrame
+        // if profiler instrumentation is enabled.
+        {
+            Label skipProfilingInstrumentation;
+            Register realFramePtr = numStackValues;
+            AbsoluteAddress addressOfEnabled(cx->runtime()->spsProfiler.addressOfEnabled());
+            masm.branch32(Assembler::Equal, addressOfEnabled, Imm32(0),
+                          &skipProfilingInstrumentation);
+            masm.ma_add(framePtr, Imm32(sizeof(void*)), realFramePtr);
+            masm.profilerEnterFrame(realFramePtr, scratch);
+            masm.bind(&skipProfilingInstrumentation);
+        }
 
         masm.jump(jitcode);
 
@@ -298,6 +325,10 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
         MOZ_ASSERT(R1.scratchReg() != r0);
         masm.loadPtr(Address(r11, offsetof(EnterJITStack, scopeChain)), R1.scratchReg());
     }
+
+    // The space for the return address is already reserved. Check that it is
+    // correctly aligned for a Jit frame.
+    masm.assertStackAlignment(JitStackAlignment);
 
     // Call the function.
     masm.ma_callJitNoPush(r0);
@@ -332,7 +363,7 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
 
     Linker linker(masm);
     AutoFlushICache afc("EnterJIT");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "EnterJIT");
@@ -341,8 +372,8 @@ JitRuntime::generateEnterJIT(JSContext *cx, EnterJitType type)
     return code;
 }
 
-JitCode *
-JitRuntime::generateInvalidator(JSContext *cx)
+JitCode*
+JitRuntime::generateInvalidator(JSContext* cx)
 {
     // See large comment in x86's JitRuntime::generateInvalidator.
     MacroAssembler masm(cx);
@@ -377,14 +408,14 @@ JitRuntime::generateInvalidator(JSContext *cx)
     const int sizeOfRetval = sizeof(size_t)*2;
     masm.reserveStack(sizeOfRetval);
     masm.mov(sp, r1);
-    const int sizeOfBailoutInfo = sizeof(void *)*2;
+    const int sizeOfBailoutInfo = sizeof(void*)*2;
     masm.reserveStack(sizeOfBailoutInfo);
     masm.mov(sp, r2);
     masm.setupAlignedABICall(3);
     masm.passABIArg(r0);
     masm.passABIArg(r1);
     masm.passABIArg(r2);
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, InvalidationBailout));
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, InvalidationBailout));
 
     masm.ma_ldr(Address(sp, 0), r2);
     masm.ma_ldr(Address(sp, sizeOfBailoutInfo), r1);
@@ -397,13 +428,13 @@ JitRuntime::generateInvalidator(JSContext *cx)
     masm.ma_add(sp, r1, sp);
 
     // Jump to shared bailout tail. The BailoutInfo pointer has to be in r2.
-    JitCode *bailoutTail = cx->runtime()->jitRuntime()->getBailoutTail();
+    JitCode* bailoutTail = cx->runtime()->jitRuntime()->getBailoutTail();
     masm.branch(bailoutTail);
 
     Linker linker(masm);
     AutoFlushICache afc("Invalidator");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
-    JitSpew(JitSpew_IonInvalidate, "   invalidation thunk created at %p", (void *) code->raw());
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitSpew(JitSpew_IonInvalidate, "   invalidation thunk created at %p", (void*) code->raw());
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "Invalidator");
@@ -412,8 +443,8 @@ JitRuntime::generateInvalidator(JSContext *cx)
     return code;
 }
 
-JitCode *
-JitRuntime::generateArgumentsRectifier(JSContext *cx, void **returnAddrOut)
+JitCode*
+JitRuntime::generateArgumentsRectifier(JSContext* cx, void** returnAddrOut)
 {
     MacroAssembler masm(cx);
     masm.pushReturnAddress();
@@ -509,12 +540,12 @@ JitRuntime::generateArgumentsRectifier(JSContext *cx, void **returnAddrOut)
     masm.ret();
     Linker linker(masm);
     AutoFlushICache afc("ArgumentsRectifier");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
     CodeOffsetLabel returnLabel(returnOffset);
     returnLabel.fixup(&masm);
     if (returnAddrOut)
-        *returnAddrOut = (void *) (code->raw() + returnLabel.offset());
+        *returnAddrOut = (void*) (code->raw() + returnLabel.offset());
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "ArgumentsRectifier");
@@ -524,7 +555,7 @@ JitRuntime::generateArgumentsRectifier(JSContext *cx, void **returnAddrOut)
 }
 
 static void
-PushBailoutFrame(MacroAssembler &masm, uint32_t frameClass, Register spArg)
+PushBailoutFrame(MacroAssembler& masm, uint32_t frameClass, Register spArg)
 {
     // the stack should look like:
     // [IonFrame]
@@ -581,14 +612,14 @@ PushBailoutFrame(MacroAssembler &masm, uint32_t frameClass, Register spArg)
 }
 
 static void
-GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
+GenerateBailoutThunk(JSContext* cx, MacroAssembler& masm, uint32_t frameClass)
 {
     PushBailoutFrame(masm, frameClass, r0);
 
     // SP % 8 == 4
     // STEP 1c: Call the bailout function, giving a pointer to the
     //          structure we just blitted onto the stack.
-    const int sizeOfBailoutInfo = sizeof(void *)*2;
+    const int sizeOfBailoutInfo = sizeof(void*)*2;
     masm.reserveStack(sizeOfBailoutInfo);
     masm.mov(sp, r1);
     masm.setupAlignedABICall(2);
@@ -601,13 +632,13 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     masm.passABIArg(r1);
 
     // Sp % 8 == 0
-    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void *, Bailout));
+    masm.callWithABI(JS_FUNC_TO_DATA_PTR(void*, Bailout));
     masm.ma_ldr(Address(sp, 0), r2);
     masm.ma_add(sp, Imm32(sizeOfBailoutInfo), sp);
     // Common size of a bailout frame.
-    uint32_t bailoutFrameSize = sizeof(void *) + // frameClass
+    uint32_t bailoutFrameSize = sizeof(void*) + // frameClass
                               sizeof(double) * FloatRegisters::TotalPhys +
-                              sizeof(void *) * Registers::Total;
+                              sizeof(void*) * Registers::Total;
 
     if (frameClass == NO_FRAME_SIZE_CLASS_ID) {
         // Make sure the bailout frame size fits into the offset for a load.
@@ -635,12 +666,12 @@ GenerateBailoutThunk(JSContext *cx, MacroAssembler &masm, uint32_t frameClass)
     }
 
     // Jump to shared bailout tail. The BailoutInfo pointer has to be in r2.
-    JitCode *bailoutTail = cx->runtime()->jitRuntime()->getBailoutTail();
+    JitCode* bailoutTail = cx->runtime()->jitRuntime()->getBailoutTail();
     masm.branch(bailoutTail);
 }
 
-JitCode *
-JitRuntime::generateBailoutTable(JSContext *cx, uint32_t frameClass)
+JitCode*
+JitRuntime::generateBailoutTable(JSContext* cx, uint32_t frameClass)
 {
     MacroAssembler masm(cx);
 
@@ -657,7 +688,7 @@ JitRuntime::generateBailoutTable(JSContext *cx, uint32_t frameClass)
 
     Linker linker(masm);
     AutoFlushICache afc("BailoutTable");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "BailoutTable");
@@ -666,15 +697,15 @@ JitRuntime::generateBailoutTable(JSContext *cx, uint32_t frameClass)
     return code;
 }
 
-JitCode *
-JitRuntime::generateBailoutHandler(JSContext *cx)
+JitCode*
+JitRuntime::generateBailoutHandler(JSContext* cx)
 {
     MacroAssembler masm(cx);
     GenerateBailoutThunk(cx, masm, NO_FRAME_SIZE_CLASS_ID);
 
     Linker linker(masm);
     AutoFlushICache afc("BailoutHandler");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "BailoutHandler");
@@ -683,8 +714,8 @@ JitRuntime::generateBailoutHandler(JSContext *cx)
     return code;
 }
 
-JitCode *
-JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
+JitCode*
+JitRuntime::generateVMWrapper(JSContext* cx, const VMFunction& f)
 {
     MOZ_ASSERT(functionWrappers_);
     MOZ_ASSERT(functionWrappers_->initialized());
@@ -773,7 +804,7 @@ JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
         switch (f.argProperties(explicitArg)) {
           case VMFunction::WordByValue:
             masm.passABIArg(MoveOperand(argsBase, argDisp), MoveOp::GENERAL);
-            argDisp += sizeof(void *);
+            argDisp += sizeof(void*);
             break;
           case VMFunction::DoubleByValue:
             // Values should be passed by reference, not by value, so we assert
@@ -784,11 +815,11 @@ JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
             break;
           case VMFunction::WordByRef:
             masm.passABIArg(MoveOperand(argsBase, argDisp, MoveOperand::EFFECTIVE_ADDRESS), MoveOp::GENERAL);
-            argDisp += sizeof(void *);
+            argDisp += sizeof(void*);
             break;
           case VMFunction::DoubleByRef:
             masm.passABIArg(MoveOperand(argsBase, argDisp, MoveOperand::EFFECTIVE_ADDRESS), MoveOp::GENERAL);
-            argDisp += 2 * sizeof(void *);
+            argDisp += 2 * sizeof(void*);
             break;
         }
     }
@@ -847,12 +878,12 @@ JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
     }
     masm.leaveExitFrame();
     masm.retn(Imm32(sizeof(ExitFrameLayout) +
-                    f.explicitStackSlots() * sizeof(void *) +
+                    f.explicitStackSlots() * sizeof(void*) +
                     f.extraValuesToPop * sizeof(Value)));
 
     Linker linker(masm);
     AutoFlushICache afc("VMWrapper");
-    JitCode *wrapper = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* wrapper = linker.newCode<NoGC>(cx, OTHER_CODE);
     if (!wrapper)
         return nullptr;
 
@@ -868,8 +899,8 @@ JitRuntime::generateVMWrapper(JSContext *cx, const VMFunction &f)
     return wrapper;
 }
 
-JitCode *
-JitRuntime::generatePreBarrier(JSContext *cx, MIRType type)
+JitCode*
+JitRuntime::generatePreBarrier(JSContext* cx, MIRType type)
 {
     MacroAssembler masm(cx);
 
@@ -897,7 +928,7 @@ JitRuntime::generatePreBarrier(JSContext *cx, MIRType type)
 
     Linker linker(masm);
     AutoFlushICache afc("PreBarrier");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "PreBarrier");
@@ -906,11 +937,11 @@ JitRuntime::generatePreBarrier(JSContext *cx, MIRType type)
     return code;
 }
 
-typedef bool (*HandleDebugTrapFn)(JSContext *, BaselineFrame *, uint8_t *, bool *);
+typedef bool (*HandleDebugTrapFn)(JSContext*, BaselineFrame*, uint8_t*, bool*);
 static const VMFunction HandleDebugTrapInfo = FunctionInfo<HandleDebugTrapFn>(HandleDebugTrap);
 
-JitCode *
-JitRuntime::generateDebugTrapHandler(JSContext *cx)
+JitCode*
+JitRuntime::generateDebugTrapHandler(JSContext* cx)
 {
     MacroAssembler masm;
 
@@ -927,7 +958,7 @@ JitRuntime::generateDebugTrapHandler(JSContext *cx)
     masm.movePtr(ImmPtr(nullptr), BaselineStubReg);
     EmitEnterStubFrame(masm, scratch2);
 
-    JitCode *code = cx->runtime()->jitRuntime()->getVMWrapper(HandleDebugTrapInfo);
+    JitCode* code = cx->runtime()->jitRuntime()->getVMWrapper(HandleDebugTrapInfo);
     if (!code)
         return nullptr;
 
@@ -949,11 +980,22 @@ JitRuntime::generateDebugTrapHandler(JSContext *cx)
                    JSReturnOperand);
     masm.mov(r11, sp);
     masm.pop(r11);
+
+    // Before returning, if profiling is turned on, make sure that lastProfilingFrame
+    // is set to the correct caller frame.
+    {
+        Label skipProfilingInstrumentation;
+        AbsoluteAddress addressOfEnabled(cx->runtime()->spsProfiler.addressOfEnabled());
+        masm.branch32(Assembler::Equal, addressOfEnabled, Imm32(0), &skipProfilingInstrumentation);
+        masm.profilerExitFrame();
+        masm.bind(&skipProfilingInstrumentation);
+    }
+
     masm.ret();
 
     Linker linker(masm);
     AutoFlushICache afc("DebugTrapHandler");
-    JitCode *codeDbg = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* codeDbg = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(codeDbg, "DebugTrapHandler");
@@ -962,8 +1004,8 @@ JitRuntime::generateDebugTrapHandler(JSContext *cx)
     return codeDbg;
 }
 
-JitCode *
-JitRuntime::generateExceptionTailStub(JSContext *cx, void *handler)
+JitCode*
+JitRuntime::generateExceptionTailStub(JSContext* cx, void* handler)
 {
     MacroAssembler masm;
 
@@ -971,7 +1013,7 @@ JitRuntime::generateExceptionTailStub(JSContext *cx, void *handler)
 
     Linker linker(masm);
     AutoFlushICache afc("ExceptionTailStub");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "ExceptionTailStub");
@@ -980,8 +1022,8 @@ JitRuntime::generateExceptionTailStub(JSContext *cx, void *handler)
     return code;
 }
 
-JitCode *
-JitRuntime::generateBailoutTailStub(JSContext *cx)
+JitCode*
+JitRuntime::generateBailoutTailStub(JSContext* cx)
 {
     MacroAssembler masm;
 
@@ -989,10 +1031,351 @@ JitRuntime::generateBailoutTailStub(JSContext *cx)
 
     Linker linker(masm);
     AutoFlushICache afc("BailoutTailStub");
-    JitCode *code = linker.newCode<NoGC>(cx, OTHER_CODE);
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
 
 #ifdef JS_ION_PERF
     writePerfSpewerJitCodeProfile(code, "BailoutTailStub");
+#endif
+
+    return code;
+}
+
+JitCode*
+JitRuntime::generateProfilerExitFrameTailStub(JSContext* cx)
+{
+    MacroAssembler masm;
+
+    Register scratch1 = r5;
+    Register scratch2 = r6;
+    Register scratch3 = r7;
+    Register scratch4 = r8;
+
+    //
+    // The code generated below expects that the current stack pointer points
+    // to an Ion or Baseline frame, at the state it would be immediately
+    // before a ret().  Thus, after this stub's business is done, it executes
+    // a ret() and returns directly to the caller script, on behalf of the
+    // callee script that jumped to this code.
+    //
+    // Thus the expected stack is:
+    //
+    //                                   StackPointer ----+
+    //                                                    v
+    // ..., ActualArgc, CalleeToken, Descriptor, ReturnAddr
+    // MEM-HI                                       MEM-LOW
+    //
+    //
+    // The generated jitcode is responsible for overwriting the
+    // jitActivation->lastProfilingFrame field with a pointer to the previous
+    // Ion or Baseline jit-frame that was pushed before this one. It is also
+    // responsible for overwriting jitActivation->lastProfilingCallSite with
+    // the return address into that frame.  The frame could either be an
+    // immediate "caller" frame, or it could be a frame in a previous
+    // JitActivation (if the current frame was entered from C++, and the C++
+    // was entered by some caller jit-frame further down the stack).
+    //
+    // So this jitcode is responsible for "walking up" the jit stack, finding
+    // the previous Ion or Baseline JS frame, and storing its address and the
+    // return address into the appropriate fields on the current jitActivation.
+    //
+    // There are a fixed number of different path types that can lead to the
+    // current frame, which is either a baseline or ion frame:
+    //
+    // <Baseline-Or-Ion>
+    // ^
+    // |
+    // ^--- Ion
+    // |
+    // ^--- Baseline Stub <---- Baseline
+    // |
+    // ^--- Argument Rectifier
+    // |    ^
+    // |    |
+    // |    ^--- Ion
+    // |    |
+    // |    ^--- Baseline Stub <---- Baseline
+    // |
+    // ^--- Entry Frame (From C++)
+    //
+    Register actReg = scratch4;
+    AbsoluteAddress activationAddr(GetJitContext()->runtime->addressOfProfilingActivation());
+    masm.loadPtr(activationAddr, actReg);
+
+    Address lastProfilingFrame(actReg, JitActivation::offsetOfLastProfilingFrame());
+    Address lastProfilingCallSite(actReg, JitActivation::offsetOfLastProfilingCallSite());
+
+#ifdef DEBUG
+    // Ensure that frame we are exiting is current lastProfilingFrame
+    {
+        masm.loadPtr(lastProfilingFrame, scratch1);
+        Label checkOk;
+        masm.branchPtr(Assembler::Equal, scratch1, ImmWord(0), &checkOk);
+        masm.branchPtr(Assembler::Equal, StackPointer, scratch1, &checkOk);
+        masm.assumeUnreachable(
+            "Mismatch between stored lastProfilingFrame and current stack pointer.");
+        masm.bind(&checkOk);
+    }
+#endif
+
+    // Load the frame descriptor into |scratch1|, figure out what to do depending on its type.
+    masm.loadPtr(Address(StackPointer, JitFrameLayout::offsetOfDescriptor()), scratch1);
+
+    // Going into the conditionals, we will have:
+    //      FrameDescriptor.size in scratch1
+    //      FrameDescriptor.type in scratch2
+    masm.ma_and(Imm32((1 << FRAMESIZE_SHIFT) - 1), scratch1, scratch2);
+    masm.rshiftPtr(Imm32(FRAMESIZE_SHIFT), scratch1);
+
+    // Handling of each case is dependent on FrameDescriptor.type
+    Label handle_IonJS;
+    Label handle_BaselineStub;
+    Label handle_Rectifier;
+    Label handle_IonAccessorIC;
+    Label handle_Entry;
+    Label end;
+
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_IonJS), &handle_IonJS);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_BaselineJS), &handle_IonJS);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_BaselineStub), &handle_BaselineStub);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_Rectifier), &handle_Rectifier);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_IonAccessorIC), &handle_IonAccessorIC);
+    masm.branch32(Assembler::Equal, scratch2, Imm32(JitFrame_Entry), &handle_Entry);
+
+    masm.assumeUnreachable("Invalid caller frame type when exiting from Ion frame.");
+
+    //
+    // JitFrame_IonJS
+    //
+    // Stack layout:
+    //                  ...
+    //                  Ion-Descriptor
+    //     Prev-FP ---> Ion-ReturnAddr
+    //                  ... previous frame data ... |- Descriptor.Size
+    //                  ... arguments ...           |
+    //                  ActualArgc          |
+    //                  CalleeToken         |- JitFrameLayout::Size()
+    //                  Descriptor          |
+    //        FP -----> ReturnAddr          |
+    //
+    masm.bind(&handle_IonJS);
+    {
+        // |scratch1| contains Descriptor.size
+
+        // returning directly to an IonJS frame.  Store return addr to frame
+        // in lastProfilingCallSite.
+        masm.loadPtr(Address(StackPointer, JitFrameLayout::offsetOfReturnAddress()), scratch2);
+        masm.storePtr(scratch2, lastProfilingCallSite);
+
+        // Store return frame in lastProfilingFrame.
+        // scratch2 := StackPointer + Descriptor.size*1 + JitFrameLayout::Size();
+        masm.ma_add(StackPointer, scratch1, scratch2);
+        masm.ma_add(scratch2, Imm32(JitFrameLayout::Size()), scratch2);
+        masm.storePtr(scratch2, lastProfilingFrame);
+        masm.ret();
+    }
+
+    //
+    // JitFrame_BaselineStub
+    //
+    // Look past the stub and store the frame pointer to
+    // the baselineJS frame prior to it.
+    //
+    // Stack layout:
+    //              ...
+    //              BL-Descriptor
+    // Prev-FP ---> BL-ReturnAddr
+    //      +-----> BL-PrevFramePointer
+    //      |       ... BL-FrameData ...
+    //      |       BLStub-Descriptor
+    //      |       BLStub-ReturnAddr
+    //      |       BLStub-StubPointer          |
+    //      +------ BLStub-SavedFramePointer    |- Descriptor.Size
+    //              ... arguments ...           |
+    //              ActualArgc          |
+    //              CalleeToken         |- JitFrameLayout::Size()
+    //              Descriptor          |
+    //    FP -----> ReturnAddr          |
+    //
+    // We take advantage of the fact that the stub frame saves the frame
+    // pointer pointing to the baseline frame, so a bunch of calculation can
+    // be avoided.
+    //
+    masm.bind(&handle_BaselineStub);
+    {
+        masm.ma_add(StackPointer, scratch1, scratch3);
+        Address stubFrameReturnAddr(scratch3,
+                                    JitFrameLayout::Size() +
+                                    BaselineStubFrameLayout::offsetOfReturnAddress());
+        masm.loadPtr(stubFrameReturnAddr, scratch2);
+        masm.storePtr(scratch2, lastProfilingCallSite);
+
+        Address stubFrameSavedFramePtr(scratch3,
+                                       JitFrameLayout::Size() - (2 * sizeof(void*)));
+        masm.loadPtr(stubFrameSavedFramePtr, scratch2);
+        masm.addPtr(Imm32(sizeof(void*)), scratch2); // Skip past BL-PrevFramePtr
+        masm.storePtr(scratch2, lastProfilingFrame);
+        masm.ret();
+    }
+
+
+    //
+    // JitFrame_Rectifier
+    //
+    // The rectifier frame can be preceded by either an IonJS or a
+    // BaselineStub frame.
+    //
+    // Stack layout if caller of rectifier was Ion:
+    //
+    //              Ion-Descriptor
+    //              Ion-ReturnAddr
+    //              ... ion frame data ... |- Rect-Descriptor.Size
+    //              < COMMON LAYOUT >
+    //
+    // Stack layout if caller of rectifier was Baseline:
+    //
+    //              BL-Descriptor
+    // Prev-FP ---> BL-ReturnAddr
+    //      +-----> BL-SavedFramePointer
+    //      |       ... baseline frame data ...
+    //      |       BLStub-Descriptor
+    //      |       BLStub-ReturnAddr
+    //      |       BLStub-StubPointer          |
+    //      +------ BLStub-SavedFramePointer    |- Rect-Descriptor.Size
+    //              ... args to rectifier ...   |
+    //              < COMMON LAYOUT >
+    //
+    // Common stack layout:
+    //
+    //              ActualArgc          |
+    //              CalleeToken         |- IonRectitiferFrameLayout::Size()
+    //              Rect-Descriptor     |
+    //              Rect-ReturnAddr     |
+    //              ... rectifier data & args ... |- Descriptor.Size
+    //              ActualArgc      |
+    //              CalleeToken     |- JitFrameLayout::Size()
+    //              Descriptor      |
+    //    FP -----> ReturnAddr      |
+    //
+    masm.bind(&handle_Rectifier);
+    {
+        // scratch2 := StackPointer + Descriptor.size*1 + JitFrameLayout::Size();
+        masm.ma_add(StackPointer, scratch1, scratch2);
+        masm.add32(Imm32(JitFrameLayout::Size()), scratch2);
+        masm.loadPtr(Address(scratch2, RectifierFrameLayout::offsetOfDescriptor()), scratch3);
+        masm.ma_lsr(Imm32(FRAMESIZE_SHIFT), scratch3, scratch1);
+        masm.and32(Imm32((1 << FRAMETYPE_BITS) - 1), scratch3);
+
+        // Now |scratch1| contains Rect-Descriptor.Size
+        // and |scratch2| points to Rectifier frame
+        // and |scratch3| contains Rect-Descriptor.Type
+
+        // Check for either Ion or BaselineStub frame.
+        Label handle_Rectifier_BaselineStub;
+        masm.branch32(Assembler::NotEqual, scratch3, Imm32(JitFrame_IonJS),
+                      &handle_Rectifier_BaselineStub);
+
+        // Handle Rectifier <- IonJS
+        // scratch3 := RectFrame[ReturnAddr]
+        masm.loadPtr(Address(scratch2, RectifierFrameLayout::offsetOfReturnAddress()), scratch3);
+        masm.storePtr(scratch3, lastProfilingCallSite);
+
+        // scratch3 := RectFrame + Rect-Descriptor.Size + RectifierFrameLayout::Size()
+        masm.ma_add(scratch2, scratch1, scratch3);
+        masm.add32(Imm32(RectifierFrameLayout::Size()), scratch3);
+        masm.storePtr(scratch3, lastProfilingFrame);
+        masm.ret();
+
+        // Handle Rectifier <- BaselineStub <- BaselineJS
+        masm.bind(&handle_Rectifier_BaselineStub);
+#ifdef DEBUG
+        {
+            Label checkOk;
+            masm.branch32(Assembler::Equal, scratch3, Imm32(JitFrame_BaselineStub), &checkOk);
+            masm.assumeUnreachable("Unrecognized frame preceding baselineStub.");
+            masm.bind(&checkOk);
+        }
+#endif
+        masm.ma_add(scratch2, scratch1, scratch3);
+        Address stubFrameReturnAddr(scratch3, RectifierFrameLayout::Size() +
+                                              BaselineStubFrameLayout::offsetOfReturnAddress());
+        masm.loadPtr(stubFrameReturnAddr, scratch2);
+        masm.storePtr(scratch2, lastProfilingCallSite);
+
+        Address stubFrameSavedFramePtr(scratch3,
+                                       RectifierFrameLayout::Size() - (2 * sizeof(void*)));
+        masm.loadPtr(stubFrameSavedFramePtr, scratch2);
+        masm.addPtr(Imm32(sizeof(void*)), scratch2);
+        masm.storePtr(scratch2, lastProfilingFrame);
+        masm.ret();
+    }
+
+    // JitFrame_IonAccessorIC
+    //
+    // The caller is always an IonJS frame.
+    //
+    //              Ion-Descriptor
+    //              Ion-ReturnAddr
+    //              ... ion frame data ... |- AccFrame-Descriptor.Size
+    //              StubCode             |
+    //              AccFrame-Descriptor  |- IonAccessorICFrameLayout::Size()
+    //              AccFrame-ReturnAddr  |
+    //              ... accessor frame data & args ... |- Descriptor.Size
+    //              ActualArgc      |
+    //              CalleeToken     |- JitFrameLayout::Size()
+    //              Descriptor      |
+    //    FP -----> ReturnAddr      |
+    masm.bind(&handle_IonAccessorIC);
+    {
+        // scratch2 := StackPointer + Descriptor.size + JitFrameLayout::Size()
+        masm.ma_add(StackPointer, scratch1, scratch2);
+        masm.addPtr(Imm32(JitFrameLayout::Size()), scratch2);
+
+        // scratch3 := AccFrame-Descriptor.Size
+        masm.loadPtr(Address(scratch2, IonAccessorICFrameLayout::offsetOfDescriptor()), scratch3);
+#ifdef DEBUG
+        // Assert previous frame is an IonJS frame.
+        masm.movePtr(scratch3, scratch1);
+        masm.and32(Imm32((1 << FRAMETYPE_BITS) - 1), scratch1);
+        {
+            Label checkOk;
+            masm.branch32(Assembler::Equal, scratch1, Imm32(JitFrame_IonJS), &checkOk);
+            masm.assumeUnreachable("IonAccessorIC frame must be preceded by IonJS frame");
+            masm.bind(&checkOk);
+        }
+#endif
+        masm.rshiftPtr(Imm32(FRAMESIZE_SHIFT), scratch3);
+
+        // lastProfilingCallSite := AccFrame-ReturnAddr
+        masm.loadPtr(Address(scratch2, IonAccessorICFrameLayout::offsetOfReturnAddress()), scratch1);
+        masm.storePtr(scratch1, lastProfilingCallSite);
+
+        // lastProfilingFrame := AccessorFrame + AccFrame-Descriptor.Size +
+        //                       IonAccessorICFrameLayout::Size()
+        masm.ma_add(scratch2, scratch3, scratch1);
+        masm.addPtr(Imm32(IonAccessorICFrameLayout::Size()), scratch1);
+        masm.storePtr(scratch1, lastProfilingFrame);
+        masm.ret();
+    }
+
+    //
+    // JitFrame_Entry
+    //
+    // If at an entry frame, store null into both fields.
+    //
+    masm.bind(&handle_Entry);
+    {
+        masm.movePtr(ImmPtr(nullptr), scratch1);
+        masm.storePtr(scratch1, lastProfilingCallSite);
+        masm.storePtr(scratch1, lastProfilingFrame);
+        masm.ret();
+    }
+
+    Linker linker(masm);
+    AutoFlushICache afc("ProfilerExitFrameTailStub");
+    JitCode* code = linker.newCode<NoGC>(cx, OTHER_CODE);
+
+#ifdef JS_ION_PERF
+    writePerfSpewerJitCodeProfile(code, "ProfilerExitFrameStub");
 #endif
 
     return code;

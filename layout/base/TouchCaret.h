@@ -27,7 +27,7 @@ namespace mozilla {
  * TouchCaret is also responsible for touch caret visibility. Touch caret
  * won't be shown when timer expires or while key event causes selection change.
  */
-class TouchCaret MOZ_FINAL : public nsISelectionListener
+class TouchCaret final : public nsISelectionListener
 {
 public:
   explicit TouchCaret(nsIPresShell* aPresShell);
@@ -86,6 +86,11 @@ private:
    * Find the nsCanvasFrame which holds the touch caret.
    */
   nsCanvasFrame* GetCanvasFrame();
+
+  /**
+   * Find the root frame to update the touch caret's position.
+   */
+  nsIFrame* GetRootFrame();
 
   /**
    * Retrieve the bounding rectangle of the touch caret.

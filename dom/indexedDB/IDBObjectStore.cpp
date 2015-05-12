@@ -136,7 +136,7 @@ struct IDBObjectStore::StructuredCloneWriteInfo
 
 namespace {
 
-struct MOZ_STACK_CLASS MutableFileData MOZ_FINAL
+struct MOZ_STACK_CLASS MutableFileData final
 {
   nsString type;
   nsString name;
@@ -152,7 +152,7 @@ struct MOZ_STACK_CLASS MutableFileData MOZ_FINAL
   }
 };
 
-struct MOZ_STACK_CLASS BlobOrFileData MOZ_FINAL
+struct MOZ_STACK_CLASS BlobOrFileData final
 {
   uint32_t tag;
   uint64_t size;
@@ -174,7 +174,7 @@ struct MOZ_STACK_CLASS BlobOrFileData MOZ_FINAL
   }
 };
 
-struct MOZ_STACK_CLASS GetAddInfoClosure MOZ_FINAL
+struct MOZ_STACK_CLASS GetAddInfoClosure final
 {
   IDBObjectStore::StructuredCloneWriteInfo& mCloneWriteInfo;
   JS::Handle<JS::Value> mValue;
@@ -464,7 +464,7 @@ StructuredCloneReadString(JSStructuredCloneReader* aReader,
   }
   length = NativeEndian::swapFromLittleEndian(length);
 
-  if (!aString.SetLength(length, fallible_t())) {
+  if (!aString.SetLength(length, fallible)) {
     NS_WARNING("Out of memory?");
     return false;
   }
@@ -677,9 +677,7 @@ public:
     MOZ_ASSERT(!aDatabase);
 
     // MutableFile can't be used in index creation, so just make a dummy object.
-    JS::Rooted<JSObject*> obj(aCx,
-      JS_NewObject(aCx, nullptr, JS::NullPtr(), JS::NullPtr()));
-
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
     if (NS_WARN_IF(!obj)) {
       return false;
     }
@@ -705,8 +703,7 @@ public:
     //   File.name
     //   File.lastModifiedDate
 
-    JS::Rooted<JSObject*> obj(aCx,
-      JS_NewObject(aCx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::Rooted<JSObject*> obj(aCx, JS_NewPlainObject(aCx));
     if (NS_WARN_IF(!obj)) {
       return false;
     }
@@ -856,7 +853,7 @@ const JSClass IDBObjectStore::sDummyPropJSClass = {
 IDBObjectStore::IDBObjectStore(IDBTransaction* aTransaction,
                                const ObjectStoreSpec* aSpec)
   : mTransaction(aTransaction)
-  , mCachedKeyPath(JSVAL_VOID)
+  , mCachedKeyPath(JS::UndefinedValue())
   , mSpec(aSpec)
   , mId(aSpec->metadata().id())
   , mRooted(false)
@@ -871,7 +868,7 @@ IDBObjectStore::~IDBObjectStore()
   AssertIsOnOwningThread();
 
   if (mRooted) {
-    mCachedKeyPath = JSVAL_VOID;
+    mCachedKeyPath.setUndefined();
     mozilla::DropJSObjects(this);
   }
 }
@@ -1282,9 +1279,8 @@ IDBObjectStore::AddOrPut(JSContext* aCx,
     }
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  BackgroundRequestChild* actor = mTransaction->StartRequest(request, params);
+  MOZ_ASSERT(actor);
 
   if (!fileInfosToKeepAlive.IsEmpty()) {
     nsTArray<nsRefPtr<FileInfo>> fileInfos;
@@ -1368,9 +1364,7 @@ IDBObjectStore::GetAllInternal(bool aKeysOnly,
                  IDB_LOG_STRINGIFY(aLimit));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1406,9 +1400,7 @@ IDBObjectStore::Clear(ErrorResult& aRv)
                IDB_LOG_STRINGIFY(mTransaction),
                IDB_LOG_STRINGIFY(this));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1487,7 +1479,7 @@ NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN(IDBObjectStore)
 
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mIndexes);
 
-  tmp->mCachedKeyPath = JSVAL_VOID;
+  tmp->mCachedKeyPath.setUndefined();
 
   if (tmp->mRooted) {
     mozilla::DropJSObjects(tmp);
@@ -1603,9 +1595,7 @@ IDBObjectStore::Get(JSContext* aCx,
                IDB_LOG_STRINGIFY(this),
                IDB_LOG_STRINGIFY(keyRange));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1660,9 +1650,7 @@ IDBObjectStore::DeleteInternal(JSContext* aCx,
                  IDB_LOG_STRINGIFY(keyRange));
   }
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }
@@ -1902,9 +1890,7 @@ IDBObjectStore::Count(JSContext* aCx,
                IDB_LOG_STRINGIFY(this),
                IDB_LOG_STRINGIFY(keyRange));
 
-  BackgroundRequestChild* actor = new BackgroundRequestChild(request);
-
-  mTransaction->StartRequest(actor, params);
+  mTransaction->StartRequest(request, params);
 
   return request.forget();
 }

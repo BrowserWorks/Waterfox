@@ -1,3 +1,7 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 package org.mozilla.gecko.tests;
 
 import org.mozilla.gecko.Actions;
@@ -5,6 +9,7 @@ import org.mozilla.gecko.util.Clipboard;
 
 import android.util.DisplayMetrics;
 
+import com.jayway.android.robotium.solo.Condition;
 
 /**
  * This class covers interactions with the context menu opened from web content
@@ -71,9 +76,9 @@ abstract class ContentContextMenuTest extends PixelTest {
             openWebContentContextMenu(copyOption); // Open the context menu if it is not already
         }
         mSolo.clickOnText(copyOption);
-        boolean correctText = waitForTest(new BooleanTest() {
+        boolean correctText = waitForCondition(new Condition() {
             @Override
-            public boolean test() {
+            public boolean isSatisfied() {
                 final String clipboardText = Clipboard.getText();
                 mAsserter.dumpLog("Clipboard text = " + clipboardText + " , expected text = " + copiedText);
                 return clipboardText.contains(copiedText);

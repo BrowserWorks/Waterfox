@@ -7,6 +7,10 @@
 // These dictionaries need to be in a separate file from their use in unions
 // in MediaTrackConstraintSet.webidl due to a webidl compiler limitation.
 
+// These enums are in the spec even though they're not used directly in the API
+// due to https://www.w3.org/Bugs/Public/show_bug.cgi?id=19936
+// Their binding code is quite useful though, and is used in the implementation.
+
 enum VideoFacingModeEnum {
     "user",
     "environment",
@@ -19,15 +23,31 @@ enum MediaSourceEnum {
     "screen",
     "application",
     "window",
-    "browser"
+    "browser",
+    "microphone",
+    "other"
 };
 
 dictionary ConstrainLongRange {
-    long min = -2147483647; // +1 works around windows compiler bug
-    long max = 2147483647;
+    long min;
+    long max;
+    long exact;
+    long ideal;
 };
 
 dictionary ConstrainDoubleRange {
-    unrestricted double min = -Infinity;
-    unrestricted double max = Infinity;
+    double min;
+    double max;
+    double exact;
+    double ideal;
+};
+
+dictionary ConstrainBooleanParameters {
+    boolean exact;
+    boolean ideal;
+};
+
+dictionary ConstrainDOMStringParameters {
+    (DOMString or sequence<DOMString>) exact;
+    (DOMString or sequence<DOMString>) ideal;
 };

@@ -73,8 +73,8 @@ AutoCompleteInput.prototype = {
 
 function ensure_results(uris, searchTerm)
 {
-  promiseAsyncUpdates().then(function () ensure_results_internal(uris,
-                                                                 searchTerm));
+  PlacesTestUtils.promiseAsyncUpdates()
+                 .then(() => ensure_results_internal(uris, searchTerm));
 }
 
 function ensure_results_internal(uris, searchTerm)
@@ -129,7 +129,7 @@ function task_setCountDate(aURI, aCount, aDate)
   for (let i = 0; i < aCount; i++) {
     visits.push({ uri: aURI, visitDate: aDate, transition: TRANSITION_TYPED });
   }
-  yield promiseAddVisits(visits);
+  yield PlacesTestUtils.addVisits(visits);
 }
 
 function setBookmark(aURI)
@@ -287,7 +287,7 @@ add_task(function test_frecency()
   prefs.setBoolPref("browser.urlbar.suggest.openpage", false);
   for (let [, test] in Iterator(tests)) {
     remove_all_bookmarks();
-    yield promiseClearHistory();
+    yield PlacesTestUtils.clearHistory();
 
     deferEnsureResults = Promise.defer();
     yield test();

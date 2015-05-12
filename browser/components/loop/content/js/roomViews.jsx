@@ -14,6 +14,7 @@ loop.roomViews = (function(mozL10n) {
   var sharedActions = loop.shared.actions;
   var sharedMixins = loop.shared.mixins;
   var ROOM_STATES = loop.store.ROOM_STATES;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
   var sharedViews = loop.shared.views;
 
   /**
@@ -164,13 +165,14 @@ loop.roomViews = (function(mozL10n) {
     mixins: [
       ActiveRoomStoreMixin,
       sharedMixins.DocumentTitleMixin,
-      sharedMixins.RoomsAudioMixin
+      sharedMixins.MediaSetupMixin,
+      sharedMixins.RoomsAudioMixin,
+      sharedMixins.WindowCloseMixin
     ],
 
     propTypes: {
       dispatcher: React.PropTypes.instanceOf(loop.Dispatcher).isRequired,
-      feedbackStore:
-        React.PropTypes.instanceOf(loop.store.FeedbackStore).isRequired,
+      mozLoop: React.PropTypes.object.isRequired
     },
 
     _renderInvitationOverlay: function() {
@@ -183,17 +185,6 @@ loop.roomViews = (function(mozL10n) {
       return null;
     },
 
-    componentDidMount: function() {
-      /**
-       * OT inserts inline styles into the markup. Using a listener for
-       * resize events helps us trigger a full width/height on the element
-       * so that they update to the correct dimensions.
-       * XXX: this should be factored as a mixin.
-       */
-      window.addEventListener('orientationchange', this.updateVideoContainer);
-      window.addEventListener('resize', this.updateVideoContainer);
-    },
-
     componentWillUpdate: function(nextProps, nextState) {
       // The SDK needs to know about the configuration and the elements to use
       // for display. So the best way seems to pass the information here - ideally
@@ -201,66 +192,25 @@ loop.roomViews = (function(mozL10n) {
       if (this.state.roomState !== ROOM_STATES.MEDIA_WAIT &&
           nextState.roomState === ROOM_STATES.MEDIA_WAIT) {
         this.props.dispatcher.dispatch(new sharedActions.SetupStreamElements({
-          publisherConfig: this._getPublisherConfig(),
+          publisherConfig: this.getDefaultPublisherConfig({
+            publishVideo: !this.state.videoMuted
+          }),
           getLocalElementFunc: this._getElement.bind(this, ".local"),
+          getScreenShareElementFunc: this._getElement.bind(this, ".screen"),
           getRemoteElementFunc: this._getElement.bind(this, ".remote")
         }));
       }
-    },
-
-    _getPublisherConfig: function() {
-      // height set to 100%" to fix video layout on Google Chrome
-      // @see https://bugzilla.mozilla.org/show_bug.cgi?id=1020445
-      return {
-        insertMode: "append",
-        width: "100%",
-        height: "100%",
-        publishVideo: !this.state.videoMuted,
-        style: {
-          audioLevelDisplayMode: "off",
-          buttonDisplayMode: "off",
-          nameDisplayMode: "off",
-          videoDisabledDisplayMode: "off"
-        }
-      };
-    },
-
-    /**
-     * Used to update the video container whenever the orientation or size of the
-     * display area changes.
-     */
-    updateVideoContainer: function() {
-      var localStreamParent = this._getElement('.local .OT_publisher');
-      var remoteStreamParent = this._getElement('.remote .OT_subscriber');
-      if (localStreamParent) {
-        localStreamParent.style.width = "100%";
-      }
-      if (remoteStreamParent) {
-        remoteStreamParent.style.height = "100%";
-      }
-    },
-
-    /**
-     * Returns either the required DOMNode
-     *
-     * @param {String} className The name of the class to get the element for.
-     */
-    _getElement: function(className) {
-      return this.getDOMNode().querySelector(className);
     },
 
     /**
      * User clicked on the "Leave" button.
      */
     leaveRoom: function() {
-      this.props.dispatcher.dispatch(new sharedActions.LeaveRoom());
-    },
-
-    /**
-     * Closes the window if the cancel button is pressed in the generic failure view.
-     */
-    closeWindow: function() {
-      window.close();
+      if (this.state.used) {
+        this.props.dispatcher.dispatch(new sharedActions.LeaveRoom());
+      } else {
+        this.closeWindow();
+      }
     },
 
     /**
@@ -289,6 +239,11 @@ loop.roomViews = (function(mozL10n) {
         "room-preview": this.state.roomState !== ROOM_STATES.HAS_PARTICIPANTS
       });
 
+      var screenShareData = {
+        state: this.state.screenSharingState,
+        visible: this.props.mozLoop.getLoopPref("screenshare.enabled")
+      };
+
       switch(this.state.roomState) {
         case ROOM_STATES.FAILED:
         case ROOM_STATES.FULL: {
@@ -299,16 +254,9 @@ loop.roomViews = (function(mozL10n) {
           />;
         }
         case ROOM_STATES.ENDED: {
-          if (this.state.used)
-            return <sharedViews.FeedbackView
-              feedbackStore={this.props.feedbackStore}
-              onAfterFeedbackReceived={this.closeWindow}
-            />;
-
-          // In case the room was not used (no one was here), we
-          // bypass the feedback form.
-          this.closeWindow();
-          return null;
+          return <sharedViews.FeedbackView
+            onAfterFeedbackReceived={this.closeWindow}
+          />;
         }
         default: {
           return (
@@ -318,15 +266,18 @@ loop.roomViews = (function(mozL10n) {
                 <div className="conversation room-conversation">
                   <div className="media nested">
                     <div className="video_wrapper remote_wrapper">
-                      <div className="video_inner remote"></div>
+                      <div className="video_inner remote focus-stream"></div>
                     </div>
                     <div className={localStreamClasses}></div>
+                    <div className="screen hide"></div>
                   </div>
                   <sharedViews.ConversationToolbar
+                    dispatcher={this.props.dispatcher}
                     video={{enabled: !this.state.videoMuted, visible: true}}
                     audio={{enabled: !this.state.audioMuted, visible: true}}
                     publishStream={this.publishStream}
-                    hangup={this.leaveRoom} />
+                    hangup={this.leaveRoom}
+                    screenShare={screenShareData} />
                 </div>
               </div>
             </div>

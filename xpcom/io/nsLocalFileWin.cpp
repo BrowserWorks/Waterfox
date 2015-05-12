@@ -154,7 +154,8 @@ private:
     HRESULT hr;
     if (attributes & FILE_ATTRIBUTE_DIRECTORY) {
       // We have a directory so we should open the directory itself.
-      ITEMIDLIST* dir = ILCreateFromPathW(mResolvedPath.get());
+      ITEMIDLIST* dir =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(mResolvedPath.get()));
       if (!dir) {
         return NS_ERROR_FAILURE;
       }
@@ -177,13 +178,15 @@ private:
       PathRemoveFileSpecW(parentDirectoryPath);
 
       // We have a file so we should open the parent directory.
-      ITEMIDLIST* dir = ILCreateFromPathW(parentDirectoryPath);
+      ITEMIDLIST* dir =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(parentDirectoryPath));
       if (!dir) {
         return NS_ERROR_FAILURE;
       }
 
       // Set the item in the directory to select to the file we want to reveal.
-      ITEMIDLIST* item = ILCreateFromPathW(mResolvedPath.get());
+      ITEMIDLIST* item =
+        static_cast<ITEMIDLIST*>(ILCreateFromPathW(mResolvedPath.get()));
       if (!item) {
         CoTaskMemFree(dir);
         return NS_ERROR_FAILURE;
@@ -551,7 +554,7 @@ IsShortcutPath(const nsAString& aPath)
   // Under Windows, the shortcuts are just files with a ".lnk" extension.
   // Note also that we don't resolve links in the middle of paths.
   // i.e. "c:\foo.lnk\bar.txt" is invalid.
-  NS_ABORT_IF_FALSE(!aPath.IsEmpty(), "don't pass an empty string");
+  MOZ_ASSERT(!aPath.IsEmpty(), "don't pass an empty string");
   int32_t len = aPath.Length();
   return len >= 4 && (StringTail(aPath, 4).LowerCaseEqualsASCII(".lnk"));
 }
@@ -861,7 +864,7 @@ CloseDir(nsDir*& aDir)
 // nsDirEnumerator
 //-----------------------------------------------------------------------------
 
-class nsDirEnumerator MOZ_FINAL
+class nsDirEnumerator final
   : public nsISimpleEnumerator
   , public nsIDirectoryEnumerator
 {
@@ -3651,7 +3654,7 @@ nsDriveEnumerator::Init()
    * the length required for the string. */
   DWORD length = GetLogicalDriveStringsW(0, 0);
   /* The string is null terminated */
-  if (!mDrives.SetLength(length + 1, fallible_t())) {
+  if (!mDrives.SetLength(length + 1, fallible)) {
     return NS_ERROR_OUT_OF_MEMORY;
   }
   if (!GetLogicalDriveStringsW(length, wwc(mDrives.BeginWriting()))) {

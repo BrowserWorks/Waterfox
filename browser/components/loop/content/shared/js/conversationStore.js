@@ -10,7 +10,8 @@ loop.store = loop.store || {};
 (function() {
   var sharedActions = loop.shared.actions;
   var CALL_TYPES = loop.shared.utils.CALL_TYPES;
-  var FAILURE_REASONS = loop.shared.utils.FAILURE_REASONS;
+  var REST_ERRNOS = loop.shared.utils.REST_ERRNOS;
+  var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
 
   /**
    * Websocket states taken from:
@@ -148,7 +149,7 @@ loop.store = loop.store || {};
        * we do, this can be removed (bug 1138851), and the sdk should handle it.
        */
       if (this._isDesktop &&
-          actionData.reason === FAILURE_REASONS.UNABLE_TO_PUBLISH_MEDIA &&
+          actionData.reason === FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA &&
           this.getStoreState().videoMuted === false) {
         // We failed to publish with media, so due to the bug, we try again without
         // video.
@@ -391,8 +392,12 @@ loop.store = loop.store || {};
         function(err, result) {
           if (err) {
             console.error("Failed to get outgoing call data", err);
+            var failureReason = "setup";
+            if (err.errno == REST_ERRNOS.USER_UNAVAILABLE) {
+              failureReason = REST_ERRNOS.USER_UNAVAILABLE;
+            }
             this.dispatcher.dispatch(
-              new sharedActions.ConnectionFailure({reason: "setup"}));
+              new sharedActions.ConnectionFailure({reason: failureReason}));
             return;
           }
 

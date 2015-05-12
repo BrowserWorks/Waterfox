@@ -6,8 +6,8 @@
 <!ENTITY  no_space_to_start_error "There is not enough space available for &brandShortName; to start.">
 <!ENTITY  error_loading_file "An error occurred when trying to load files required to run &brandShortName;">
 
-<!ENTITY  onboard_start_message "Welcome to &brandShortName;!">
-<!ENTITY  onboard_start_subtext "Committed to you, your privacy, and an Open Web">
+<!ENTITY  onboard_start_message2 "Welcome to &brandShortName;">
+<!ENTITY  onboard_start_subtext2 "More privacy features and ways to customize than ever.">
 <!ENTITY  onboard_start_button_account "Sign in to &brandShortName;">
 <!ENTITY  onboard_start_button_browser "Start Browsing">
 
@@ -213,6 +213,8 @@ size. -->
 
 <!ENTITY pref_media_autoplay_enabled "Allow autoplay">
 <!ENTITY pref_media_autoplay_enabled_summary "Control if websites can autoplay videos and other media content">
+<!ENTITY pref_zoom_force_enabled "Always enable zoom">
+<!ENTITY pref_zoom_force_enabled_summary "Force override so you can zoom any page">
 
 <!ENTITY pref_use_master_password "Use master password">
 <!ENTITY pref_sync "Sync">
@@ -269,7 +271,7 @@ size. -->
      (crashReporterSection.label) in en-US/chrome/browser/preferences/advanced.dtd.-->
 <!ENTITY datareporting_crashreporter_title_short "Crash Reporter">
 <!ENTITY datareporting_wifi_title2 "&vendorShortName; Location Service">
-<!ENTITY datareporting_wifi_geolocation_summary2 "Shares approximate Wi-Fi and cellular location of your device with &vendorShortName; to improve our geolocation service">
+<!ENTITY datareporting_wifi_geolocation_summary3 "Help &vendorShortName; map the world! Share approximate Wi-Fi and cellular location of your device to improve our geolocation service">
 <!-- Localization note (pref_update_autodownload2) : This should mention downloading
      specifically, since the pref only prevents automatic downloads and not the
      actual notification that an update is available. -->
@@ -364,6 +366,10 @@ size. -->
 <!ENTITY site_settings_no_settings  "There are no settings to clear.">
 
 <!ENTITY reading_list_added "Page added to your Reading List">
+<!ENTITY reading_list_removed "Page removed from your Reading List">
+<!-- Localization note (reading_list_remove) : Used to remove the currently open page from
+     the user's reading list. The opposite of overlay_share_reading_list_btn_label. -->
+<!ENTITY reading_list_remove "Remove from Reading List">
 <!ENTITY reading_list_duplicate "Page already in your Reading List">
 
 <!-- Localization note (reading_list_time_minutes2) : This string is used in the "Reading List"
@@ -559,6 +565,13 @@ just addresses the organization to follow, e.g. "This site is run by " -->
 <!ENTITY actionbar_menu "Menu">
 <!ENTITY actionbar_done "Done">
 
+<!-- Voice search in the awesome bar -->
+<!ENTITY voicesearch_prompt "Speak now">
+<!ENTITY voicesearch_failed_title "&brandShortName; Voice Search">
+<!ENTITY voicesearch_failed_message "There is a problem with voice search right now. Please try later.">
+<!ENTITY voicesearch_failed_message_recoverable "Sorry! We could not recognize your words. Please try again.">
+<!ENTITY voicesearch_failed_retry "Try again">
+
 <!-- Localization note (remote_tabs_last_synced): the variable is replaced by a
      "relative time span string" produced by Android.  This string describes the
      time the tabs were last synced relative to the current time; examples
@@ -566,6 +579,8 @@ just addresses the organization to follow, e.g. "This site is run by " -->
      "Last synced" is one of the user's other Sync clients, typically Firefox on
      their desktop or laptop.-->
 <!ENTITY remote_tabs_last_synced "Last synced: &formatS;">
+<!-- Localization note: Used when the sync has not happend yet, showed in place of a date -->
+<!ENTITY remote_tabs_never_synced "Last synced: never">
 
 <!-- Find-In-Page strings -->
 <!-- LOCALIZATION NOTE (find_matchcase): This is meant to appear as an icon that changes color

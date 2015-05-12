@@ -14,7 +14,7 @@
 
 class nsIWidget;
 
-class nsQueryContentEventResult MOZ_FINAL : public nsIQueryContentEventResult
+class nsQueryContentEventResult final : public nsIQueryContentEventResult
 {
 public:
   nsQueryContentEventResult();
@@ -31,7 +31,7 @@ protected:
 
   uint32_t mOffset;
   nsString mString;
-  nsIntRect mRect;
+  mozilla::LayoutDeviceIntRect mRect;
 
   bool mSucceeded;
   bool mReversed;

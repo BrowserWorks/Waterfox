@@ -64,7 +64,7 @@ protected:
  * Finally, in the COMPLETE state the consumer can call CompletionStatus() to
  * get the status passed to SourceBuffer::Complete().
  */
-class SourceBufferIterator MOZ_FINAL
+class SourceBufferIterator final
 {
 public:
   enum State {
@@ -213,7 +213,7 @@ private:
  * live SourceBufferIterator's for it remain, we can compact its contents into a
  * single chunk.
  */
-class SourceBuffer MOZ_FINAL
+class SourceBuffer final
 {
 public:
   MOZ_DECLARE_REFCOUNTED_TYPENAME(image::SourceBuffer)
@@ -272,7 +272,6 @@ private:
       , mLength(0)
     {
       MOZ_ASSERT(aCapacity > 0, "Creating zero-capacity chunk");
-      static const fallible_t fallible = fallible_t();
       mData = new (fallible) char[mCapacity];
     }
 

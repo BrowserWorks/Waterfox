@@ -557,9 +557,9 @@ skip-if(B2G) == 363858-1.html 363858-1-ref.html
 skip-if(B2G) == 363858-2.html 363858-2-ref.html
 skip-if(B2G) == 363858-3.html 363858-3-ref.html
 skip-if(B2G) == 363858-4.html 363858-4-ref.html
-fuzzy-if(OSX==10.8,45,2) == 363858-5a.html 363858-5-ref.html
+fuzzy-if(OSX>=1008,45,2) == 363858-5a.html 363858-5-ref.html
 == 363858-5b.html 363858-5-ref.html
-fuzzy-if(OSX==10.8,45,2) == 363858-6a.html 363858-6-ref.html
+fuzzy-if(OSX>=1008,45,2) == 363858-6a.html 363858-6-ref.html
 == 363858-6b.html 363858-6-ref.html
 == 363874.html 363874-ref.html
 == 363874-max-width.html 363874-max-width-ref.html
@@ -1313,9 +1313,9 @@ skip-if(B2G) == 478811-1.html 478811-1-ref.html
 == 480880-2a.html about:blank
 == 480880-2b.html about:blank
 == 480880-2c.html about:blank
-skip-if(B2G) == 481024-1a.html 481024-1-ref.html
-skip-if(B2G) == 481024-1b.html 481024-1-ref.html
-skip-if(B2G) == 481024-1c.html 481024-1-ref.html
+skip-if(B2G) fails-if(Android) == 481024-1a.html 481024-1-ref.html
+skip-if(B2G) fails-if(Android) == 481024-1b.html 481024-1-ref.html
+skip-if(B2G) fails-if(Android) == 481024-1c.html 481024-1-ref.html
 == 481024-1d.html 481024-1-ref.html
 == 481024-1e.html 481024-1-ref.html
 != 481948-1.html 481948-1-ref.html
@@ -1461,7 +1461,7 @@ random-if(d2d) == 523468-1.html 523468-1-ref.html
 == 534804-1.html 534804-1-ref.html
 == 534808-1.html 534808-1-ref.html
 == 534808-2.html 534808-2-ref.html
-fails-if(OSX==10.7) == 534919-1.html 534919-1-ref.html # Bug 705044
+fails-if(OSX==1007) == 534919-1.html 534919-1-ref.html # Bug 705044
 random == 536061.html 536061-ref.html # fixedpoint division in blur code makes this fail
 == 537471-1.html 537471-1-ref.html
 skip-if(B2G&&browserIsRemote) == 537507-1.xul 537507-1-ref.xul # bug 974780
@@ -1508,7 +1508,7 @@ skip-if(B2G) fails-if(Android) == 557087-2.html 557087-ref.html
 == 557736-1.html 557736-1-ref.html
 skip-if(B2G&&browserIsRemote) != 558011-1.xul 558011-1-ref.xul # bug 974780
 == 559284-1.html 559284-1-ref.html
-skip-if(B2G) == 560455-1.xul 560455-1-ref.xul
+skip-if(B2G) fails-if(Android) == 560455-1.xul 560455-1-ref.xul
 == 561981-1.html 561981-1-ref.html
 == 561981-2.html 561981-2-ref.html
 == 561981-3.html 561981-3-ref.html
@@ -1588,13 +1588,13 @@ skip-if(B2G) == 582476-1.svg 582476-1-ref.svg
 == 584699-1.html 584699-1-ref.html
 == 585598-2.xhtml 585598-2-ref.xhtml
 == 586400-1.html 586400-1-ref.html
-skip-if(B2G) fuzzy-if(d2d,52,1051) fuzzy-if(OSX==10.8,129,1068) == 586683-1.html 586683-1-ref.html
+skip-if(B2G) fuzzy-if(d2d,52,1051) fuzzy-if(OSX==1008,129,1068) == 586683-1.html 586683-1-ref.html
 == 589615-1a.xhtml 589615-1-ref.html
 == 589615-1b.html 589615-1-ref.html
 == 589672-1.html 589672-1-ref.html
 != 589682-1.html 589682-1-notref.html
-skip-if(!browserIsRemote) == 593243-1.html 593243-1-ref.html # bug 593168
-skip-if(!browserIsRemote) == 593243-2.html 593243-2-ref.html # bug 593168
+skip-if(!asyncPanZoom) == 593243-1.html 593243-1-ref.html # bug 593168
+skip-if(!asyncPanZoom) == 593243-2.html 593243-2-ref.html # bug 593168
 == 593544-1.html 593544-1-ref.html
 random-if(Android) == 594333-1.html 594333-1-ref.html
 fuzzy-if(B2G,1,40000) == 594624-1.html 594624-1-ref.html
@@ -1645,7 +1645,7 @@ skip-if(Android) HTTP(..) == 621253-1-externalFilter.html 621253-1-ref.html
 skip-if(Android) == 621253-1-internalFilter.html 621253-1-ref.html
 HTTP(..) == 621253-2-externalFilter.html 621253-2-ref.html
 == 621253-2-internalFilter.html 621253-2-ref.html
-skip-if(B2G) random-if(winWidget) fuzzy-if(OSX==10.8,19,17) == 621918-1.svg 621918-1-ref.svg # 1-pixel diacritic positioning discrepancy in rotated text (may depend on platform fonts)
+skip-if(B2G) random-if(winWidget) fuzzy-if(OSX==1008,19,17) == 621918-1.svg 621918-1-ref.svg # 1-pixel diacritic positioning discrepancy in rotated text (may depend on platform fonts)
 random-if(winWidget) HTTP(..) == 621918-2.svg 621918-2-ref.svg # same 1px issue as above, and HTTP(..) for filters.svg, used to mask antialiasing issues where glyphs touch
 fuzzy-if(d2d,5,1) == 622585-1.html 622585-1-ref.html # bug 789402
 fuzzy-if(Android&&AndroidVersion>=15,8,300) == 625409-1.html 625409-1-ref.html
@@ -1792,7 +1792,7 @@ fuzzy-if(cocoaWidget,1,40) == 928607-1.html 928607-1-ref.html
 == 931464-1.html 931464-1-ref.html
 == 931853.html 931853-ref.html
 == 931853-quirks.html 931853-quirks-ref.html
-fuzzy-if(OSX==10.6,2,30) skip-if(B2G&&browserIsRemote) == 933264-1.html 933264-1-ref.html
+fuzzy-if(OSX==1006,2,30) skip-if(B2G&&browserIsRemote) == 933264-1.html 933264-1-ref.html
 == 936670-1.svg 936670-1-ref.svg
 == 941940-1.html 941940-1-ref.html
 fails == 942017.html 942017-ref.html # bug 942017
@@ -1821,6 +1821,7 @@ pref(layout.css.overflow-clip-box.enabled,true) == 992447.html 992447-ref.html
 == 1003425-1.html 1003425-1-ref.html
 == 1003425-2.html 1003425-2-ref.html
 pref(layout.css.sticky.enabled,true) == 1005405-1.html 1005405-1-ref.html
+== 1012640-1.html 1012640-1-ref.html
 fuzzy-if(/^Windows\x20NT\x205\.1/.test(http.oscpu),255,1) == 1013054-1.html 1013054-1-ref.html
 pref(layout.css.will-change.enabled,true) == 1018522-1.html 1018522-1-ref.html
 == 1021564-1.html 1021564-ref.html
@@ -1849,7 +1850,7 @@ test-pref(dom.webcomponents.enabled,true) == 1066554-1.html 1066554-1-ref.html
 == 1069716-1.html 1069716-1-ref.html
 == 1078262-1.html about:blank
 test-pref(layout.testing.overlay-scrollbars.always-visible,false) == 1081072-1.html 1081072-1-ref.html
-fuzzy-if(winWidget&&!layersGPUAccelerated,1,31) fuzzy-if(B2G,128,75) == 1081185-1.html 1081185-1-ref.html   # fuzzy with event-regions, see bug 1107843
+== 1081185-1.html 1081185-1-ref.html
 == 1097437-1.html 1097437-1-ref.html
 == 1103258-1.html 1103258-1-ref.html # assertion crash test with layers culling test
 == 1105137-1.html 1105137-1-ref.html
@@ -1857,5 +1858,14 @@ fuzzy-if(d2d,36,304) HTTP(..) == 1116480-1-fakeitalic-overflow.html 1116480-1-fa
 == 1111753-1.html about:blank
 == 1119117-1a.html 1119117-1-ref.html
 == 1119117-1b.html 1119117-1-ref.html
+== 1120431-1.html 1120431-1-ref.html
+== 1120431-2.html 1120431-2-ref.html
+== 1121748-1.html 1121748-1-ref.html
+== 1121748-2.html 1121748-2-ref.html
+== 1127107-1a-nowrap.html 1127107-1-ref.html
+== 1127107-1b-pre.html 1127107-1-ref.html
+== 1127107-2-capitalize.html 1127107-2-capitalize-ref.html
+== 1127679-1a-inline-flex-relpos.html 1127679-1b-inline-flex-relpos.html
+== 1128354-1.html 1128354-1-ref.html
 == 1130231-1-button-padding-rtl.html 1130231-1-button-padding-rtl-ref.html
 == 1130231-2-button-padding-rtl.html 1130231-2-button-padding-rtl-ref.html

@@ -56,10 +56,6 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_SIDE_TO_HALF_CORNER(side_, second_, parallel_) \
   ((((side_) + !!(second_))*2 + ((side_) + !(parallel_))%2) % 8)
 
-// {margin,border-{width,style,color},padding}-{left,right}-{ltr,rtl}-source
-#define NS_BOXPROP_SOURCE_PHYSICAL 0
-#define NS_BOXPROP_SOURCE_LOGICAL  1
-
 // box-sizing
 #define NS_STYLE_BOX_SIZING_CONTENT       0
 #define NS_STYLE_BOX_SIZING_PADDING       1
@@ -401,9 +397,11 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_DIRECTION_RTL                  1
 
 // See nsStyleVisibility
+// WritingModes.h depends on the particular values used here
 #define NS_STYLE_WRITING_MODE_HORIZONTAL_TB     0
-#define NS_STYLE_WRITING_MODE_VERTICAL_LR       1
-#define NS_STYLE_WRITING_MODE_VERTICAL_RL       2
+#define NS_STYLE_WRITING_MODE_VERTICAL_RL       1
+// #define NS_STYLE_WRITING_MODE_HORIZONTAL_BT  2  // hypothetical
+#define NS_STYLE_WRITING_MODE_VERTICAL_LR       3
 
 // See nsStyleDisplay
 #define NS_STYLE_DISPLAY_NONE                   0
@@ -842,14 +840,16 @@ static inline mozilla::css::Side operator++(mozilla::css::Side& side, int) {
 #define NS_STYLE_HYPHENS_MANUAL                 1
 #define NS_STYLE_HYPHENS_AUTO                   2
 
+// ruby-align, see nsStyleText
+#define NS_STYLE_RUBY_ALIGN_START               0
+#define NS_STYLE_RUBY_ALIGN_CENTER              1
+#define NS_STYLE_RUBY_ALIGN_SPACE_BETWEEN       2
+#define NS_STYLE_RUBY_ALIGN_SPACE_AROUND        3
+
 // ruby-position, see nsStyleText
-#define NS_STYLE_RUBY_POSITION_OVER             0x01
-#define NS_STYLE_RUBY_POSITION_UNDER            0x02
-#define NS_STYLE_RUBY_POSITION_INTER_CHARACTER  0x04 // placeholder, not yet parsed
-#define NS_STYLE_RUBY_POSITION_RIGHT            0x08
-#define NS_STYLE_RUBY_POSITION_LEFT             0x10
-#define NS_STYLE_RUBY_POSITION_INITIAL \
-  (NS_STYLE_RUBY_POSITION_OVER | NS_STYLE_RUBY_POSITION_RIGHT)
+#define NS_STYLE_RUBY_POSITION_OVER             0
+#define NS_STYLE_RUBY_POSITION_UNDER            1
+#define NS_STYLE_RUBY_POSITION_INTER_CHARACTER  2 /* placeholder, not yet parsed */
 
 // See nsStyleText
 #define NS_STYLE_TEXT_SIZE_ADJUST_NONE          0

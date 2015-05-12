@@ -333,9 +333,9 @@ nsContextMenu.prototype = {
     }
 
     // BiDi UI
-    this.showItem("context-sep-bidi", top.gBidiUI);
+    this.showItem("context-sep-bidi", !this.onNumeric && top.gBidiUI);
     this.showItem("context-bidi-text-direction-toggle",
-                  this.onTextInput && top.gBidiUI);
+                  this.onTextInput && !this.onNumeric && top.gBidiUI);
     this.showItem("context-bidi-page-direction-toggle",
                   !this.onTextInput && top.gBidiUI);
 
@@ -567,6 +567,7 @@ nsContextMenu.prototype = {
     this.onAudio           = false;
     this.onDRMMedia        = false;
     this.onTextInput       = false;
+    this.onNumeric         = false;
     this.onKeywordField    = false;
     this.mediaURL          = "";
     this.onLink            = false;
@@ -576,6 +577,7 @@ nsContextMenu.prototype = {
     this.linkURL           = "";
     this.linkURI           = null;
     this.linkProtocol      = "";
+    this.linkHasNoReferrer = false;
     this.onMathML          = false;
     this.inFrame           = false;
     this.inSrcdocFrame     = false;
@@ -600,6 +602,7 @@ nsContextMenu.prototype = {
     // gContextMenuContentData instead.
     if (this.isRemote) {
       this.browser = gContextMenuContentData.browser;
+      this.principal = gContextMenuContentData.principal;
     } else {
       editFlags = SpellCheckHelper.isEditable(this.target, window);
       this.browser = this.target.ownerDocument.defaultView
@@ -607,6 +610,7 @@ nsContextMenu.prototype = {
                                   .getInterface(Ci.nsIWebNavigation)
                                   .QueryInterface(Ci.nsIDocShell)
                                   .chromeEventHandler;
+      this.principal = this.target.ownerDocument.nodePrincipal;
     }
     this.onSocial = !!this.browser.getAttribute("origin");
 
@@ -666,6 +670,7 @@ nsContextMenu.prototype = {
       }
       else if (editFlags & (SpellCheckHelper.INPUT | SpellCheckHelper.TEXTAREA)) {
         this.onTextInput = (editFlags & SpellCheckHelper.TEXTINPUT) !== 0;
+        this.onNumeric = (editFlags & SpellCheckHelper.NUMERIC) !== 0;
         this.onEditableArea = (editFlags & SpellCheckHelper.EDITABLE) !== 0;
         if (this.onEditableArea) {
           if (this.isRemote) {
@@ -735,6 +740,7 @@ nsContextMenu.prototype = {
           this.linkProtocol = this.getLinkProtocol();
           this.onMailtoLink = (this.linkProtocol == "mailto");
           this.onSaveableLink = this.isLinkSaveable( this.link );
+          this.linkHasNoReferrer = BrowserUtils.linkHasNoReferrer(elem);
         }
 
         // Background image?  Don't bother if we've already found a
@@ -844,18 +850,6 @@ nsContextMenu.prototype = {
              this.linkProtocol == "snews"      );
   },
 
-  _unremotePrincipal: function(aRemotePrincipal) {
-    if (this.isRemote) {
-      return Cc["@mozilla.org/scriptsecuritymanager;1"]
-               .getService(Ci.nsIScriptSecurityManager)
-               .getAppCodebasePrincipal(aRemotePrincipal.URI,
-                                        aRemotePrincipal.appId,
-                                        aRemotePrincipal.isInBrowserElement);
-    }
-
-    return aRemotePrincipal;
-  },
-
   _isSpellCheckEnabled: function(aNode) {
     // We can always force-enable spellchecking on textboxes
     if (this.isTargetATextBox(aNode)) {
@@ -873,10 +867,11 @@ nsContextMenu.prototype = {
     return aNode.spellcheck;
   },
 
-  _openLinkInParameters : function (doc, extra) {
-    let params = { charset: doc.characterSet,
-                   referrerURI: doc.documentURIObject,
-                   noReferrer: BrowserUtils.linkHasNoReferrer(this.link) };
+  _openLinkInParameters : function (extra) {
+    let params = { charset: gContextMenuContentData.charSet,
+                   referrerURI: gContextMenuContentData.documentURIObject,
+                   referrerPolicy: gContextMenuContentData.referrerPolicy,
+                   noReferrer: this.linkHasNoReferrer };
     for (let p in extra)
       params[p] = extra[p];
     return params;
@@ -884,41 +879,38 @@ nsContextMenu.prototype = {
 
   // Open linked-to URL in a new window.
   openLink : function () {
-    var doc = this.target.ownerDocument;
-    urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
-    openLinkIn(this.linkURL, "window", this._openLinkInParameters(doc));
+    urlSecurityCheck(this.linkURL, this.principal);
+    openLinkIn(this.linkURL, "window", this._openLinkInParameters());
   },
 
   // Open linked-to URL in a new private window.
   openLinkInPrivateWindow : function () {
-    var doc = this.target.ownerDocument;
-    urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
+    urlSecurityCheck(this.linkURL, this.principal);
     openLinkIn(this.linkURL, "window",
-               this._openLinkInParameters(doc, { private: true }));
+               this._openLinkInParameters({ private: true }));
   },
 
   // Open linked-to URL in a new tab.
   openLinkInTab: function() {
-    var doc = this.target.ownerDocument;
-    urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
-    var referrerURI = doc.documentURIObject;
+    urlSecurityCheck(this.linkURL, this.principal);
+    let referrerURI = gContextMenuContentData.documentURIObject;
 
     // if the mixedContentChannel is present and the referring URI passes
     // a same origin check with the target URI, we can preserve the users
     // decision of disabling MCB on a page for it's child tabs.
-    var persistAllowMixedContentInChildTab = false;
+    let persistAllowMixedContentInChildTab = false;
 
     if (this.browser.docShell && this.browser.docShell.mixedContentChannel) {
       const sm = Services.scriptSecurityManager;
       try {
-        var targetURI = this.linkURI;
+        let targetURI = this.linkURI;
         sm.checkSameOriginURI(referrerURI, targetURI, false);
         persistAllowMixedContentInChildTab = true;
       }
       catch (e) { }
     }
 
-    let params = this._openLinkInParameters(doc, {
+    let params = this._openLinkInParameters({
       allowMixedContent: persistAllowMixedContentInChildTab,
     });
     openLinkIn(this.linkURL, "tab", params);
@@ -926,18 +918,15 @@ nsContextMenu.prototype = {
 
   // open URL in current tab
   openLinkInCurrent: function() {
-    var doc = this.target.ownerDocument;
-    urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
-    openLinkIn(this.linkURL, "current", this._openLinkInParameters(doc));
+    urlSecurityCheck(this.linkURL, this.principal);
+    openLinkIn(this.linkURL, "current", this._openLinkInParameters());
   },
 
   // Open frame in a new tab.
   openFrameInTab: function() {
-    var doc = this.target.ownerDocument;
-    var frameURL = doc.location.href;
-    var referrer = doc.referrer;
-    openLinkIn(frameURL, "tab",
-               { charset: doc.characterSet,
+    let referrer = gContextMenuContentData.referrer;
+    openLinkIn(gContextMenuContentData.docLocation, "tab",
+               { charset: gContextMenuContentData.charSet,
                  referrerURI: referrer ? makeURI(referrer) : null });
   },
 
@@ -948,25 +937,21 @@ nsContextMenu.prototype = {
 
   // Open clicked-in frame in its own window.
   openFrame: function() {
-    var doc = this.target.ownerDocument;
-    var frameURL = doc.location.href;
-    var referrer = doc.referrer;
-    openLinkIn(frameURL, "window",
-               { charset: doc.characterSet,
+    let referrer = gContextMenuContentData.referrer;
+    openLinkIn(gContextMenuContentData.docLocation, "window",
+               { charset: gContextMenuContentData.charSet,
                  referrerURI: referrer ? makeURI(referrer) : null });
   },
 
   // Open clicked-in frame in the same window.
   showOnlyThisFrame: function() {
-    var doc = this.target.ownerDocument;
-    var frameURL = doc.location.href;
-
-    urlSecurityCheck(frameURL,
+    urlSecurityCheck(gContextMenuContentData.docLocation,
                      this.browser.contentPrincipal,
                      Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
-    var referrer = doc.referrer;
-    openUILinkIn(frameURL, "current", { disallowInheritPrincipal: true,
-                                        referrerURI: referrer ? makeURI(referrer) : null });
+    let referrer = gContextMenuContentData.referrer;
+    openUILinkIn(gContextMenuContentData.docLocation, "current",
+                 { disallowInheritPrincipal: true,
+                   referrerURI: referrer ? makeURI(referrer) : null });
   },
 
   reload: function(event) {
@@ -1087,12 +1072,6 @@ nsContextMenu.prototype = {
     mm.addMessageListener("ContextMenu:SaveVideoFrameAsImage:Result", onMessage);
   },
 
-  fullScreenVideo: function () {
-    let video = this.target;
-    if (document.mozFullScreenEnabled)
-      video.mozRequestFullScreen();
-  },
-
   leaveDOMFullScreen: function() {
     document.mozCancelFullScreen();
   },
@@ -1135,8 +1114,7 @@ nsContextMenu.prototype = {
       return;
 
     var doc = this.target.ownerDocument;
-    urlSecurityCheck(this.target.currentURI.spec,
-                     this._unremotePrincipal(doc.nodePrincipal));
+    urlSecurityCheck(this.target.currentURI.spec, this.principal);
 
     // Confirm since it's annoying if you hit this accidentally.
     const kDesktopBackgroundURL = 
@@ -1217,7 +1195,7 @@ nsContextMenu.prototype = {
         let channel = aRequest.QueryInterface(Ci.nsIChannel);
         this.extListener =
           extHelperAppSvc.doContent(channel.contentType, aRequest, 
-                                    doc.defaultView, true, window);
+                                    null, true, window);
         this.extListener.onStartRequest(aRequest, aContext);
       }, 
 
@@ -1226,7 +1204,8 @@ nsContextMenu.prototype = {
         if (aStatusCode == NS_ERROR_SAVE_LINK_AS_TIMEOUT) {
           // do it the old fashioned way, which will pick the best filename
           // it can without waiting.
-          saveURL(linkURL, linkText, dialogTitle, bypassCache, false, doc.documentURIObject, doc);
+          saveURL(linkURL, linkText, dialogTitle, bypassCache, false,
+                  BrowserUtils.makeURIFromCPOW(doc.documentURIObject), doc);
         }
         if (this.extListener)
           this.extListener.onStopRequest(aRequest, aContext, aStatusCode);
@@ -1270,9 +1249,14 @@ nsContextMenu.prototype = {
     // set up a channel to do the saving
     var ioService = Cc["@mozilla.org/network/io-service;1"].
                     getService(Ci.nsIIOService);
-    var channel = ioService.newChannelFromURI(makeURI(linkURL));
+    var channel = ioService.newChannelFromURI2(makeURI(linkURL),
+                                               null, // aLoadingNode
+                                               this.principal, // aLoadingPrincipal
+                                               null, // aTriggeringPrincipal
+                                               Ci.nsILoadInfo.SEC_NORMAL,
+                                               Ci.nsIContentPolicy.TYPE_OTHER);
     if (channel instanceof Ci.nsIPrivateBrowsingChannel) {
-      let docIsPrivate = PrivateBrowsingUtils.isWindowPrivate(doc.defaultView);
+      let docIsPrivate = PrivateBrowsingUtils.isBrowserPrivate(gBrowser.selectedBrowser);
       channel.setPrivate(docIsPrivate);
     }
     channel.notificationCallbacks = new callbacks();
@@ -1288,7 +1272,7 @@ nsContextMenu.prototype = {
     channel.loadFlags |= flags;
 
     if (channel instanceof Ci.nsIHttpChannel) {
-      channel.referrer = doc.documentURIObject;
+      channel.referrer = BrowserUtils.makeURIFromCPOW(doc.documentURIObject);
       if (channel instanceof Ci.nsIHttpChannelInternal)
         channel.forceAllowThirdPartyCookie = true;
     }
@@ -1313,7 +1297,7 @@ nsContextMenu.prototype = {
       linkText = this.focusedWindow.getSelection().toString().trim();
     else
       linkText = this.linkText();
-    urlSecurityCheck(this.linkURL, this._unremotePrincipal(doc.nodePrincipal));
+    urlSecurityCheck(this.linkURL, this.principal);
 
     this.saveHelper(this.linkURL, linkText, null, true, doc);
   },
@@ -1330,17 +1314,15 @@ nsContextMenu.prototype = {
     if (this.onCanvas) {
       // Bypass cache, since it's a data: URL.
       saveImageURL(this.target.toDataURL(), "canvas.png", "SaveImageTitle",
-                   true, false, doc.documentURIObject, doc);
+                   true, false, BrowserUtils.makeURIFromCPOW(doc.documentURIObject), doc);
     }
     else if (this.onImage) {
-      urlSecurityCheck(this.mediaURL,
-                       this._unremotePrincipal(doc.nodePrincipal));
+      urlSecurityCheck(this.mediaURL, this.principal);
       saveImageURL(this.mediaURL, null, "SaveImageTitle", false,
-                   false, doc.documentURIObject, doc);
+                   false, BrowserUtils.makeURIFromCPOW(doc.documentURIObject), doc);
     }
     else if (this.onVideo || this.onAudio) {
-      urlSecurityCheck(this.mediaURL,
-                       this._unremotePrincipal(doc.nodePrincipal));
+      urlSecurityCheck(this.mediaURL, this.principal);
       var dialogTitle = this.onVideo ? "SaveVideoTitle" : "SaveAudioTitle";
       this.saveHelper(this.mediaURL, null, dialogTitle, false, doc);
     }
@@ -1674,37 +1656,10 @@ nsContextMenu.prototype = {
   },
 
   mediaCommand : function CM_mediaCommand(command, data) {
-    var media = this.target;
-
-    switch (command) {
-      case "play":
-        media.play();
-        break;
-      case "pause":
-        media.pause();
-        break;
-      case "mute":
-        media.muted = true;
-        break;
-      case "unmute":
-        media.muted = false;
-        break;
-      case "playbackRate":
-        media.playbackRate = data;
-        break;
-      case "hidecontrols":
-        media.removeAttribute("controls");
-        break;
-      case "showcontrols":
-        media.setAttribute("controls", "true");
-        break;
-      case "hidestats":
-      case "showstats":
-        var event = media.ownerDocument.createEvent("CustomEvent");
-        event.initCustomEvent("media-showStatistics", false, true, command == "showstats");
-        media.dispatchEvent(event);
-        break;
-    }
+    let mm = this.browser.messageManager;
+    mm.sendAsyncMessage("ContextMenu:MediaCommand",
+                        {command: command, data: data},
+                        {element: this.target});
   },
 
   copyMediaLocation : function () {

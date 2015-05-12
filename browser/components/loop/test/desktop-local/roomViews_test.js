@@ -6,21 +6,29 @@ describe("loop.roomViews", function () {
   "use strict";
 
   var ROOM_STATES = loop.store.ROOM_STATES;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
 
   var sandbox, dispatcher, roomStore, activeRoomStore, fakeWindow;
+  var fakeMozLoop;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
 
     dispatcher = new loop.Dispatcher();
 
+    fakeMozLoop = {
+      getAudioBlob: sinon.stub(),
+      getLoopPref: sinon.stub()
+    };
+
     fakeWindow = {
+      close: sinon.stub(),
       document: {},
       navigator: {
-        mozLoop: {
-          getAudioBlob: sinon.stub()
-        }
-      }
+        mozLoop: fakeMozLoop
+      },
+      addEventListener: function() {},
+      removeEventListener: function() {}
     };
     loop.shared.mixins.setRootObject(fakeWindow);
 
@@ -60,14 +68,10 @@ describe("loop.roomViews", function () {
           roomStore: roomStore
         }));
 
-      expect(testView.state).eql({
-        roomState: ROOM_STATES.INIT,
-        audioMuted: false,
-        videoMuted: false,
-        failureReason: undefined,
-        used: false,
-        foo: "bar"
-      });
+      var expectedState = _.extend({foo: "bar"},
+        activeRoomStore.getInitialStoreState());
+
+      expect(testView.state).eql(expectedState);
     });
 
     it("should listen to store changes", function() {
@@ -200,6 +204,11 @@ describe("loop.roomViews", function () {
     var view;
 
     beforeEach(function() {
+      loop.store.StoreMixin.register({
+        feedbackStore: new loop.store.FeedbackStore(dispatcher, {
+          feedbackClient: {}
+        })
+      });
       sandbox.stub(dispatcher, "dispatch");
     });
 
@@ -208,9 +217,7 @@ describe("loop.roomViews", function () {
         React.createElement(loop.roomViews.DesktopRoomConversationView, {
           dispatcher: dispatcher,
           roomStore: roomStore,
-          feedbackStore: new loop.store.FeedbackStore(dispatcher, {
-            feedbackClient: {}
-          })
+          mozLoop: fakeMozLoop
         }));
     }
 
@@ -268,6 +275,46 @@ describe("loop.roomViews", function () {
       var muteBtn = view.getDOMNode().querySelector('.btn-mute-audio');
 
       expect(muteBtn.classList.contains("muted")).eql(true);
+    });
+
+    it("should dispatch a `StartScreenShare` action when sharing is not active " +
+       "and the screen share button is pressed", function() {
+      view = mountTestComponent();
+
+      view.setState({screenSharingState: SCREEN_SHARE_STATES.INACTIVE});
+
+      var muteBtn = view.getDOMNode().querySelector('.btn-mute-video');
+
+      React.addons.TestUtils.Simulate.click(muteBtn);
+
+      sinon.assert.calledWithMatch(dispatcher.dispatch,
+        sinon.match.hasOwn("name", "setMute"));
+    });
+
+    it("should dispatch a `LeaveRoom` action when the hangup button is pressed and the room has been used", function() {
+      view = mountTestComponent();
+
+      view.setState({used: true});
+
+      var hangupBtn = view.getDOMNode().querySelector(".btn-hangup");
+
+      React.addons.TestUtils.Simulate.click(hangupBtn);
+
+      sinon.assert.calledOnce(dispatcher.dispatch);
+      sinon.assert.calledWithExactly(dispatcher.dispatch,
+        new sharedActions.LeaveRoom());
+    });
+
+    it("should close the window when the hangup button is pressed and the room has not been used", function() {
+      view = mountTestComponent();
+
+      view.setState({used: false});
+
+      var hangupBtn = view.getDOMNode().querySelector(".btn-hangup");
+
+      React.addons.TestUtils.Simulate.click(hangupBtn);
+
+      sinon.assert.calledOnce(fakeWindow.close);
     });
 
     describe("#componentWillUpdate", function() {
@@ -368,18 +415,6 @@ describe("loop.roomViews", function () {
 
           TestUtils.findRenderedComponentWithType(view,
             loop.shared.views.FeedbackView);
-        });
-
-      it("should NOT render the FeedbackView if the room has not been used",
-        function() {
-          activeRoomStore.setStoreState({
-            roomState: ROOM_STATES.ENDED,
-            used: false
-          });
-
-          view = mountTestComponent();
-
-          expect(view.getDOMNode()).eql(null);
         });
     });
 

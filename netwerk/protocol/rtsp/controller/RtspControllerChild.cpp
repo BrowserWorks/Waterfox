@@ -136,7 +136,7 @@ RtspControllerChild::RecvOnMediaDataAvailable(
                        const nsCString& data,
                        const uint32_t& length,
                        const uint32_t& offset,
-                       const InfallibleTArray<RtspMetadataParam>& metaArray)
+                       InfallibleTArray<RtspMetadataParam>&& metaArray)
 {
   nsRefPtr<RtspMetaData> meta = new RtspMetaData();
   nsresult rv = meta->DeserializeRtspMetaData(metaArray);
@@ -164,7 +164,7 @@ RtspControllerChild::GetMetaDataLength()
 bool
 RtspControllerChild::RecvOnConnected(
                        const uint8_t& index,
-                       const InfallibleTArray<RtspMetadataParam>& metaArray)
+                       InfallibleTArray<RtspMetadataParam>&& metaArray)
 {
   // Deserialize meta data.
   nsRefPtr<RtspMetaData> meta = new RtspMetaData();
@@ -219,8 +219,8 @@ RtspControllerChild::RecvAsyncOpenFailed(const nsresult& reason)
 void
 RtspControllerChild::AddIPDLReference()
 {
-  NS_ABORT_IF_FALSE(!mIPCOpen,
-                    "Attempt to retain more than one IPDL reference");
+  MOZ_ASSERT(!mIPCOpen,
+             "Attempt to retain more than one IPDL reference");
   mIPCOpen = true;
   AllowIPC();
   AddRef();
@@ -229,7 +229,7 @@ RtspControllerChild::AddIPDLReference()
 void
 RtspControllerChild::ReleaseIPDLReference()
 {
-  NS_ABORT_IF_FALSE(mIPCOpen, "Attempt to release nonexistent IPDL reference");
+  MOZ_ASSERT(mIPCOpen, "Attempt to release nonexistent IPDL reference");
   mIPCOpen = false;
   DisallowIPC();
   Release();

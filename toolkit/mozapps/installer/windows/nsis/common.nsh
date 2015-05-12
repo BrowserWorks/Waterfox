@@ -5091,7 +5091,7 @@
 
       !ifdef HAVE_64BIT_BUILD
         ${Unless} ${RunningX64}
-        ${OrUnless} ${AtLeastWin7}
+        ${OrUnless} ${AtLeastWinXP}
           MessageBox MB_OK|MB_ICONSTOP "$R9" IDOK
           ; Nothing initialized so no need to call OnEndCommon
           Quit
@@ -6734,7 +6734,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6814,7 +6814,7 @@
 
       StrCpy $R5 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -6886,7 +6886,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\TaskBar"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\TaskBar\*.lnk"
         ${Do}
@@ -6947,7 +6947,7 @@
 
       StrCpy $R9 0
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
       ${AndIf} ${FileExists} "$QUICKLAUNCH\User Pinned\StartMenu"
         FindFirst $R8 $R7 "$QUICKLAUNCH\User Pinned\StartMenu\*.lnk"
         ${Do}
@@ -7028,7 +7028,7 @@
 
       StrCpy $R3 "false"
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ; installed shortcuts
         ${${_MOZFUNC_UN}GetLongPath} "$INSTDIR\uninstall\${SHORTCUTS_LOG}" $R6
         ${If} ${FileExists} "$R6"
@@ -7259,7 +7259,7 @@
       Exch $R8 ; stack: $R8, $R9   | $R8 = regpath
       Push $R7
 
-      ${If} ${AtLeastWin7}
+      ${If} ${AtLeastWinXP}
         ${${_MOZFUNC_UN}GetLongPath} "$R9" $R9
         ; Always create a new AppUserModelID and overwrite the existing one
         ; for the current installation path.

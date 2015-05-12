@@ -21,13 +21,11 @@ NS_IMPL_RELEASE_INHERITED(BluetoothPairingListener, DOMEventTargetHelper)
 
 BluetoothPairingListener::BluetoothPairingListener(nsPIDOMWindow* aWindow)
   : DOMEventTargetHelper(aWindow)
+  , mHasListenedToSignal(false)
 {
   MOZ_ASSERT(aWindow);
 
-  BluetoothService* bs = BluetoothService::Get();
-  NS_ENSURE_TRUE_VOID(bs);
-  bs->RegisterBluetoothSignalHandler(NS_LITERAL_STRING(KEY_PAIRING_LISTENER),
-                                     this);
+  TryListeningToBluetoothSignal();
 }
 
 already_AddRefed<BluetoothPairingListener>
@@ -92,18 +90,21 @@ BluetoothPairingListener::Notify(const BluetoothSignal& aData)
     const InfallibleTArray<BluetoothNamedValue>& arr =
       value.get_ArrayOfBluetoothNamedValue();
 
-    MOZ_ASSERT(arr.Length() == 3 &&
+    MOZ_ASSERT(arr.Length() == 4 &&
                arr[0].value().type() == BluetoothValue::TnsString && // address
-               arr[1].value().type() == BluetoothValue::TnsString && // passkey
-               arr[2].value().type() == BluetoothValue::TnsString);  // type
+               arr[1].value().type() == BluetoothValue::TnsString && // name
+               arr[2].value().type() == BluetoothValue::TnsString && // passkey
+               arr[3].value().type() == BluetoothValue::TnsString);  // type
 
     nsString deviceAddress = arr[0].value().get_nsString();
-    nsString passkey = arr[1].value().get_nsString();
-    nsString type = arr[2].value().get_nsString();
+    nsString deviceName = arr[1].value().get_nsString();
+    nsString passkey = arr[2].value().get_nsString();
+    nsString type = arr[3].value().get_nsString();
 
-    // Create a temporary device with deviceAddress for searching
+    // Create a temporary device with deviceAddress and deviceName
     InfallibleTArray<BluetoothNamedValue> props;
     BT_APPEND_NAMED_VALUE(props, "Address", deviceAddress);
+    BT_APPEND_NAMED_VALUE(props, "Name", deviceName);
     nsRefPtr<BluetoothDevice> device =
       BluetoothDevice::Create(GetOwner(), props);
 
@@ -130,4 +131,40 @@ BluetoothPairingListener::DisconnectFromOwner()
   NS_ENSURE_TRUE_VOID(bs);
   bs->UnregisterBluetoothSignalHandler(NS_LITERAL_STRING(KEY_PAIRING_LISTENER),
                                        this);
+}
+
+void
+BluetoothPairingListener::EventListenerAdded(nsIAtom* aType)
+{
+  DOMEventTargetHelper::EventListenerAdded(aType);
+
+  TryListeningToBluetoothSignal();
+}
+
+void
+BluetoothPairingListener::TryListeningToBluetoothSignal()
+{
+  if (mHasListenedToSignal) {
+    // We've handled prior pending pairing requests
+    return;
+  }
+
+  // Listen to bluetooth signal only if all pairing event handlers have been
+  // attached. All pending pairing requests queued in BluetoothService would
+  // be fired when pairing listener starts listening to bluetooth signal.
+  if (!HasListenersFor(nsGkAtoms::ondisplaypasskeyreq) ||
+      !HasListenersFor(nsGkAtoms::onenterpincodereq) ||
+      !HasListenersFor(nsGkAtoms::onpairingconfirmationreq) ||
+      !HasListenersFor(nsGkAtoms::onpairingconsentreq)) {
+    BT_LOGR("Pairing listener is not ready to handle pairing requests!");
+    return;
+  }
+
+  // Start listening to bluetooth signal to handle pairing requests
+  BluetoothService* bs = BluetoothService::Get();
+  NS_ENSURE_TRUE_VOID(bs);
+  bs->RegisterBluetoothSignalHandler(NS_LITERAL_STRING(KEY_PAIRING_LISTENER),
+                                     this);
+
+  mHasListenedToSignal = true;
 }

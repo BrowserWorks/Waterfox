@@ -18,8 +18,8 @@ function run_test()
 add_task(function test_execute()
 {
   // add pages to history
-  yield promiseAddVisits(TEST_URI);
-  yield promiseAddVisits(TEST_BOOKMARKED_URI);
+  yield PlacesTestUtils.addVisits(TEST_URI);
+  yield PlacesTestUtils.addVisits(TEST_BOOKMARKED_URI);
 
   // create bookmarks on TEST_BOOKMARKED_URI
   var bm1 = PlacesUtils.bookmarks.insertBookmark(
@@ -45,7 +45,7 @@ add_task(function test_execute()
   // get charset from bookmarked page
   do_check_eq((yield PlacesUtils.getCharsetForURI(TEST_BOOKMARKED_URI)), charset);
 
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 
   // ensure that charset has gone for not-bookmarked page
   do_check_neq((yield PlacesUtils.getCharsetForURI(TEST_URI)), charset);

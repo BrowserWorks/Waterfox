@@ -150,7 +150,7 @@ bool OmxDecoder::Init(sp<MediaExtractor>& extractor) {
 
   mResource->SetReadMode(MediaCacheStream::MODE_PLAYBACK);
 
-  if (videoTrackIndex != -1) {
+  if (videoTrackIndex != -1 && mDecoder->GetImageContainer()) {
     mVideoTrack = extractor->getTrack(videoTrackIndex);
   }
 
@@ -217,14 +217,6 @@ bool OmxDecoder::EnsureMetadata() {
   }
 
   return true;
-}
-
-bool OmxDecoder::IsDormantNeeded()
-{
-  if (mVideoTrack.get()) {
-    return true;
-  }
-  return false;
 }
 
 bool OmxDecoder::IsWaitingMediaResources()
@@ -608,7 +600,7 @@ bool OmxDecoder::ReadVideo(VideoFrame *aFrame, int64_t aTimeUs,
       // For some codecs, the length of first decoded frame after seek is 0.
       // Need to ignore it and continue to find the next one
       if (mVideoBuffer->range_length() == 0) {
-        ReleaseVideoBuffer();
+        PostReleaseVideoBuffer(mVideoBuffer, FenceHandle());
         findNextBuffer = true;
       }
     }

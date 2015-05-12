@@ -16,12 +16,16 @@ class ContentParent;
 namespace plugins {
 
 bool
-SetupBridge(uint32_t aPluginId, dom::ContentParent* aContentParent);
+SetupBridge(uint32_t aPluginId, dom::ContentParent* aContentParent,
+            bool aForceBridgeNow, nsresult* rv);
 
 bool
 FindPluginsForContent(uint32_t aPluginEpoch,
                       nsTArray<PluginTag>* aPlugins,
                       uint32_t* aNewPluginEpoch);
+
+void
+TerminatePlugin(uint32_t aPluginId);
 
 } // namespace plugins
 } // namespace mozilla

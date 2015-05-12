@@ -3,8 +3,10 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 const Cc = Components.classes;
 const Ci = Components.interfaces;
+const Cu = Components.utils;
 
-Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
+Cu.import("resource://gre/modules/AppConstants.jsm");
+Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 
 let modules = {
   // about:
@@ -30,11 +32,9 @@ let modules = {
   },
 
   rights: {
-#ifdef MOZ_OFFICIAL_BRANDING
-    uri: "chrome://browser/content/aboutRights.xhtml",
-#else
-    uri: "chrome://global/content/aboutRights-unbranded.xhtml",
-#endif
+    uri: AppConstants.MOZ_OFFICIAL_BRANDING ?
+      "chrome://browser/content/aboutRights.xhtml" :
+      "chrome://global/content/aboutRights-unbranded.xhtml",
     privileged: false
   },
   blocked: {
@@ -62,6 +62,7 @@ let modules = {
   reader: {
     uri: "chrome://global/content/reader/aboutReader.html",
     privileged: false,
+    dontLink: true,
     hide: true
   },
   feedback: {
@@ -72,24 +73,25 @@ let modules = {
     uri: "chrome://browser/content/aboutPrivateBrowsing.xhtml",
     privileged: true
   },
-#ifdef MOZ_SERVICES_HEALTHREPORT
-  healthreport: {
+}
+
+if (AppConstants.MOZ_SERVICES_HEALTHREPORT) {
+  modules['healthreport'] = {
     uri: "chrome://browser/content/aboutHealthReport.xhtml",
     privileged: true
-  },
-#endif
-#ifdef MOZ_DEVICES
-  devices: {
+  };
+}
+if (AppConstants.MOZ_DEVICES) {
+  modules['devices'] = {
     uri: "chrome://browser/content/aboutDevices.xhtml",
     privileged: true
-  },
-#endif
-#ifdef NIGHTLY_BUILD
-  passwords: {
+  };
+}
+if (AppConstants.NIGHTLY_BUILD) {
+  modules['passwords'] = {
     uri: "chrome://browser/content/aboutPasswords.xhtml",
     privileged: true
-  }
-#endif
+  };
 }
 
 function AboutRedirector() {}
@@ -108,6 +110,8 @@ AboutRedirector.prototype = {
     let moduleInfo = this._getModuleInfo(aURI);
     if (moduleInfo.hide)
       flags = Ci.nsIAboutModule.HIDE_FROM_ABOUTABOUT;
+    if (moduleInfo.dontLink)
+      flags = flags | Ci.nsIAboutModule.MAKE_UNLINKABLE;
 
     return flags | Ci.nsIAboutModule.ALLOW_SCRIPT;
   },

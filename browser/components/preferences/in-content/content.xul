@@ -27,9 +27,9 @@
               type="bool"/>
 </preferences>
 
-<script type="application/javascript" 
+<script type="application/javascript"
         src="chrome://mozapps/content/preferences/fontbuilder.js"/>
-<script type="application/javascript" 
+<script type="application/javascript"
         src="chrome://browser/content/preferences/in-content/content.js"/>
 
 <hbox id="header-content"
@@ -40,7 +40,7 @@
 </hbox>
 
 <groupbox id="drmGroup" data-category="paneContent" hidden="true">
-  <caption><label>DRM content</label></caption>
+  <caption><label>&drmContent.label;</label></caption>
   <grid id="contentGrid2">
     <columns>
       <column flex="1"/>
@@ -50,10 +50,10 @@
       <row id="playDRMContentRow">
         <vbox align="start">
           <checkbox id="playDRMContent" preference="media.eme.enabled"
-                    label="Play DRM content" accesskey="P"/>
+                    label="&playDRMContent.label;" accesskey="&playDRMContent.accesskey;"/>
         </vbox>
         <hbox pack="end" align="center">
-          <label id="playDRMContentLink" class="text-link" value="Learn more"/>
+          <label id="playDRMContentLink" class="text-link" value="&playDRMContent.learnMore.label;"/>
         </hbox>
       </row>
     </rows>

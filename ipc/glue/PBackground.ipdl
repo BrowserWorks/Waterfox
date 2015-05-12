@@ -5,10 +5,14 @@
 include protocol PBackgroundIDBFactory;
 include protocol PBackgroundTest;
 include protocol PBlob;
+include protocol PBroadcastChannel;
 include protocol PFileDescriptorSet;
+include protocol PVsync;
 
 include DOMTypes;
+include PBackgroundSharedTypes;
 include PBackgroundIDBSharedTypes;
+include ServiceWorkerRegistrarTypes;
 
 namespace mozilla {
 namespace ipc {
@@ -18,13 +22,25 @@ sync protocol PBackground
   manages PBackgroundIDBFactory;
   manages PBackgroundTest;
   manages PBlob;
+  manages PBroadcastChannel;
   manages PFileDescriptorSet;
+  manages PVsync;
 
 parent:
   // Only called at startup during mochitests to check the basic infrastructure.
   PBackgroundTest(nsCString testArg);
 
   PBackgroundIDBFactory(LoggingInfo loggingInfo);
+
+  PVsync();
+
+  PBroadcastChannel(PrincipalInfo pInfo, nsString origin, nsString channel,
+                    bool privateBrowsing);
+
+  RegisterServiceWorker(ServiceWorkerRegistrationData data);
+  UnregisterServiceWorker(PrincipalInfo principalInfo,
+                          nsString scope);
+  ShutdownServiceWorkerRegistrar();
 
 both:
   PBlob(BlobConstructorParams params);

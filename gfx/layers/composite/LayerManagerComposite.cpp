@@ -43,6 +43,7 @@
 #include "ipc/CompositorBench.h"        // for CompositorBench
 #include "ipc/ShadowLayerUtils.h"
 #include "mozilla/mozalloc.h"           // for operator new, etc
+#include "nsAppRunner.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsCOMPtr.h"                   // for already_AddRefed
 #include "nsDebug.h"                    // for NS_WARNING, NS_RUNTIMEABORT, etc
@@ -232,7 +233,7 @@ LayerManagerComposite::ApplyOcclusionCulling(Layer* aLayer, nsIntRegion& aOpaque
       !aLayer->GetMaskLayer() &&
       aLayer->GetLocalOpacity() == 1.0f) {
     if (aLayer->GetContentFlags() & Layer::CONTENT_OPAQUE) {
-      localOpaque.Or(localOpaque, composite->GetShadowVisibleRegion());
+      localOpaque.Or(localOpaque, composite->GetFullyRenderedRegion());
     }
     localOpaque.MoveBy(transform2d._31, transform2d._32);
     const nsIntRect* clip = aLayer->GetEffectiveClipRect();
@@ -332,15 +333,19 @@ LayerManagerComposite::CreateOptimalMaskDrawTarget(const IntSize &aSize)
 already_AddRefed<PaintedLayer>
 LayerManagerComposite::CreatePaintedLayer()
 {
-  NS_RUNTIMEABORT("Should only be called on the drawing side");
-  return nullptr;
+  MOZ_ASSERT(gIsGtest, "Unless you're testing the compositor using GTest,"
+                       "this should only be called on the drawing side");
+  nsRefPtr<PaintedLayer> layer = new PaintedLayerComposite(this);
+  return layer.forget();
 }
 
 already_AddRefed<ContainerLayer>
 LayerManagerComposite::CreateContainerLayer()
 {
-  NS_RUNTIMEABORT("Should only be called on the drawing side");
-  return nullptr;
+  MOZ_ASSERT(gIsGtest, "Unless you're testing the compositor using GTest,"
+                       "this should only be called on the drawing side");
+  nsRefPtr<ContainerLayer> layer = new ContainerLayerComposite(this);
+  return layer.forget();
 }
 
 already_AddRefed<ImageLayer>
@@ -353,8 +358,10 @@ LayerManagerComposite::CreateImageLayer()
 already_AddRefed<ColorLayer>
 LayerManagerComposite::CreateColorLayer()
 {
-  NS_RUNTIMEABORT("Should only be called on the drawing side");
-  return nullptr;
+  MOZ_ASSERT(gIsGtest, "Unless you're testing the compositor using GTest,"
+                       "this should only be called on the drawing side");
+  nsRefPtr<ColorLayer> layer = new ColorLayerComposite(this);
+  return layer.forget();
 }
 
 already_AddRefed<CanvasLayer>
@@ -655,6 +662,7 @@ LayerManagerComposite::Render()
   }
 
   if (!mTarget && composer2D && composer2D->TryRender(mRoot, mGeometryChanged)) {
+    LayerScope::SetHWComposed();
     if (mFPS) {
       double fps = mFPS->mCompositionFps.AddFrameAndGetFps(TimeStamp::Now());
       if (gfxPrefs::LayersDrawFPS()) {
@@ -908,7 +916,7 @@ LayerManagerComposite::ComputeRenderIntegrity()
     Layer* rootScrollable = rootScrollableLayers[0];
     const FrameMetrics& metrics = LayerMetricsWrapper::TopmostScrollableMetrics(rootScrollable);
     Matrix4x4 transform = rootScrollable->GetEffectiveTransform();
-    transform.PostScale(metrics.mPresShellResolution, metrics.mPresShellResolution, 1);
+    transform.PostScale(metrics.GetPresShellResolution(), metrics.GetPresShellResolution(), 1);
 
     // Clip the screen rect to the document bounds
     Rect documentBounds =
@@ -1141,6 +1149,20 @@ LayerComposite::SetLayerManager(LayerManagerComposite* aManager)
 {
   mCompositeManager = aManager;
   mCompositor = aManager->GetCompositor();
+}
+
+nsIntRegion
+LayerComposite::GetFullyRenderedRegion() {
+  if (TiledLayerComposer* tiled = GetTiledLayerComposer()) {
+    nsIntRegion shadowVisibleRegion = GetShadowVisibleRegion();
+    // Discard the region which hasn't been drawn yet when doing
+    // progressive drawing. Note that if the shadow visible region
+    // shrunk the tiled valig region may not have discarded this yet.
+    shadowVisibleRegion.And(shadowVisibleRegion, tiled->GetValidRegion());
+    return shadowVisibleRegion;
+  } else {
+    return GetShadowVisibleRegion();
+  }
 }
 
 #ifndef MOZ_HAVE_PLATFORM_SPECIFIC_LAYER_BUFFERS

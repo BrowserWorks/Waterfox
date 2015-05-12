@@ -369,7 +369,7 @@ enum {
     AMETA_SHIFT_MASK            = AMETA_SHIFT_LEFT_ON | AMETA_SHIFT_RIGHT_ON | AMETA_SHIFT_ON,
 };
 
-class nsAndroidDisplayport MOZ_FINAL : public nsIAndroidDisplayport
+class nsAndroidDisplayport final : public nsIAndroidDisplayport
 {
 public:
     NS_DECL_ISUPPORTS
@@ -526,7 +526,6 @@ public:
     int KeyCode() { return mKeyCode; }
     int ScanCode() { return mScanCode; }
     int MetaState() { return mMetaState; }
-    uint32_t DomKeyLocation() { return mDomKeyLocation; }
     Modifiers DOMModifiers() const;
     bool IsAltPressed() const { return (mMetaState & AMETA_ALT_MASK) != 0; }
     bool IsShiftPressed() const { return (mMetaState & AMETA_SHIFT_MASK) != 0; }
@@ -585,7 +584,6 @@ protected:
     nsTArray<int> mToolTypes;
     nsIntRect mRect;
     int mFlags, mMetaState;
-    uint32_t mDomKeyLocation;
     int mKeyCode, mScanCode;
     int mUnicodeChar, mBaseUnicodeChar, mDOMPrintableKeyValue;
     int mRepeatCount;
@@ -637,8 +635,6 @@ protected:
     void ReadDataField(JNIEnv *jenv);
     void ReadStringFromJString(nsString &aString, JNIEnv *jenv, jstring s);
 
-    uint32_t ReadDomKeyLocation(JNIEnv* jenv, jobject jGeckoEventObj);
-
     static jclass jGeckoEventClass;
     static jfieldID jActionField;
     static jfieldID jTypeField;
@@ -664,7 +660,6 @@ protected:
     static jfieldID jKeyCodeField;
     static jfieldID jScanCodeField;
     static jfieldID jMetaStateField;
-    static jfieldID jDomKeyLocationField;
     static jfieldID jFlagsField;
     static jfieldID jCountField;
     static jfieldID jStartField;
@@ -700,9 +695,6 @@ protected:
     static jfieldID jGamepadValuesField;
 
     static jfieldID jObjectField;
-
-    static jclass jDomKeyLocationClass;
-    static jfieldID jDomKeyLocationValueField;
 
 public:
     enum {
@@ -746,6 +738,7 @@ public:
         GAMEPAD_ADDREMOVE = 45,
         GAMEPAD_DATA = 46,
         LONG_PRESS = 47,
+        ZOOMEDVIEW = 48,
         dummy_java_enum_list_end
     };
 

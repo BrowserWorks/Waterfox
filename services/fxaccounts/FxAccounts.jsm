@@ -23,6 +23,9 @@ XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsClient",
 XPCOMUtils.defineLazyModuleGetter(this, "jwcrypto",
   "resource://gre/modules/identity/jwcrypto.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "FxAccountsOAuthGrantClient",
+  "resource://gre/modules/FxAccountsOAuthGrantClient.jsm");
+
 // All properties exposed by the public FxAccounts API.
 let publicProperties = [
   "accountStatus",
@@ -32,6 +35,7 @@ let publicProperties = [
   "getAssertion",
   "getKeys",
   "getSignedInUser",
+  "getOAuthToken",
   "loadAndPoll",
   "localtimeOffsetMsec",
   "now",
@@ -335,6 +339,11 @@ FxAccountsInternal.prototype = {
    * The current data format's version number.
    */
   version: DATA_FORMAT_VERSION,
+
+  // The timeout (in ms) we use to poll for a verified mail for the first 2 mins.
+  VERIFICATION_POLL_TIMEOUT_INITIAL: 5000, // 5 seconds
+  // And how often we poll after the first 2 mins.
+  VERIFICATION_POLL_TIMEOUT_SUBSEQUENT: 15000, // 15 seconds.
 
   _fxAccountsClient: null,
 
@@ -855,7 +864,8 @@ FxAccountsInternal.prototype = {
     }
     if (timeoutMs === undefined) {
       let currentMinute = Math.ceil(ageMs / 60000);
-      timeoutMs = 1000 * (currentMinute <= 2 ? 5 : 15);
+      timeoutMs = currentMinute <= 2 ? this.VERIFICATION_POLL_TIMEOUT_INITIAL
+                                     : this.VERIFICATION_POLL_TIMEOUT_SUBSEQUENT;
     }
     log.debug("polling with timeout = " + timeoutMs);
     this.currentTimer = setTimeout(() => {
@@ -908,6 +918,98 @@ FxAccountsInternal.prototype = {
       newQueryPortion += "email=" + encodeURIComponent(accountData.email);
       return url + newQueryPortion;
     }).then(result => currentState.resolve(result));
+  },
+
+  /**
+   * Get an OAuth token for the user
+   *
+   * @param options
+   *        {
+   *          scope: (string) the oauth scope being requested
+   *        }
+   *
+   * @return Promise.<string | Error>
+   *        The promise resolves the oauth token as a string or rejects with
+   *        an error object ({error: ERROR, details: {}}) of the following:
+   *          INVALID_PARAMETER
+   *          NO_ACCOUNT
+   *          UNVERIFIED_ACCOUNT
+   *          NETWORK_ERROR
+   *          AUTH_ERROR
+   *          UNKNOWN_ERROR
+   */
+  getOAuthToken: function (options = {}) {
+    log.debug("getOAuthToken enter");
+
+    if (!options.scope) {
+      return this._error(ERROR_INVALID_PARAMETER, "Missing 'scope' option");
+    }
+
+    let oAuthURL = Services.urlFormatter.formatURLPref("identity.fxaccounts.remote.oauth.uri");
+    let client = options.client;
+
+    if (!client) {
+      try {
+        client = new FxAccountsOAuthGrantClient({
+          serverURL: oAuthURL,
+          client_id: FX_OAUTH_CLIENT_ID
+        });
+      } catch (e) {
+        return this._error(ERROR_INVALID_PARAMETER, e);
+      }
+    }
+
+    return this._getVerifiedAccountOrReject()
+      .then(() => this.getAssertion(oAuthURL))
+      .then(assertion => client.getTokenFromAssertion(assertion, options.scope))
+      .then(result => result.access_token)
+      .then(null, err => this._errorToErrorClass(err));
+  },
+
+  _getVerifiedAccountOrReject: function () {
+    return this.currentAccountState.getUserAccountData().then(data => {
+      if (!data) {
+        // No signed-in user
+        return this._error(ERROR_NO_ACCOUNT);
+      }
+      if (!this.isUserEmailVerified(data)) {
+        // Signed-in user has not verified email
+        return this._error(ERROR_UNVERIFIED_ACCOUNT);
+      }
+    });
+  },
+
+  /*
+   * Coerce an error into one of the general error cases:
+   *          NETWORK_ERROR
+   *          AUTH_ERROR
+   *          UNKNOWN_ERROR
+   *
+   * These errors will pass through:
+   *          INVALID_PARAMETER
+   *          NO_ACCOUNT
+   *          UNVERIFIED_ACCOUNT
+   */
+  _errorToErrorClass: function (aError) {
+    if (aError.errno) {
+      let error = SERVER_ERRNO_TO_ERROR[aError.errno];
+      return this._error(ERROR_TO_GENERAL_ERROR_CLASS[error] || ERROR_UNKNOWN, aError);
+    } else if (aError.message &&
+        aError.message === "INVALID_PARAMETER" ||
+        aError.message === "NO_ACCOUNT" ||
+        aError.message === "UNVERIFIED_ACCOUNT") {
+      return Promise.reject(aError);
+    }
+    return this._error(ERROR_UNKNOWN, aError);
+  },
+
+  _error: function(aError, aDetails) {
+    log.error("FxA rejecting with error ${aError}, details: ${aDetails}", {aError, aDetails});
+    let reason = new Error(aError);
+    if (aDetails) {
+      reason.details = aDetails;
+    }
+    return Promise.reject(reason);
   }
 };
 

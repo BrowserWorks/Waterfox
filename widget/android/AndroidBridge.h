@@ -115,7 +115,7 @@ private:
     mozilla::TimeStamp mRunTime;
 };
 
-class AndroidBridge MOZ_FINAL
+class AndroidBridge final
 {
 public:
     enum {
@@ -188,6 +188,7 @@ public:
     bool GetThreadNameJavaProfiling(uint32_t aThreadId, nsCString & aResult);
     bool GetFrameNameJavaProfiling(uint32_t aThreadId, uint32_t aSampleId, uint32_t aFrameId, nsCString & aResult);
 
+    nsresult CaptureZoomedView(nsIDOMWindow *window, nsIntRect zoomedViewRect, jni::Object::Param buffer, float zoomFactor);
     nsresult CaptureThumbnail(nsIDOMWindow *window, int32_t bufW, int32_t bufH, int32_t tabId, jni::Object::Param buffer, bool &shouldStore);
     void GetDisplayPort(bool aPageSizeUpdate, bool aIsBrowserContentDisplayed, int32_t tabId, nsIAndroidViewport* metrics, nsIAndroidDisplayport** displayPort);
     void ContentDocumentChanged();
@@ -592,7 +593,7 @@ private:
 { 0x0FE2321D, 0xEBD9, 0x467D, \
     { 0xA7, 0x43, 0x03, 0xA6, 0x8D, 0x40, 0x59, 0x9E } }
 
-class nsAndroidBridge MOZ_FINAL : public nsIAndroidBridge
+class nsAndroidBridge final : public nsIAndroidBridge
 {
 public:
   NS_DECL_ISUPPORTS

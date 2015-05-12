@@ -66,8 +66,8 @@ extern bool gBluetoothDebugFlag;
     }                                                                \
   } while(0)
 
-#define BT_LOGR(msg, ...) printf("%s: " msg, __FUNCTION__, ##__VA_ARGS__))
-#define BT_WARNING(msg, ...) printf("%s: " msg, __FUNCTION__, ##__VA_ARGS__))
+#define BT_LOGR(msg, ...) printf("%s: " msg, __FUNCTION__, ##__VA_ARGS__)
+#define BT_WARNING(msg, ...) printf("%s: " msg, __FUNCTION__, ##__VA_ARGS__)
 #endif
 
 /**
@@ -195,6 +195,12 @@ extern bool gBluetoothDebugFlag;
  * dispatch an event.
  */
 #define REQUEST_MEDIA_PLAYSTATUS_ID          "requestmediaplaystatus"
+
+/**
+ * When a remote BLE device gets connected / disconnected, we'll dispatch an
+ * event
+ */
+#define GATT_CONNECTION_STATE_CHANGED_ID     "connectionstatechanged"
 
 // Bluetooth address format: xx:xx:xx:xx:xx:xx (or xx_xx_xx_xx_xx_xx)
 #define BLUETOOTH_ADDRESS_LENGTH 17

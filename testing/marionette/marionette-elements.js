@@ -310,6 +310,7 @@ ElementManager.prototype = {
           result = [];
           for (let i = 0; i < val.length; ++i) {
             result.push(this.wrapValue(val[i]));
+
           }
         }
         else if (val == null) {
@@ -397,7 +398,7 @@ ElementManager.prototype = {
   applyNamedArgs: function EM_applyNamedArgs(args) {
     namedArgs = {};
     args.forEach(function(arg) {
-      if (typeof(arg['__marionetteArgs']) === 'object') {
+      if (arg && typeof(arg['__marionetteArgs']) === 'object') {
         for (let prop in arg['__marionetteArgs']) {
           namedArgs[prop] = arg['__marionetteArgs'][prop];
         }
@@ -470,7 +471,7 @@ ElementManager.prototype = {
       if (isArrayLike) {
         let ids = []
         for (let i = 0 ; i < found.length ; i++) {
-          ids.push(this.addToKnownElements(found[i]));
+          ids.push({'ELEMENT': this.addToKnownElements(found[i])});
         }
         on_success(ids, command_id);
       } else {

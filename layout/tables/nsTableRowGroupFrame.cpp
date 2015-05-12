@@ -22,7 +22,6 @@
 #include <algorithm>
 
 using namespace mozilla;
-using namespace mozilla::image;
 using namespace mozilla::layout;
 
 nsTableRowGroupFrame::nsTableRowGroupFrame(nsStyleContext* aContext):
@@ -148,12 +147,12 @@ public:
   }
 #endif
 
-  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) MOZ_OVERRIDE;
+  virtual nsDisplayItemGeometry* AllocateGeometry(nsDisplayListBuilder* aBuilder) override;
   virtual void ComputeInvalidationRegion(nsDisplayListBuilder* aBuilder,
                                          const nsDisplayItemGeometry* aGeometry,
-                                         nsRegion *aInvalidRegion) MOZ_OVERRIDE;
+                                         nsRegion *aInvalidRegion) override;
   virtual void Paint(nsDisplayListBuilder* aBuilder,
-                     nsRenderingContext* aCtx) MOZ_OVERRIDE;
+                     nsRenderingContext* aCtx) override;
 
   NS_DISPLAY_DECL_NAME("TableRowGroupBackground", TYPE_TABLE_ROW_GROUP_BACKGROUND)
 };
@@ -1417,6 +1416,7 @@ nsTableRowGroupFrame::AppendFrames(ChildListID     aListID,
 {
   NS_ASSERTION(aListID == kPrincipalList, "unexpected child list");
 
+  DrainSelfOverflowList(); // ensure the last frame is in mFrames
   ClearRowCursor();
 
   // collect the new row frames in an array
@@ -1456,6 +1456,7 @@ nsTableRowGroupFrame::InsertFrames(ChildListID     aListID,
   NS_ASSERTION(!aPrevFrame || aPrevFrame->GetParent() == this,
                "inserting after sibling frame with different parent");
 
+  DrainSelfOverflowList(); // ensure aPrevFrame is in mFrames
   ClearRowCursor();
 
   // collect the new row frames in an array
@@ -1846,13 +1847,8 @@ nsTableRowGroupFrame::GetNextSiblingOnLine(nsIFrame*& aFrame,
 
 //end nsLineIterator methods
 
-static void
-DestroyFrameCursorData(void* aPropertyValue)
-{
-  delete static_cast<nsTableRowGroupFrame::FrameCursorData*>(aPropertyValue);
-}
-
-NS_DECLARE_FRAME_PROPERTY(RowCursorProperty, DestroyFrameCursorData)
+NS_DECLARE_FRAME_PROPERTY(RowCursorProperty,
+                          DeleteValue<nsTableRowGroupFrame::FrameCursorData>)
 
 void
 nsTableRowGroupFrame::ClearRowCursor()

@@ -39,42 +39,42 @@ namespace mozilla {
 class EventStates;
 } // namespace mozilla
 
-class nsEmptyStyleRule MOZ_FINAL : public nsIStyleRule
+class nsEmptyStyleRule final : public nsIStyleRule
 {
 private:
   ~nsEmptyStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
-class nsInitialStyleRule MOZ_FINAL : public nsIStyleRule
+class nsInitialStyleRule final : public nsIStyleRule
 {
 private:
   ~nsInitialStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
-class nsDisableTextZoomStyleRule MOZ_FINAL : public nsIStyleRule
+class nsDisableTextZoomStyleRule final : public nsIStyleRule
 {
 private:
   ~nsDisableTextZoomStyleRule() {}
 
 public:
   NS_DECL_ISUPPORTS
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 };
 
@@ -133,11 +133,28 @@ class nsStyleSet
   // Resolve style by making replacements in the list of style rules as
   // described by aReplacements, but otherwise maintaining the status
   // quo.
+  // aPseudoElement must follow the same rules as for
+  // ResolvePseudoElementStyle, and be null for non-pseudo-element cases
+  enum { // flags for aFlags
+    // Skip starting CSS animations that result from the style.
+    eSkipStartingAnimations = (1<<0),
+  };
   already_AddRefed<nsStyleContext>
   ResolveStyleWithReplacement(mozilla::dom::Element* aElement,
+                              mozilla::dom::Element* aPseudoElement,
                               nsStyleContext* aNewParentContext,
                               nsStyleContext* aOldStyleContext,
-                              nsRestyleHint aReplacements);
+                              nsRestyleHint aReplacements,
+                              uint32_t aFlags = 0);
+
+  // Resolve style by returning a style context with the specified
+  // animation data removed.  It is allowable to remove all animation
+  // data with eRestyle_AllHintsWithAnimations, or by using any other
+  // hints that are allowed by ResolveStyleWithReplacement.
+  already_AddRefed<nsStyleContext>
+    ResolveStyleWithoutAnimation(mozilla::dom::Element* aElement,
+                                 nsStyleContext* aStyleContext,
+                                 nsRestyleHint aWhichToRemove);
 
   // Get a style context for a non-element (which no rules will match),
   // such as text nodes, placeholder frames, and the nsFirstLetterFrame
@@ -152,8 +169,8 @@ class nsStyleSet
   // Get a style context for a pseudo-element.  aParentElement must be
   // non-null.  aPseudoID is the nsCSSPseudoElements::Type for the
   // pseudo-element.  aPseudoElement must be non-null if the pseudo-element
-  // type is one that allows user action pseudo-classes after it; otherwise,
-  // it is ignored.
+  // type is one that allows user action pseudo-classes after it or allows
+  // style attributes; otherwise, it is ignored.
   already_AddRefed<nsStyleContext>
   ResolvePseudoElementStyle(mozilla::dom::Element* aParentElement,
                             nsCSSPseudoElements::Type aType,
@@ -233,16 +250,10 @@ class nsStyleSet
   // aElement should be non-null if this is a style context for an
   // element or pseudo-element; in the latter case it should be the
   // real element the pseudo-element is for.
-  // aElementOrPseudoElement should be the same, except for
-  // pseudo-elements it should be the pseudo-element.  It is temporary
-  // until bug 960465 lands.  It only really needs to be correct for
-  // things we run animations on (elements and ::before and ::after
-  // pseudo-elements).
   already_AddRefed<nsStyleContext>
   ReparentStyleContext(nsStyleContext* aStyleContext,
                        nsStyleContext* aNewParentContext,
-                       mozilla::dom::Element* aElement,
-                       mozilla::dom::Element* aElementOrPseudoElement);
+                       mozilla::dom::Element* aElement);
 
   // Test if style is dependent on a document state.
   bool HasDocumentStateDependentStyle(nsPresContext* aPresContext,
@@ -422,7 +433,10 @@ class nsStyleSet
                           bool aWalkAllXBLStylesheets);
 
   // Helper for ResolveStyleWithReplacement
+  // aPseudoElement must follow the same rules as for
+  // ResolvePseudoElementStyle, and be null for non-pseudo-element cases
   nsRuleNode* RuleNodeWithReplacement(mozilla::dom::Element* aElement,
+                                      mozilla::dom::Element* aPseudoElement,
                                       nsRuleNode* aOldRuleNode,
                                       nsCSSPseudoElements::Type aPseudoType,
                                       nsRestyleHint aReplacements);

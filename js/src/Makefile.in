@@ -39,8 +39,6 @@ GARBAGE += jsautokw.h host_jskwgen$(HOST_BIN_SUFFIX)
 
 GARBAGE += selfhosted.out.h
 
-USE_HOST_CXX = 1
-
 ifdef HAVE_DTRACE
 ifneq ($(OS_ARCH),Darwin)
 DTRACE_PROBE_OBJ = $(LIBRARY_NAME)-dtrace.$(OBJ_SUFFIX)
@@ -141,23 +139,11 @@ check-jit-test::
 
 check:: check-style
 
-# jstests doesn't have a --jitflags option, so we need to loop, updating the
-# exit code (RC) after each invocation.
-# FIXME: MethodJIT doesn't work for 1 test case (bug 644393), so
-# --no-extensions is set to skip that test. Remove as soon as possible.
 check-jstests:
-	RC=0; \
-	for f in `echo '$(JITFLAGS)' | tr ',' '\n'`; \
-		do \
-			$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
-				--tinderbox --no-progress \
-				--no-extensions \
-				--timeout 300 \
-				--args="`echo $$f | sed 's/\(.\)/ -\1/g'`" \
-				$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX); \
-			RC=$$(( $$RC || $$?)); \
-		done; \
-	exit $$RC
+	$(wildcard $(RUN_TEST_PROGRAM)) $(PYTHON) -u $(srcdir)/tests/jstests.py \
+		--no-progress --tinderbox --timeout 300 \
+		$(JSTESTS_EXTRA_ARGS) \
+		$(DIST)/bin/$(JS_SHELL_NAME)$(BIN_SUFFIX)
 
 # FIXME:
 # We want to run check-jstests as part of |make check| on all platforms, on
@@ -225,6 +211,9 @@ $(LIBRARY_NAME).pc: js.pc
 
 install:: $(LIBRARY_NAME).pc
 	$(SYSINSTALL) $^ $(DESTDIR)$(libdir)/pkgconfig
+
+install:: js-config.h
+	$(SYSINSTALL) $^ $(DESTDIR)$(includedir)
 
 ######################################################
 # BEGIN SpiderMonkey header installation
@@ -486,4 +475,8 @@ SPSProfiler.$(OBJ_SUFFIX): CXXFLAGS := -O2
 SavedStacks.$(OBJ_SUFFIX): CXXFLAGS := -O2
 StringBuffer.$(OBJ_SUFFIX): CXXFLAGS := -O2
 Symbol.$(OBJ_SUFFIX): CXXFLAGS := -O2
+RematerializedFrame.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+RematerializedFrame.$(OBJ_SUFFIX): CXXFLAGS := -O2
+MemoryMetrics.$(OBJ_SUFFIX): CXX := $(CXX:icl=cl)
+MemoryMetrics.$(OBJ_SUFFIX): CXXFLAGS := -O2
 endif

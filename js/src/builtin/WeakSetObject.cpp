@@ -39,8 +39,8 @@ const JSFunctionSpec WeakSetObject::methods[] = {
     JS_FS_END
 };
 
-JSObject *
-WeakSetObject::initClass(JSContext *cx, JSObject *obj)
+JSObject*
+WeakSetObject::initClass(JSContext* cx, JSObject* obj)
 {
     Rooted<GlobalObject*> global(cx, &obj->as<GlobalObject>());
     // Todo: WeakSet.prototype should not be a WeakSet!
@@ -61,9 +61,9 @@ WeakSetObject::initClass(JSContext *cx, JSObject *obj)
 }
 
 WeakSetObject*
-WeakSetObject::create(JSContext *cx)
+WeakSetObject::create(JSContext* cx)
 {
-    Rooted<WeakSetObject *> obj(cx, NewBuiltinClassInstance<WeakSetObject>(cx));
+    Rooted<WeakSetObject*> obj(cx, NewBuiltinClassInstance<WeakSetObject>(cx));
     if (!obj)
         return nullptr;
 
@@ -76,7 +76,7 @@ WeakSetObject::create(JSContext *cx)
 }
 
 bool
-WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
+WeakSetObject::construct(JSContext* cx, unsigned argc, Value* vp)
 {
     Rooted<WeakSetObject*> obj(cx, WeakSetObject::create(cx));
     if (!obj)
@@ -94,18 +94,18 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
         RootedObject map(cx, &obj->getReservedSlot(WEAKSET_MAP_SLOT).toObject());
 
         RootedValue adderVal(cx);
-        if (!JSObject::getProperty(cx, obj, obj, cx->names().add, &adderVal))
+        if (!GetProperty(cx, obj, obj, cx->names().add, &adderVal))
             return false;
 
         if (!IsCallable(adderVal))
             return ReportIsNotFunction(cx, adderVal);
 
-        JSFunction *adder;
+        JSFunction* adder;
         bool isOriginalAdder = IsFunctionObject(adderVal, &adder) &&
                                IsSelfHostedFunctionWithName(adder, cx->names().WeakSet_add);
         RootedValue setVal(cx, ObjectValue(*obj));
         FastInvokeGuard fig(cx, adderVal);
-        InvokeArgs &args2 = fig.args();
+        InvokeArgs& args2 = fig.args();
 
         JS::ForOfIterator iter(cx);
         if (!iter.init(args[0]))
@@ -149,8 +149,8 @@ WeakSetObject::construct(JSContext *cx, unsigned argc, Value *vp)
 }
 
 
-JSObject *
-js_InitWeakSetClass(JSContext *cx, HandleObject obj)
+JSObject*
+js_InitWeakSetClass(JSContext* cx, HandleObject obj)
 {
     return WeakSetObject::initClass(cx, obj);
 }

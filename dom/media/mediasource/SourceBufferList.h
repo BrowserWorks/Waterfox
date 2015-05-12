@@ -29,7 +29,7 @@ namespace dom {
 
 class MediaSource;
 
-class SourceBufferList MOZ_FINAL : public DOMEventTargetHelper
+class SourceBufferList final : public DOMEventTargetHelper
 {
 public:
   /** WebIDL Methods. */
@@ -46,7 +46,7 @@ public:
 
   MediaSource* GetParentObject() const;
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx) override;
 
   // Append a SourceBuffer and fire "addsourcebuffer" at the list.
   void Append(SourceBuffer* aSourceBuffer);
@@ -77,6 +77,13 @@ public:
 
   // Returns the highest end time of any of the Sourcebuffers.
   double GetHighestBufferedEndTime();
+
+  // Append a SourceBuffer to the list. No event is fired.
+  void AppendSimple(SourceBuffer* aSourceBuffer);
+
+  // Remove all SourceBuffers from mSourceBuffers.
+  //  No event is fired and no action is performed on the sourcebuffers.
+  void ClearSimple();
 
 #if defined(DEBUG)
   void Dump(const char* aPath);

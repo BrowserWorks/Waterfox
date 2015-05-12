@@ -5,7 +5,7 @@
 MOZ_APP_BASENAME=Fennec
 MOZ_APP_VENDOR=Mozilla
 
-MOZ_APP_VERSION=37.0
+MOZ_APP_VERSION=38.0
 MOZ_APP_UA_NAME=Firefox
 
 MOZ_BRANDING_DIRECTORY=mobile/android/branding/unofficial
@@ -72,9 +72,6 @@ MOZ_WEBGL_CONFORMANT=1
 
 # Enable the Search Activity.
 MOZ_ANDROID_SEARCH_ACTIVITY=1
-
-# Use the new tablet UI. This will go away in Bug 1106935.
-MOZ_ANDROID_NEW_TABLET_UI=1
 
 # Enable the share handler.
 MOZ_ANDROID_SHARE_OVERLAY=1

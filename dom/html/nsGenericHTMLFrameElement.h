@@ -12,7 +12,6 @@
 #include "mozilla/ErrorResult.h"
 #include "mozilla/dom/nsBrowserElement.h"
 
-#include "nsElementFrameLoaderOwner.h"
 #include "nsFrameLoader.h"
 #include "nsGenericHTMLElement.h"
 #include "nsIDOMEventListener.h"
@@ -25,7 +24,7 @@ class nsXULElement;
  * A helper class for frame elements
  */
 class nsGenericHTMLFrameElement : public nsGenericHTMLElement,
-                                  public nsElementFrameLoaderOwner,
+                                  public nsIFrameLoaderOwner,
                                   public mozilla::nsBrowserElement,
                                   public nsIMozBrowserFrame
 {
@@ -33,23 +32,27 @@ public:
   nsGenericHTMLFrameElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo,
                             mozilla::dom::FromParser aFromParser)
     : nsGenericHTMLElement(aNodeInfo)
-    , nsElementFrameLoaderOwner(aFromParser)
     , nsBrowserElement()
+    , mNetworkCreated(aFromParser == mozilla::dom::FROM_PARSER_NETWORK)
+    , mIsPrerendered(false)
+    , mBrowserFrameListenersRegistered(false)
+    , mFrameLoaderCreationDisallowed(false)
   {
   }
 
   NS_DECL_ISUPPORTS_INHERITED
 
+  NS_DECL_NSIFRAMELOADEROWNER
   NS_DECL_NSIDOMMOZBROWSERFRAME
   NS_DECL_NSIMOZBROWSERFRAME
 
   // nsIContent
-  virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) MOZ_OVERRIDE;
+  virtual bool IsHTMLFocusable(bool aWithMouse, bool *aIsFocusable, int32_t *aTabIndex) override;
   virtual nsresult BindToTree(nsIDocument* aDocument, nsIContent* aParent,
                               nsIContent* aBindingParent,
-                              bool aCompileEventHandlers) MOZ_OVERRIDE;
+                              bool aCompileEventHandlers) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
   nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                    const nsAString& aValue, bool aNotify)
   {
@@ -57,35 +60,24 @@ public:
   }
   virtual nsresult SetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                            nsIAtom* aPrefix, const nsAString& aValue,
-                           bool aNotify) MOZ_OVERRIDE;
+                           bool aNotify) override;
   virtual nsresult UnsetAttr(int32_t aNameSpaceID, nsIAtom* aAttribute,
-                             bool aNotify) MOZ_OVERRIDE;
+                             bool aNotify) override;
   virtual nsresult AfterSetAttr(int32_t aNameSpaceID, nsIAtom* aName,
                                 const nsAttrValue* aValue,
-                                bool aNotify) MOZ_OVERRIDE;
-  virtual void DestroyContent() MOZ_OVERRIDE;
+                                bool aNotify) override;
+  virtual void DestroyContent() override;
 
   nsresult CopyInnerTo(mozilla::dom::Element* aDest);
 
-  virtual int32_t TabIndexDefault() MOZ_OVERRIDE;
+  virtual int32_t TabIndexDefault() override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(nsGenericHTMLFrameElement,
                                                      nsGenericHTMLElement)
 
-  static bool BrowserFramesEnabled();
+  void SwapFrameLoaders(nsXULElement& aOtherOwner, mozilla::ErrorResult& aError);
 
-  /**
-   * nsIFrameLoaderOwner defines two GetFrameLoader() overloads. One
-   * is XPCOM style interface, the other one is C++ only.  "using" pulls
-   * them both in, now GetFrameLoader() is ambiguous because
-   * nsBrowserElement also has GetFrameLoader(). Explicit redefine
-   * GetFrameLoader() to choose nsElementFrameLoaderOwner::GetFrameLoader()
-   */
-  using nsElementFrameLoaderOwner::GetFrameLoader;
-  NS_IMETHOD_(already_AddRefed<nsFrameLoader>) GetFrameLoader() MOZ_OVERRIDE
-  {
-    return nsElementFrameLoaderOwner::GetFrameLoader();
-  }
+  static bool BrowserFramesEnabled();
 
   /**
    * Helper method to map a HTML 'scrolling' attribute value to a nsIScrollable
@@ -98,12 +90,29 @@ public:
   static int32_t MapScrollingAttribute(const nsAttrValue* aValue);
 
 protected:
-  virtual ~nsGenericHTMLFrameElement() {}
+  virtual ~nsGenericHTMLFrameElement();
 
-  virtual mozilla::dom::Element* ThisFrameElement() MOZ_OVERRIDE
-  {
-    return this;
-  }
+  // This doesn't really ensure a frame loader in all cases, only when
+  // it makes sense.
+  void EnsureFrameLoader();
+  nsresult LoadSrc();
+  nsIDocument* GetContentDocument();
+  nsresult GetContentDocument(nsIDOMDocument** aContentDocument);
+  already_AddRefed<nsPIDOMWindow> GetContentWindow();
+  nsresult GetContentWindow(nsIDOMWindow** aContentWindow);
+
+  nsRefPtr<nsFrameLoader> mFrameLoader;
+
+  /**
+   * True when the element is created by the parser using the
+   * NS_FROM_PARSER_NETWORK flag.
+   * If the element is modified, it may lose the flag.
+   */
+  bool mNetworkCreated;
+
+  bool mIsPrerendered;
+  bool mBrowserFrameListenersRegistered;
+  bool mFrameLoaderCreationDisallowed;
 
 private:
   void GetManifestURLByType(nsIAtom *aAppType, nsAString& aOut);

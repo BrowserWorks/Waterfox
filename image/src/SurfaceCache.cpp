@@ -11,7 +11,7 @@
 
 #include <algorithm>
 #include "mozilla/Assertions.h"
-#include "mozilla/Attributes.h"  // for MOZ_THIS_IN_INITIALIZER_LIST
+#include "mozilla/Attributes.h"
 #include "mozilla/DebugOnly.h"
 #include "mozilla/Likely.h"
 #include "mozilla/Move.h"
@@ -161,6 +161,7 @@ public:
   CostEntry GetCostEntry() { return image::CostEntry(this, mCost); }
   nsExpirationState* GetExpirationState() { return &mExpirationState; }
   Lifetime GetLifetime() const { return mLifetime; }
+  bool IsDecoded() const { return mSurface->IsImageComplete(); }
 
   // A helper type used by SurfaceCacheImpl::SizeOfSurfacesSum.
   struct SizeOfSurfacesSum
@@ -315,6 +316,17 @@ private:
     }
 
     MOZ_ASSERT(context->mBestMatch, "Should have a current best match");
+
+    // Always prefer completely decoded surfaces.
+    bool bestMatchIsDecoded = context->mBestMatch->IsDecoded();
+    if (bestMatchIsDecoded && !aSurface->IsDecoded()) {
+      return PL_DHASH_NEXT;
+    }
+    if (!bestMatchIsDecoded && aSurface->IsDecoded()) {
+      context->mBestMatch = aSurface;
+      return PL_DHASH_NEXT;
+    }
+
     SurfaceKey bestMatchKey = context->mBestMatch->GetSurfaceKey();
 
     // Compare sizes. We use an area-based heuristic here instead of computing a
@@ -354,7 +366,7 @@ private:
  * maintains high-level invariants and encapsulates the details of the surface
  * cache's implementation.
  */
-class SurfaceCacheImpl MOZ_FINAL : public nsIMemoryReporter
+class SurfaceCacheImpl final : public nsIMemoryReporter
 {
 public:
   NS_DECL_ISUPPORTS
@@ -740,7 +752,7 @@ public:
   NS_IMETHOD
   CollectReports(nsIHandleReportCallback* aHandleReport,
                  nsISupports*             aData,
-                 bool                     aAnonymize) MOZ_OVERRIDE
+                 bool                     aAnonymize) override
   {
     MutexAutoLock lock(mMutex);
 
@@ -816,7 +828,7 @@ private:
     { }
 
   protected:
-    virtual void NotifyExpired(CachedSurface* aSurface) MOZ_OVERRIDE
+    virtual void NotifyExpired(CachedSurface* aSurface) override
     {
       if (sInstance) {
         MutexAutoLock lock(sInstance->GetMutex());
@@ -831,7 +843,7 @@ private:
 
     NS_IMETHOD Observe(nsISupports*,
                        const char* aTopic,
-                       const char16_t*) MOZ_OVERRIDE
+                       const char16_t*) override
     {
       if (sInstance && strcmp(aTopic, "memory-pressure") == 0) {
         MutexAutoLock lock(sInstance->GetMutex());

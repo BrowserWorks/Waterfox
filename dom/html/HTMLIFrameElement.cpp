@@ -46,7 +46,7 @@ NS_IMPL_BOOL_ATTR(HTMLIFrameElement, AllowFullscreen, allowfullscreen)
 NS_IMPL_STRING_ATTR(HTMLIFrameElement, Srcdoc, srcdoc)
 
 void
-HTMLIFrameElement::GetItemValueText(nsAString& aValue)
+HTMLIFrameElement::GetItemValueText(DOMString& aValue)
 {
   GetSrc(aValue);
 }
@@ -121,10 +121,10 @@ HTMLIFrameElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       if (NS_STYLE_FRAME_0 == frameborder ||
           NS_STYLE_FRAME_NO == frameborder ||
           NS_STYLE_FRAME_OFF == frameborder) {
-        nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidthValue();
+        nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidth();
         if (borderLeftWidth->GetUnit() == eCSSUnit_Null)
           borderLeftWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
-        nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidthValue();
+        nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidth();
         if (borderRightWidth->GetUnit() == eCSSUnit_Null)
           borderRightWidth->SetFloatValue(0.0f, eCSSUnit_Pixel);
         nsCSSValue* borderTopWidth = aData->ValueForBorderTopWidth();

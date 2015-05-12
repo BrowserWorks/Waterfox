@@ -73,6 +73,9 @@ public:
     hb_position_t GetHKerning(uint16_t aFirstGlyph,
                               uint16_t aSecondGlyph) const;
 
+    hb_bool_t GetGlyphExtents(hb_codepoint_t aGlyph,
+                              hb_glyph_extents_t *aExtents) const;
+
     static hb_script_t
     GetHBScriptUsedForShaping(int32_t aScript) {
         // Decide what harfbuzz script code will be used for shaping
@@ -107,6 +110,17 @@ protected:
     bool InitializeVertical();
     bool LoadHmtxTable();
 
+    struct Glyf { // we only need the bounding-box at the beginning
+                  // of the glyph record, not the actual outline data
+        AutoSwap_PRInt16 numberOfContours;
+        AutoSwap_PRInt16 xMin;
+        AutoSwap_PRInt16 yMin;
+        AutoSwap_PRInt16 xMax;
+        AutoSwap_PRInt16 yMax;
+    };
+
+    const Glyf *FindGlyf(hb_codepoint_t aGlyph, bool *aEmptyGlyf) const;
+
     // harfbuzz face object: we acquire a reference from the font entry
     // on shaper creation, and release it in our destructor
     hb_face_t         *mHBFace;
@@ -130,6 +144,10 @@ protected:
     // For vertical fonts, cached vmtx and VORG table, if present.
     mutable hb_blob_t *mVmtxTable;
     mutable hb_blob_t *mVORGTable;
+    // And for vertical TrueType (not CFF) fonts that have vmtx,
+    // we also use loca and glyf to get glyph bounding boxes.
+    mutable hb_blob_t *mLocaTable;
+    mutable hb_blob_t *mGlyfTable;
 
     // Cached pointer to cmap subtable to be used for char-to-glyph mapping.
     // This comes from GetFontTablePtr; if it is non-null, our destructor
@@ -157,6 +175,10 @@ protected:
 
     bool mInitialized;
     bool mVerticalInitialized;
+
+    // these are set from the FindGlyf callback on first use of the glyf data
+    mutable bool mLoadedLocaGlyf;
+    mutable bool mLocaLongOffsets;
 };
 
 #endif /* GFX_HARFBUZZSHAPER_H */

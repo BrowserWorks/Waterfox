@@ -20,7 +20,7 @@
 #include "nsCOMArray.h"
 #include "nsCycleCollectionParticipant.h"
 
-class nsAutoCompleteController MOZ_FINAL : public nsIAutoCompleteController,
+class nsAutoCompleteController final : public nsIAutoCompleteController,
                                            public nsIAutoCompleteObserver,
                                            public nsITimerCallback,
                                            public nsITreeView
@@ -50,6 +50,8 @@ protected:
   nsresult ClearSearchTimer();
   void MaybeCompletePlaceholder();
 
+  void HandleSearchResult(nsIAutoCompleteSearch *aSearch,
+                          nsIAutoCompleteResult *aResult);
   nsresult ProcessResult(int32_t aSearchIndex, nsIAutoCompleteResult *aResult);
   nsresult PostSearchCleanup();
 

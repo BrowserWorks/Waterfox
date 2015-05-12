@@ -47,7 +47,7 @@ public:
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   // WebIDL Interface
   DOMRequestReadyState ReadyState() const
@@ -58,7 +58,7 @@ public:
 
   void GetResult(JSContext*, JS::MutableHandle<JS::Value> aRetval) const
   {
-    NS_ASSERTION(mDone || mResult == JSVAL_VOID,
+    NS_ASSERTION(mDone || mResult.isUndefined(),
                  "Result should be undefined when pending");
     JS::ExposeValueToActiveJS(mResult);
     aRetval.set(mResult);
@@ -93,7 +93,7 @@ protected:
   void RootResultVal();
 };
 
-class DOMRequestService MOZ_FINAL : public nsIDOMRequestService
+class DOMRequestService final : public nsIDOMRequestService
 {
   ~DOMRequestService() {}
 

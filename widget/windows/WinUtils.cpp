@@ -430,6 +430,7 @@ WinUtils::DwmSetWindowAttributeProc WinUtils::dwmSetWindowAttributePtr = nullptr
 WinUtils::DwmInvalidateIconicBitmapsProc WinUtils::dwmInvalidateIconicBitmapsPtr = nullptr;
 WinUtils::DwmDefWindowProcProc WinUtils::dwmDwmDefWindowProcPtr = nullptr;
 WinUtils::DwmGetCompositionTimingInfoProc WinUtils::dwmGetCompositionTimingInfoPtr = nullptr;
+WinUtils::DwmFlushProc WinUtils::dwmFlushProcPtr = nullptr;
 
 /* static */
 void
@@ -453,6 +454,7 @@ WinUtils::Initialize()
       dwmInvalidateIconicBitmapsPtr = (DwmInvalidateIconicBitmapsProc)::GetProcAddress(sDwmDll, "DwmInvalidateIconicBitmaps");
       dwmDwmDefWindowProcPtr = (DwmDefWindowProcProc)::GetProcAddress(sDwmDll, "DwmDefWindowProc");
       dwmGetCompositionTimingInfoPtr = (DwmGetCompositionTimingInfoProc)::GetProcAddress(sDwmDll, "DwmGetCompositionTimingInfo");
+      dwmFlushProcPtr = (DwmFlushProc)::GetProcAddress(sDwmDll, "DwmFlush");
     }
   }
 }
@@ -753,7 +755,7 @@ GetNSWindowPropName()
 {
   static wchar_t sPropName[40] = L"";
   if (!*sPropName) {
-    _snwprintf(sPropName, 39, L"MozillansIWidgetPtr%p",
+    _snwprintf(sPropName, 39, L"MozillansIWidgetPtr%u",
                ::GetCurrentProcessId());
     sPropName[39] = '\0';
   }
@@ -1024,6 +1026,54 @@ WinUtils::SHGetKnownFolderPath(REFKNOWNFOLDERID rfid,
     return E_FAIL;
 
   return sGetKnownFolderPath(rfid, dwFlags, hToken, ppszPath);
+}
+
+static BOOL
+WINAPI EnumFirstChild(HWND hwnd, LPARAM lParam)
+{
+  *((HWND*)lParam) = hwnd;
+  return FALSE;
+}
+
+/* static */
+void
+WinUtils::InvalidatePluginAsWorkaround(nsIWidget *aWidget, const nsIntRect &aRect)
+{
+  aWidget->Invalidate(aRect);
+
+  // XXX - Even more evil workaround!! See bug 762948, flash's bottom
+  // level sandboxed window doesn't seem to get our invalidate. We send
+  // an invalidate to it manually. This is totally specialized for this
+  // bug, for other child window structures this will just be a more or
+  // less bogus invalidate but since that should not have any bad
+  // side-effects this will have to do for now.
+  HWND current = (HWND)aWidget->GetNativeData(NS_NATIVE_WINDOW);
+
+  RECT windowRect;
+  RECT parentRect;
+
+  ::GetWindowRect(current, &parentRect);
+
+  HWND next = current;
+  do {
+    current = next;
+    ::EnumChildWindows(current, &EnumFirstChild, (LPARAM)&next);
+    ::GetWindowRect(next, &windowRect);
+    // This is relative to the screen, adjust it to be relative to the
+    // window we're reconfiguring.
+    windowRect.left -= parentRect.left;
+    windowRect.top -= parentRect.top;
+  } while (next != current && windowRect.top == 0 && windowRect.left == 0);
+
+  if (windowRect.top == 0 && windowRect.left == 0) {
+    RECT rect;
+    rect.left   = aRect.x;
+    rect.top    = aRect.y;
+    rect.right  = aRect.XMost();
+    rect.bottom = aRect.YMost();
+
+    ::InvalidateRect(next, &rect, FALSE);
+  }
 }
 
 #ifdef MOZ_PLACES

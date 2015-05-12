@@ -10,7 +10,6 @@
 #include "nsPresContext.h"
 #include "nsStyleContext.h"
 #include "WritingModes.h"
-#include "RubyReflowState.h"
 #include "mozilla/UniquePtr.h"
 
 using namespace mozilla;
@@ -125,19 +124,49 @@ nsRubyTextContainerFrame::Reflow(nsPresContext* aPresContext,
   DO_GLOBAL_REFLOW_COUNT("nsRubyTextContainerFrame");
   DISPLAY_REFLOW(aPresContext, this, aReflowState, aDesiredSize, aStatus);
 
-  MOZ_ASSERT(aReflowState.mRubyReflowState, "No ruby reflow state provided");
-
-  // All rt children have already been reflowed. All we need to do is
-  // to report complete and return the desired size provided by the
-  // ruby base container.
-
   // Although a ruby text container may have continuations, returning
   // NS_FRAME_COMPLETE here is still safe, since its parent, ruby frame,
   // ignores the status, and continuations of the ruby base container
   // will take care of our continuations.
   aStatus = NS_FRAME_COMPLETE;
   WritingMode lineWM = aReflowState.mLineLayout->GetWritingMode();
-  const RubyReflowState::TextContainerInfo& info =
-    aReflowState.mRubyReflowState->GetCurrentTextContainerInfo(this);
-  aDesiredSize.SetSize(lineWM, info.mLineSize);
+
+  nscoord minBCoord = nscoord_MAX;
+  nscoord maxBCoord = nscoord_MIN;
+  for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+    nsIFrame* child = e.get();
+    MOZ_ASSERT(child->GetType() == nsGkAtoms::rubyTextFrame);
+    // The container width is still unknown yet.
+    LogicalRect rect = child->GetLogicalRect(lineWM, 0);
+    LogicalMargin margin = child->GetLogicalUsedMargin(lineWM);
+    nscoord blockStart = rect.BStart(lineWM) - margin.BStart(lineWM);
+    minBCoord = std::min(minBCoord, blockStart);
+    nscoord blockEnd = rect.BEnd(lineWM) + margin.BEnd(lineWM);
+    maxBCoord = std::max(maxBCoord, blockEnd);
+  }
+
+  MOZ_ASSERT(minBCoord <= maxBCoord || mFrames.IsEmpty());
+  LogicalSize size(lineWM, mISize, 0);
+  if (!mFrames.IsEmpty()) {
+    size.BSize(lineWM) = maxBCoord - minBCoord;
+    nscoord deltaBCoord = -minBCoord;
+    if (lineWM.IsVerticalRL()) {
+      deltaBCoord -= size.BSize(lineWM);
+    }
+
+    if (deltaBCoord != 0) {
+      nscoord containerWidth = size.Width(lineWM);
+      for (nsFrameList::Enumerator e(mFrames); !e.AtEnd(); e.Next()) {
+        nsIFrame* child = e.get();
+        LogicalPoint pos = child->GetLogicalPosition(lineWM, containerWidth);
+        pos.B(lineWM) += deltaBCoord;
+        // Relative positioning hasn't happened yet.
+        // So MovePositionBy should be used here.
+        child->SetPosition(lineWM, pos, containerWidth);
+        nsContainerFrame::PlaceFrameView(child);
+      }
+    }
+  }
+
+  aDesiredSize.SetSize(lineWM, size);
 }

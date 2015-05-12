@@ -25,13 +25,9 @@ BEGIN_TEST(testResolveRecursion)
         my_resolve
     };
 
-    obj1 = obj2 = nullptr;
-    JS::AddObjectRoot(cx, &obj1);
-    JS::AddObjectRoot(cx, &obj2);
-
-    obj1 = JS_NewObject(cx, &my_resolve_class, JS::NullPtr(), JS::NullPtr());
+    obj1.init(cx, JS_NewObject(cx, &my_resolve_class));
     CHECK(obj1);
-    obj2 = JS_NewObject(cx, &my_resolve_class, JS::NullPtr(), JS::NullPtr());
+    obj2.init(cx, JS_NewObject(cx, &my_resolve_class));
     CHECK(obj2);
     JS_SetPrivate(obj1, this);
     JS_SetPrivate(obj2, this);
@@ -53,19 +49,17 @@ BEGIN_TEST(testResolveRecursion)
 
     obj1 = nullptr;
     obj2 = nullptr;
-    JS::RemoveObjectRoot(cx, &obj1);
-    JS::RemoveObjectRoot(cx, &obj2);
     return true;
 }
 
-JS::Heap<JSObject *> obj1;
-JS::Heap<JSObject *> obj2;
+JS::PersistentRootedObject obj1;
+JS::PersistentRootedObject obj2;
 int resolveEntryCount;
 int resolveExitCount;
 
 struct AutoIncrCounters {
 
-    explicit AutoIncrCounters(cls_testResolveRecursion *t) : t(t) {
+    explicit AutoIncrCounters(cls_testResolveRecursion* t) : t(t) {
         t->resolveEntryCount++;
     }
 
@@ -73,11 +67,11 @@ struct AutoIncrCounters {
         t->resolveExitCount++;
     }
 
-    cls_testResolveRecursion *t;
+    cls_testResolveRecursion* t;
 };
 
 bool
-doResolve(JS::HandleObject obj, JS::HandleId id, bool *resolvedp)
+doResolve(JS::HandleObject obj, JS::HandleId id, bool* resolvedp)
 {
     CHECK_EQUAL(resolveExitCount, 0);
     AutoIncrCounters incr(this);
@@ -85,7 +79,7 @@ doResolve(JS::HandleObject obj, JS::HandleId id, bool *resolvedp)
 
     CHECK(JSID_IS_STRING(id));
 
-    JSFlatString *str = JS_FlattenString(cx, JSID_TO_STRING(id));
+    JSFlatString* str = JS_FlattenString(cx, JSID_TO_STRING(id));
     CHECK(str);
     JS::RootedValue v(cx);
     if (JS_FlatStringEqualsAscii(str, "x")) {
@@ -135,9 +129,9 @@ doResolve(JS::HandleObject obj, JS::HandleId id, bool *resolvedp)
 }
 
 static bool
-my_resolve(JSContext *cx, JS::HandleObject obj, JS::HandleId id, bool *resolvedp)
+my_resolve(JSContext* cx, JS::HandleObject obj, JS::HandleId id, bool* resolvedp)
 {
-    return static_cast<cls_testResolveRecursion *>(JS_GetPrivate(obj))->
+    return static_cast<cls_testResolveRecursion*>(JS_GetPrivate(obj))->
            doResolve(obj, id, resolvedp);
 }
 

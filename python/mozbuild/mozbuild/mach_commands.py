@@ -586,6 +586,12 @@ class Build(MachCommandBase):
         python = self.virtualenv_manager.python_path
         config_status = os.path.join(self.topobjdir, 'config.status')
 
+        if not os.path.exists(config_status):
+            print('config.status not found.  Please run |mach configure| '
+                  'or |mach build| prior to building the %s build backend.'
+                  % backend)
+            return 1
+
         args = [python, config_status, '--backend=%s' % backend]
         if diff:
             args.append('--diff')
@@ -704,7 +710,10 @@ class GTestCommands(MachCommandBase):
 
         xre_path = os.path.join(self.topobjdir, "dist", "bin")
         gtest_env["MOZ_XRE_DIR"] = xre_path
-        gtest_env["MOZ_GMP_PATH"] = os.path.join(xre_path, "gmp-fake", "1.0")
+        gtest_env["MOZ_GMP_PATH"] = os.pathsep.join(
+            os.path.join(xre_path, p, "1.0")
+            for p in ('gmp-fake', 'gmp-fakeopenh264')
+        )
 
         gtest_env[b"MOZ_RUN_GTEST"] = b"True"
 

@@ -4,6 +4,11 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 %endif
 
+:root {
+  --tab-toolbar-navbar-overlap: 1px;
+  --tab-min-height: 31px;
+}
+
 %define tabCurveWidth 30px
 %define tabCurveHalfWidth 15px
 
@@ -20,7 +25,7 @@
 }
 
 #tabbrowser-tabs {
-  min-height: @tabMinHeight@;
+  min-height: var(--tab-min-height);
 }
 
 .tabbrowser-tab,
@@ -60,6 +65,10 @@
   -moz-padding-start: 9px;
 }
 
+.tab-content[pinned] {
+  -moz-padding-end: 3px;
+}
+
 .tab-throbber,
 .tab-icon-image,
 .tab-close-button {
@@ -70,10 +79,24 @@
 .tab-icon-image {
   height: 16px;
   width: 16px;
+  -moz-margin-end: 6px;
 }
 
 .tab-icon-image {
   list-style-image: url("chrome://mozapps/skin/places/defaultFavicon.png");
+}
+
+.tab-icon-overlay {
+  width: 16px;
+  height: 16px;
+  margin-top: 10px;
+  -moz-margin-start: -16px;
+  display: none;
+}
+
+.tab-icon-overlay[crashed] {
+  display: -moz-box;
+  list-style-image: url("chrome://browser/skin/tabbrowser/crashed.svg");
 }
 
 .tab-throbber[busy] {
@@ -82,11 +105,6 @@
 
 .tab-throbber[progress] {
   list-style-image: url("chrome://browser/skin/tabbrowser/loading.png");
-}
-
-.tab-throbber:not([pinned]),
-.tab-icon-image:not([pinned]) {
-  -moz-margin-end: 6px;
 }
 
 .tab-label {
@@ -118,7 +136,7 @@
   background-image: url(chrome://browser/skin/tabbrowser/tab-overflow-indicator.png);
   background-size: 100% 100%;
   width: 14px;
-  margin-bottom: @tabToolbarNavbarOverlap@;
+  margin-bottom: var(--tab-toolbar-navbar-overlap);
   pointer-events: none;
   position: relative;
   z-index: 3; /* the selected tab's z-index + 1 */
@@ -155,7 +173,7 @@
 .tab-background-end,
 .tab-background-end[selected=true]::after,
 .tab-background-end[selected=true]::before {
-  min-height: @tabMinHeight@;
+  min-height: var(--tab-min-height);
   width: @tabCurveWidth@;
 }
 
@@ -295,7 +313,7 @@
 
 .tabbrowser-tab[pinned][titlechanged]:not([selected="true"]) > .tab-stack > .tab-content {
   background-image: radial-gradient(farthest-corner at center bottom, rgb(255,255,255) 3%, rgba(186,221,251,0.75) 20%, rgba(127,179,255,0.25) 40%, transparent 70%);
-  background-position: center bottom @tabToolbarNavbarOverlap@;
+  background-position: center bottom var(--tab-toolbar-navbar-overlap);
   background-repeat: no-repeat;
   background-size: 85% 100%;
 }
@@ -308,20 +326,12 @@
   -moz-margin-start: -1.5px;
   -moz-margin-end: -1.5px;
   background-image: url(chrome://browser/skin/tabbrowser/tab-separator.png);
-  background-position: left bottom @tabToolbarNavbarOverlap@;
+  background-position: left bottom var(--tab-toolbar-navbar-overlap);
   background-repeat: no-repeat;
   background-size: 3px 100%;
   content: "";
   display: -moz-box;
   width: 3px;
-}
-
-/* Handle a case where the last separator in a customized tab bar with a
-   separated new tab button causes the width of the tab to extend and causes
-   jittering with a small tab curve width (Bug 1111091). */
-#TabsToolbar[currentset]:not([currentset*="tabbrowser-tabs,new-tab-button"]) #tabbrowser-tabs:not([overflow]) > .tabbrowser-tab[last-visible-tab]:not([selected]):not([beforehovered]):not(:hover)::after {
-  -moz-margin-start: -3px;
-  -moz-margin-end: 0;
 }
 
 /* New tab button */

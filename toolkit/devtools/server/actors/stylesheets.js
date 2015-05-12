@@ -99,7 +99,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
    *         Promise that resolves with an array of StyleSheetActors
    */
   _addAllStyleSheets: function() {
-    return Task.spawn(function() {
+    return Task.spawn(function*() {
       let documents = [this.document];
       let actors = [];
 
@@ -116,7 +116,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
           }
         }
       }
-      throw new Task.Result(actors);
+      return actors;
     }.bind(this));
   },
 
@@ -132,7 +132,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
    */
   _addStyleSheets: function(styleSheets)
   {
-    return Task.spawn(function() {
+    return Task.spawn(function*() {
       let actors = [];
       for (let i = 0; i < styleSheets.length; i++) {
         let actor = this.parentActor.createStyleSheetActor(styleSheets[i]);
@@ -142,7 +142,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
         let imports = yield this._getImported(actor);
         actors = actors.concat(imports);
       }
-      throw new Task.Result(actors);
+      return actors;
     }.bind(this));
   },
 
@@ -155,7 +155,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
    *         A promise that resolves with an array of StyleSheetActors
    */
   _getImported: function(styleSheet) {
-    return Task.spawn(function() {
+    return Task.spawn(function*() {
       let rules = yield styleSheet.getCSSRules();
       let imported = [];
 
@@ -180,7 +180,7 @@ let StyleSheetsActor = exports.StyleSheetsActor = protocol.ActorClass({
         }
       }
 
-      throw new Task.Result(imported);
+      return imported;
     }.bind(this));
   },
 
@@ -1086,20 +1086,27 @@ function fetch(aURL, aOptions={ loadFromCache: true, window: null,
     case "chrome":
     case "resource":
       try {
-        NetUtil.asyncFetch(url, function onFetch(aStream, aStatus, aRequest) {
-          if (!components.isSuccessCode(aStatus)) {
-            deferred.reject(new Error("Request failed with status code = "
-                                      + aStatus
-                                      + " after NetUtil.asyncFetch for url = "
-                                      + url));
-            return;
-          }
+        NetUtil.asyncFetch2(
+          url,
+          function onFetch(aStream, aStatus, aRequest) {
+            if (!components.isSuccessCode(aStatus)) {
+              deferred.reject(new Error("Request failed with status code = "
+                                        + aStatus
+                                        + " after NetUtil.asyncFetch2 for url = "
+                                        + url));
+              return;
+            }
 
-          let source = NetUtil.readInputStreamToString(aStream, aStream.available());
-          contentType = aRequest.contentType;
-          deferred.resolve(source);
-          aStream.close();
-        });
+            let source = NetUtil.readInputStreamToString(aStream, aStream.available());
+            contentType = aRequest.contentType;
+            deferred.resolve(source);
+            aStream.close();
+          },
+          null,      // aLoadingNode
+          Services.scriptSecurityManager.getSystemPrincipal(),
+          null,      // aTriggeringPrincipal
+          Ci.nsILoadInfo.SEC_NORMAL,
+          Ci.nsIContentPolicy.TYPE_STYLESHEET);
       } catch (ex) {
         deferred.reject(ex);
       }
@@ -1108,12 +1115,26 @@ function fetch(aURL, aOptions={ loadFromCache: true, window: null,
     default:
       let channel;
       try {
-        channel = Services.io.newChannel(url, null, null);
+        channel = Services.io.newChannel2(url,
+                                          null,
+                                          null,
+                                          null,      // aLoadingNode
+                                          Services.scriptSecurityManager.getSystemPrincipal(),
+                                          null,      // aTriggeringPrincipal
+                                          Ci.nsILoadInfo.SEC_NORMAL,
+                                          Ci.nsIContentPolicy.TYPE_STYLESHEET);
       } catch (e if e.name == "NS_ERROR_UNKNOWN_PROTOCOL") {
         // On Windows xpcshell tests, c:/foo/bar can pass as a valid URL, but
         // newChannel won't be able to handle it.
         url = "file:///" + url;
-        channel = Services.io.newChannel(url, null, null);
+        channel = Services.io.newChannel2(url,
+                                          null,
+                                          null,
+                                          null,      // aLoadingNode
+                                          Services.scriptSecurityManager.getSystemPrincipal(),
+                                          null,      // aTriggeringPrincipal
+                                          Ci.nsILoadInfo.SEC_NORMAL,
+                                          Ci.nsIContentPolicy.TYPE_STYLESHEET);
       }
       let chunks = [];
       let streamListener = {

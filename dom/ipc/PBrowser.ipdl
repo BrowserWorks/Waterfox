@@ -19,12 +19,14 @@ include DOMTypes;
 include JavaScriptTypes;
 include URIParams;
 include PContentPermission;
+include ServiceWorkerRegistrarTypes;
 
 
 using class IPC::Principal from "mozilla/dom/PermissionMessageUtils.h";
 using class mozilla::gfx::Matrix from "mozilla/gfx/Matrix.h";
 using struct gfxSize from "gfxPoint.h";
 using CSSRect from "Units.h";
+using LayoutDeviceIntRect from "Units.h";
 using struct mozilla::layers::FrameMetrics from "FrameMetrics.h";
 using struct mozilla::layers::ScrollableLayerGuid from "FrameMetrics.h";
 using struct mozilla::layers::ZoomConstraints from "FrameMetrics.h";
@@ -64,6 +66,11 @@ struct NativeKeyBinding
   CommandInt[] richTextCommands;
 };
 
+struct BrowserConfiguration
+{
+  ServiceWorkerRegistrationData[] serviceWorkerRegistrations;
+};
+
 union MaybeNativeKeyBinding
 {
   NativeKeyBinding;
@@ -79,7 +86,13 @@ struct ShowInfo
   double defaultScale;
 };
 
-prio(normal upto urgent) intr protocol PBrowser
+struct FrameScriptInfo
+{
+    nsString url;
+    bool runInGlobalScope;
+};
+
+prio(normal upto urgent) sync protocol PBrowser
 {
     manager PContent or PContentBridge;
 
@@ -110,6 +123,12 @@ parent:
     sync PPluginWidget();
 
     /**
+     * Return native data of root widget
+     */
+    sync GetWidgetNativeData() returns (WindowsHandle value);
+
+parent:
+    /**
      * When child sends this message, parent should move focus to
      * the next or previous focusable element.
      */
@@ -117,7 +136,8 @@ parent:
 
     Event(RemoteDOMEvent aEvent);
 
-    intr CreateWindow(uint32_t aChromeFlags,
+    sync CreateWindow(PBrowser aNewTab,
+                      uint32_t aChromeFlags,
                       bool aCalledFromJS,
                       bool aPositionSpecified,
                       bool aSizeSpecified,
@@ -125,7 +145,7 @@ parent:
                       nsString aName,
                       nsString aFeatures,
                       nsString aBaseURI)
-      returns (bool windowIsNew, PBrowser window);
+      returns (bool windowOpened, FrameScriptInfo[] frameScripts, nsCString urlToLoad);
 
     sync SyncMessage(nsString aMessage, ClonedMessageData aData,
                      CpowEntry[] aCpows, Principal aPrincipal)
@@ -193,9 +213,9 @@ parent:
      *  caretRect    The rect of IME caret
      */
     prio(urgent) async NotifyIMESelectedCompositionRect(uint32_t offset,
-                                                        nsIntRect[] rect,
+                                                        LayoutDeviceIntRect[] rect,
                                                         uint32_t caretOffset,
-                                                        nsIntRect caretRect);
+                                                        LayoutDeviceIntRect caretRect);
 
     /**
      * Notifies chrome that there has been a change in selection
@@ -232,7 +252,7 @@ parent:
      *
      *  rect         Rect of current focused editor
      */
-    prio(urgent) async NotifyIMEEditorRect(nsIntRect rect);
+    prio(urgent) async NotifyIMEEditorRect(LayoutDeviceIntRect rect);
 
     /**
      * Notifies chrome to position change
@@ -240,22 +260,25 @@ parent:
      *  editorRect   Rect of current focused editor
      *  compositionRects     Rects of current composition string
      */
-    prio(urgent) async NotifyIMEPositionChange(nsIntRect editorRect,
-                                               nsIntRect[] compositionRects,
-                                               nsIntRect caretRect);
+    prio(urgent) async NotifyIMEPositionChange(LayoutDeviceIntRect editorRect,
+                                               LayoutDeviceIntRect[] compositionRects,
+                                               LayoutDeviceIntRect caretRect);
 
     /**
      * Instructs chrome to end any pending composition
      *
-     *  cancel       PR_TRUE if composition should be cancelled
+     *  cancel       true if composition should be cancelled
+     *  noCompositionEvent   true if no composition event is fired by commit or
+     *                       cancel
      *  composition  Text to commit before ending the composition
      *
-     *  if cancel is PR_TRUE,
+     *  if cancel is true,
      *    widget should return empty string for composition
-     *  if cancel is PR_FALSE,
+     *  if cancel is false,
      *    widget should return the current composition text
      */
-    prio(urgent) sync EndIMEComposition(bool cancel) returns (nsString composition);
+    prio(urgent) sync EndIMEComposition(bool cancel)
+                        returns (bool noCompositionEvent, nsString composition);
 
     /**
      * Tells chrome to start plugin IME.  If this results in a string getting
@@ -316,11 +339,6 @@ parent:
      * Gets the default scaling factor of the screen corresponding to this browser.
      */
     sync GetDefaultScale() returns (double value);
-
-    /**
-     * Return native data of root widget
-     */
-    sync GetWidgetNativeData() returns (WindowsHandle value);
 
     /**
      * Set the native cursor.
@@ -460,6 +478,12 @@ parent:
                  TextureFactoryIdentifier textureFactoryIdentifier,
                  uint64_t layersId);
 
+    /**
+     * Sent by the child to the parent to inform it that an update to the
+     * dimensions has been requested, likely through win.moveTo or resizeTo
+     */
+    async SetDimensions(uint32_t aFlags, int32_t aX, int32_t aY, int32_t aCx, int32_t aCy);
+
 child:
     /**
      * Notify the remote browser that it has been Show()n on this
@@ -475,9 +499,10 @@ child:
          ScrollingBehavior scrolling,
          TextureFactoryIdentifier textureFactoryIdentifier,
          uint64_t layersId,
-         nullable PRenderFrame renderFrame);
+         nullable PRenderFrame renderFrame,
+         bool parentIsActive);
 
-    LoadURL(nsCString uri);
+    LoadURL(nsCString uri, BrowserConfiguration config);
 
     CacheFileDescriptor(nsString path, FileDescriptor fd);
 
@@ -517,7 +542,12 @@ child:
                int32_t aModifiers,
                bool aIgnoreRootScrollFrame);
 
-    RealMouseEvent(WidgetMouseEvent event);
+    /**
+     * When two consecutive mouse move events would be added to the message queue,
+     * they are 'compressed' by dumping the oldest one.
+     */
+    RealMouseMoveEvent(WidgetMouseEvent event) compress;
+    RealMouseButtonEvent(WidgetMouseEvent event);
     RealKeyEvent(WidgetKeyboardEvent event, MaybeNativeKeyBinding keyBinding);
     MouseWheelEvent(WidgetWheelEvent event, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);
     RealTouchEvent(WidgetTouchEvent aEvent, ScrollableLayerGuid aGuid, uint64_t aInputBlockId);

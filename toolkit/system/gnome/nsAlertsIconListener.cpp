@@ -43,7 +43,7 @@ static void notify_closed_marshal(GClosure* closure,
                                   gpointer invocation_hint,
                                   gpointer marshal_data)
 {
-  NS_ABORT_IF_FALSE(n_param_values >= 1, "No object in params");
+  MOZ_ASSERT(n_param_values >= 1, "No object in params");
 
   nsAlertsIconListener* alert =
     static_cast<nsAlertsIconListener*>(closure->data);
@@ -137,7 +137,9 @@ nsAlertsIconListener::OnLoadComplete(imgIRequest* aRequest)
 
   nsCOMPtr<imgIContainer> image;
   rv = aRequest->GetImage(getter_AddRefs(image));
-  MOZ_ASSERT(image);
+  if (NS_WARN_IF(NS_FAILED(rv) || !image)) {
+    return rv;
+  }
 
   // Ask the image to decode at its intrinsic size.
   int32_t width = 0, height = 0;

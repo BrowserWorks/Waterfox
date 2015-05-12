@@ -22,12 +22,12 @@
  * limitations under the License.
  */
 
-#ifndef mozilla_pkix__Input_h
-#define mozilla_pkix__Input_h
+#ifndef mozilla_pkix_Input_h
+#define mozilla_pkix_Input_h
 
 #include <cstring>
 
-#include "pkix/nullptr.h"
+#include "pkix/stdkeywords.h"
 #include "pkix/Result.h"
 #include "stdint.h"
 
@@ -50,7 +50,7 @@ class Reader;
 //
 // Note that in the example, GoodExample has the same performance
 // characteristics as WorseExample, but with much better safety guarantees.
-class Input
+class Input final
 {
 public:
   typedef uint16_t size_type;
@@ -79,6 +79,9 @@ public:
     , len(0u)
   {
   }
+
+  // This is intentionally not explicit in order to allow value semantics.
+  Input(const Input&) = default;
 
   // Initialize the input. data must be non-null and len must be less than
   // 65536. Init may not be called more than once.
@@ -124,7 +127,7 @@ private:
   const uint8_t* data;
   size_t len;
 
-  void operator=(const Input&) /* = delete */; // Use Init instead.
+  void operator=(const Input&) = delete; // Use Init instead.
 };
 
 inline bool
@@ -142,7 +145,7 @@ InputsAreEqual(const Input& a, const Input& b)
 //
 // In general, Reader allows for one byte of lookahead and no backtracking.
 // However, the Match* functions internally may have more lookahead.
-class Reader
+class Reader final
 {
 public:
   Reader()
@@ -269,9 +272,9 @@ public:
     input = end;
   }
 
-  void SkipToEnd(/*out*/ Input& skipped)
+  Result SkipToEnd(/*out*/ Input& skipped)
   {
-    (void) Skip(static_cast<size_t>(end - input), skipped);
+    return Skip(static_cast<Input::size_type>(end - input), skipped);
   }
 
   Result EnsureLength(Input::size_type len)
@@ -284,14 +287,16 @@ public:
 
   bool AtEnd() const { return input == end; }
 
-  class Mark
+  class Mark final
   {
+  public:
+    Mark(const Mark&) = default; // Intentionally not explicit.
   private:
     friend class Reader;
     Mark(const Reader& input, const uint8_t* mark) : input(input), mark(mark) { }
     const Reader& input;
     const uint8_t* const mark;
-    void operator=(const Mark&) /* = delete */;
+    void operator=(const Mark&) = delete;
   };
 
   Mark GetMark() const { return Mark(*this, input); }
@@ -320,8 +325,8 @@ private:
   const uint8_t* input;
   const uint8_t* end;
 
-  Reader(const Reader&) /* = delete */;
-  void operator=(const Reader&) /* = delete */;
+  Reader(const Reader&) = delete;
+  void operator=(const Reader&) = delete;
 };
 
 inline bool
@@ -341,4 +346,4 @@ InputContains(const Input& input, uint8_t toFind)
 
 } } // namespace mozilla::pkix
 
-#endif // mozilla_pkix__Input_h
+#endif // mozilla_pkix_Input_h

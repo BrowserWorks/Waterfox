@@ -154,8 +154,8 @@ let gSyncPane = {
       if (this.selectedCount)
         this.clearSelection();
     });
-    setEventListener("syncComputerName", "change", function () {
-      gSyncUtils.changeName(this);
+    setEventListener("syncComputerName", "change", function (e) {
+      gSyncUtils.changeName(e.target);
     });
     setEventListener("unlinkDevice", "click", function () {
       gSyncPane.startOver(true);
@@ -203,8 +203,8 @@ let gSyncPane = {
     setEventListener("rejectUnlinkFxaAccount", "click", function () {
       gSyncPane.unlinkFirefoxAccount(true);
     });
-    setEventListener("fxaSyncComputerName", "change", function () {
-      gSyncUtils.changeName(this);
+    setEventListener("fxaSyncComputerName", "change", function (e) {
+      gSyncUtils.changeName(e.target);
     });
     setEventListener("tosPP-small-ToS", "click", gSyncPane.openToS);
     setEventListener("tosPP-small-PP", "click", gSyncPane.openPrivacyPolicy);
@@ -237,6 +237,11 @@ let gSyncPane = {
     // service.fxAccountsEnabled is false iff sync is already configured for
     // the legacy provider.
     if (service.fxAccountsEnabled) {
+      // unhide the reading-list engine if readinglist is enabled (note we do
+      // it here as it must remain disabled for legacy sync users)
+      if (Services.prefs.getBoolPref("browser.readinglist.enabled")) {
+        document.getElementById("readinglist-engine").removeAttribute("hidden");
+      }
       // determine the fxa status...
       this.page = PAGE_PLEASE_WAIT;
       fxAccounts.getSignedInUser().then(data => {
@@ -370,6 +375,19 @@ let gSyncPane = {
     }
     document.getElementById("sync-migration").hidden = false;
     document.getElementById("sync-migration-deck").selectedIndex = selIndex;
+  },
+
+  // Called whenever one of the sync engine preferences is changed.
+  onPreferenceChanged: function() {
+    let prefElts = document.querySelectorAll("#syncEnginePrefs > preference");
+    let syncEnabled = false;
+    for (let elt of prefElts) {
+      if (elt.name.startsWith("services.sync.") && elt.value) {
+        syncEnabled = true;
+        break;
+      }
+    }
+    Services.prefs.setBoolPref("services.sync.enabled", syncEnabled);
   },
 
   startOver: function (showDialog) {

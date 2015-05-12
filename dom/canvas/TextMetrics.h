@@ -12,7 +12,7 @@
 namespace mozilla {
 namespace dom {
 
-class TextMetrics MOZ_FINAL : public NonRefcountedDOMObject
+class TextMetrics final : public NonRefcountedDOMObject
 {
 public:
   explicit TextMetrics(float aValue) : width(aValue)
@@ -30,9 +30,9 @@ public:
     return width;
   }
 
-  JSObject* WrapObject(JSContext* aCx, bool* aTookOwnership)
+  bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector)
   {
-    return TextMetricsBinding::Wrap(aCx, this, aTookOwnership);
+    return TextMetricsBinding::Wrap(aCx, this, aReflector);
   }
 
 private:

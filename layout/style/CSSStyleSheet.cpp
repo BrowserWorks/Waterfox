@@ -50,17 +50,17 @@ using namespace mozilla::dom;
 // -------------------------------
 // Style Rule List for the DOM
 //
-class CSSRuleListImpl MOZ_FINAL : public CSSRuleList
+class CSSRuleListImpl final : public CSSRuleList
 {
 public:
   explicit CSSRuleListImpl(CSSStyleSheet *aStyleSheet);
 
-  virtual CSSStyleSheet* GetParentObject() MOZ_OVERRIDE;
+  virtual CSSStyleSheet* GetParentObject() override;
 
   virtual nsIDOMCSSRule*
-  IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
+  IndexedGetter(uint32_t aIndex, bool& aFound) override;
   virtual uint32_t
-  Length() MOZ_OVERRIDE;
+  Length() override;
 
   void DropReference() { mStyleSheet = nullptr; }
 
@@ -1490,8 +1490,8 @@ CSSStyleSheet::EnsureUniqueInner()
 {
   mDirty = true;
 
-  NS_ABORT_IF_FALSE(mInner->mSheets.Length() != 0,
-                    "unexpected number of outers");
+  MOZ_ASSERT(mInner->mSheets.Length() != 0,
+             "unexpected number of outers");
   if (mInner->mSheets.Length() == 1) {
     return eUniqueInner_AlreadyUnique;
   }
@@ -1614,8 +1614,8 @@ CSSStyleSheet::WillDirty()
 void
 CSSStyleSheet::DidDirty()
 {
-  NS_ABORT_IF_FALSE(!mInner->mComplete || mDirty,
-                    "caller must have called WillDirty()");
+  MOZ_ASSERT(!mInner->mComplete || mDirty,
+             "caller must have called WillDirty()");
   ClearRuleCascades();
 }
 

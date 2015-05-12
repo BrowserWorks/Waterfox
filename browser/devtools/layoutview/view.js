@@ -14,12 +14,14 @@ Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/Task.jsm");
 Cu.import("resource://gre/modules/devtools/Loader.jsm");
 Cu.import("resource://gre/modules/devtools/Console.jsm");
+Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
 
 const {Promise: promise} = Cu.import("resource://gre/modules/Promise.jsm", {});
 const {InplaceEditor, editableItem} = devtools.require("devtools/shared/inplace-editor");
 const {parseDeclarations} = devtools.require("devtools/styleinspector/css-parsing-utils");
 const {ReflowFront} = devtools.require("devtools/server/actors/layout");
 
+const SHARED_L10N = new ViewHelpers.L10N("chrome://browser/locale/devtools/shared.properties");
 const NUMERIC = /^-?[\d\.]+$/;
 const LONG_TEXT_ROTATE_LIMIT = 3;
 
@@ -174,17 +176,11 @@ LayoutView.prototype = {
       marginBottom: {selector: ".margin.bottom > span",
                   property: "margin-bottom",
                   value: undefined},
-      // margin-left is a shorthand for some internal properties,
-      // margin-left-ltr-source and margin-left-rtl-source for example. The
-      // real margin value we want is in margin-left-value
       marginLeft: {selector: ".margin.left > span",
                   property: "margin-left",
-                  realProperty: "margin-left-value",
                   value: undefined},
-      // margin-right behaves the same as margin-left
       marginRight: {selector: ".margin.right > span",
                   property: "margin-right",
-                  realProperty: "margin-right-value",
                   value: undefined},
       paddingTop: {selector: ".padding.top > span",
                   property: "padding-top",
@@ -192,15 +188,11 @@ LayoutView.prototype = {
       paddingBottom: {selector: ".padding.bottom > span",
                   property: "padding-bottom",
                   value: undefined},
-      // padding-left behaves the same as margin-left
       paddingLeft: {selector: ".padding.left > span",
                   property: "padding-left",
-                  realProperty: "padding-left-value",
                   value: undefined},
-      // padding-right behaves the same as margin-left
       paddingRight: {selector: ".padding.right > span",
                   property: "padding-right",
-                  realProperty: "padding-right-value",
                   value: undefined},
       borderTop: {selector: ".border.top > span",
                   property: "border-top-width",
@@ -265,11 +257,9 @@ LayoutView.prototype = {
    * Called when the user clicks on one of the editable values in the layoutview
    */
   initEditor: function(element, event, dimension) {
-    let { property, realProperty } = dimension;
-    if (!realProperty)
-      realProperty = property;
+    let { property } = dimension;
     let session = new EditingSession(document, this.elementRules);
-    let initialValue = session.getProperty(realProperty);
+    let initialValue = session.getProperty(property);
 
     let editor = new InplaceEditor({
       element: element,
@@ -413,7 +403,8 @@ LayoutView.prototype = {
       this._lastRequest = null;
       let width = layout.width;
       let height = layout.height;
-      let newLabel = width + "x" + height;
+      let newLabel = SHARED_L10N.getFormatStr("dimensions", width, height);
+
       if (this.sizeHeadingLabel.textContent != newLabel) {
         this.sizeHeadingLabel.textContent = newLabel;
       }
@@ -464,7 +455,7 @@ LayoutView.prototype = {
       height -= this.map.borderTop.value + this.map.borderBottom.value +
                 this.map.paddingTop.value + this.map.paddingBottom.value;
 
-      let newValue = width + "x" + height;
+      let newValue = width + "\u00D7" + height;
       if (this.sizeLabel.textContent != newValue) {
         this.sizeLabel.textContent = newValue;
       }

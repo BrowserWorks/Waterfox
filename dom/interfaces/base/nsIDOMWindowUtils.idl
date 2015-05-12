@@ -46,12 +46,11 @@ interface nsIDOMClientRect;
 interface nsIURI;
 interface nsIDOMEventTarget;
 interface nsIRunnable;
-interface nsICompositionStringSynthesizer;
 interface nsITranslationNodeList;
 interface nsIJSRAIIHelper;
 interface nsIContentPermissionRequest;
 
-[scriptable, uuid(0281e107-394d-4c96-830b-2f830b07c6c0)]
+[scriptable, uuid(d0461871-31bd-4da1-b22d-24595c27295c)]
 interface nsIDOMWindowUtils : nsISupports {
 
   /**
@@ -262,10 +261,12 @@ interface nsIDOMWindowUtils : nsISupports {
   const long MODIFIER_ALTGRAPH   = 0x0010;
   const long MODIFIER_CAPSLOCK   = 0x0020;
   const long MODIFIER_FN         = 0x0040;
-  const long MODIFIER_NUMLOCK    = 0x0080;
-  const long MODIFIER_SCROLLLOCK = 0x0100;
-  const long MODIFIER_SYMBOLLOCK = 0x0200;
-  const long MODIFIER_OS         = 0x0400;
+  const long MODIFIER_FNLOCK     = 0x0080;
+  const long MODIFIER_NUMLOCK    = 0x0100;
+  const long MODIFIER_SCROLLLOCK = 0x0200;
+  const long MODIFIER_SYMBOL     = 0x0400;
+  const long MODIFIER_SYMBOLLOCK = 0x0800;
+  const long MODIFIER_OS         = 0x1000;
 
   /** Synthesize a mouse event. The event types supported are:
    *    mousedown, mouseup, mousemove, mouseover, mouseout, contextmenu,
@@ -557,8 +558,6 @@ interface nsIDOMWindowUtils : nsISupports {
   const unsigned long KEY_FLAG_LOCATION_LEFT     = 0x0020;
   const unsigned long KEY_FLAG_LOCATION_RIGHT    = 0x0040;
   const unsigned long KEY_FLAG_LOCATION_NUMPAD   = 0x0080;
-  const unsigned long KEY_FLAG_LOCATION_MOBILE   = 0x0100;
-  const unsigned long KEY_FLAG_LOCATION_JOYSTICK = 0x0200;
 
   boolean sendKeyEvent(in AString aType,
                        in long aKeyCode,
@@ -664,8 +663,8 @@ interface nsIDOMWindowUtils : nsISupports {
    * drag - msg1-n:TOUCH_CONTACT (moving), msgn+1:TOUCH_REMOVE
    * hover drag - msg1-n:TOUCH_HOVER (moving), msgn+1:TOUCH_REMOVE
    *
-   * Widget support: Windows 8.0+, Winrt/Win32. Other widgets will
-   * throw.
+   * Widget support: Windows 8.0+, Winrt/Win32. Gonk supports CONTACT, REMOVE,
+   * and CANCEL but no HOVER. Other widgets will throw.
    *
    * @param aPointerId The touch point id to create or update.
    * @param aTouchState one or more of the touch states listed above
@@ -1034,33 +1033,6 @@ interface nsIDOMWindowUtils : nsISupports {
    */
   void sendContentCommandEvent(in AString aType,
                                [optional] in nsITransferable aTransferable);
-
-  /**
-   * Synthesize a composition event to the window.
-   *
-   * Cannot be accessed from unprivileged context (not content-accessible)
-   * Will throw a DOM security error if called without chrome privileges.
-   *
-   * @param aType     The event type: "compositionstart",
-   *                  "compositioncommitasis", or "compositioncommit".
-   * @param aData     The data property value.  Note that this isn't applied
-   *                  for compositionstart event because its value is the
-   *                  selected text which is automatically computed. And also
-   *                  this isn't applied for compositioncommitasis because
-   *                  the last data will be set automatically.
-   * @param aLocale   The locale property value.
-   */
-  void sendCompositionEvent(in AString aType,
-                            in AString aData,
-                            in AString aLocale);
-
-  /**
-   * Creating synthesizer of composition string on the window.
-   *
-   * Cannot be accessed from unprivileged context (not content-accessible)
-   * Will throw a DOM security error if called without chrome privileges.
-   */
-  nsICompositionStringSynthesizer createCompositionStringSynthesizer();
 
   /**
    * If sendQueryContentEvent()'s aAdditionalFlags argument is
@@ -1767,6 +1739,16 @@ interface nsIDOMWindowUtils : nsISupports {
    * May throw NS_ERROR_NOT_AVAILABLE.
    */
   readonly attribute unsigned long long framesReflowed;
+
+  /**
+   * Controls the amount of chrome that should be visible on each side of
+   * the window. Works like the chromemargin xul:window attribute.
+   * This should only be used with non-XUL windows.
+   */
+  void setChromeMargin(in int32_t aTop,
+                       in int32_t aRight,
+                       in int32_t aBottom,
+                       in int32_t aLeft);
 };
 
 [scriptable, uuid(c694e359-7227-4392-a138-33c0cc1f15a6)]

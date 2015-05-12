@@ -25,6 +25,7 @@ public:
   NS_DECL_NSICANCELABLE
 
   DNSRequestChild(const nsCString& aHost, const uint32_t& aFlags,
+                  const nsCString& aNetworkInterface,
                   nsIDNSListener *aListener, nsIEventTarget *target);
 
   void AddIPDLReference() {
@@ -41,8 +42,8 @@ protected:
   friend class ChildDNSService;
   virtual ~DNSRequestChild() {}
 
-  virtual bool RecvLookupCompleted(const DNSRequestResponse& reply) MOZ_OVERRIDE;
-  virtual void ActorDestroy(ActorDestroyReason why) MOZ_OVERRIDE;
+  virtual bool RecvLookupCompleted(const DNSRequestResponse& reply) override;
+  virtual void ActorDestroy(ActorDestroyReason why) override;
 
   nsCOMPtr<nsIDNSListener>  mListener;
   nsCOMPtr<nsIEventTarget>  mTarget;
@@ -50,6 +51,7 @@ protected:
   nsresult                  mResultStatus;
   nsCString                 mHost;
   uint16_t                  mFlags;
+  nsCString                 mNetworkInterface;
   bool                      mIPCOpen;
 };
 

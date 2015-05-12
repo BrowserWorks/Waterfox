@@ -949,7 +949,7 @@ class XPCShellTests(object):
                         # We pipe stdin to node because the spdy server will exit when its
                         # stdin reaches EOF
                         process = Popen([nodeBin, serverJs], stdin=PIPE, stdout=PIPE,
-                                stderr=STDOUT, env=self.env, cwd=os.getcwd())
+                                stderr=PIPE, env=self.env, cwd=os.getcwd())
                         self.nodeProc[name] = process
 
                         # Check to make sure the server starts properly by waiting for it to
@@ -957,6 +957,12 @@ class XPCShellTests(object):
                         msg = process.stdout.readline()
                         if 'server listening' in msg:
                             nodeMozInfo['hasNode'] = True
+                            searchObj = re.search( r'SPDY server listening on port (.*)', msg, 0)
+                            if searchObj:
+                              self.env["MOZSPDY-PORT"] = searchObj.group(1)
+                            searchObj = re.search( r'HTTP2 server listening on port (.*)', msg, 0)
+                            if searchObj:
+                              self.env["MOZHTTP2-PORT"] = searchObj.group(1)
                     except OSError, e:
                         # This occurs if the subprocess couldn't be started
                         self.log.error('Could not run %s server: %s' % (name, str(e)))
@@ -973,7 +979,19 @@ class XPCShellTests(object):
         """
         for name, proc in self.nodeProc.iteritems():
             self.log.info('Node %s server shutting down ...' % name)
-            proc.terminate()
+            if proc.poll() is not None:
+                self.log.info('Node server %s already dead %s' % (name, proc.poll()))
+            else:
+                proc.terminate()
+            def dumpOutput(fd, label):
+                firstTime = True
+                for msg in fd:
+                    if firstTime:
+                        firstTime = False;
+                        self.log.info('Process %s' % label)
+                    self.log.info(msg)
+            dumpOutput(proc.stdout, "stdout")
+            dumpOutput(proc.stderr, "stderr")
 
     def buildXpcsRunArgs(self):
         """

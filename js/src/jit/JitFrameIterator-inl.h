@@ -16,11 +16,24 @@
 namespace js {
 namespace jit {
 
-inline BaselineFrame *
+inline JitFrameLayout*
+JitProfilingFrameIterator::framePtr()
+{
+    MOZ_ASSERT(!done());
+    return (JitFrameLayout*) fp_;
+}
+
+inline JSScript*
+JitProfilingFrameIterator::frameScript()
+{
+    return ScriptFromCalleeToken(framePtr()->calleeToken());
+}
+
+inline BaselineFrame*
 JitFrameIterator::baselineFrame() const
 {
     MOZ_ASSERT(isBaselineJS());
-    return (BaselineFrame *)(fp() - BaselineFrame::FramePointerOffset - BaselineFrame::Size());
+    return (BaselineFrame*)(fp() - BaselineFrame::FramePointerOffset - BaselineFrame::Size());
 }
 
 template <typename T>

@@ -22,7 +22,7 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
+#include "pkixgtest.h"
 #include "pkix/pkixtypes.h"
 #include "pkixtestutil.h"
 
@@ -70,7 +70,7 @@ TEST_F(pkixcheck_CheckValidity, BothEmptyNull)
     0x17/*UTCTime*/, 0/*length*/,
   };
   static const Input validity(DER);
-  ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
+  ASSERT_EQ(Result::ERROR_INVALID_DER_TIME, CheckValidity(validity, NOW));
 }
 
 TEST_F(pkixcheck_CheckValidity, NotBeforeEmptyNull)
@@ -80,7 +80,7 @@ TEST_F(pkixcheck_CheckValidity, NotBeforeEmptyNull)
     NEWER_UTCTIME
   };
   static const Input validity(DER);
-  ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
+  ASSERT_EQ(Result::ERROR_INVALID_DER_TIME, CheckValidity(validity, NOW));
 }
 
 TEST_F(pkixcheck_CheckValidity, NotAfterEmptyNull)
@@ -90,7 +90,7 @@ TEST_F(pkixcheck_CheckValidity, NotAfterEmptyNull)
     0x17/*UTCTime*/, 0x00/*length*/,
   };
   static const Input validity(DER);
-  ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
+  ASSERT_EQ(Result::ERROR_INVALID_DER_TIME, CheckValidity(validity, NOW));
 }
 
 static const uint8_t OLDER_UTCTIME_NEWER_UTCTIME_DATA[] = {
@@ -137,7 +137,7 @@ TEST_F(pkixcheck_CheckValidity, Valid_UTCTIME_GENERALIZEDTIME)
 
 TEST_F(pkixcheck_CheckValidity, InvalidBeforeNotBefore)
 {
-  ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE,
+  ASSERT_EQ(Result::ERROR_NOT_YET_VALID_CERTIFICATE,
             CheckValidity(OLDER_UTCTIME_NEWER_UTCTIME, PAST_TIME));
 }
 
@@ -154,5 +154,5 @@ TEST_F(pkixcheck_CheckValidity, InvalidNotAfterBeforeNotBefore)
     OLDER_UTCTIME,
   };
   static const Input validity(DER);
-  ASSERT_EQ(Result::ERROR_EXPIRED_CERTIFICATE, CheckValidity(validity, NOW));
+  ASSERT_EQ(Result::ERROR_INVALID_DER_TIME, CheckValidity(validity, NOW));
 }

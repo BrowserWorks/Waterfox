@@ -133,11 +133,27 @@
             if (!aURI)
               aURI = "about:blank";
 
+            var aReferrerPolicy = Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT;
+
+            // Check for loadURIWithFlags(uri, { ... });
+            var params = arguments[1];
+            if (params && typeof(params) == "object") {
+              aFlags = params.flags;
+              aReferrerURI = params.referrerURI;
+              if ('referrerPolicy' in params) {
+                aReferrerPolicy = params.referrerPolicy;
+              }
+              aCharset = params.charset;
+              aPostData = params.postData;
+            }
+
             if (!(aFlags & this.webNavigation.LOAD_FLAGS_FROM_EXTERNAL))
               this.userTypedClear++;
 
             try {
-              this.webNavigation.loadURI(aURI, aFlags, aReferrerURI, aPostData, null);
+              this.webNavigation.loadURIWithOptions(
+                  aURI, aFlags, aReferrerURI, aReferrerPolicy,
+                  aPostData, null, null);
             } finally {
               if (this.userTypedClear)
                 this.userTypedClear--;
@@ -392,6 +408,15 @@
                 onget="return this._permanentKey;"
                 onset="this._permanentKey = val;"/>
 
+      <property name="outerWindowID" readonly="true">
+        <getter><![CDATA[
+          return this.contentWindow
+                     .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                     .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                     .outerWindowID;
+        ]]></getter>
+      </property>
+
       <field name="_lastSearchString">null</field>
       <field name="_lastSearchHighlight">false</field>
 
@@ -641,10 +666,6 @@
       <property name="securityUI">
         <getter>
           <![CDATA[
-            // Bug 666809 - SecurityUI support for e10s
-            if (!this.docShell)
-              return null;
-
             if (!this.docShell.securityUI) {
               const SECUREBROWSERUI_CONTRACTID = "@mozilla.org/secure_browser_ui;1";
               if (!this.hasAttribute("disablesecurity") &&

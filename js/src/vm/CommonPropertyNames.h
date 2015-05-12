@@ -47,7 +47,6 @@
     macro(count, count, "count") \
     macro(currency, currency, "currency") \
     macro(currencyDisplay, currencyDisplay, "currencyDisplay") \
-    macro(std_iterator, std_iterator, "@@iterator") \
     macro(DateTimeFormat, DateTimeFormat, "DateTimeFormat") \
     macro(DateTimeFormatFormatGet, DateTimeFormatFormatGet, "Intl_DateTimeFormat_format_get") \
     macro(decodeURI, decodeURI, "decodeURI") \
@@ -65,6 +64,7 @@
     macro(each, each, "each") \
     macro(elementType, elementType, "elementType") \
     macro(empty, empty, "") \
+    macro(emptyRegExp, emptyRegExp, "(?:)") \
     macro(encodeURI, encodeURI, "encodeURI") \
     macro(encodeURIComponent, encodeURIComponent, "encodeURIComponent") \
     macro(enumerable, enumerable, "enumerable") \
@@ -79,6 +79,7 @@
     macro(float32, float32, "float32") \
     macro(float32x4, float32x4, "float32x4") \
     macro(float64, float64, "float64") \
+    macro(float64x2, float64x2, "float64x2") \
     macro(forceInterpreter, forceInterpreter, "forceInterpreter") \
     macro(format, format, "format") \
     macro(frame, frame, "frame") \

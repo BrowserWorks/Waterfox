@@ -22,6 +22,10 @@
 #include "FrameLayerBuilder.h"
 #include "mozilla/dom/TabChild.h"
 #include "mozilla/unused.h"
+#include "mozilla/DebugOnly.h"
+#if defined(XP_WIN)
+#include "WinUtils.h"
+#endif
 
 using mozilla::layers::LayerTransactionChild;
 using mozilla::dom::TabChildBase;
@@ -98,6 +102,7 @@ CompositorChild::Create(Transport* aTransport, ProcessId aOtherProcess)
   sCompositor->SendGetTileSize(&width, &height);
   gfxPlatform::GetPlatform()->SetTileSize(width, height);
 
+  // We release this ref in ActorDestroy().
   return sCompositor;
 }
 
@@ -137,6 +142,125 @@ CompositorChild::RecvInvalidateAll()
   return true;
 }
 
+#if defined(XP_WIN) || defined(MOZ_WIDGET_GTK)
+static void CalculatePluginClip(const nsIntRect& aBounds,
+                                const nsTArray<nsIntRect>& aPluginClipRects,
+                                const nsIntPoint& aContentOffset,
+                                const nsIntRegion& aParentLayerVisibleRegion,
+                                nsTArray<nsIntRect>& aResult,
+                                nsIntRect& aVisibleBounds,
+                                bool& aPluginIsVisible)
+{
+  aPluginIsVisible = true;
+  // aBounds (content origin)
+  nsIntRegion contentVisibleRegion(aBounds);
+  // aPluginClipRects (plugin widget origin)
+  for (uint32_t idx = 0; idx < aPluginClipRects.Length(); idx++) {
+    nsIntRect rect = aPluginClipRects[idx];
+    // shift to content origin
+    rect.MoveBy(aBounds.x, aBounds.y);
+    contentVisibleRegion.AndWith(rect);
+  }
+  // apply layers clip (window origin)
+  nsIntRegion region = aParentLayerVisibleRegion;
+  region.MoveBy(-aContentOffset.x, -aContentOffset.y);
+  contentVisibleRegion.AndWith(region);
+  if (contentVisibleRegion.IsEmpty()) {
+    aPluginIsVisible = false;
+    return;
+  }
+  // shift to plugin widget origin
+  contentVisibleRegion.MoveBy(-aBounds.x, -aBounds.y);
+  nsIntRegionRectIterator iter(contentVisibleRegion);
+  for (const nsIntRect* rgnRect = iter.Next(); rgnRect; rgnRect = iter.Next()) {
+    aResult.AppendElement(*rgnRect);
+    aVisibleBounds.UnionRect(aVisibleBounds, *rgnRect);
+  }
+}
+#endif
+
+bool
+CompositorChild::RecvUpdatePluginConfigurations(const nsIntPoint& aContentOffset,
+                                                const nsIntRegion& aParentLayerVisibleRegion,
+                                                nsTArray<PluginWindowData>&& aPlugins)
+{
+#if !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
+  NS_NOTREACHED("CompositorChild::RecvUpdatePluginConfigurations calls "
+                "unexpected on this platform.");
+  return false;
+#else
+  // Now that we are on the main thread, update plugin widget config.
+  // This should happen a little before we paint to the screen assuming
+  // the main thread is running freely.
+  DebugOnly<nsresult> rv;
+  MOZ_ASSERT(NS_IsMainThread());
+
+  // Tracks visible plugins we update, so we can hide any plugins we don't.
+  nsTArray<uintptr_t> visiblePluginIds;
+
+  for (uint32_t pluginsIdx = 0; pluginsIdx < aPlugins.Length(); pluginsIdx++) {
+    nsIWidget* widget =
+      nsIWidget::LookupRegisteredPluginWindow(aPlugins[pluginsIdx].windowId());
+    if (!widget) {
+      NS_WARNING("Unexpected, plugin id not found!");
+      continue;
+    }
+    bool isVisible = aPlugins[pluginsIdx].visible();
+    if (widget && !widget->Destroyed()) {
+      nsIntRect bounds;
+      nsIntRect visibleBounds;
+      // If the plugin is visible update it's geometry.
+      if (isVisible) {
+        // bounds (content origin) - don't pass true to Resize, it triggers a
+        // sync paint update to the plugin process on Windows, which happens
+        // prior to clipping information being applied.
+        bounds = aPlugins[pluginsIdx].bounds();
+        rv = widget->Resize(aContentOffset.x + bounds.x,
+                            aContentOffset.y + bounds.y,
+                            bounds.width, bounds.height, false);
+        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+        nsTArray<nsIntRect> rectsOut;
+        // This call may change the value of isVisible
+        CalculatePluginClip(bounds, aPlugins[pluginsIdx].clip(),
+                            aContentOffset, aParentLayerVisibleRegion,
+                            rectsOut, visibleBounds, isVisible);
+        // content clipping region (widget origin)
+        rv = widget->SetWindowClipRegion(rectsOut, false);
+        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+      }
+
+      rv = widget->Enable(isVisible);
+      NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+
+      // visible state - updated after clipping, prior to invalidating
+      rv = widget->Show(isVisible);
+      NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+
+      // Handle invalidation, this can be costly, avoid if it is not needed.
+      if (isVisible) {
+        // invalidate region (widget origin)
+        nsIntRect bounds = aPlugins[pluginsIdx].bounds();
+        nsIntRect rect(0, 0, bounds.width, bounds.height);
+#if defined(XP_WIN)
+        // Work around for flash's crummy sandbox. See bug 762948. This call
+        // digs down into the window hirearchy, invalidating regions on
+        // windows owned by other processes.
+        mozilla::widget::WinUtils::InvalidatePluginAsWorkaround(widget, visibleBounds);
+#else
+        rv = widget->Invalidate(visibleBounds);
+        NS_ASSERTION(NS_SUCCEEDED(rv), "widget call failure");
+#endif
+        visiblePluginIds.AppendElement(aPlugins[pluginsIdx].windowId());
+      }
+    }
+  }
+  // Any plugins we didn't update need to be hidden, as they are
+  // not associated with visible content.
+  nsIWidget::UpdateRegisteredPluginWindowVisibility(visiblePluginIds);
+  return true;
+#endif // !defined(XP_WIN) && !defined(MOZ_WIDGET_GTK)
+}
+
 bool
 CompositorChild::RecvDidComposite(const uint64_t& aId, const uint64_t& aTransactionId)
 {
@@ -172,6 +296,7 @@ CompositorChild::AddOverfillObserver(ClientLayerManager* aLayerManager)
 void
 CompositorChild::ActorDestroy(ActorDestroyReason aWhy)
 {
+  MOZ_ASSERT(!mCanSend);
   MOZ_ASSERT(sCompositor == this);
 
 #ifdef MOZ_B2G
@@ -183,24 +308,17 @@ CompositorChild::ActorDestroy(ActorDestroyReason aWhy)
     NS_RUNTIMEABORT("ActorDestroy by IPC channel failure at CompositorChild");
   }
 #endif
-
+  if (sCompositor) {
+    sCompositor->Release();
+    sCompositor = nullptr;
+  }
   // We don't want to release the ref to sCompositor here, during
   // cleanup, because that will cause it to be deleted while it's
   // still being used.  So defer the deletion to after it's not in
   // use.
-  sCompositor = nullptr;
-
   MessageLoop::current()->PostTask(
     FROM_HERE,
     NewRunnableMethod(this, &CompositorChild::Release));
-}
-
-void
-CompositorChild::ShutDown()
-{
-  if (sCompositor) {
-    sCompositor->ActorDestroy(NormalShutdown);
-  }
 }
 
 bool

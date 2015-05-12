@@ -41,6 +41,7 @@
     <command id="View:PageSource" oncommand="BrowserViewSourceOfDocument(window.gBrowser.selectedBrowser.contentDocumentAsCPOW);" observes="isImage"/>
     <command id="View:PageInfo" oncommand="BrowserPageInfo();"/>
     <command id="View:FullScreen" oncommand="BrowserFullScreen();"/>
+    <command id="View:ReaderView" oncommand="ReaderParent.toggleReaderMode(event);"/>
     <command id="cmd_find"
              oncommand="gFindBar.onFindCommand();"
              observes="isImage"/>
@@ -101,7 +102,7 @@
     <command id="Tools:WebIDE" oncommand="gDevToolsBrowser.openWebIDE();" disabled="true" hidden="true"/>
     <command id="Tools:BrowserToolbox" oncommand="BrowserToolboxProcess.init();" disabled="true" hidden="true"/>
     <command id="Tools:BrowserContentToolbox" oncommand="gDevToolsBrowser.openContentProcessToolbox();" disabled="true" hidden="true"/>
-    <command id="Tools:BrowserConsole" oncommand="HUDService.toggleBrowserConsole();"/>
+    <command id="Tools:BrowserConsole" oncommand="HUDService.openBrowserConsoleOrFocus();"/>
     <command id="Tools:Scratchpad" oncommand="Scratchpad.openScratchpad();"/>
     <command id="Tools:ResponsiveUI" oncommand="ResponsiveUI.toggle();"/>
     <command id="Tools:Eyedropper" oncommand="openEyedropper();"/>
@@ -138,7 +139,7 @@
     <broadcaster id="Social:PageShareOrMark" disabled="true"/>
     <broadcaster id="viewBookmarksSidebar" autoCheck="false" label="&bookmarksButton.label;"
                  type="checkbox" group="sidebar" sidebarurl="chrome://browser/content/bookmarks/bookmarksPanel.xul"
-                 oncommand="toggleSidebar('viewBookmarksSidebar');"/>
+                 oncommand="SidebarUI.toggle('viewBookmarksSidebar');"/>
 
     <!-- for both places and non-places, the sidebar lives at
          chrome://browser/content/history/history-panel.xul so there are no
@@ -146,11 +147,16 @@
     <broadcaster id="viewHistorySidebar" autoCheck="false" sidebartitle="&historyButton.label;"
                  type="checkbox" group="sidebar"
                  sidebarurl="chrome://browser/content/history/history-panel.xul"
-                 oncommand="toggleSidebar('viewHistorySidebar');"/>
+                 oncommand="SidebarUI.toggle('viewHistorySidebar');"/>
+
+    <broadcaster id="readingListSidebar" hidden="true" autoCheck="false" disabled="true"
+                 sidebartitle="&readingList.label;" type="checkbox" group="sidebar"
+                 sidebarurl="chrome://browser/content/readinglist/sidebar.xhtml"
+                 oncommand="SidebarUI.toggle('readingListSidebar');"/>
 
     <broadcaster id="viewWebPanelsSidebar" autoCheck="false"
                  type="checkbox" group="sidebar" sidebarurl="chrome://browser/content/web-panels.xul"
-                 oncommand="toggleSidebar('viewWebPanelsSidebar');"/>
+                 oncommand="SidebarUI.toggle('viewWebPanelsSidebar');"/>
 
     <broadcaster id="bookmarkThisPageBroadcaster"
                  label="&bookmarkThisPageCmd.label;"
@@ -417,6 +423,11 @@
          modifiers="accel"
 #endif
          command="viewHistorySidebar"/>
+
+    <key id="key_readingListSidebar"
+         key="&readingList.sidebar.commandKey;"
+         modifiers="accel,alt"
+         command="readingListSidebar"/>
 
     <key id="key_fullZoomReduce"  key="&fullZoomReduceCmd.commandkey;"   command="cmd_fullZoomReduce"  modifiers="accel"/>
     <key                          key="&fullZoomReduceCmd.commandkey2;"  command="cmd_fullZoomReduce"  modifiers="accel"/>

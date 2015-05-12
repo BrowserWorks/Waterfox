@@ -131,28 +131,38 @@ NSSErrorsService::GetErrorClass(nsresult aXPCOMErrorCode, uint32_t *aErrorClass)
     return NS_ERROR_FAILURE;
   }
 
-  switch (aNSPRCode)
+  if (mozilla::psm::ErrorIsOverridable(aNSPRCode)) {
+    *aErrorClass = ERROR_CLASS_BAD_CERT;
+  } else {
+    *aErrorClass = ERROR_CLASS_SSL_PROTOCOL;
+  }
+
+  return NS_OK;
+}
+
+bool
+ErrorIsOverridable(PRErrorCode code)
+{
+  switch (code)
   {
     // Overridable errors.
-    case SEC_ERROR_UNKNOWN_ISSUER:
-    case SEC_ERROR_UNTRUSTED_ISSUER:
-    case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
-    case SEC_ERROR_UNTRUSTED_CERT:
-    case SSL_ERROR_BAD_CERT_DOMAIN:
-    case SEC_ERROR_EXPIRED_CERTIFICATE:
-    case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
-    case SEC_ERROR_CA_CERT_INVALID:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_CA_CERT_USED_AS_END_ENTITY:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_INADEQUATE_KEY_SIZE:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_CERTIFICATE:
+    case mozilla::pkix::MOZILLA_PKIX_ERROR_NOT_YET_VALID_ISSUER_CERTIFICATE:
     case mozilla::pkix::MOZILLA_PKIX_ERROR_V1_CERT_USED_AS_CA:
-      *aErrorClass = ERROR_CLASS_BAD_CERT;
-      break;
+    case SEC_ERROR_CA_CERT_INVALID:
+    case SEC_ERROR_CERT_SIGNATURE_ALGORITHM_DISABLED:
+    case SEC_ERROR_EXPIRED_CERTIFICATE:
+    case SEC_ERROR_EXPIRED_ISSUER_CERTIFICATE:
+    case SEC_ERROR_INVALID_TIME:
+    case SEC_ERROR_UNKNOWN_ISSUER:
+    case SSL_ERROR_BAD_CERT_DOMAIN:
+      return true;
     // Non-overridable errors.
     default:
-      *aErrorClass = ERROR_CLASS_SSL_PROTOCOL;
-      break;
+      return false;
   }
-  return NS_OK;
 }
 
 NS_IMETHODIMP

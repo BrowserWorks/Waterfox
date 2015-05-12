@@ -197,8 +197,11 @@ Convert(bt_property_type_t aIn, BluetoothPropertyType& aOut)
     CONVERT(BT_PROPERTY_ADAPTER_DISCOVERY_TIMEOUT,
       PROPERTY_ADAPTER_DISCOVERY_TIMEOUT),
     CONVERT(BT_PROPERTY_REMOTE_FRIENDLY_NAME, PROPERTY_REMOTE_FRIENDLY_NAME),
-    CONVERT(BT_PROPERTY_REMOTE_RSSI, PROPERTY_REMOTE_RSSI),
+    CONVERT(BT_PROPERTY_REMOTE_RSSI, PROPERTY_REMOTE_RSSI)
+#if ANDROID_VERSION >= 18
+    ,
     CONVERT(BT_PROPERTY_REMOTE_VERSION_INFO,PROPERTY_REMOTE_VERSION_INFO)
+#endif
   };
   if (aIn == BT_PROPERTY_REMOTE_DEVICE_TIMESTAMP) {
     /* This case is handled separately to not populate
@@ -911,7 +914,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)();
     return NS_OK;
@@ -937,7 +940,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)(mArg1);
     return NS_OK;
@@ -970,7 +973,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     ((*mObj).*mMethod)(mArg1, mArg2, mArg3);
     return NS_OK;
@@ -1018,7 +1021,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -1080,7 +1083,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -1157,7 +1160,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -1241,7 +1244,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -1330,7 +1333,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -1428,7 +1431,7 @@ public:
   }
 
   NS_METHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 

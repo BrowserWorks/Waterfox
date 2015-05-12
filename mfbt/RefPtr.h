@@ -9,6 +9,7 @@
 #ifndef mozilla_RefPtr_h
 #define mozilla_RefPtr_h
 
+#include "mozilla/AlreadyAddRefed.h"
 #include "mozilla/Assertions.h"
 #include "mozilla/Atomics.h"
 #include "mozilla/Attributes.h"
@@ -160,7 +161,7 @@ private:
 };
 
 #ifdef MOZ_REFCOUNTED_LEAK_CHECKING
-// Passing MOZ_OVERRIDE for the optional argument marks the typeName and
+// Passing override for the optional argument marks the typeName and
 // typeSize functions defined by this macro as overrides.
 #define MOZ_DECLARE_REFCOUNTED_VIRTUAL_TYPENAME(T, ...) \
   virtual const char* typeName() const __VA_ARGS__ { return #T; } \
@@ -235,6 +236,7 @@ public:
   RefPtr() : mPtr(0) {}
   RefPtr(const RefPtr& aOther) : mPtr(ref(aOther.mPtr)) {}
   MOZ_IMPLICIT RefPtr(const TemporaryRef<T>& aOther) : mPtr(aOther.take()) {}
+  MOZ_IMPLICIT RefPtr(already_AddRefed<T>& aOther) : mPtr(aOther.take()) {}
   MOZ_IMPLICIT RefPtr(T* aVal) : mPtr(ref(aVal)) {}
 
   template<typename U>
@@ -248,6 +250,11 @@ public:
     return *this;
   }
   RefPtr& operator=(const TemporaryRef<T>& aOther)
+  {
+    assign(aOther.take());
+    return *this;
+  }
+  RefPtr& operator=(already_AddRefed<T>& aOther)
   {
     assign(aOther.take());
     return *this;

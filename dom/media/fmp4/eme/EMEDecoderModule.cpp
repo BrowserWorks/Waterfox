@@ -34,7 +34,7 @@ public:
   {
   }
 
-  virtual nsresult Init() MOZ_OVERRIDE {
+  virtual nsresult Init() override {
     MOZ_ASSERT(!mIsShutdown);
     nsresult rv = mTaskQueue->SyncDispatch(
       NS_NewRunnableMethod(mDecoder, &MediaDataDecoder::Init));
@@ -49,7 +49,7 @@ public:
       , mTaskQueue(aTaskQueue)
     {}
     virtual void Decrypted(GMPErr aResult,
-                           mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE {
+                           mp4_demuxer::MP4Sample* aSample) override {
       if (aResult == GMPNoKeyErr) {
         RefPtr<nsIRunnable> task;
         task = NS_NewRunnableMethodWithArg<MP4Sample*>(mDecryptor,
@@ -76,7 +76,7 @@ public:
     nsRefPtr<FlushableMediaTaskQueue> mTaskQueue;
   };
 
-  virtual nsresult Input(MP4Sample* aSample) MOZ_OVERRIDE {
+  virtual nsresult Input(MP4Sample* aSample) override {
     MOZ_ASSERT(!mIsShutdown);
     // We run the PDM on its own task queue. We can't run it on the decode
     // task queue, because that calls into Input() in a loop and waits until
@@ -88,6 +88,9 @@ public:
     if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
       return NS_OK;
     }
+
+    mProxy->GetSessionIdsForKeyId(aSample->crypto.key,
+                                  aSample->crypto.session_ids);
 
     mProxy->Decrypt(aSample, new DeliverDecrypted(this, mTaskQueue));
     return NS_OK;
@@ -103,7 +106,7 @@ public:
     unused << NS_WARN_IF(NS_FAILED(rv));
   }
 
-  virtual nsresult Flush() MOZ_OVERRIDE {
+  virtual nsresult Flush() override {
     MOZ_ASSERT(!mIsShutdown);
     nsresult rv = mTaskQueue->SyncDispatch(
       NS_NewRunnableMethod(
@@ -114,7 +117,7 @@ public:
     return rv;
   }
 
-  virtual nsresult Drain() MOZ_OVERRIDE {
+  virtual nsresult Drain() override {
     MOZ_ASSERT(!mIsShutdown);
     nsresult rv = mTaskQueue->Dispatch(
       NS_NewRunnableMethod(
@@ -124,7 +127,7 @@ public:
     return rv;
   }
 
-  virtual nsresult Shutdown() MOZ_OVERRIDE {
+  virtual nsresult Shutdown() override {
     MOZ_ASSERT(!mIsShutdown);
 #ifdef DEBUG
     mIsShutdown = true;
@@ -162,14 +165,16 @@ public:
   EMEMediaDataDecoderProxy(nsIThread* aProxyThread, MediaDataDecoderCallback* aCallback, CDMProxy* aProxy, FlushableMediaTaskQueue* aTaskQueue)
    : MediaDataDecoderProxy(aProxyThread, aCallback)
    , mSamplesWaitingForKey(new SamplesWaitingForKey(this, aTaskQueue, aProxy))
+   , mProxy(aProxy)
   {
   }
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE;
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
+  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override;
+  virtual nsresult Shutdown() override;
 
 private:
   nsRefPtr<SamplesWaitingForKey> mSamplesWaitingForKey;
+  nsRefPtr<CDMProxy> mProxy;
 };
 
 nsresult
@@ -178,6 +183,9 @@ EMEMediaDataDecoderProxy::Input(mp4_demuxer::MP4Sample* aSample)
   if (mSamplesWaitingForKey->WaitIfKeyNotUsable(aSample)) {
     return NS_OK;
   }
+
+  mProxy->GetSessionIdsForKeyId(aSample->crypto.key,
+                                aSample->crypto.session_ids);
 
   return MediaDataDecoderProxy::Input(aSample);
 }
@@ -189,6 +197,7 @@ EMEMediaDataDecoderProxy::Shutdown()
 
   mSamplesWaitingForKey->BreakCycles();
   mSamplesWaitingForKey = nullptr;
+  mProxy = nullptr;
 
   return rv;
 }
@@ -206,15 +215,6 @@ EMEDecoderModule::EMEDecoderModule(CDMProxy* aProxy,
 
 EMEDecoderModule::~EMEDecoderModule()
 {
-}
-
-nsresult
-EMEDecoderModule::Shutdown()
-{
-  if (mPDM) {
-    return mPDM->Shutdown();
-  }
-  return NS_OK;
 }
 
 static already_AddRefed<MediaDataDecoderProxy>

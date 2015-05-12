@@ -34,7 +34,6 @@
 // constraints, the reference identifier is the entire encoded name constraint
 // extension value.
 
-#include "pkix/bind.h"
 #include "pkixcheck.h"
 #include "pkixutil.h"
 
@@ -135,12 +134,18 @@ Result SearchWithinRDN(Reader& rdn,
                        FallBackToSearchWithinSubject fallBackToEmailAddress,
                        FallBackToSearchWithinSubject fallBackToCommonName,
                        /*in/out*/ MatchResult& match);
-Result SearchWithinAVA(Reader& rdn,
-                       GeneralNameType referenceIDType,
-                       Input referenceID,
-                       FallBackToSearchWithinSubject fallBackToEmailAddress,
-                       FallBackToSearchWithinSubject fallBackToCommonName,
-                       /*in/out*/ MatchResult& match);
+Result MatchAVA(Input type,
+                uint8_t valueEncodingTag,
+                Input presentedID,
+                GeneralNameType referenceIDType,
+                Input referenceID,
+                FallBackToSearchWithinSubject fallBackToEmailAddress,
+                FallBackToSearchWithinSubject fallBackToCommonName,
+                /*in/out*/ MatchResult& match);
+Result ReadAVA(Reader& rdn,
+               /*out*/ Input& type,
+               /*out*/ uint8_t& valueTag,
+               /*out*/ Input& value);
 void MatchSubjectPresentedIDWithReferenceID(GeneralNameType presentedIDType,
                                             Input presentedID,
                                             GeneralNameType referenceIDType,
@@ -258,9 +263,7 @@ CheckCertHostname(Input endEntityCertDER, Input hostname)
       return Result::ERROR_BAD_CERT_DOMAIN;
     case MatchResult::Match:
       return Success;
-    default:
-      return NotReached("Invalid match result",
-                        Result::FATAL_ERROR_LIBRARY_FAILURE);
+    MOZILLA_PKIX_UNREACHABLE_DEFAULT_ENUM
   }
 }
 
@@ -351,8 +354,10 @@ SearchNames(/*optional*/ const Input* subjectAltName,
       return rv;
     }
 
-    // do { ... } while(...) because subjectAltName isn't allowed to be empty.
-    do {
+    // According to RFC 5280, "If the subjectAltName extension is present, the
+    // sequence MUST contain at least one entry." For compatibility reasons, we
+    // do not enforce this. See bug 1143085.
+    while (!altNames.AtEnd()) {
       GeneralNameType presentedIDType;
       Input presentedID;
       rv = ReadGeneralName(altNames, presentedIDType, presentedID);
@@ -374,7 +379,7 @@ SearchNames(/*optional*/ const Input* subjectAltName,
           presentedIDType == GeneralNameType::iPAddress) {
         fallBackToCommonName = FallBackToSearchWithinSubject::No;
       }
-    } while (!altNames.AtEnd());
+    }
   }
 
   if (referenceIDType == GeneralNameType::nameConstraints) {
@@ -468,10 +473,10 @@ SearchNames(/*optional*/ const Input* subjectAltName,
   //   SET SIZE (1..MAX) OF AttributeTypeAndValue
   Reader subjectReader(subject);
   return der::NestedOf(subjectReader, der::SEQUENCE, der::SET,
-                       der::EmptyAllowed::Yes,
-                       bind(SearchWithinRDN, _1, referenceIDType,
-                            referenceID, fallBackToEmailAddress,
-                            fallBackToCommonName, ref(match)));
+                       der::EmptyAllowed::Yes, [&](Reader& r) {
+    return SearchWithinRDN(r, referenceIDType, referenceID,
+                          fallBackToEmailAddress, fallBackToCommonName, match);
+  });
 }
 
 // RelativeDistinguishedName ::=
@@ -489,10 +494,15 @@ SearchWithinRDN(Reader& rdn,
                 /*in/out*/ MatchResult& match)
 {
   do {
-    Result rv = der::Nested(rdn, der::SEQUENCE,
-                            bind(SearchWithinAVA, _1, referenceIDType,
-                                 referenceID, fallBackToEmailAddress,
-                                 fallBackToCommonName, ref(match)));
+    Input type;
+    uint8_t valueTag;
+    Input value;
+    Result rv = ReadAVA(rdn, type, valueTag, value);
+    if (rv != Success) {
+      return rv;
+    }
+    rv = MatchAVA(type, valueTag, value, referenceIDType, referenceID,
+                  fallBackToEmailAddress, fallBackToCommonName, match);
     if (rv != Success) {
       return rv;
     }
@@ -516,26 +526,13 @@ SearchWithinRDN(Reader& rdn,
 //       utf8String              UTF8String (SIZE (1..MAX)),
 //       bmpString               BMPString (SIZE (1..MAX)) }
 Result
-SearchWithinAVA(Reader& rdn,
-                GeneralNameType referenceIDType,
-                Input referenceID,
-                FallBackToSearchWithinSubject fallBackToEmailAddress,
-                FallBackToSearchWithinSubject fallBackToCommonName,
-                /*in/out*/ MatchResult& match)
+MatchAVA(Input type, uint8_t valueEncodingTag, Input presentedID,
+         GeneralNameType referenceIDType,
+         Input referenceID,
+         FallBackToSearchWithinSubject fallBackToEmailAddress,
+         FallBackToSearchWithinSubject fallBackToCommonName,
+         /*in/out*/ MatchResult& match)
 {
-  // AttributeTypeAndValue ::= SEQUENCE {
-  //   type     AttributeType,
-  //   value    AttributeValue }
-  //
-  // AttributeType ::= OBJECT IDENTIFIER
-  //
-  // AttributeValue ::= ANY -- DEFINED BY AttributeType
-  Reader type;
-  Result rv = der::ExpectTagAndGetValue(rdn, der::OIDTag, type);
-  if (rv != Success) {
-    return rv;
-  }
-
   // Try to match the  CN as a DNSName or an IPAddress.
   //
   // id-at-commonName        AttributeType ::= { id-at 3 }
@@ -556,18 +553,11 @@ SearchWithinAVA(Reader& rdn,
     0x55, 0x04, 0x03
   };
   if (fallBackToCommonName == FallBackToSearchWithinSubject::Yes &&
-      type.MatchRest(id_at_commonName)) {
+      InputsAreEqual(type, Input(id_at_commonName))) {
     // We might have previously found a match. Now that we've found another CN,
     // we no longer consider that previous match to be a match, so "forget" about
     // it.
     match = MatchResult::NoNamesOfGivenType;
-
-    uint8_t valueEncodingTag;
-    Input presentedID;
-    rv = der::ReadTagAndGetValue(rdn, valueEncodingTag, presentedID);
-    if (rv != Success) {
-      return rv;
-    }
 
     // PrintableString is a subset of ASCII that contains all the characters
     // allowed in CN-IDs except '*'. Although '*' is illegal, there are many
@@ -633,23 +623,20 @@ SearchWithinAVA(Reader& rdn,
     0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x01
   };
   if (fallBackToEmailAddress == FallBackToSearchWithinSubject::Yes &&
-      type.MatchRest(id_emailAddress)) {
+      InputsAreEqual(type, Input(id_emailAddress))) {
     if (referenceIDType == GeneralNameType::rfc822Name &&
         match == MatchResult::Match) {
       // We already found a match; we don't need to match another one
       return Success;
     }
-    Input presentedID;
-    rv = der::ExpectTagAndGetValue(rdn, der::IA5String, presentedID);
-    if (rv != Success) {
-      return rv;
+    if (valueEncodingTag != der::IA5String) {
+      return Result::ERROR_BAD_DER;
     }
     return MatchPresentedIDWithReferenceID(GeneralNameType::rfc822Name,
                                            presentedID, referenceIDType,
                                            referenceID, match);
   }
 
-  rdn.SkipToEnd();
   return Success;
 }
 
@@ -721,10 +708,8 @@ MatchPresentedIDWithReferenceID(GeneralNameType presentedIDType,
       return NotReached("unexpected nameType for SearchType::Match",
                         Result::FATAL_ERROR_INVALID_ARGS);
 
-    default:
-      return NotReached("Invalid nameType for MatchPresentedIDWithReferenceID",
-                        Result::FATAL_ERROR_INVALID_ARGS);
-  }
+    MOZILLA_PKIX_UNREACHABLE_DEFAULT_ENUM
+ }
 
   if (rv != Success) {
     return rv;
@@ -900,10 +885,11 @@ CheckPresentedIDConformsToNameConstraintsSubtrees(
         case GeneralNameType::registeredID: // fall through
           return Result::ERROR_CERT_NOT_IN_NAME_SPACE;
 
-        case GeneralNameType::nameConstraints: // fall through
-        default:
+        case GeneralNameType::nameConstraints:
           return NotReached("invalid presentedIDType",
                             Result::FATAL_ERROR_LIBRARY_FAILURE);
+
+        MOZILLA_PKIX_UNREACHABLE_DEFAULT_ENUM
       }
 
       switch (subtreesType) {
@@ -919,9 +905,6 @@ CheckPresentedIDConformsToNameConstraintsSubtrees(
             return Result::ERROR_CERT_NOT_IN_NAME_SPACE;
           }
           break;
-        default:
-          return NotReached("unexpected subtreesType",
-                            Result::FATAL_ERROR_INVALID_ARGS);
       }
     }
   } while (!subtrees.AtEnd());
@@ -1142,8 +1125,7 @@ MatchPresentedDNSIDWithReferenceDNSID(
     }
 
     case IDRole::PresentedID: // fall through
-    default:
-      return NotReached("invalid or unknown referenceDNSIDRole",
+      return NotReached("IDRole::PresentedID is not a valid referenceDNSIDRole",
                         Result::FATAL_ERROR_INVALID_ARGS);
   }
 
@@ -1285,6 +1267,32 @@ MatchPresentedIPAddressWithConstraint(Input presentedID,
   return Success;
 }
 
+// AttributeTypeAndValue ::= SEQUENCE {
+//   type     AttributeType,
+//   value    AttributeValue }
+//
+// AttributeType ::= OBJECT IDENTIFIER
+//
+// AttributeValue ::= ANY -- DEFINED BY AttributeType
+Result
+ReadAVA(Reader& rdn,
+        /*out*/ Input& type,
+        /*out*/ uint8_t& valueTag,
+        /*out*/ Input& value)
+{
+  return der::Nested(rdn, der::SEQUENCE, [&](Reader& ava) -> Result {
+    Result rv = der::ExpectTagAndGetValue(ava, der::OIDTag, type);
+    if (rv != Success) {
+      return rv;
+    }
+    rv = der::ReadTagAndGetValue(ava, valueTag, value);
+    if (rv != Success) {
+      return rv;
+    }
+    return Success;
+  });
+}
+
 // Names are sequences of RDNs. RDNS are sets of AVAs. That means that RDNs are
 // unordered, so in theory we should match RDNs with equivalent AVAs that are
 // in different orders. Within the AVAs are DirectoryNames that are supposed to
@@ -1314,12 +1322,17 @@ MatchPresentedIPAddressWithConstraint(Input presentedID,
 //     paths, CAs SHOULD state name constraints for distinguished names as
 //     permittedSubtrees wherever possible.
 //
-// Consequently, we implement the comparison in the simplest possible way. For
-// permittedSubtrees, we rely on implementations to follow that MUST-level
-// requirement for compatibility. For excludedSubtrees, we simply prohibit any
-// non-empty directoryName constraint to ensure we are not being too lenient.
-// We support empty DirectoryName constraints in excludedSubtrees so that a CA
-// can say "Do not allow any DirectoryNames in issued certificates."
+// For permittedSubtrees, the MUST-level requirement is relaxed for
+// compatibility in the case of PrintableString and UTF8String. That is, if a
+// name constraint has been encoded using UTF8String and the presented ID has
+// been encoded with a PrintableString (or vice-versa), they are considered to
+// match if they are equal everywhere except for the tag identifying the
+// encoding. See bug 1150114.
+//
+// For excludedSubtrees, we simply prohibit any non-empty directoryName
+// constraint to ensure we are not being too lenient. We support empty
+// DirectoryName constraints in excludedSubtrees so that a CA can say "Do not
+// allow any DirectoryNames in issued certificates."
 Result
 MatchPresentedDirectoryNameWithConstraint(NameConstraintsSubtrees subtreesType,
                                           Input presentedID,
@@ -1348,8 +1361,6 @@ MatchPresentedDirectoryNameWithConstraint(NameConstraintsSubtrees subtreesType,
       }
       matches = true;
       return Success;
-    default:
-      return NotReached("invalid subtrees", Result::FATAL_ERROR_INVALID_ARGS);
   }
 
   for (;;) {
@@ -1363,17 +1374,49 @@ MatchPresentedDirectoryNameWithConstraint(NameConstraintsSubtrees subtreesType,
       matches = false;
       return Success;
     }
-    Input constraintRDN;
+    Reader constraintRDN;
     rv = der::ExpectTagAndGetValue(constraintRDNs, der::SET, constraintRDN);
     if (rv != Success) {
       return rv;
     }
-    Input presentedRDN;
+    Reader presentedRDN;
     rv = der::ExpectTagAndGetValue(presentedRDNs, der::SET, presentedRDN);
     if (rv != Success) {
       return rv;
     }
-    if (!InputsAreEqual(constraintRDN, presentedRDN)) {
+    while (!constraintRDN.AtEnd() && !presentedRDN.AtEnd()) {
+      Input constraintType;
+      uint8_t constraintValueTag;
+      Input constraintValue;
+      rv = ReadAVA(constraintRDN, constraintType, constraintValueTag,
+                   constraintValue);
+      if (rv != Success) {
+        return rv;
+      }
+      Input presentedType;
+      uint8_t presentedValueTag;
+      Input presentedValue;
+      rv = ReadAVA(presentedRDN, presentedType, presentedValueTag,
+                   presentedValue);
+      if (rv != Success) {
+        return rv;
+      }
+      // TODO (bug 1155767): verify that if an AVA is a PrintableString it
+      // consists only of characters valid for PrintableStrings.
+      bool avasMatch =
+        InputsAreEqual(constraintType, presentedType) &&
+        InputsAreEqual(constraintValue, presentedValue) &&
+        (constraintValueTag == presentedValueTag ||
+         (constraintValueTag == der::Tag::UTF8String &&
+          presentedValueTag == der::Tag::PrintableString) ||
+         (constraintValueTag == der::Tag::PrintableString &&
+          presentedValueTag == der::Tag::UTF8String));
+      if (!avasMatch) {
+        matches = false;
+        return Success;
+      }
+    }
+    if (!constraintRDN.AtEnd() || !presentedRDN.AtEnd()) {
       matches = false;
       return Success;
     }
@@ -1448,7 +1491,9 @@ IsValidRFC822Name(Input input)
           return false;
         }
         Input domain;
-        reader.SkipToEnd(domain);
+        if (reader.SkipToEnd(domain) != Success) {
+          return false;
+        }
         return IsValidDNSID(domain, IDRole::PresentedID, AllowWildcards::No);
       }
 
@@ -1498,17 +1543,15 @@ MatchPresentedRFC822NameWithReferenceRFC822Name(Input presentedRFC822Name,
       }
 
       Input presentedDNSID;
-      presented.SkipToEnd(presentedDNSID);
+      if (presented.SkipToEnd(presentedDNSID) != Success) {
+        return Result::FATAL_ERROR_LIBRARY_FAILURE;
+      }
 
       return MatchPresentedDNSIDWithReferenceDNSID(
                presentedDNSID, AllowWildcards::No,
                AllowDotlessSubdomainMatches::No, IDRole::NameConstraint,
                referenceRFC822Name, matches);
     }
-
-    default:
-      return NotReached("invalid referenceRFC822NameRole",
-                        Result::FATAL_ERROR_INVALID_ARGS);
   }
 
   if (!IsValidRFC822Name(referenceRFC822Name)) {
@@ -1651,13 +1694,14 @@ FinishIPv6Address(/*in/out*/ uint8_t (&address)[16], int numComponents,
   }
 
   // Shift components that occur after the contraction over.
-  int componentsToMove = numComponents - contractionIndex;
-  memmove(address + (2u * (8 - componentsToMove)),
-          address + (2u * contractionIndex),
+  size_t componentsToMove = static_cast<size_t>(numComponents -
+                                                contractionIndex);
+  memmove(address + (2u * static_cast<size_t>(8 - componentsToMove)),
+          address + (2u * static_cast<size_t>(contractionIndex)),
           componentsToMove * 2u);
   // Fill in the contracted area with zeros.
-  memset(address + (2u * contractionIndex), 0u,
-         (8u - numComponents) * 2u);
+  memset(address + (2u * static_cast<size_t>(contractionIndex)), 0u,
+         (8u - static_cast<size_t>(numComponents)) * 2u);
 
   return true;
 }
@@ -1794,7 +1838,6 @@ ParseIPv6Address(Input hostname, /*out*/ uint8_t (&out)[16])
       if (contractionIndex != -1) {
         return false; // multiple contractions are not allowed.
       }
-      uint8_t b;
       if (input.Read(b) != Success || b != ':') {
         assert(false);
         return false;

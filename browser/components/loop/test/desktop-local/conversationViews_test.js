@@ -12,6 +12,8 @@ describe("loop.conversationViews", function () {
   var fakeMozLoop, fakeWindow;
 
   var CALL_STATES = loop.store.CALL_STATES;
+  var REST_ERRNOS = loop.shared.utils.REST_ERRNOS;
+  var WEBSOCKET_REASONS = loop.shared.utils.WEBSOCKET_REASONS;
 
   // XXX refactor to Just Work with "sandbox.stubComponent" or else
   // just pass in the sandbox and put somewhere generally usable
@@ -92,7 +94,9 @@ describe("loop.conversationViews", function () {
 
     fakeWindow = {
       navigator: { mozLoop: fakeMozLoop },
-      close: sandbox.stub(),
+      close: sinon.stub(),
+      addEventListener: function() {},
+      removeEventListener: function() {}
     };
     loop.shared.mixins.setRootObject(fakeWindow);
 
@@ -413,18 +417,18 @@ describe("loop.conversationViews", function () {
       expect(fakeAudio.loop).to.equal(false);
     });
 
-    it("should show 'something went wrong' when the reason is 'media-fail'",
+    it("should show 'something went wrong' when the reason is WEBSOCKET_REASONS.MEDIA_FAIL",
       function () {
-        store.setStoreState({callStateReason: "media-fail"});
+        store.setStoreState({callStateReason: WEBSOCKET_REASONS.MEDIA_FAIL});
 
         view = mountTestComponent({contact: contact});
 
         sinon.assert.calledWith(document.mozL10n.get, "generic_failure_title");
       });
 
-    it("should show 'contact unavailable' when the reason is 'reject'",
+    it("should show 'contact unavailable' when the reason is WEBSOCKET_REASONS.REJECT",
       function () {
-        store.setStoreState({callStateReason: "reject"});
+        store.setStoreState({callStateReason: WEBSOCKET_REASONS.REJECT});
 
         view = mountTestComponent({contact: contact});
 
@@ -433,9 +437,9 @@ describe("loop.conversationViews", function () {
           {contactName: loop.conversationViews._getContactDisplayName(contact)});
       });
 
-    it("should show 'contact unavailable' when the reason is 'busy'",
+    it("should show 'contact unavailable' when the reason is WEBSOCKET_REASONS.BUSY",
       function () {
-        store.setStoreState({callStateReason: "busy"});
+        store.setStoreState({callStateReason: WEBSOCKET_REASONS.BUSY});
 
         view = mountTestComponent({contact: contact});
 
@@ -444,9 +448,19 @@ describe("loop.conversationViews", function () {
           {contactName: loop.conversationViews._getContactDisplayName(contact)});
       });
 
-    it("should show 'contact unavailable' when the reason is 'setup'",
+    it("should show 'something went wrong' when the reason is 'setup'",
       function () {
         store.setStoreState({callStateReason: "setup"});
+
+        view = mountTestComponent({contact: contact});
+
+        sinon.assert.calledWithExactly(document.mozL10n.get,
+          "generic_failure_title");
+      });
+
+    it("should show 'contact unavailable' when the reason is REST_ERRNOS.USER_UNAVAILABLE",
+      function () {
+        store.setStoreState({callStateReason: REST_ERRNOS.USER_UNAVAILABLE});
 
         view = mountTestComponent({contact: contact});
 
@@ -456,8 +470,8 @@ describe("loop.conversationViews", function () {
       });
 
     it("should display a generic contact unavailable msg when the reason is" +
-       " 'busy' and no display name is available", function() {
-        store.setStoreState({callStateReason: "busy"});
+       " WEBSOCKET_REASONS.BUSY and no display name is available", function() {
+        store.setStoreState({callStateReason: WEBSOCKET_REASONS.BUSY});
         var phoneOnlyContact = {
           tel: [{"pref": true, type: "work", value: ""}]
         };
@@ -568,8 +582,7 @@ describe("loop.conversationViews", function () {
       return TestUtils.renderIntoDocument(
         React.createElement(loop.conversationViews.OutgoingConversationView, {
           dispatcher: dispatcher,
-          store: store,
-          feedbackStore: feedbackStore
+          store: store
         }));
     }
 
@@ -675,8 +688,7 @@ describe("loop.conversationViews", function () {
           client: client,
           conversation: conversation,
           sdk: {},
-          conversationAppStore: conversationAppStore,
-          feedbackStore: feedbackStore
+          conversationAppStore: conversationAppStore
         }));
     }
 
@@ -846,7 +858,7 @@ describe("loop.conversationViews", function () {
               promise.then(function() {
                 icView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "timeout"
+                  reason: WEBSOCKET_REASONS.TIMEOUT
                 }, "alerting");
 
                 sinon.assert.calledOnce(navigator.mozLoop.stopAlerting);
@@ -858,7 +870,7 @@ describe("loop.conversationViews", function () {
               promise.then(function() {
                 icView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "closed"
+                  reason: WEBSOCKET_REASONS.CLOSED
                 }, "alerting");
 
                 sinon.assert.calledOnce(icView._websocket.close);
@@ -870,7 +882,7 @@ describe("loop.conversationViews", function () {
               promise.then(function() {
                 icView._websocket.trigger("progress", {
                   state: "terminated",
-                  reason: "answered-elsewhere"
+                  reason: WEBSOCKET_REASONS.ANSWERED_ELSEWHERE
                 }, "alerting");
 
                 sandbox.clock.tick(1);
@@ -889,7 +901,7 @@ describe("loop.conversationViews", function () {
                 promise.then(function() {
                   icView._websocket.trigger("progress", {
                     state: "terminated",
-                    reason: "media-fail"
+                    reason: WEBSOCKET_REASONS.MEDIA_FAIL
                   }, "connecting");
 
                   expect(icView.state.callStatus).eql("end");
@@ -901,7 +913,7 @@ describe("loop.conversationViews", function () {
                 promise.then(function() {
                   icView._websocket.trigger("progress", {
                     state: "terminated",
-                    reason: "media-fail"
+                    reason: WEBSOCKET_REASONS.MEDIA_FAIL
                   }, "connecting");
 
                   sinon.assert.calledOnce(navigator.mozLoop.stopAlerting);

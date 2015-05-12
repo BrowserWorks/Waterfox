@@ -139,7 +139,7 @@ function ensure_results(aSearchString, aExpectedValue) {
     waitForCleanup(run_next_test);
   };
 
-  do_log_info("Searching for: '" + aSearchString + "'");
+  do_print("Searching for: '" + aSearchString + "'");
   controller.startSearch(aSearchString);
 }
 
@@ -153,7 +153,7 @@ function run_test() {
   gAutoCompleteTests.forEach(function (testData) {
     let [description, searchString, expectedValue, setupFunc] = testData;
     add_test(function () {
-      do_log_info(description);
+      do_print(description);
       Services.prefs.setBoolPref("browser.urlbar.autocomplete.enabled", true);
       Services.prefs.setBoolPref("browser.urlbar.autoFill", true);
       Services.prefs.setBoolPref("browser.urlbar.autoFill.typed", false);
@@ -166,8 +166,8 @@ function run_test() {
       // updates.
       // This is not a problem in real life, but autocomplete tests should
       // return reliable resultsets, thus we have to wait.
-      promiseAsyncUpdates().then(function () ensure_results(searchString,
-                                                            expectedValue));
+      PlacesTestUtils.promiseAsyncUpdates()
+                     .then(() => ensure_results(searchString, expectedValue));
     })
   }, this);
 
@@ -181,7 +181,7 @@ function add_autocomplete_test(aTestData) {
 
 function waitForCleanup(aCallback) {
   remove_all_bookmarks();
-  promiseClearHistory().then(aCallback);
+  PlacesTestUtils.clearHistory().then(aCallback);
 }
 
 function addBookmark(aBookmarkObj) {

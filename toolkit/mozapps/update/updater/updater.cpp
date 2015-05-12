@@ -98,10 +98,17 @@ void LaunchMacPostProcess(const char* aAppBundle);
 # include <linux/ioprio.h>
 # include <sys/resource.h>
 
+#if ANDROID_VERSION < 21
 // The only header file in bionic which has a function prototype for ioprio_set
 // is libc/include/sys/linux-unistd.h. However, linux-unistd.h conflicts
 // badly with unistd.h, so we declare the prototype for ioprio_set directly.
 extern "C" MOZ_EXPORT int ioprio_set(int which, int who, int ioprio);
+#else
+# include <sys/syscall.h>
+static int ioprio_set(int which, int who, int ioprio) {
+      return syscall(__NR_ioprio_set, which, who, ioprio);
+}
+#endif
 
 # define MAYBE_USE_HARD_LINKS 1
 static bool sUseHardLinks = true;
@@ -133,10 +140,8 @@ static bool sUseHardLinks = true;
 #define BZ2_CRC32TABLE_UNDECLARED
 
 #if MOZ_IS_GCC
-#if MOZ_GCC_VERSION_AT_LEAST(3, 3, 0)
 extern "C"  __attribute__((visibility("default"))) unsigned int BZ2_crc32Table[256];
 #undef BZ2_CRC32TABLE_UNDECLARED
-#endif
 #elif defined(__SUNPRO_C) || defined(__SUNPRO_CC)
 extern "C" __global unsigned int BZ2_crc32Table[256];
 #undef BZ2_CRC32TABLE_UNDECLARED
@@ -464,11 +469,12 @@ static int ensure_remove(const NS_tchar *path)
 }
 
 // Remove the directory pointed to by path and all of its files and sub-directories.
-static int ensure_remove_recursive(const NS_tchar *path)
+static int ensure_remove_recursive(const NS_tchar *path,
+                                   bool continueEnumOnFailure = false)
 {
   // We use lstat rather than stat here so that we can successfully remove
   // symlinks.
-  struct stat sInfo;
+  struct NS_tstat_t sInfo;
   int rv = NS_tlstat(path, &sInfo);
   if (rv) {
     // This error is benign
@@ -483,8 +489,8 @@ static int ensure_remove_recursive(const NS_tchar *path)
 
   dir = NS_topendir(path);
   if (!dir) {
-    LOG(("ensure_remove_recursive: path is not a directory: " LOG_S ", rv: %d, err: %d",
-         path, rv, errno));
+    LOG(("ensure_remove_recursive: unable to open directory: " LOG_S
+         ", rv: %d, err: %d", path, rv, errno));
     return rv;
   }
 
@@ -495,7 +501,7 @@ static int ensure_remove_recursive(const NS_tchar *path)
       NS_tsnprintf(childPath, sizeof(childPath)/sizeof(childPath[0]),
                    NS_T("%s/%s"), path, entry->d_name);
       rv = ensure_remove_recursive(childPath);
-      if (rv) {
+      if (rv && !continueEnumOnFailure) {
         break;
       }
     }
@@ -507,8 +513,8 @@ static int ensure_remove_recursive(const NS_tchar *path)
     ensure_write_permissions(path);
     rv = NS_trmdir(path);
     if (rv) {
-      LOG(("ensure_remove_recursive: path is not a directory: " LOG_S ", rv: %d, err: %d",
-           path, rv, errno));
+      LOG(("ensure_remove_recursive: unable to remove directory: " LOG_S
+           ", rv: %d, err: %d", path, rv, errno));
     }
   }
   return rv;
@@ -550,7 +556,7 @@ static FILE* ensure_open(const NS_tchar *path, const NS_tchar *flags, unsigned i
     }
     return nullptr;
   }
-  struct stat ss;
+  struct NS_tstat_t ss;
   if (NS_tstat(path, &ss) != 0 || ss.st_mode != options) {
     if (f != nullptr) {
       fclose(f);
@@ -639,7 +645,7 @@ static int ensure_copy(const NS_tchar *path, const NS_tchar *dest)
   }
   return 0;
 #else
-  struct stat ss;
+  struct NS_tstat_t ss;
   int rv = NS_tlstat(path, &ss);
   if (rv) {
     LOG(("ensure_copy: failed to read file status info: " LOG_S ", err: %d",
@@ -722,8 +728,9 @@ struct copy_recursive_skiplist {
   void append(unsigned index, const NS_tchar *path, const NS_tchar *suffix) {
     NS_tsnprintf(paths[index], MAXPATHLEN, NS_T("%s/%s"), path, suffix);
   }
+
   bool find(const NS_tchar *path) {
-    for (unsigned i = 0; i < N; ++i) {
+    for (int i = 0; i < static_cast<int>(N); ++i) {
       if (!NS_tstricmp(paths[i], path)) {
         return true;
       }
@@ -738,7 +745,7 @@ template <unsigned N>
 static int ensure_copy_recursive(const NS_tchar *path, const NS_tchar *dest,
                                  copy_recursive_skiplist<N>& skiplist)
 {
-  struct stat sInfo;
+  struct NS_tstat_t sInfo;
   int rv = NS_tlstat(path, &sInfo);
   if (rv) {
     LOG(("ensure_copy_recursive: path doesn't exist: " LOG_S ", rv: %d, err: %d",
@@ -791,7 +798,7 @@ static int ensure_copy_recursive(const NS_tchar *path, const NS_tchar *dest,
       }
     }
   }
-
+  NS_tclosedir(dir);
   return rv;
 }
 
@@ -804,7 +811,7 @@ static int rename_file(const NS_tchar *spath, const NS_tchar *dpath,
   if (rv)
     return rv;
 
-  struct stat spathInfo;
+  struct NS_tstat_t spathInfo;
   rv = NS_tstat(spath, &spathInfo);
   if (rv) {
     LOG(("rename_file: failed to read file status info: " LOG_S ", " \
@@ -838,6 +845,73 @@ static int rename_file(const NS_tchar *spath, const NS_tchar *dpath,
 
   return OK;
 }
+
+#ifdef XP_WIN
+// Remove the directory pointed to by path and all of its files and
+// sub-directories. If a file is in use move it to the tobedeleted directory
+// and attempt to schedule removal of the file on reboot
+static int remove_recursive_on_reboot(const NS_tchar *path, const NS_tchar *deleteDir)
+{
+  struct NS_tstat_t sInfo;
+  int rv = NS_tlstat(path, &sInfo);
+  if (rv) {
+    // This error is benign
+    return rv;
+  }
+
+  if (!S_ISDIR(sInfo.st_mode)) {
+    NS_tchar tmpDeleteFile[MAXPATHLEN];
+    GetTempFileNameW(deleteDir, L"rep", 0, tmpDeleteFile);
+    NS_tremove(tmpDeleteFile);
+    rv = rename_file(path, tmpDeleteFile, false);
+    if (MoveFileEx(rv ? path : tmpDeleteFile, nullptr, MOVEFILE_DELAY_UNTIL_REBOOT)) {
+      LOG(("remove_recursive_on_reboot: file will be removed on OS reboot: "
+           LOG_S, rv ? path : tmpDeleteFile));
+    } else {
+      LOG(("remove_recursive_on_reboot: failed to schedule OS reboot removal of "
+           "file: " LOG_S, rv ? path : tmpDeleteFile));
+    }
+    return rv;
+  }
+
+  NS_tDIR *dir;
+  NS_tdirent *entry;
+
+  dir = NS_topendir(path);
+  if (!dir) {
+    LOG(("remove_recursive_on_reboot: unable to open directory: " LOG_S
+         ", rv: %d, err: %d",
+         path, rv, errno));
+    return rv;
+  }
+
+  while ((entry = NS_treaddir(dir)) != 0) {
+    if (NS_tstrcmp(entry->d_name, NS_T(".")) &&
+        NS_tstrcmp(entry->d_name, NS_T(".."))) {
+      NS_tchar childPath[MAXPATHLEN];
+      NS_tsnprintf(childPath, sizeof(childPath)/sizeof(childPath[0]),
+                   NS_T("%s/%s"), path, entry->d_name);
+      // There is no need to check the return value of this call since this
+      // function is only called after an update is successful and there is not
+      // much that can be done to recover if it isn't successful. There is also
+      // no need to log the value since it will have already been logged.
+      remove_recursive_on_reboot(childPath, deleteDir);
+    }
+  }
+
+  NS_tclosedir(dir);
+
+  if (rv == OK) {
+    ensure_write_permissions(path);
+    rv = NS_trmdir(path);
+    if (rv) {
+      LOG(("remove_recursive_on_reboot: unable to remove directory: " LOG_S
+           ", rv: %d, err: %d", path, rv, errno));
+    }
+  }
+  return rv;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 
@@ -993,7 +1067,7 @@ RemoveFile::Prepare()
   LOG(("PREPARE REMOVEFILE " LOG_S, mFile));
 
   // Make sure that we're actually a file...
-  struct stat fileInfo;
+  struct NS_tstat_t fileInfo;
   rv = NS_tstat(mFile, &fileInfo);
   if (rv) {
     LOG(("failed to read file status info: " LOG_S ", err: %d", mFile,
@@ -1102,7 +1176,7 @@ RemoveDir::Prepare()
   LOG(("PREPARE REMOVEDIR " LOG_S "/", mDir));
 
   // Make sure that we're actually a dir.
-  struct stat dirInfo;
+  struct NS_tstat_t dirInfo;
   rv = NS_tstat(mDir, &dirInfo);
   if (rv) {
     LOG(("failed to read directory status info: " LOG_S ", err: %d", mDir,
@@ -1435,7 +1509,7 @@ PatchFile::Execute()
 
   // Rename the destination file if it exists before proceeding so it can be
   // used to restore the file to its original state if there is an error.
-  struct stat ss;
+  struct NS_tstat_t ss;
   rv = NS_tstat(mFile, &ss);
   if (rv) {
     LOG(("failed to read file status info: " LOG_S ", err: %d", mFile,
@@ -2011,16 +2085,20 @@ ProcessReplaceRequest()
   }
 
   LOG(("Now, remove the tmpDir"));
-  rv = ensure_remove_recursive(tmpDir);
+  rv = ensure_remove_recursive(tmpDir, true);
   if (rv) {
     LOG(("Removing tmpDir failed, err: %d", rv));
 #ifdef XP_WIN
-    if (MoveFileExW(tmpDir, nullptr, MOVEFILE_DELAY_UNTIL_REBOOT)) {
-      LOG(("tmpDir will be removed on OS reboot: " LOG_S, tmpDir));
-    } else {
-      LOG(("Failed to schedule OS reboot removal of directory: " LOG_S,
-           tmpDir));
+    NS_tchar deleteDir[MAXPATHLEN];
+    NS_tsnprintf(deleteDir, sizeof(deleteDir)/sizeof(deleteDir[0]),
+                 NS_T("%s\\%s"), destDir, DELETE_DIR);
+    // Attempt to remove the tobedeleted directory and then recreate it if it
+    // was successfully removed.
+    _wrmdir(deleteDir);
+    if (NS_taccess(deleteDir, F_OK)) {
+      NS_tmkdir(deleteDir, 0755);
     }
+    remove_recursive_on_reboot(tmpDir, deleteDir);
 #endif
   }
 
@@ -2045,7 +2123,6 @@ WaitForServiceFinishThread(void *param)
   // We wait at most 10 minutes, we already waited 5 seconds previously
   // before deciding to show this UI.
   WaitForServiceStop(SVC_NAME, 595);
-  LOG(("calling QuitProgressUI"));
   QuitProgressUI();
 }
 #endif
@@ -2467,9 +2544,9 @@ int NS_main(int argc, NS_tchar **argv)
 #ifdef XP_WIN
     // On Windows, the current working directory of the process should be changed
     // so that it's not locked.
-    NS_tchar tmpDir[MAXPATHLEN];
-    if (GetTempPathW(MAXPATHLEN, tmpDir)) {
-      NS_tchdir(tmpDir);
+    NS_tchar sysDir[MAX_PATH + 1] = { L'\0' };
+    if (GetSystemDirectoryW(sysDir, MAX_PATH + 1)) {
+      NS_tchdir(sysDir);
     }
 #endif
   }

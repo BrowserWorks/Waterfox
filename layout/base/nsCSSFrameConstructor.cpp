@@ -4952,7 +4952,7 @@ nsCSSFrameConstructor::FindMathMLData(Element* aElement,
     SIMPLE_MATHML_CREATE(munder_, NS_NewMathMLmunderoverFrame),
     SIMPLE_MATHML_CREATE(mover_, NS_NewMathMLmunderoverFrame),
     SIMPLE_MATHML_CREATE(munderover_, NS_NewMathMLmunderoverFrame),
-    SIMPLE_MATHML_CREATE(mphantom_, NS_NewMathMLmphantomFrame),
+    SIMPLE_MATHML_CREATE(mphantom_, NS_NewMathMLmrowFrame),
     SIMPLE_MATHML_CREATE(mpadded_, NS_NewMathMLmpaddedFrame),
     SIMPLE_MATHML_CREATE(mspace_, NS_NewMathMLmspaceFrame),
     SIMPLE_MATHML_CREATE(none, NS_NewMathMLmspaceFrame),
@@ -8991,7 +8991,7 @@ nsCSSFrameConstructor::MaybeRecreateFramesForElement(Element* aElement)
 static bool
 IsWhitespaceFrame(nsIFrame* aFrame)
 {
-  NS_ABORT_IF_FALSE(aFrame, "invalid argument");
+  MOZ_ASSERT(aFrame, "invalid argument");
   return aFrame->GetType() == nsGkAtoms::textFrame &&
     aFrame->GetContent()->TextIsOnlyWhitespace();
 }
@@ -9296,9 +9296,9 @@ nsCSSFrameConstructor::RecreateFramesForContent(nsIContent*  aContent,
       // nsIAnonymousContentCreator that created this content knows how to make
       // that happen.
       nsIAnonymousContentCreator* acc = nullptr;
-      nsIFrame* ancestor = frame->GetParent();
+      nsIFrame* ancestor = nsLayoutUtils::GetParentOrPlaceholderFor(frame);
       while (!(acc = do_QueryFrame(ancestor))) {
-        ancestor = ancestor->GetParent();
+        ancestor = nsLayoutUtils::GetParentOrPlaceholderFor(ancestor);
       }
       NS_ASSERTION(acc, "Where is the nsIAnonymousContentCreator? We may fail "
                         "to recreate its content correctly");
@@ -9599,9 +9599,9 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
         // else, we have a next child and it does not want to be wrapped.  So,
         // we jump back to the beginning of the loop to skip over that child
         // (and anything else non-wrappable after it)
-        NS_ABORT_IF_FALSE(!iter.IsDone() &&
-                          !iter.item().NeedsAnonFlexOrGridItem(aState),
-                          "hitEnd and/or nextChildNeedsAnonItem lied");
+        MOZ_ASSERT(!iter.IsDone() &&
+                   !iter.item().NeedsAnonFlexOrGridItem(aState),
+                   "hitEnd and/or nextChildNeedsAnonItem lied");
         continue;
       }
     }
@@ -9644,10 +9644,10 @@ nsCSSFrameConstructor::CreateNeededAnonFlexOrGridItems(
       newItem->mStyleContext->StyleDisplay()->IsInlineOutsideStyle();
     newItem->mIsBlock = !newItem->mIsAllInline;
 
-    NS_ABORT_IF_FALSE(!newItem->mIsAllInline && newItem->mIsBlock,
-                      "expecting anonymous flex/grid items to be block-level "
-                      "(this will make a difference when we encounter "
-                      "'align-items: baseline')");
+    MOZ_ASSERT(!newItem->mIsAllInline && newItem->mIsBlock,
+               "expecting anonymous flex/grid items to be block-level "
+               "(this will make a difference when we encounter "
+               "'align-items: baseline')");
 
     // Anonymous flex and grid items induce line boundaries around their
     // contents.
@@ -9879,9 +9879,8 @@ nsCSSFrameConstructor::CreateNeededPseudoInternalRubyBoxes(
     return;
   }
 
-  nsStyleContext* parentStyle = aParentFrame->StyleContext();
-  if (!parentStyle->GetPseudo()) {
-    // Normally, pseudo frames start from and end at some elements,
+  if (!IsRubyPseudo(aParentFrame)) {
+    // Normally, ruby pseudo frames start from and end at some elements,
     // which means they don't have leading and trailing whitespaces at
     // all.  But there are two cases where they do actually have leading
     // or trailing whitespaces:
@@ -9896,6 +9895,7 @@ nsCSSFrameConstructor::CreateNeededPseudoInternalRubyBoxes(
 
   FCItemIterator iter(aItems);
   nsIContent* parentContent = aParentFrame->GetContent();
+  nsStyleContext* parentStyle = aParentFrame->StyleContext();
   while (!iter.IsDone()) {
     if (!iter.SkipItemsWantingParentType(ourParentType)) {
       if (ourParentType == eTypeRuby) {
@@ -10244,17 +10244,17 @@ nsCSSFrameConstructor::AddFCItemsForAnonymousContent(
                  "ProcessChildren() codepath for this frame");
 #endif
     // Assert some things about this content
-    NS_ABORT_IF_FALSE(!(content->GetFlags() &
-                        (NODE_DESCENDANTS_NEED_FRAMES | NODE_NEEDS_FRAME)),
-                      "Should not be marked as needing frames");
-    NS_ABORT_IF_FALSE(!content->IsElement() ||
-                      !(content->GetFlags() & ELEMENT_ALL_RESTYLE_FLAGS),
-                      "Should have no pending restyle flags");
-    NS_ABORT_IF_FALSE(!content->GetPrimaryFrame(),
-                      "Should have no existing frame");
-    NS_ABORT_IF_FALSE(!content->IsNodeOfType(nsINode::eCOMMENT) &&
-                      !content->IsNodeOfType(nsINode::ePROCESSING_INSTRUCTION),
-                      "Why is someone creating garbage anonymous content");
+    MOZ_ASSERT(!(content->GetFlags() &
+                 (NODE_DESCENDANTS_NEED_FRAMES | NODE_NEEDS_FRAME)),
+               "Should not be marked as needing frames");
+    MOZ_ASSERT(!content->IsElement() ||
+               !(content->GetFlags() & ELEMENT_ALL_RESTYLE_FLAGS),
+               "Should have no pending restyle flags");
+    MOZ_ASSERT(!content->GetPrimaryFrame(),
+               "Should have no existing frame");
+    MOZ_ASSERT(!content->IsNodeOfType(nsINode::eCOMMENT) &&
+               !content->IsNodeOfType(nsINode::ePROCESSING_INSTRUCTION),
+               "Why is someone creating garbage anonymous content");
 
     nsRefPtr<nsStyleContext> styleContext;
     TreeMatchContext::AutoParentDisplayBasedStyleFixupSkipper
@@ -10342,8 +10342,8 @@ nsCSSFrameConstructor::ProcessChildren(nsFrameConstructorState& aState,
   GetAnonymousContent(aContent, aPossiblyLeafFrame, anonymousItems);
 #ifdef DEBUG
   for (uint32_t i = 0; i < anonymousItems.Length(); ++i) {
-    NS_ABORT_IF_FALSE(anonymousItems[i].mContent->IsRootOfAnonymousSubtree(),
-                      "Content should know it's an anonymous subtree");
+    MOZ_ASSERT(anonymousItems[i].mContent->IsRootOfAnonymousSubtree(),
+               "Content should know it's an anonymous subtree");
   }
 #endif
   AddFCItemsForAnonymousContent(aState, aFrame, anonymousItems,

@@ -7,18 +7,12 @@
 
 #include "jsapi-tests/tests.h"
 
-#ifdef JS_HAS_SYMBOLS
-#define STD_ITERATOR "Symbol.iterator"
-#else
-#define STD_ITERATOR "'@@iterator'"
-#endif
-
 BEGIN_TEST(testForOfIterator_basicNonIterable)
 {
     JS::RootedValue v(cx);
     // Hack to make it simple to produce an object that has a property
     // named Symbol.iterator.
-    EVAL("({[" STD_ITERATOR "]: 5})", &v);
+    EVAL("({[Symbol.iterator]: 5})", &v);
     JS::ForOfIterator iter(cx);
     bool ok = iter.init(v);
     CHECK(!ok);
@@ -33,7 +27,7 @@ BEGIN_TEST(testForOfIterator_bug515273_part1)
 
     // Hack to make it simple to produce an object that has a property
     // named Symbol.iterator.
-    EVAL("({[" STD_ITERATOR "]: 5})", &v);
+    EVAL("({[Symbol.iterator]: 5})", &v);
 
     JS::ForOfIterator iter(cx);
     bool ok = iter.init(v, JS::ForOfIterator::AllowNonIterable);
@@ -45,8 +39,7 @@ END_TEST(testForOfIterator_bug515273_part1)
 
 BEGIN_TEST(testForOfIterator_bug515273_part2)
 {
-    JS::RootedObject obj(cx,
-			 JS_NewObject(cx, nullptr, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject obj(cx, JS_NewPlainObject(cx));
     CHECK(obj);
     JS::RootedValue v(cx, JS::ObjectValue(*obj));
 

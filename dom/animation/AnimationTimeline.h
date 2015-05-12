@@ -10,6 +10,7 @@
 #include "nsCycleCollectionParticipant.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/TimeStamp.h"
+#include "nsIGlobalObject.h"
 #include "js/TypeDecls.h"
 #include "nsIDocument.h"
 #include "nsRefreshDriver.h"
@@ -19,12 +20,14 @@ struct JSContext;
 namespace mozilla {
 namespace dom {
 
-class AnimationTimeline MOZ_FINAL : public nsWrapperCache
+class AnimationTimeline final : public nsWrapperCache
 {
 public:
   explicit AnimationTimeline(nsIDocument* aDocument)
     : mDocument(aDocument)
+    , mWindow(aDocument->GetParentObject())
   {
+    MOZ_ASSERT(mWindow);
   }
 
 protected:
@@ -36,9 +39,9 @@ public:
 
   nsIGlobalObject* GetParentObject() const
   {
-    return mDocument->GetParentObject();
+    return mWindow;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   // AnimationTimeline methods
   Nullable<TimeDuration> GetCurrentTime() const;
@@ -70,7 +73,12 @@ public:
 protected:
   TimeStamp GetCurrentTimeStamp() const;
 
+  // Sometimes documents can be given a new window, or windows can be given a
+  // new document (e.g. document.open()). Since GetParentObject is required to
+  // _always_ return the same object it can't get the window from our
+  // mDocument, which is why we have pointers to both our document and window.
   nsCOMPtr<nsIDocument> mDocument;
+  nsCOMPtr<nsIGlobalObject> mWindow;
 
   // The most recently used refresh driver time. This is used in cases where
   // we don't have a refresh driver (e.g. because we are in a display:none

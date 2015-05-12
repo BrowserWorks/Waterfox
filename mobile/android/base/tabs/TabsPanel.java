@@ -14,6 +14,8 @@ import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.animation.PropertyAnimator;
+import org.mozilla.gecko.Tab;
+import org.mozilla.gecko.Tabs;
 import org.mozilla.gecko.animation.ViewHelper;
 import org.mozilla.gecko.lwt.LightweightTheme;
 import org.mozilla.gecko.lwt.LightweightThemeDrawable;
@@ -64,7 +66,7 @@ public class TabsPanel extends LinearLayout
     }
 
     public static View createTabsLayout(final Context context, final AttributeSet attrs) {
-        if (NewTabletUI.isEnabled(context)) {
+        if (HardwareUtils.isTablet()) {
             return new TabsGridLayout(context, attrs);
         } else {
             return new TabsListLayout(context, attrs);
@@ -166,7 +168,7 @@ public class TabsPanel extends LinearLayout
             }
         });
 
-        if(NewTabletUI.isEnabled(getContext())) {
+        if (HardwareUtils.isTablet()) {
             ViewStub backButtonStub = (ViewStub) findViewById(R.id.nav_back_stub);
             mNavBackButton = (ImageButton) backButtonStub.inflate( );
             mNavBackButton.setOnClickListener(new Button.OnClickListener() {
@@ -256,7 +258,7 @@ public class TabsPanel extends LinearLayout
         int screenHeight = resources.getDisplayMetrics().heightPixels;
         int actionBarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
 
-        if(NewTabletUI.isEnabled(tabsContainer.getContext())){
+        if (HardwareUtils.isTablet()) {
             return screenHeight - actionBarHeight;
         }
 
@@ -393,15 +395,42 @@ public class TabsPanel extends LinearLayout
     }
 
     public void show(Panel panelToShow) {
-        if (!isShown())
+        final boolean showAnimation = !mVisible;
+        prepareToShow(panelToShow);
+        if (isSideBar()) {
+            if (showAnimation) {
+                dispatchLayoutChange(getWidth(), getHeight());
+            }
+        } else {
+            int height = getVerticalPanelHeight();
+            dispatchLayoutChange(getWidth(), height);
+        }
+        mHeaderVisible = true;
+    }
+
+    public void prepareToDrag() {
+        Tab selectedTab = Tabs.getInstance().getSelectedTab();
+        if (selectedTab != null && selectedTab.isPrivate()) {
+            prepareToShow(TabsPanel.Panel.PRIVATE_TABS);
+        } else {
+            prepareToShow(TabsPanel.Panel.NORMAL_TABS);
+        }
+        mHeaderVisible = true;
+        if (mIsSideBar) {
+            prepareSidebarAnimation(getWidth());
+        }
+    }
+
+    public void prepareToShow(Panel panelToShow) {
+        if (!isShown()) {
             setVisibility(View.VISIBLE);
+        }
 
         if (mPanel != null) {
             // Hide the old panel.
             mPanel.hide();
         }
 
-        final boolean showAnimation = !mVisible;
         mVisible = true;
         mCurrentPanel = panelToShow;
 
@@ -435,16 +464,17 @@ public class TabsPanel extends LinearLayout
         } else {
             mPopupMenu.setAnchor(mAddTab);
         }
+    }
 
-        if (isSideBar()) {
-            if (showAnimation)
-                dispatchLayoutChange(getWidth(), getHeight());
-        } else {
-            int actionBarHeight = mContext.getResources().getDimensionPixelSize(R.dimen.browser_toolbar_height);
-            int height = actionBarHeight + getTabContainerHeight(mTabsContainer);
-            dispatchLayoutChange(getWidth(), height);
-        }
-        mHeaderVisible = true;
+    public void hideImmediately() {
+        mVisible = false;
+        setVisibility(View.INVISIBLE);
+    }
+
+    public int getVerticalPanelHeight() {
+        final int actionBarHeight = mContext.getResources().getDimensionPixelSize(R.dimen.browser_toolbar_height);
+        final int height = actionBarHeight + getTabContainerHeight(mTabsContainer);
+        return height;
     }
 
     public void hide() {
@@ -488,6 +518,28 @@ public class TabsPanel extends LinearLayout
         return mCurrentPanel;
     }
 
+    public void setHWLayerEnabled(boolean enabled) {
+        if (Versions.preHC) {
+            return;
+        }
+        if (enabled) {
+            mHeader.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+            mTabsContainer.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        } else {
+            mHeader.setLayerType(View.LAYER_TYPE_NONE, null);
+            mTabsContainer.setLayerType(View.LAYER_TYPE_NONE, null);
+        }
+    }
+
+    public void prepareSidebarAnimation(int tabsPanelWidth) {
+        if (mVisible) {
+            ViewHelper.setTranslationX(mHeader, -tabsPanelWidth);
+            ViewHelper.setTranslationX(mTabsContainer, -tabsPanelWidth);
+            // The footer view is only present on the sidebar, v11+.
+            ViewHelper.setTranslationX(mFooter, -tabsPanelWidth);
+        }
+    }
+
     public void prepareTabsAnimation(PropertyAnimator animator) {
         // Not worth doing this on pre-Honeycomb without proper
         // hardware accelerated animations.
@@ -497,13 +549,7 @@ public class TabsPanel extends LinearLayout
 
         if (mIsSideBar) {
             final int tabsPanelWidth = getWidth();
-            if (mVisible) {
-                ViewHelper.setTranslationX(mHeader, -tabsPanelWidth);
-                ViewHelper.setTranslationX(mTabsContainer, -tabsPanelWidth);
-
-                // The footer view is only present on the sidebar, v11+.
-                ViewHelper.setTranslationX(mFooter, -tabsPanelWidth);
-            }
+            prepareSidebarAnimation(tabsPanelWidth);
             final int translationX = (mVisible ? 0 : -tabsPanelWidth);
             animator.attach(mTabsContainer, PropertyAnimator.Property.TRANSLATION_X, translationX);
             animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_X, translationX);
@@ -523,8 +569,25 @@ public class TabsPanel extends LinearLayout
             animator.attach(mHeader, PropertyAnimator.Property.TRANSLATION_Y, translationY);
         }
 
-        mHeader.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        mTabsContainer.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        setHWLayerEnabled(true);
+    }
+
+    public void translateInRange(float progress) {
+        final Resources resources = getContext().getResources();
+        if (!mIsSideBar) {
+            final int toolbarHeight = resources.getDimensionPixelSize(R.dimen.browser_toolbar_height);
+            final int translationY =  (int) - ((1 - progress) * toolbarHeight);
+            ViewHelper.setTranslationY(mHeader, translationY);
+            ViewHelper.setTranslationY(mTabsContainer, translationY);
+            mTabsContainer.setAlpha(progress);
+        } else {
+            final int tabsPanelWidth = getWidth();
+            prepareSidebarAnimation(tabsPanelWidth);
+            final int translationX = (int) - ((1 - progress) * tabsPanelWidth);
+            ViewHelper.setTranslationX(mHeader, translationX);
+            ViewHelper.setTranslationX(mTabsContainer, translationX);
+            ViewHelper.setTranslationX(mFooter, translationX);
+        }
     }
 
     public void finishTabsAnimation() {
@@ -532,10 +595,9 @@ public class TabsPanel extends LinearLayout
             return;
         }
 
-        mHeader.setLayerType(View.LAYER_TYPE_NONE, null);
-        mTabsContainer.setLayerType(View.LAYER_TYPE_NONE, null);
+        setHWLayerEnabled(false);
 
-        // If the tabs panel is now hidden, call hide() on current panel and unset it as the current panel
+        // If the tray is now hidden, call hide() on current panel and unset it as the current panel
         // to avoid hide() being called again when the layout is opened next.
         if (!mVisible && mPanel != null) {
             mPanel.hide();

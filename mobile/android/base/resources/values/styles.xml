@@ -97,9 +97,6 @@
     </style>
 
     <style name="Widget.MenuItemActionView">
-        <item name="android:divider">@drawable/divider_vertical</item>
-        <item name="android:showDividers">middle</item>
-        <item name="android:dividerPadding">0dip</item>
         <item name="android:gravity">left</item>
     </style>
 
@@ -274,15 +271,12 @@
         <item name="android:gravity">center</item>
     </style>
 
-    <style name="Widget.Onboard.Start.Button" parent="Widget.BaseButton">
-        <item name="android:layout_width">0dp</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:layout_weight">1</item>
-        <item name="android:paddingTop">15dp</item>
-        <item name="android:paddingBottom">15dp</item>
-        <item name="android:background">@drawable/onboard_start_button</item>
-        <item name="android:textColor">#4A90E2</item>
-        <item name="android:textSize">16sp</item>
+    <style name="Widget.Firstrun.Button" parent="Widget.BaseButton">
+        <item name="android:layout_width">@dimen/firstrun_content_width</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:textColor">@color/android:white</item>
+        <item name="android:background">@color/firstrun_pager_button</item>
+        <item name="android:textSize">18sp</item>
     </style>
 
     <!--
@@ -782,24 +776,25 @@
         <item name="android:gravity">right</item>
     </style>
 
-    <style name="ShareOverlayButton">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:minHeight">60dp</item>
-        <item name="android:gravity">center_vertical</item>
+    <style name="ShareOverlayTitle">
+        <item name="android:gravity">center_horizontal</item>
         <item name="android:paddingLeft">15dp</item>
         <item name="android:paddingRight">15dp</item>
-        <item name="android:paddingTop">17dp</item>
-        <item name="android:paddingBottom">17dp</item>
-        <item name="android:focusableInTouchMode">false</item>
-        <item name="android:layout_margin">0dp</item>
     </style>
 
-    <style name="ShareOverlayButton.Text">
-        <item name="android:drawablePadding">15dp</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/overlay_btn_text</item>
+    <style name="TextAppearance.ShareOverlay">
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="TextAppearance.ShareOverlay.Header">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+
+    <style name="ShareOverlayRow">
+        <item name="android:minHeight">60dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/overlay_share_button_background</item>
+        <item name="android:focusableInTouchMode">false</item>
     </style>
 
     <style name="TabInput"></style>
@@ -820,19 +815,33 @@
     </style>
 
     <!-- Make the share overlay activity appear like an overlay. -->
-    <style name="ShareOverlayActivity">
+    <style name="ShareOverlayActivity" parent="Gecko">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:backgroundDimEnabled">true</item>
+
+        <!-- We display the overlay on top of other Activities so show their status bar. -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
-    <style name="OnboardStartTextAppearance">
-        <item name="android:textColor">#5F636B</item>
+    <style name="TextAppearance.FirstrunLight"/>
+    <style name="TextAppearance.FirstrunRegular"/>
+
+    <style name="TextAppearance.FirstrunLight.Main">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">#363B40</item>
     </style>
 
-    <style name="OnboardStartTextAppearance.Subtext">
-        <item name="android:textSize">18sp</item>
+    <style name="TextAppearance.FirstrunRegular.Body">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#777777</item>
+        <item name="android:lineSpacingMultiplier">1.25</item>
+    </style>
+
+    <style name="TextAppearance.FirstrunRegular.Link">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">#0096DD</item>
     </style>
 
     <!-- Remote Tabs home panel -->

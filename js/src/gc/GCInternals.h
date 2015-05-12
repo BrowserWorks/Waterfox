@@ -17,21 +17,21 @@ namespace js {
 namespace gc {
 
 void
-MarkPersistentRootedChains(JSTracer *trc);
+MarkPersistentRootedChains(JSTracer* trc);
 
 class AutoCopyFreeListToArenas
 {
-    JSRuntime *runtime;
+    JSRuntime* runtime;
     ZoneSelector selector;
 
   public:
-    AutoCopyFreeListToArenas(JSRuntime *rt, ZoneSelector selector);
+    AutoCopyFreeListToArenas(JSRuntime* rt, ZoneSelector selector);
     ~AutoCopyFreeListToArenas();
 };
 
 struct AutoFinishGC
 {
-    explicit AutoFinishGC(JSRuntime *rt);
+    explicit AutoFinishGC(JSRuntime* rt);
 };
 
 /*
@@ -41,12 +41,12 @@ struct AutoFinishGC
 class AutoTraceSession
 {
   public:
-    explicit AutoTraceSession(JSRuntime *rt, HeapState state = Tracing);
+    explicit AutoTraceSession(JSRuntime* rt, HeapState state = Tracing);
     ~AutoTraceSession();
 
   protected:
     AutoLockForExclusiveAccess lock;
-    JSRuntime *runtime;
+    JSRuntime* runtime;
 
   private:
     AutoTraceSession(const AutoTraceSession&) = delete;
@@ -61,46 +61,43 @@ struct AutoPrepareForTracing
     AutoTraceSession session;
     AutoCopyFreeListToArenas copy;
 
-    AutoPrepareForTracing(JSRuntime *rt, ZoneSelector selector);
+    AutoPrepareForTracing(JSRuntime* rt, ZoneSelector selector);
 };
 
 class IncrementalSafety
 {
-    const char *reason_;
+    const char* reason_;
 
-    explicit IncrementalSafety(const char *reason) : reason_(reason) {}
+    explicit IncrementalSafety(const char* reason) : reason_(reason) {}
 
   public:
     static IncrementalSafety Safe() { return IncrementalSafety(nullptr); }
-    static IncrementalSafety Unsafe(const char *reason) { return IncrementalSafety(reason); }
+    static IncrementalSafety Unsafe(const char* reason) { return IncrementalSafety(reason); }
 
-    typedef void (IncrementalSafety::* ConvertibleToBool)();
-    void nonNull() {}
-
-    operator ConvertibleToBool() const {
-        return reason_ == nullptr ? &IncrementalSafety::nonNull : 0;
+    explicit operator bool() const {
+        return reason_ == nullptr;
     }
 
-    const char *reason() {
+    const char* reason() {
         MOZ_ASSERT(reason_);
         return reason_;
     }
 };
 
 IncrementalSafety
-IsIncrementalGCSafe(JSRuntime *rt);
+IsIncrementalGCSafe(JSRuntime* rt);
 
 #ifdef JS_GC_ZEAL
 
 class AutoStopVerifyingBarriers
 {
-    GCRuntime *gc;
+    GCRuntime* gc;
     bool restartPreVerifier;
     bool restartPostVerifier;
     MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
 
   public:
-    AutoStopVerifyingBarriers(JSRuntime *rt, bool isShutdown
+    AutoStopVerifyingBarriers(JSRuntime* rt, bool isShutdown
                               MOZ_GUARD_OBJECT_NOTIFIER_PARAM)
       : gc(&rt->gc)
     {
@@ -134,25 +131,48 @@ class AutoStopVerifyingBarriers
 #else
 struct AutoStopVerifyingBarriers
 {
-    AutoStopVerifyingBarriers(JSRuntime *, bool) {}
+    AutoStopVerifyingBarriers(JSRuntime*, bool) {}
 };
 #endif /* JS_GC_ZEAL */
 
 #ifdef JSGC_HASH_TABLE_CHECKS
 void
-CheckHashTablesAfterMovingGC(JSRuntime *rt);
+CheckHashTablesAfterMovingGC(JSRuntime* rt);
 #endif
 
-#ifdef JSGC_COMPACTING
 struct MovingTracer : JSTracer {
-    MovingTracer(JSRuntime *rt) : JSTracer(rt, Visit, TraceWeakMapKeysValues) {}
+    explicit MovingTracer(JSRuntime* rt) : JSTracer(rt, Visit, TraceWeakMapKeysValues) {}
 
-    static void Visit(JSTracer *jstrc, void **thingp, JSGCTraceKind kind);
-    static bool IsMovingTracer(JSTracer *trc) {
+    static void Visit(JSTracer* jstrc, void** thingp, JSGCTraceKind kind);
+    static bool IsMovingTracer(JSTracer* trc) {
         return trc->callback == Visit;
     }
 };
+
+// In debug builds, set/unset the GC sweeping flag for the current thread.
+struct AutoSetThreadIsSweeping
+{
+#ifdef DEBUG
+    explicit AutoSetThreadIsSweeping(MOZ_GUARD_OBJECT_NOTIFIER_ONLY_PARAM)
+      : threadData_(js::TlsPerThreadData.get())
+    {
+        MOZ_ASSERT(!threadData_->gcSweeping);
+        threadData_->gcSweeping = true;
+        MOZ_GUARD_OBJECT_NOTIFIER_INIT;
+    }
+
+    ~AutoSetThreadIsSweeping() {
+        MOZ_ASSERT(threadData_->gcSweeping);
+        threadData_->gcSweeping = false;
+    }
+
+  private:
+    PerThreadData* threadData_;
+    MOZ_DECL_USE_GUARD_OBJECT_NOTIFIER
+#else
+    AutoSetThreadIsSweeping() {}
 #endif
+};
 
 } /* namespace gc */
 } /* namespace js */

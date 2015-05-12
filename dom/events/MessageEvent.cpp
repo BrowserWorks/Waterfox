@@ -19,7 +19,7 @@ namespace dom {
 NS_IMPL_CYCLE_COLLECTION_CLASS(MessageEvent)
 
 NS_IMPL_CYCLE_COLLECTION_UNLINK_BEGIN_INHERITED(MessageEvent, Event)
-  tmp->mData = JSVAL_VOID;
+  tmp->mData.setUndefined();
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mWindowSource)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPortSource)
   NS_IMPL_CYCLE_COLLECTION_UNLINK(mPorts)
@@ -46,13 +46,13 @@ MessageEvent::MessageEvent(EventTarget* aOwner,
                            nsPresContext* aPresContext,
                            WidgetEvent* aEvent)
   : Event(aOwner, aPresContext, aEvent)
-  , mData(JSVAL_VOID)
+  , mData(JS::UndefinedValue())
 {
 }
 
 MessageEvent::~MessageEvent()
 {
-  mData = JSVAL_VOID;
+  mData.setUndefined();
   DropJSObjects(this);
 }
 
@@ -119,14 +119,23 @@ MessageEvent::Constructor(const GlobalObject& aGlobal,
                           ErrorResult& aRv)
 {
   nsCOMPtr<EventTarget> t = do_QueryInterface(aGlobal.GetAsSupports());
-  nsRefPtr<MessageEvent> event = new MessageEvent(t, nullptr, nullptr);
+  return Constructor(t, aType, aParam, aRv);
+}
+
+/* static */ already_AddRefed<MessageEvent>
+MessageEvent::Constructor(EventTarget* aEventTarget,
+                          const nsAString& aType,
+                          const MessageEventInit& aParam,
+                          ErrorResult& aRv)
+{
+  nsRefPtr<MessageEvent> event = new MessageEvent(aEventTarget, nullptr, nullptr);
 
   aRv = event->InitEvent(aType, aParam.mBubbles, aParam.mCancelable);
   if (aRv.Failed()) {
     return nullptr;
   }
 
-  bool trusted = event->Init(t);
+  bool trusted = event->Init(aEventTarget);
   event->SetTrusted(trusted);
 
   event->mData = aParam.mData;
@@ -189,6 +198,12 @@ MessageEvent::SetPorts(MessagePortList* aPorts)
 {
   MOZ_ASSERT(!mPorts && aPorts);
   mPorts = aPorts;
+}
+
+void
+MessageEvent::SetSource(mozilla::dom::MessagePort* aPort)
+{
+  mPortSource = aPort;
 }
 
 } // namespace dom

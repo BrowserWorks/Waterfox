@@ -30,7 +30,7 @@ namespace {
  * Important note: we maintain the invariant that these private data
  * slots are already addrefed.
  */
-class FinalizationEvent MOZ_FINAL: public nsRunnable
+class FinalizationEvent final: public nsRunnable
 {
 public:
   FinalizationEvent(const char* aTopic,
@@ -190,8 +190,7 @@ FinalizationWitnessService::Make(const char* aTopic,
                                  JSContext* aCx,
                                  JS::MutableHandle<JS::Value> aRetval)
 {
-  JS::Rooted<JSObject*> objResult(aCx, JS_NewObject(aCx, &sWitnessClass, JS::NullPtr(),
-                                                    JS::NullPtr()));
+  JS::Rooted<JSObject*> objResult(aCx, JS_NewObject(aCx, &sWitnessClass));
   if (!objResult) {
     return NS_ERROR_OUT_OF_MEMORY;
   }

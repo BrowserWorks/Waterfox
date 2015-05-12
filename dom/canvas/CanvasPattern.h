@@ -22,19 +22,19 @@ class SourceSurface;
 namespace dom {
 class SVGMatrix;
 
-class CanvasPattern MOZ_FINAL : public nsWrapperCache
+class CanvasPattern final : public nsWrapperCache
 {
   ~CanvasPattern() {}
 public:
   NS_INLINE_DECL_CYCLE_COLLECTING_NATIVE_REFCOUNTING(CanvasPattern)
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_NATIVE_CLASS(CanvasPattern)
 
-  MOZ_BEGIN_NESTED_ENUM_CLASS(RepeatMode, uint8_t)
+  enum class RepeatMode : uint8_t {
     REPEAT,
     REPEATX,
     REPEATY,
     NOREPEAT
-  MOZ_END_NESTED_ENUM_CLASS(RepeatMode)
+  };
 
   CanvasPattern(CanvasRenderingContext2D* aContext,
                 gfx::SourceSurface* aSurface,
@@ -52,7 +52,7 @@ public:
   {
   }
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE
+  JSObject* WrapObject(JSContext* aCx) override
   {
     return CanvasPatternBinding::Wrap(aCx, this);
   }
@@ -73,8 +73,6 @@ public:
   const bool mCORSUsed;
   const RepeatMode mRepeat;
 };
-
-MOZ_FINISH_NESTED_ENUM_CLASS(CanvasPattern::RepeatMode)
 
 }
 }

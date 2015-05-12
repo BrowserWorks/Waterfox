@@ -53,7 +53,6 @@ nsIAtom** const kElementsHTML[] = {
   &nsGkAtoms::code,
   &nsGkAtoms::col,
   &nsGkAtoms::colgroup,
-  &nsGkAtoms::command,
   &nsGkAtoms::datalist,
   &nsGkAtoms::dd,
   &nsGkAtoms::del,
@@ -1104,8 +1103,8 @@ nsTreeSanitizer::SanitizeStyleSheet(const nsAString& aOriginal,
                          aDocument->NodePrincipal(), 0, false);
   NS_ENSURE_SUCCESS(rv, true);
   // Mark the sheet as complete.
-  NS_ABORT_IF_FALSE(!sheet->IsModified(),
-      "should not get marked modified during parsing");
+  MOZ_ASSERT(!sheet->IsModified(),
+             "should not get marked modified during parsing");
   sheet->SetComplete();
   // Loop through all the rules found in the CSS text
   int32_t ruleCount = sheet->StyleRuleCount();

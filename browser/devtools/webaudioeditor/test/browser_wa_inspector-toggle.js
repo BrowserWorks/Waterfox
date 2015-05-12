@@ -34,8 +34,6 @@ add_task(function*() {
     "InspectorView empty message should still be visible.");
   ok(!isVisible($("#web-audio-editor-tabs")),
     "InspectorView tabs view should still be hidden.");
-  is($("#web-audio-inspector-title").value, "AudioNode Inspector",
-    "Inspector should still have default title.");
 
   // Close inspector pane
   $("#inspector-pane-toggle").click();
@@ -51,15 +49,12 @@ add_task(function*() {
   ok(!isVisible($("#web-audio-editor-tabs")),
     "InspectorView tabs are still hidden.");
 
-  click(panelWin, findGraphNode(panelWin, nodeIds[1]));
-  yield once(panelWin, EVENTS.UI_INSPECTOR_NODE_SET);
+  yield clickGraphNode(panelWin, findGraphNode(panelWin, nodeIds[1]));
 
   ok(!isVisible($("#web-audio-editor-details-pane-empty")),
     "Empty message hides even when loading node while open.");
   ok(isVisible($("#web-audio-editor-tabs")),
     "Switches to tab view when loading node while open.");
-  is($("#web-audio-inspector-title").value, "Oscillator",
-    "Inspector title updates when loading node while open.");
 
   yield teardown(target);
 });

@@ -12,8 +12,8 @@ struct BarkWhenTracedClass {
     static int traceCount;
 
     static const JSClass class_;
-    static void finalize(JSFreeOp *fop, JSObject *obj) { finalizeCount++; }
-    static void trace(JSTracer *trc, JSObject *obj) { traceCount++; }
+    static void finalize(JSFreeOp* fop, JSObject* obj) { finalizeCount++; }
+    static void trace(JSTracer* trc, JSObject* obj) { traceCount++; }
     static void reset() { finalizeCount = 0; traceCount = 0; }
 };
 
@@ -21,7 +21,7 @@ int BarkWhenTracedClass::finalizeCount;
 int BarkWhenTracedClass::traceCount;
 
 const JSClass BarkWhenTracedClass::class_ = {
-    "BarkWhenTracedClass", 0,
+    "BarkWhenTracedClass", JSCLASS_IMPLEMENTS_BARRIERS,
     nullptr,
     nullptr,
     nullptr,
@@ -38,17 +38,24 @@ const JSClass BarkWhenTracedClass::class_ = {
 
 struct Kennel {
     PersistentRootedObject obj;
-    explicit Kennel(JSContext *cx) : obj(cx) { }
-    Kennel(JSContext *cx, const HandleObject &woof) : obj(cx, woof) { }
+    Kennel() { }
+    explicit Kennel(JSContext* cx) : obj(cx) { }
+    Kennel(JSContext* cx, const HandleObject& woof) : obj(cx, woof) { }
+    void init(JSContext* cx, const HandleObject& woof) {
+        obj.init(cx, woof);
+    }
+    void clear() {
+        obj = nullptr;
+    }
 };
 
 // A function for allocating a Kennel and a barker. Only allocating
 // PersistentRooteds on the heap, and in this function, helps ensure that the
 // conservative GC doesn't find stray references to the barker. Ugh.
-MOZ_NEVER_INLINE static Kennel *
-Allocate(JSContext *cx)
+MOZ_NEVER_INLINE static Kennel*
+Allocate(JSContext* cx)
 {
-    RootedObject barker(cx, JS_NewObject(cx, &BarkWhenTracedClass::class_, JS::NullPtr(), JS::NullPtr()));
+    RootedObject barker(cx, JS_NewObject(cx, &BarkWhenTracedClass::class_));
     if (!barker)
         return nullptr;
 
@@ -57,7 +64,7 @@ Allocate(JSContext *cx)
 
 // Do a GC, expecting |n| barkers to be finalized.
 static bool
-GCFinalizesNBarkers(JSContext *cx, int n)
+GCFinalizesNBarkers(JSContext* cx, int n)
 {
     int preGCTrace = BarkWhenTracedClass::traceCount;
     int preGCFinalize = BarkWhenTracedClass::finalizeCount;
@@ -73,7 +80,7 @@ BEGIN_TEST(test_PersistentRooted)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel *kennel = Allocate(cx);
+    Kennel* kennel = Allocate(cx);
     CHECK(kennel);
 
     // GC should be able to find our barker.
@@ -109,13 +116,13 @@ BEGIN_TEST(test_PersistentRootedCopy)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel *kennel = Allocate(cx);
+    Kennel* kennel = Allocate(cx);
     CHECK(kennel);
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
     // Copy construction! AMAZING!
-    Kennel *newKennel = new Kennel(*kennel);
+    Kennel* newKennel = new Kennel(*kennel);
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
@@ -139,13 +146,13 @@ BEGIN_TEST(test_PersistentRootedAssign)
 {
     BarkWhenTracedClass::reset();
 
-    Kennel *kennel = Allocate(cx);
+    Kennel* kennel = Allocate(cx);
     CHECK(kennel);
 
     CHECK(GCFinalizesNBarkers(cx, 0));
 
     // Allocate a new, empty kennel.
-    Kennel *kennel2 = new Kennel(cx);
+    Kennel* kennel2 = new Kennel(cx);
 
     // Assignment! ASTONISHING!
     *kennel2 = *kennel;
@@ -178,3 +185,35 @@ BEGIN_TEST(test_PersistentRootedAssign)
     return true;
 }
 END_TEST(test_PersistentRootedAssign)
+
+static PersistentRootedObject gGlobalRoot;
+
+// PersistentRooted instances can initialized in a separate step to allow for global PersistentRooteds.
+BEGIN_TEST(test_GlobalPersistentRooted)
+{
+    BarkWhenTracedClass::reset();
+
+    CHECK(!gGlobalRoot.initialized());
+
+    {
+        RootedObject barker(cx, JS_NewObject(cx, &BarkWhenTracedClass::class_));
+        CHECK(barker);
+
+        gGlobalRoot.init(cx, barker);
+    }
+
+    CHECK(gGlobalRoot.initialized());
+
+    // GC should be able to find our barker.
+    CHECK(GCFinalizesNBarkers(cx, 0));
+
+    gGlobalRoot.reset();
+    CHECK(!gGlobalRoot.initialized());
+
+    // Now GC should not be able to find the barker.
+    JS_GC(JS_GetRuntime(cx));
+    CHECK(BarkWhenTracedClass::finalizeCount == 1);
+
+    return true;
+}
+END_TEST(test_GlobalPersistentRooted)

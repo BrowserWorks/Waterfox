@@ -98,12 +98,15 @@ if (typeof Mozilla == 'undefined') {
 		});
 	};
 
-	Mozilla.UITour.showHeartbeat = function(message, thankyouMessage, flowId, engagementURL) {
+	Mozilla.UITour.showHeartbeat = function(message, thankyouMessage, flowId, engagementURL,
+																					learnMoreLabel, learnMoreURL) {
 		_sendEvent('showHeartbeat', {
 			message: message,
 			thankyouMessage: thankyouMessage,
 			flowId: flowId,
-			engagementURL: engagementURL
+			engagementURL: engagementURL,
+			learnMoreLabel: learnMoreLabel,
+			learnMoreURL: learnMoreURL,
 		});
 	};
 
@@ -278,4 +281,13 @@ if (typeof Mozilla == 'undefined') {
 		});
 	};
 
+	Mozilla.UITour.toggleReaderMode = function(feature) {
+		_sendEvent('toggleReaderMode');
+	};
+
 })();
+
+// Make this library Require-able.
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Mozilla.UITour;
+}

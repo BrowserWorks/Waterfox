@@ -23,6 +23,20 @@ function SpecialPowers(window) {
       }});
   this._pongHandlers = [];
   this._messageListener = this._messageReceived.bind(this);
+  this._grandChildFrameMM = null;
+  this.SP_SYNC_MESSAGES = ["SPChromeScriptMessage",
+                           "SPLoadChromeScript",
+                           "SPObserverService",
+                           "SPPermissionManager",
+                           "SPPrefService",
+                           "SPProcessCrashService",
+                           "SPSetTestPluginEnabledState",
+                           "SPWebAppService"];
+
+  this.SP_ASYNC_MESSAGES = ["SpecialPowers.Focus",
+                            "SpecialPowers.Quit",
+                            "SPPingService",
+                            "SPQuotaManager"];
   addMessageListener("SPPingService", this._messageListener);
   let self = this;
   Services.obs.addObserver(function onInnerWindowDestroyed(subject, topic, data) {
@@ -47,17 +61,25 @@ SpecialPowers.prototype.sanityCheck = function() { return "foo"; };
 // This gets filled in in the constructor.
 SpecialPowers.prototype.DOMWindowUtils = undefined;
 SpecialPowers.prototype.Components = undefined;
+SpecialPowers.prototype.IsInNestedFrame = false;
 
 SpecialPowers.prototype._sendSyncMessage = function(msgname, msg) {
+  if (this.SP_SYNC_MESSAGES.indexOf(msgname) == -1) {
+    dump("TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n");
+  }
   return sendSyncMessage(msgname, msg);
 };
 
 SpecialPowers.prototype._sendAsyncMessage = function(msgname, msg) {
+  if (this.SP_ASYNC_MESSAGES.indexOf(msgname) == -1) {
+    dump("TEST-INFO | specialpowers.js |  Unexpected SP message: " + msgname + "\n");
+  }
   sendAsyncMessage(msgname, msg);
 };
 
 SpecialPowers.prototype._addMessageListener = function(msgname, listener) {
   addMessageListener(msgname, listener);
+  sendAsyncMessage("SPPAddNestedMessageListener", { name: msgname });
 };
 
 SpecialPowers.prototype._removeMessageListener = function(msgname, listener) {
@@ -90,6 +112,9 @@ SpecialPowers.prototype._messageReceived = function(aMessage) {
         if (handler) {
           handler();
         }
+        if (this._grandChildFrameMM) {
+          this._grandChildFrameMM.sendAsyncMessage("SPPingService", { op: "pong" });
+        }
       }
       break;
   }
@@ -105,6 +130,47 @@ SpecialPowers.prototype.executeAfterFlushingMessageQueue = function(aCallback) {
   sendAsyncMessage("SPPingService", { op: "ping" });
 };
 
+SpecialPowers.prototype.nestedFrameSetup = function() {
+  let self = this;
+  Services.obs.addObserver(function onRemoteBrowserShown(subject, topic, data) {
+    let frameLoader = subject;
+    // get a ref to the app <iframe>
+    frameLoader.QueryInterface(Components.interfaces.nsIFrameLoader);
+    let frame = frameLoader.ownerElement;
+    let frameId = frame.getAttribute('id');
+    if (frameId === "nested-parent-frame") {
+      Services.obs.removeObserver(onRemoteBrowserShown, "remote-browser-shown");
+
+      let mm = frame.QueryInterface(Components.interfaces.nsIFrameLoaderOwner).frameLoader.messageManager;
+      self._grandChildFrameMM = mm;
+
+      self.SP_SYNC_MESSAGES.forEach(function (msgname) {
+        mm.addMessageListener(msgname, function (msg) {
+          return self._sendSyncMessage(msgname, msg.data)[0];
+        });
+      });
+      self.SP_ASYNC_MESSAGES.forEach(function (msgname) {
+        mm.addMessageListener(msgname, function (msg) {
+          self._sendAsyncMessage(msgname, msg.data);
+        });
+      });
+      mm.addMessageListener("SPPAddNestedMessageListener", function(msg) {
+        self._addMessageListener(msg.json.name, function(aMsg) {
+          mm.sendAsyncMessage(aMsg.name, aMsg.data);
+          });
+      });
+
+      let specialPowersBase = "chrome://specialpowers/content/";
+      mm.loadFrameScript(specialPowersBase + "MozillaLogger.js", false);
+      mm.loadFrameScript(specialPowersBase + "specialpowersAPI.js", false);
+      mm.loadFrameScript(specialPowersBase + "specialpowers.js", false);
+
+      let frameScript = "SpecialPowers.prototype.IsInNestedFrame=true;";
+      mm.loadFrameScript("data:," + frameScript, false);
+    }
+  }, "remote-browser-shown", false);
+};
+
 // Attach our API to the window.
 function attachSpecialPowersToWindow(aWindow) {
   try {
@@ -112,7 +178,11 @@ function attachSpecialPowersToWindow(aWindow) {
         (aWindow !== undefined) &&
         (aWindow.wrappedJSObject) &&
         !(aWindow.wrappedJSObject.SpecialPowers)) {
-      aWindow.wrappedJSObject.SpecialPowers = new SpecialPowers(aWindow);
+      let sp = new SpecialPowers(aWindow);
+      aWindow.wrappedJSObject.SpecialPowers = sp;
+      if (sp.IsInNestedFrame) {
+        sp.addPermission("allowXULXBL", true, aWindow.document);
+      }
     }
   } catch(ex) {
     dump("TEST-INFO | specialpowers.js |  Failed to attach specialpowers to window exception: " + ex + "\n");
@@ -134,6 +204,7 @@ SpecialPowersManager.prototype = {
     attachSpecialPowersToWindow(window);
   }
 };
+
 
 var specialpowersmanager = new SpecialPowersManager();
 

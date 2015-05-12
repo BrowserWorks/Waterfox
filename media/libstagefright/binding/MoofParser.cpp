@@ -48,7 +48,7 @@ MoofParser::RebuildFragmentedIndex(BoxContext& aContext)
       mInitRange = MediaByteRange(0, box.Range().mEnd);
       ParseMoov(box);
     } else if (box.IsType("moof")) {
-      Moof moof(box, mTrex, mMdhd, mEdts, mSinf);
+      Moof moof(box, mTrex, mMdhd, mEdts, mSinf, mIsAudio);
 
       if (!moof.IsValid() && !box.Next().IsAvailable()) {
         // Moof isn't valid abort search for now.
@@ -76,18 +76,18 @@ public:
   }
 
   bool ReadAt(int64_t offset, void* data, size_t size, size_t* bytes_read)
-    MOZ_OVERRIDE
+    override
   {
     return mStream->ReadAt(offset, data, size, bytes_read);
   }
 
   bool CachedReadAt(int64_t offset, void* data, size_t size, size_t* bytes_read)
-    MOZ_OVERRIDE
+    override
   {
     return mStream->ReadAt(offset, data, size, bytes_read);
   }
 
-  virtual bool Length(int64_t* size) MOZ_OVERRIDE
+  virtual bool Length(int64_t* size) override
   {
     return mStream->Length(size);
   }
@@ -99,9 +99,10 @@ private:
 bool
 MoofParser::BlockingReadNextMoof()
 {
+  int64_t length = std::numeric_limits<int64_t>::max();
+  mSource->Length(&length);
   nsTArray<MediaByteRange> byteRanges;
-  byteRanges.AppendElement(
-    MediaByteRange(0, std::numeric_limits<int64_t>::max()));
+  byteRanges.AppendElement(MediaByteRange(0, length));
   nsRefPtr<mp4_demuxer::BlockingStream> stream = new BlockingStream(mSource);
 
   BoxContext context(stream, byteRanges);
@@ -239,13 +240,13 @@ MoofParser::ParseEncrypted(Box& aBox)
   }
 }
 
-Moof::Moof(Box& aBox, Trex& aTrex, Mdhd& aMdhd, Edts& aEdts, Sinf& aSinf)
+Moof::Moof(Box& aBox, Trex& aTrex, Mdhd& aMdhd, Edts& aEdts, Sinf& aSinf, bool aIsAudio)
   : mRange(aBox.Range())
   , mMaxRoundingError(35000)
 {
   for (Box box = aBox.FirstChild(); box.IsAvailable(); box = box.Next()) {
     if (box.IsType("traf")) {
-      ParseTraf(box, aTrex, aMdhd, aEdts, aSinf);
+      ParseTraf(box, aTrex, aMdhd, aEdts, aSinf, aIsAudio);
     }
   }
   if (IsValid()) {
@@ -318,7 +319,7 @@ Moof::ProcessCenc()
 }
 
 void
-Moof::ParseTraf(Box& aBox, Trex& aTrex, Mdhd& aMdhd, Edts& aEdts, Sinf& aSinf)
+Moof::ParseTraf(Box& aBox, Trex& aTrex, Mdhd& aMdhd, Edts& aEdts, Sinf& aSinf, bool aIsAudio)
 {
   Tfhd tfhd(aTrex);
   Tfdt tfdt;
@@ -328,12 +329,22 @@ Moof::ParseTraf(Box& aBox, Trex& aTrex, Mdhd& aMdhd, Edts& aEdts, Sinf& aSinf)
     } else if (!aTrex.mTrackId || tfhd.mTrackId == aTrex.mTrackId) {
       if (box.IsType("tfdt")) {
         tfdt = Tfdt(box);
-      } else if (box.IsType("trun")) {
-        ParseTrun(box, tfhd, tfdt, aMdhd, aEdts);
       } else if (box.IsType("saiz")) {
         mSaizs.AppendElement(Saiz(box, aSinf.mDefaultEncryptionType));
       } else if (box.IsType("saio")) {
         mSaios.AppendElement(Saio(box, aSinf.mDefaultEncryptionType));
+      }
+    }
+  }
+  if (aTrex.mTrackId && tfhd.mTrackId != aTrex.mTrackId) {
+    return;
+  }
+  // Now search for TRUN box.
+  for (Box box = aBox.FirstChild(); box.IsAvailable(); box = box.Next()) {
+    if (box.IsType("trun")) {
+      ParseTrun(box, tfhd, tfdt, aMdhd, aEdts, aIsAudio);
+      if (IsValid()) {
+        break;
       }
     }
   }
@@ -362,7 +373,7 @@ public:
 };
 
 void
-Moof::ParseTrun(Box& aBox, Tfhd& aTfhd, Tfdt& aTfdt, Mdhd& aMdhd, Edts& aEdts)
+Moof::ParseTrun(Box& aBox, Tfhd& aTfhd, Tfdt& aTfdt, Mdhd& aMdhd, Edts& aEdts, bool aIsAudio)
 {
   if (!aTfhd.IsValid() || !aTfdt.IsValid() ||
       !aMdhd.IsValid() || !aEdts.IsValid()) {
@@ -439,7 +450,9 @@ Moof::ParseTrun(Box& aBox, Tfhd& aTfhd, Tfdt& aTfdt, Mdhd& aMdhd, Edts& aEdts)
       aMdhd.ToMicroseconds((int64_t)decodeTime + ctsOffset + sampleDuration - aEdts.mMediaStart));
     decodeTime += sampleDuration;
 
-    sample.mSync = !(sampleFlags & 0x1010000);
+    // Sometimes audio streams don't properly mark their samples as keyframes,
+    // because every audio sample is a keyframe.
+    sample.mSync = !(sampleFlags & 0x1010000) || aIsAudio;
 
     mIndex.AppendElement(sample);
 

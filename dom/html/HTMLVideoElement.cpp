@@ -126,6 +126,12 @@ nsresult HTMLVideoElement::SetAcceptHeader(nsIHttpChannel* aChannel)
                                     false);
 }
 
+bool
+HTMLVideoElement::IsInteractiveHTMLContent(bool aIgnoreTabindex) const
+{
+  return HasAttr(kNameSpaceID_None, nsGkAtoms::controls);
+}
+
 uint32_t HTMLVideoElement::MozParsedFrames() const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
@@ -173,7 +179,7 @@ double HTMLVideoElement::MozFrameDelay()
 bool HTMLVideoElement::MozHasAudio() const
 {
   MOZ_ASSERT(NS_IsMainThread(), "Should be on main thread.");
-  return mHasAudio;
+  return HasAudio();
 }
 
 JSObject*
@@ -247,7 +253,7 @@ HTMLVideoElement::UpdateScreenWakeLock()
     return;
   }
 
-  if (!mScreenWakeLock && !mPaused && !hidden && mHasVideo) {
+  if (!mScreenWakeLock && !mPaused && !hidden && HasVideo()) {
     nsRefPtr<power::PowerManagerService> pmService =
       power::PowerManagerService::GetInstance();
     NS_ENSURE_TRUE_VOID(pmService);

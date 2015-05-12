@@ -7,10 +7,9 @@ Cu.import("resource://services-sync/service.js");
 Cu.import("resource://services-sync/util.js");
 Cu.import("resource://gre/modules/FileUtils.jsm");
 Cu.import("resource://gre/modules/NetUtil.jsm");
+Cu.import("resource://gre/modules/Services.jsm");
 
 const logsdir            = FileUtils.getDir("ProfD", ["weave", "logs"], true);
-const LOG_PREFIX_SUCCESS = "success-";
-const LOG_PREFIX_ERROR   = "error-";
 
 // Delay to wait before cleanup, to allow files to age.
 // This is so large because the file timestamp granularity is per-second, and
@@ -31,6 +30,7 @@ function setLastSync(lastSyncValue) {
 function run_test() {
   initTestLogging("Trace");
 
+  Log.repository.getLogger("Sync.LogManager").level = Log.Level.Trace;
   Log.repository.getLogger("Sync.Service").level = Log.Level.Trace;
   Log.repository.getLogger("Sync.SyncScheduler").level = Log.Level.Trace;
   Log.repository.getLogger("Sync.ErrorHandler").level = Log.Level.Trace;
@@ -40,7 +40,7 @@ function run_test() {
 
 add_test(function test_noOutput() {
   // Ensure that the log appender won't print anything.
-  errorHandler._logAppender.level = Log.Level.Fatal + 1;
+  errorHandler._logManager._fileAppender.level = Log.Level.Fatal + 1;
 
   // Clear log output from startup.
   Svc.Prefs.set("log.appender.file.logOnSuccess", false);
@@ -52,7 +52,7 @@ add_test(function test_noOutput() {
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
-    errorHandler._logAppender.level = Log.Level.Trace;
+    errorHandler._logManager._fileAppender.level = Log.Level.Trace;
     Svc.Prefs.resetBranch("");
     run_next_test();
   });
@@ -81,11 +81,16 @@ add_test(function test_logOnSuccess_false() {
 });
 
 function readFile(file, callback) {
-  NetUtil.asyncFetch(file, function (inputStream, statusCode, request) {
+  NetUtil.asyncFetch2(file, function (inputStream, statusCode, request) {
     let data = NetUtil.readInputStreamToString(inputStream,
                                                inputStream.available());
     callback(statusCode, data);
-  });
+  },
+  null,      // aLoadingNode
+  Services.scriptSecurityManager.getSystemPrincipal(),
+  null,      // aTriggeringPrincipal
+  Ci.nsILoadInfo.SEC_NORMAL,
+  Ci.nsIContentPolicy.TYPE_OTHER);
 }
 
 add_test(function test_logOnSuccess_true() {
@@ -103,8 +108,7 @@ add_test(function test_logOnSuccess_true() {
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_SUCCESS.length),
-                LOG_PREFIX_SUCCESS);
+    do_check_true(logfile.leafName.startsWith("success-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
 
     // Ensure the log message was actually written to file.
@@ -156,6 +160,13 @@ add_test(function test_sync_error_logOnError_true() {
   const MESSAGE = "this WILL show up";
   log.info(MESSAGE);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
@@ -164,8 +175,7 @@ add_test(function test_sync_error_logOnError_true() {
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                LOG_PREFIX_ERROR);
+    do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
 
     // Ensure the log message was actually written to file.
@@ -182,7 +192,6 @@ add_test(function test_sync_error_logOnError_true() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
     });
   });
 
@@ -218,6 +227,13 @@ add_test(function test_login_error_logOnError_true() {
   const MESSAGE = "this WILL show up";
   log.info(MESSAGE);
 
+  // We need to wait until the log cleanup started by this test is complete
+  // or the next test will fail as it is ongoing.
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
+    run_next_test();
+  });
+
   Svc.Obs.add("weave:service:reset-file-log", function onResetFileLog() {
     Svc.Obs.remove("weave:service:reset-file-log", onResetFileLog);
 
@@ -226,8 +242,7 @@ add_test(function test_login_error_logOnError_true() {
     do_check_true(entries.hasMoreElements());
     let logfile = entries.getNext().QueryInterface(Ci.nsILocalFile);
     do_check_eq(logfile.leafName.slice(-4), ".txt");
-    do_check_eq(logfile.leafName.slice(0, LOG_PREFIX_ERROR.length),
-                LOG_PREFIX_ERROR);
+    do_check_true(logfile.leafName.startsWith("error-sync-"), logfile.leafName);
     do_check_false(entries.hasMoreElements());
 
     // Ensure the log message was actually written to file.
@@ -244,7 +259,6 @@ add_test(function test_login_error_logOnError_true() {
       }
 
       Svc.Prefs.resetBranch("");
-      run_next_test();
     });
   });
 
@@ -267,7 +281,7 @@ add_test(function test_logErrorCleanup_age() {
   _("Making some files.");
   for (let i = 0; i < numLogs; i++) {
     let now = Date.now();
-    let filename = LOG_PREFIX_ERROR + now + "" + i + ".txt";
+    let filename = "error-sync-" + now + "" + i + ".txt";
     let newLog = FileUtils.getFile("ProfD", ["weave", "logs", filename]);
     let foStream = FileUtils.openFileOutputStream(newLog);
     foStream.write(errString, errString.length);
@@ -276,8 +290,8 @@ add_test(function test_logErrorCleanup_age() {
     oldLogs.push(newLog.leafName);
   }
 
-  Svc.Obs.add("weave:service:cleanup-logs", function onCleanupLogs() {
-    Svc.Obs.remove("weave:service:cleanup-logs", onCleanupLogs);
+  Svc.Obs.add("services-tests:common:log-manager:cleanup-logs", function onCleanupLogs() {
+    Svc.Obs.remove("services-tests:common:log-manager:cleanup-logs", onCleanupLogs);
 
     // Only the newest created log file remains.
     let entries = logsdir.directoryEntries;

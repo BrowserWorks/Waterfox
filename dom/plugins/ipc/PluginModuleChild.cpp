@@ -65,6 +65,7 @@ const wchar_t * kMozillaWindowClass = L"MozillaWindowClass";
 #endif
 
 namespace {
+// see PluginModuleChild::GetChrome()
 PluginModuleChild* gChromeInstance = nullptr;
 nsTArray<PluginModuleChild*>* gAllInstances;
 }
@@ -158,7 +159,9 @@ PluginModuleChild::PluginModuleChild(bool aIsChrome)
     }
     mUserAgent.SetIsVoid(true);
 #ifdef XP_MACOSX
-    mac_plugin_interposing::child::SetUpCocoaInterposing();
+    if (aIsChrome) {
+      mac_plugin_interposing::child::SetUpCocoaInterposing();
+    }
 #endif
 }
 
@@ -196,6 +199,9 @@ PluginModuleChild::~PluginModuleChild()
 PluginModuleChild*
 PluginModuleChild::GetChrome()
 {
+    // A special PluginModuleChild instance that talks to the chrome process
+    // during startup and shutdown. Synchronous messages to or from this actor
+    // should be avoided because they may lead to hangs.
     MOZ_ASSERT(gChromeInstance);
     return gChromeInstance;
 }
@@ -235,7 +241,6 @@ PluginModuleChild::InitForContent(base::ProcessHandle aParentProcessHandle,
     mTransport = aChannel;
 
     mLibrary = GetChrome()->mLibrary;
-    mQuirks = GetChrome()->mQuirks;
     mFunctions = GetChrome()->mFunctions;
 
     return true;
@@ -513,10 +518,10 @@ PluginModuleChild::DetectNestedEventLoop(gpointer data)
 {
     PluginModuleChild* pmc = static_cast<PluginModuleChild*>(data);
 
-    NS_ABORT_IF_FALSE(0 != pmc->mNestedLoopTimerId,
-                      "callback after descheduling");
-    NS_ABORT_IF_FALSE(pmc->mTopLoopDepth < g_main_depth(),
-                      "not canceled before returning to main event loop!");
+    MOZ_ASSERT(0 != pmc->mNestedLoopTimerId,
+               "callback after descheduling");
+    MOZ_ASSERT(pmc->mTopLoopDepth < g_main_depth(),
+               "not canceled before returning to main event loop!");
 
     PLUGIN_LOG_DEBUG(("Detected nested glib event loop"));
 
@@ -539,8 +544,8 @@ PluginModuleChild::ProcessBrowserEvents(gpointer data)
 {
     PluginModuleChild* pmc = static_cast<PluginModuleChild*>(data);
 
-    NS_ABORT_IF_FALSE(pmc->mTopLoopDepth < g_main_depth(),
-                      "not canceled before returning to main event loop!");
+    MOZ_ASSERT(pmc->mTopLoopDepth < g_main_depth(),
+               "not canceled before returning to main event loop!");
 
     pmc->CallProcessSomeEvents();
 
@@ -550,8 +555,8 @@ PluginModuleChild::ProcessBrowserEvents(gpointer data)
 void
 PluginModuleChild::EnteredCxxStack()
 {
-    NS_ABORT_IF_FALSE(0 == mNestedLoopTimerId,
-                      "previous timer not descheduled");
+    MOZ_ASSERT(0 == mNestedLoopTimerId,
+               "previous timer not descheduled");
 
     mNestedLoopTimerId =
         g_timeout_add_full(kNestedLoopDetectorPriority,
@@ -568,8 +573,8 @@ PluginModuleChild::EnteredCxxStack()
 void
 PluginModuleChild::ExitedCxxStack()
 {
-    NS_ABORT_IF_FALSE(0 < mNestedLoopTimerId,
-                      "nested loop timeout not scheduled");
+    MOZ_ASSERT(0 < mNestedLoopTimerId,
+               "nested loop timeout not scheduled");
 
     g_source_remove(mNestedLoopTimerId);
     mNestedLoopTimerId = 0;
@@ -579,8 +584,8 @@ PluginModuleChild::ExitedCxxStack()
 void
 PluginModuleChild::EnteredCxxStack()
 {
-    NS_ABORT_IF_FALSE(mNestedLoopTimerObject == nullptr,
-                      "previous timer not descheduled");
+    MOZ_ASSERT(mNestedLoopTimerObject == nullptr,
+               "previous timer not descheduled");
     mNestedLoopTimerObject = new NestedLoopTimer(this);
     QTimer::singleShot(kNestedLoopDetectorIntervalMs,
                        mNestedLoopTimerObject, SLOT(timeOut()));
@@ -589,8 +594,8 @@ PluginModuleChild::EnteredCxxStack()
 void
 PluginModuleChild::ExitedCxxStack()
 {
-    NS_ABORT_IF_FALSE(mNestedLoopTimerObject != nullptr,
-                      "nested loop timeout not scheduled");
+    MOZ_ASSERT(mNestedLoopTimerObject != nullptr,
+               "nested loop timeout not scheduled");
     delete mNestedLoopTimerObject;
     mNestedLoopTimerObject = nullptr;
 }
@@ -633,8 +638,8 @@ PluginModuleChild::InitGraphics()
     // called.  (Toggle references wouldn't detect if the reference count
     // might be higher.)
     GObjectDisposeFn* dispose = &G_OBJECT_CLASS(gtk_plug_class)->dispose;
-    NS_ABORT_IF_FALSE(*dispose != wrap_gtk_plug_dispose,
-                      "InitGraphics called twice");
+    MOZ_ASSERT(*dispose != wrap_gtk_plug_dispose,
+               "InitGraphics called twice");
     real_gtk_plug_dispose = *dispose;
     *dispose = wrap_gtk_plug_dispose;
 
@@ -1085,7 +1090,7 @@ const NPNetscapeFuncs PluginModuleChild::sBrowserFuncs = {
 PluginInstanceChild*
 InstCast(NPP aNPP)
 {
-    NS_ABORT_IF_FALSE(!!(aNPP->ndata), "nil instance");
+    MOZ_ASSERT(!!(aNPP->ndata), "nil instance");
     return static_cast<PluginInstanceChild*>(aNPP->ndata);
 }
 
@@ -2090,7 +2095,13 @@ PluginModuleChild::AllocPPluginInstanceChild(const nsCString& aMimeType,
     PLUGIN_LOG_DEBUG_METHOD;
     AssertPluginThread();
 
-    InitQuirksModes(aMimeType);
+    // In e10s, gChromeInstance hands out quirks to instances, but never
+    // allocates an instance on its own. Make sure it gets the latest copy
+    // of quirks once we have them. Also note, with process-per-tab, we may
+    // have multiple PluginModuleChilds in the same plugin process, so only
+    // initialize this once in gChromeInstance, which is a singleton.
+    GetChrome()->InitQuirksModes(aMimeType);
+    mQuirks = GetChrome()->mQuirks;
 
 #ifdef XP_WIN
     if ((mQuirks & QUIRK_FLASH_HOOK_GETWINDOWINFO) &&
@@ -2111,10 +2122,10 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
     if (mQuirks != QUIRKS_NOT_INITIALIZED)
       return;
     mQuirks = 0;
-    // application/x-silverlight
-    // application/x-silverlight-2
-    NS_NAMED_LITERAL_CSTRING(silverlight, "application/x-silverlight");
-    if (FindInReadable(silverlight, aMimeType)) {
+
+    nsPluginHost::SpecialType specialType = nsPluginHost::GetSpecialType(aMimeType);
+
+    if (specialType == nsPluginHost::eSpecialType_Silverlight) {
         mQuirks |= QUIRK_SILVERLIGHT_DEFAULT_TRANSPARENT;
 #ifdef OS_WIN
         mQuirks |= QUIRK_WINLESS_TRACKPOPUP_HOOK;
@@ -2123,11 +2134,9 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
     }
 
 #ifdef OS_WIN
-    // application/x-shockwave-flash
-    NS_NAMED_LITERAL_CSTRING(flash, "application/x-shockwave-flash");
-    if (FindInReadable(flash, aMimeType)) {
+    if (specialType == nsPluginHost::eSpecialType_Flash) {
         mQuirks |= QUIRK_WINLESS_TRACKPOPUP_HOOK;
-        mQuirks |= QUIRK_FLASH_THROTTLE_WMUSER_EVENTS; 
+        mQuirks |= QUIRK_FLASH_THROTTLE_WMUSER_EVENTS;
         mQuirks |= QUIRK_FLASH_HOOK_SETLONGPTR;
         mQuirks |= QUIRK_FLASH_HOOK_GETWINDOWINFO;
         mQuirks |= QUIRK_FLASH_FIXUP_MOUSE_CAPTURE;
@@ -2136,19 +2145,17 @@ PluginModuleChild::InitQuirksModes(const nsCString& aMimeType)
     // QuickTime plugin usually loaded with audio/mpeg mimetype
     NS_NAMED_LITERAL_CSTRING(quicktime, "npqtplugin");
     if (FindInReadable(quicktime, mPluginFilename)) {
-      mQuirks |= QUIRK_QUICKTIME_AVOID_SETWINDOW;
+        mQuirks |= QUIRK_QUICKTIME_AVOID_SETWINDOW;
     }
 #endif
 
 #ifdef XP_MACOSX
     // Whitelist Flash and Quicktime to support offline renderer
-    NS_NAMED_LITERAL_CSTRING(flash, "application/x-shockwave-flash");
     NS_NAMED_LITERAL_CSTRING(quicktime, "QuickTime Plugin.plugin");
-    if (FindInReadable(flash, aMimeType)) {
-      mQuirks |= QUIRK_FLASH_AVOID_CGMODE_CRASHES;
-    }
-    if (FindInReadable(flash, aMimeType) ||
-        FindInReadable(quicktime, mPluginFilename)) {
+    if (specialType == nsPluginHost::eSpecialType_Flash) {
+        mQuirks |= QUIRK_FLASH_AVOID_CGMODE_CRASHES;
+        mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
+    } else if (FindInReadable(quicktime, mPluginFilename)) {
         mQuirks |= QUIRK_ALLOW_OFFLINE_RENDERER;
     }
 #endif
@@ -2158,8 +2165,8 @@ bool
 PluginModuleChild::RecvPPluginInstanceConstructor(PPluginInstanceChild* aActor,
                                                   const nsCString& aMimeType,
                                                   const uint16_t& aMode,
-                                                  const InfallibleTArray<nsCString>& aNames,
-                                                  const InfallibleTArray<nsCString>& aValues)
+                                                  InfallibleTArray<nsCString>&& aNames,
+                                                  InfallibleTArray<nsCString>&& aValues)
 {
     PLUGIN_LOG_DEBUG_METHOD;
     AssertPluginThread();
@@ -2505,8 +2512,8 @@ PluginModuleChild::ProcessNativeEvents() {
 bool
 PluginModuleChild::RecvStartProfiler(const uint32_t& aEntries,
                                      const double& aInterval,
-                                     const nsTArray<nsCString>& aFeatures,
-                                     const nsTArray<nsCString>& aThreadNameFilters)
+                                     nsTArray<nsCString>&& aFeatures,
+                                     nsTArray<nsCString>&& aThreadNameFilters)
 {
     nsTArray<const char*> featureArray;
     for (size_t i = 0; i < aFeatures.Length(); ++i) {

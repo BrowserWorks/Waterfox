@@ -27,6 +27,10 @@ from mozbuild.util import (
 import mozpack.path as mozpath
 from .context import FinalTargetValue
 
+from ..util import (
+    group_unified_files,
+)
+
 
 class TreeMetadata(object):
     """Base class for all data being captured."""
@@ -244,6 +248,15 @@ class Resources(ContextDerived):
             defs.update(defines)
         self.defines = defs
 
+class JsPreferenceFile(ContextDerived):
+    """Context derived container object for a Javascript preference file.
+
+    Paths are assumed to be relative to the srcdir."""
+    __slots__ = ('path')
+
+    def __init__(self, context, path):
+        ContextDerived.__init__(self, context)
+        self.path = path
 
 class IPDLFile(ContextDerived):
     """Describes an individual .ipdl source file."""
@@ -769,13 +782,32 @@ class UnifiedSources(BaseSources):
     """Represents files to be compiled in a unified fashion during the build."""
 
     __slots__ = (
-        'files_per_unified_file',
+        'have_unified_mapping',
+        'unified_source_mapping'
     )
 
     def __init__(self, context, files, canonical_suffix, files_per_unified_file=16):
         BaseSources.__init__(self, context, files, canonical_suffix)
 
-        self.files_per_unified_file = files_per_unified_file
+        self.have_unified_mapping = files_per_unified_file > 1
+
+        if self.have_unified_mapping:
+            # Sorted so output is consistent and we don't bump mtimes.
+            source_files = list(sorted(self.files))
+
+            # On Windows, path names have a maximum length of 255 characters,
+            # so avoid creating extremely long path names.
+            unified_prefix = context.relsrcdir
+            if len(unified_prefix) > 20:
+                unified_prefix = unified_prefix[-20:].split('/', 1)[-1]
+            unified_prefix = unified_prefix.replace('/', '_')
+
+            suffix = self.canonical_suffix[1:]
+            unified_prefix='Unified_%s_%s' % (suffix, unified_prefix)
+            self.unified_source_mapping = list(group_unified_files(source_files,
+                                                                   unified_prefix=unified_prefix,
+                                                                   unified_suffix=suffix,
+                                                                   files_per_unified_file=files_per_unified_file))
 
 
 class InstallationTarget(ContextDerived):
@@ -819,6 +851,22 @@ class FinalTargetFiles(ContextDerived):
         ContextDerived.__init__(self, sandbox)
         self.files = files
         self.target = target
+
+
+class GeneratedFile(ContextDerived):
+    """Represents a generated file."""
+
+    __slots__ = (
+        'script',
+        'output',
+        'inputs',
+    )
+
+    def __init__(self, context, script, output, inputs):
+        ContextDerived.__init__(self, context)
+        self.script = script
+        self.output = output
+        self.inputs = inputs
 
 
 class ClassPathEntry(object):

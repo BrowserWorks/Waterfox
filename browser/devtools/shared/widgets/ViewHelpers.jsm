@@ -13,13 +13,6 @@ const PANE_APPEARANCE_DELAY = 50;
 const PAGE_SIZE_ITEM_COUNT_RATIO = 5;
 const WIDGET_FOCUSABLE_NODES = new Set(["vbox", "hbox"]);
 
-/**
- * The method name to use for ES6 iteration. If symbols are enabled in
- * this build, use Symbol.iterator; otherwise "@@iterator".
- */
-const JS_HAS_SYMBOLS = typeof Symbol === "function";
-const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
-
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Timer.jsm");
@@ -624,7 +617,7 @@ Item.prototype = {
 
 // Creating maps thousands of times for widgets with a large number of children
 // fills up a lot of memory. Make sure these are instantiated only if needed.
-DevToolsUtils.defineLazyPrototypeGetter(Item.prototype, "_itemsByElement", Map);
+DevToolsUtils.defineLazyPrototypeGetter(Item.prototype, "_itemsByElement", () => new Map());
 
 /**
  * Some generic Widget methods handling Item instances.
@@ -807,7 +800,7 @@ this.WidgetMethods = {
    */
   removeForPredicate: function(aPredicate) {
     let item;
-    while (item = this.getItemForPredicate(aPredicate)) {
+    while ((item = this.getItemForPredicate(aPredicate))) {
       this.remove(item);
     }
   },
@@ -1736,7 +1729,7 @@ this.WidgetMethods = {
 /**
  * A generator-iterator over all the items in this container.
  */
-Item.prototype[ITERATOR_SYMBOL] =
-WidgetMethods[ITERATOR_SYMBOL] = function*() {
+Item.prototype[Symbol.iterator] =
+WidgetMethods[Symbol.iterator] = function*() {
   yield* this._itemsByElement.values();
 };

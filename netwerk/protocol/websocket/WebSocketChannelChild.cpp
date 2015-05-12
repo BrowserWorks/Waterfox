@@ -13,6 +13,7 @@
 #include "nsNetUtil.h"
 #include "mozilla/ipc/InputStreamUtils.h"
 #include "mozilla/ipc/URIUtils.h"
+#include "mozilla/ipc/BackgroundUtils.h"
 #include "mozilla/net/ChannelEventQueue.h"
 #include "SerializedLoadContext.h"
 
@@ -53,7 +54,7 @@ WebSocketChannelChild::WebSocketChannelChild(bool aEncrypted)
  : mIPCState(Closed)
  , mMutex("WebSocketChannelChild::mMutex")
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
 
   LOG(("WebSocketChannelChild::WebSocketChannelChild() %p\n", this));
   mEncrypted = aEncrypted;
@@ -72,7 +73,7 @@ WebSocketChannelChild::AddIPDLReference()
 
   {
     MutexAutoLock lock(mMutex);
-    NS_ABORT_IF_FALSE(mIPCState == Closed, "Attempt to retain more than one IPDL reference");
+    MOZ_ASSERT(mIPCState == Closed, "Attempt to retain more than one IPDL reference");
     mIPCState = Opened;
   }
 
@@ -86,7 +87,7 @@ WebSocketChannelChild::ReleaseIPDLReference()
 
   {
     MutexAutoLock lock(mMutex);
-    NS_ABORT_IF_FALSE(mIPCState != Closed, "Attempt to release nonexistent IPDL reference");
+    MOZ_ASSERT(mIPCState != Closed, "Attempt to release nonexistent IPDL reference");
     mIPCState = Closed;
   }
 
@@ -452,6 +453,25 @@ WebSocketChannelChild::OnServerClose(const uint16_t& aCode,
   }
 }
 
+// helper function to assign loadInfo to wsArgs
+void
+propagateLoadInfo(nsILoadInfo *aLoadInfo,
+                  WebSocketLoadInfoArgs& wsArgs)
+{
+  mozilla::ipc::PrincipalInfo requestingPrincipalInfo;
+  mozilla::ipc::PrincipalInfo triggeringPrincipalInfo;
+
+  mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->LoadingPrincipal(),
+                                         &requestingPrincipalInfo);
+  wsArgs.requestingPrincipalInfo() = requestingPrincipalInfo;
+  mozilla::ipc::PrincipalToPrincipalInfo(aLoadInfo->TriggeringPrincipal(),
+                                         &triggeringPrincipalInfo);
+  wsArgs.triggeringPrincipalInfo() = triggeringPrincipalInfo;
+  wsArgs.securityFlags() = aLoadInfo->GetSecurityFlags();
+  wsArgs.contentPolicyType() = aLoadInfo->GetContentPolicyType();
+  wsArgs.innerWindowID() = aLoadInfo->GetInnerWindowID();
+}
+
 NS_IMETHODIMP
 WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
                                  const nsACString &aOrigin,
@@ -460,9 +480,9 @@ WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
 {
   LOG(("WebSocketChannelChild::AsyncOpen() %p\n", this));
 
-  NS_ABORT_IF_FALSE(NS_IsMainThread(), "not main thread");
-  NS_ABORT_IF_FALSE(aURI && aListener && !mListenerMT,
-                    "Invalid state for WebSocketChannelChild::AsyncOpen");
+  MOZ_ASSERT(NS_IsMainThread(), "not main thread");
+  MOZ_ASSERT(aURI && aListener && !mListenerMT,
+             "Invalid state for WebSocketChannelChild::AsyncOpen");
 
   mozilla::dom::TabChild* tabChild = nullptr;
   nsCOMPtr<nsITabChild> iTabChild;
@@ -482,12 +502,16 @@ WebSocketChannelChild::AsyncOpen(nsIURI *aURI,
   // Corresponding release in DeallocPWebSocket
   AddIPDLReference();
 
+  WebSocketLoadInfoArgs wsArgs;
+  propagateLoadInfo(mLoadInfo, wsArgs);
+
   gNeckoChild->SendPWebSocketConstructor(this, tabChild,
                                          IPC::SerializedLoadContext(this));
   if (!SendAsyncOpen(uri, nsCString(aOrigin), mProtocol, mEncrypted,
                      mPingInterval, mClientSetPingInterval,
-                     mPingResponseTimeout, mClientSetPingTimeout))
+                     mPingResponseTimeout, mClientSetPingTimeout, wsArgs)) {
     return NS_ERROR_UNEXPECTED;
+  }
 
   mOriginalURI = aURI;
   mURI = mOriginalURI;

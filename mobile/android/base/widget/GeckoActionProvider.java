@@ -5,17 +5,20 @@
 
 package org.mozilla.gecko.widget;
 
+import android.view.Menu;
 import org.mozilla.gecko.GeckoAppShell;
+import org.mozilla.gecko.R;
 import org.mozilla.gecko.Telemetry;
 import org.mozilla.gecko.TelemetryContract;
 import org.mozilla.gecko.menu.MenuItemActionView;
+import org.mozilla.gecko.menu.QuickShareBarActionView;
+import org.mozilla.gecko.overlays.ui.ShareDialog;
 import org.mozilla.gecko.util.ThreadUtils;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.graphics.drawable.Drawable;
 import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.SubMenu;
@@ -27,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class GeckoActionProvider {
-    private static final int MAX_HISTORY_SIZE = 2;
+    private static final int MAX_HISTORY_SIZE_DEFAULT = 2;
 
     /**
      * A listener to know when a target was selected.
@@ -84,16 +87,41 @@ public class GeckoActionProvider {
         mContext = context;
     }
 
-    public View onCreateActionView() {
+    /**
+     * Creates the action view using the default history size.
+     */
+    public View onCreateActionView(final ActionViewType viewType) {
+        return onCreateActionView(MAX_HISTORY_SIZE_DEFAULT, viewType);
+    }
+
+    public View onCreateActionView(final int maxHistorySize, final ActionViewType viewType) {
         // Create the view and set its data model.
         ActivityChooserModel dataModel = ActivityChooserModel.get(mContext, mHistoryFileName);
-        MenuItemActionView view = new MenuItemActionView(mContext, null);
+        final MenuItemActionView view;
+        switch (viewType) {
+            case DEFAULT:
+                view = new MenuItemActionView(mContext, null);
+                break;
+
+            case QUICK_SHARE_ICON:
+                view = new QuickShareBarActionView(mContext, null);
+                break;
+
+            case CONTEXT_MENU:
+                view = new MenuItemActionView(mContext, null);
+                view.initContextMenuStyles();
+                break;
+
+            default:
+                throw new IllegalArgumentException(
+                        "Unknown " + ActionViewType.class.getSimpleName() + ": " + viewType);
+        }
         view.addActionButtonClickListener(mCallbacks);
 
         final PackageManager packageManager = mContext.getPackageManager();
         int historySize = dataModel.getDistinctActivityCountInHistory();
-        if (historySize > MAX_HISTORY_SIZE) {
-            historySize = MAX_HISTORY_SIZE;
+        if (historySize > maxHistorySize) {
+            historySize = maxHistorySize;
         }
 
         // Historical data is dependent on past selection of activities.
@@ -112,10 +140,6 @@ public class GeckoActionProvider {
         return view;
     }
 
-    public View getView() {
-        return onCreateActionView();
-    }
-
     public boolean hasSubMenu() {
         return true;
     }
@@ -128,10 +152,24 @@ public class GeckoActionProvider {
         PackageManager packageManager = mContext.getPackageManager();
 
         // Populate the sub-menu with a sub set of the activities.
+        final String shareDialogClassName = ShareDialog.class.getCanonicalName();
+        final String sendTabLabel = mContext.getResources().getString(R.string.overlay_share_send_other);
         final int count = dataModel.getActivityCount();
         for (int i = 0; i < count; i++) {
             ResolveInfo activity = dataModel.getActivity(i);
-            subMenu.add(0, i, i, activity.loadLabel(packageManager))
+            final CharSequence activityLabel = activity.loadLabel(packageManager);
+
+            // Pin internal actions to the top. Note:
+            // the order here does not affect quick share.
+            final int order;
+            if (shareDialogClassName.equals(activity.activityInfo.name) &&
+                    sendTabLabel.equals(activityLabel)) {
+                order = i;
+            } else {
+                order = i | Menu.CATEGORY_SECONDARY;
+            }
+
+            subMenu.add(0, i, order, activityLabel)
                 .setIcon(activity.loadIcon(packageManager))
                 .setOnMenuItemClickListener(mCallbacks);
         }
@@ -225,5 +263,11 @@ public class GeckoActionProvider {
             // Context: Sharing via chrome mainmenu and content contextmenu quickshare (no explicit session is active)
             Telemetry.sendUIEvent(TelemetryContract.Event.SHARE, TelemetryContract.Method.BUTTON);
         }
+    }
+
+    public enum ActionViewType {
+        DEFAULT,
+        QUICK_SHARE_ICON,
+        CONTEXT_MENU,
     }
 }

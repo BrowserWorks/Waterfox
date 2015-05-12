@@ -269,7 +269,7 @@ private:
  * nsOfflineCacheDeviceInfo
  */
 
-class nsOfflineCacheDeviceInfo MOZ_FINAL : public nsICacheDeviceInfo
+class nsOfflineCacheDeviceInfo final : public nsICacheDeviceInfo
 {
 public:
   NS_DECL_ISUPPORTS
@@ -347,7 +347,7 @@ nsOfflineCacheDeviceInfo::GetMaximumSize(uint32_t *aMaximumSize)
  * nsOfflineCacheBinding
  */
 
-class nsOfflineCacheBinding MOZ_FINAL : public nsISupports
+class nsOfflineCacheBinding final : public nsISupports
 {
   ~nsOfflineCacheBinding() {}
 
@@ -516,7 +516,7 @@ CreateCacheEntry(nsOfflineCacheDevice *device,
  * nsOfflineCacheEntryInfo
  */
 
-class nsOfflineCacheEntryInfo MOZ_FINAL : public nsICacheEntryInfo
+class nsOfflineCacheEntryInfo final : public nsICacheEntryInfo
 {
   ~nsOfflineCacheEntryInfo() {}
 
@@ -966,7 +966,7 @@ nsOfflineCacheDevice::UpdateEntry(nsCacheEntry *entry)
 
   nsCString metaDataBuf;
   uint32_t mdSize = entry->MetaDataSize();
-  if (!metaDataBuf.SetLength(mdSize, fallible_t()))
+  if (!metaDataBuf.SetLength(mdSize, fallible))
     return NS_ERROR_OUT_OF_MEMORY;
   char *md = metaDataBuf.BeginWriting();
   entry->FlattenMetaData(md, mdSize);

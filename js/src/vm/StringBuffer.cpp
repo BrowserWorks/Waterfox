@@ -15,20 +15,20 @@
 using namespace js;
 
 template <typename CharT, class Buffer>
-static CharT *
-ExtractWellSized(ExclusiveContext *cx, Buffer &cb)
+static CharT*
+ExtractWellSized(ExclusiveContext* cx, Buffer& cb)
 {
     size_t capacity = cb.capacity();
     size_t length = cb.length();
 
-    CharT *buf = cb.extractRawBuffer();
+    CharT* buf = cb.extractRawBuffer();
     if (!buf)
         return nullptr;
 
     /* For medium/big buffers, avoid wasting more than 1/4 of the memory. */
     MOZ_ASSERT(capacity >= length);
     if (length > Buffer::sMaxInlineStorage && capacity - length > length / 4) {
-        CharT *tmp = cx->zone()->pod_realloc<CharT>(buf, capacity, length + 1);
+        CharT* tmp = cx->zone()->pod_realloc<CharT>(buf, capacity, length + 1);
         if (!tmp) {
             js_free(buf);
             return nullptr;
@@ -39,7 +39,7 @@ ExtractWellSized(ExclusiveContext *cx, Buffer &cb)
     return buf;
 }
 
-char16_t *
+char16_t*
 StringBuffer::stealChars()
 {
     if (isLatin1() && !inflateChars())
@@ -72,8 +72,8 @@ StringBuffer::inflateChars()
 }
 
 template <typename CharT, class Buffer>
-static JSFlatString *
-FinishStringFlat(ExclusiveContext *cx, StringBuffer &sb, Buffer &cb)
+static JSFlatString*
+FinishStringFlat(ExclusiveContext* cx, StringBuffer& sb, Buffer& cb)
 {
     size_t len = sb.length();
     if (!sb.append('\0'))
@@ -83,7 +83,7 @@ FinishStringFlat(ExclusiveContext *cx, StringBuffer &sb, Buffer &cb)
     if (!buf)
         return nullptr;
 
-    JSFlatString *str = NewStringDontDeflate<CanGC>(cx, buf.get(), len);
+    JSFlatString* str = NewStringDontDeflate<CanGC>(cx, buf.get(), len);
     if (!str)
         return nullptr;
 
@@ -97,7 +97,7 @@ FinishStringFlat(ExclusiveContext *cx, StringBuffer &sb, Buffer &cb)
     return str;
 }
 
-JSFlatString *
+JSFlatString*
 StringBuffer::finishString()
 {
     size_t len = length();
@@ -111,14 +111,14 @@ StringBuffer::finishString()
     JS_STATIC_ASSERT(JSFatInlineString::MAX_LENGTH_LATIN1 < Latin1CharBuffer::InlineLength);
 
     if (isLatin1()) {
-        if (JSFatInlineString::latin1LengthFits(len)) {
+        if (JSInlineString::lengthFits<Latin1Char>(len)) {
             mozilla::Range<const Latin1Char> range(latin1Chars().begin(), len);
-            return NewFatInlineString<CanGC>(cx, range);
+            return NewInlineString<CanGC>(cx, range);
         }
     } else {
-        if (JSFatInlineString::twoByteLengthFits(len)) {
+        if (JSInlineString::lengthFits<char16_t>(len)) {
             mozilla::Range<const char16_t> range(twoByteChars().begin(), len);
-            return NewFatInlineString<CanGC>(cx, range);
+            return NewInlineString<CanGC>(cx, range);
         }
     }
 
@@ -127,7 +127,7 @@ StringBuffer::finishString()
         : FinishStringFlat<char16_t>(cx, *this, twoByteChars());
 }
 
-JSAtom *
+JSAtom*
 StringBuffer::finishAtom()
 {
     size_t len = length();
@@ -135,18 +135,18 @@ StringBuffer::finishAtom()
         return cx->names().empty;
 
     if (isLatin1()) {
-        JSAtom *atom = AtomizeChars(cx, latin1Chars().begin(), len);
+        JSAtom* atom = AtomizeChars(cx, latin1Chars().begin(), len);
         latin1Chars().clear();
         return atom;
     }
 
-    JSAtom *atom = AtomizeChars(cx, twoByteChars().begin(), len);
+    JSAtom* atom = AtomizeChars(cx, twoByteChars().begin(), len);
     twoByteChars().clear();
     return atom;
 }
 
 bool
-js::ValueToStringBufferSlow(JSContext *cx, const Value &arg, StringBuffer &sb)
+js::ValueToStringBufferSlow(JSContext* cx, const Value& arg, StringBuffer& sb)
 {
     RootedValue v(cx, arg);
     if (!ToPrimitive(cx, JSTYPE_STRING, &v))

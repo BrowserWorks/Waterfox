@@ -9,7 +9,7 @@
 using namespace js;
 using namespace js::jit;
 
-MoveEmitterX86::MoveEmitterX86(MacroAssemblerSpecific &masm)
+MoveEmitterX86::MoveEmitterX86(MacroAssemblerSpecific& masm)
   : inCycle_(false),
     masm(masm),
     pushedAtCycle_(-1)
@@ -21,13 +21,13 @@ MoveEmitterX86::MoveEmitterX86(MacroAssemblerSpecific &masm)
 // simple cycle consisting of all register-to-register moves in a single class,
 // and whether it can be implemented entirely by swaps.
 size_t
-MoveEmitterX86::characterizeCycle(const MoveResolver &moves, size_t i,
-                                  bool *allGeneralRegs, bool *allFloatRegs)
+MoveEmitterX86::characterizeCycle(const MoveResolver& moves, size_t i,
+                                  bool* allGeneralRegs, bool* allFloatRegs)
 {
     size_t swapCount = 0;
 
     for (size_t j = i; ; j++) {
-        const MoveOp &move = moves.getMove(j);
+        const MoveOp& move = moves.getMove(j);
 
         // If it isn't a cycle of registers of the same kind, we won't be able
         // to optimize it.
@@ -55,7 +55,7 @@ MoveEmitterX86::characterizeCycle(const MoveResolver &moves, size_t i,
     }
 
     // Check that the last move cycles back to the first move.
-    const MoveOp &move = moves.getMove(i + swapCount);
+    const MoveOp& move = moves.getMove(i + swapCount);
     if (move.from() != moves.getMove(i).to()) {
         *allGeneralRegs = false;
         *allFloatRegs = false;
@@ -68,7 +68,7 @@ MoveEmitterX86::characterizeCycle(const MoveResolver &moves, size_t i,
 // If we can emit optimized code for the cycle in moves starting at position i,
 // do so, and return true.
 bool
-MoveEmitterX86::maybeEmitOptimizedCycle(const MoveResolver &moves, size_t i,
+MoveEmitterX86::maybeEmitOptimizedCycle(const MoveResolver& moves, size_t i,
                                         bool allGeneralRegs, bool allFloatRegs, size_t swapCount)
 {
     if (allGeneralRegs && swapCount <= 2) {
@@ -95,12 +95,18 @@ MoveEmitterX86::maybeEmitOptimizedCycle(const MoveResolver &moves, size_t i,
 }
 
 void
-MoveEmitterX86::emit(const MoveResolver &moves)
+MoveEmitterX86::emit(const MoveResolver& moves)
 {
+#if defined(JS_CODEGEN_X86) && defined(DEBUG)
+    // Clobber any scratch register we have, to make regalloc bugs more visible.
+    if (hasScratchRegister())
+        masm.mov(ImmWord(0xdeadbeef), scratchRegister());
+#endif
+
     for (size_t i = 0; i < moves.numMoves(); i++) {
-        const MoveOp &move = moves.getMove(i);
-        const MoveOperand &from = move.from();
-        const MoveOperand &to = move.to();
+        const MoveOp& move = moves.getMove(i);
+        const MoveOperand& from = move.from();
+        const MoveOperand& to = move.to();
 
         if (move.isCycleEnd()) {
             MOZ_ASSERT(inCycle_);
@@ -171,7 +177,7 @@ MoveEmitterX86::cycleSlot()
 }
 
 Address
-MoveEmitterX86::toAddress(const MoveOperand &operand) const
+MoveEmitterX86::toAddress(const MoveOperand& operand) const
 {
     if (operand.base() != StackPointer)
         return Address(operand.base(), operand.disp());
@@ -186,7 +192,7 @@ MoveEmitterX86::toAddress(const MoveOperand &operand) const
 // compute the effective destination address after altering the stack pointer.
 // Use toPopOperand if an Operand is needed for a pop.
 Operand
-MoveEmitterX86::toOperand(const MoveOperand &operand) const
+MoveEmitterX86::toOperand(const MoveOperand& operand) const
 {
     if (operand.isMemoryOrEffectiveAddress())
         return Operand(toAddress(operand));
@@ -200,7 +206,7 @@ MoveEmitterX86::toOperand(const MoveOperand &operand) const
 // This is the same as toOperand except that it computes an Operand suitable for
 // use in a pop.
 Operand
-MoveEmitterX86::toPopOperand(const MoveOperand &operand) const
+MoveEmitterX86::toPopOperand(const MoveOperand& operand) const
 {
     if (operand.isMemory()) {
         if (operand.base() != StackPointer)
@@ -212,7 +218,7 @@ MoveEmitterX86::toPopOperand(const MoveOperand &operand) const
         // Note the adjustment by the stack slot here, to offset for the fact that pop
         // computes its effective address after incrementing the stack pointer.
         return Operand(StackPointer,
-                       operand.disp() + (masm.framePushed() - sizeof(void *) - pushedAtStart_));
+                       operand.disp() + (masm.framePushed() - sizeof(void*) - pushedAtStart_));
     }
     if (operand.isGeneralReg())
         return Operand(operand.reg());
@@ -222,7 +228,7 @@ MoveEmitterX86::toPopOperand(const MoveOperand &operand) const
 }
 
 void
-MoveEmitterX86::breakCycle(const MoveOperand &to, MoveOp::Type type)
+MoveEmitterX86::breakCycle(const MoveOperand& to, MoveOp::Type type)
 {
     // There is some pattern:
     //   (A -> B)
@@ -283,7 +289,7 @@ MoveEmitterX86::breakCycle(const MoveOperand &to, MoveOp::Type type)
 }
 
 void
-MoveEmitterX86::completeCycle(const MoveOperand &to, MoveOp::Type type)
+MoveEmitterX86::completeCycle(const MoveOperand& to, MoveOp::Type type)
 {
     // There is some pattern:
     //   (A -> B)
@@ -355,7 +361,7 @@ MoveEmitterX86::completeCycle(const MoveOperand &to, MoveOp::Type type)
 }
 
 void
-MoveEmitterX86::emitInt32Move(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitInt32Move(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isGeneralReg()) {
         masm.move32(from.reg(), toOperand(to));
@@ -365,20 +371,20 @@ MoveEmitterX86::emitInt32Move(const MoveOperand &from, const MoveOperand &to)
     } else {
         // Memory to memory gpr move.
         MOZ_ASSERT(from.isMemory());
-#ifdef JS_CODEGEN_X64
-        // x64 has a ScratchReg. Use it.
-        masm.load32(toAddress(from), ScratchReg);
-        masm.move32(ScratchReg, toOperand(to));
-#else
-        // No ScratchReg; bounce it off the stack.
-        masm.Push(toOperand(from));
-        masm.Pop(toPopOperand(to));
-#endif
+        if (hasScratchRegister()) {
+            Register reg = scratchRegister();
+            masm.load32(toAddress(from), reg);
+            masm.move32(reg, toOperand(to));
+        } else {
+            // No scratch register available; bounce it off the stack.
+            masm.Push(toOperand(from));
+            masm.Pop(toPopOperand(to));
+        }
     }
 }
 
 void
-MoveEmitterX86::emitGeneralMove(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitGeneralMove(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isGeneralReg()) {
         masm.mov(from.reg(), toOperand(to));
@@ -390,35 +396,35 @@ MoveEmitterX86::emitGeneralMove(const MoveOperand &from, const MoveOperand &to)
             masm.lea(toOperand(from), to.reg());
     } else if (from.isMemory()) {
         // Memory to memory gpr move.
-#ifdef JS_CODEGEN_X64
-        // x64 has a ScratchReg. Use it.
-        masm.loadPtr(toAddress(from), ScratchReg);
-        masm.mov(ScratchReg, toOperand(to));
-#else
-        // No ScratchReg; bounce it off the stack.
-        masm.Push(toOperand(from));
-        masm.Pop(toPopOperand(to));
-#endif
+        if (hasScratchRegister()) {
+            Register reg = scratchRegister();
+            masm.loadPtr(toAddress(from), reg);
+            masm.mov(reg, toOperand(to));
+        } else {
+            // No scratch register available; bounce it off the stack.
+            masm.Push(toOperand(from));
+            masm.Pop(toPopOperand(to));
+        }
     } else {
         // Effective address to memory move.
         MOZ_ASSERT(from.isEffectiveAddress());
-#ifdef JS_CODEGEN_X64
-        // x64 has a ScratchReg. Use it.
-        masm.lea(toOperand(from), ScratchReg);
-        masm.mov(ScratchReg, toOperand(to));
-#else
-        // This is tricky without a ScratchReg. We can't do an lea. Bounce the
-        // base register off the stack, then add the offset in place. Note that
-        // this clobbers FLAGS!
-        masm.Push(from.base());
-        masm.Pop(toPopOperand(to));
-        masm.addPtr(Imm32(from.disp()), toOperand(to));
-#endif
+        if (hasScratchRegister()) {
+            Register reg = scratchRegister();
+            masm.lea(toOperand(from), reg);
+            masm.mov(reg, toOperand(to));
+        } else {
+            // This is tricky without a scratch reg. We can't do an lea. Bounce the
+            // base register off the stack, then add the offset in place. Note that
+            // this clobbers FLAGS!
+            masm.Push(from.base());
+            masm.Pop(toPopOperand(to));
+            masm.addPtr(Imm32(from.disp()), toOperand(to));
+        }
     }
 }
 
 void
-MoveEmitterX86::emitFloat32Move(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitFloat32Move(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isFloatReg()) {
         if (to.isFloatReg())
@@ -436,7 +442,7 @@ MoveEmitterX86::emitFloat32Move(const MoveOperand &from, const MoveOperand &to)
 }
 
 void
-MoveEmitterX86::emitDoubleMove(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitDoubleMove(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isFloatReg()) {
         if (to.isFloatReg())
@@ -454,7 +460,7 @@ MoveEmitterX86::emitDoubleMove(const MoveOperand &from, const MoveOperand &to)
 }
 
 void
-MoveEmitterX86::emitInt32X4Move(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitInt32X4Move(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isFloatReg()) {
         if (to.isFloatReg())
@@ -472,7 +478,7 @@ MoveEmitterX86::emitInt32X4Move(const MoveOperand &from, const MoveOperand &to)
 }
 
 void
-MoveEmitterX86::emitFloat32X4Move(const MoveOperand &from, const MoveOperand &to)
+MoveEmitterX86::emitFloat32X4Move(const MoveOperand& from, const MoveOperand& to)
 {
     if (from.isFloatReg()) {
         if (to.isFloatReg())

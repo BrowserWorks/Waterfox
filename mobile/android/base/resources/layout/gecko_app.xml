@@ -3,7 +3,7 @@
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.mozilla.gecko.OuterLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:gecko="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/root_layout"
                 android:layout_width="match_parent"
@@ -28,6 +28,12 @@
 
             <include layout="@layout/shared_ui_components"/>
 
+            <ViewStub android:id="@+id/zoomed_view_stub"
+                      android:inflatedId="@+id/zoomed_view"
+                      android:layout="@layout/zoomed_view"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content" />
+
             <FrameLayout android:id="@+id/home_pager_container"
                          android:layout_width="match_parent"
                          android:layout_height="match_parent"
@@ -43,6 +49,11 @@
                           android:layout_width="match_parent"
                           android:layout_height="@dimen/home_banner_height"
                           android:layout_gravity="bottom"/>
+
+                <ViewStub android:id="@+id/firstrun_pager_stub"
+                          android:layout="@layout/firstrun_pane"
+                          android:layout_width="match_parent"
+                          android:layout_height="match_parent"/>
 
             </FrameLayout>
 
@@ -133,4 +144,4 @@
               android:layout="@layout/button_toast"
               style="@style/Toast"/>
 
-</RelativeLayout>
+</org.mozilla.gecko.OuterLayout>

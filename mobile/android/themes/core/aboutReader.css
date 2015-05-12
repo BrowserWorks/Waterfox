@@ -21,7 +21,7 @@ body {
 }
 
 .dark {
-  background-color: #000000;
+  background-color: #222222;
   color: #eeeeee;
 }
 
@@ -33,12 +33,48 @@ body {
   font-family: serif;
 }
 
+.font-size1 {
+  font-size: 10px;
+}
+
+.font-size2 {
+  font-size: 12px;
+}
+
+.font-size3 {
+  font-size: 14px;
+}
+
+.font-size4  {
+  font-size: 16px;
+}
+
+.font-size5 {
+  font-size: 18px;
+}
+
+.font-size6 {
+  font-size: 20px;
+}
+
+.font-size7 {
+  font-size: 22px;
+}
+
+.font-size8 {
+  font-size: 24px;
+}
+
+.font-size9 {
+  font-size: 26px;
+}
+
 .message {
   margin-top: 40px;
   display: none;
   text-align: center;
   width: 100%;
-  font-size: 16px;
+  font-size: 0.9em;
 }
 
 .header {
@@ -65,7 +101,7 @@ body {
 }
 
 .header > h1 {
-  font-size: 2.625em;
+  font-size: 1.33em;
   font-weight: 700;
   line-height: 1.1em;
   width: 100%;
@@ -81,92 +117,45 @@ body {
   margin-bottom: 32px;
 }
 
-.light > .header > .domain {
+.light > .container > .header > .domain {
   color: #ee7600;
   border-bottom-color: #d0d0d0; 
 }
 
-.light > .header > h1 {
+.light > .container > .header > h1 {
   color: #222222;
 }
 
-.light > .header > .credits {
+.light > .container > .header > .credits {
   color: #898989;
 }
 
-.dark > .header > .domain {
+.dark > .container > .header > .domain {
   color: #ff9400;
   border-bottom-color: #777777; 
 }
 
-.dark > .header > h1 {
+.dark > .container > .header > h1 {
   color: #eeeeee;
 }
 
-.dark > .header > .credits {
+.dark > .container > .header > .credits {
   color: #aaaaaa;
-}
-
-.font-size1 > .header > h1 {
-  font-size: 27px;
-}
-
-.font-size2 > .header > h1 {
-  font-size: 29px;
-}
-
-.font-size3 > .header > h1 {
-  font-size: 31px;
-}
-
-.font-size4 > .header > h1 {
-  font-size: 33px;
-}
-
-.font-size5 > .header > h1 {
-  font-size: 35px;
 }
 
 /* This covers caption, domain, and credits
    texts in the reader UI */
 
-.font-size1 > .content .wp-caption-text,
-.font-size1 > .content figcaption,
-.font-size1 > .header > .domain,
-.font-size1 > .header > .credits {
-  font-size: 10px;
+#moz-reader-content .wp-caption-text,
+#moz-reader-content figcaption,
+.header > .domain,
+.header > .credits {
+  font-size: 0.9em;
 }
 
-.font-size2 > .content .wp-caption-text,
-.font-size2 > .content figcaption,
-.font-size2 > .header > .domain,
-.font-size2 > .header > .credits {
-  font-size: 13px;
-}
-
-.font-size3 > .content .wp-caption-text,
-.font-size3 > .content figcaption,
-.font-size3 > .header > .domain,
-.font-size3 > .header > .credits {
-  font-size: 15px;
-}
-
-.font-size4 > .content .wp-caption-text,
-.font-size4 > .content figcaption,
-.font-size4 > .header > .domain,
-.font-size4 > .header > .credits {
-  font-size: 17px;
-}
-
-.font-size5 > .content .wp-caption-text,
-.font-size5 > .content figcaption,
-.font-size5 > .header > .domain,
-.font-size5 > .header > .credits {
-  font-size: 19px;
-}
-
-.content {
+#moz-reader-content {
   display: none;
+  font-size: 1em;
 }
 
 .content a {
@@ -174,17 +163,10 @@ body {
   font-weight: normal;
 }
 
-.light > .content a,
-.light > .content a:visited,
-.light > .content a:hover,
-.light > .content a:active {
-  color: #00acff !important;
-}
-
-.dark > .content a,
-.dark > .content a:visited,
-.dark > .content a:hover,
-.dark > .content a:active {
+.content a,
+.content a:visited,
+.content a:hover,
+.content a:active {
   color: #00acff !important;
 }
 
@@ -193,7 +175,7 @@ body {
   height: auto !important;
 }
 
-.content p {
+#moz-reader-content p {
   line-height: 1.4em !important;
   margin: 0px !important;
   margin-bottom: 20px !important;
@@ -215,18 +197,17 @@ body {
 .content p > a:only-child > img:only-child,
 .content .wp-caption img,
 .content figure img {
-  max-width: none !important;
-  height: auto !important;
-  display: block !important;
-  margin-top: 0px !important;
-  margin-bottom: 32px !important;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-/* If image is place inside one of these blocks
-   there's no need to add margin at the bottom */
-.content .wp-caption img,
-.content figure img {
-  margin-bottom: 0px !important;
+/* Account for body padding to make image full width */
+.content img[moz-reader-full-width] {
+  width: calc(100% + 40px);
+  margin-left: -20px;
+  margin-right: -20px;
+  max-width: none !important;
 }
 
 /* Image caption text */
@@ -238,15 +219,15 @@ body {
   padding-top: 4px !important;
 }
 
-.light > .content .caption,
-.light > .content .wp-caption-text,
-.light > .content figcaption {
+.light > .container > .content .caption,
+.light > .container > .content .wp-caption-text,
+.light > .container > .content figcaption {
   color: #898989;
 }
 
-.dark > .content .caption,
-.dark > .content .wp-caption-text,
-.dark > .content figcaption {
+.dark > .container > .content .caption,
+.dark > .container > .content .wp-caption-text,
+.dark > .container > .content figcaption {
   color: #aaaaaa;
 }
 
@@ -267,18 +248,18 @@ body {
   border-left: 2px solid !important;
 }
 
-.light > .content blockquote {
+.light > .container > .content blockquote {
   color: #898989 !important;
   border-left-color: #d0d0d0 !important;
 }
 
-.dark > .content blockquote {
+.dark > .container > .content blockquote {
   color: #aaaaaa !important;
   border-left-color: #777777 !important;
 }
 
-.content ul,
-.content ol {
+#moz-reader-content ul,
+#moz-reader-content ol {
   margin: 0px !important;
   margin-bottom: 20px !important;
   padding: 0px !important;
@@ -287,7 +268,7 @@ body {
 
 .content ul {
   -moz-padding-start: 30px !important;
-  list-style: disk !important;
+  list-style: disc !important;
 }
 
 .content ol {
@@ -295,53 +276,25 @@ body {
   list-style: decimal !important;
 }
 
-.font-size1-sample,
-.font-size1 > .content {
-  font-size: 14px !important;
-}
-
-.font-size2-sample,
-.font-size2 > .content {
-  font-size: 16px !important;
-}
-
-.font-size3-sample,
-.font-size3 > .content {
-  font-size: 18px !important;
-}
-
-.font-size4-sample,
-.font-size4 > .content {
-  font-size: 20px !important;
-}
-
-.font-size5-sample,
-.font-size5 > .content {
-  font-size: 22px !important;
-}
+/*======= Controls toolbar =======*/
 
 .toolbar {
-  font-family: "Clear Sans",sans-serif;
-  transition-property: visibility, opacity;
-  transition-duration: 0.7s;
-  visibility: visible;
-  opacity: 1.0;
+  font-family: sans-serif;
+  transition-property: bottom;
+  transition-duration: 0.3s;
   position: fixed;
   width: 100%;
-  bottom: 0px;
-  left: 0px;
+  left: 0;
   margin: 0;
   padding: 0;
   list-style: none;
   background-color: #EBEBF0;
-  -moz-user-select: none;
+  border-top: 1px solid #D7D9DB;
+  display: none;
 }
 
-.toolbar-hidden {
-  transition-property: visibility, opacity;
-  transition-duration: 0.7s;
-  visibility: hidden;
-  opacity: 0.0;
+.toolbar[visible] {
+  bottom: 0;
 }
 
 .toolbar > * {
@@ -350,14 +303,27 @@ body {
 }
 
 .button {
-  color: white;
   display: block;
   background-position: center;
-  background-size: 30px 24px;
+  background-size: 30px 28px;
   background-repeat: no-repeat;
+  background-color: transparent;
+  border: 0;
+  width: 100%;
+}
+
+.button:active {
+  background-color: #D7D7DC;
+}
+
+/* Remove dotted border when button is focused */
+.button::-moz-focus-inner,
+.dropdown-popup > div > button::-moz-focus-inner {
+  border: 0;
 }
 
 .dropdown {
+  left: 0;
   text-align: center;
   display: inline-block;
   list-style: none;
@@ -375,117 +341,126 @@ body {
   padding: 0px;
 }
 
+/*======= Font style popup =======*/
+
 .dropdown-popup {
-  text-align: start;
   position: absolute;
-  left: 0px;
+  left: 0;
+  width: 100%;
   z-index: 1000;
-  float: left;
   background: #EBEBF0;
-  margin-top: 12px;
-  margin-bottom: 10px;
-  padding-top: 4px;
-  padding-bottom: 8px;
-  font-size: 14px;
-  box-shadow: 0px -1px 12px #333;
-  border-radius: 3px;
   visibility: hidden;
+  border-top: 1px solid #D7D9DB;
 }
 
-.dropdown-popup > hr {
-  width: 100%;
-  height: 0px;
-  border: 0px;
-  border-top: 1px solid #B5B5B5;
-  margin: 0;
+/* Only used on desktop */
+.dropdown-popup > hr,
+.dropdown-arrow,
+#font-type-buttons > button > .name {
+  display: none;
 }
 
 .open > .dropdown-popup {
-  margin-top: 0px;
-  margin-bottom: 6px;
-  bottom: 100%;
   visibility: visible;
-}
-
-.dropdown-arrow {
-  position: absolute;
-  width: 40px;
-  height: 18px;
-  bottom: -18px;
-  background-image: url('chrome://browser/skin/images/reader-dropdown-arrow-mdpi.png');
-  background-size: 40px 18px;
-  background-position: center;
-  display: block;
+  bottom: 100%;
 }
 
 #font-type-buttons,
-.segmented-button {
+#font-size-buttons,
+#color-scheme-buttons {
   display: flex;
   flex-direction: row;
-  list-style: none;
-  padding: 10px 5px;
-  white-space: nowrap;
 }
 
-#font-type-buttons > li,
-.segmented-button > li {
-  width: 50px; /* combined with flex, this acts as a minimum width */
-  flex: 1 0 auto;
+#font-type-buttons > button,
+#color-scheme-buttons > button {
   text-align: center;
-  line-height: 20px;
 }
 
-#font-type-buttons > li {
-  padding: 10px 0;
+#font-type-buttons > button,
+#font-size-buttons > button {
+  width: 50%;
+  background-color: transparent;
+  border: 0;
 }
 
-.segmented-button > li {
-  border-left: 1px solid #B5B5B5;
+#font-type-buttons > button {
+  font-size: 24px;
+  color: #AFB1B3;
+  padding: 15px 0;
 }
 
-.segmented-button > li:first-child {
-  border-left: 0px;
+#font-type-buttons > button:active,
+#font-type-buttons > button.selected {
+  color: #222222;
 }
 
-#font-type-buttons > li > a,
-.segmented-button > li > a {
-  vertical-align: middle;
-  text-decoration: none;
-  color: black;
+#font-size-sample {
+  flex: 0;
+  font-size: 24px;
+  color: #000000;
+  margin-left: -20px;
+  margin-right: -20px;
 }
 
-#font-type-buttons > li > a {
-  display: inline-block;
-  font-size: 48px;
-  line-height: 50px;
-  margin-bottom: 5px;
-  border-bottom: 3px solid transparent;
+.serif-button {
+  font-family: serif;
 }
 
-.segmented-button > li > a {
-  display: block;
-  padding: 5px 0;
-  font-family: "Clear Sans",sans-serif;
-  font-weight: lighter;
+.minus-button,
+.plus-button {
+  background-color: transparent;
+  border: 0;
+  height: 60px;
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-#font-type-buttons > li > a:active,
-#font-type-buttons > li.selected > a {
-  border-color: #ff9400;
+.minus-button {
+  background-size: 24px 6px;
 }
 
-.segmented-button > li > a:active,
-.segmented-button > li.selected > a {
-  font-weight: bold;
+.plus-button {
+  background-size: 24px 24px;
 }
 
-#font-type-buttons > li > .sans-serif {
-  font-weight: lighter;
+#color-scheme-buttons > button {
+  width: 33%;
+  border-radius: 4px;
+  border: 1px solid #BFBFBF;
+  padding: 10px;
+  margin: 15px 10px;
+  font-size: 14px;
 }
 
-#font-type-buttons > li > div {
-  color: #666;
-  font-size: 12px;
+#color-scheme-buttons > button:active,
+#color-scheme-buttons > button.selected {
+  border: 2px solid #FF9500;
+}
+
+.dark-button {
+  color: #eeeeee;
+  background-color: #333333;
+}
+
+.auto-button {
+  color: #000000;
+  background-color: transparent;
+}
+
+.light-button {
+  color: #333333;
+  background-color: #ffffff;
+}
+
+/*======= Toolbar icons =======*/
+
+/* desktop-only controls */
+.close-button,
+.list-button,
+.footer {
+  display: none;
 }
 
 .toggle-button.on {
@@ -504,19 +479,19 @@ body {
   background-image: url('chrome://browser/skin/images/reader-style-icon-mdpi.png');
 }
 
+.open .style-button {
+  background-image: url('chrome://browser/skin/images/reader-style-icon-active-mdpi.png');
+}
+
+.minus-button {
+  background-image: url('chrome://browser/skin/images/reader-minus-mdpi.png');
+}
+
+.plus-button {
+  background-image: url('chrome://browser/skin/images/reader-plus-mdpi.png');
+}
+
 @media screen and (min-resolution: 1.25dppx) {
-  .dropdown-arrow {
-    background-image: url('chrome://browser/skin/images/reader-dropdown-arrow-hdpi.png');
-  }
-
-  .step-control > .plus-button {
-    background-image: url('chrome://browser/skin/images/reader-plus-icon-hdpi.png');
-  }
-
-  .step-control > .minus-button {
-    background-image: url('chrome://browser/skin/images/reader-minus-icon-hdpi.png');
-  }
-
   .toggle-button.on {
     background-image: url('chrome://browser/skin/images/reader-toggle-on-icon-hdpi.png');
   }
@@ -532,21 +507,21 @@ body {
   .style-button {
     background-image: url('chrome://browser/skin/images/reader-style-icon-hdpi.png');
   }
+
+  .open .style-button {
+    background-image: url('chrome://browser/skin/images/reader-style-icon-active-hdpi.png');
+  }
+
+  .minus-button {
+    background-image: url('chrome://browser/skin/images/reader-minus-hdpi.png');
+  }
+
+  .plus-button {
+    background-image: url('chrome://browser/skin/images/reader-plus-hdpi.png');
+  }
 }
 
 @media screen and (min-resolution: 2dppx) {
-  .dropdown-arrow {
-    background-image: url('chrome://browser/skin/images/reader-dropdown-arrow-xhdpi.png');
-  }
-
-  .step-control > .plus-button {
-    background-image: url('chrome://browser/skin/images/reader-plus-icon-xhdpi.png');
-  }
-
-  .step-control > .minus-button {
-    background-image: url('chrome://browser/skin/images/reader-minus-icon-xhdpi.png');
-  }
-
   .toggle-button.on {
     background-image: url('chrome://browser/skin/images/reader-toggle-on-icon-xhdpi.png');
   }
@@ -562,17 +537,67 @@ body {
   .style-button {
     background-image: url('chrome://browser/skin/images/reader-style-icon-xhdpi.png');
   }
+
+  .open .style-button {
+    background-image: url('chrome://browser/skin/images/reader-style-icon-active-xhdpi.png');
+  }
+
+  .minus-button {
+    background-image: url('chrome://browser/skin/images/reader-minus-xhdpi.png');
+  }
+
+  .plus-button {
+    background-image: url('chrome://browser/skin/images/reader-plus-xhdpi.png');
+  }
+}
+
+@media screen and (min-resolution: 3dppx) {
+  .toggle-button.on {
+    background-image: url('chrome://browser/skin/images/reader-toggle-on-icon-xxhdpi.png');
+  }
+
+  .toggle-button {
+    background-image: url('chrome://browser/skin/images/reader-toggle-off-icon-xxhdpi.png');
+  }
+
+  .share-button {
+    background-image: url('chrome://browser/skin/images/reader-share-icon-xhdpi.png');
+  }
+
+  .style-button {
+    background-image: url('chrome://browser/skin/images/reader-style-icon-xxhdpi.png');
+  }
+
+  .open .style-button {
+    background-image: url('chrome://browser/skin/images/reader-style-icon-active-xxhdpi.png');
+  }
+
+  .minus-button {
+    background-image: url('chrome://browser/skin/images/reader-minus-xxhdpi.png');
+  }
+
+  .plus-button {
+    background-image: url('chrome://browser/skin/images/reader-plus-xxhdpi.png');
+  }
 }
 
 @media screen and (orientation: portrait) {
   .button {
-    height: 48px;
+    height: 56px;
+  }
+
+  .toolbar {
+    bottom: -57px;
   }
 }
 
 @media screen and (orientation: landscape) {
   .button {
     height: 40px;
+  }
+
+  .toolbar {
+    bottom: -41px;
   }
 }
 
@@ -582,7 +607,24 @@ body {
     height: 56px;
   }
 
+  .toolbar {
+    bottom: -57px;
+  }
+
   .toolbar > * {
     width: 56px;
+  }
+
+  .dropdown-popup {
+    position: absolute;
+    width: 350px;
+    left: auto;
+    right: 15px;
+    bottom: -12px;
+    z-index: 1000;
+    background: #EBEBF0;
+    border: 1px solid #D7D9DB;
+    border-radius: 4px;
+    box-shadow: 0px 2px 4px 2px #BFBFBF;
   }
 }

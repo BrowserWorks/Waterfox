@@ -69,11 +69,23 @@ private:
     virtual void run(const MatchFinder::MatchResult &Result);
   };
 
+  class NaNExprChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
+  class NoAddRefReleaseOnReturnChecker : public MatchFinder::MatchCallback {
+  public:
+    virtual void run(const MatchFinder::MatchResult &Result);
+  };
+
   ScopeChecker stackClassChecker;
   ScopeChecker globalClassChecker;
   NonHeapClassChecker nonheapClassChecker;
   ArithmeticArgChecker arithmeticArgChecker;
   TrivialCtorDtorChecker trivialCtorDtorChecker;
+  NaNExprChecker nanExprChecker;
+  NoAddRefReleaseOnReturnChecker noAddRefReleaseOnReturnChecker;
   MatchFinder astMatcher;
 };
 
@@ -214,7 +226,7 @@ public:
       }
     }
 
-    if (isInterestingDecl(d)) {
+    if (!d->isAbstract() && isInterestingDecl(d)) {
       for (CXXRecordDecl::ctor_iterator ctor = d->ctor_begin(),
            e = d->ctor_end(); ctor != e; ++ctor) {
         // Ignore non-converting ctors
@@ -235,7 +247,10 @@ public:
         }
         unsigned ctorID = Diag.getDiagnosticIDs()->getCustomDiagID(
           DiagnosticIDs::Error, "bad implicit conversion constructor for %0");
+        unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+          DiagnosticIDs::Note, "consider adding the explicit keyword to the constructor");
         Diag.Report(ctor->getLocation(), ctorID) << d->getDeclName();
+        Diag.Report(ctor->getLocation(), noteID);
       }
     }
 
@@ -380,6 +395,12 @@ AST_MATCHER(CXXRecordDecl, hasTrivialCtorDtor) {
   return MozChecker::hasCustomAnnotation(&Node, "moz_trivial_ctor_dtor");
 }
 
+/// This matcher will match any function declaration that is marked to prohibit
+/// calling AddRef or Release on its return value.
+AST_MATCHER(FunctionDecl, hasNoAddRefReleaseOnReturnAttr) {
+  return MozChecker::hasCustomAnnotation(&Node, "moz_no_addref_release_on_return");
+}
+
 /// This matcher will match all arithmetic binary operators.
 AST_MATCHER(BinaryOperator, binaryArithmeticOperator) {
   BinaryOperatorKind opcode = Node.getOpcode();
@@ -416,6 +437,50 @@ AST_MATCHER(UnaryOperator, unaryArithmeticOperator) {
          opcode == UO_Minus ||
          opcode == UO_Not;
 }
+
+/// This matcher will match == and != binary operators.
+AST_MATCHER(BinaryOperator, binaryEqualityOperator) {
+  BinaryOperatorKind opcode = Node.getOpcode();
+  return opcode == BO_EQ || opcode == BO_NE;
+}
+
+/// This matcher will match floating point types.
+AST_MATCHER(QualType, isFloat) {
+  return Node->isRealFloatingType();
+}
+
+/// This matcher will match locations in system headers.  This is adopted from
+/// isExpansionInSystemHeader in newer clangs, but modified in order to work
+/// with old clangs that we use on infra.
+AST_MATCHER(BinaryOperator, isInSystemHeader) {
+  auto &SourceManager = Finder->getASTContext().getSourceManager();
+  auto ExpansionLoc = SourceManager.getExpansionLoc(Node.getLocStart());
+  if (ExpansionLoc.isInvalid()) {
+    return false;
+  }
+  return SourceManager.isInSystemHeader(ExpansionLoc);
+}
+
+/// This matcher will match locations in SkScalar.h.  This header contains a
+/// known NaN-testing expression which we would like to whitelist.
+AST_MATCHER(BinaryOperator, isInSkScalarDotH) {
+  SourceLocation Loc = Node.getOperatorLoc();
+  auto &SourceManager = Finder->getASTContext().getSourceManager();
+  SmallString<1024> FileName = SourceManager.getFilename(Loc);
+  return llvm::sys::path::rbegin(FileName)->equals("SkScalar.h");
+}
+
+/// This matcher will match all accesses to AddRef or Release methods.
+AST_MATCHER(MemberExpr, isAddRefOrRelease) {
+  ValueDecl *Member = Node.getMemberDecl();
+  CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(Member);
+  if (Method) {
+    std::string Name = Method->getNameAsString();
+    return Name == "AddRef" || Name == "Release";
+  }
+  return false;
+}
+
 }
 }
 
@@ -499,6 +564,19 @@ DiagnosticsMatcher::DiagnosticsMatcher()
 
   astMatcher.addMatcher(recordDecl(hasTrivialCtorDtor()).bind("node"),
     &trivialCtorDtorChecker);
+
+  astMatcher.addMatcher(binaryOperator(allOf(binaryEqualityOperator(),
+          hasLHS(has(declRefExpr(hasType(qualType((isFloat())))).bind("lhs"))),
+          hasRHS(has(declRefExpr(hasType(qualType((isFloat())))).bind("rhs"))),
+          unless(anyOf(isInSystemHeader(), isInSkScalarDotH()))
+      )).bind("node"),
+    &nanExprChecker);
+
+  astMatcher.addMatcher(callExpr(callee(functionDecl(hasNoAddRefReleaseOnReturnAttr()).bind("func")),
+                                 hasParent(memberExpr(isAddRefOrRelease(),
+                                                      hasParent(callExpr())).bind("member")
+      )).bind("node"),
+    &noAddRefReleaseOnReturnChecker);
 }
 
 void DiagnosticsMatcher::ScopeChecker::run(
@@ -646,6 +724,55 @@ void DiagnosticsMatcher::TrivialCtorDtorChecker::run(
   bool badDtor = !node->hasTrivialDestructor();
   if (badCtor || badDtor)
     Diag.Report(node->getLocStart(), errorID) << node;
+}
+
+void DiagnosticsMatcher::NaNExprChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  if (!Result.Context->getLangOpts().CPlusPlus) {
+    // mozilla::IsNaN is not usable in C, so there is no point in issuing these warnings.
+    return;
+  }
+
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "comparing a floating point value to itself for NaN checking can lead to incorrect results");
+  unsigned noteID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, "consider using mozilla::IsNaN instead");
+  const BinaryOperator *expr = Result.Nodes.getNodeAs<BinaryOperator>("node");
+  const DeclRefExpr *lhs = Result.Nodes.getNodeAs<DeclRefExpr>("lhs");
+  const DeclRefExpr *rhs = Result.Nodes.getNodeAs<DeclRefExpr>("rhs");
+  const ImplicitCastExpr *lhsExpr = dyn_cast<ImplicitCastExpr>(expr->getLHS());
+  const ImplicitCastExpr *rhsExpr = dyn_cast<ImplicitCastExpr>(expr->getRHS());
+  // The AST subtree that we are looking for will look like this:
+  // -BinaryOperator ==/!=
+  //  |-ImplicitCastExpr LValueToRValue
+  //  | |-DeclRefExpr
+  //  |-ImplicitCastExpr LValueToRValue
+  //    |-DeclRefExpr
+  // The check below ensures that we are dealing with the correct AST subtree shape, and
+  // also that both of the found DeclRefExpr's point to the same declaration.
+  if (lhs->getFoundDecl() == rhs->getFoundDecl() &&
+      lhsExpr && rhsExpr &&
+      std::distance(lhsExpr->child_begin(), lhsExpr->child_end()) == 1 &&
+      std::distance(rhsExpr->child_begin(), rhsExpr->child_end()) == 1 &&
+      *lhsExpr->child_begin() == lhs &&
+      *rhsExpr->child_begin() == rhs) {
+    Diag.Report(expr->getLocStart(), errorID);
+    Diag.Report(expr->getLocStart(), noteID);
+  }
+}
+
+void DiagnosticsMatcher::NoAddRefReleaseOnReturnChecker::run(
+    const MatchFinder::MatchResult &Result) {
+  DiagnosticsEngine &Diag = Result.Context->getDiagnostics();
+  unsigned errorID = Diag.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, "%1 cannot be called on the return value of %0");
+  const Stmt *node = Result.Nodes.getNodeAs<Stmt>("node");
+  const FunctionDecl *func = Result.Nodes.getNodeAs<FunctionDecl>("func");
+  const MemberExpr *member = Result.Nodes.getNodeAs<MemberExpr>("member");
+  const CXXMethodDecl *method = dyn_cast<CXXMethodDecl>(member->getMemberDecl());
+
+  Diag.Report(node->getLocStart(), errorID) << func << method;
 }
 
 class MozCheckAction : public PluginASTAction {

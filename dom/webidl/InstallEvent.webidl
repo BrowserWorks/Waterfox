@@ -7,26 +7,15 @@
  * http://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html
  */
 
-// While not explicitly restricted to ServiceWorkerGlobalScope, it probably
-// should be. https://github.com/slightlyoff/ServiceWorker/issues/254
 [Constructor(DOMString type, optional InstallEventInit eventInitDict),
- Func="mozilla::dom::workers::ServiceWorkerEventsVisible",
- // XXXbz I have no idea where this should be exposed.  The spec makes
- // no sense.  But since it returns a ServiceWorker and that's only
- // exposed in Window, let's say Window.
- Exposed=Window]
-interface InstallEvent : InstallPhaseEvent {
-  // The currently active worker for this scope when this worker is asked to
-  // install itself.
-  // This may be null when a ServiceWorker is being installed for a previously
-  // uncontrolled scope.
-  // https://github.com/slightlyoff/ServiceWorker/issues/260
+ Exposed=ServiceWorker]
+interface InstallEvent : ExtendableEvent {
   readonly attribute ServiceWorker? activeWorker;
   void replace();
 };
 
 // Should be in the spec soon to satisfy conventions about events.
 // https://github.com/slightlyoff/ServiceWorker/issues/216.
-dictionary InstallEventInit : EventInit {
+dictionary InstallEventInit : ExtendableEventInit {
   ServiceWorker? activeWorker = null;
 };

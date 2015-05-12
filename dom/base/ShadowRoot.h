@@ -103,7 +103,7 @@ public:
   nsIContent* GetPoolHost() { return mPoolHost; }
   nsTArray<HTMLShadowElement*>& ShadowDescendants() { return mShadowDescendants; }
 
-  JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  JSObject* WrapObject(JSContext* aCx) override;
 
   static bool IsPooledNode(nsIContent* aChild, nsIContent* aContainer,
                            nsIContent* aHost);
@@ -127,6 +127,12 @@ public:
   Element* Host();
   ShadowRoot* GetOlderShadowRoot() { return mOlderShadow; }
   void StyleSheetChanged();
+
+  bool IsComposedDocParticipant() { return mIsComposedDocParticipant; }
+  void SetIsComposedDocParticipant(bool aIsComposedDocParticipant)
+  {
+    mIsComposedDocParticipant = aIsComposedDocParticipant;
+  }
 protected:
   virtual ~ShadowRoot();
 
@@ -171,6 +177,12 @@ protected:
   // the insertion points. After this flag is set, nodes will be distributed
   // on the next mutation event.
   bool mInsertionPointChanged;
+
+  // Flag to indicate whether the descendants of this shadow root are part of the
+  // composed document. Ideally, we would use a node flag on nodes to
+  // mark whether it is in the composed document, but we have run out of flags
+  // so instead we track it here.
+  bool mIsComposedDocParticipant;
 };
 
 class ShadowRootStyleSheetList : public StyleSheetList
@@ -181,13 +193,13 @@ public:
   NS_DECL_ISUPPORTS_INHERITED
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED(ShadowRootStyleSheetList, StyleSheetList)
 
-  virtual nsINode* GetParentObject() const MOZ_OVERRIDE
+  virtual nsINode* GetParentObject() const override
   {
     return mShadowRoot;
   }
 
-  virtual uint32_t Length() MOZ_OVERRIDE;
-  virtual CSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) MOZ_OVERRIDE;
+  virtual uint32_t Length() override;
+  virtual CSSStyleSheet* IndexedGetter(uint32_t aIndex, bool& aFound) override;
 
 protected:
   virtual ~ShadowRootStyleSheetList();

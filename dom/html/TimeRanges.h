@@ -25,7 +25,7 @@ namespace dom {
 
 // Implements media TimeRanges:
 // http://www.whatwg.org/specs/web-apps/current-work/multipage/video.html#timeranges
-class TimeRanges MOZ_FINAL : public nsIDOMTimeRanges
+class TimeRanges final : public nsIDOMTimeRanges
 {
 public:
   NS_DECL_ISUPPORTS
@@ -50,7 +50,7 @@ public:
   // Mutate this TimeRange to be the intersection of this and aOtherRanges.
   void Intersection(const TimeRanges* aOtherRanges);
 
-  JSObject* WrapObject(JSContext* aCx);
+  bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector);
 
   uint32_t Length() const
   {

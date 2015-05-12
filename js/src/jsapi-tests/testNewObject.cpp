@@ -8,13 +8,13 @@
 #include "jsapi-tests/tests.h"
 
 static bool
-constructHook(JSContext *cx, unsigned argc, jsval *vp)
+constructHook(JSContext* cx, unsigned argc, jsval* vp)
 {
     JS::CallArgs args = CallArgsFromVp(argc, vp);
 
     // Check that arguments were passed properly from JS_New.
 
-    JS::RootedObject obj(cx, JS_NewObject(cx, js::Jsvalify(&js::PlainObject::class_), JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject obj(cx, JS_NewPlainObject(cx));
     if (!obj) {
         JS_ReportError(cx, "test failed, could not construct object");
         return false;
@@ -100,7 +100,7 @@ BEGIN_TEST(testNewObject_1)
         nullptr, nullptr, nullptr, nullptr,
         nullptr, nullptr, constructHook
     };
-    JS::RootedObject ctor(cx, JS_NewObject(cx, &cls, JS::NullPtr(), JS::NullPtr()));
+    JS::RootedObject ctor(cx, JS_NewObject(cx, &cls));
     CHECK(ctor);
     JS::RootedValue rt2(cx, OBJECT_TO_JSVAL(ctor));
     obj = JS_New(cx, ctor, JS::HandleValueArray::subarray(argv, 0, 3));

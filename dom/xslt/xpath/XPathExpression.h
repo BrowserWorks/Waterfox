@@ -27,16 +27,16 @@ class XPathResult;
 /**
  * A class for evaluating an XPath expression string
  */
-class XPathExpression MOZ_FINAL : public NonRefcountedDOMObject
+class XPathExpression final : public NonRefcountedDOMObject
 {
 public:
     XPathExpression(nsAutoPtr<Expr>&& aExpression, txResultRecycler* aRecycler,
                     nsIDocument *aDocument);
     ~XPathExpression();
 
-    JSObject* WrapObject(JSContext* aCx, bool* aTookOwnership)
+    bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector)
     {
-        return XPathExpressionBinding::Wrap(aCx, this, aTookOwnership);
+        return XPathExpressionBinding::Wrap(aCx, this, aReflector);
     }
 
     already_AddRefed<XPathResult>

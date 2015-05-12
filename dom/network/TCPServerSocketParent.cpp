@@ -61,7 +61,7 @@ TCPServerSocketParent::Init(PNeckoParent* neckoParent, const uint16_t& aLocalPor
   }
 
   rv = mIntermediary->Listen(this, aLocalPort, aBacklog, aBinaryType, GetAppId(),
-                             getter_AddRefs(mServerSocket));
+                             GetInBrowser(), getter_AddRefs(mServerSocket));
   if (NS_FAILED(rv) || !mServerSocket) {
     FireInteralError(this, __LINE__);
     return true;
@@ -76,11 +76,24 @@ TCPServerSocketParent::GetAppId()
   const PContentParent *content = Manager()->Manager();
   const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
   if (browsers.Length() > 0) {
-    TabParent *tab = static_cast<TabParent*>(browsers[0]);
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
     appId = tab->OwnAppId();
   }
   return appId;
 };
+
+bool
+TCPServerSocketParent::GetInBrowser()
+{
+  bool inBrowser = false;
+  const PContentParent *content = Manager()->Manager();
+  const InfallibleTArray<PBrowserParent*>& browsers = content->ManagedPBrowserParent();
+  if (browsers.Length() > 0) {
+    TabParent *tab = TabParent::GetFrom(browsers[0]);
+    inBrowser = tab->IsBrowserElement();
+  }
+  return inBrowser;
+}
 
 NS_IMETHODIMP
 TCPServerSocketParent::SendCallbackAccept(nsITCPSocketParent *socket)

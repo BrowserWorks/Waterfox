@@ -15,11 +15,7 @@
 #include <vector>
 #include <sstream>
 
-#ifdef _MSC_VER
-#include <hash_set>
-#else
 #include <unordered_set>
-#endif
 
 struct IDWriteFactory;
 
@@ -39,7 +35,7 @@ public:
   DrawTargetD2D1();
   virtual ~DrawTargetD2D1();
 
-  virtual DrawTargetType GetType() const MOZ_OVERRIDE { return DrawTargetType::HARDWARE_RASTER; }
+  virtual DrawTargetType GetType() const override { return DrawTargetType::HARDWARE_RASTER; }
   virtual BackendType GetBackendType() const { return BackendType::DIRECT2D1_1; }
   virtual TemporaryRef<SourceSurface> Snapshot();
   virtual IntSize GetSize() { return mSize; }
@@ -158,11 +154,7 @@ public:
 private:
   friend class SourceSurfaceD2D1;
 
-#ifdef _MSC_VER
-  typedef stdext::hash_set<DrawTargetD2D1*> TargetSet;
-#else
   typedef std::unordered_set<DrawTargetD2D1*> TargetSet;
-#endif
 
   // This function will mark the surface as changing, and make sure any
   // copy-on-write snapshots are notified.
@@ -183,9 +175,12 @@ private:
   // bounds to correctly reflect the total clip. This is in device space.
   TemporaryRef<ID2D1Geometry> GetClippedGeometry(IntRect *aClipBounds);
 
+  TemporaryRef<ID2D1Geometry> GetInverseClippedGeometry();
+
   bool GetDeviceSpaceClipRect(D2D1_RECT_F& aClipRect, bool& aIsPixelAligned);
 
   void PopAllClips();
+  void PushAllClips();
   void PushClipsToDC(ID2D1DeviceContext *aDC);
   void PopClipsFromDC(ID2D1DeviceContext *aDC);
 

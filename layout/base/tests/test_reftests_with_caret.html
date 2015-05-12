@@ -8,8 +8,9 @@
   <link rel="stylesheet" type="text/css" href="/tests/SimpleTest/test.css" />
   <style>
     iframe {
+      border: none;
       width: 600px;
-      height: 600px;
+      height: 400px;
     }
   </style>
 <script type="text/javascript">
@@ -93,12 +94,8 @@ function refTest(test,ref) {
 
 var caretBlinkTime = null;
 function endTest() {
-  if (caretBlinkTime !== null) {
-    SpecialPowers.setIntPref("ui.caretBlinkTime", caretBlinkTime);
-  } else {
-    SpecialPowers.clearUserPref("ui.caretBlinkTime");
-  }
-
+  var parentDoc = window.parent.document;
+  parentDoc.styleSheets[parentDoc.styleSheets.length-1].deleteRule(0);
   // finish(), yet let the test actually end first, to be safe.
   SimpleTest.executeSoon(SimpleTest.finish);
 }
@@ -113,7 +110,7 @@ var tests = [
     // The following test cases are all involving with one sending
     // synthesizeKey(), the other without. They ought to be failed
     // when touch caret preference on. Test them with preference off.
-    function() {SpecialPowers.setBoolPref("touchcaret.enabled", false);} ,
+    function() {SpecialPowers.pushPrefEnv({'set': [['touchcaret.enabled', false]]}, nextTest);} ,
     [ 'bug240933-1.html' , 'bug240933-1-ref.html' ] ,
     [ 'bug240933-2.html' , 'bug240933-1-ref.html' ] ,
     [ 'bug389321-1.html' , 'bug389321-1-ref.html' ] ,
@@ -137,34 +134,142 @@ var tests = [
     [ 'bug633044-1.html' , 'bug633044-1-ref.html' ] ,
     [ 'bug634406-1.html' , 'bug634406-1-ref.html' ] ,
     [ 'bug644428-1.html' , 'bug644428-1-ref.html' ] ,
-    function() {SpecialPowers.setBoolPref("bidi.browser.ui", true);} ,
+    function() {SpecialPowers.pushPrefEnv({'set': [['bidi.browser.ui', true]]}, nextTest);} ,
     [ 'bug646382-1.html' , 'bug646382-1-ref.html' ] ,
     [ 'bug646382-2.html' , 'bug646382-2-ref.html' ] ,
     [ 'bug664087-1.html' , 'bug664087-1-ref.html' ] ,
     [ 'bug664087-2.html' , 'bug664087-2-ref.html' ] ,
     [ 'bug682712-1.html' , 'bug682712-1-ref.html' ] ,
-    function() {SpecialPowers.clearUserPref("bidi.browser.ui");} ,
+    function() {SpecialPowers.pushPrefEnv({'clear': [['bidi.browser.ui']]}, nextTest);} ,
     [ 'bug746993-1.html' , 'bug746993-1-ref.html' ] ,
+    [ 'bug989012-1.html' , 'bug989012-1-ref.html' ] ,
+    [ 'bug989012-2.html' , 'bug989012-2-ref.html' ] ,
+    [ 'bug989012-3.html' , 'bug989012-3-ref.html' ] ,
     [ 'bug1007065-1.html' , 'bug1007065-1-ref.html' ] ,
     [ 'bug1007067-1.html' , 'bug1007067-1-ref.html' ] ,
-    [ 'bug1061468.html'   , 'bug1061468-ref.html' ] ,
-    function() {SpecialPowers.clearUserPref("touchcaret.enabled");} ,
+    [ 'bug1061468.html'  , 'bug1061468-ref.html'  ] ,
+    [ 'bug1109968-1.html', 'bug1109968-1-ref.html'] ,
+    [ 'bug1109968-2.html', 'bug1109968-2-ref.html'] ,
+    // [ 'bug1123067-1.html' , 'bug1123067-ref.html'  ] , TODO: bug 1129205
+    [ 'bug1123067-2.html' , 'bug1123067-ref.html'  ] ,
+    [ 'bug1123067-3.html' , 'bug1123067-ref.html'  ] ,
+    function() {SpecialPowers.pushPrefEnv({'clear': [['touchcaret.enabled']]}, nextTest);} ,
 ];
 
 if (navigator.appVersion.indexOf("Android") == -1 &&
   SpecialPowers.Services.appinfo.name != "B2G") {
-  tests.push(function() {SpecialPowers.setBoolPref("touchcaret.enabled", false);});
+  tests.push(function() {SpecialPowers.pushPrefEnv({'set': [['touchcaret.enabled', false]]}, nextTest);});
   tests.push([ 'bug512295-1.html' , 'bug512295-1-ref.html' ]);
   tests.push([ 'bug512295-2.html' , 'bug512295-2-ref.html' ]);
   tests.push([ 'bug923376.html'   , 'bug923376-ref.html'   ]);
-  tests.push(function() {SpecialPowers.clearUserPref("touchcaret.enabled");});
-  tests.push(function() {SpecialPowers.setBoolPref("layout.css.overflow-clip-box.enabled", true);});
+  tests.push(function() {SpecialPowers.pushPrefEnv({'clear': [['touchcaret.enabled']]}, nextTest);});
+  tests.push(function() {SpecialPowers.pushPrefEnv({'set': [['layout.css.overflow-clip-box.enabled', true]]}, nextTest);});
   tests.push([ 'bug966992-1.html' , 'bug966992-1-ref.html' ]);
   tests.push([ 'bug966992-2.html' , 'bug966992-2-ref.html' ]);
   tests.push([ 'bug966992-3.html' , 'bug966992-3-ref.html' ]);
-  tests.push(function() {SpecialPowers.setBoolPref("layout.css.overflow-clip-box.enabled", false);});
+  tests.push(function() {SpecialPowers.pushPrefEnv({'clear': [['layout.css.overflow-clip-box.enabled']]}, nextTest);});
 } else {
   is(SpecialPowers.getIntPref("layout.spellcheckDefault"), 0, "Spellcheck should be turned off for this platrom or this if..else check removed");
+}
+
+if (navigator.platform.indexOf("Linux") >= 0 &&
+    SpecialPowers.Services.appinfo.name != "B2G") {
+  tests = tests.concat([
+    function() {SpecialPowers.pushPrefEnv({'set': [['touchcaret.enabled', false]]}, nextTest);} ,
+    // eDirPrevious, Shift+click
+    [ 'multi-range-user-select.html#prev1S_' , 'multi-range-user-select-ref.html#prev1S_'  ] ,
+    [ 'multi-range-user-select.html#prev2S_' , 'multi-range-user-select-ref.html#prev2S_'  ] ,
+    [ 'multi-range-user-select.html#prev3S_' , 'multi-range-user-select-ref.html#prev3S_'  ] ,
+    [ 'multi-range-user-select.html#prev4S_' , 'multi-range-user-select-ref.html#prev4S_'  ] ,
+    [ 'multi-range-user-select.html#prev5S_' , 'multi-range-user-select-ref.html#prev5S_'  ] ,
+    [ 'multi-range-user-select.html#prev6S_' , 'multi-range-user-select-ref.html#prev6S_'  ] ,
+    [ 'multi-range-user-select.html#prev7S_' , 'multi-range-user-select-ref.html#prev7S_'  ] ,
+    // eDirPrevious, Shift+Accel+click
+    [ 'multi-range-user-select.html#prev1SA' , 'multi-range-user-select-ref.html#prev1SA'  ] ,
+    [ 'multi-range-user-select.html#prev2SA' , 'multi-range-user-select-ref.html#prev2SA'  ] ,
+    [ 'multi-range-user-select.html#prev3SA' , 'multi-range-user-select-ref.html#prev3SA'  ] ,
+    [ 'multi-range-user-select.html#prev4SA' , 'multi-range-user-select-ref.html#prev4SA'  ] ,
+    [ 'multi-range-user-select.html#prev5SA' , 'multi-range-user-select-ref.html#prev5SA'  ] ,
+    [ 'multi-range-user-select.html#prev6SA' , 'multi-range-user-select-ref.html#prev6SA'  ] ,
+    [ 'multi-range-user-select.html#prev7SA' , 'multi-range-user-select-ref.html#prev7SA'  ] ,
+    // eDirPrevious, Accel+drag-select (adding an additional range)
+    [ 'multi-range-user-select.html#prev1AD' , 'multi-range-user-select-ref.html#prev1AD'  ] ,
+    [ 'multi-range-user-select.html#prev7AD' , 'multi-range-user-select-ref.html#prev7AD'  ] ,
+    // eDirPrevious, Accel+drag-select (bug 1128722)
+    [ 'multi-range-user-select.html#prev8AD' , 'multi-range-user-select-ref.html#prev8AD'  ] ,
+    // eDirPrevious, VK_RIGHT / LEFT
+    [ 'multi-range-user-select.html#prev1SR' , 'multi-range-user-select-ref.html#prev1SR'  ] ,
+    [ 'multi-range-user-select.html#prev1SL' , 'multi-range-user-select-ref.html#prev1SL'  ] ,
+    // eDirNext, Shift+click
+    [ 'multi-range-user-select.html#next1S_' , 'multi-range-user-select-ref.html#next1S_'  ] ,
+    [ 'multi-range-user-select.html#next2S_' , 'multi-range-user-select-ref.html#next2S_'  ] ,
+    [ 'multi-range-user-select.html#next3S_' , 'multi-range-user-select-ref.html#next3S_'  ] ,
+    [ 'multi-range-user-select.html#next4S_' , 'multi-range-user-select-ref.html#next4S_'  ] ,
+    [ 'multi-range-user-select.html#next5S_' , 'multi-range-user-select-ref.html#next5S_'  ] ,
+    [ 'multi-range-user-select.html#next6S_' , 'multi-range-user-select-ref.html#next6S_'  ] ,
+    [ 'multi-range-user-select.html#next7S_' , 'multi-range-user-select-ref.html#next7S_'  ] ,
+    // eDirNext, Shift+Accel+click
+    [ 'multi-range-user-select.html#next1SA' , 'multi-range-user-select-ref.html#next1SA'  ] ,
+    [ 'multi-range-user-select.html#next2SA' , 'multi-range-user-select-ref.html#next2SA'  ] ,
+    [ 'multi-range-user-select.html#next3SA' , 'multi-range-user-select-ref.html#next3SA'  ] ,
+    [ 'multi-range-user-select.html#next4SA' , 'multi-range-user-select-ref.html#next4SA'  ] ,
+    [ 'multi-range-user-select.html#next5SA' , 'multi-range-user-select-ref.html#next5SA'  ] ,
+    [ 'multi-range-user-select.html#next6SA' , 'multi-range-user-select-ref.html#next6SA'  ] ,
+    [ 'multi-range-user-select.html#next7SA' , 'multi-range-user-select-ref.html#next7SA'  ] ,
+    // eDirNext, Accel+drag-select (adding an additional range)
+    [ 'multi-range-user-select.html#next1AD' , 'multi-range-user-select-ref.html#next1AD'  ] ,
+    [ 'multi-range-user-select.html#next7AD' , 'multi-range-user-select-ref.html#next7AD'  ] ,
+    // eDirNext, Accel+drag-select (bug 1128722)
+    [ 'multi-range-user-select.html#next8AD' , 'multi-range-user-select-ref.html#next8AD'  ] ,
+    // eDirNext, VK_RIGHT / LEFT
+    [ 'multi-range-user-select.html#next1SR' , 'multi-range-user-select-ref.html#next1SR'  ] ,
+    [ 'multi-range-user-select.html#next1SL' , 'multi-range-user-select-ref.html#next1SL'  ] ,
+    // eDirPrevious, Shift+click
+    [ 'multi-range-script-select.html#prev1S_' , 'multi-range-script-select-ref.html#prev1S_'  ] ,
+    [ 'multi-range-script-select.html#prev2S_' , 'multi-range-script-select-ref.html#prev2S_'  ] ,
+    [ 'multi-range-script-select.html#prev3S_' , 'multi-range-script-select-ref.html#prev3S_'  ] ,
+    [ 'multi-range-script-select.html#prev4S_' , 'multi-range-script-select-ref.html#prev4S_'  ] ,
+    [ 'multi-range-script-select.html#prev5S_' , 'multi-range-script-select-ref.html#prev5S_'  ] ,
+    [ 'multi-range-script-select.html#prev6S_' , 'multi-range-script-select-ref.html#prev6S_'  ] ,
+    [ 'multi-range-script-select.html#prev7S_' , 'multi-range-script-select-ref.html#prev7S_'  ] ,
+    // eDirPrevious, Shift+Accel+click
+    [ 'multi-range-script-select.html#prev1SA' , 'multi-range-script-select-ref.html#prev1SA'  ] ,
+    [ 'multi-range-script-select.html#prev2SA' , 'multi-range-script-select-ref.html#prev2SA'  ] ,
+    [ 'multi-range-script-select.html#prev3SA' , 'multi-range-script-select-ref.html#prev3SA'  ] ,
+    [ 'multi-range-script-select.html#prev4SA' , 'multi-range-script-select-ref.html#prev4SA'  ] ,
+    [ 'multi-range-script-select.html#prev5SA' , 'multi-range-script-select-ref.html#prev5SA'  ] ,
+    [ 'multi-range-script-select.html#prev6SA' , 'multi-range-script-select-ref.html#prev6SA'  ] ,
+    [ 'multi-range-script-select.html#prev7SA' , 'multi-range-script-select-ref.html#prev7SA'  ] ,
+    // eDirPrevious, Accel+drag-select (adding an additional range)
+    [ 'multi-range-script-select.html#prev1AD' , 'multi-range-script-select-ref.html#prev1AD'  ] ,
+    [ 'multi-range-script-select.html#prev7AD' , 'multi-range-script-select-ref.html#prev7AD'  ] ,
+    // eDirPrevious, VK_RIGHT / LEFT
+    [ 'multi-range-script-select.html#prev1SR' , 'multi-range-script-select-ref.html#prev1SR'  ] ,
+    [ 'multi-range-script-select.html#prev1SL' , 'multi-range-script-select-ref.html#prev1SL'  ] ,
+    // eDirNext, Shift+click
+    [ 'multi-range-script-select.html#next1S_' , 'multi-range-script-select-ref.html#next1S_'  ] ,
+    [ 'multi-range-script-select.html#next2S_' , 'multi-range-script-select-ref.html#next2S_'  ] ,
+    [ 'multi-range-script-select.html#next3S_' , 'multi-range-script-select-ref.html#next3S_'  ] ,
+    [ 'multi-range-script-select.html#next4S_' , 'multi-range-script-select-ref.html#next4S_'  ] ,
+    [ 'multi-range-script-select.html#next5S_' , 'multi-range-script-select-ref.html#next5S_'  ] ,
+    [ 'multi-range-script-select.html#next6S_' , 'multi-range-script-select-ref.html#next6S_'  ] ,
+    [ 'multi-range-script-select.html#next7S_' , 'multi-range-script-select-ref.html#next7S_'  ] ,
+    // eDirNext, Shift+Accel+click
+    [ 'multi-range-script-select.html#next1SA' , 'multi-range-script-select-ref.html#next1SA'  ] ,
+    [ 'multi-range-script-select.html#next2SA' , 'multi-range-script-select-ref.html#next2SA'  ] ,
+    [ 'multi-range-script-select.html#next3SA' , 'multi-range-script-select-ref.html#next3SA'  ] ,
+    [ 'multi-range-script-select.html#next4SA' , 'multi-range-script-select-ref.html#next4SA'  ] ,
+    [ 'multi-range-script-select.html#next5SA' , 'multi-range-script-select-ref.html#next5SA'  ] ,
+    [ 'multi-range-script-select.html#next6SA' , 'multi-range-script-select-ref.html#next6SA'  ] ,
+    [ 'multi-range-script-select.html#next7SA' , 'multi-range-script-select-ref.html#next7SA'  ] ,
+    // eDirNext, Accel+drag-select (adding an additional range)
+    [ 'multi-range-script-select.html#next1AD' , 'multi-range-script-select-ref.html#next1AD'  ] ,
+    [ 'multi-range-script-select.html#next7AD' , 'multi-range-script-select-ref.html#next7AD'  ] ,
+    // eDirNext, VK_RIGHT / LEFT
+    [ 'multi-range-script-select.html#next1SR' , 'multi-range-script-select-ref.html#next1SR'  ] ,
+    [ 'multi-range-script-select.html#next1SL' , 'multi-range-script-select-ref.html#next1SL'  ] ,
+    function() {SpecialPowers.pushPrefEnv({'clear': [['touchcaret.enabled']]}, nextTest);} ,
+  ]);
 }
 
 var testIndex = 0;
@@ -173,7 +278,6 @@ function nextTest() {
   if (testIndex < tests.length) {
     if (typeof(tests[testIndex]) == 'function') {
       tests[testIndex]();
-      SimpleTest.executeSoon(nextTest);
     } else {
       refTest(tests[testIndex][0],tests[testIndex][1]);
     }
@@ -184,12 +288,15 @@ function nextTest() {
 }
 function runTests() {
   try {
+    if (window.parent) {
+      var parentDoc = window.parent.document;
+      extraCSSRule = parentDoc.styleSheets[parentDoc.styleSheets.length-1]
+        .insertRule("iframe#testframe{width:600px;height:400px}",0);
+    }
     try {
       caretBlinkTime = SpecialPowers.getIntPref("ui.caretBlinkTime");
     } catch (e) {}
-    SpecialPowers.setIntPref("ui.caretBlinkTime", -1);
-
-    nextTest();
+    SpecialPowers.pushPrefEnv({'set': [['ui.caretBlinkTime', -1]]}, nextTest);
   } catch(e) {
     endTest();
   }

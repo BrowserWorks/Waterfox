@@ -17,38 +17,29 @@ using namespace mozilla::gfx;
 namespace mozilla {
 namespace dom {
 
-NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(VRFieldOfView, mParent)
-NS_IMPL_CYCLE_COLLECTION_ROOT_NATIVE(VRFieldOfView, AddRef)
-NS_IMPL_CYCLE_COLLECTION_UNROOT_NATIVE(VRFieldOfView, Release)
-
-already_AddRefed<VRFieldOfView>
+VRFieldOfView*
 VRFieldOfView::Constructor(const GlobalObject& aGlobal, const VRFieldOfViewInit& aParams,
                            ErrorResult& aRV)
 {
-  nsRefPtr<VRFieldOfView> obj =
-    new VRFieldOfView(aGlobal.GetAsSupports(),
-                      aParams.mUpDegrees, aParams.mRightDegrees,
-                      aParams.mDownDegrees, aParams.mLeftDegrees);
-  return obj.forget();
+  return new VRFieldOfView(aParams.mUpDegrees, aParams.mRightDegrees,
+                           aParams.mDownDegrees, aParams.mLeftDegrees);
 }
 
-already_AddRefed<VRFieldOfView>
+VRFieldOfView*
 VRFieldOfView::Constructor(const GlobalObject& aGlobal,
                            double aUpDegrees, double aRightDegrees,
                            double aDownDegrees, double aLeftDegrees,
                            ErrorResult& aRV)
 {
-  nsRefPtr<VRFieldOfView> obj =
-    new VRFieldOfView(aGlobal.GetAsSupports(),
-                      aUpDegrees, aRightDegrees,
-                      aDownDegrees, aLeftDegrees);
-  return obj.forget();
+  return new VRFieldOfView(aUpDegrees, aRightDegrees, aDownDegrees,
+                           aLeftDegrees);
 }
 
-JSObject*
-VRFieldOfView::WrapObject(JSContext* aCx)
+bool
+VRFieldOfView::WrapObject(JSContext* aCx,
+                          JS::MutableHandle<JSObject*> aReflector)
 {
-  return VRFieldOfViewBinding::Wrap(aCx, this);
+  return VRFieldOfViewBinding::Wrap(aCx, this, aReflector);
 }
 
 NS_IMPL_CYCLE_COLLECTION_WRAPPERCACHE(VRPositionState, mParent)
@@ -186,7 +177,7 @@ public:
    */
   virtual void SetFieldOfView(const VRFieldOfViewInit& aLeftFOV,
                               const VRFieldOfViewInit& aRightFOV,
-                              double zNear, double zFar) MOZ_OVERRIDE
+                              double zNear, double zFar) override
   {
     gfx::VRFieldOfView left = gfx::VRFieldOfView(aLeftFOV.mUpDegrees, aLeftFOV.mRightDegrees,
                                                  aLeftFOV.mDownDegrees, aLeftFOV.mLeftDegrees);
@@ -201,7 +192,7 @@ public:
     mHMD->SetFOV(left, right, zNear, zFar);
   }
 
-  virtual already_AddRefed<DOMPoint> GetEyeTranslation(VREye aEye) MOZ_OVERRIDE
+  virtual already_AddRefed<DOMPoint> GetEyeTranslation(VREye aEye) override
   {
     gfx::Point3D p = mHMD->GetEyeTranslation(EyeToEye(aEye));
 
@@ -209,22 +200,22 @@ public:
     return obj.forget();
   }
 
-  virtual already_AddRefed<VRFieldOfView> GetCurrentEyeFieldOfView(VREye aEye) MOZ_OVERRIDE
+  virtual VRFieldOfView* GetCurrentEyeFieldOfView(VREye aEye) override
   {
     return CopyFieldOfView(mHMD->GetEyeFOV(EyeToEye(aEye)));
   }
 
-  virtual already_AddRefed<VRFieldOfView> GetRecommendedEyeFieldOfView(VREye aEye) MOZ_OVERRIDE
+  virtual VRFieldOfView* GetRecommendedEyeFieldOfView(VREye aEye) override
   {
     return CopyFieldOfView(mHMD->GetRecommendedEyeFOV(EyeToEye(aEye)));
   }
 
-  virtual already_AddRefed<VRFieldOfView> GetMaximumEyeFieldOfView(VREye aEye) MOZ_OVERRIDE
+  virtual VRFieldOfView* GetMaximumEyeFieldOfView(VREye aEye) override
   {
     return CopyFieldOfView(mHMD->GetMaximumEyeFOV(EyeToEye(aEye)));
   }
 
-  virtual already_AddRefed<DOMRect> GetRecommendedEyeRenderRect(VREye aEye) MOZ_OVERRIDE
+  virtual already_AddRefed<DOMRect> GetRecommendedEyeRenderRect(VREye aEye) override
   {
     const IntSize& a(mHMD->SuggestedEyeResolution());
     nsRefPtr<DOMRect> obj =
@@ -235,13 +226,11 @@ public:
   }
 
 protected:
-  already_AddRefed<VRFieldOfView>
+  VRFieldOfView*
   CopyFieldOfView(const gfx::VRFieldOfView& aSrc)
   {
-    nsRefPtr<VRFieldOfView> obj =
-      new VRFieldOfView(mParent, aSrc.upDegrees, aSrc.rightDegrees,
-                        aSrc.downDegrees, aSrc.leftDegrees);
-    return obj.forget();
+    return new VRFieldOfView(aSrc.upDegrees, aSrc.rightDegrees,
+                             aSrc.downDegrees, aSrc.leftDegrees);
   }
 };
 
@@ -268,7 +257,7 @@ public:
     }
   }
 
-  virtual already_AddRefed<VRPositionState> GetState(double timeOffset) MOZ_OVERRIDE
+  virtual already_AddRefed<VRPositionState> GetState(double timeOffset) override
   {
     if (!mTracking) {
       mHMD->StartSensorTracking();
@@ -281,7 +270,7 @@ public:
     return obj.forget();
   }
 
-  virtual void ZeroSensor() MOZ_OVERRIDE
+  virtual void ZeroSensor() override
   {
     mHMD->ZeroSensor();
   }

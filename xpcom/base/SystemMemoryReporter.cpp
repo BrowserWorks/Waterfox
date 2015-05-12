@@ -133,7 +133,7 @@ IsAnonymous(const nsACString& aName)
          StringBeginsWith(aName, NS_LITERAL_CSTRING("[stack:"));
 }
 
-class SystemReporter MOZ_FINAL : public nsIMemoryReporter
+class SystemReporter final : public nsIMemoryReporter
 {
   ~SystemReporter() {}
 
@@ -159,7 +159,7 @@ public:
   REPORT_WITH_CLEANUP(_path, UNITS_BYTES, _amount, _desc, (void)0)
 
   NS_IMETHOD CollectReports(nsIHandleReportCallback* aHandleReport,
-                            nsISupports* aData, bool aAnonymize)
+                            nsISupports* aData, bool aAnonymize) override
   {
     // There is lots of privacy-sensitive data in /proc. Just skip this
     // reporter entirely when anonymization is required.
@@ -740,10 +740,10 @@ private:
     uint64_t size;
 
     // Ignore the header line.
-    fgets(buffer, kBufferLen, iommu);
+    unused << fgets(buffer, kBufferLen, iommu);
 
     // Ignore the separator line.
-    fgets(buffer, kBufferLen, iommu);
+    unused << fgets(buffer, kBufferLen, iommu);
 
     const char* const kSep = "----";
     const size_t kSepLen = 4;
@@ -760,7 +760,7 @@ private:
     }
 
     // Ignore the orphaned header.
-    fgets(buffer, kBufferLen, iommu);
+    unused << fgets(buffer, kBufferLen, iommu);
 
     // Read orphaned entries.
     while (fgets(buffer, kBufferLen, iommu) &&
@@ -787,7 +787,7 @@ private:
     }
 
     uint64_t size = 0;
-    fscanf(sizeFile, "%" SCNu64, &size);
+    unused << fscanf(sizeFile, "%" SCNu64, &size);
     fclose(sizeFile);
 
     return size;
@@ -1029,7 +1029,7 @@ private:
 
       // Bypass the header line.
       char buff[1024];
-      fgets(buff, 1024, memFile);
+      unused << fgets(buff, 1024, memFile);
 
       while (fscanf(memFile, kScanFormat, &gpuaddr, &useraddr, &size, &id,
                     flags, type, usage, &sglen) == kNumFields) {

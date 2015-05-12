@@ -16,7 +16,7 @@ namespace dom {
 
 class HTMLTableSectionElement;
 
-class HTMLTableRowElement MOZ_FINAL : public nsGenericHTMLElement
+class HTMLTableRowElement final : public nsGenericHTMLElement
 {
 public:
   explicit HTMLTableRowElement(already_AddRefed<mozilla::dom::NodeInfo>& aNodeInfo)
@@ -37,7 +37,7 @@ public:
     InsertCell(int32_t aIndex, ErrorResult& aError);
   void DeleteCell(int32_t aValue, ErrorResult& aError);
 
-  void GetAlign(nsString& aAlign)
+  void GetAlign(DOMString& aAlign)
   {
     GetHTMLAttr(nsGkAtoms::align, aAlign);
   }
@@ -45,7 +45,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::align, aAlign, aError);
   }
-  void GetCh(nsString& aCh)
+  void GetCh(DOMString& aCh)
   {
     GetHTMLAttr(nsGkAtoms::_char, aCh);
   }
@@ -53,7 +53,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::_char, aCh, aError);
   }
-  void GetChOff(nsString& aChOff)
+  void GetChOff(DOMString& aChOff)
   {
     GetHTMLAttr(nsGkAtoms::charoff, aChOff);
   }
@@ -61,7 +61,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::charoff, aChOff, aError);
   }
-  void GetVAlign(nsString& aVAlign)
+  void GetVAlign(DOMString& aVAlign)
   {
     GetHTMLAttr(nsGkAtoms::valign, aVAlign);
   }
@@ -69,7 +69,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::valign, aVAlign, aError);
   }
-  void GetBgColor(nsString& aBgColor)
+  void GetBgColor(DOMString& aBgColor)
   {
     GetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
   }
@@ -81,11 +81,11 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                                 nsIAtom* aAttribute,
                                 const nsAString& aValue,
-                                nsAttrValue& aResult) MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
+                                nsAttrValue& aResult) override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
 
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
   NS_DECL_CYCLE_COLLECTION_CLASS_INHERITED_NO_UNLINK(HTMLTableRowElement,
                                                      nsGenericHTMLElement)
@@ -93,7 +93,7 @@ public:
 protected:
   virtual ~HTMLTableRowElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx) override;
 
   HTMLTableSectionElement* GetSection() const;
   HTMLTableElement* GetTable() const;

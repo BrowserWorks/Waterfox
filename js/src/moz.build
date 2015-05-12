@@ -16,6 +16,8 @@ if not CONFIG['JS_DISABLE_SHELL']:
 
 TEST_DIRS += ['jsapi-tests', 'tests', 'gdb']
 
+CFLAGS += ['-O2']
+
 CONFIGURE_SUBST_FILES += [
     'devtools/rootAnalysis/Makefile',
     'js-confdefs.h',
@@ -51,7 +53,6 @@ EXPORTS += [
     'jsfriendapi.h',
     'jsprf.h',
     'jsprototypes.h',
-    'jsproxy.h',
     'jspubtd.h',
     'jstypes.h',
     'jsversion.h',
@@ -79,11 +80,13 @@ EXPORTS.js += [
     '../public/Principals.h',
     '../public/ProfilingFrameIterator.h',
     '../public/ProfilingStack.h',
+    '../public/Proxy.h',
     '../public/RequiredDefines.h',
     '../public/RootingAPI.h',
     '../public/SliceBudget.h',
     '../public/StructuredClone.h',
     '../public/TracingAPI.h',
+    '../public/TrackedOptimizationInfo.h',
     '../public/TypeDecls.h',
     '../public/UbiNode.h',
     '../public/UbiNodeTraverse.h',
@@ -93,7 +96,7 @@ EXPORTS.js += [
     '../public/WeakMapPtr.h',
 ]
 
-UNIFIED_SOURCES += [
+SOURCES += [
     'asmjs/AsmJSFrameIterator.cpp',
     'asmjs/AsmJSLink.cpp',
     'asmjs/AsmJSModule.cpp',
@@ -154,6 +157,7 @@ UNIFIED_SOURCES += [
     'jit/C1Spewer.cpp',
     'jit/CodeGenerator.cpp',
     'jit/CompileWrappers.cpp',
+    'jit/Disassembler.cpp',
     'jit/EdgeCaseAnalysis.cpp',
     'jit/EffectiveAddressAnalysis.cpp',
     'jit/ExecutableAllocator.cpp',
@@ -178,6 +182,7 @@ UNIFIED_SOURCES += [
     'jit/MIR.cpp',
     'jit/MIRGraph.cpp',
     'jit/MoveResolver.cpp',
+    'jit/OptimizationTracking.cpp',
     'jit/PerfSpewer.cpp',
     'jit/RangeAnalysis.cpp',
     'jit/Recover.cpp',
@@ -200,14 +205,12 @@ UNIFIED_SOURCES += [
     'jsbool.cpp',
     'jscntxt.cpp',
     'jscompartment.cpp',
-    'jscrashreport.cpp',
     'jsdate.cpp',
     'jsdtoa.cpp',
     'jsexn.cpp',
     'jsfriendapi.cpp',
     'jsfun.cpp',
     'jsgc.cpp',
-    'jsinfer.cpp',
     'jsiter.cpp',
     'jsnativestack.cpp',
     'jsnum.cpp',
@@ -241,7 +244,6 @@ UNIFIED_SOURCES += [
     'vm/Debugger.cpp',
     'vm/DebuggerMemory.cpp',
     'vm/ErrorObject.cpp',
-    'vm/ForkJoin.cpp',
     'vm/ForOfIterator.cpp',
     'vm/GeneratorObject.cpp',
     'vm/GlobalObject.cpp',
@@ -252,6 +254,7 @@ UNIFIED_SOURCES += [
     'vm/MemoryMetrics.cpp',
     'vm/Monitor.cpp',
     'vm/NativeObject.cpp',
+    'vm/ObjectGroup.cpp',
     'vm/PIC.cpp',
     'vm/Probes.cpp',
     'vm/ProxyObject.cpp',
@@ -270,9 +273,10 @@ UNIFIED_SOURCES += [
     'vm/StringBuffer.cpp',
     'vm/StructuredClone.cpp',
     'vm/Symbol.cpp',
-    'vm/ThreadPool.cpp',
     'vm/TypedArrayObject.cpp',
+    'vm/TypeInference.cpp',
     'vm/UbiNode.cpp',
+    'vm/UnboxedObject.cpp',
     'vm/Unicode.cpp',
     'vm/Value.cpp',
     'vm/WeakMapPtr.cpp',
@@ -299,7 +303,7 @@ SOURCES += [
 ]
 
 if CONFIG['JS_POSIX_NSPR']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'vm/PosixNSPR.cpp',
     ]
 
@@ -316,21 +320,23 @@ if CONFIG['ENABLE_TRACE_LOGGING']:
     ]
 
 if not CONFIG['ENABLE_ION']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'jit/none/Trampoline-none.cpp'
     ]
 elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'jit/shared/Assembler-x86-shared.cpp',
+        'jit/shared/AssemblerBuffer-x86-shared.cpp',
         'jit/shared/BaselineCompiler-x86-shared.cpp',
         'jit/shared/BaselineIC-x86-shared.cpp',
         'jit/shared/CodeGenerator-x86-shared.cpp',
+        'jit/shared/Disassembler-x86-shared.cpp',
         'jit/shared/Lowering-x86-shared.cpp',
         'jit/shared/MacroAssembler-x86-shared.cpp',
         'jit/shared/MoveEmitter-x86-shared.cpp',
     ]
     if CONFIG['JS_CODEGEN_X64']:
-        UNIFIED_SOURCES += [
+        SOURCES += [
             'jit/x64/Assembler-x64.cpp',
             'jit/x64/Bailouts-x64.cpp',
             'jit/x64/BaselineCompiler-x64.cpp',
@@ -341,7 +347,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'jit/x64/Trampoline-x64.cpp',
         ]
     else:
-        UNIFIED_SOURCES += [
+        SOURCES += [
             'jit/x86/Assembler-x86.cpp',
             'jit/x86/Bailouts-x86.cpp',
             'jit/x86/BaselineCompiler-x86.cpp',
@@ -352,7 +358,7 @@ elif CONFIG['JS_CODEGEN_X86'] or CONFIG['JS_CODEGEN_X64']:
             'jit/x86/Trampoline-x86.cpp',
         ]
 elif CONFIG['JS_CODEGEN_ARM']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'jit/arm/Architecture-arm.cpp',
         'jit/arm/Assembler-arm.cpp',
         'jit/arm/Bailouts-arm.cpp',
@@ -365,11 +371,11 @@ elif CONFIG['JS_CODEGEN_ARM']:
         'jit/arm/Trampoline-arm.cpp',
     ]
     if CONFIG['JS_ARM_SIMULATOR']:
-        UNIFIED_SOURCES += [
+        SOURCES += [
             'jit/arm/Simulator-arm.cpp'
         ]
 elif CONFIG['JS_CODEGEN_MIPS']:
-    UNIFIED_SOURCES += [
+    SOURCES += [
         'jit/mips/Architecture-mips.cpp',
         'jit/mips/Assembler-mips.cpp',
         'jit/mips/Bailouts-mips.cpp',
@@ -382,7 +388,7 @@ elif CONFIG['JS_CODEGEN_MIPS']:
         'jit/mips/Trampoline-mips.cpp',
     ]
     if CONFIG['JS_MIPS_SIMULATOR']:
-        UNIFIED_SOURCES += [
+        SOURCES += [
             'jit/mips/Simulator-mips.cpp'
         ]
 
@@ -490,6 +496,7 @@ if CONFIG['_MSC_VER']:
     # Prevent floating point errors caused by VC++ optimizations
     # XXX We should add this to CXXFLAGS, too?
     CFLAGS += ['-fp:precise']
+	
 
 if CONFIG['OS_ARCH'] not in ('WINNT', 'HP-UX'):
     OS_LIBS += [

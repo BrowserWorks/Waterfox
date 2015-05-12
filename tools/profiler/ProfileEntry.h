@@ -12,8 +12,10 @@
 #include "platform.h"
 #include "JSStreamWriter.h"
 #include "ProfilerBacktrace.h"
+#include "nsRefPtr.h"
 #include "mozilla/Mutex.h"
 #include "gtest/MozGtestFriend.h"
+#include "mozilla/UniquePtr.h"
 
 class ThreadProfile;
 
@@ -33,12 +35,10 @@ public:
   ProfileEntry(char aTagName, Address aTagAddress);
   ProfileEntry(char aTagName, int aTagLine);
   ProfileEntry(char aTagName, char aTagChar);
-  friend std::ostream& operator<<(std::ostream& stream, const ProfileEntry& entry);
   bool is_ent_hint(char hintChar);
   bool is_ent_hint();
   bool is_ent(char tagName);
   void* get_tagPtr();
-  void log();
   const ProfilerMarker* getMarker() {
     MOZ_ASSERT(mTagName == 'm');
     return mTagMarker;
@@ -52,7 +52,7 @@ private:
   FRIEND_TEST(ThreadProfile, InsertTagsNoWrap);
   FRIEND_TEST(ThreadProfile, InsertTagsWrap);
   FRIEND_TEST(ThreadProfile, MemoryMeasure);
-  friend class ThreadProfile;
+  friend class ProfileBuffer;
   union {
     const char* mTagData;
     char        mTagChars[sizeof(void*)];
@@ -71,18 +71,63 @@ private:
 
 typedef void (*IterateTagsCallback)(const ProfileEntry& entry, const char* tagStringData);
 
+class ProfileBuffer {
+public:
+  NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ProfileBuffer)
+
+  explicit ProfileBuffer(int aEntrySize);
+
+  void addTag(const ProfileEntry& aTag);
+  void IterateTagsForThread(IterateTagsCallback aCallback, int aThreadId);
+  void StreamSamplesToJSObject(JSStreamWriter& b, int aThreadId, JSRuntime* rt);
+  void StreamMarkersToJSObject(JSStreamWriter& b, int aThreadId);
+  void DuplicateLastSample(int aThreadId);
+
+  void addStoredMarker(ProfilerMarker* aStoredMarker);
+  void deleteExpiredStoredMarkers();
+
+protected:
+  char* processDynamicTag(int readPos, int* tagsConsumed, char* tagBuff);
+  int FindLastSampleOfThread(int aThreadId);
+
+  ~ProfileBuffer() {}
+
+public:
+  // Circular buffer 'Keep One Slot Open' implementation for simplicity
+  mozilla::UniquePtr<ProfileEntry[]> mEntries;
+
+  // Points to the next entry we will write to, which is also the one at which
+  // we need to stop reading.
+  int mWritePos;
+
+  // Points to the entry at which we can start reading.
+  int mReadPos;
+
+  // The number of entries in our buffer.
+  int mEntrySize;
+
+  // How many times mWritePos has wrapped around.
+  int mGeneration;
+
+  // Markers that marker entries in the buffer might refer to.
+  ProfilerMarkerLinkedList mStoredMarkers;
+};
+
 class ThreadProfile
 {
 public:
-  ThreadProfile(ThreadInfo* aThreadInfo, int aEntrySize);
+  ThreadProfile(ThreadInfo* aThreadInfo, ProfileBuffer* aBuffer);
   virtual ~ThreadProfile();
-  void addTag(ProfileEntry aTag);
-  void flush();
-  void erase();
-  char* processDynamicTag(int readPos, int* tagsConsumed, char* tagBuff);
+  void addTag(const ProfileEntry& aTag);
+
+  /**
+   * Track a marker which has been inserted into the ThreadProfile.
+   * This marker can safely be deleted once the generation has
+   * expired.
+   */
+  void addStoredMarker(ProfilerMarker *aStoredMarker);
+
   void IterateTags(IterateTagsCallback aCallback);
-  friend std::ostream& operator<<(std::ostream& stream,
-                                  const ThreadProfile& profile);
   void ToStreamAsJSON(std::ostream& stream);
   JSObject *ToJSObject(JSContext *aCx);
   PseudoStack* GetPseudoStack();
@@ -94,13 +139,9 @@ public:
 
   bool IsMainThread() const { return mIsMainThread; }
   const char* Name() const { return mThreadInfo->Name(); }
-  Thread::tid_t ThreadId() const { return mThreadId; }
+  int ThreadId() const { return mThreadId; }
 
   PlatformData* GetPlatformData() const { return mPlatformData; }
-  int GetGenerationID() const { return mGeneration; }
-  bool HasGenerationExpired(int aGenID) const {
-    return aGenID + 2 <= mGeneration;
-  }
   void* GetStackTop() const { return mStackTop; }
   void DuplicateLastSample();
 
@@ -118,20 +159,14 @@ private:
   FRIEND_TEST(ThreadProfile, InsertTagsWrap);
   FRIEND_TEST(ThreadProfile, MemoryMeasure);
   ThreadInfo* mThreadInfo;
-  // Circular buffer 'Keep One Slot Open' implementation
-  // for simplicity
-  ProfileEntry*  mEntries;
-  int            mWritePos; // points to the next entry we will write to
-  int            mLastFlushPos; // points to the next entry since the last flush()
-  int            mReadPos;  // points to the next entry we will read to
-  int            mEntrySize;
+
+  const nsRefPtr<ProfileBuffer> mBuffer;
+
   PseudoStack*   mPseudoStack;
   mozilla::Mutex mMutex;
-  Thread::tid_t  mThreadId;
+  int            mThreadId;
   bool           mIsMainThread;
   PlatformData*  mPlatformData;  // Platform specific data.
-  int            mGeneration;
-  int            mPendingGenerationFlush;
   void* const    mStackTop;
   ThreadResponsiveness mRespInfo;
 
@@ -143,8 +178,8 @@ public:
   int64_t        mRssMemory;
   int64_t        mUssMemory;
 #endif
-};
 
-std::ostream& operator<<(std::ostream& stream, const ThreadProfile& profile);
+  void StreamTrackedOptimizations(JSStreamWriter& b, void* addr, uint8_t index);
+};
 
 #endif /* ndef MOZ_PROFILE_ENTRY_H */

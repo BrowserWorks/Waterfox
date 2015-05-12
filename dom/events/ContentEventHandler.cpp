@@ -182,8 +182,8 @@ ContentEventHandler::QueryContentRect(nsIContent* aContent,
     resultRect.UnionRect(resultRect, frameRect);
   }
 
-  aEvent->mReply.mRect =
-      resultRect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel());
+  aEvent->mReply.mRect = LayoutDevicePixel::FromUntyped(
+      resultRect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel()));
   aEvent->mSucceeded = true;
 
   return NS_OK;
@@ -251,9 +251,8 @@ static uint32_t CountNewlinesInXPLength(nsIContent* aContent,
     return 0;
   }
   // For automated tests, we should abort on debug build.
-  NS_ABORT_IF_FALSE(
-    (aXPLength == UINT32_MAX || aXPLength <= text->GetLength()),
-    "aXPLength is out-of-bounds");
+  MOZ_ASSERT(aXPLength == UINT32_MAX || aXPLength <= text->GetLength(),
+             "aXPLength is out-of-bounds");
   const uint32_t length = std::min(aXPLength, text->GetLength());
   uint32_t newlines = 0;
   for (uint32_t i = 0; i < length; ++i) {
@@ -283,7 +282,7 @@ static uint32_t CountNewlinesInNativeLength(nsIContent* aContent,
        i < xpLength && nativeOffset < aNativeLength;
        ++i, ++nativeOffset) {
     // For automated tests, we should abort on debug build.
-    NS_ABORT_IF_FALSE(i < text->GetLength(), "i is out-of-bounds");
+    MOZ_ASSERT(i < text->GetLength(), "i is out-of-bounds");
     if (text->CharAt(i) == '\n') {
       ++newlines;
       ++nativeOffset;
@@ -312,6 +311,17 @@ ContentEventHandler::GetNativeTextLength(nsIContent* aContent,
                                          uint32_t aMaxLength)
 {
   return GetTextLength(aContent, LINE_BREAK_TYPE_NATIVE, aMaxLength);
+}
+
+static inline uint32_t
+GetBRLength(LineBreakType aLineBreakType)
+{
+#if defined(XP_WIN)
+  // Length of \r\n
+  return (aLineBreakType == LINE_BREAK_TYPE_NATIVE) ? 2 : 1;
+#else
+  return 1;
+#endif
 }
 
 /* static */ uint32_t
@@ -344,12 +354,7 @@ ContentEventHandler::GetTextLength(nsIContent* aContent,
     uint32_t length = std::min(text->GetLength(), aMaxLength);
     return length + textLengthDifference;
   } else if (IsContentBR(aContent)) {
-#if defined(XP_WIN)
-    // Length of \r\n
-    return (aLineBreakType == LINE_BREAK_TYPE_NATIVE) ? 2 : 1;
-#else
-    return 1;
-#endif
+    return GetBRLength(aLineBreakType);
   }
   return 0;
 }
@@ -393,7 +398,6 @@ static nsresult GenerateFlatTextContent(nsRange* aRange,
     return NS_OK;
   }
 
-  nsAutoString tmpStr;
   for (; !iter->IsDone(); iter->Next()) {
     nsINode* node = iter->GetCurrentNode();
     if (!node) {
@@ -420,6 +424,171 @@ static nsresult GenerateFlatTextContent(nsRange* aRange,
   if (aLineBreakType == LINE_BREAK_TYPE_NATIVE) {
     ConvertToNativeNewlines(aString);
   }
+  return NS_OK;
+}
+
+static FontRange*
+AppendFontRange(nsTArray<FontRange>& aFontRanges, uint32_t aBaseOffset)
+{
+  FontRange* fontRange = aFontRanges.AppendElement();
+  fontRange->mStartOffset = aBaseOffset;
+  return fontRange;
+}
+
+/* static */ uint32_t
+ContentEventHandler::GetTextLengthInRange(nsIContent* aContent,
+                                          uint32_t aXPStartOffset,
+                                          uint32_t aXPEndOffset,
+                                          LineBreakType aLineBreakType)
+{
+  return aLineBreakType == LINE_BREAK_TYPE_NATIVE ?
+    GetNativeTextLength(aContent, aXPStartOffset, aXPEndOffset) :
+    aXPEndOffset - aXPStartOffset;
+}
+
+/* static */ void
+ContentEventHandler::AppendFontRanges(FontRangeArray& aFontRanges,
+                                      nsIContent* aContent,
+                                      int32_t aBaseOffset,
+                                      int32_t aXPStartOffset,
+                                      int32_t aXPEndOffset,
+                                      LineBreakType aLineBreakType)
+{
+  nsIFrame* frame = aContent->GetPrimaryFrame();
+  if (!frame) {
+    // It is a non-rendered content, create an empty range for it.
+    AppendFontRange(aFontRanges, aBaseOffset);
+    return;
+  }
+
+  int32_t baseOffset = aBaseOffset;
+  nsTextFrame* curr = do_QueryFrame(frame);
+  MOZ_ASSERT(curr, "Not a text frame");
+  while (curr) {
+    int32_t frameXPStart = std::max(curr->GetContentOffset(), aXPStartOffset);
+    int32_t frameXPEnd = std::min(curr->GetContentEnd(), aXPEndOffset);
+    if (frameXPStart >= frameXPEnd) {
+      curr = static_cast<nsTextFrame*>(curr->GetNextContinuation());
+      continue;
+    }
+
+    gfxSkipCharsIterator iter = curr->EnsureTextRun(nsTextFrame::eInflated);
+    gfxTextRun* textRun = curr->GetTextRun(nsTextFrame::eInflated);
+
+    nsTextFrame* next = nullptr;
+    if (frameXPEnd < aXPEndOffset) {
+      next = static_cast<nsTextFrame*>(curr->GetNextContinuation());
+      while (next && next->GetTextRun(nsTextFrame::eInflated) == textRun) {
+        frameXPEnd = std::min(next->GetContentEnd(), aXPEndOffset);
+        next = frameXPEnd < aXPEndOffset ?
+          static_cast<nsTextFrame*>(next->GetNextContinuation()) : nullptr;
+      }
+    }
+
+    uint32_t skipStart = iter.ConvertOriginalToSkipped(frameXPStart);
+    uint32_t skipEnd = iter.ConvertOriginalToSkipped(frameXPEnd);
+    gfxTextRun::GlyphRunIterator runIter(
+      textRun, skipStart, skipEnd - skipStart);
+    int32_t lastXPEndOffset = frameXPStart;
+    while (runIter.NextRun()) {
+      gfxFont* font = runIter.GetGlyphRun()->mFont.get();
+      int32_t startXPOffset =
+        iter.ConvertSkippedToOriginal(runIter.GetStringStart());
+      // It is possible that the first glyph run has exceeded the frame,
+      // because the whole frame is filled by skipped chars.
+      if (startXPOffset >= frameXPEnd) {
+        break;
+      }
+
+      if (startXPOffset > lastXPEndOffset) {
+        // Create range for skipped leading chars.
+        AppendFontRange(aFontRanges, baseOffset);
+        baseOffset += GetTextLengthInRange(
+          aContent, lastXPEndOffset, startXPOffset, aLineBreakType);
+        lastXPEndOffset = startXPOffset;
+      }
+
+      FontRange* fontRange = AppendFontRange(aFontRanges, baseOffset);
+      fontRange->mFontName = font->GetName();
+      fontRange->mFontSize = font->GetAdjustedSize();
+
+      // The converted original offset may exceed the range,
+      // hence we need to clamp it.
+      int32_t endXPOffset =
+        iter.ConvertSkippedToOriginal(runIter.GetStringEnd());
+      endXPOffset = std::min(frameXPEnd, endXPOffset);
+      baseOffset += GetTextLengthInRange(aContent, startXPOffset, endXPOffset,
+                                         aLineBreakType);
+      lastXPEndOffset = endXPOffset;
+    }
+    if (lastXPEndOffset < frameXPEnd) {
+      // Create range for skipped trailing chars. It also handles case
+      // that the whole frame contains only skipped chars.
+      AppendFontRange(aFontRanges, baseOffset);
+      baseOffset += GetTextLengthInRange(
+        aContent, lastXPEndOffset, frameXPEnd, aLineBreakType);
+    }
+
+    curr = next;
+  }
+}
+
+/* static */ nsresult
+ContentEventHandler::GenerateFlatFontRanges(nsRange* aRange,
+                                            FontRangeArray& aFontRanges,
+                                            uint32_t& aLength,
+                                            LineBreakType aLineBreakType)
+{
+  MOZ_ASSERT(aFontRanges.IsEmpty(), "aRanges must be empty array");
+
+  nsINode* startNode = aRange->GetStartParent();
+  nsINode* endNode = aRange->GetEndParent();
+  if (NS_WARN_IF(!startNode || !endNode)) {
+    return NS_ERROR_FAILURE;
+  }
+
+  // baseOffset is the flattened offset of each content node.
+  int32_t baseOffset = 0;
+  nsCOMPtr<nsIContentIterator> iter = NS_NewContentIterator();
+  for (iter->Init(aRange); !iter->IsDone(); iter->Next()) {
+    nsINode* node = iter->GetCurrentNode();
+    if (NS_WARN_IF(!node)) {
+      break;
+    }
+    if (!node->IsContent()) {
+      continue;
+    }
+    nsIContent* content = node->AsContent();
+
+    if (content->IsNodeOfType(nsINode::eTEXT)) {
+      int32_t startOffset = content != startNode ? 0 : aRange->StartOffset();
+      int32_t endOffset = content != endNode ?
+        content->TextLength() : aRange->EndOffset();
+      AppendFontRanges(aFontRanges, content, baseOffset,
+                       startOffset, endOffset, aLineBreakType);
+      baseOffset += GetTextLengthInRange(content, startOffset, endOffset,
+                                         aLineBreakType);
+    } else if (IsContentBR(content)) {
+      if (aFontRanges.IsEmpty()) {
+        MOZ_ASSERT(baseOffset == 0);
+        FontRange* fontRange = AppendFontRange(aFontRanges, baseOffset);
+        nsIFrame* frame = content->GetPrimaryFrame();
+        if (frame) {
+          const nsFont& font = frame->GetParent()->StyleFont()->mFont;
+          const FontFamilyList& fontList = font.fontlist;
+          const FontFamilyName& fontName = fontList.IsEmpty() ?
+            FontFamilyName(fontList.GetDefaultFontType()) :
+            fontList.GetFontlist()[0];
+          fontName.AppendToString(fontRange->mFontName, false);
+          fontRange->mFontSize =
+            frame->PresContext()->AppUnitsToDevPixels(font.size);
+        }
+      }
+      baseOffset += GetBRLength(aLineBreakType);
+    }
+  }
+
+  aLength = baseOffset;
   return NS_OK;
 }
 
@@ -697,6 +866,18 @@ ContentEventHandler::OnQueryTextContent(WidgetQueryContentEvent* aEvent)
   rv = GenerateFlatTextContent(range, aEvent->mReply.mString, lineBreakType);
   NS_ENSURE_SUCCESS(rv, rv);
 
+  if (aEvent->mWithFontRanges) {
+    uint32_t fontRangeLength;
+    rv = GenerateFlatFontRanges(range, aEvent->mReply.mFontRanges,
+                                fontRangeLength, lineBreakType);
+    if (NS_WARN_IF(NS_FAILED(rv))) {
+      return rv;
+    }
+
+    MOZ_ASSERT(fontRangeLength == aEvent->mReply.mString.Length(),
+               "Font ranges doesn't match the string");
+  }
+
   aEvent->mSucceeded = true;
 
   return NS_OK;
@@ -761,8 +942,13 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
   nsPoint ptOffset;
   firstFrame->GetPointFromOffset(nodeOffset, &ptOffset);
   // minus 1 to avoid creating an empty rect
-  rect.x += ptOffset.x - 1;
-  rect.width -= ptOffset.x - 1;
+  if (firstFrame->GetWritingMode().IsVertical()) {
+    rect.y += ptOffset.y - 1;
+    rect.height -= ptOffset.y - 1;
+  } else {
+    rect.x += ptOffset.x - 1;
+    rect.width -= ptOffset.x - 1;
+  }
 
   // get the ending frame
   nodeOffset = range->EndOffset();
@@ -803,15 +989,20 @@ ContentEventHandler::OnQueryTextRect(WidgetQueryContentEvent* aEvent)
   // get the ending frame rect
   lastFrame->GetPointFromOffset(nodeOffset, &ptOffset);
   // minus 1 to avoid creating an empty rect
-  frameRect.width -= lastFrame->GetRect().width - ptOffset.x - 1;
+  if (lastFrame->GetWritingMode().IsVertical()) {
+    frameRect.height -= lastFrame->GetRect().height - ptOffset.y - 1;
+  } else {
+    frameRect.width -= lastFrame->GetRect().width - ptOffset.x - 1;
+  }
 
   if (firstFrame == lastFrame) {
     rect.IntersectRect(rect, frameRect);
   } else {
     rect.UnionRect(rect, frameRect);
   }
-  aEvent->mReply.mRect =
-      rect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel());
+  aEvent->mReply.mRect = LayoutDevicePixel::FromUntyped(
+      rect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel()));
+  aEvent->mReply.mWritingMode = lastFrame->GetWritingMode();
   aEvent->mSucceeded = true;
   return NS_OK;
 }
@@ -861,8 +1052,8 @@ ContentEventHandler::OnQueryCaretRect(WidgetQueryContentEvent* aEvent)
       }
       rv = ConvertToRootViewRelativeOffset(caretFrame, caretRect);
       NS_ENSURE_SUCCESS(rv, rv);
-      aEvent->mReply.mRect =
-        caretRect.ToOutsidePixels(caretFrame->PresContext()->AppUnitsPerDevPixel());
+      aEvent->mReply.mRect = LayoutDevicePixel::FromUntyped(
+        caretRect.ToOutsidePixels(caretFrame->PresContext()->AppUnitsPerDevPixel()));
       aEvent->mReply.mOffset = aEvent->mInput.mOffset;
       aEvent->mSucceeded = true;
       return NS_OK;
@@ -894,8 +1085,8 @@ ContentEventHandler::OnQueryCaretRect(WidgetQueryContentEvent* aEvent)
   rv = ConvertToRootViewRelativeOffset(frame, rect);
   NS_ENSURE_SUCCESS(rv, rv);
 
-  aEvent->mReply.mRect =
-      rect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel());
+  aEvent->mReply.mRect = LayoutDevicePixel::FromUntyped(
+      rect.ToOutsidePixels(mPresContext->AppUnitsPerDevPixel()));
   aEvent->mSucceeded = true;
   return NS_OK;
 }
@@ -967,9 +1158,8 @@ ContentEventHandler::OnQueryCharacterAtPoint(WidgetQueryContentEvent* aEvent)
   eventOnRoot.mUseNativeLineBreak = aEvent->mUseNativeLineBreak;
   eventOnRoot.refPoint = aEvent->refPoint;
   if (rootWidget != aEvent->widget) {
-    eventOnRoot.refPoint += LayoutDeviceIntPoint::FromUntyped(
-      aEvent->widget->WidgetToScreenOffset() -
-        rootWidget->WidgetToScreenOffset());
+    eventOnRoot.refPoint += aEvent->widget->WidgetToScreenOffset() -
+      rootWidget->WidgetToScreenOffset();
   }
   nsPoint ptInRoot =
     nsLayoutUtils::GetEventCoordinatesRelativeTo(&eventOnRoot, rootFrame);
@@ -1032,8 +1222,7 @@ ContentEventHandler::OnQueryDOMWidgetHittest(WidgetQueryContentEvent* aEvent)
   nsIFrame* docFrame = mPresShell->GetRootFrame();
   NS_ENSURE_TRUE(docFrame, NS_ERROR_FAILURE);
 
-  LayoutDeviceIntPoint eventLoc = aEvent->refPoint +
-    LayoutDeviceIntPoint::FromUntyped(aEvent->widget->WidgetToScreenOffset());
+  LayoutDeviceIntPoint eventLoc = aEvent->refPoint + aEvent->widget->WidgetToScreenOffset();
   nsIntRect docFrameRect = docFrame->GetScreenRect(); // Returns CSS pixels
   CSSIntPoint eventLocCSS(
     mPresContext->DevPixelsToIntCSSPixels(eventLoc.x) - docFrameRect.x,

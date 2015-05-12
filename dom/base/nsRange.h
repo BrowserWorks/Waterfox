@@ -30,7 +30,7 @@ class DOMRectList;
 }
 }
 
-class nsRange MOZ_FINAL : public nsIDOMRange,
+class nsRange final : public nsIDOMRange,
                           public nsStubMutationObserver,
                           public nsWrapperCache
 {
@@ -49,6 +49,7 @@ public:
     , mIsDetached(false)
     , mMaySpanAnonymousSubtrees(false)
     , mInSelection(false)
+    , mIsGenerated(false)
     , mStartOffsetWasIncremented(false)
     , mEndOffsetWasIncremented(false)
     , mEnableGravitationOnElementRemoval(true)
@@ -153,6 +154,27 @@ public:
     }
   }
 
+  /**
+   * Return true if this range was generated.
+   * @see SetIsGenerated
+   */
+  bool IsGenerated() const
+  {
+    return mIsGenerated;
+  }
+
+  /**
+   * Mark this range as being generated or not.
+   * Currently it is used for marking ranges that are created when splitting up
+   * a range to exclude a -moz-user-select:none region.
+   * @see Selection::AddItem
+   * @see ExcludeNonSelectableNodes
+   */
+  void SetIsGenerated(bool aIsGenerated)
+  {
+    mIsGenerated = aIsGenerated;
+  }
+
   nsINode* GetCommonAncestor() const;
   void Reset();
   nsresult SetStart(nsINode* aParent, int32_t aOffset);
@@ -222,7 +244,7 @@ public:
                                                bool aFlushLayout = true);
 
   nsINode* GetParentObject() const { return mOwner; }
-  virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE MOZ_FINAL;
+  virtual JSObject* WrapObject(JSContext* cx) override final;
 
 private:
   // no copy's or assigns
@@ -333,6 +355,7 @@ protected:
   bool mIsDetached;
   bool mMaySpanAnonymousSubtrees;
   bool mInSelection;
+  bool mIsGenerated;
   bool mStartOffsetWasIncremented;
   bool mEndOffsetWasIncremented;
   bool mEnableGravitationOnElementRemoval;

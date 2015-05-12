@@ -22,6 +22,9 @@
 #include "gtkdrawing.h"
 #include "nsStyleConsts.h"
 #include "gfxFontConstants.h"
+
+#include <dlfcn.h>
+
 #include "mozilla/gfx/2D.h"
 
 using mozilla::LookAndFeel;
@@ -733,6 +736,16 @@ GetSystemFontInfo(GtkWidget *aWidget,
         size *= float(gfxPlatformGtk::GetDPI()) / POINTS_PER_INCH_FLOAT;
     }
 
+    // Scale fonts up on HiDPI displays.
+    // This would be done automatically with cairo, but we manually manage
+    // the display scale for platform consistency.
+    static auto sGdkScreenGetMonitorScaleFactorPtr = (gint (*)(GdkScreen*,gint))
+        dlsym(RTLD_DEFAULT, "gdk_screen_get_monitor_scale_factor");
+    if (sGdkScreenGetMonitorScaleFactorPtr) {
+        GdkScreen *screen = gdk_screen_get_default();
+        size *= (*sGdkScreenGetMonitorScaleFactorPtr)(screen, 0);
+    }
+
     // |size| is now pixels
 
     aFontStyle->size = size;
@@ -784,7 +797,7 @@ GetSystemFontInfo(LookAndFeel::FontID aID,
         gtk_widget_destroy(window);  // no unref, windows are different
 
     } else {
-        NS_ABORT_IF_FALSE(aID == LookAndFeel::eFont_Menu, "unexpected font ID");
+        MOZ_ASSERT(aID == LookAndFeel::eFont_Menu, "unexpected font ID");
         GtkWidget *accel_label = gtk_accel_label_new("M");
         GtkWidget *menuitem = gtk_menu_item_new();
         GtkWidget *menu = gtk_menu_new();

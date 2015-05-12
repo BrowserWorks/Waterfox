@@ -10,17 +10,23 @@ function usage() {
   echo "Usage: $0 [--dep] <variant>"
 }
 
-clean=""
+clean=1
 platform=""
+TIMEOUT=3h
 while [ $# -gt 1 ]; do
     case "$1" in
-        --clobber)
+        --dep)
             shift
-            clean=1
+            clean=""
             ;;
         --platform)
             shift
             platform="$1"
+            shift
+            ;;
+        --timeout)
+            shift
+            TIMEOUT="$1"
             shift
             ;;
         *)
@@ -32,19 +38,26 @@ while [ $# -gt 1 ]; do
 done
 
 VARIANT=$1
-if [ ! -f "$ABSDIR/$VARIANT" ]; then
+
+# 'generational' is being retired in favor of 'compacting', but we need to
+# decouple the landings.
+if [[ "$VARIANT" = "generational" ]]; then
+    VARIANT=compacting
+fi
+
+if [ ! -f "$ABSDIR/variants/$VARIANT" ]; then
     echo "Could not find variant '$VARIANT'"
     usage
     exit 1
 fi
 
-(cd "$SOURCE/js/src"; autoconf-2.13 || autoconf2.13)
+(cd "$SOURCE/js/src"; autoconf-2.13 || autoconf2.13 || autoconf213)
 
 TRY_OVERRIDE=$SOURCE/js/src/config.try
 if [ -r $TRY_OVERRIDE ]; then
   CONFIGURE_ARGS="$(cat "$TRY_OVERRIDE")"
 else
-  CONFIGURE_ARGS="$(cat "$ABSDIR/$VARIANT")"
+  CONFIGURE_ARGS="$(cat "$ABSDIR/variants/$VARIANT")"
 fi
 
 OBJDIR="${OBJDIR:-$SOURCE/obj-spider}"
@@ -63,6 +76,9 @@ USE_64BIT=false
 
 if [[ "$OSTYPE" == darwin* ]]; then
   USE_64BIT=true
+  if [ "$VARIANT" = "arm-sim-osx" ]; then
+    USE_64BIT=false
+  fi
 elif [ "$OSTYPE" = "linux-gnu" ]; then
   if [ -n "$AUTOMATION" ]; then
       GCCDIR="${GCCDIR:-/tools/gcc-4.7.2-0moz1}"
@@ -111,34 +127,44 @@ $SOURCE/js/src/configure $CONFIGURE_ARGS --enable-nspr-build --prefix=$OBJDIR/di
 $MAKE -s -w -j4 || exit 2
 cp -p $SOURCE/build/unix/run-mozilla.sh $OBJDIR/dist/bin
 
-# The root analysis tests run in a special GC Zeal mode and disable ASLR to
-# make tests reproducible.
 COMMAND_PREFIX=''
+
+# On Linux, disable ASLR to make shell builds a bit more reproducible.
+if type setarch >/dev/null 2>&1; then
+    COMMAND_PREFIX="setarch $(uname -m) -R "
+fi
+
+RUN_JSTESTS=true
+
+PARENT=$$
+sh -c "sleep $TIMEOUT; kill $PARENT" <&- >&- 2>&- &
+KILLER=$!
+disown %1
+trap "kill $KILLER" EXIT
+
 if [[ "$VARIANT" = "rootanalysis" ]]; then
     export JS_GC_ZEAL=7
 
-    # rootanalysis builds are currently only done on Linux, which should have
-    # setarch, but just in case we enable them on another platform:
-    if type setarch >/dev/null 2>&1; then
-        COMMAND_PREFIX="setarch $(uname -m) -R "
-    fi
-elif [[ "$VARIANT" = "generational" ]]; then
-    # Generational is currently being used for compacting GC
+elif [[ "$VARIANT" = "compacting" ]]; then
     export JS_GC_ZEAL=14
 
     # Ignore timeouts from tests that are known to take too long with this zeal mode
     export JITTEST_EXTRA_ARGS=--ignore-timeouts=$ABSDIR/cgc-jittest-timeouts.txt
+    export JSTESTS_EXTRA_ARGS=--exclude-file=$ABSDIR/cgc-jstests-slow.txt
 
-    # rootanalysis builds are currently only done on Linux, which should have
-    # setarch, but just in case we enable them on another platform:
-    if type setarch >/dev/null 2>&1; then
-        COMMAND_PREFIX="setarch $(uname -m) -R "
-    fi
+    case "$platform" in
+    win*)
+        RUN_JSTESTS=false
+    esac
+fi
+
+if [[ "$VARIANT" = "warnaserr" ]]; then
+    export JSTESTS_EXTRA_ARGS=--tbpl
 fi
 
 $COMMAND_PREFIX $MAKE check || exit 1
 $COMMAND_PREFIX $MAKE check-jit-test || exit 1
-if [[ "$VARIANT" != "generational" ]]; then
+$COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1
+if $RUN_JSTESTS; then
     $COMMAND_PREFIX $MAKE check-jstests || exit 1
 fi
-$COMMAND_PREFIX $OBJDIR/dist/bin/jsapi-tests || exit 1

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2014 Mozilla Foundation
+ * Copyright (C) 2012-2015 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -349,11 +349,19 @@ nsGonkCameraControl::SetConfigurationInternal(const Configuration& aConfig)
     if (NS_FAILED(rv)) {
       DOM_CAMERA_LOGE("Failed to set recording hint (0x%x)\n", rv);
     }
-  }
 
-  mCurrentConfiguration.mMode = config.mMode;
-  mCurrentConfiguration.mRecorderProfile = config.mRecorderProfile;
-  mCurrentConfiguration.mPictureSize = config.mPictureSize;
+    mCurrentConfiguration.mMode = config.mMode;
+    mCurrentConfiguration.mRecorderProfile = config.mRecorderProfile;
+    
+    if (config.mMode == kPictureMode) {
+      mCurrentConfiguration.mPictureSize = config.mPictureSize;
+    } else /* if config.mMode == kVideoMode */ {
+      // The following is best-effort; we don't currently support taking
+      // pictures while in video mode, but we should at least return
+      // sane values to OnConfigurationChange() handlers...
+      SetPictureSizeImpl(config.mPictureSize);
+    }
+  }
   return NS_OK;
 }
 
@@ -925,7 +933,7 @@ nsGonkCameraControl::SetThumbnailSize(const Size& aSize)
     ~SetThumbnailSize() { MOZ_COUNT_DTOR(SetThumbnailSize); }
 
     NS_IMETHODIMP
-    Run() MOZ_OVERRIDE
+    Run() override
     {
       nsresult rv = mCameraControl->SetThumbnailSizeImpl(mSize);
       if (NS_FAILED(rv)) {
@@ -1043,7 +1051,7 @@ nsGonkCameraControl::SetPictureSize(const Size& aSize)
     ~SetPictureSize() { MOZ_COUNT_DTOR(SetPictureSize); }
 
     NS_IMETHODIMP
-    Run() MOZ_OVERRIDE
+    Run() override
     {
       nsresult rv = mCameraControl->SetPictureSizeImpl(mSize);
       if (NS_FAILED(rv)) {
@@ -1300,7 +1308,7 @@ nsGonkCameraControl::OnAutoFocusComplete(bool aSuccess)
     { }
 
     NS_IMETHODIMP
-    Run() MOZ_OVERRIDE
+    Run() override
     {
       mCameraControl->OnAutoFocusComplete(mSuccess);
       return NS_OK;

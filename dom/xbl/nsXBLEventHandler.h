@@ -49,7 +49,7 @@ public:
   virtual ~nsXBLMouseEventHandler();
 
 private:
-  bool EventMatched(nsIDOMEvent* aEvent) MOZ_OVERRIDE;
+  bool EventMatched(nsIDOMEvent* aEvent) override;
 };
 
 class nsXBLKeyEventHandler : public nsIDOMEventListener
@@ -113,13 +113,8 @@ private:
   bool mUsingContentXBLScope;
 };
 
-nsresult
+already_AddRefed<nsXBLEventHandler>
 NS_NewXBLEventHandler(nsXBLPrototypeHandler* aHandler,
-                      nsIAtom* aEventType,
-                      nsXBLEventHandler** aResult);
-
-nsresult
-NS_NewXBLKeyEventHandler(nsIAtom* aEventType, uint8_t aPhase,
-                         uint8_t aType, nsXBLKeyEventHandler** aResult);
+                      nsIAtom* aEventType);
 
 #endif

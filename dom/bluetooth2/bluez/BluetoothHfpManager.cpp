@@ -166,7 +166,8 @@ static CINDItem sCINDItems[] = {
 #endif
 };
 
-class BluetoothHfpManager::GetVolumeTask : public nsISettingsServiceCallback
+class BluetoothHfpManager::GetVolumeTask final
+  : public nsISettingsServiceCallback
 {
 public:
   NS_DECL_ISUPPORTS
@@ -234,7 +235,7 @@ BluetoothHfpManager::Notify(const hal::BatteryInformation& aBatteryInfo)
 class BluetoothHfpManager::RespondToBLDNTask : public Task
 {
 private:
-  void Run() MOZ_OVERRIDE
+  void Run() override
   {
     MOZ_ASSERT(sBluetoothHfpManager);
 
@@ -255,7 +256,7 @@ public:
     MOZ_ASSERT(NS_IsMainThread());
   }
 
-  void Run() MOZ_OVERRIDE
+  void Run() override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -295,7 +296,7 @@ private:
 class BluetoothHfpManager::CloseScoTask : public Task
 {
 private:
-  void Run() MOZ_OVERRIDE
+  void Run() override
   {
     MOZ_ASSERT(sBluetoothHfpManager);
 
@@ -685,6 +686,28 @@ BluetoothHfpManager::HandleShutdown()
   Disconnect(nullptr);
   DisconnectSco();
   sBluetoothHfpManager = nullptr;
+}
+
+void
+BluetoothHfpManager::ParseAtCommand(const nsACString& aAtCommand,
+                                    const int aStart,
+                                    nsTArray<nsCString>& aRetValues)
+{
+  int length = aAtCommand.Length();
+  int begin = aStart;
+
+  for (int i = aStart; i < length; ++i) {
+    // Use ',' as separator
+    if (aAtCommand[i] == ',') {
+      nsCString tmp(nsDependentCSubstring(aAtCommand, begin, i - begin));
+      aRetValues.AppendElement(tmp);
+
+      begin = i + 1;
+    }
+  }
+
+  nsCString tmp(nsDependentCSubstring(aAtCommand, begin));
+  aRetValues.AppendElement(tmp);
 }
 
 // Virtual function of class SocketConsumer

@@ -38,7 +38,7 @@ class DOMSVGLength;
  *
  * Our DOM items are created lazily on demand as and when script requests them.
  */
-class DOMSVGLengthList MOZ_FINAL : public nsISupports,
+class DOMSVGLengthList final : public nsISupports,
                                    public nsWrapperCache
 {
   friend class AutoChangeLengthListNotifier;
@@ -69,7 +69,7 @@ public:
     InternalListLengthWillChange(aInternalList.Length()); // Sync mItems
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
 
   nsISupports* GetParentObject()
   {
@@ -81,9 +81,9 @@ public:
    * hit OOM in which case our length will be zero.
    */
   uint32_t LengthNoFlush() const {
-    NS_ABORT_IF_FALSE(mItems.Length() == 0 ||
-                      mItems.Length() == InternalList().Length(),
-                      "DOM wrapper's list length is out of sync");
+    MOZ_ASSERT(mItems.Length() == 0 ||
+               mItems.Length() == InternalList().Length(),
+               "DOM wrapper's list length is out of sync");
     return mItems.Length();
   }
 
@@ -146,8 +146,8 @@ private:
 
   /// Used to determine if this list is the baseVal or animVal list.
   bool IsAnimValList() const {
-    NS_ABORT_IF_FALSE(this == mAList->mBaseVal || this == mAList->mAnimVal,
-                      "Calling IsAnimValList() too early?!");
+    MOZ_ASSERT(this == mAList->mBaseVal || this == mAList->mAnimVal,
+               "Calling IsAnimValList() too early?!");
     return this == mAList->mAnimVal;
   }
 

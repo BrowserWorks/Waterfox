@@ -40,7 +40,7 @@ class nsHttpResponseHead;
 // intended to run on the socket thread.
 //-----------------------------------------------------------------------------
 
-class nsHttpTransaction MOZ_FINAL : public nsAHttpTransaction
+class nsHttpTransaction final : public nsAHttpTransaction
                                   , public ATokenBucketEvent
                                   , public nsIInputStreamCallback
                                   , public nsIOutputStreamCallback
@@ -114,7 +114,6 @@ public:
     void    SetPriority(int32_t priority) { mPriority = priority; }
     int32_t    Priority()                 { return mPriority; }
 
-    const TimingStruct& Timings() const { return mTimings; }
     enum Classifier Classification() { return mClassification; }
 
     void PrintDiagnostics(nsCString &log);
@@ -125,12 +124,12 @@ public:
     bool UsesPipelining() const { return mCaps & NS_HTTP_ALLOW_PIPELINING; }
 
     // overload of nsAHttpTransaction::LoadGroupConnectionInfo()
-    nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() MOZ_OVERRIDE { return mLoadGroupCI.get(); }
+    nsILoadGroupConnectionInfo *LoadGroupConnectionInfo() override { return mLoadGroupCI.get(); }
     void SetLoadGroupConnectionInfo(nsILoadGroupConnectionInfo *aLoadGroupCI);
     void DispatchedAsBlocking();
     void RemoveDispatchedAsBlocking();
 
-    nsHttpTransaction *QueryHttpTransaction() MOZ_OVERRIDE { return this; }
+    nsHttpTransaction *QueryHttpTransaction() override { return this; }
 
     Http2PushedStream *GetPushedStream() { return mPushedStream; }
     Http2PushedStream *TakePushedStream()
@@ -140,6 +139,24 @@ public:
         return r;
     }
     void SetPushedStream(Http2PushedStream *push) { mPushedStream = push; }
+
+    // Locked methods to get and set timing info
+    const TimingStruct Timings();
+    void SetDomainLookupStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetDomainLookupEnd(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetConnectStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetConnectEnd(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetRequestStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetResponseStart(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+    void SetResponseEnd(mozilla::TimeStamp timeStamp, bool onlyIfNull = false);
+
+    mozilla::TimeStamp GetDomainLookupStart();
+    mozilla::TimeStamp GetDomainLookupEnd();
+    mozilla::TimeStamp GetConnectStart();
+    mozilla::TimeStamp GetConnectEnd();
+    mozilla::TimeStamp GetRequestStart();
+    mozilla::TimeStamp GetResponseStart();
+    mozilla::TimeStamp GetResponseEnd();
 
 private:
     friend class DeleteHttpTransaction;
@@ -168,10 +185,10 @@ private:
 
     bool TimingEnabled() const { return mCaps & NS_HTTP_TIMING_ENABLED; }
 
-    bool ResponseTimeoutEnabled() const MOZ_FINAL;
+    bool ResponseTimeoutEnabled() const final;
 
-    void DisableSpdy() MOZ_OVERRIDE;
-    void ReuseConnectionOnRestartOK(bool reuseOk) MOZ_OVERRIDE { mReuseOnRestart = reuseOk; }
+    void DisableSpdy() override;
+    void ReuseConnectionOnRestartOK(bool reuseOk) override { mReuseOnRestart = reuseOk; }
 
 private:
     class UpdateSecurityCallbacks : public nsRunnable
@@ -207,7 +224,7 @@ private:
 
     nsCString                       mReqHeaderBuf;    // flattened request headers
     nsCOMPtr<nsIInputStream>        mRequestStream;
-    uint64_t                        mRequestSize;
+    int64_t                         mRequestSize;
 
     nsRefPtr<nsAHttpConnection>     mConnection;
     nsRefPtr<nsHttpConnectionInfo>  mConnInfo;
@@ -241,15 +258,18 @@ private:
 
     uint16_t                        mRestartCount;        // the number of times this transaction has been restarted
     uint32_t                        mCaps;
-    // mCapsToClear holds flags that should be cleared in mCaps, e.g. unset
-    // NS_HTTP_REFRESH_DNS when DNS refresh request has completed to avoid
-    // redundant requests on the network. To deal with raciness, only unsetting
-    // bitfields should be allowed: 'lost races' will thus err on the
-    // conservative side, e.g. by going ahead with a 2nd DNS refresh.
-    uint32_t                        mCapsToClear;
     enum Classifier                 mClassification;
     int32_t                         mPipelinePosition;
     int64_t                         mMaxPipelineObjectSize;
+
+    // mCapsToClear holds flags that should be cleared in mCaps, e.g. unset
+    // NS_HTTP_REFRESH_DNS when DNS refresh request has completed to avoid
+    // redundant requests on the network. The member itself is atomic, but
+    // access to it from the networking thread may happen either before or
+    // after the main thread modifies it. To deal with raciness, only unsetting
+    // bitfields should be allowed: 'lost races' will thus err on the
+    // conservative side, e.g. by going ahead with a 2nd DNS refresh.
+    Atomic<uint32_t>                mCapsToClear;
 
     nsHttpVersion                   mHttpVersion;
 
@@ -364,7 +384,7 @@ public:
     // token bucket submission the transaction just posts an event that causes
     // the pending transaction queue to be rerun (and TryToRunPacedRequest() to
     // be run again.
-    void OnTokenBucketAdmitted() MOZ_OVERRIDE; // ATokenBucketEvent
+    void OnTokenBucketAdmitted() override; // ATokenBucketEvent
 
     // CancelPacing() can be used to tell the token bucket to remove this
     // transaction from the list of pending transactions. This is used when a
@@ -383,6 +403,7 @@ private:
     uint64_t                           mCountRecv;
     uint64_t                           mCountSent;
     uint32_t                           mAppId;
+    bool                               mIsInBrowser;
 #ifdef MOZ_WIDGET_GONK
     nsMainThreadPtrHandle<nsINetworkInterface> mActiveNetwork;
 #endif

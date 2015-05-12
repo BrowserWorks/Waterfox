@@ -70,6 +70,18 @@ Convert(int aIn, int16_t& aOut)
 }
 
 nsresult
+Convert(int aIn, int32_t& aOut)
+{
+  if (NS_WARN_IF(aIn < std::numeric_limits<int32_t>::min()) ||
+      NS_WARN_IF(aIn > std::numeric_limits<int32_t>::max())) {
+    aOut = 0; // silences compiler warning
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = static_cast<int32_t>(aIn);
+  return NS_OK;
+}
+
+nsresult
 Convert(int32_t aIn, BluetoothDeviceType& aOut)
 {
   static const BluetoothDeviceType sDeviceType[] = {
@@ -376,6 +388,21 @@ Convert(uint8_t aIn, BluetoothHandsfreeVolumeType& aOut)
 }
 
 nsresult
+Convert(uint8_t aIn, BluetoothHandsfreeWbsConfig& aOut)
+{
+  static const BluetoothHandsfreeWbsConfig sWbsConfig[] = {
+    CONVERT(0x00, HFP_WBS_NONE),
+    CONVERT(0x01, HFP_WBS_NO),
+    CONVERT(0x02, HFP_WBS_YES)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sWbsConfig))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sWbsConfig[aIn];
+  return NS_OK;
+}
+
+nsresult
 Convert(uint8_t aIn, BluetoothPropertyType& aOut)
 {
   static const BluetoothPropertyType sPropertyType[] = {
@@ -660,6 +687,22 @@ Convert(BluetoothAvrcpNotification aIn, uint8_t& aOut)
 }
 
 nsresult
+Convert(BluetoothAvrcpPlayerAttribute aIn, uint8_t& aOut)
+{
+  static const uint8_t sValue[] = {
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_EQUALIZER, 0x01),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_REPEAT, 0x02),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_SHUFFLE, 0x03),
+    CONVERT(AVRCP_PLAYER_ATTRIBUTE_SCAN, 0x04)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sValue))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sValue[aIn];
+  return NS_OK;
+}
+
+nsresult
 Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut)
 {
   if (NS_WARN_IF(aIn < std::numeric_limits<unsigned long>::min()) ||
@@ -668,6 +711,23 @@ Convert(BluetoothAvrcpRemoteFeature aIn, unsigned long& aOut)
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = static_cast<unsigned long>(aIn);
+  return NS_OK;
+}
+
+nsresult
+Convert(BluetoothAvrcpStatus aIn, uint8_t& aOut)
+{
+  static const uint8_t sValue[] = {
+    CONVERT(AVRCP_STATUS_BAD_COMMAND, 0x00),
+    CONVERT(AVRCP_STATUS_BAD_PARAMETER, 0x01),
+    CONVERT(AVRCP_STATUS_NOT_FOUND, 0x02),
+    CONVERT(AVRCP_STATUS_INTERNAL_ERROR, 0x03),
+    CONVERT(AVRCP_STATUS_SUCCESS, 0x04)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sValue))) {
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sValue[aIn];
   return NS_OK;
 }
 
@@ -809,6 +869,22 @@ Convert(BluetoothHandsfreeVolumeType aIn, uint8_t& aOut)
     return NS_ERROR_ILLEGAL_VALUE;
   }
   aOut = sVolumeType[aIn];
+  return NS_OK;
+}
+
+nsresult
+Convert(BluetoothHandsfreeWbsConfig aIn, uint8_t& aOut)
+{
+  static const uint8_t sWbsConfig[] = {
+    CONVERT(HFP_WBS_NONE, 0x00),
+    CONVERT(HFP_WBS_NO, 0x01),
+    CONVERT(HFP_WBS_YES, 0x02)
+  };
+  if (NS_WARN_IF(aIn >= MOZ_ARRAY_LENGTH(sWbsConfig))) {
+    aOut = 0x00; // silences compiler warning
+    return NS_ERROR_ILLEGAL_VALUE;
+  }
+  aOut = sWbsConfig[aIn];
   return NS_OK;
 }
 
@@ -1109,6 +1185,19 @@ PackPDU(BluetoothAvrcpNotification aIn, BluetoothDaemonPDU& aPDU)
 }
 
 nsresult
+PackPDU(BluetoothAvrcpPlayerAttribute aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(
+    PackConversion<BluetoothAvrcpPlayerAttribute, uint8_t>(aIn), aPDU);
+}
+
+nsresult
+PackPDU(BluetoothAvrcpStatus aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(PackConversion<BluetoothAvrcpStatus, uint8_t>(aIn), aPDU);
+}
+
+nsresult
 PackPDU(const BluetoothConfigurationParameter& aIn, BluetoothDaemonPDU& aPDU)
 {
   return PackPDU(aIn.mType, aIn.mLength,
@@ -1182,6 +1271,13 @@ PackPDU(const BluetoothHandsfreeVolumeType& aIn, BluetoothDaemonPDU& aPDU)
 {
   return PackPDU(
     PackConversion<BluetoothHandsfreeVolumeType, uint8_t>(aIn), aPDU);
+}
+
+nsresult
+PackPDU(const BluetoothHandsfreeWbsConfig& aIn, BluetoothDaemonPDU& aPDU)
+{
+  return PackPDU(
+    PackConversion<BluetoothHandsfreeWbsConfig, uint8_t>(aIn), aPDU);
 }
 
 nsresult
@@ -1569,7 +1665,7 @@ UnpackPDU(BluetoothDaemonPDU& aPDU, nsDependentCString& aOut)
     return NS_ERROR_ILLEGAL_VALUE; // end of PDU
   }
 
-  const char* end = static_cast<char*>(memchr(str, '\0', aPDU.GetSize()));
+  const char* end = static_cast<char*>(memchr(str, '\0', aPDU.GetSize() + 1));
   if (NS_WARN_IF(!end)) {
     return NS_ERROR_ILLEGAL_VALUE; // no string terminator
   }

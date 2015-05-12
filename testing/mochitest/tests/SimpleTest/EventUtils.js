@@ -29,6 +29,11 @@ window.__defineGetter__('_EU_Ci', function() {
   return c.value && !c.writable ? Components.interfaces : SpecialPowers.Ci;
 });
 
+window.__defineGetter__('_EU_Cc', function() {
+  var c = Object.getOwnPropertyDescriptor(window, 'Components');
+  return c.value && !c.writable ? Components.classes : SpecialPowers.Cc;
+});
+
 /**
  * Send a mouse event to the node aTarget (aTarget can be an id, or an
  * actual node) . The "event" passed in to aEvent is just a JavaScript
@@ -184,11 +189,17 @@ function _parseModifiers(aEvent)
   if (aEvent.fnKey) {
     mval |= nsIDOMWindowUtils.MODIFIER_FN;
   }
+  if (aEvent.fnLockKey) {
+    mval |= nsIDOMWindowUtils.MODIFIER_FNLOCK;
+  }
   if (aEvent.numLockKey) {
     mval |= nsIDOMWindowUtils.MODIFIER_NUMLOCK;
   }
   if (aEvent.scrollLockKey) {
     mval |= nsIDOMWindowUtils.MODIFIER_SCROLLLOCK;
+  }
+  if (aEvent.symbolKey) {
+    mval |= nsIDOMWindowUtils.MODIFIER_SYMBOL;
   }
   if (aEvent.symbolLockKey) {
     mval |= nsIDOMWindowUtils.MODIFIER_SYMBOLLOCK;
@@ -499,112 +510,72 @@ function _computeKeyCodeFromChar(aChar)
 }
 
 /**
- * isKeypressFiredKey() returns TRUE if the given key should cause keypress
- * event when widget handles the native key event.  Otherwise, FALSE.
- *
- * aDOMKeyCode should be one of consts of nsIDOMKeyEvent::DOM_VK_*, or a key
- * name begins with "VK_", or a character.
- */
-function isKeypressFiredKey(aDOMKeyCode)
-{
-  if (typeof(aDOMKeyCode) == "string") {
-    if (aDOMKeyCode.indexOf("VK_") == 0) {
-      aDOMKeyCode = KeyEvent["DOM_" + aDOMKeyCode];
-      if (!aDOMKeyCode) {
-        throw "Unknown key: " + aDOMKeyCode;
-      }
-    } else {
-      // If the key generates a character, it must cause a keypress event.
-      return true;
-    }
-  }
-  switch (aDOMKeyCode) {
-    case KeyEvent.DOM_VK_SHIFT:
-    case KeyEvent.DOM_VK_CONTROL:
-    case KeyEvent.DOM_VK_ALT:
-    case KeyEvent.DOM_VK_CAPS_LOCK:
-    case KeyEvent.DOM_VK_NUM_LOCK:
-    case KeyEvent.DOM_VK_SCROLL_LOCK:
-    case KeyEvent.DOM_VK_META:
-      return false;
-    default:
-      return true;
-  }
-}
-
-/**
  * Synthesize a key event. It is targeted at whatever would be targeted by an
  * actual keypress by the user, typically the focused element.
  *
- * aKey should be either a character or a keycode starting with VK_ such as
- * VK_RETURN.
+ * aKey should be:
+ *  - key value (recommended).  If you specify a non-printable key name,
+ *    append "KEY_" prefix.  Otherwise, specifying a printable key, the
+ *    key value should be specified.
+ *  - keyCode name starting with "VK_" (e.g., VK_RETURN).  This is available
+ *    only for compatibility with legacy API.  Don't use this with new tests.
  *
  * aEvent is an object which may contain the properties:
- *   shiftKey, ctrlKey, altKey, metaKey, accessKey, type, location
- *
- * Sets one of KeyboardEvent.DOM_KEY_LOCATION_* to location.  Otherwise,
- * DOMWindowUtils will choose good location from the keycode.
- *
- * If the type is specified, a key event of that type is fired. Otherwise,
- * a keydown, a keypress and then a keyup event are fired in sequence.
+ *  - code: If you emulates a physical keyboard's key event, this should be
+ *          specified.
+ *  - repeat: If you emulates auto-repeat, you should set the count of repeat.
+ *            This method will automatically synthesize keydown (and keypress).
+ *  - location: If you want to specify this, you can specify this explicitly.
+ *              However, if you don't specify this value, it will be computed
+ *              from code value.
+ *  - type: Basically, you shouldn't specify this.  Then, this function will
+ *          synthesize keydown (, keypress) and keyup.
+ *          If keydown is specified, this only fires keydown (and keypress if
+ *          it should be fired).
+ *          If keyup is specified, this only fires keyup.
+ *  - altKey, altGraphKey, ctrlKey, capsLockKey, fnKey, fnLockKey, numLockKey,
+ *    metaKey, osKey, scrollLockKey, shiftKey, symbolKey, symbolLockKey:
+ *        Basically, you shouldn't use these attributes.  nsITextInputProcessor
+ *        manages modifier key state when you synthesize modifier key events.
+ *        However, if some of these attributes are true, this function activates
+ *        the modifiers only during dispatching the key events.
+ *        Note that if some of these values are false, they are ignored (i.e.,
+ *        not inactivated with this function).
+ *  - keyCode: Must be 0 - 255 (0xFF). If this is specified explicitly,
+ *             .keyCode value is initialized with this value.
  *
  * aWindow is optional, and defaults to the current window object.
  */
 function synthesizeKey(aKey, aEvent, aWindow)
 {
-  var utils = _getDOMWindowUtils(aWindow);
-  if (utils) {
-    var keyCode = 0, charCode = 0;
-    if (aKey.indexOf("VK_") == 0) {
-      keyCode = KeyEvent["DOM_" + aKey];
-      if (!keyCode) {
-        throw "Unknown key: " + aKey;
-      }
-    } else {
-      charCode = aKey.charCodeAt(0);
-      keyCode = _computeKeyCodeFromChar(aKey.charAt(0));
-    }
+  var TIP = _getTIP(aWindow);
+  if (!TIP) {
+    return;
+  }
+  var modifiers = _emulateToActivateModifiers(TIP, aEvent);
+  var keyEventDict = _createKeyboardEventDictionary(aKey, aEvent);
+  var keyEvent = new KeyboardEvent("", keyEventDict.dictionary);
+  var dispatchKeydown =
+    !("type" in aEvent) || aEvent.type === "keydown" || !aEvent.type;
+  var dispatchKeyup =
+    !("type" in aEvent) || aEvent.type === "keyup"   || !aEvent.type;
 
-    var modifiers = _parseModifiers(aEvent);
-    var flags = 0;
-    if (aEvent.location != undefined) {
-      switch (aEvent.location) {
-        case KeyboardEvent.DOM_KEY_LOCATION_STANDARD:
-          flags |= utils.KEY_FLAG_LOCATION_STANDARD;
-          break;
-        case KeyboardEvent.DOM_KEY_LOCATION_LEFT:
-          flags |= utils.KEY_FLAG_LOCATION_LEFT;
-          break;
-        case KeyboardEvent.DOM_KEY_LOCATION_RIGHT:
-          flags |= utils.KEY_FLAG_LOCATION_RIGHT;
-          break;
-        case KeyboardEvent.DOM_KEY_LOCATION_NUMPAD:
-          flags |= utils.KEY_FLAG_LOCATION_NUMPAD;
-          break;
-        case KeyboardEvent.DOM_KEY_LOCATION_MOBILE:
-          flags |= utils.KEY_FLAG_LOCATION_MOBILE;
-          break;
-        case KeyboardEvent.DOM_KEY_LOCATION_JOYSTICK:
-          flags |= utils.KEY_FLAG_LOCATION_JOYSTICK;
-          break;
+  try {
+    if (dispatchKeydown) {
+      TIP.keydown(keyEvent, keyEventDict.flags);
+      if ("repeat" in aEvent && aEvent.repeat > 1) {
+        keyEventDict.dictionary.repeat = true;
+        var repeatedKeyEvent = new KeyboardEvent("", keyEventDict.dictionary);
+        for (var i = 1; i < aEvent.repeat; i++) {
+          TIP.keydown(repeatedKeyEvent, keyEventDict.flags);
+        }
       }
     }
-
-    if (!("type" in aEvent) || !aEvent.type) {
-      // Send keydown + (optional) keypress + keyup events.
-      var keyDownDefaultHappened =
-        utils.sendKeyEvent("keydown", keyCode, 0, modifiers, flags);
-      if (isKeypressFiredKey(keyCode) && keyDownDefaultHappened) {
-        utils.sendKeyEvent("keypress", keyCode, charCode, modifiers, flags);
-      }
-      utils.sendKeyEvent("keyup", keyCode, 0, modifiers, flags);
-    } else if (aEvent.type == "keypress") {
-      // Send standalone keypress event.
-      utils.sendKeyEvent(aEvent.type, keyCode, charCode, modifiers, flags);
-    } else {
-      // Send other standalone event than keypress.
-      utils.sendKeyEvent(aEvent.type, keyCode, 0, modifiers, flags);
+    if (dispatchKeyup) {
+      TIP.keyup(keyEvent, keyEventDict.flags);
     }
+  } finally {
+    _emulateToInactivateModifiers(TIP, modifiers);
   }
 }
 
@@ -860,11 +831,310 @@ function _getDOMWindowUtils(aWindow)
                                getInterface(_EU_Ci.nsIDOMWindowUtils);
 }
 
-// Must be synchronized with nsICompositionStringSynthesizer.
-const COMPOSITION_ATTR_RAWINPUT              = 0x02;
-const COMPOSITION_ATTR_SELECTEDRAWTEXT       = 0x03;
-const COMPOSITION_ATTR_CONVERTEDTEXT         = 0x04;
-const COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT = 0x05;
+const COMPOSITION_ATTR_RAW_CLAUSE =
+  _EU_Ci.nsITextInputProcessor.ATTR_RAW_CLAUSE;
+const COMPOSITION_ATTR_SELECTED_RAW_CLAUSE =
+  _EU_Ci.nsITextInputProcessor.ATTR_SELECTED_RAW_CLAUSE;
+const COMPOSITION_ATTR_CONVERTED_CLAUSE =
+  _EU_Ci.nsITextInputProcessor.ATTR_CONVERTED_CLAUSE;
+const COMPOSITION_ATTR_SELECTED_CLAUSE =
+  _EU_Ci.nsITextInputProcessor.ATTR_SELECTED_CLAUSE;
+
+var TIPMap = new WeakMap();
+
+function _getTIP(aWindow, aCallback)
+{
+  if (!aWindow) {
+    aWindow = window;
+  }
+  var tip;
+  if (TIPMap.has(aWindow)) {
+    tip = TIPMap.get(aWindow);
+  } else {
+    tip =
+      _EU_Cc["@mozilla.org/text-input-processor;1"].
+        createInstance(_EU_Ci.nsITextInputProcessor);
+    TIPMap.set(aWindow, tip);
+  }
+  if (!tip.beginInputTransactionForTests(aWindow, aCallback)) {
+    tip = null;
+    TIPMap.delete(aWindow);
+  }
+  return tip;
+}
+
+function _guessKeyNameFromKeyCode(aKeyCode)
+{
+  switch (aKeyCode) {
+    case KeyboardEvent.DOM_VK_CANCEL:
+      return "Cancel";
+    case KeyboardEvent.DOM_VK_HELP:
+      return "Help";
+    case KeyboardEvent.DOM_VK_BACK_SPACE:
+      return "Backspace";
+    case KeyboardEvent.DOM_VK_TAB:
+      return "Tab";
+    case KeyboardEvent.DOM_VK_CLEAR:
+      return "Clear";
+    case KeyboardEvent.DOM_VK_RETURN:
+      return "Enter";
+    case KeyboardEvent.DOM_VK_SHIFT:
+      return "Shift";
+    case KeyboardEvent.DOM_VK_CONTROL:
+      return "Control";
+    case KeyboardEvent.DOM_VK_ALT:
+      return "Alt";
+    case KeyboardEvent.DOM_VK_PAUSE:
+      return "Pause";
+    case KeyboardEvent.DOM_VK_EISU:
+      return "Eisu";
+    case KeyboardEvent.DOM_VK_ESCAPE:
+      return "Escape";
+    case KeyboardEvent.DOM_VK_CONVERT:
+      return "Convert";
+    case KeyboardEvent.DOM_VK_NONCONVERT:
+      return "NonConvert";
+    case KeyboardEvent.DOM_VK_ACCEPT:
+      return "Accept";
+    case KeyboardEvent.DOM_VK_MODECHANGE:
+      return "ModeChange";
+    case KeyboardEvent.DOM_VK_PAGE_UP:
+      return "PageUp";
+    case KeyboardEvent.DOM_VK_PAGE_DOWN:
+      return "PageDown";
+    case KeyboardEvent.DOM_VK_END:
+      return "End";
+    case KeyboardEvent.DOM_VK_HOME:
+      return "Home";
+    case KeyboardEvent.DOM_VK_LEFT:
+      return "ArrowLeft";
+    case KeyboardEvent.DOM_VK_UP:
+      return "ArrowUp";
+    case KeyboardEvent.DOM_VK_RIGHT:
+      return "ArrowRight";
+    case KeyboardEvent.DOM_VK_DOWN:
+      return "ArrowDown";
+    case KeyboardEvent.DOM_VK_SELECT:
+      return "Select";
+    case KeyboardEvent.DOM_VK_PRINT:
+      return "Print";
+    case KeyboardEvent.DOM_VK_EXECUTE:
+      return "Execute";
+    case KeyboardEvent.DOM_VK_PRINTSCREEN:
+      return "PrintScreen";
+    case KeyboardEvent.DOM_VK_INSERT:
+      return "Insert";
+    case KeyboardEvent.DOM_VK_DELETE:
+      return "Delete";
+    case KeyboardEvent.DOM_VK_WIN:
+      return "OS";
+    case KeyboardEvent.DOM_VK_CONTEXT_MENU:
+      return "ContextMenu";
+    case KeyboardEvent.DOM_VK_SLEEP:
+      return "Standby";
+    case KeyboardEvent.DOM_VK_F1:
+      return "F1";
+    case KeyboardEvent.DOM_VK_F2:
+      return "F2";
+    case KeyboardEvent.DOM_VK_F3:
+      return "F3";
+    case KeyboardEvent.DOM_VK_F4:
+      return "F4";
+    case KeyboardEvent.DOM_VK_F5:
+      return "F5";
+    case KeyboardEvent.DOM_VK_F6:
+      return "F6";
+    case KeyboardEvent.DOM_VK_F7:
+      return "F7";
+    case KeyboardEvent.DOM_VK_F8:
+      return "F8";
+    case KeyboardEvent.DOM_VK_F9:
+      return "F9";
+    case KeyboardEvent.DOM_VK_F10:
+      return "F10";
+    case KeyboardEvent.DOM_VK_F11:
+      return "F11";
+    case KeyboardEvent.DOM_VK_F12:
+      return "F12";
+    case KeyboardEvent.DOM_VK_F13:
+      return "F13";
+    case KeyboardEvent.DOM_VK_F14:
+      return "F14";
+    case KeyboardEvent.DOM_VK_F15:
+      return "F15";
+    case KeyboardEvent.DOM_VK_F16:
+      return "F16";
+    case KeyboardEvent.DOM_VK_F17:
+      return "F17";
+    case KeyboardEvent.DOM_VK_F18:
+      return "F18";
+    case KeyboardEvent.DOM_VK_F19:
+      return "F19";
+    case KeyboardEvent.DOM_VK_F20:
+      return "F20";
+    case KeyboardEvent.DOM_VK_F21:
+      return "F21";
+    case KeyboardEvent.DOM_VK_F22:
+      return "F22";
+    case KeyboardEvent.DOM_VK_F23:
+      return "F23";
+    case KeyboardEvent.DOM_VK_F24:
+      return "F24";
+    case KeyboardEvent.DOM_VK_NUM_LOCK:
+      return "NumLock";
+    case KeyboardEvent.DOM_VK_SCROLL_LOCK:
+      return "ScrollLock";
+    case KeyboardEvent.DOM_VK_VOLUME_MUTE:
+      return "VolumeMute";
+    case KeyboardEvent.DOM_VK_VOLUME_DOWN:
+      return "VolumeDown";
+    case KeyboardEvent.DOM_VK_VOLUME_UP:
+      return "VolumeUp";
+    case KeyboardEvent.DOM_VK_META:
+      return "Meta";
+    case KeyboardEvent.DOM_VK_ALTGR:
+      return "AltGraph";
+    case KeyboardEvent.DOM_VK_ATTN:
+      return "Attn";
+    case KeyboardEvent.DOM_VK_CRSEL:
+      return "CrSel";
+    case KeyboardEvent.DOM_VK_EXSEL:
+      return "ExSel";
+    case KeyboardEvent.DOM_VK_EREOF:
+      return "EraseEof";
+    case KeyboardEvent.DOM_VK_PLAY:
+      return "Play";
+    default:
+      return "Unidentified";
+  }
+}
+
+function _createKeyboardEventDictionary(aKey, aKeyEvent)
+{
+  var result = { dictionary: null, flags: 0 };
+
+  var keyCodeIsDefined = "keyCode" in aKeyEvent;
+  var keyCode =
+    (keyCodeIsDefined && aKeyEvent.keyCode >= 0 && aKeyEvent.keyCode <= 255) ?
+      aKeyEvent.keyCode : 0;
+  var keyName = "Unidentified";
+  if (aKey.indexOf("KEY_") == 0) {
+    keyName = aKey.substr("KEY_".length);
+    result.flags |= _EU_Ci.nsITextInputProcessor.KEY_NON_PRINTABLE_KEY;
+  } else if (aKey.indexOf("VK_") == 0) {
+    keyCode = KeyEvent["DOM_" + aKey];
+    if (!keyCode) {
+      throw "Unknown key: " + aKey;
+    }
+    keyName = _guessKeyNameFromKeyCode(keyCode);
+    result.flags |= _EU_Ci.nsITextInputProcessor.KEY_NON_PRINTABLE_KEY;
+  } else if (aKey != "") {
+    keyName = aKey;
+    if (!keyCodeIsDefined) {
+      keyCode = _computeKeyCodeFromChar(aKey.charAt(0));
+    }
+    if (!keyCode) {
+      result.flags |= _EU_Ci.nsITextInputProcessor.KEY_KEEP_KEYCODE_ZERO;
+    }
+    result.flags |= _EU_Ci.nsITextInputProcessor.KEY_FORCE_PRINTABLE_KEY;
+  }
+  var locationIsDefined = "location" in aKeyEvent;
+  if (locationIsDefined && aKeyEvent.location === 0) {
+    result.flags |= _EU_Ci.nsITextInputProcessor.KEY_KEEP_KEY_LOCATION_STANDARD;
+  }
+  result.dictionary = {
+    key: keyName,
+    code: "code" in aKeyEvent ? aKeyEvent.code : "",
+    location: locationIsDefined ? aKeyEvent.location : 0,
+    repeat: "repeat" in aKeyEvent ? aKeyEvent.repeat === true : false,
+    keyCode: keyCode,
+  };
+  return result;
+}
+
+function _emulateToActivateModifiers(aTIP, aKeyEvent)
+{
+  if (!aKeyEvent) {
+    return null;
+  }
+  var modifiers = {
+    normal: [
+      { key: "Alt",        attr: "altKey" },
+      { key: "AltGraph",   attr: "altGraphKey" },
+      { key: "Control",    attr: "ctrlKey" },
+      { key: "Fn",         attr: "fnKey" },
+      { key: "Meta",       attr: "metaKey" },
+      { key: "OS",         attr: "osKey" },
+      { key: "Shift",      attr: "shiftKey" },
+      { key: "Symbol",     attr: "symbolKey" },
+      { key: (navigator.platform.indexOf("Mac") >= 0) ? "Meta" : "Control",
+                           attr: "accelKey" },
+    ],
+    lockable: [
+      { key: "CapsLock",   attr: "capsLockKey" },
+      { key: "FnLock",     attr: "fnLockKey" },
+      { key: "NumLock",    attr: "numLockKey" },
+      { key: "ScrollLock", attr: "scrollLockKey" },
+      { key: "SymbolLock", attr: "symbolLockKey" },
+    ]
+  }
+
+  for (var i = 0; i < modifiers.normal.length; i++) {
+    if (!aKeyEvent[modifiers.normal[i].attr]) {
+      continue;
+    }
+    if (aTIP.getModifierState(modifiers.normal[i].key)) {
+      continue; // already activated.
+    }
+    var event = new KeyboardEvent("", { key: modifiers.normal[i].key });
+    aTIP.keydown(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+    modifiers.normal[i].activated = true;
+  }
+  for (var i = 0; i < modifiers.lockable.length; i++) {
+    if (!aKeyEvent[modifiers.lockable[i].attr]) {
+      continue;
+    }
+    if (aTIP.getModifierState(modifiers.lockable[i].key)) {
+      continue; // already activated.
+    }
+    var event = new KeyboardEvent("", { key: modifiers.lockable[i].key });
+    aTIP.keydown(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+    aTIP.keyup(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+    modifiers.lockable[i].activated = true;
+  }
+  return modifiers;
+}
+
+function _emulateToInactivateModifiers(aTIP, aModifiers)
+{
+  if (!aModifiers) {
+    return;
+  }
+  for (var i = 0; i < aModifiers.normal.length; i++) {
+    if (!aModifiers.normal[i].activated) {
+      continue;
+    }
+    var event = new KeyboardEvent("", { key: aModifiers.normal[i].key });
+    aTIP.keyup(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+  }
+  for (var i = 0; i < aModifiers.lockable.length; i++) {
+    if (!aModifiers.lockable[i].activated) {
+      continue;
+    }
+    if (!aTIP.getModifierState(aModifiers.lockable[i].key)) {
+      continue; // who already inactivated this?
+    }
+    var event = new KeyboardEvent("", { key: aModifiers.lockable[i].key });
+    aTIP.keydown(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+    aTIP.keyup(event,
+      aTIP.KEY_NON_PRINTABLE_KEY | aTIP.KEY_DONT_DISPATCH_MODIFIER_KEY_EVENT);
+  }
+}
 
 /**
  * Synthesize a composition event.
@@ -878,17 +1148,48 @@ const COMPOSITION_ATTR_SELECTEDCONVERTEDTEXT = 0x05;
  *                             the composition event.  Note that the |data| is
  *                             ignored if the event type is "compositionstart"
  *                             or "compositioncommitasis".
+ *                             If |key| is specified, the key event may be
+ *                             dispatched.  This can emulates changing
+ *                             composition state caused by key operation.
+ *                             Its key value should start with "KEY_" if the
+ *                             value is non-printable key name defined in D3E.
  * @param aWindow              Optional (If null, current |window| will be used)
+ * @param aCallback            Optional (If non-null, use the callback for
+ *                             receiving notifications to IME)
  */
-function synthesizeComposition(aEvent, aWindow)
+function synthesizeComposition(aEvent, aWindow, aCallback)
 {
-  var utils = _getDOMWindowUtils(aWindow);
-  if (!utils) {
-    return;
+  var TIP = _getTIP(aWindow, aCallback);
+  if (!TIP) {
+    return false;
   }
-
-  utils.sendCompositionEvent(aEvent.type, aEvent.data ? aEvent.data : "",
-                             aEvent.locale ? aEvent.locale : "");
+  var modifiers = _emulateToActivateModifiers(TIP, aEvent.key);
+  var ret = false;
+  var keyEventDict =
+    "key" in aEvent ?
+      _createKeyboardEventDictionary(aEvent.key.key, aEvent.key) :
+      { dictionary: null, flags: 0 };
+  var keyEvent = 
+    "key" in aEvent ?
+      new KeyboardEvent(aEvent.type === "keydown" ? "keydown" : "",
+                        keyEventDict.dictionary) :
+      null;
+  try {
+    switch (aEvent.type) {
+      case "compositionstart":
+        ret = TIP.startComposition(keyEvent, keyEventDict.flags);
+        break;
+      case "compositioncommitasis":
+        ret = TIP.commitComposition(keyEvent, keyEventDict.flags);
+        break;
+      case "compositioncommit":
+        ret = TIP.commitCompositionWith(aEvent.data, keyEvent,
+                                        keyEventDict.flags);
+        break;
+    }
+  } finally {
+    _emulateToInactivateModifiers(TIP, modifiers);
+  }
 }
 /**
  * Synthesize a compositionchange event which causes a DOM text event and
@@ -907,8 +1208,9 @@ function synthesizeComposition(aEvent, aWindow)
  *                   |           +-- length
  *                   |           +-- attr
  *                   +-- caret
- *                         +-- start
- *                         +-- length
+ *                   |     +-- start
+ *                   |     +-- length
+ *                   +-- key
  *
  *                 Set the composition string to |composition.string|.  Set its
  *                 clauses information to the |clauses| array.
@@ -929,12 +1231,19 @@ function synthesizeComposition(aEvent, aWindow)
  *                 caret.  However, current nsEditor doesn't support wide
  *                 caret, therefore, you should always set 0 now.
  *
+ *                 If |key| is specified, the key event may be dispatched.
+ *                 This can emulates changing composition state caused by key
+ *                 operation.  Its key value should start with "KEY_" if the
+ *                 value is non-printable key name defined in D3E.
+ *
  * @param aWindow  Optional (If null, current |window| will be used)
+ * @param aCallback     Optional (If non-null, use the callback for receiving
+ *                      notifications to IME)
  */
-function synthesizeCompositionChange(aEvent, aWindow)
+function synthesizeCompositionChange(aEvent, aWindow, aCallback)
 {
-  var utils = _getDOMWindowUtils(aWindow);
-  if (!utils) {
+  var TIP = _getTIP(aWindow, aCallback);
+  if (!TIP) {
     return;
   }
 
@@ -943,17 +1252,17 @@ function synthesizeCompositionChange(aEvent, aWindow)
     return;
   }
 
-  var compositionString = utils.createCompositionStringSynthesizer();
-  compositionString.setString(aEvent.composition.string);
+  TIP.setPendingCompositionString(aEvent.composition.string);
   if (aEvent.composition.clauses[0].length) {
     for (var i = 0; i < aEvent.composition.clauses.length; i++) {
       switch (aEvent.composition.clauses[i].attr) {
-        case compositionString.ATTR_RAWINPUT:
-        case compositionString.ATTR_SELECTEDRAWTEXT:
-        case compositionString.ATTR_CONVERTEDTEXT:
-        case compositionString.ATTR_SELECTEDCONVERTEDTEXT:
-          compositionString.appendClause(aEvent.composition.clauses[i].length,
-                                         aEvent.composition.clauses[i].attr);
+        case TIP.ATTR_RAW_CLAUSE:
+        case TIP.ATTR_SELECTED_RAW_CLAUSE:
+        case TIP.ATTR_CONVERTED_CLAUSE:
+        case TIP.ATTR_SELECTED_CLAUSE:
+          TIP.appendClauseToPendingComposition(
+                aEvent.composition.clauses[i].length,
+                aEvent.composition.clauses[i].attr);
           break;
         case 0:
           // Ignore dummy clause for the argument.
@@ -966,10 +1275,24 @@ function synthesizeCompositionChange(aEvent, aWindow)
   }
 
   if (aEvent.caret) {
-    compositionString.setCaret(aEvent.caret.start, aEvent.caret.length);
+    TIP.setCaretInPendingComposition(aEvent.caret.start);
   }
 
-  compositionString.dispatchEvent();
+  var modifiers = _emulateToActivateModifiers(TIP, aEvent.key);
+  try {
+    var keyEventDict =
+      "key" in aEvent ?
+        _createKeyboardEventDictionary(aEvent.key.key, aEvent.key) :
+        { dictionary: null, flags: 0 };
+    var keyEvent = 
+      "key" in aEvent ?
+        new KeyboardEvent(aEvent.type === "keydown" ? "keydown" : "",
+                          keyEventDict.dictionary) :
+        null;
+    TIP.flushPendingComposition(keyEvent, keyEventDict.flags);
+  } finally {
+    _emulateToInactivateModifiers(TIP, modifiers);
+  }
 }
 
 // Must be synchronized with nsIDOMWindowUtils.

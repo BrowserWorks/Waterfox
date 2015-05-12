@@ -63,7 +63,7 @@ public:
   NS_DECL_CYCLE_COLLECTION_SCRIPT_HOLDER_CLASS(AnimationPlayer)
 
   AnimationTimeline* GetParentObject() const { return mTimeline; }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   virtual CSSAnimationPlayer* AsCSSAnimationPlayer() { return nullptr; }
   virtual CSSTransitionPlayer* AsCSSTransitionPlayer() { return nullptr; }
@@ -148,6 +148,26 @@ public:
   // removing the player from any PendingPlayerTracker it may have been added
   // to.
   void StartNow();
+
+  /**
+   * When StartOnNextTick is called, we store the ready time but we don't apply
+   * it until the next tick. In the meantime, GetStartTime() will return null.
+   *
+   * However, if we build layer animations again before the next tick, we
+   * should initialize them with the start time that GetStartTime() will return
+   * on the next tick.
+   *
+   * If we were to simply set the start time of layer animations to null, their
+   * start time would be updated to the current wallclock time when rendering
+   * finishes, thus making them out of sync with the start time stored here.
+   * This, in turn, will make the animation jump backwards when we build
+   * animations on the next tick and apply the start time stored here.
+   *
+   * This method returns the start time, if resolved. Otherwise, if we have
+   * a pending ready time, it returns the corresponding start time. If neither
+   * of those are available, it returns null.
+   */
+  Nullable<TimeDuration> GetCurrentOrPendingStartTime() const;
 
   void Cancel();
 

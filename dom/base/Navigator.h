@@ -19,7 +19,7 @@
 #include "nsString.h"
 #include "nsTArray.h"
 #ifdef MOZ_EME
-#include "mozilla/dom/MediaKeySystemAccess.h"
+#include "mozilla/dom/MediaKeySystemAccessManager.h"
 #endif
 
 class nsPluginArray;
@@ -108,7 +108,7 @@ class AudioChannelManager;
 #endif
 } // namespace system
 
-class Navigator MOZ_FINAL : public nsIDOMNavigator
+class Navigator final : public nsIDOMNavigator
                           , public nsIMozNavigatorNetwork
                           , public nsWrapperCache
 {
@@ -235,6 +235,8 @@ public:
                             systemMessageCallback* aCallback,
                             ErrorResult& aRv);
   bool MozHasPendingMessage(const nsAString& aType, ErrorResult& aRv);
+  void MozSetMessageHandlerPromise(Promise& aPromise, ErrorResult& aRv);
+
 #ifdef MOZ_B2G
   already_AddRefed<Promise> GetMobileIdAssertion(const MobileIdOptions& options,
                                                  ErrorResult& aRv);
@@ -285,6 +287,8 @@ public:
                            ErrorResult& aRv);
   void GetLanguages(nsTArray<nsString>& aLanguages);
 
+  bool MozE10sEnabled();
+
   static void GetAcceptLanguages(nsTArray<nsString>& aLanguages);
 
   // WebIDL helper methods
@@ -313,18 +317,26 @@ public:
 
   static bool HasTVSupport(JSContext* aCx, JSObject* aGlobal);
 
+  static bool IsE10sEnabled(JSContext* aCx, JSObject* aGlobal);
+
   nsPIDOMWindow* GetParentObject() const
   {
     return GetWindow();
   }
 
-  virtual JSObject* WrapObject(JSContext* cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* cx) override;
+
+  // GetWindowFromGlobal returns the inner window for this global, if
+  // any, else null.
+  static already_AddRefed<nsPIDOMWindow> GetWindowFromGlobal(JSObject* aGlobal);
 
 #ifdef MOZ_EME
   already_AddRefed<Promise>
   RequestMediaKeySystemAccess(const nsAString& aKeySystem,
                               const Optional<Sequence<MediaKeySystemOptions>>& aOptions,
                               ErrorResult& aRv);
+private:
+  nsRefPtr<MediaKeySystemAccessManager> mMediaKeySystemAccessManager;
 #endif
 
 private:
@@ -332,9 +344,6 @@ private:
 
   bool CheckPermission(const char* type);
   static bool CheckPermission(nsPIDOMWindow* aWindow, const char* aType);
-  // GetWindowFromGlobal returns the inner window for this global, if
-  // any, else null.
-  static already_AddRefed<nsPIDOMWindow> GetWindowFromGlobal(JSObject* aGlobal);
 
   nsRefPtr<nsMimeTypeArray> mMimeTypes;
   nsRefPtr<nsPluginArray> mPlugins;

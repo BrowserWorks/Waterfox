@@ -15,15 +15,21 @@ xul|tab[selected] {
 }
 
 xul|button,
+html|button,
 xul|colorpicker[type="button"],
 xul|menulist {
   margin-top: 3px;
 }
 
-xul|button {
+xul|button,
+html|button {
   /* use the same margin of other elements for the alignment */
   margin-left: 4px;
   margin-right: 4px;
+}
+
+xul|caption {
+  -moz-padding-start: 0;
 }
 
 xul|groupbox > xul|*.groupbox-body {
@@ -73,6 +79,21 @@ xul|description {
 html|a:-moz-focusring,
 xul|*.text-link:-moz-focusring,
 xul|*.inline-link:-moz-focusring {
-  outline-width: 0;
-  box-shadow: @focusRingShadow@;
+  color: #ff9500;
+  text-decoration: underline;
+  box-shadow: none;
+}
+
+xul|button:-moz-focusring,
+xul|menulist:-moz-focusring,
+xul|checkbox:-moz-focusring > .checkbox-check,
+xul|radio[focused="true"] > .radio-check,
+xul|tab:-moz-focusring > .tab-middle > .tab-text {
+	outline: 2px solid rgba(0,149,221,0.5);
+	outline-offset: 1px;
+	-moz-outline-radius: 2px;
+}
+
+xul|radio[focused="true"] > .radio-check {
+	-moz-outline-radius: 100%;
 }

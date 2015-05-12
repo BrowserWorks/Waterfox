@@ -15,6 +15,8 @@
  */
 
 #include "WMFUtils.h"
+#include "ClearKeyUtils.h"
+#include <versionhelpers.h>
 
 #include <stdio.h>
 
@@ -40,10 +42,12 @@ void LOG(const char* format, ...)
 DEFINE_GUID(CLSID_CMSAACDecMFT, 0x32D186A7, 0x218F, 0x4C75, 0x88, 0x76, 0xDD, 0x77, 0x27, 0x3A, 0x89, 0x99);
 #endif
 
+DEFINE_GUID(CLSID_CMSH264DecMFT, 0x62CE7E72, 0x4C71, 0x4d20, 0xB1, 0x5D, 0x45, 0x28, 0x31, 0xA8, 0x7D, 0x9D);
+
 namespace wmf {
 
 
-#define MFPLAT_FUNC(_func) \
+#define MFPLAT_FUNC(_func, _dllname) \
   decltype(::_func)* _func;
 #include "WMFSymbols.h"
 #undef MFPLAT_FUNC
@@ -55,17 +59,47 @@ LinkMfplat()
   static bool sInitOk = false;
   if (!sInitDone) {
     sInitDone = true;
-    auto handle = GetModuleHandleA("mfplat.dll");
-#define MFPLAT_FUNC(_func) \
-    if (!(_func = (decltype(_func))(GetProcAddress(handle, #_func)))) { \
-      return false; \
-    }
+    HMODULE handle;
+
+#define MFPLAT_FUNC(_func, _dllname) \
+      handle = GetModuleHandleA(_dllname); \
+      if (!(_func = (decltype(_func))(GetProcAddress(handle, #_func)))) { \
+        return false; \
+      }
+
 #include "WMFSymbols.h"
 #undef MFPLAT_FUNC
     sInitOk = true;
   }
   return sInitOk;
 }
+
+const char*
+WMFDecoderDllNameFor(CodecType aCodec)
+{
+  if (aCodec == H264) {
+    // For H.264 decoding, we need msmpeg2vdec.dll on Win 7 & 8,
+    // and mfh264dec.dll on Vista.
+    if (IsWindows7OrGreater()) {
+      return "msmpeg2vdec.dll";
+    } else {
+      return "mfh264dec.dll";
+    }
+  } else if (aCodec == AAC) {
+    // For AAC decoding, we need to use msauddecmft.dll on Win8,
+    // msmpeg2adec.dll on Win7, and msheaacdec.dll on Vista.
+    if (IsWindows8OrGreater()) {
+      return "msauddecmft.dll";
+    } else if (IsWindows7OrGreater()) {
+      return "msmpeg2adec.dll";
+    } else {
+      return "mfheaacdec.dll";
+    }
+  } else {
+    return "";
+  }
+}
+
 
 bool
 EnsureLibs()
@@ -74,9 +108,8 @@ EnsureLibs()
   static bool sInitOk = false;
   if (!sInitDone) {
     sInitOk = LinkMfplat() &&
-      !!GetModuleHandleA("msauddecmft.dll") &&
-      !!GetModuleHandleA("msmpeg2adec.dll") &&
-      !!GetModuleHandleA("msmpeg2vdec.dll");
+              !!GetModuleHandleA(WMFDecoderDllNameFor(AAC)) &&
+              !!GetModuleHandleA(WMFDecoderDllNameFor(H264));
     sInitDone = true;
   }
   return sInitOk;

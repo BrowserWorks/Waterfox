@@ -24,28 +24,50 @@ namespace plugins {
 class PluginWidgetParent : public PPluginWidgetParent
 {
 public:
+  /**
+   * Windows helper for firing off an update window request to a plugin.
+   *
+   * aWidget - the eWindowType_plugin_ipc_chrome widget associated with
+   *           this plugin window.
+   */
+  static void SendAsyncUpdate(nsIWidget* aWidget);
+
   PluginWidgetParent();
   virtual ~PluginWidgetParent();
 
-  virtual void ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
-  virtual bool RecvCreate() MOZ_OVERRIDE;
-  virtual bool RecvDestroy() MOZ_OVERRIDE;
-  virtual bool RecvShow(const bool& aState) MOZ_OVERRIDE;
-  virtual bool RecvSetFocus(const bool& aRaise) MOZ_OVERRIDE;
-  virtual bool RecvInvalidate(const nsIntRect& aRect) MOZ_OVERRIDE;
-  virtual bool RecvGetNativePluginPort(uintptr_t* value) MOZ_OVERRIDE;
-  virtual bool RecvResize(const nsIntRect& aRect) MOZ_OVERRIDE;
-  virtual bool RecvMove(const double& aX, const double& aY) MOZ_OVERRIDE;
-  virtual bool RecvSetWindowClipRegion(const nsTArray<nsIntRect>& Regions,
-                                        const bool& aIntersectWithExisting) MOZ_OVERRIDE;
+  virtual void ActorDestroy(ActorDestroyReason aWhy) override;
+  virtual bool RecvCreate(nsresult* aResult) override;
+  virtual bool RecvDestroy() override;
+  virtual bool RecvSetFocus(const bool& aRaise) override;
+  virtual bool RecvGetNativePluginPort(uintptr_t* value) override;
+
+  // Helper for compositor checks on the channel
+  bool ActorDestroyed() { return !mWidget; }
+
+  // Called by PBrowser when it receives a Destroy() call from the child.
+  void ParentDestroy();
+
+  // Sets mWidget's parent
+  void SetParent(nsIWidget* aParent);
 
 private:
   // The tab our connection is associated with.
   mozilla::dom::TabParent* GetTabParent();
+
+public:
+  // Identifies the side of the connection that initiates shutdown.
+  enum ShutdownType {
+    TAB_CLOSURE = 1,
+    CONTENT     = 2
+  };
+
+private:
+  void Shutdown(ShutdownType aType);
+
   // The chrome side native widget.
   nsCOMPtr<nsIWidget> mWidget;
 #if defined(MOZ_WIDGET_GTK)
-  UniquePtr<nsPluginNativeWindowGtk> mWrapper;
+  nsAutoPtr<nsPluginNativeWindowGtk> mWrapper;
 #endif
 };
 

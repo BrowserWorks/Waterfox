@@ -167,7 +167,7 @@ public:
 // nsXBLStreamListener, a helper class used for
 // asynchronous parsing of URLs
 /* Header file */
-class nsXBLStreamListener MOZ_FINAL : public nsIStreamListener,
+class nsXBLStreamListener final : public nsIStreamListener,
                                       public nsIDOMEventListener
 {
 public:
@@ -764,12 +764,10 @@ nsXBLService::GetBinding(nsIContent* aBoundElement, nsIURI* aURI,
    return NS_ERROR_FAILURE;
   }
 
-  NS_ENSURE_TRUE(aDontExtendURIs.AppendElement(protoBinding->BindingURI()),
-                 NS_ERROR_OUT_OF_MEMORY);
+  aDontExtendURIs.AppendElement(protoBinding->BindingURI());
   nsCOMPtr<nsIURI> altBindingURI = protoBinding->AlternateBindingURI();
   if (altBindingURI) {
-    NS_ENSURE_TRUE(aDontExtendURIs.AppendElement(altBindingURI),
-                   NS_ERROR_OUT_OF_MEMORY);
+    aDontExtendURIs.AppendElement(altBindingURI);
   }
 
   // Our prototype binding must have all its resources loaded.
@@ -831,7 +829,6 @@ nsXBLService::GetBinding(nsIContent* aBoundElement, nsIURI* aURI,
   if (!aPeekOnly) {
     // Make a new binding
     nsXBLBinding *newBinding = new nsXBLBinding(protoBinding);
-    NS_ENSURE_TRUE(newBinding, NS_ERROR_OUT_OF_MEMORY);
 
     if (baseBinding) {
       if (!baseProto) {
@@ -1100,8 +1097,7 @@ nsXBLService::FetchBindingDocument(nsIContent* aBoundElement, nsIDocument* aBoun
 
   NS_ENSURE_SUCCESS(rv, rv);
 
-  nsCOMPtr<nsIInterfaceRequestor> sameOriginChecker = nsContentUtils::GetSameOriginChecker();
-  NS_ENSURE_TRUE(sameOriginChecker, NS_ERROR_OUT_OF_MEMORY);
+  nsCOMPtr<nsIInterfaceRequestor> sameOriginChecker = nsContentUtils::SameOriginChecker();
 
   channel->SetNotificationCallbacks(sameOriginChecker);
 
@@ -1109,7 +1105,6 @@ nsXBLService::FetchBindingDocument(nsIContent* aBoundElement, nsIDocument* aBoun
     // We can be asynchronous
     nsXBLStreamListener* xblListener =
       new nsXBLStreamListener(aBoundDocument, xblSink, doc);
-    NS_ENSURE_TRUE(xblListener,NS_ERROR_OUT_OF_MEMORY);
 
     // Add ourselves to the list of loading docs.
     nsBindingManager *bindingManager;

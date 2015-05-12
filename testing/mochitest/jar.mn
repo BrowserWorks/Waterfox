@@ -15,6 +15,7 @@ mochikit.jar:
   content/server.js (server.js)
   content/chunkifyTests.js (chunkifyTests.js)
   content/manifestLibrary.js (manifestLibrary.js)
+  content/nested_setup.js (nested_setup.js)
   content/dynamic/getMyDirectory.sjs (dynamic/getMyDirectory.sjs)
   content/static/harness.css (static/harness.css)
   content/tests/SimpleTest/ChromePowers.js (tests/SimpleTest/ChromePowers.js)
@@ -25,7 +26,7 @@ mochikit.jar:
   content/tests/SimpleTest/MozillaLogger.js (../specialpowers/content/MozillaLogger.js)
   content/tests/SimpleTest/specialpowers.js (../specialpowers/content/specialpowers.js)
   content/tests/SimpleTest/SpecialPowersObserverAPI.js (../specialpowers/content/SpecialPowersObserverAPI.js)
-  content/tests/SimpleTest/specialpowersAPI.js (../specialpowers/content/specialpowersAPI.js)
+* content/tests/SimpleTest/specialpowersAPI.js (../specialpowers/content/specialpowersAPI.js)
   content/tests/SimpleTest/setup.js (tests/SimpleTest/setup.js)
   content/tests/SimpleTest/SimpleTest.js (tests/SimpleTest/SimpleTest.js)
   content/tests/SimpleTest/test.css (tests/SimpleTest/test.css)
@@ -36,4 +37,6 @@ mochikit.jar:
   content/tests/SimpleTest/NativeKeyCodes.js (tests/SimpleTest/NativeKeyCodes.js)
   content/tests/SimpleTest/paint_listener.js (tests/SimpleTest/paint_listener.js)
   content/tests/SimpleTest/docshell_helpers.js (../../docshell/test/chrome/docshell_helpers.js)
+  content/tests/BrowserTestUtils/content-task.js (BrowserTestUtils/content/content-task.js)
+  content/tests/BrowserTestUtils/content-utils.js (BrowserTestUtils/content/content-utils.js)
 

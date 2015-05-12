@@ -9,10 +9,12 @@
 #ifndef nsRubyFrame_h___
 #define nsRubyFrame_h___
 
-#include "nsContainerFrame.h"
+#include "nsInlineFrame.h"
 
 class nsRubyBaseContainerFrame;
 class nsRubyTextContainerFrame;
+
+typedef nsInlineFrame nsRubyFrameSuper;
 
 /**
  * Factory function.
@@ -21,7 +23,7 @@ class nsRubyTextContainerFrame;
 nsContainerFrame* NS_NewRubyFrame(nsIPresShell* aPresShell,
                                   nsStyleContext* aContext);
 
-class nsRubyFrame MOZ_FINAL : public nsContainerFrame
+class nsRubyFrame final : public nsRubyFrameSuper
 {
 public:
   NS_DECL_FRAMEARENA_HELPERS
@@ -29,31 +31,19 @@ public:
   NS_DECL_QUERYFRAME
 
   // nsIFrame overrides
-  virtual nsIAtom* GetType() const MOZ_OVERRIDE;
-  virtual bool IsFrameOfType(uint32_t aFlags) const MOZ_OVERRIDE;
+  virtual nsIAtom* GetType() const override;
+  virtual bool IsFrameOfType(uint32_t aFlags) const override;
   virtual void AddInlineMinISize(nsRenderingContext *aRenderingContext,
-                                 InlineMinISizeData *aData) MOZ_OVERRIDE;
+                                 InlineMinISizeData *aData) override;
   virtual void AddInlinePrefISize(nsRenderingContext *aRenderingContext,
-                                  InlinePrefISizeData *aData) MOZ_OVERRIDE;
-  virtual mozilla::LogicalSize
-    ComputeSize(nsRenderingContext *aRenderingContext,
-                mozilla::WritingMode aWritingMode,
-                const mozilla::LogicalSize& aCBSize,
-                nscoord aAvailableISize,
-                const mozilla::LogicalSize& aMargin,
-                const mozilla::LogicalSize& aBorder,
-                const mozilla::LogicalSize& aPadding,
-                ComputeSizeFlags aFlags) MOZ_OVERRIDE;
+                                  InlinePrefISizeData *aData) override;
   virtual void Reflow(nsPresContext* aPresContext,
                       nsHTMLReflowMetrics& aDesiredSize,
                       const nsHTMLReflowState& aReflowState,
-                      nsReflowStatus& aStatus) MOZ_OVERRIDE;
-  virtual nscoord GetLogicalBaseline(mozilla::WritingMode aWritingMode)
-    const MOZ_OVERRIDE;
-  virtual bool CanContinueTextRun() const MOZ_OVERRIDE;
+                      nsReflowStatus& aStatus) override;
 
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const MOZ_OVERRIDE;
+  virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
 
   void GetBlockLeadings(nscoord& aStartLeading, nscoord& aEndLeading)
@@ -65,7 +55,8 @@ public:
 protected:
   friend nsContainerFrame* NS_NewRubyFrame(nsIPresShell* aPresShell,
                                            nsStyleContext* aContext);
-  explicit nsRubyFrame(nsStyleContext* aContext) : nsContainerFrame(aContext) {}
+  explicit nsRubyFrame(nsStyleContext* aContext)
+    : nsRubyFrameSuper(aContext) {}
 
   void ReflowSegment(nsPresContext* aPresContext,
                      const nsHTMLReflowState& aReflowState,
@@ -74,11 +65,8 @@ protected:
 
   nsRubyBaseContainerFrame* PullOneSegment(ContinuationTraversingState& aState);
 
-  // The three members below are not initialized until the first reflow.
-
-  nscoord mBaseline;
-
-  // The leadings required to put the annotations.
+  // The leading required to put the annotations.
+  // They are not initialized until the first reflow.
   nscoord mBStartLeading;
   nscoord mBEndLeading;
 };

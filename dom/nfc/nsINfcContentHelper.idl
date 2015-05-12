@@ -31,7 +31,7 @@ interface nsITagNDEFInfo : nsISupports
   readonly attribute boolean isFormatable;
 };
 
-[scriptable, uuid(be09c440-8385-4210-bb7b-7d3333ec3d43)]
+[scriptable, uuid(151b4024-0443-434f-99ca-47ec247508ce)]
 interface nsINfcEventListener : nsISupports
 {
   /**
@@ -83,7 +83,15 @@ interface nsINfcEventListener : nsISupports
    * @param rfState
    *        RF state received from parent process
    */
-  void notifyRFStateChange(in DOMString rfState);
+  void notifyRFStateChanged(in DOMString rfState);
+
+  /**
+   * Callback function used to notify focus changed.
+   *
+   * @param focus
+   *        focus value receveid from parent process.
+   */
+  void notifyFocusChanged(in boolean focus);
 };
 
 [scriptable, uuid(6c913015-9658-46a9-88d9-6ecfda2bd020)]
@@ -102,7 +110,16 @@ interface nsINfcRequestCallback : nsISupports
   void notifyError(in DOMString errorMsg);
 };
 
-[scriptable, uuid(0f8aae32-9920-491e-a197-8995941d54df)]
+[scriptable, uuid(7ae94107-adc9-4467-ae44-72f9a91f3ee8)]
+interface nsINfcBrowserAPI : nsISupports
+{
+  const int32_t SYSTEM_APP_ID = -1;
+
+  void setFocusApp(in uint64_t tabId,
+                   in boolean isFocus);
+};
+
+[scriptable, uuid(39e1b25b-5063-449e-b9e8-5514cdca9c3a)]
 interface nsINfcContentHelper : nsISupports
 {
   void init(in nsIDOMWindow window);
@@ -179,34 +196,6 @@ interface nsINfcContentHelper : nsISupports
                   in DOMString technology,
                   in nsIVariant command,
                   in nsINfcRequestCallback callback);
-
-  /**
-   * Enable I/O operations to the tag
-   *
-   * @param techType
-   *        Interface to a technology in a Tag
-   *
-   * @param sessionToken
-   *        Current token
-   *
-   * @param callback
-   *        Called when request is finished
-   */
-  void connect(in unsigned long techType,
-               in DOMString sessionToken,
-               in nsINfcRequestCallback callback);
-
-  /**
-   * Disable I/O operations to the tag
-   *
-   * @param sessionToken
-   *        Current token
-   *
-   * @param callback
-   *        Called when request is finished
-   */
-  void close(in DOMString sessionToken,
-             in nsINfcRequestCallback callback);
 
   /**
    * Get current RF state.
@@ -297,4 +286,32 @@ interface nsINfcContentHelper : nsISupports
    */
   void changeRFState(in DOMString rfState,
                      in nsINfcRequestCallback callback);
+
+  /**
+   * Notify parent process to call the default tagfound or peerfound event
+   * handler.
+   *
+   * @param sessionToken
+   *        Session token of this event.
+   * @param isP2P
+   *        Is this a P2P Session.
+   * @param records
+   *        NDEF Records.
+   */
+  void callDefaultFoundHandler(in DOMString sessionToken,
+                               in boolean isP2P,
+                               in nsIVariant records);
+
+  /**
+   * Notify parent process to call the default taglost or peerlost event
+   * handler.
+   *
+   * @param sessionToken
+   *        Session token of this event.
+   * @param isP2P
+   *        Is this a P2P Session.
+   */
+  void callDefaultLostHandler(in DOMString sessionToken,
+                              in boolean isP2P);
+
 };

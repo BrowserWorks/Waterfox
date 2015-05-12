@@ -13,65 +13,65 @@
 
 add_task(function changeuri_unvisited_bookmark()
 {
-  do_log_info("After changing URI of bookmark, frecency of bookmark's " +
-              "original URI should be zero if original URI is unvisited and " +
-              "no longer bookmarked.");
+  do_print("After changing URI of bookmark, frecency of bookmark's " +
+           "original URI should be zero if original URI is unvisited and " +
+           "no longer bookmarked.");
   const TEST_URI = NetUtil.newURI("http://example.com/1");
   let id = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
                                                 TEST_URI,
                                                 PlacesUtils.bookmarks.DEFAULT_INDEX,
                                                 "bookmark title");
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("Bookmarked => frecency of URI should be != 0");
+  do_print("Bookmarked => frecency of URI should be != 0");
   do_check_neq(frecencyForUrl(TEST_URI), 0);
 
   PlacesUtils.bookmarks.changeBookmarkURI(id, uri("http://example.com/2"));
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("Unvisited URI no longer bookmarked => frecency should = 0");
+  do_print("Unvisited URI no longer bookmarked => frecency should = 0");
   do_check_eq(frecencyForUrl(TEST_URI), 0);
 
   remove_all_bookmarks();
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function changeuri_visited_bookmark()
 {
-  do_log_info("After changing URI of bookmark, frecency of bookmark's " +
-              "original URI should not be zero if original URI is visited.");
+  do_print("After changing URI of bookmark, frecency of bookmark's " +
+           "original URI should not be zero if original URI is visited.");
   const TEST_URI = NetUtil.newURI("http://example.com/1");
   let id = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
                                                 TEST_URI,
                                                 PlacesUtils.bookmarks.DEFAULT_INDEX,
                                                 "bookmark title");
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("Bookmarked => frecency of URI should be != 0");
+  do_print("Bookmarked => frecency of URI should be != 0");
   do_check_neq(frecencyForUrl(TEST_URI), 0);
 
-  yield promiseAddVisits(TEST_URI);
+  yield PlacesTestUtils.addVisits(TEST_URI);
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
   PlacesUtils.bookmarks.changeBookmarkURI(id, uri("http://example.com/2"));
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("*Visited* URI no longer bookmarked => frecency should != 0");
+  do_print("*Visited* URI no longer bookmarked => frecency should != 0");
   do_check_neq(frecencyForUrl(TEST_URI), 0);
 
   remove_all_bookmarks();
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function changeuri_bookmark_still_bookmarked()
 {
-  do_log_info("After changing URI of bookmark, frecency of bookmark's " +
-              "original URI should not be zero if original URI is still " +
-              "bookmarked.");
+  do_print("After changing URI of bookmark, frecency of bookmark's " +
+           "original URI should not be zero if original URI is still " +
+           "bookmarked.");
   const TEST_URI = NetUtil.newURI("http://example.com/1");
   let id1 = PlacesUtils.bookmarks.insertBookmark(PlacesUtils.unfiledBookmarksFolderId,
                                                  TEST_URI,
@@ -82,25 +82,25 @@ add_task(function changeuri_bookmark_still_bookmarked()
                                                  PlacesUtils.bookmarks.DEFAULT_INDEX,
                                                  "bookmark 2 title");
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("Bookmarked => frecency of URI should be != 0");
+  do_print("Bookmarked => frecency of URI should be != 0");
   do_check_neq(frecencyForUrl(TEST_URI), 0);
 
   PlacesUtils.bookmarks.changeBookmarkURI(id1, uri("http://example.com/2"));
 
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
 
-  do_log_info("URI still bookmarked => frecency should != 0");
+  do_print("URI still bookmarked => frecency should != 0");
   do_check_neq(frecencyForUrl(TEST_URI), 0);
 
   remove_all_bookmarks();
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 add_task(function changeuri_nonexistent_bookmark()
 {
-  do_log_info("Changing the URI of a nonexistent bookmark should fail.");
+  do_print("Changing the URI of a nonexistent bookmark should fail.");
   function tryChange(itemId)
   {
     try {
@@ -127,7 +127,7 @@ add_task(function changeuri_nonexistent_bookmark()
   tryChange(id);
 
   remove_all_bookmarks();
-  yield promiseClearHistory();
+  yield PlacesTestUtils.clearHistory();
 });
 
 ///////////////////////////////////////////////////////////////////////////////

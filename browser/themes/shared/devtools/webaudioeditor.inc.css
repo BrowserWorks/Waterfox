@@ -17,15 +17,6 @@
   font-size: 110%;
 }
 
-#waiting-notice::before {
-  display: inline-block;
-  content: "";
-  background: url("chrome://global/skin/icons/loading_16.png") center no-repeat;
-  width: 16px;
-  height: 16px;
-  -moz-margin-end: 6px;
-}
-
 /* Context Graph */
 svg {
   overflow: hidden;
@@ -81,12 +72,46 @@ g.edgePath.param-connection {
 
 .nodes rect {
   stroke: var(--theme-tab-toolbar-background);
+}
+.theme-light rect {
+  fill: var(--theme-tab-toolbar-background);
+}
+.theme-dark rect {
   fill: var(--theme-toolbar-background);
 }
 
+/**
+ * Bypassed Nodes
+ */
+
+.theme-light .nodes g.bypassed rect {
+  fill: url(chrome://browser/skin/devtools/filters.svg#bypass-light);
+}
+.theme-dark .nodes g.bypassed rect {
+  fill: url(chrome://browser/skin/devtools/filters.svg#bypass-dark);
+}
+.nodes g.bypassed.selected rect {
+  stroke: var(--theme-selection-background);
+}
+
+/*
+.nodes g.bypassed text {
+  opacity: 0.8;
+}
+*/
+
+/**
+ * Selected Nodes
+ */
 .nodes g.selected rect {
   fill: var(--theme-selection-background);
 }
+
+/* Don't style bypassed nodes text different because it'd be illegible in light-theme */
+.theme-light g.selected:not(.bypassed) text {
+  fill: var(--theme-toolbar-background);
+}
+
 
 /* Text in nodes and edges */
 text {
@@ -100,9 +125,6 @@ text {
   fill: var(--theme-body-color-alt);
 }
 
-.theme-light g.selected text {
-  fill: var(--theme-toolbar-background);
-}
 
 .nodes text {
   cursor: pointer;
@@ -111,6 +133,12 @@ text {
 /**
  * Inspector Styles
  */
+
+/* hide the variables view scope title as its redundant,
+ * because there's only one scope displayed. */
+.variables-view-scope > .title {
+  display: none;
+}
 
 #web-audio-inspector-title {
   margin: 6px;
@@ -145,6 +173,20 @@ text {
   -moz-image-region: rect(0px,32px,16px,16px);
 }
 
+/**
+ * Automation Styles
+ */
+
+#automation-param-toolbar .automation-param-button[selected] {
+  color: var(--theme-selection-color);
+  background-color: var(--theme-selection-background);
+}
+
+#automation-graph {
+  overflow: hidden;
+  -moz-box-flex: 1;
+}
+
 @media (min-resolution: 2dppx) {
   #inspector-pane-toggle {
     list-style-image: url(debugger-collapse@2x.png);
@@ -163,6 +205,32 @@ text {
     background-image: url(alerticon-warning@2x.png);
   }
 }
+
+/**
+ * Inspector toolbar
+ */
+
+#audio-node-toolbar .bypass {
+  list-style-image: url(power.svg);
+}
+
+#audio-node-toolbar toolbarbutton[disabled] {
+  opacity: 0.5;
+  background-color: transparent;
+}
+
+.theme-dark #audio-node-toolbar toolbarbutton[checked] {
+  background-color: #1d4f73; /* Select Highlight Blue */
+}
+.theme-light #audio-node-toolbar toolbarbutton[checked] {
+  background-color: #4c9ed9; /* Select Highlight Blue */
+}
+
+/* don't invert checked buttons so we can have white icons on light theme */
+#audio-node-toolbar toolbarbutton[checked] > .toolbarbutton-icon {
+  filter: none;
+}
+
 
 /**
  * Responsive Styles

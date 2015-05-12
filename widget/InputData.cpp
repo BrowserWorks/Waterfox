@@ -10,6 +10,7 @@
 #include "nsThreadUtils.h"
 #include "mozilla/MouseEvents.h"
 #include "mozilla/TouchEvents.h"
+#include "UnitTransforms.h"
 
 namespace mozilla {
 
@@ -17,10 +18,10 @@ using namespace dom;
 
 already_AddRefed<Touch> SingleTouchData::ToNewDOMTouch() const
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(),
-                    "Can only create dom::Touch instances on main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only create dom::Touch instances on main thread");
   nsRefPtr<Touch> touch = new Touch(mIdentifier,
-                                    nsIntPoint(mScreenPoint.x, mScreenPoint.y),
+                                    LayoutDeviceIntPoint(mScreenPoint.x, mScreenPoint.y),
                                     nsIntPoint(mRadius.width, mRadius.height),
                                     mRotationAngle,
                                     mForce);
@@ -31,8 +32,8 @@ MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
   : InputData(MULTITOUCH_INPUT, aTouchEvent.time, aTouchEvent.timeStamp,
               aTouchEvent.modifiers)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(),
-                    "Can only copy from WidgetTouchEvent on main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only copy from WidgetTouchEvent on main thread");
 
   switch (aTouchEvent.message) {
     case NS_TOUCH_START:
@@ -77,8 +78,8 @@ MultiTouchInput::MultiTouchInput(const WidgetTouchEvent& aTouchEvent)
 WidgetTouchEvent
 MultiTouchInput::ToWidgetTouchEvent(nsIWidget* aWidget) const
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(),
-                    "Can only convert To WidgetTouchEvent on main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only convert To WidgetTouchEvent on main thread");
 
   uint32_t touchType = NS_EVENT_NULL;
   switch (mType) {
@@ -118,8 +119,8 @@ MultiTouchInput::ToWidgetTouchEvent(nsIWidget* aWidget) const
 WidgetMouseEvent
 MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(),
-                    "Can only convert To WidgetMouseEvent on main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only convert To WidgetMouseEvent on main thread");
 
   uint32_t mouseEventType = NS_EVENT_NULL;
   switch (mType) {
@@ -157,6 +158,17 @@ MultiTouchInput::ToWidgetMouseEvent(nsIWidget* aWidget) const
   return event;
 }
 
+int32_t
+MultiTouchInput::IndexOfTouch(int32_t aTouchIdentifier)
+{
+  for (size_t i = 0; i < mTouches.Length(); i++) {
+    if (mTouches[i].mIdentifier == aTouchIdentifier) {
+      return (int32_t)i;
+    }
+  }
+  return -1;
+}
+
 // This conversion from WidgetMouseEvent to MultiTouchInput is needed because on
 // the B2G emulator we can only receive mouse events, but we need to be able
 // to pan correctly. To do this, we convert the events into a format that the
@@ -167,8 +179,8 @@ MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
   : InputData(MULTITOUCH_INPUT, aMouseEvent.time, aMouseEvent.timeStamp,
               aMouseEvent.modifiers)
 {
-  NS_ABORT_IF_FALSE(NS_IsMainThread(),
-                    "Can only copy from WidgetMouseEvent on main thread");
+  MOZ_ASSERT(NS_IsMainThread(),
+             "Can only copy from WidgetMouseEvent on main thread");
   switch (aMouseEvent.message) {
   case NS_MOUSE_BUTTON_DOWN:
     mType = MULTITOUCH_START;
@@ -199,4 +211,38 @@ MultiTouchInput::MultiTouchInput(const WidgetMouseEvent& aMouseEvent)
                                          180.0f,
                                          1.0f));
 }
+
+void
+MultiTouchInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  for (size_t i = 0; i < mTouches.Length(); i++) {
+    mTouches[i].mLocalScreenPoint = TransformTo<ParentLayerPixel>(aTransform, ScreenPoint(mTouches[i].mScreenPoint));
+  }
 }
+
+void
+PanGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  mLocalPanStartPoint = TransformTo<ParentLayerPixel>(aTransform, mPanStartPoint);
+  mLocalPanDisplacement = TransformVector<ParentLayerPixel>(aTransform, mPanDisplacement, mPanStartPoint);
+}
+
+void
+PinchGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  mLocalFocusPoint = TransformTo<ParentLayerPixel>(aTransform, mFocusPoint);
+}
+
+void
+TapGestureInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  mLocalPoint = TransformTo<ParentLayerPixel>(aTransform, mPoint);
+}
+
+void
+ScrollWheelInput::TransformToLocal(const gfx::Matrix4x4& aTransform)
+{
+  mLocalOrigin = TransformTo<ParentLayerPixel>(aTransform, mOrigin);
+}
+
+} // namespace mozilla

@@ -169,13 +169,10 @@ MappedAttrTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
 }
 
 static const PLDHashTableOps MappedAttrTable_Ops = {
-  PL_DHashAllocTable,
-  PL_DHashFreeTable,
   MappedAttrTable_HashKey,
   MappedAttrTable_MatchEntry,
   PL_DHashMoveEntryStub,
   MappedAttrTable_ClearEntry,
-  PL_DHashFinalizeStub,
   nullptr
 };
 
@@ -211,9 +208,8 @@ LangRuleTable_MatchEntry(PLDHashTable *table, const PLDHashEntryHdr *hdr,
   return entry->mRule->mLang == *lang;
 }
 
-static bool
-LangRuleTable_InitEntry(PLDHashTable *table, PLDHashEntryHdr *hdr,
-                        const void *key)
+static void
+LangRuleTable_InitEntry(PLDHashEntryHdr *hdr, const void *key)
 {
   const nsString *lang = static_cast<const nsString*>(key);
 
@@ -221,18 +217,13 @@ LangRuleTable_InitEntry(PLDHashTable *table, PLDHashEntryHdr *hdr,
 
   // Create the unique rule for this language
   entry->mRule = new nsHTMLStyleSheet::LangRule(*lang);
-
-  return true;
 }
 
 static const PLDHashTableOps LangRuleTable_Ops = {
-  PL_DHashAllocTable,
-  PL_DHashFreeTable,
   LangRuleTable_HashKey,
   LangRuleTable_MatchEntry,
   PL_DHashMoveEntryStub,
   LangRuleTable_ClearEntry,
-  PL_DHashFinalizeStub,
   LangRuleTable_InitEntry
 };
 
@@ -244,16 +235,16 @@ nsHTMLStyleSheet::nsHTMLStyleSheet(nsIDocument* aDocument)
   , mTableTHRule(new TableTHRule())
 {
   MOZ_ASSERT(aDocument);
-  mMappedAttrTable.ops = nullptr;
-  mLangRuleTable.ops = nullptr;
 }
 
 nsHTMLStyleSheet::~nsHTMLStyleSheet()
 {
-  if (mLangRuleTable.ops)
+  if (mLangRuleTable.IsInitialized()) {
     PL_DHashTableFinish(&mLangRuleTable);
-  if (mMappedAttrTable.ops)
+  }
+  if (mMappedAttrTable.IsInitialized()) {
     PL_DHashTableFinish(&mMappedAttrTable);
+  }
 }
 
 NS_IMPL_ISUPPORTS(nsHTMLStyleSheet, nsIStyleRuleProcessor)
@@ -431,13 +422,11 @@ nsHTMLStyleSheet::Reset()
   mVisitedRule       = nullptr;
   mActiveRule        = nullptr;
 
-  if (mLangRuleTable.ops) {
+  if (mLangRuleTable.IsInitialized()) {
     PL_DHashTableFinish(&mLangRuleTable);
-    mLangRuleTable.ops = nullptr;
   }
-  if (mMappedAttrTable.ops) {
+  if (mMappedAttrTable.IsInitialized()) {
     PL_DHashTableFinish(&mMappedAttrTable);
-    mMappedAttrTable.ops = nullptr;
   }
 }
 
@@ -487,12 +476,13 @@ nsHTMLStyleSheet::SetVisitedLinkColor(nscolor aColor)
 already_AddRefed<nsMappedAttributes>
 nsHTMLStyleSheet::UniqueMappedAttributes(nsMappedAttributes* aMapped)
 {
-  if (!mMappedAttrTable.ops) {
+  if (!mMappedAttrTable.IsInitialized()) {
     PL_DHashTableInit(&mMappedAttrTable, &MappedAttrTable_Ops,
-                      nullptr, sizeof(MappedAttrTableEntry));
+                      sizeof(MappedAttrTableEntry));
   }
-  MappedAttrTableEntry *entry = static_cast<MappedAttrTableEntry*>
-                                           (PL_DHashTableAdd(&mMappedAttrTable, aMapped));
+  MappedAttrTableEntry *entry =
+    static_cast<MappedAttrTableEntry*>
+               (PL_DHashTableAdd(&mMappedAttrTable, aMapped, fallible));
   if (!entry)
     return nullptr;
   if (!entry->mAttributes) {
@@ -508,7 +498,7 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
 {
   NS_ENSURE_TRUE_VOID(aMapped);
 
-  NS_ASSERTION(mMappedAttrTable.ops, "table uninitialized");
+  NS_ASSERTION(mMappedAttrTable.IsInitialized(), "table uninitialized");
 #ifdef DEBUG
   uint32_t entryCount = mMappedAttrTable.EntryCount() - 1;
 #endif
@@ -521,12 +511,12 @@ nsHTMLStyleSheet::DropMappedAttributes(nsMappedAttributes* aMapped)
 nsIStyleRule*
 nsHTMLStyleSheet::LangRuleFor(const nsString& aLanguage)
 {
-  if (!mLangRuleTable.ops) {
+  if (!mLangRuleTable.IsInitialized()) {
     PL_DHashTableInit(&mLangRuleTable, &LangRuleTable_Ops,
-                      nullptr, sizeof(LangRuleTableEntry));
+                      sizeof(LangRuleTableEntry));
   }
   LangRuleTableEntry *entry = static_cast<LangRuleTableEntry*>
-    (PL_DHashTableAdd(&mLangRuleTable, &aLanguage));
+    (PL_DHashTableAdd(&mLangRuleTable, &aLanguage, fallible));
   if (!entry) {
     NS_ASSERTION(false, "out of memory");
     return nullptr;
@@ -551,7 +541,7 @@ nsHTMLStyleSheet::DOMSizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const
 {
   size_t n = aMallocSizeOf(this);
 
-  if (mMappedAttrTable.ops) {
+  if (mMappedAttrTable.IsInitialized()) {
     n += PL_DHashTableSizeOfExcludingThis(&mMappedAttrTable,
                                           SizeOfAttributesEntryExcludingThis,
                                           aMallocSizeOf);

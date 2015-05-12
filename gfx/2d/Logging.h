@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <stdio.h>
+#include <vector>
 
 #ifdef MOZ_LOGGING
 #include <prlog.h>
@@ -20,7 +21,6 @@
 #include "Point.h"
 #include "BaseRect.h"
 #include "Matrix.h"
-#include "mozilla/TypedEnum.h"
 
 #ifdef WIN32
 // This file gets included from nsGlobalWindow.cpp, which doesn't like
@@ -206,6 +206,12 @@ class LogForwarder {
 public:
   virtual ~LogForwarder() {}
   virtual void Log(const std::string &aString) = 0;
+
+  // Provide a copy of the logs to the caller.  The int is the index
+  // of the Log call, if the number of logs exceeds some preset capacity
+  // we may not get all of them, so the indices help figure out which
+  // ones we did save.
+  virtual std::vector<std::pair<int32_t,std::string> > StringsVectorCopy() = 0;
 };
 
 class NoLog
@@ -218,11 +224,11 @@ public:
   NoLog &operator <<(const T &aLogText) { return *this; }
 };
 
-MOZ_BEGIN_ENUM_CLASS(LogOptions, int)
+enum class LogOptions : int {
   NoNewline = 0x01,
   AutoPrefix = 0x02,
   AssertOnCall = 0x04
-MOZ_END_ENUM_CLASS(LogOptions)
+};
 
 template<typename T>
 struct Hexa {

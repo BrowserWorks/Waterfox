@@ -16,6 +16,7 @@
 #include "nsCOMPtr.h"
 #include "nsString.h"
 #include "nscore.h"
+#include "TimeUnits.h"
 
 namespace mozilla {
 
@@ -29,7 +30,7 @@ class TimeRanges;
 
 } // namespace dom
 
-class TrackBuffer MOZ_FINAL {
+class TrackBuffer final {
 public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(TrackBuffer);
 
@@ -96,7 +97,8 @@ public:
   // Implementation is only partial, we can only trim a buffer.
   // Returns true if data was evicted.
   // Times are in microseconds.
-  bool RangeRemoval(int64_t aStart, int64_t aEnd);
+  bool RangeRemoval(mozilla::media::Microseconds aStart,
+                    mozilla::media::Microseconds aEnd);
 
   // Abort any pending appendBuffer by rejecting any pending promises.
   void AbortAppendData();

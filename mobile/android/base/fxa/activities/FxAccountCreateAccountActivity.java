@@ -7,10 +7,12 @@ package org.mozilla.gecko.fxa.activities;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import org.mozilla.gecko.AppConstants;
 import org.mozilla.gecko.R;
 import org.mozilla.gecko.background.common.log.Logger;
 import org.mozilla.gecko.background.fxa.FxAccountAgeLockoutHelper;
@@ -21,6 +23,8 @@ import org.mozilla.gecko.background.fxa.FxAccountClient20.LoginResponse;
 import org.mozilla.gecko.background.fxa.FxAccountClientException.FxAccountClientRemoteException;
 import org.mozilla.gecko.background.fxa.FxAccountUtils;
 import org.mozilla.gecko.background.fxa.PasswordStretcher;
+import org.mozilla.gecko.db.BrowserContract;
+import org.mozilla.gecko.fxa.authenticator.AndroidFxAccount;
 import org.mozilla.gecko.fxa.tasks.FxAccountCreateAccountTask;
 import org.mozilla.gecko.sync.Utils;
 
@@ -52,10 +56,17 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   private static final int CHILD_REQUEST_CODE = 2;
 
   protected String[] yearItems;
+  protected String[] monthItems;
+  protected String[] dayItems;
   protected EditText yearEdit;
+  protected EditText monthEdit;
+  protected EditText dayEdit;
   protected CheckBox chooseCheckBox;
+  protected View monthDaycombo;
 
   protected Map<String, Boolean> selectedEngines;
+  protected final Map<String, Boolean> authoritiesToSyncAutomaticallyMap =
+      new HashMap<String, Boolean>(AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP);
 
   /**
    * {@inheritDoc}
@@ -71,6 +82,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     passwordEdit = (EditText) ensureFindViewById(null, R.id.password, "password edit");
     showPasswordButton = (Button) ensureFindViewById(null, R.id.show_password, "show password button");
     yearEdit = (EditText) ensureFindViewById(null, R.id.year_edit, "year edit");
+    monthEdit = (EditText) ensureFindViewById(null, R.id.month_edit, "month edit");
+    dayEdit = (EditText) ensureFindViewById(null, R.id.day_edit, "day edit");
+    monthDaycombo = ensureFindViewById(null, R.id.month_day_combo, "month day combo");
     remoteErrorTextView = (TextView) ensureFindViewById(null, R.id.remote_error, "remote error text view");
     button = (Button) ensureFindViewById(null, R.id.button, "create account button");
     progressBar = (ProgressBar) ensureFindViewById(null, R.id.progress, "progress bar");
@@ -84,6 +98,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     createShowPasswordButton();
     linkifyPolicy();
     createChooseCheckBox();
+    initializeMonthAndDayValues();
 
     View signInInsteadLink = ensureFindViewById(null, R.id.sign_in_instead_link, "sign in instead link");
     signInInsteadLink.setOnClickListener(new OnClickListener() {
@@ -95,13 +110,26 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     });
 
     updateFromIntentExtras();
+    maybeEnableAnimations();
+  }
+
+  @Override
+  protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    super.onRestoreInstanceState(savedInstanceState);
+    updateMonthAndDayFromBundle(savedInstanceState);
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    updateBundleWithMonthAndDay(outState);
   }
 
   @Override
   protected Bundle makeExtrasBundle(String email, String password) {
     final Bundle extras = super.makeExtrasBundle(email, password);
-    final String year = yearEdit.getText().toString();
-    extras.putString(EXTRA_YEAR, year);
+    extras.putString(EXTRA_YEAR, yearEdit.getText().toString());
+    updateBundleWithMonthAndDay(extras);
     return extras;
   }
 
@@ -111,7 +139,38 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
 
     if (getIntent() != null) {
       yearEdit.setText(getIntent().getStringExtra(EXTRA_YEAR));
+      updateMonthAndDayFromBundle(getIntent().getExtras() != null ? getIntent().getExtras() : new Bundle());
     }
+  }
+
+  private void updateBundleWithMonthAndDay(final Bundle bundle) {
+    if (monthEdit.getTag() != null) {
+      bundle.putInt(EXTRA_MONTH, (Integer) monthEdit.getTag());
+    }
+    if (dayEdit.getTag() != null) {
+      bundle.putInt(EXTRA_DAY, (Integer) dayEdit.getTag());
+    }
+  }
+
+  private void updateMonthAndDayFromBundle(final Bundle extras) {
+    final Integer zeroBasedMonthIndex = (Integer) extras.get(EXTRA_MONTH);
+    final Integer oneBasedDayIndex = (Integer) extras.get(EXTRA_DAY);
+    maybeEnableMonthAndDayButtons();
+
+    if (zeroBasedMonthIndex != null) {
+      monthEdit.setText(monthItems[zeroBasedMonthIndex]);
+      monthEdit.setTag(Integer.valueOf(zeroBasedMonthIndex));
+      createDayEdit(zeroBasedMonthIndex);
+
+      if (oneBasedDayIndex != null && dayItems != null) {
+        dayEdit.setText(dayItems[oneBasedDayIndex - 1]);
+        dayEdit.setTag(Integer.valueOf(oneBasedDayIndex));
+      }
+    } else {
+      monthEdit.setText("");
+      dayEdit.setText("");
+    }
+    updateButtonState();
   }
 
   @Override
@@ -186,6 +245,7 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
           @Override
           public void onClick(DialogInterface dialog, int which) {
             yearEdit.setText(yearItems[which]);
+            maybeEnableMonthAndDayButtons();
             updateButtonState();
           }
         };
@@ -200,12 +260,120 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     });
   }
 
-  public void createAccount(String email, String password, Map<String, Boolean> engines) {
+  private void initializeMonthAndDayValues() {
+    // Hide Month and day pickers
+    monthDaycombo.setVisibility(View.GONE);
+    dayEdit.setEnabled(false);
+
+    // Populate month names.
+    final Calendar calendar = Calendar.getInstance();
+    final Map<String, Integer> monthNamesMap = calendar.getDisplayNames(Calendar.MONTH, Calendar.LONG, Locale.getDefault());
+    monthItems = new String[monthNamesMap.size()];
+    for (Map.Entry<String, Integer> entry : monthNamesMap.entrySet()) {
+      monthItems[entry.getValue()] = entry.getKey();
+    }
+    createMonthEdit();
+  }
+
+  protected void createMonthEdit() {
+    monthEdit.setText("");
+    monthEdit.setTag(null);
+    monthEdit.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        android.content.DialogInterface.OnClickListener listener = new Dialog.OnClickListener() {
+	      @Override
+          public void onClick(DialogInterface dialog, int which) {
+            monthEdit.setText(monthItems[which]);
+            monthEdit.setTag(Integer.valueOf(which));
+            createDayEdit(which);
+            updateButtonState();
+          }
+        };
+        final AlertDialog dialog = new AlertDialog.Builder(FxAccountCreateAccountActivity.this)
+        .setTitle(R.string.fxaccount_create_account_month_of_birth)
+        .setItems(monthItems, listener)
+        .setIcon(R.drawable.icon)
+        .create();
+        dialog.show();
+      }
+    });
+  }
+
+  protected void createDayEdit(final int monthIndex) {
+    dayEdit.setText("");
+    dayEdit.setTag(null);
+    dayEdit.setEnabled(true);
+
+    String yearText = yearEdit.getText().toString();
+    Integer birthYear;
+    try {
+      birthYear = Integer.parseInt(yearText);
+    } catch (NumberFormatException e) {
+      // Ideal this should never happen.
+      Logger.debug(LOG_TAG, "Exception while parsing year value" + e);
+      return;
+    }
+
+    Calendar c = Calendar.getInstance();
+    c.set(birthYear, monthIndex, 1);
+    LinkedList<String> days = new LinkedList<String>();
+    for (int i = c.getActualMinimum(Calendar.DAY_OF_MONTH); i <= c.getActualMaximum(Calendar.DAY_OF_MONTH); i++) {
+      days.add(Integer.toString(i));
+    }
+    dayItems = days.toArray(new String[days.size()]);
+
+    dayEdit.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        android.content.DialogInterface.OnClickListener listener = new Dialog.OnClickListener() {
+	      @Override
+          public void onClick(DialogInterface dialog, int which) {
+            dayEdit.setText(dayItems[which]);
+            dayEdit.setTag(Integer.valueOf(which + 1)); // Days are 1-based.
+            updateButtonState();
+          }
+        };
+        final AlertDialog dialog = new AlertDialog.Builder(FxAccountCreateAccountActivity.this)
+        .setTitle(R.string.fxaccount_create_account_day_of_birth)
+        .setItems(dayItems, listener)
+        .setIcon(R.drawable.icon)
+        .create();
+        dialog.show();
+      }
+    });
+  }
+
+  private void maybeEnableMonthAndDayButtons() {
+    Integer yearOfBirth = null;
+    try {
+      yearOfBirth = Integer.valueOf(yearEdit.getText().toString(), 10);
+    } catch (NumberFormatException e) {
+      Logger.debug(LOG_TAG, "Year text is not a number; assuming year is a range and that user is old enough.");
+    }
+
+    // Check if the selected year is the magic year.
+    if (yearOfBirth == null || !FxAccountAgeLockoutHelper.isMagicYear(yearOfBirth)) {
+      // Year/Dec/31 is the latest birthday in the selected year, corresponding
+      // to the youngest person.
+      monthEdit.setTag(Integer.valueOf(11));
+      dayEdit.setTag(Integer.valueOf(31));
+      return;
+    }
+
+    // Show month and date field.
+    yearEdit.setVisibility(View.GONE);
+    monthDaycombo.setVisibility(View.VISIBLE);
+    monthEdit.setTag(null);
+    dayEdit.setTag(null);
+  }
+
+  public void createAccount(String email, String password, Map<String, Boolean> engines, Map<String, Boolean> authoritiesToSyncAutomaticallyMap) {
     String serverURI = getAuthServerEndpoint();
     PasswordStretcher passwordStretcher = makePasswordStretcher(password);
     // This delegate creates a new Android account on success, opens the
     // appropriate "success!" activity, and finishes this activity.
-    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines) {
+    RequestDelegate<LoginResponse> delegate = new AddAccountDelegate(email, passwordStretcher, serverURI, engines, authoritiesToSyncAutomaticallyMap) {
       @Override
       public void handleError(Exception e) {
         showRemoteError(e, R.string.fxaccount_create_account_unknown_error);
@@ -230,7 +398,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
   @Override
   protected boolean shouldButtonBeEnabled() {
     return super.shouldButtonBeEnabled() &&
-        (yearEdit.length() > 0);
+        (yearEdit.length() > 0) &&
+        (monthEdit.getTag() != null) &&
+        (dayEdit.getTag() != null);
   }
 
   protected void createCreateAccountButton() {
@@ -242,13 +412,19 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         }
         final String email = emailEdit.getText().toString();
         final String password = passwordEdit.getText().toString();
+        final int dayOfBirth = (Integer) dayEdit.getTag();
+        final int zeroBasedMonthOfBirth = (Integer) monthEdit.getTag();
         // Only include selected engines if the user currently has the option checked.
         final Map<String, Boolean> engines = chooseCheckBox.isChecked()
             ? selectedEngines
             : null;
-        if (FxAccountAgeLockoutHelper.passesAgeCheck(yearEdit.getText().toString(), yearItems)) {
+        // Only include authorities if the user currently has the option checked.
+        final Map<String, Boolean> authoritiesMap = chooseCheckBox.isChecked()
+            ? authoritiesToSyncAutomaticallyMap
+            : AndroidFxAccount.DEFAULT_AUTHORITIES_TO_SYNC_AUTOMATICALLY_MAP;
+        if (FxAccountAgeLockoutHelper.passesAgeCheck(dayOfBirth, zeroBasedMonthOfBirth, yearEdit.getText().toString(), yearItems)) {
           FxAccountUtils.pii(LOG_TAG, "Passed age check.");
-          createAccount(email, password, engines);
+          createAccount(email, password, engines, authoritiesMap);
         } else {
           FxAccountUtils.pii(LOG_TAG, "Failed age check!");
           FxAccountAgeLockoutHelper.lockOut(SystemClock.elapsedRealtime());
@@ -268,7 +444,13 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     final int INDEX_HISTORY = 1;
     final int INDEX_TABS = 2;
     final int INDEX_PASSWORDS = 3;
-    final int NUMBER_OF_ENGINES = 4;
+    final int INDEX_READING_LIST = 4; // Only valid if reading list is enabled.
+    final int NUMBER_OF_ENGINES;
+    if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+      NUMBER_OF_ENGINES = 5;
+    } else {
+      NUMBER_OF_ENGINES = 4;
+    }
 
     final String items[] = new String[NUMBER_OF_ENGINES];
     final boolean checkedItems[] = new boolean[NUMBER_OF_ENGINES];
@@ -276,6 +458,9 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
     items[INDEX_HISTORY] = getResources().getString(R.string.fxaccount_status_history);
     items[INDEX_TABS] = getResources().getString(R.string.fxaccount_status_tabs);
     items[INDEX_PASSWORDS] = getResources().getString(R.string.fxaccount_status_passwords);
+    if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+      items[INDEX_READING_LIST] = getResources().getString(R.string.fxaccount_status_reading_list);
+    }
     // Default to everything checked.
     for (int i = 0; i < NUMBER_OF_ENGINES; i++) {
       checkedItems[i] = true;
@@ -301,7 +486,11 @@ public class FxAccountCreateAccountActivity extends FxAccountAbstractSetupActivi
         selectedEngines.put("history", checkedItems[INDEX_HISTORY]);
         selectedEngines.put("tabs", checkedItems[INDEX_TABS]);
         selectedEngines.put("passwords", checkedItems[INDEX_PASSWORDS]);
+        if (AppConstants.MOZ_ANDROID_READING_LIST_SERVICE) {
+          authoritiesToSyncAutomaticallyMap.put(BrowserContract.READING_LIST_AUTHORITY, checkedItems[INDEX_READING_LIST]);
+        }
         FxAccountUtils.pii(LOG_TAG, "Updating selectedEngines: " + selectedEngines.toString());
+        FxAccountUtils.pii(LOG_TAG, "Updating authorities: " + authoritiesToSyncAutomaticallyMap.toString());
       }
     };
 

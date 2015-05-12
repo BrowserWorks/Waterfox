@@ -16,7 +16,7 @@ namespace dom {
 
 class InternalHeaders;
 
-class InternalResponse MOZ_FINAL
+class InternalResponse final
 {
   friend class FetchDriver;
 
@@ -24,6 +24,8 @@ public:
   NS_INLINE_DECL_THREADSAFE_REFCOUNTING(InternalResponse)
 
   InternalResponse(uint16_t aStatus, const nsACString& aStatusText);
+
+  already_AddRefed<InternalResponse> Clone();
 
   static already_AddRefed<InternalResponse>
   NetworkError()
@@ -76,6 +78,18 @@ public:
     mURL.Assign(aURL);
   }
 
+  bool
+  FinalURL() const
+  {
+    return mFinalURL;
+  }
+
+  void
+  SetFinalURL(bool aFinalURL)
+  {
+    mFinalURL = aFinalURL;
+  }
+
   uint16_t
   GetStatus() const
   {
@@ -104,6 +118,8 @@ public:
   void
   SetBody(nsIInputStream* aBody)
   {
+    // A request's body may not be reset once set.
+    MOZ_ASSERT(!mBody);
     mBody = aBody;
   }
 
@@ -111,13 +127,14 @@ private:
   ~InternalResponse()
   { }
 
-  // Used to create filtered responses.
-  // Does not copy headers.
+  // Used to create filtered and cloned responses.
+  // Does not copy headers or body stream.
   explicit InternalResponse(const InternalResponse& aOther);
 
   ResponseType mType;
   nsCString mTerminationReason;
   nsCString mURL;
+  bool mFinalURL;
   const uint16_t mStatus;
   const nsCString mStatusText;
   nsRefPtr<InternalHeaders> mHeaders;

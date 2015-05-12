@@ -9,6 +9,11 @@
 #include "mozilla/ipc/PBackgroundParent.h"
 
 namespace mozilla {
+
+namespace layout {
+class VsyncParent;
+}
+
 namespace ipc {
 
 // Instances of this class should never be created directly. This class is meant
@@ -20,44 +25,77 @@ protected:
   virtual ~BackgroundParentImpl();
 
   virtual void
-  ActorDestroy(ActorDestroyReason aWhy) MOZ_OVERRIDE;
+  ActorDestroy(ActorDestroyReason aWhy) override;
 
   virtual PBackgroundTestParent*
-  AllocPBackgroundTestParent(const nsCString& aTestArg) MOZ_OVERRIDE;
+  AllocPBackgroundTestParent(const nsCString& aTestArg) override;
 
   virtual bool
   RecvPBackgroundTestConstructor(PBackgroundTestParent* aActor,
-                                 const nsCString& aTestArg) MOZ_OVERRIDE;
+                                 const nsCString& aTestArg) override;
 
   virtual bool
-  DeallocPBackgroundTestParent(PBackgroundTestParent* aActor) MOZ_OVERRIDE;
+  DeallocPBackgroundTestParent(PBackgroundTestParent* aActor) override;
 
   virtual PBackgroundIDBFactoryParent*
   AllocPBackgroundIDBFactoryParent(const LoggingInfo& aLoggingInfo)
-                                   MOZ_OVERRIDE;
+                                   override;
 
   virtual bool
   RecvPBackgroundIDBFactoryConstructor(PBackgroundIDBFactoryParent* aActor,
                                        const LoggingInfo& aLoggingInfo)
-                                       MOZ_OVERRIDE;
+                                       override;
 
   virtual bool
   DeallocPBackgroundIDBFactoryParent(PBackgroundIDBFactoryParent* aActor)
-                                     MOZ_OVERRIDE;
+                                     override;
 
   virtual PBlobParent*
-  AllocPBlobParent(const BlobConstructorParams& aParams) MOZ_OVERRIDE;
+  AllocPBlobParent(const BlobConstructorParams& aParams) override;
 
   virtual bool
-  DeallocPBlobParent(PBlobParent* aActor) MOZ_OVERRIDE;
+  DeallocPBlobParent(PBlobParent* aActor) override;
 
   virtual PFileDescriptorSetParent*
   AllocPFileDescriptorSetParent(const FileDescriptor& aFileDescriptor)
-                                MOZ_OVERRIDE;
+                                override;
 
   virtual bool
   DeallocPFileDescriptorSetParent(PFileDescriptorSetParent* aActor)
-                                  MOZ_OVERRIDE;
+                                  override;
+
+  virtual PVsyncParent*
+  AllocPVsyncParent() override;
+
+  virtual bool
+  DeallocPVsyncParent(PVsyncParent* aActor) override;
+
+  virtual PBroadcastChannelParent*
+  AllocPBroadcastChannelParent(const PrincipalInfo& aPrincipalInfo,
+                               const nsString& aOrigin,
+                               const nsString& aChannel,
+                               const bool& aPrivateBrowsing) override;
+
+  virtual bool
+  RecvPBroadcastChannelConstructor(PBroadcastChannelParent* actor,
+                                   const PrincipalInfo& aPrincipalInfo,
+                                   const nsString& origin,
+                                   const nsString& channel,
+                                   const bool& aPrivateBrowsing) override;
+
+  virtual bool
+  DeallocPBroadcastChannelParent(PBroadcastChannelParent* aActor) override;
+
+  virtual bool
+  RecvRegisterServiceWorker(const ServiceWorkerRegistrationData& aData)
+                            override;
+
+  virtual bool
+  RecvUnregisterServiceWorker(const PrincipalInfo& aPrincipalInfo,
+                              const nsString& aScope) override;
+
+  virtual bool
+  RecvShutdownServiceWorkerRegistrar() override;
 };
 
 } // namespace ipc

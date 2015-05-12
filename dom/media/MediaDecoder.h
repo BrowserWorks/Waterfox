@@ -235,16 +235,22 @@ struct SeekTarget {
   SeekTarget()
     : mTime(-1.0)
     , mType(SeekTarget::Invalid)
+    , mEventVisibility(MediaDecoderEventVisibility::Observable)
   {
   }
-  SeekTarget(int64_t aTimeUsecs, Type aType)
+  SeekTarget(int64_t aTimeUsecs,
+             Type aType,
+             MediaDecoderEventVisibility aEventVisibility =
+               MediaDecoderEventVisibility::Observable)
     : mTime(aTimeUsecs)
     , mType(aType)
+    , mEventVisibility(aEventVisibility)
   {
   }
   SeekTarget(const SeekTarget& aOther)
     : mTime(aOther.mTime)
     , mType(aOther.mType)
+    , mEventVisibility(aOther.mEventVisibility)
   {
   }
   bool IsValid() const {
@@ -260,6 +266,7 @@ struct SeekTarget {
   // "Fast" seeks to the seek point preceeding mTime, whereas
   // "Accurate" seeks as close as possible to mTime.
   Type mType;
+  MediaDecoderEventVisibility mEventVisibility;
 };
 
 class MediaDecoder : public nsIObserver,
@@ -324,7 +331,7 @@ public:
   // MediaDecoder has been destroyed. You might need to do this if you're
   // wrapping the MediaResource in some kind of byte stream interface to be
   // passed to a platform decoder.
-  MediaResource* GetResource() const MOZ_FINAL MOZ_OVERRIDE
+  MediaResource* GetResource() const final override
   {
     return mResource;
   }
@@ -367,7 +374,7 @@ public:
   // Adjust the speed of the playback, optionally with pitch correction,
   virtual void SetVolume(double aVolume);
 
-  virtual void NotifyWaitingForResourcesStatusChanged() MOZ_OVERRIDE;
+  virtual void NotifyWaitingForResourcesStatusChanged() override;
 
   virtual void SetPlaybackRate(double aPlaybackRate);
   void SetPreservesPitch(bool aPreservesPitch);
@@ -435,9 +442,9 @@ public:
   class DecodedStreamGraphListener : public MediaStreamListener {
   public:
     DecodedStreamGraphListener(MediaStream* aStream, DecodedStreamData* aData);
-    virtual void NotifyOutput(MediaStreamGraph* aGraph, GraphTime aCurrentTime) MOZ_OVERRIDE;
+    virtual void NotifyOutput(MediaStreamGraph* aGraph, GraphTime aCurrentTime) override;
     virtual void NotifyEvent(MediaStreamGraph* aGraph,
-                             MediaStreamListener::MediaStreamGraphEvent event) MOZ_OVERRIDE;
+                             MediaStreamListener::MediaStreamGraphEvent event) override;
 
     void DoNotifyFinished();
 
@@ -479,17 +486,17 @@ public:
     bool mStreamFinishedOnMainThread;
   };
 
+  class OutputStreamListener;
+
   struct OutputStreamData {
-    void Init(ProcessedMediaStream* aStream, bool aFinishWhenEnded)
-    {
-      mStream = aStream;
-      mFinishWhenEnded = aFinishWhenEnded;
-    }
+    void Init(MediaDecoder* aDecoder, ProcessedMediaStream* aStream);
+    ~OutputStreamData();
     nsRefPtr<ProcessedMediaStream> mStream;
     // mPort connects mDecodedStream->mStream to our mStream.
     nsRefPtr<MediaInputPort> mPort;
-    bool mFinishWhenEnded;
+    nsRefPtr<OutputStreamListener> mListener;
   };
+
   /**
    * Connects mDecodedStream->mStream to aStream->mStream.
    */
@@ -531,7 +538,7 @@ public:
   virtual double GetDuration();
 
   // Return the duration of the video in seconds.
-  int64_t GetMediaDuration() MOZ_FINAL MOZ_OVERRIDE;
+  int64_t GetMediaDuration() final override;
 
   // A media stream is assumed to be infinite if the metadata doesn't
   // contain the duration, and range requests are not supported, and
@@ -563,7 +570,7 @@ public:
 
   // Called as data arrives on the stream and is read into the cache.  Called
   // on the main thread only.
-  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) MOZ_OVERRIDE;
+  virtual void NotifyDataArrived(const char* aBuffer, uint32_t aLength, int64_t aOffset) override;
 
   // Called by MediaResource when the principal of the resource has
   // changed. Called on main thread only.
@@ -572,15 +579,16 @@ public:
   // Called by the MediaResource to keep track of the number of bytes read
   // from the resource. Called on the main by an event runner dispatched
   // by the MediaResource read functions.
-  void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) MOZ_FINAL MOZ_OVERRIDE;
+  void NotifyBytesConsumed(int64_t aBytes, int64_t aOffset) final override;
 
   // Return true if we are currently seeking in the media resource.
   // Call on the main thread only.
   virtual bool IsSeeking() const;
 
-  // Return true if the decoder has reached the end of playback.
+  // Return true if the decoder has reached the end of playback or the decoder
+  // has shutdown.
   // Call on the main thread only.
-  virtual bool IsEnded() const;
+  virtual bool IsEndedOrShutdown() const;
 
   // Set the duration of the media resource in units of seconds.
   // This is called via a channel listener if it can pick up the duration
@@ -589,7 +597,7 @@ public:
 
   // Sets the initial duration of the media. Called while the media metadata
   // is being read and the decode is being setup.
-  void SetMediaDuration(int64_t aDuration) MOZ_OVERRIDE;
+  void SetMediaDuration(int64_t aDuration) override;
   // Updates the media duration. This is called while the media is being
   // played, calls before the media has reached loaded metadata are ignored.
   // The duration is assumed to be an estimate, and so a degree of
@@ -598,17 +606,17 @@ public:
   // If the incoming duration is significantly different, the duration is
   // changed, this causes a durationchanged event to fire to the media
   // element.
-  void UpdateEstimatedMediaDuration(int64_t aDuration) MOZ_OVERRIDE;
+  void UpdateEstimatedMediaDuration(int64_t aDuration) override;
 
   // Set a flag indicating whether seeking is supported
-  virtual void SetMediaSeekable(bool aMediaSeekable) MOZ_OVERRIDE;
+  virtual void SetMediaSeekable(bool aMediaSeekable) override;
 
   // Returns true if this media supports seeking. False for example for WebM
   // files without an index and chained ogg files.
-  virtual bool IsMediaSeekable() MOZ_FINAL MOZ_OVERRIDE;
+  virtual bool IsMediaSeekable() final override;
   // Returns true if seeking is supported on a transport level (e.g. the server
   // supports range requests, we are playing a file, etc.).
-  virtual bool IsTransportSeekable() MOZ_OVERRIDE;
+  virtual bool IsTransportSeekable() override;
 
   // Return the time ranges that can be seeked into.
   virtual nsresult GetSeekable(dom::TimeRanges* aSeekable);
@@ -618,7 +626,7 @@ public:
   virtual void SetFragmentEndTime(double aTime);
 
   // Set the end time of the media. aTime is in microseconds.
-  void SetMediaEndTime(int64_t aTime) MOZ_FINAL MOZ_OVERRIDE;
+  void SetMediaEndTime(int64_t aTime) final override;
 
   // Invalidate the frame.
   void Invalidate();
@@ -653,16 +661,16 @@ public:
   // has changed.
   void DurationChanged();
 
-  bool OnStateMachineThread() const MOZ_OVERRIDE;
+  bool OnStateMachineThread() const override;
 
-  bool OnDecodeThread() const MOZ_OVERRIDE;
+  bool OnDecodeThread() const override;
 
   // Returns the monitor for other threads to synchronise access to
   // state.
-  ReentrantMonitor& GetReentrantMonitor() MOZ_OVERRIDE;
+  ReentrantMonitor& GetReentrantMonitor() override;
 
   // Returns true if the decoder is shut down
-  bool IsShutdown() const MOZ_FINAL MOZ_OVERRIDE;
+  bool IsShutdown() const final override;
 
   // Constructs the time ranges representing what segments of the media
   // are buffered and playable.
@@ -673,11 +681,11 @@ public:
   size_t SizeOfVideoQueue();
   size_t SizeOfAudioQueue();
 
-  VideoFrameContainer* GetVideoFrameContainer() MOZ_FINAL MOZ_OVERRIDE
+  VideoFrameContainer* GetVideoFrameContainer() final override
   {
     return mVideoFrameContainer;
   }
-  layers::ImageContainer* GetImageContainer() MOZ_OVERRIDE;
+  layers::ImageContainer* GetImageContainer() override;
 
   // Return the current state. Can be called on any thread. If called from
   // a non-main thread, the decoder monitor must be held.
@@ -731,7 +739,7 @@ public:
   // the reader on the decoder thread (Assertions for this checked by
   // mDecoderStateMachine). This must be called with the decode monitor
   // held.
-  void UpdatePlaybackPosition(int64_t aTime) MOZ_FINAL MOZ_OVERRIDE;
+  void UpdatePlaybackPosition(int64_t aTime) final override;
 
   void SetAudioChannel(dom::AudioChannel aChannel) { mAudioChannel = aChannel; }
   dom::AudioChannel GetAudioChannel() { return mAudioChannel; }
@@ -741,7 +749,7 @@ public:
   // or equal to aPublishTime.
   void QueueMetadata(int64_t aPublishTime,
                      nsAutoPtr<MediaInfo> aInfo,
-                     nsAutoPtr<MetadataTags> aTags) MOZ_OVERRIDE;
+                     nsAutoPtr<MetadataTags> aTags) override;
 
   int64_t GetSeekTime() { return mRequestedSeekTarget.mTime; }
   void ResetSeekTime() { mRequestedSeekTarget.Reset(); }
@@ -762,18 +770,18 @@ public:
 
   // May be called by the reader to notify this decoder that the metadata from
   // the media file has been read. Call on the decode thread only.
-  void OnReadMetadataCompleted() MOZ_OVERRIDE { }
+  void OnReadMetadataCompleted() override { }
 
   // Called when the metadata from the media file has been loaded by the
   // state machine. Call on the main thread only.
   virtual void MetadataLoaded(nsAutoPtr<MediaInfo> aInfo,
                               nsAutoPtr<MetadataTags> aTags,
-                              bool aRestoredFromDromant) MOZ_OVERRIDE;
+                              MediaDecoderEventVisibility aEventVisibility) override;
 
   // Called when the first audio and/or video from the media file has been loaded
   // by the state machine. Call on the main thread only.
   virtual void FirstFrameLoaded(nsAutoPtr<MediaInfo> aInfo,
-                                bool aRestoredFromDromant) MOZ_OVERRIDE;
+                                MediaDecoderEventVisibility aEventVisibility) override;
 
   // Called from MetadataLoaded(). Creates audio tracks and adds them to its
   // owner's audio track list, and implies to video tracks respectively.
@@ -782,7 +790,7 @@ public:
 
   // Removes all audio tracks and video tracks that are previously added into
   // the track list. Call on the main thread only.
-  virtual void RemoveMediaTracks() MOZ_OVERRIDE;
+  virtual void RemoveMediaTracks() override;
 
   // Returns true if the this decoder is expecting any more data to arrive
   // sometime in the not-too-distant future, either from the network or from
@@ -797,20 +805,20 @@ public:
 
   // Seeking has stopped. Inform the element on the main
   // thread.
-  void SeekingStopped();
+  void SeekingStopped(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
 
   // Seeking has stopped at the end of the resource. Inform the element on the main
   // thread.
-  void SeekingStoppedAtEnd();
+  void SeekingStoppedAtEnd(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
 
   // Seeking has started. Inform the element on the main
   // thread.
-  void SeekingStarted();
+  void SeekingStarted(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
 
   // Called when the backend has changed the current playback
   // position. It dispatches a timeupdate event and invalidates the frame.
   // This must be called on the main thread only.
-  virtual void PlaybackPositionChanged();
+  virtual void PlaybackPositionChanged(MediaDecoderEventVisibility aEventVisibility = MediaDecoderEventVisibility::Observable);
 
   // Calls mElement->UpdateReadyStateForData, telling it whether we have
   // data for the next frame and if we're buffering. Main thread only.
@@ -836,7 +844,7 @@ public:
   // Indicate whether the media is same-origin with the element.
   void UpdateSameOriginStatus(bool aSameOrigin);
 
-  MediaDecoderOwner* GetOwner() MOZ_OVERRIDE;
+  MediaDecoderOwner* GetOwner() override;
 
   // Returns true if we're logically playing, that is, if the Play() has
   // been called and Pause() has not or we have not yet reached the end
@@ -847,10 +855,10 @@ public:
 
 #ifdef MOZ_EME
   // This takes the decoder monitor.
-  virtual nsresult SetCDMProxy(CDMProxy* aProxy) MOZ_OVERRIDE;
+  virtual nsresult SetCDMProxy(CDMProxy* aProxy) override;
 
   // Decoder monitor must be held.
-  virtual CDMProxy* GetCDMProxy() MOZ_OVERRIDE;
+  virtual CDMProxy* GetCDMProxy() override;
 #endif
 
 #ifdef MOZ_RAW
@@ -1027,7 +1035,7 @@ public:
   // Increments the parsed and decoded frame counters by the passed in counts.
   // Can be called on any thread.
   virtual void NotifyDecodedFrames(uint32_t aParsed, uint32_t aDecoded,
-                                   uint32_t aDropped) MOZ_OVERRIDE
+                                   uint32_t aDropped) override
   {
     GetFrameStatistics().NotifyDecodedFrames(aParsed, aDecoded, aDropped);
   }
@@ -1043,6 +1051,9 @@ protected:
 
   // Cancel a timer for heuristic dormant.
   void CancelDormantTimer();
+
+  // Return true if the decoder has reached the end of playback
+  bool IsEnded() const;
 
   /******
    * The following members should be accessed with the decoder lock held.
@@ -1161,6 +1172,8 @@ protected:
   // Ensures our media stream has been unpinned.
   void UnpinForSeek();
 
+  const char* PlayStateStr();
+
   // This should only ever be accessed from the main thread.
   // It is set in Init and cleared in Shutdown when the element goes away.
   // The decoder does not add a reference the element.
@@ -1209,6 +1222,12 @@ protected:
 
   // True if MediaDecoder is in dormant state.
   bool mIsDormant;
+
+  // True if MediaDecoder was PLAY_STATE_ENDED state, when entering to dormant.
+  // When MediaCodec is in dormant during PLAY_STATE_ENDED state, PlayState
+  // becomes different from PLAY_STATE_ENDED. But the MediaDecoder need to act
+  // as in PLAY_STATE_ENDED state to MediaDecoderOwner.
+  bool mWasEndedWhenEnteredDormant;
 
   // True if heuristic dormant is supported.
   const bool mIsHeuristicDormantSupported;

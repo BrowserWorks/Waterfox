@@ -220,7 +220,7 @@ nsIntRect nsView::CalcWidgetBounds(nsWindowType aType)
     if (parentWidget && aType == eWindowType_popup &&
         IsEffectivelyVisible()) {
       // put offset into screen coordinates. (based on client area origin)
-      nsIntPoint screenPoint = parentWidget->WidgetToScreenOffset();
+      LayoutDeviceIntPoint screenPoint = parentWidget->WidgetToScreenOffset();
       viewBounds += nsPoint(NSIntPixelsToAppUnits(screenPoint.x, p2a),
                             NSIntPixelsToAppUnits(screenPoint.y, p2a));
     }
@@ -553,9 +553,9 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
                                bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(!aWidgetInitData ||
-                    aWidgetInitData->mWindowType != eWindowType_popup,
-                    "Use CreateWidgetForPopup");
+  MOZ_ASSERT(!aWidgetInitData ||
+             aWidgetInitData->mWindowType != eWindowType_popup,
+             "Use CreateWidgetForPopup");
 
   DefaultWidgetInitData defaultInitData;
   bool initDataPassedIn = !!aWidgetInitData;
@@ -566,8 +566,6 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
   nsIWidget* parentWidget =
     GetParent() ? GetParent()->GetNearestWidget(nullptr) : nullptr;
   if (!parentWidget) {
@@ -577,8 +575,7 @@ nsresult nsView::CreateWidget(nsWidgetInitData *aWidgetInitData,
 
   // XXX: using aForceUseIWidgetParent=true to preserve previous
   // semantics.  It's not clear that it's actually needed.
-  mWindow = parentWidget->CreateChild(trect, dx, aWidgetInitData,
-                                      true).take();
+  mWindow = parentWidget->CreateChild(trect, aWidgetInitData, true).take();
   if (!mWindow) {
     return NS_ERROR_FAILURE;
   }
@@ -594,20 +591,18 @@ nsresult nsView::CreateWidgetForParent(nsIWidget* aParentWidget,
                                         bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(!aWidgetInitData ||
-                    aWidgetInitData->mWindowType != eWindowType_popup,
-                    "Use CreateWidgetForPopup");
-  NS_ABORT_IF_FALSE(aParentWidget, "Parent widget required");
+  MOZ_ASSERT(!aWidgetInitData ||
+             aWidgetInitData->mWindowType != eWindowType_popup,
+             "Use CreateWidgetForPopup");
+  MOZ_ASSERT(aParentWidget, "Parent widget required");
 
   DefaultWidgetInitData defaultInitData;
   aWidgetInitData = aWidgetInitData ? aWidgetInitData : &defaultInitData;
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
   mWindow =
-    aParentWidget->CreateChild(trect, dx, aWidgetInitData).take();
+    aParentWidget->CreateChild(trect, aWidgetInitData).take();
   if (!mWindow) {
     return NS_ERROR_FAILURE;
   }
@@ -623,13 +618,11 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
                                        bool aResetVisibility)
 {
   AssertNoWindow();
-  NS_ABORT_IF_FALSE(aWidgetInitData, "Widget init data required");
-  NS_ABORT_IF_FALSE(aWidgetInitData->mWindowType == eWindowType_popup,
-                    "Use one of the other CreateWidget methods");
+  MOZ_ASSERT(aWidgetInitData, "Widget init data required");
+  MOZ_ASSERT(aWidgetInitData->mWindowType == eWindowType_popup,
+             "Use one of the other CreateWidget methods");
 
   nsIntRect trect = CalcWidgetBounds(aWidgetInitData->mWindowType);
-
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
 
   // XXX/cjones: having these two separate creation cases seems ... um
   // ... unnecessary, but it's the way the old code did it.  Please
@@ -638,8 +631,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
   if (aParentWidget) {
     // XXX: using aForceUseIWidgetParent=true to preserve previous
     // semantics.  It's not clear that it's actually needed.
-    mWindow = aParentWidget->CreateChild(trect, dx, aWidgetInitData,
-                                         true).take();
+    mWindow = aParentWidget->CreateChild(trect, aWidgetInitData, true).take();
   }
   else {
     nsIWidget* nearestParent = GetParent() ? GetParent()->GetNearestWidget(nullptr)
@@ -650,8 +642,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
       return NS_ERROR_FAILURE;
     }
 
-    mWindow =
-      nearestParent->CreateChild(trect, dx, aWidgetInitData).take();
+    mWindow = nearestParent->CreateChild(trect, aWidgetInitData).take();
   }
   if (!mWindow) {
     return NS_ERROR_FAILURE;
@@ -665,7 +656,7 @@ nsresult nsView::CreateWidgetForPopup(nsWidgetInitData *aWidgetInitData,
 void
 nsView::InitializeWindow(bool aEnableDragDrop, bool aResetVisibility)
 {
-  NS_ABORT_IF_FALSE(mWindow, "Must have a window to initialize");
+  MOZ_ASSERT(mWindow, "Must have a window to initialize");
 
   mWindow->SetWidgetListener(this);
 
@@ -697,11 +688,9 @@ nsresult nsView::AttachToTopLevelWidget(nsIWidget* aWidget)
     }
   }
 
-  nsRefPtr<nsDeviceContext> dx = mViewManager->GetDeviceContext();
-
   // Note, the previous device context will be released. Detaching
   // will not restore the old one.
-  nsresult rv = aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets(), dx);
+  nsresult rv = aWidget->AttachViewToTopLevel(!nsIWidget::UsePuppetWidgets());
   if (NS_FAILED(rv))
     return rv;
 
@@ -815,9 +804,8 @@ nsPoint nsView::GetOffsetTo(const nsView* aOther) const
 
 nsPoint nsView::GetOffsetTo(const nsView* aOther, const int32_t aAPD) const
 {
-  NS_ABORT_IF_FALSE(GetParent() || !aOther || aOther->GetParent() ||
-                    this == aOther, "caller of (outer) GetOffsetTo must not "
-                    "pass unrelated views");
+  MOZ_ASSERT(GetParent() || !aOther || aOther->GetParent() || this == aOther,
+             "caller of (outer) GetOffsetTo must not pass unrelated views");
   // We accumulate the final result in offset
   nsPoint offset(0, 0);
   // The offset currently accumulated at the current APD

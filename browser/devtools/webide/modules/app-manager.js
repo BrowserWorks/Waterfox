@@ -18,6 +18,7 @@ const {ConnectionManager, Connection} = require("devtools/client/connection-mana
 const {AppActorFront} = require("devtools/app-actor-front");
 const {getDeviceFront} = require("devtools/server/actors/device");
 const {getPreferenceFront} = require("devtools/server/actors/preference");
+const {getSettingsFront} = require("devtools/server/actors/settings");
 const {setTimeout} = require("sdk/timers");
 const {Task} = Cu.import("resource://gre/modules/Task.jsm", {});
 const {RuntimeScanners, RuntimeTypes} = require("devtools/webide/runtimes");
@@ -93,12 +94,13 @@ let AppManager = exports.AppManager = {
   },
 
   onConnectionChanged: function() {
+    console.log("Connection status changed: " + this.connection.status);
+
     if (this.connection.status == Connection.Status.DISCONNECTED) {
       this.selectedRuntime = null;
     }
 
-    if (this.connection.status != Connection.Status.CONNECTED) {
-      console.log("Connection status changed: " + this.connection.status);
+    if (!this.connected) {
       if (this._appsFront) {
         this._appsFront.off("install-progress", this.onInstallProgress);
         this._appsFront.unwatchApps();
@@ -119,11 +121,11 @@ let AppManager = exports.AppManager = {
             this._appsFront = front;
             this._listTabsResponse = response;
             this.update("list-tabs-response");
-            return front.fetchIcons();
           })
           .then(() => {
             this.checkIfProjectIsRunning();
             this.update("runtime-apps-found");
+            front.fetchIcons();
           });
         } else {
           this._listTabsResponse = response;
@@ -133,6 +135,10 @@ let AppManager = exports.AppManager = {
     }
 
     this.update("connection");
+  },
+
+  get connected() {
+    return this.connection.status == Connection.Status.CONNECTED;
   },
 
   get apps() {
@@ -276,6 +282,13 @@ let AppManager = exports.AppManager = {
     // A regular comparison still sees a difference when equal in some cases
     if (JSON.stringify(this._selectedProject) !==
         JSON.stringify(value)) {
+
+      let cancelled = false;
+      this.update("before-project", { cancel: () => { cancelled = true; } });
+      if (cancelled)  {
+        return;
+      }
+
       this._selectedProject = value;
 
       // Clear out tab store's selected state, if any
@@ -303,6 +316,10 @@ let AppManager = exports.AppManager = {
   removeSelectedProject: function() {
     let location = this.selectedProject.location;
     AppManager.selectedProject = null;
+    // If the user cancels the removeProject operation, don't remove the project
+    if (AppManager.selectedProject != null) {
+      return;
+    }
     return AppProjects.remove(location);
   },
 
@@ -324,8 +341,7 @@ let AppManager = exports.AppManager = {
 
   connectToRuntime: function(runtime) {
 
-    if (this.connection.status == Connection.Status.CONNECTED &&
-        this.selectedRuntime === runtime) {
+    if (this.connected && this.selectedRuntime === runtime) {
       // Already connected
       return promise.resolve();
     }
@@ -338,23 +354,23 @@ let AppManager = exports.AppManager = {
       let onConnectedOrDisconnected = () => {
         this.connection.off(Connection.Events.CONNECTED, onConnectedOrDisconnected);
         this.connection.off(Connection.Events.DISCONNECTED, onConnectedOrDisconnected);
-        if (this.connection.status == Connection.Status.CONNECTED) {
+        if (this.connected) {
           deferred.resolve();
         } else {
           deferred.reject();
         }
-      }
+      };
       this.connection.on(Connection.Events.CONNECTED, onConnectedOrDisconnected);
       this.connection.on(Connection.Events.DISCONNECTED, onConnectedOrDisconnected);
       try {
         // Reset the connection's state to defaults
         this.connection.resetOptions();
-        this.selectedRuntime.connect(this.connection).then(
-          () => {},
-          deferred.reject.bind(deferred));
+        // Only watch for errors here.  Final resolution occurs above, once
+        // we've reached the CONNECTED state.
+        this.selectedRuntime.connect(this.connection)
+                            .then(null, e => deferred.reject(e));
       } catch(e) {
-        console.error(e);
-        deferred.reject();
+        deferred.reject(e);
       }
     }, deferred.reject);
 
@@ -375,6 +391,10 @@ let AppManager = exports.AppManager = {
       this.connection.once(Connection.Events.STATUS_CHANGED, () => {
         this._telemetry.stopTimer(timerId);
       });
+    }).catch(() => {
+      // Empty rejection handler to silence uncaught rejection warnings
+      // |connectToRuntime| caller should listen for rejections.
+      // Bug 1121100 may find a better way to silence these.
     });
 
     return deferred.promise;
@@ -399,8 +419,15 @@ let AppManager = exports.AppManager = {
     return getPreferenceFront(this.connection.client, this._listTabsResponse);
   },
 
+  get settingsFront() {
+     if (!this._listTabsResponse) {
+      return null;
+    }
+    return getSettingsFront(this.connection.client, this._listTabsResponse);
+  },
+
   disconnectRuntime: function() {
-    if (this.connection.status != Connection.Status.CONNECTED) {
+    if (!this.connected) {
       return promise.resolve();
     }
     let deferred = promise.defer();
@@ -454,7 +481,10 @@ let AppManager = exports.AppManager = {
     return Task.spawn(function* () {
       let self = AppManager;
 
-      let packageDir = yield ProjectBuilding.build(project);
+      let packageDir = yield ProjectBuilding.build({
+        project: project,
+        logger: self.update.bind(self, "pre-package")
+      });
 
       yield self.validateProject(project);
 
@@ -495,6 +525,12 @@ let AppManager = exports.AppManager = {
         response = yield self._appsFront.installHosted(appId,
                                             metadata,
                                             project.manifest);
+      }
+
+      // Addons don't have any document to load (yet?)
+      // So that there is no need to run them, installing is enough
+      if (project.manifest.role && project.manifest.role === "addon") {
+        return;
       }
 
       let {app} = response;

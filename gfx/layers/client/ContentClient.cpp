@@ -290,8 +290,8 @@ ContentClientRemoteBuffer::BuildTextureClients(SurfaceFormat aFormat,
   // real transaction. That is kind of fragile, and this assert will catch
   // circumstances where we screw that up, e.g., by unnecessarily recreating our
   // buffers.
-  NS_ABORT_IF_FALSE(!mIsNewBuffer,
-                    "Bad! Did we create a buffer twice without painting?");
+  MOZ_ASSERT(!mIsNewBuffer,
+             "Bad! Did we create a buffer twice without painting?");
 
   mIsNewBuffer = true;
 
@@ -382,7 +382,7 @@ ContentClientRemoteBuffer::GetUpdatedRegion(const nsIntRegion& aRegionToDraw,
 
   NS_ASSERTION(BufferRect().Contains(aRegionToDraw.GetBounds()),
                "Update outside of buffer rect!");
-  NS_ABORT_IF_FALSE(mTextureClient, "should have a back buffer by now");
+  MOZ_ASSERT(mTextureClient, "should have a back buffer by now");
 
   return updatedRegion;
 }
@@ -421,7 +421,18 @@ ContentClientRemoteBuffer::Dump(std::stringstream& aStream,
                                 bool aDumpHtml)
 {
   // TODO We should combine the OnWhite/OnBlack here an just output a single image.
+  aStream << "\n" << aPrefix << "Surface: ";
   CompositableClient::DumpTextureClient(aStream, mTextureClient);
+}
+
+void
+ContentClientDoubleBuffered::Dump(std::stringstream& aStream,
+                                const char* aPrefix,
+                                bool aDumpHtml)
+{
+  // TODO We should combine the OnWhite/OnBlack here an just output a single image.
+  aStream << "\n" << aPrefix << "Surface: ";
+  CompositableClient::DumpTextureClient(aStream, mFrontClient);
 }
 
 void
@@ -775,7 +786,7 @@ ContentClientIncremental::BeginPaintBuffer(PaintedLayer* aLayer,
         if ((mode == SurfaceMode::SURFACE_COMPONENT_ALPHA) != mHasBufferOnWhite) {
           printf_stderr("Layer's component alpha status has changed\n");
         }
-        printf_stderr("Invalidating entire layer %p\n", aLayer);
+        printf_stderr("Invalidating entire layer %p: no buffer, or content type or component alpha changed\n", aLayer);
       }
 #endif
       // We're effectively clearing the valid region, so we need to draw

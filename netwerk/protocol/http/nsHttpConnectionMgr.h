@@ -364,7 +364,7 @@ private:
         // mSpdyPreferred. The mapping is maintained in the connection mananger
         // mSpdyPreferred hash.
         //
-        nsCString mCoalescingKey;
+        nsTArray<nsCString> mCoalescingKeys;
 
         // The value of a recevied SPDY settings type 5 previously received
         // for this connection entry and the time it was set.
@@ -382,7 +382,7 @@ private:
         // minimized so that we can multiplex on a single spdy connection.
         bool mTestedSpdy;
 
-        bool mSpdyPreferred;
+        bool mInPreferredHash;
 
         // Flags to remember our happy-eyeballs decision.
         // Reset only by Ctrl-F5 reload.
@@ -430,7 +430,7 @@ private:
     // nsHalfOpenSocket is used to hold the state of an opening TCP socket
     // while we wait for it to establish and bind it to a connection
 
-    class nsHalfOpenSocket MOZ_FINAL : public nsIOutputStreamCallback,
+    class nsHalfOpenSocket final : public nsIOutputStreamCallback,
                                        public nsITransportEventSink,
                                        public nsIInterfaceRequestor,
                                        public nsITimerCallback
@@ -478,6 +478,7 @@ private:
     private:
         nsConnectionEntry              *mEnt;
         nsRefPtr<nsAHttpTransaction>   mTransaction;
+        bool                           mDispatchedMTransaction;
         nsCOMPtr<nsISocketTransport>   mSocketTransport;
         nsCOMPtr<nsIAsyncOutputStream> mStreamOut;
         nsCOMPtr<nsIAsyncInputStream>  mStreamIn;
@@ -589,7 +590,9 @@ private:
 
     // Manage the preferred spdy connection entry for this address
     nsConnectionEntry *GetSpdyPreferredEnt(nsConnectionEntry *aOriginalEntry);
-    void               RemoveSpdyPreferredEnt(nsACString &aDottedDecimal);
+    nsConnectionEntry *LookupPreferredHash(nsConnectionEntry *ent);
+    void               StorePreferredHash(nsConnectionEntry *ent);
+    void               RemovePreferredHash(nsConnectionEntry *ent);
     nsHttpConnection  *GetSpdyPreferredConn(nsConnectionEntry *ent);
     nsDataHashtable<nsCStringHashKey, nsConnectionEntry *>   mSpdyPreferredHash;
     nsConnectionEntry *LookupConnectionEntry(nsHttpConnectionInfo *ci,

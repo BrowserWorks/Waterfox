@@ -1,5 +1,5 @@
 /* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
-/* vim: set sw=2 ts=8 et tw=80 : */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
 /* This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
@@ -11,7 +11,7 @@ namespace mozilla {
 
 NS_IMPL_ISUPPORTS(LoadContext, nsILoadContext, nsIInterfaceRequestor)
 
-LoadContext::LoadContext(nsIPrincipal* aPrincipal)
+LoadContext::LoadContext(nsIPrincipal* aPrincipal, nsILoadContext* aOptionalBase)
   : mTopFrameElement(nullptr)
   , mNestedFrameId(0)
   , mIsContent(true)
@@ -24,6 +24,15 @@ LoadContext::LoadContext(nsIPrincipal* aPrincipal)
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aPrincipal->GetAppId(&mAppId)));
   MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
     aPrincipal->GetIsInBrowserElement(&mIsInBrowserElement)));
+
+  if (!aOptionalBase) {
+    return;
+  }
+
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aOptionalBase->GetIsContent(&mIsContent)));
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(
+    aOptionalBase->GetUsePrivateBrowsing(&mUsePrivateBrowsing)));
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(aOptionalBase->GetUseRemoteTabs(&mUseRemoteTabs)));
 }
 
 //-----------------------------------------------------------------------------
@@ -159,7 +168,7 @@ LoadContext::GetAppId(uint32_t* aAppId)
 // LoadContext::nsIInterfaceRequestor
 //-----------------------------------------------------------------------------
 NS_IMETHODIMP
-LoadContext::GetInterface(const nsIID &aIID, void **aResult)
+LoadContext::GetInterface(const nsIID& aIID, void** aResult)
 {
   NS_ENSURE_ARG_POINTER(aResult);
   *aResult = nullptr;

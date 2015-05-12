@@ -15,16 +15,19 @@
 #include "nsIDOMMessageEvent.h"
 #include "nsIDocument.h"
 #include "nsIDocShell.h"
+#include "nsIInterfaceRequestor.h"
 #include "nsIMemoryReporter.h"
 #include "nsIPermissionManager.h"
 #include "nsIScriptError.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIScriptSecurityManager.h"
+#include "nsITabChild.h"
 #include "nsITextToSubURI.h"
 #include "nsIThreadInternal.h"
 #include "nsITimer.h"
 #include "nsIURI.h"
 #include "nsIURL.h"
+#include "nsIWeakReferenceUtils.h"
 #include "nsIWorkerDebugger.h"
 #include "nsIXPConnect.h"
 #include "nsPerformance.h"
@@ -194,7 +197,7 @@ SwapToISupportsArray(SmartPtr<T>& aSrc,
 // This class is used to wrap any runnables that the worker receives via the
 // nsIEventTarget::Dispatch() method (either from NS_DispatchToCurrentThread or
 // from the worker's EventTarget).
-class ExternalRunnableWrapper MOZ_FINAL : public WorkerRunnable
+class ExternalRunnableWrapper final : public WorkerRunnable
 {
   nsCOMPtr<nsICancelableRunnable> mWrappedRunnable;
 
@@ -215,7 +218,7 @@ private:
   { }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     nsresult rv = mWrappedRunnable->Run();
     if (NS_FAILED(rv)) {
@@ -228,7 +231,7 @@ private:
   }
 
   NS_IMETHOD
-  Cancel() MOZ_OVERRIDE
+  Cancel() override
   {
     nsresult rv = mWrappedRunnable->Cancel();
     nsresult rv2 = WorkerRunnable::Cancel();
@@ -700,24 +703,32 @@ const JSStructuredCloneCallbacks gMainThreadChromeWorkerStructuredCloneCallbacks
   nullptr
 };
 
-class MainThreadReleaseRunnable MOZ_FINAL : public nsRunnable
+class MainThreadReleaseRunnable final : public nsRunnable
 {
   nsTArray<nsCOMPtr<nsISupports>> mDoomed;
   nsTArray<nsCString> mHostObjectURIs;
+  nsCOMPtr<nsILoadGroup> mLoadGroupToCancel;
 
 public:
   MainThreadReleaseRunnable(nsTArray<nsCOMPtr<nsISupports>>& aDoomed,
-                            nsTArray<nsCString>& aHostObjectURIs)
+                            nsTArray<nsCString>& aHostObjectURIs,
+                            nsCOMPtr<nsILoadGroup>& aLoadGroupToCancel)
   {
     mDoomed.SwapElements(aDoomed);
     mHostObjectURIs.SwapElements(aHostObjectURIs);
+    mLoadGroupToCancel.swap(aLoadGroupToCancel);
   }
 
   NS_DECL_ISUPPORTS_INHERITED
 
   NS_IMETHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
+    if (mLoadGroupToCancel) {
+      mLoadGroupToCancel->Cancel(NS_BINDING_ABORTED);
+      mLoadGroupToCancel = nullptr;
+    }
+
     mDoomed.Clear();
 
     for (uint32_t index = 0; index < mHostObjectURIs.Length(); index++) {
@@ -732,7 +743,7 @@ private:
   { }
 };
 
-class WorkerFinishedRunnable MOZ_FINAL : public WorkerControlRunnable
+class WorkerFinishedRunnable final : public WorkerControlRunnable
 {
   WorkerPrivate* mFinishedWorker;
 
@@ -745,7 +756,7 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // Silence bad assertions.
     return true;
@@ -753,14 +764,17 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     // Silence bad assertions.
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
+    nsCOMPtr<nsILoadGroup> loadGroupToCancel;
+    mFinishedWorker->ForgetOverridenLoadGroup(loadGroupToCancel);
+
     nsTArray<nsCOMPtr<nsISupports>> doomed;
     mFinishedWorker->ForgetMainThreadObjects(doomed);
 
@@ -768,7 +782,7 @@ private:
     mFinishedWorker->StealHostObjectURIs(hostObjectURIs);
 
     nsRefPtr<MainThreadReleaseRunnable> runnable =
-      new MainThreadReleaseRunnable(doomed, hostObjectURIs);
+      new MainThreadReleaseRunnable(doomed, hostObjectURIs, loadGroupToCancel);
     if (NS_FAILED(NS_DispatchToMainThread(runnable))) {
       NS_WARNING("Failed to dispatch, going to leak!");
     }
@@ -785,7 +799,7 @@ private:
   }
 };
 
-class TopLevelWorkerFinishedRunnable MOZ_FINAL : public nsRunnable
+class TopLevelWorkerFinishedRunnable final : public nsRunnable
 {
   WorkerPrivate* mFinishedWorker;
 
@@ -802,7 +816,7 @@ private:
   ~TopLevelWorkerFinishedRunnable() {}
 
   NS_IMETHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     AssertIsOnMainThread();
 
@@ -816,6 +830,9 @@ private:
 
     runtime->UnregisterWorker(cx, mFinishedWorker);
 
+    nsCOMPtr<nsILoadGroup> loadGroupToCancel;
+    mFinishedWorker->ForgetOverridenLoadGroup(loadGroupToCancel);
+
     nsTArray<nsCOMPtr<nsISupports> > doomed;
     mFinishedWorker->ForgetMainThreadObjects(doomed);
 
@@ -823,7 +840,7 @@ private:
     mFinishedWorker->StealHostObjectURIs(hostObjectURIs);
 
     nsRefPtr<MainThreadReleaseRunnable> runnable =
-      new MainThreadReleaseRunnable(doomed, hostObjectURIs);
+      new MainThreadReleaseRunnable(doomed, hostObjectURIs, loadGroupToCancel);
     if (NS_FAILED(NS_DispatchToCurrentThread(runnable))) {
       NS_WARNING("Failed to dispatch, going to leak!");
     }
@@ -833,7 +850,7 @@ private:
   }
 };
 
-class ModifyBusyCountRunnable MOZ_FINAL : public WorkerControlRunnable
+class ModifyBusyCountRunnable final : public WorkerControlRunnable
 {
   bool mIncrease;
 
@@ -845,14 +862,14 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return aWorkerPrivate->ModifyBusyCount(aCx, mIncrease);
   }
 
   virtual void
   PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate, bool aRunResult)
-          MOZ_OVERRIDE
+          override
   {
     if (mIncrease) {
       WorkerControlRunnable::PostRun(aCx, aWorkerPrivate, aRunResult);
@@ -863,7 +880,7 @@ private:
   }
 };
 
-class CompileScriptRunnable MOZ_FINAL : public WorkerRunnable
+class CompileScriptRunnable final : public WorkerRunnable
 {
 public:
   explicit CompileScriptRunnable(WorkerPrivate* aWorkerPrivate)
@@ -872,7 +889,7 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     JS::Rooted<JSObject*> global(aCx,
       aWorkerPrivate->CreateGlobalScope(aCx));
@@ -890,7 +907,7 @@ private:
   }
 };
 
-class CloseEventRunnable MOZ_FINAL : public WorkerRunnable
+class CloseEventRunnable final : public WorkerRunnable
 {
 public:
   explicit CloseEventRunnable(WorkerPrivate* aWorkerPrivate)
@@ -899,20 +916,20 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_CRASH("Don't call Dispatch() on CloseEventRunnable!");
   }
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     MOZ_CRASH("Don't call Dispatch() on CloseEventRunnable!");
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     JS::Rooted<JSObject*> target(aCx, JS::CurrentGlobalOrNull(aCx));
     NS_ASSERTION(target, "This must never be null!");
@@ -944,7 +961,7 @@ private:
 
   virtual void
   PostRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate, bool aRunResult)
-          MOZ_OVERRIDE
+          override
   {
     // Report errors.
     WorkerRunnable::PostRun(aCx, aWorkerPrivate, aRunResult);
@@ -958,7 +975,7 @@ private:
   }
 };
 
-class MessageEventRunnable MOZ_FINAL : public WorkerRunnable
+class MessageEventRunnable final : public WorkerRunnable
 {
   JSAutoStructuredCloneBuffer mBuffer;
   nsTArray<nsCOMPtr<nsISupports> > mClonedObjects;
@@ -1020,7 +1037,7 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_ASSERT_IF(mToMessagePort, aWorkerPrivate->IsSharedWorker());
 
@@ -1067,7 +1084,7 @@ private:
   }
 };
 
-class NotifyRunnable MOZ_FINAL : public WorkerControlRunnable
+class NotifyRunnable final : public WorkerControlRunnable
 {
   Status mStatus;
 
@@ -1082,7 +1099,7 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // Modify here, but not in PostRun! This busy count addition will be matched
     // by the CloseEventRunnable.
@@ -1091,7 +1108,7 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     if (!aDispatchResult) {
       // We couldn't dispatch to the worker, which means it's already dead.
@@ -1101,13 +1118,13 @@ private:
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return aWorkerPrivate->NotifyInternal(aCx, mStatus);
   }
 };
 
-class CloseRunnable MOZ_FINAL : public WorkerControlRunnable
+class CloseRunnable final : public WorkerControlRunnable
 {
 public:
   explicit CloseRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1116,7 +1133,7 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // This busy count will be matched by the CloseEventRunnable.
     return aWorkerPrivate->ModifyBusyCount(aCx, true) &&
@@ -1124,7 +1141,7 @@ private:
   }
 };
 
-class SuspendRunnable MOZ_FINAL : public WorkerControlRunnable
+class SuspendRunnable final : public WorkerControlRunnable
 {
 public:
   explicit SuspendRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1133,13 +1150,13 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return aWorkerPrivate->SuspendInternal(aCx);
   }
 };
 
-class ResumeRunnable MOZ_FINAL : public WorkerControlRunnable
+class ResumeRunnable final : public WorkerControlRunnable
 {
 public:
   explicit ResumeRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1148,13 +1165,13 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return aWorkerPrivate->ResumeInternal(aCx);
   }
 };
 
-class ReportErrorRunnable MOZ_FINAL : public WorkerRunnable
+class ReportErrorRunnable final : public WorkerRunnable
 {
   nsString mMessage;
   nsString mFilename;
@@ -1288,7 +1305,7 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     aWorkerPrivate->AssertIsOnWorkerThread();
 
@@ -1297,7 +1314,7 @@ private:
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     JS::Rooted<JSObject*> target(aCx, aWorkerPrivate->GetWrapper());
 
@@ -1318,15 +1335,20 @@ private:
         return true;
       }
 
-      if (aWorkerPrivate->IsServiceWorker()) {
-        nsRefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
-        MOZ_ASSERT(swm);
-        swm->HandleError(aCx, aWorkerPrivate->SharedWorkerName(),
-                         aWorkerPrivate->ScriptURL(),
-                         mMessage,
-                         mFilename, mLine, mLineNumber, mColumnNumber, mFlags);
-        return true;
-      } else if (aWorkerPrivate->IsSharedWorker()) {
+      if (aWorkerPrivate->IsServiceWorker() || aWorkerPrivate->IsSharedWorker()) {
+        if (aWorkerPrivate->IsServiceWorker()) {
+          nsRefPtr<ServiceWorkerManager> swm = ServiceWorkerManager::GetInstance();
+          MOZ_ASSERT(swm);
+          bool handled = swm->HandleError(aCx, aWorkerPrivate->SharedWorkerName(),
+                                          aWorkerPrivate->ScriptURL(),
+                                          mMessage,
+                                          mFilename, mLine, mLineNumber,
+                                          mColumnNumber, mFlags);
+          if (handled) {
+            return true;
+          }
+        }
+
         aWorkerPrivate->BroadcastErrorToSharedWorkers(aCx, mMessage, mFilename,
                                                       mLine, mLineNumber,
                                                       mColumnNumber, mFlags);
@@ -1354,7 +1376,7 @@ private:
   }
 };
 
-class TimerRunnable MOZ_FINAL : public WorkerRunnable
+class TimerRunnable final : public WorkerRunnable
 {
 public:
   explicit TimerRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1363,7 +1385,7 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // Silence bad assertions.
     return true;
@@ -1371,13 +1393,13 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     // Silence bad assertions.
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     return aWorkerPrivate->RunExpiredTimeouts(aCx);
   }
@@ -1389,7 +1411,7 @@ DummyCallback(nsITimer* aTimer, void* aClosure)
   // Nothing!
 }
 
-class TimerThreadEventTarget MOZ_FINAL : public nsIEventTarget
+class TimerThreadEventTarget final : public nsIEventTarget
 {
   ~TimerThreadEventTarget() {}
 
@@ -1409,7 +1431,7 @@ public:
 
 protected:
   NS_IMETHOD
-  Dispatch(nsIRunnable* aRunnable, uint32_t aFlags) MOZ_OVERRIDE
+  Dispatch(nsIRunnable* aRunnable, uint32_t aFlags) override
   {
     // This should only happen on the timer thread.
     MOZ_ASSERT(!NS_IsMainThread());
@@ -1430,7 +1452,7 @@ protected:
   }
 
   NS_IMETHOD
-  IsOnCurrentThread(bool* aIsOnCurrentThread) MOZ_OVERRIDE
+  IsOnCurrentThread(bool* aIsOnCurrentThread) override
   {
     MOZ_ASSERT(aIsOnCurrentThread);
 
@@ -1443,11 +1465,11 @@ protected:
   }
 };
 
-class KillCloseEventRunnable MOZ_FINAL : public WorkerRunnable
+class KillCloseEventRunnable final : public WorkerRunnable
 {
   nsCOMPtr<nsITimer> mTimer;
 
-  class KillScriptRunnable MOZ_FINAL : public WorkerControlRunnable
+  class KillScriptRunnable final : public WorkerControlRunnable
   {
   public:
     explicit KillScriptRunnable(WorkerPrivate* aWorkerPrivate)
@@ -1456,7 +1478,7 @@ class KillCloseEventRunnable MOZ_FINAL : public WorkerRunnable
 
   private:
     virtual bool
-    PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+    PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
     {
       // Silence bad assertions, this is dispatched from the timer thread.
       return true;
@@ -1464,13 +1486,13 @@ class KillCloseEventRunnable MOZ_FINAL : public WorkerRunnable
 
     virtual void
     PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-                 bool aDispatchResult) MOZ_OVERRIDE
+                 bool aDispatchResult) override
     {
       // Silence bad assertions, this is dispatched from the timer thread.
     }
 
     virtual bool
-    WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+    WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
     {
       // Kill running script.
       return false;
@@ -1521,20 +1543,20 @@ private:
   }
 
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_CRASH("Don't call Dispatch() on KillCloseEventRunnable!");
   }
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     MOZ_CRASH("Don't call Dispatch() on KillCloseEventRunnable!");
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     if (mTimer) {
       mTimer->Cancel();
@@ -1545,7 +1567,7 @@ private:
   }
 };
 
-class UpdateRuntimeOptionsRunnable MOZ_FINAL : public WorkerControlRunnable
+class UpdateRuntimeOptionsRunnable final : public WorkerControlRunnable
 {
   JS::RuntimeOptions mRuntimeOptions;
 
@@ -1559,14 +1581,14 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->UpdateRuntimeOptionsInternal(aCx, mRuntimeOptions);
     return true;
   }
 };
 
-class UpdatePreferenceRunnable MOZ_FINAL : public WorkerControlRunnable
+class UpdatePreferenceRunnable final : public WorkerControlRunnable
 {
   WorkerPreference mPref;
   bool mValue;
@@ -1581,14 +1603,14 @@ public:
   { }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->UpdatePreferenceInternal(aCx, mPref, mValue);
     return true;
   }
 };
 
-class UpdateLanguagesRunnable MOZ_FINAL : public WorkerRunnable
+class UpdateLanguagesRunnable final : public WorkerRunnable
 {
   nsTArray<nsString> mLanguages;
 
@@ -1600,14 +1622,14 @@ public:
   { }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->UpdateLanguagesInternal(aCx, mLanguages);
     return true;
   }
 };
 
-class UpdateJSWorkerMemoryParameterRunnable MOZ_FINAL :
+class UpdateJSWorkerMemoryParameterRunnable final :
   public WorkerControlRunnable
 {
   uint32_t mValue;
@@ -1623,7 +1645,7 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->UpdateJSWorkerMemoryParameterInternal(aCx, mKey, mValue);
     return true;
@@ -1631,7 +1653,7 @@ private:
 };
 
 #ifdef JS_GC_ZEAL
-class UpdateGCZealRunnable MOZ_FINAL : public WorkerControlRunnable
+class UpdateGCZealRunnable final : public WorkerControlRunnable
 {
   uint8_t mGCZeal;
   uint32_t mFrequency;
@@ -1646,7 +1668,7 @@ public:
 
 private:
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->UpdateGCZealInternal(aCx, mGCZeal, mFrequency);
     return true;
@@ -1654,7 +1676,7 @@ private:
 };
 #endif
 
-class GarbageCollectRunnable MOZ_FINAL : public WorkerControlRunnable
+class GarbageCollectRunnable final : public WorkerControlRunnable
 {
   bool mShrinking;
   bool mCollectChildren;
@@ -1668,7 +1690,7 @@ public:
 
 private:
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // Silence bad assertions, this can be dispatched from either the main
     // thread or the timer thread..
@@ -1677,14 +1699,14 @@ private:
 
   virtual void
   PostDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate,
-                bool aDispatchResult) MOZ_OVERRIDE
+                bool aDispatchResult) override
   {
     // Silence bad assertions, this can be dispatched from either the main
     // thread or the timer thread..
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     aWorkerPrivate->GarbageCollectInternal(aCx, mShrinking, mCollectChildren);
     return true;
@@ -1760,7 +1782,7 @@ public:
   virtual void
   initExtraZoneStats(JS::Zone* aZone,
                      JS::ZoneStats* aZoneStats)
-                     MOZ_OVERRIDE
+                     override
   {
     MOZ_ASSERT(!aZoneStats->extra);
 
@@ -1778,7 +1800,7 @@ public:
   virtual void
   initExtraCompartmentStats(JSCompartment* aCompartment,
                             JS::CompartmentStats* aCompartmentStats)
-                            MOZ_OVERRIDE
+                            override
   {
     MOZ_ASSERT(!aCompartmentStats->extra);
 
@@ -1807,7 +1829,7 @@ public:
   }
 };
 
-class MessagePortRunnable MOZ_FINAL : public WorkerRunnable
+class MessagePortRunnable final : public WorkerRunnable
 {
   uint64_t mMessagePortSerial;
   bool mConnect;
@@ -1827,7 +1849,7 @@ private:
   { }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     if (mConnect) {
       return aWorkerPrivate->ConnectMessagePort(aCx, mMessagePortSerial);
@@ -1838,7 +1860,7 @@ private:
   }
 };
 
-class DummyRunnable MOZ_FINAL
+class DummyRunnable final
   : public WorkerRunnable
 {
 public:
@@ -1856,7 +1878,7 @@ private:
   }
 
   virtual bool
-  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     MOZ_ASSERT_UNREACHABLE("Should never call Dispatch on this!");
     return true;
@@ -1865,13 +1887,13 @@ private:
   virtual void
   PostDispatch(JSContext* aCx,
                WorkerPrivate* aWorkerPrivate,
-               bool aDispatchResult) MOZ_OVERRIDE
+               bool aDispatchResult) override
   {
     MOZ_ASSERT_UNREACHABLE("Should never call Dispatch on this!");
   }
 
   virtual bool
-  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) MOZ_OVERRIDE
+  WorkerRun(JSContext* aCx, WorkerPrivate* aWorkerPrivate) override
   {
     // Do nothing.
     return true;
@@ -1922,7 +1944,7 @@ LoadInfo::~LoadInfo()
 }
 
 template <class Derived>
-class WorkerPrivateParent<Derived>::SynchronizeAndResumeRunnable MOZ_FINAL
+class WorkerPrivateParent<Derived>::SynchronizeAndResumeRunnable final
   : public nsRunnable
 {
   friend class nsRevocableEventPtr<SynchronizeAndResumeRunnable>;
@@ -1946,7 +1968,7 @@ private:
   { }
 
   NS_IMETHOD
-  Run() MOZ_OVERRIDE
+  Run() override
   {
     AssertIsOnMainThread();
 
@@ -1978,7 +2000,130 @@ private:
 };
 
 template <class Derived>
-class WorkerPrivateParent<Derived>::EventTarget MOZ_FINAL
+class WorkerPrivateParent<Derived>::InterfaceRequestor final
+  : public nsIInterfaceRequestor
+{
+  NS_DECL_ISUPPORTS
+
+public:
+  InterfaceRequestor(nsIPrincipal* aPrincipal, nsILoadGroup* aLoadGroup)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(aPrincipal);
+
+    // Look for an existing LoadContext.  This is optional and it's ok if
+    // we don't find one.
+    nsCOMPtr<nsILoadContext> baseContext;
+    if (aLoadGroup) {
+      nsCOMPtr<nsIInterfaceRequestor> callbacks;
+      aLoadGroup->GetNotificationCallbacks(getter_AddRefs(callbacks));
+      if (callbacks) {
+        callbacks->GetInterface(NS_GET_IID(nsILoadContext),
+                                getter_AddRefs(baseContext));
+      }
+    }
+
+    mLoadContext = new LoadContext(aPrincipal, baseContext);
+  }
+
+  void
+  MaybeAddTabChild(nsILoadGroup* aLoadGroup)
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    if (!aLoadGroup) {
+      return;
+    }
+
+    nsCOMPtr<nsIInterfaceRequestor> callbacks;
+    aLoadGroup->GetNotificationCallbacks(getter_AddRefs(callbacks));
+    if (!callbacks) {
+      return;
+    }
+
+    nsCOMPtr<nsITabChild> tabChild;
+    callbacks->GetInterface(NS_GET_IID(nsITabChild), getter_AddRefs(tabChild));
+    if (!tabChild) {
+      return;
+    }
+
+    // Use weak references to the tab child.  Holding a strong reference will
+    // not prevent an ActorDestroy() from being called on the TabChild.
+    // Therefore, we should let the TabChild destroy itself as soon as possible.
+    mTabChildList.AppendElement(do_GetWeakReference(tabChild));
+  }
+
+  NS_IMETHOD
+  GetInterface(const nsIID& aIID, void** aSink) override
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+    MOZ_ASSERT(mLoadContext);
+
+    if (aIID.Equals(NS_GET_IID(nsILoadContext))) {
+      nsCOMPtr<nsILoadContext> ref = mLoadContext;
+      ref.forget(aSink);
+      return NS_OK;
+    }
+
+    // If we still have an active nsITabChild, then return it.  Its possible,
+    // though, that all of the TabChild objects have been destroyed.  In that
+    // case we return NS_NOINTERFACE.
+    if(aIID.Equals(NS_GET_IID(nsITabChild))) {
+      nsCOMPtr<nsITabChild> tabChild = GetAnyLiveTabChild();
+      if (!tabChild) {
+        return NS_NOINTERFACE;
+      }
+      tabChild.forget(aSink);
+      return NS_OK;
+    }
+
+    return NS_NOINTERFACE;
+  }
+
+private:
+  ~InterfaceRequestor() { }
+
+  already_AddRefed<nsITabChild>
+  GetAnyLiveTabChild()
+  {
+    MOZ_ASSERT(NS_IsMainThread());
+
+    // Search our list of known TabChild objects for one that still exists.
+    while (!mTabChildList.IsEmpty()) {
+      nsCOMPtr<nsITabChild> tabChild =
+        do_QueryReferent(mTabChildList.LastElement());
+
+      // Does this tab child still exist?  If so, return it.  We are done.
+      if (tabChild) {
+        return tabChild.forget();
+      }
+
+      // Otherwise remove the stale weak reference and check the next one
+      mTabChildList.RemoveElementAt(mTabChildList.Length() - 1);
+    }
+
+    return nullptr;
+  }
+
+  nsCOMPtr<nsILoadContext> mLoadContext;
+
+  // Array of weak references to nsITabChild.  We do not want to keep TabChild
+  // actors alive for long after their ActorDestroy() methods are called.
+  nsTArray<nsWeakPtr> mTabChildList;
+};
+
+template <class Derived>
+NS_IMPL_ADDREF(WorkerPrivateParent<Derived>::InterfaceRequestor)
+
+template <class Derived>
+NS_IMPL_RELEASE(WorkerPrivateParent<Derived>::InterfaceRequestor)
+
+template <class Derived>
+NS_IMPL_QUERY_INTERFACE(WorkerPrivateParent<Derived>::InterfaceRequestor,
+                        nsIInterfaceRequestor)
+
+template <class Derived>
+class WorkerPrivateParent<Derived>::EventTarget final
   : public nsIEventTarget
 {
   // This mutex protects mWorkerPrivate and must be acquired *before* the
@@ -2069,7 +2214,7 @@ struct WorkerPrivate::TimeoutInfo
   bool mCanceled;
 };
 
-class WorkerPrivate::MemoryReporter MOZ_FINAL : public nsIMemoryReporter
+class WorkerPrivate::MemoryReporter final : public nsIMemoryReporter
 {
   NS_DECL_THREADSAFE_ISUPPORTS
 
@@ -2090,7 +2235,7 @@ public:
 
   NS_IMETHOD
   CollectReports(nsIMemoryReporterCallback* aCallback,
-                 nsISupports* aClosure, bool aAnonymize) MOZ_OVERRIDE
+                 nsISupports* aClosure, bool aAnonymize) override
   {
     AssertIsOnMainThread();
 
@@ -2204,7 +2349,7 @@ WorkerPrivate::SyncLoopInfo::SyncLoopInfo(EventTarget* aEventTarget)
 {
 }
 
-struct WorkerPrivate::PreemptingRunnableInfo MOZ_FINAL
+struct WorkerPrivate::PreemptingRunnableInfo final
 {
   nsCOMPtr<nsIRunnable> mRunnable;
   uint32_t mRecursionDepth;
@@ -2830,13 +2975,29 @@ WorkerPrivateParent<Derived>::ModifyBusyCount(JSContext* aCx, bool aIncrease)
 
 template <class Derived>
 void
+WorkerPrivateParent<Derived>::ForgetOverridenLoadGroup(
+                                          nsCOMPtr<nsILoadGroup>& aLoadGroupOut)
+{
+  AssertIsOnParentThread();
+
+  // If we're not overriden, then do nothing here.  Let the load group get
+  // handled in ForgetMainThreadObjects().
+  if (!mLoadInfo.mInterfaceRequestor) {
+    return;
+  }
+
+  mLoadInfo.mLoadGroup.swap(aLoadGroupOut);
+}
+
+template <class Derived>
+void
 WorkerPrivateParent<Derived>::ForgetMainThreadObjects(
                                       nsTArray<nsCOMPtr<nsISupports> >& aDoomed)
 {
   AssertIsOnParentThread();
   MOZ_ASSERT(!mMainThreadObjectsForgotten);
 
-  static const uint32_t kDoomedCount = 8;
+  static const uint32_t kDoomedCount = 9;
 
   aDoomed.SetCapacity(kDoomedCount);
 
@@ -2848,6 +3009,7 @@ WorkerPrivateParent<Derived>::ForgetMainThreadObjects(
   SwapToISupportsArray(mLoadInfo.mChannel, aDoomed);
   SwapToISupportsArray(mLoadInfo.mCSP, aDoomed);
   SwapToISupportsArray(mLoadInfo.mLoadGroup, aDoomed);
+  SwapToISupportsArray(mLoadInfo.mInterfaceRequestor, aDoomed);
   // Before adding anything here update kDoomedCount above!
 
   MOZ_ASSERT(aDoomed.Length() == kDoomedCount);
@@ -3520,7 +3682,7 @@ WorkerPrivateParent<Derived>::SetBaseURI(nsIURI* aBaseURI)
   if (NS_SUCCEEDED(aBaseURI->GetRef(temp)) && !temp.IsEmpty()) {
     nsCOMPtr<nsITextToSubURI> converter =
       do_GetService(NS_ITEXTTOSUBURI_CONTRACTID);
-    if (converter) {
+    if (converter && nsContentUtils::EncodeDecodeURLHash()) {
       nsCString charset;
       nsAutoString unicodeRef;
       if (NS_SUCCEEDED(aBaseURI->GetOriginCharset(charset)) &&
@@ -3624,6 +3786,16 @@ void
 WorkerPrivateParent<Derived>::StealHostObjectURIs(nsTArray<nsCString>& aArray)
 {
   aArray.SwapElements(mHostObjectURIs);
+}
+
+template <class Derived>
+void
+WorkerPrivateParent<Derived>::UpdateOverridenLoadGroup(nsILoadGroup* aBaseLoadGroup)
+{
+  AssertIsOnMainThread();
+
+  // The load group should have been overriden at init time.
+  mLoadInfo.mInterfaceRequestor->MaybeAddTabChild(aBaseLoadGroup);
 }
 
 template <class Derived>
@@ -4057,7 +4229,8 @@ WorkerPrivate::Constructor(JSContext* aCx,
     stackLoadInfo.emplace();
 
     nsresult rv = GetLoadInfo(aCx, nullptr, parent, aScriptURL,
-                              aIsChromeWorker, stackLoadInfo.ptr());
+                              aIsChromeWorker, InheritLoadGroup,
+                              stackLoadInfo.ptr());
     if (NS_FAILED(rv)) {
       scriptloader::ReportLoadError(aCx, aScriptURL, rv, !parent);
       aRv.Throw(rv);
@@ -4112,7 +4285,9 @@ WorkerPrivate::Constructor(JSContext* aCx,
 nsresult
 WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
                            WorkerPrivate* aParent, const nsAString& aScriptURL,
-                           bool aIsChromeWorker, LoadInfo* aLoadInfo)
+                           bool aIsChromeWorker,
+                           LoadGroupBehavior aLoadGroupBehavior,
+                           LoadInfo* aLoadInfo)
 {
   using namespace mozilla::dom::workers::scriptloader;
   using mozilla::dom::indexedDB::IDBFactory;
@@ -4345,10 +4520,8 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
       loadInfo.mReportCSPViolations = false;
     }
 
-    if (!loadInfo.mLoadGroup) {
-      rv = NS_NewLoadGroup(getter_AddRefs(loadInfo.mLoadGroup),
-                           loadInfo.mPrincipal);
-      NS_ENSURE_SUCCESS(rv, rv);
+    if (!loadInfo.mLoadGroup || aLoadGroupBehavior == OverrideLoadGroup) {
+      OverrideLoadInfoLoadGroup(loadInfo);
     }
     MOZ_ASSERT(NS_LoadGroupMatchesPrincipal(loadInfo.mLoadGroup,
                                             loadInfo.mPrincipal));
@@ -4366,6 +4539,26 @@ WorkerPrivate::GetLoadInfo(JSContext* aCx, nsPIDOMWindow* aWindow,
 
   aLoadInfo->StealFrom(loadInfo);
   return NS_OK;
+}
+
+// static
+void
+WorkerPrivate::OverrideLoadInfoLoadGroup(LoadInfo& aLoadInfo)
+{
+  MOZ_ASSERT(!aLoadInfo.mInterfaceRequestor);
+
+  aLoadInfo.mInterfaceRequestor = new InterfaceRequestor(aLoadInfo.mPrincipal,
+                                                         aLoadInfo.mLoadGroup);
+  aLoadInfo.mInterfaceRequestor->MaybeAddTabChild(aLoadInfo.mLoadGroup);
+
+  nsCOMPtr<nsILoadGroup> loadGroup =
+    do_CreateInstance(NS_LOADGROUP_CONTRACTID);
+
+  nsresult rv =
+    loadGroup->SetNotificationCallbacks(aLoadInfo.mInterfaceRequestor);
+  MOZ_ALWAYS_TRUE(NS_SUCCEEDED(rv));
+
+  aLoadInfo.mLoadGroup = loadGroup.forget();
 }
 
 void
@@ -5136,7 +5329,7 @@ WorkerPrivate::AddFeature(JSContext* aCx, WorkerFeature* aFeature)
     }
   }
 
-  NS_ASSERTION(!mFeatures.Contains(aFeature), "Already know about this one!");
+  MOZ_ASSERT(!mFeatures.Contains(aFeature), "Already know about this one!");
   mFeatures.AppendElement(aFeature);
 
   return mFeatures.Length() == 1 ?
@@ -5149,7 +5342,7 @@ WorkerPrivate::RemoveFeature(JSContext* aCx, WorkerFeature* aFeature)
 {
   AssertIsOnWorkerThread();
 
-  NS_ASSERTION(mFeatures.Contains(aFeature), "Didn't know about this one!");
+  MOZ_ASSERT(mFeatures.Contains(aFeature), "Didn't know about this one!");
   mFeatures.RemoveElement(aFeature);
 
   if (mFeatures.IsEmpty() && !ModifyBusyCountFromWorker(aCx, false)) {
@@ -6322,8 +6515,10 @@ WorkerPrivate::CreateGlobalScope(JSContext* aCx)
     globalScope = new DedicatedWorkerGlobalScope(this);
   }
 
-  JS::Rooted<JSObject*> global(aCx, globalScope->WrapGlobalObject(aCx));
-  NS_ENSURE_TRUE(global, nullptr);
+  JS::Rooted<JSObject*> global(aCx);
+  if (!globalScope->WrapGlobalObject(aCx, &global)) {
+    return nullptr;
+  }
 
   JSAutoCompartment ac(aCx, global);
 

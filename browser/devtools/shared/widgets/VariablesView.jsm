@@ -18,13 +18,6 @@ const PAGE_SIZE_MAX_JUMPS = 30;
 const SEARCH_ACTION_MAX_DELAY = 300; // ms
 const ITEM_FLASH_DURATION = 300 // ms
 
-/**
- * The method name to use for ES6 iteration. If symbols are enabled in
- * this build, use Symbol.iterator; otherwise "@@iterator".
- */
-const JS_HAS_SYMBOLS = typeof Symbol === "function";
-const ITERATOR_SYMBOL = JS_HAS_SYMBOLS ? Symbol.iterator : "@@iterator";
-
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource:///modules/devtools/ViewHelpers.jsm");
@@ -2055,7 +2048,7 @@ Scope.prototype = {
     let parentView = self.ownerView;
     let topView;
 
-    while (topView = parentView.ownerView) {
+    while ((topView = parentView.ownerView)) {
       parentView = topView;
     }
     return parentView;
@@ -2123,7 +2116,7 @@ Scope.prototype = {
 // Creating maps and arrays thousands of times for variables or properties
 // with a large number of children fills up a lot of memory. Make sure
 // these are instantiated only if needed.
-DevToolsUtils.defineLazyPrototypeGetter(Scope.prototype, "_store", Map);
+DevToolsUtils.defineLazyPrototypeGetter(Scope.prototype, "_store", () => new Map());
 DevToolsUtils.defineLazyPrototypeGetter(Scope.prototype, "_enumItems", Array);
 DevToolsUtils.defineLazyPrototypeGetter(Scope.prototype, "_nonEnumItems", Array);
 
@@ -2426,10 +2419,27 @@ Variable.prototype = Heritage.extend(Scope.prototype, {
       this._valueLabel.classList.remove(VariablesView.getClass(prevGrip));
     }
     this._valueGrip = aGrip;
-    this._valueString = VariablesView.getString(aGrip, {
-      concise: true,
-      noEllipsis: true,
-    });
+
+    if(aGrip && (aGrip.optimizedOut || aGrip.uninitialized || aGrip.missingArguments)) {
+      if(aGrip.optimizedOut) {
+        this._valueString = STR.GetStringFromName("variablesViewOptimizedOut")
+      }
+      else if(aGrip.uninitialized) {
+        this._valueString = STR.GetStringFromName("variablesViewUninitialized")
+      }
+      else if(aGrip.missingArguments) {
+        this._valueString = STR.GetStringFromName("variablesViewMissingArgs")
+      }
+      this.eval = null;
+    }
+    else {
+      this._valueString = VariablesView.getString(aGrip, {
+        concise: true,
+        noEllipsis: true,
+      });
+      this.eval = this.ownerView.eval;
+    }
+
     this._valueClassName = VariablesView.getClass(aGrip);
 
     this._valueLabel.classList.add(this._valueClassName);
@@ -3063,10 +3073,10 @@ Property.prototype = Heritage.extend(Variable.prototype, {
 /**
  * A generator-iterator over the VariablesView, Scopes, Variables and Properties.
  */
-VariablesView.prototype[ITERATOR_SYMBOL] =
-Scope.prototype[ITERATOR_SYMBOL] =
-Variable.prototype[ITERATOR_SYMBOL] =
-Property.prototype[ITERATOR_SYMBOL] = function*() {
+VariablesView.prototype[Symbol.iterator] =
+Scope.prototype[Symbol.iterator] =
+Variable.prototype[Symbol.iterator] =
+Property.prototype[Symbol.iterator] = function*() {
   yield* this._store;
 };
 

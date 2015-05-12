@@ -330,7 +330,7 @@ NS_IMETHODIMP nsPrefBranch::GetComplexValue(const char *aPrefName, const nsIID &
       // Debugging to see why we end up with very long strings here with
       // some addons, see bug 836263.
       nsAutoString wdata;
-      if (!AppendUTF8toUTF16(utf8String, wdata, mozilla::fallible_t())) {
+      if (!AppendUTF8toUTF16(utf8String, wdata, mozilla::fallible)) {
 #ifdef MOZ_CRASHREPORTER
         nsCOMPtr<nsICrashReporter> cr =
           do_GetService("@mozilla.org/toolkit/crash-reporter;1");
@@ -555,7 +555,7 @@ NS_IMETHODIMP nsPrefBranch::GetChildList(const char *aStartingAt, uint32_t *aCou
   *aChildArray = nullptr;
   *aCount = 0;
 
-  if (!gHashTable.ops)
+  if (!gHashTable.IsInitialized())
     return NS_ERROR_NOT_INITIALIZED;
 
   // this will contain a list of all the pref name strings

@@ -40,6 +40,8 @@ function test_pane_visibility(win) {
     controlChanged(historymode);
     is(historypane.selectedPanel, win.document.getElementById(modes[mode]),
       "The correct pane should be selected for the " + mode + " mode");
+    is_element_visible(historypane.selectedPanel,
+                       "Correct pane should be visible for the " + mode + " mode");
   }
 }
 

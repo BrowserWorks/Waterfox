@@ -26,6 +26,7 @@ describe("loop.standaloneRoomViews", function() {
     feedbackStore = new loop.store.FeedbackStore(dispatcher, {
       feedbackClient: {}
     });
+    loop.store.StoreMixin.register({feedbackStore: feedbackStore});
 
     sandbox.useFakeTimers();
 
@@ -44,8 +45,7 @@ describe("loop.standaloneRoomViews", function() {
           loop.standaloneRoomViews.StandaloneRoomView, {
             dispatcher: dispatcher,
             activeRoomStore: activeRoomStore,
-            feedbackStore: feedbackStore,
-            helper: new loop.shared.utils.Helper()
+            isFirefox: true
           }));
     }
 
@@ -141,6 +141,192 @@ describe("loop.standaloneRoomViews", function() {
           enabled: true
         }));
       });
+    });
+
+    describe("Local Stream Size Position", function() {
+      var view, localElement;
+
+      beforeEach(function() {
+        sandbox.stub(window, "matchMedia").returns({
+          matches: false
+        });
+        view = mountTestComponent();
+        localElement = view._getElement(".local");
+      });
+
+      it("should be a quarter of the width of the main stream", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 640,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(localElement.style.width).eql("160px");
+        expect(localElement.style.height).eql("120px");
+      });
+
+      it("should be a quarter of the width reduced for aspect ratio", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 640,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 0.75,
+          height: 1
+        });
+
+        expect(localElement.style.width).eql("120px");
+        expect(localElement.style.height).eql("160px");
+      });
+
+      it("should ensure the height is a minimum of 48px", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 180,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(localElement.style.width).eql("64px");
+        expect(localElement.style.height).eql("48px");
+      });
+
+      it("should ensure the width is a minimum of 48px", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 180,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 0.75,
+          height: 1
+        });
+
+        expect(localElement.style.width).eql("48px");
+        expect(localElement.style.height).eql("64px");
+      });
+
+      it("should position the stream to overlap the main stream by a quarter", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 640,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(localElement.style.width).eql("160px");
+        expect(localElement.style.left).eql("600px");
+      });
+
+      it("should position the stream to overlap the main stream by a quarter when the aspect ratio is vertical", function() {
+        sandbox.stub(view, "getRemoteVideoDimensions").returns({
+          streamWidth: 640,
+          offsetX: 0
+        });
+
+        view.updateLocalCameraPosition({
+          width: 0.75,
+          height: 1
+        });
+
+        expect(localElement.style.width).eql("120px");
+        expect(localElement.style.left).eql("610px");
+      });
+    });
+
+    describe("Remote Stream Size Position", function() {
+      var view, localElement, remoteElement;
+
+      beforeEach(function() {
+        sandbox.stub(window, "matchMedia").returns({
+          matches: false
+        });
+        view = mountTestComponent();
+
+        localElement = {
+          style: {}
+        };
+        remoteElement = {
+          style: {},
+          removeAttribute: sinon.spy()
+        };
+
+        sandbox.stub(view, "_getElement", function(className) {
+          return className === ".local" ? localElement : remoteElement;
+        });
+
+        view.setState({"receivingScreenShare": true});
+      });
+
+      it("should do nothing if not receiving screenshare", function() {
+        view.setState({"receivingScreenShare": false});
+        remoteElement.style.width = "10px";
+
+        view.updateRemoteCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(remoteElement.style.width).eql("10px");
+      });
+
+      it("should be the same width as the local video", function() {
+        localElement.offsetWidth = 100;
+
+        view.updateRemoteCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(remoteElement.style.width).eql("100px");
+      });
+
+      it("should be the same left edge as the local video", function() {
+        localElement.offsetLeft = 50;
+
+        view.updateRemoteCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(remoteElement.style.left).eql("50px");
+      });
+
+      it("should have a height determined by the aspect ratio", function() {
+        localElement.offsetWidth = 100;
+
+        view.updateRemoteCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        expect(remoteElement.style.height).eql("75px");
+      });
+
+      it("should have the top be set such that the bottom is 10px above the local video", function() {
+        localElement.offsetWidth = 100;
+        localElement.offsetTop = 200;
+
+        view.updateRemoteCameraPosition({
+          width: 1,
+          height: 0.75
+        });
+
+        // 200 (top) - 75 (height) - 10 (spacing) = 115
+        expect(remoteElement.style.top).eql("115px");
+      });
+
     });
 
     describe("#render", function() {

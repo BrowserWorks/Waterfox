@@ -7,16 +7,21 @@ describe("loop.OTSdkDriver", function () {
   "use strict";
 
   var sharedActions = loop.shared.actions;
-  var FAILURE_REASONS = loop.shared.utils.FAILURE_REASONS;
+  var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
+  var STREAM_PROPERTIES = loop.shared.utils.STREAM_PROPERTIES;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
+
   var sandbox;
-  var dispatcher, driver, publisher, sdk, session, sessionData;
-  var fakeLocalElement, fakeRemoteElement, publisherConfig, fakeEvent;
+  var dispatcher, driver, mozLoop, publisher, sdk, session, sessionData;
+  var fakeLocalElement, fakeRemoteElement, fakeScreenElement;
+  var publisherConfig, fakeEvent;
 
   beforeEach(function() {
     sandbox = sinon.sandbox.create();
 
     fakeLocalElement = {fake: 1};
     fakeRemoteElement = {fake: 2};
+    fakeScreenElement = {fake: 3};
     fakeEvent = {
       preventDefault: sinon.stub()
     };
@@ -34,6 +39,7 @@ describe("loop.OTSdkDriver", function () {
       connect: sinon.stub(),
       disconnect: sinon.stub(),
       publish: sinon.stub(),
+      unpublish: sinon.stub(),
       subscribe: sinon.stub(),
       forceDisconnect: sinon.stub()
     }, Backbone.Events);
@@ -41,7 +47,10 @@ describe("loop.OTSdkDriver", function () {
     publisher = _.extend({
       destroy: sinon.stub(),
       publishAudio: sinon.stub(),
-      publishVideo: sinon.stub()
+      publishVideo: sinon.stub(),
+      _: {
+        switchAcquiredWindow: sinon.stub()
+      }
     }, Backbone.Events);
 
     sdk = _.extend({
@@ -55,9 +64,21 @@ describe("loop.OTSdkDriver", function () {
       }
     };
 
+    mozLoop = {
+      telemetryAddKeyedValue: sinon.stub(),
+      SHARING_STATE_CHANGE: {
+        WINDOW_ENABLED: "WINDOW_ENABLED",
+        WINDOW_DISABLED: "WINDOW_DISABLED",
+        BROWSER_ENABLED: "BROWSER_ENABLED",
+        BROWSER_DISABLED: "BROWSER_DISABLED"
+      }
+    }
+
     driver = new loop.OTSdkDriver({
+      mozLoop: mozLoop,
       dispatcher: dispatcher,
-      sdk: sdk
+      sdk: sdk,
+      mozLoop: mozLoop
     });
   });
 
@@ -155,6 +176,153 @@ describe("loop.OTSdkDriver", function () {
     });
   });
 
+  describe("#startScreenShare", function() {
+    var fakeElement;
+
+    beforeEach(function() {
+      sandbox.stub(dispatcher, "dispatch");
+      sandbox.stub(driver, "_noteSharingState");
+
+      fakeElement = {
+        className: "fakeVideo"
+      };
+
+      driver.getScreenShareElementFunc = function() {
+        return fakeElement;
+      };
+    });
+
+    it("should initialize a publisher", function() {
+      // We're testing with `videoSource` set to 'browser', not 'window', as it
+      // has multiple options.
+      var options = {
+        videoSource: "browser",
+        constraints: {
+          browserWindow: 42,
+          scrollWithPage: true
+        }
+      };
+      driver.startScreenShare(options);
+
+      sinon.assert.calledOnce(sdk.initPublisher);
+      sinon.assert.calledWithMatch(sdk.initPublisher, fakeElement, options);
+    });
+
+    it("should log a telemetry action", function() {
+      var options = {
+        videoSource: "browser",
+        constraints: {
+          browserWindow: 42,
+          scrollWithPage: true
+        }
+      };
+      driver.startScreenShare(options);
+
+      sinon.assert.calledWithExactly(driver._noteSharingState, "browser", true);
+    });
+  });
+
+  describe("#switchAcquiredWindow", function() {
+    beforeEach(function() {
+      var options = {
+        videoSource: "browser",
+        constraints: {
+          browserWindow: 42,
+          scrollWithPage: true
+        }
+      };
+      driver.getScreenShareElementFunc = function() {
+        return fakeScreenElement;
+      };
+      sandbox.stub(dispatcher, "dispatch");
+
+      driver.startScreenShare(options);
+    });
+
+    it("should switch to the acquired window", function() {
+      driver.switchAcquiredWindow(72);
+
+      sinon.assert.calledOnce(publisher._.switchAcquiredWindow);
+      sinon.assert.calledWithExactly(publisher._.switchAcquiredWindow, 72);
+    });
+
+    it("should not switch if the window is the same as the currently selected one", function() {
+      driver.switchAcquiredWindow(42);
+
+      sinon.assert.notCalled(publisher._.switchAcquiredWindow);
+    });
+  });
+
+  describe("#endScreenShare", function() {
+    beforeEach(function() {
+      driver.getScreenShareElementFunc = function() {};
+
+      sandbox.stub(dispatcher, "dispatch");
+      sandbox.stub(driver, "_noteSharingState");
+    });
+
+    it("should unpublish the share", function() {
+      driver.startScreenShare({
+        videoSource: "window"
+      });
+      driver.session = session;
+
+      driver.endScreenShare(new sharedActions.EndScreenShare());
+
+      sinon.assert.calledOnce(session.unpublish);
+    });
+
+    it("should log a telemetry action", function() {
+      driver.startScreenShare({
+        videoSource: "window"
+      });
+      driver.session = session;
+
+      driver.endScreenShare(new sharedActions.EndScreenShare());
+
+      sinon.assert.calledWithExactly(driver._noteSharingState, "window", false);
+    });
+
+    it("should destroy the share", function() {
+      driver.startScreenShare({
+        videoSource: "window"
+      });
+      driver.session = session;
+
+      expect(driver.endScreenShare()).to.equal(true);
+
+      sinon.assert.calledOnce(publisher.destroy);
+    });
+
+    it("should unpublish the share too when type is 'browser'", function() {
+      driver.startScreenShare({
+        videoSource: "browser",
+        constraints: {
+          browserWindow: 42
+        }
+      });
+      driver.session = session;
+
+      driver.endScreenShare(new sharedActions.EndScreenShare());
+
+      sinon.assert.calledOnce(session.unpublish);
+    });
+
+    it("should log a telemetry action too when type is 'browser'", function() {
+      driver.startScreenShare({
+        videoSource: "browser",
+        constraints: {
+          browserWindow: 42
+        }
+      });
+      driver.session = session;
+
+      driver.endScreenShare(new sharedActions.EndScreenShare());
+
+      sinon.assert.calledWithExactly(driver._noteSharingState, "browser", false);
+    });
+  });
+
   describe("#connectSession", function() {
     it("should initialise a new session", function() {
       driver.connectSession(sessionData);
@@ -190,7 +358,7 @@ describe("loop.OTSdkDriver", function () {
         sinon.assert.calledWithMatch(dispatcher.dispatch,
           sinon.match.hasOwn("name", "connectionFailure"));
         sinon.assert.calledWithMatch(dispatcher.dispatch,
-          sinon.match.hasOwn("reason", FAILURE_REASONS.COULD_NOT_CONNECT));
+          sinon.match.hasOwn("reason", FAILURE_DETAILS.COULD_NOT_CONNECT));
       });
     });
   });
@@ -210,6 +378,44 @@ describe("loop.OTSdkDriver", function () {
       driver.disconnectSession();
 
       sinon.assert.calledOnce(publisher.destroy);
+    });
+  });
+
+  describe("#_noteSharingState", function() {
+    it("should record enabled sharing states for window", function() {
+      driver._noteSharingState("window", true);
+
+      sinon.assert.calledOnce(mozLoop.telemetryAddKeyedValue);
+      sinon.assert.calledWithExactly(mozLoop.telemetryAddKeyedValue,
+        "LOOP_SHARING_STATE_CHANGE",
+        mozLoop.SHARING_STATE_CHANGE.WINDOW_ENABLED);
+    });
+
+    it("should record enabled sharing states for browser", function() {
+      driver._noteSharingState("browser", true);
+
+      sinon.assert.calledOnce(mozLoop.telemetryAddKeyedValue);
+      sinon.assert.calledWithExactly(mozLoop.telemetryAddKeyedValue,
+        "LOOP_SHARING_STATE_CHANGE",
+        mozLoop.SHARING_STATE_CHANGE.BROWSER_ENABLED);
+    });
+
+    it("should record disabled sharing states for window", function() {
+      driver._noteSharingState("window", false);
+
+      sinon.assert.calledOnce(mozLoop.telemetryAddKeyedValue);
+      sinon.assert.calledWithExactly(mozLoop.telemetryAddKeyedValue,
+        "LOOP_SHARING_STATE_CHANGE",
+        mozLoop.SHARING_STATE_CHANGE.WINDOW_DISABLED);
+    });
+
+    it("should record disabled sharing states for browser", function() {
+      driver._noteSharingState("browser", false);
+
+      sinon.assert.calledOnce(mozLoop.telemetryAddKeyedValue);
+      sinon.assert.calledWithExactly(mozLoop.telemetryAddKeyedValue,
+        "LOOP_SHARING_STATE_CHANGE",
+        mozLoop.SHARING_STATE_CHANGE.BROWSER_DISABLED);
     });
   });
 
@@ -250,12 +456,13 @@ describe("loop.OTSdkDriver", function () {
     });
   });
 
-  describe("Events", function() {
+  describe("Events (general media)", function() {
     beforeEach(function() {
       driver.connectSession(sessionData);
 
       dispatcher.dispatch(new sharedActions.SetupStreamElements({
         getLocalElementFunc: function() {return fakeLocalElement;},
+        getScreenShareElementFunc: function() {return fakeScreenElement;},
         getRemoteElementFunc: function() {return fakeRemoteElement;},
         publisherConfig: publisherConfig
       }));
@@ -302,7 +509,7 @@ describe("loop.OTSdkDriver", function () {
           sinon.assert.calledWithMatch(dispatcher.dispatch,
             sinon.match.hasOwn("name", "connectionFailure"));
           sinon.assert.calledWithMatch(dispatcher.dispatch,
-            sinon.match.hasOwn("reason", FAILURE_REASONS.NETWORK_DISCONNECTED));
+            sinon.match.hasOwn("reason", FAILURE_DETAILS.NETWORK_DISCONNECTED));
         });
 
       it("should dispatch a connectionFailure action if the session was " +
@@ -315,20 +522,54 @@ describe("loop.OTSdkDriver", function () {
           sinon.assert.calledWithMatch(dispatcher.dispatch,
             sinon.match.hasOwn("name", "connectionFailure"));
           sinon.assert.calledWithMatch(dispatcher.dispatch,
-            sinon.match.hasOwn("reason", FAILURE_REASONS.EXPIRED_OR_INVALID));
+            sinon.match.hasOwn("reason", FAILURE_DETAILS.EXPIRED_OR_INVALID));
         });
     });
 
-    describe("streamCreated", function() {
+    describe("streamCreated (publisher/local)", function() {
+      it("should dispatch a VideoDimensionsChanged action", function() {
+        var fakeStream = {
+          hasVideo: true,
+          videoType: "camera",
+          videoDimensions: {width: 1, height: 2}
+        };
+
+        publisher.trigger("streamCreated", {stream: fakeStream});
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.VideoDimensionsChanged({
+            isLocal: true,
+            videoType: "camera",
+            dimensions: {width: 1, height: 2}
+          }));
+      });
+    });
+
+    describe("streamCreated (session/remote)", function() {
       var fakeStream;
 
       beforeEach(function() {
         fakeStream = {
-          fakeStream: 3
+          hasVideo: true,
+          videoType: "camera",
+          videoDimensions: {width: 1, height: 2}
         };
       });
 
-      it("should subscribe to the stream", function() {
+      it("should dispatch a VideoDimensionsChanged action", function() {
+        session.trigger("streamCreated", {stream: fakeStream});
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.VideoDimensionsChanged({
+            isLocal: false,
+            videoType: "camera",
+            dimensions: {width: 1, height: 2}
+          }));
+      });
+
+      it("should subscribe to a camera stream", function() {
         session.trigger("streamCreated", {stream: fakeStream});
 
         sinon.assert.calledOnce(session.subscribe);
@@ -336,14 +577,122 @@ describe("loop.OTSdkDriver", function () {
           fakeStream, fakeRemoteElement, publisherConfig);
       });
 
+      it("should subscribe to a screen sharing stream", function() {
+        fakeStream.videoType = "screen";
+
+        session.trigger("streamCreated", {stream: fakeStream});
+
+        sinon.assert.calledOnce(session.subscribe);
+        sinon.assert.calledWithExactly(session.subscribe,
+          fakeStream, fakeScreenElement, publisherConfig);
+      });
+
       it("should dispach a mediaConnected action if both streams are up", function() {
         driver._publishedLocalStream = true;
 
         session.trigger("streamCreated", {stream: fakeStream});
 
-        sinon.assert.calledOnce(dispatcher.dispatch);
+        // Called twice due to the VideoDimensionsChanged above.
+        sinon.assert.calledTwice(dispatcher.dispatch);
         sinon.assert.calledWithMatch(dispatcher.dispatch,
           sinon.match.hasOwn("name", "mediaConnected"));
+      });
+
+      it("should not dispatch a mediaConnected action for screen sharing streams",
+        function() {
+          driver._publishedLocalStream = true;
+          fakeStream.videoType = "screen";
+
+          session.trigger("streamCreated", {stream: fakeStream});
+
+          sinon.assert.neverCalledWithMatch(dispatcher.dispatch,
+            sinon.match.hasOwn("name", "mediaConnected"));
+        });
+
+      it("should not dispatch a ReceivingScreenShare action for camera streams",
+        function() {
+          session.trigger("streamCreated", {stream: fakeStream});
+
+          sinon.assert.neverCalledWithMatch(dispatcher.dispatch,
+            new sharedActions.ReceivingScreenShare({receiving: true}));
+        });
+
+      it("should dispatch a ReceivingScreenShare action for screen sharing streams",
+        function() {
+          fakeStream.videoType = "screen";
+
+          session.trigger("streamCreated", {stream: fakeStream});
+
+          // Called twice due to the VideoDimensionsChanged above.
+          sinon.assert.calledTwice(dispatcher.dispatch);
+          sinon.assert.calledWithMatch(dispatcher.dispatch,
+            new sharedActions.ReceivingScreenShare({receiving: true}));
+        });
+    });
+
+    describe("streamDestroyed", function() {
+      var fakeStream;
+
+      beforeEach(function() {
+        fakeStream = {
+          videoType: "screen"
+        };
+      });
+
+      it("should dispatch a ReceivingScreenShare action", function() {
+        session.trigger("streamDestroyed", {stream: fakeStream});
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.ReceivingScreenShare({
+            receiving: false
+          }));
+      });
+
+      it("should not dispatch an action if the videoType is camera", function() {
+        fakeStream.videoType = "camera";
+
+        session.trigger("streamDestroyed", {stream: fakeStream});
+
+        sinon.assert.notCalled(dispatcher.dispatch);
+      });
+    });
+
+    describe("streamPropertyChanged", function() {
+      var fakeStream = {
+        connection: { id: "fake" },
+        videoType: "screen",
+        videoDimensions: {
+          width: 320,
+          height: 160
+        }
+      };
+
+      it("should not dispatch a VideoDimensionsChanged action for other properties", function() {
+        session.trigger("streamPropertyChanged", {
+          stream: fakeStream,
+          changedProperty: STREAM_PROPERTIES.HAS_AUDIO
+        });
+        session.trigger("streamPropertyChanged", {
+          stream: fakeStream,
+          changedProperty: STREAM_PROPERTIES.HAS_VIDEO
+        });
+
+        sinon.assert.notCalled(dispatcher.dispatch);
+      });
+
+      it("should dispatch a VideoDimensionsChanged action", function() {
+        session.connection = {
+          id: "localUser"
+        };
+        session.trigger("streamPropertyChanged", {
+          stream: fakeStream,
+          changedProperty: STREAM_PROPERTIES.VIDEO_DIMENSIONS
+        });
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithMatch(dispatcher.dispatch,
+          sinon.match.hasOwn("name", "videoDimensionsChanged"));
       });
     });
 
@@ -413,7 +762,7 @@ describe("loop.OTSdkDriver", function () {
         sinon.assert.calledWithMatch(dispatcher.dispatch,
           sinon.match.hasOwn("name", "connectionFailure"));
         sinon.assert.calledWithMatch(dispatcher.dispatch,
-          sinon.match.hasOwn("reason", FAILURE_REASONS.MEDIA_DENIED));
+          sinon.match.hasOwn("reason", FAILURE_DETAILS.MEDIA_DENIED));
       });
     });
 
@@ -422,6 +771,76 @@ describe("loop.OTSdkDriver", function () {
         publisher.trigger("accessDialogOpened", fakeEvent);
 
         sinon.assert.calledOnce(fakeEvent.preventDefault);
+      });
+    });
+
+    describe("exception", function() {
+      describe("Unable to publish (GetUserMedia)", function() {
+        it("should destroy the publisher", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.UNABLE_TO_PUBLISH,
+            message: "GetUserMedia"
+          });
+
+          sinon.assert.calledOnce(publisher.destroy);
+        });
+
+        it("should dispatch a ConnectionFailure action", function() {
+          sdk.trigger("exception", {
+            code: OT.ExceptionCodes.UNABLE_TO_PUBLISH,
+            message: "GetUserMedia"
+          });
+
+          sinon.assert.calledOnce(dispatcher.dispatch);
+          sinon.assert.calledWithExactly(dispatcher.dispatch,
+            new sharedActions.ConnectionFailure({
+              reason: FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA
+            }));
+        });
+      });
+    });
+  });
+
+  describe("Events (screenshare)", function() {
+    beforeEach(function() {
+      driver.connectSession(sessionData);
+
+      driver.getScreenShareElementFunc = function() {};
+
+      driver.startScreenShare({
+        videoSource: "window"
+      });
+
+      sandbox.stub(dispatcher, "dispatch");
+    });
+
+    describe("accessAllowed", function() {
+      it("should publish the stream", function() {
+        publisher.trigger("accessAllowed", fakeEvent);
+
+        sinon.assert.calledOnce(session.publish);
+      });
+
+      it("should dispatch a `ScreenSharingState` action", function() {
+        publisher.trigger("accessAllowed", fakeEvent);
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.ScreenSharingState({
+            state: SCREEN_SHARE_STATES.ACTIVE
+          }));
+      });
+    });
+
+    describe("accessDenied", function() {
+      it("should dispatch a `ScreenShareState` action", function() {
+        publisher.trigger("accessDenied", fakeEvent);
+
+        sinon.assert.calledOnce(dispatcher.dispatch);
+        sinon.assert.calledWithExactly(dispatcher.dispatch,
+          new sharedActions.ScreenSharingState({
+            state: SCREEN_SHARE_STATES.INACTIVE
+          }));
       });
     });
   });

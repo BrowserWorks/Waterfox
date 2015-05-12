@@ -12,6 +12,7 @@
 #include "nsPIDOMWindow.h"
 #include "nsIScriptGlobalObject.h"
 #include "nsIScriptContext.h"
+#include "nsIWeakReferenceUtils.h"
 #include "MainThreadUtils.h"
 #include "mozilla/Attributes.h"
 #include "mozilla/EventListenerManager.h"
@@ -63,15 +64,15 @@ public:
 
   NS_DECL_NSIDOMEVENTTARGET
 
-  virtual EventListenerManager* GetExistingListenerManager() const MOZ_OVERRIDE;
-  virtual EventListenerManager* GetOrCreateListenerManager() MOZ_OVERRIDE;
+  virtual EventListenerManager* GetExistingListenerManager() const override;
+  virtual EventListenerManager* GetOrCreateListenerManager() override;
 
   using dom::EventTarget::RemoveEventListener;
   virtual void AddEventListener(const nsAString& aType,
                                 dom::EventListener* aListener,
                                 bool aCapture,
                                 const dom::Nullable<bool>& aWantsUntrusted,
-                                ErrorResult& aRv) MOZ_OVERRIDE;
+                                ErrorResult& aRv) override;
 
   NS_DECLARE_STATIC_IID_ACCESSOR(NS_DOMEVENTTARGETHELPER_IID)
 
@@ -101,6 +102,11 @@ public:
     return static_cast<DOMEventTargetHelper*>(target);
   }
 
+  bool HasListenersFor(const nsAString& aType)
+  {
+    return mListenerManager && mListenerManager->HasListenersFor(aType);
+  }
+
   bool HasListenersFor(nsIAtom* aTypeWithOn)
   {
     return mListenerManager && mListenerManager->HasListenersFor(aTypeWithOn);
@@ -114,7 +120,7 @@ public:
                        JSContext* aCx,
                        JS::Value* aValue);
   using dom::EventTarget::GetEventHandler;
-  virtual nsIDOMWindow* GetOwnerGlobal() MOZ_OVERRIDE
+  virtual nsIDOMWindow* GetOwnerGlobal() override
   {
     return nsPIDOMWindow::GetOuterFromCurrentInner(GetOwner());
   }
@@ -133,11 +139,14 @@ public:
   void BindToOwner(nsPIDOMWindow* aOwner);
   void BindToOwner(DOMEventTargetHelper* aOther);
   virtual void DisconnectFromOwner();                   
-  nsIGlobalObject* GetParentObject() const { return mParentObject; }
+  nsIGlobalObject* GetParentObject() const {
+    nsCOMPtr<nsIGlobalObject> parentObject = do_QueryReferent(mParentObject);
+    return parentObject;
+  }
   bool HasOrHasHadOwner() { return mHasOrHasHadOwnerWindow; }
 
-  virtual void EventListenerAdded(nsIAtom* aType) MOZ_OVERRIDE;
-  virtual void EventListenerRemoved(nsIAtom* aType) MOZ_OVERRIDE;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
+  virtual void EventListenerRemoved(nsIAtom* aType) override;
   virtual void EventListenerWasAdded(const nsAString& aType,
                                      ErrorResult& aRv,
                                      JSCompartment* aCompartment = nullptr) {}
@@ -159,10 +168,11 @@ protected:
   virtual void LastRelease() {}
 private:
   // Inner window or sandbox.
-  nsIGlobalObject*           mParentObject;
+  nsWeakPtr                  mParentObject;
   // mParentObject pre QI-ed and cached (inner window)
   // (it is needed for off main thread access)
-  nsPIDOMWindow*             mOwnerWindow;
+  // It is obtained in BindToOwner and reset in DisconnectFromOwner.
+  nsPIDOMWindow* MOZ_NON_OWNING_REF mOwnerWindow;
   bool                       mHasOrHasHadOwnerWindow;
 };
 
@@ -271,11 +281,11 @@ NS_DEFINE_STATIC_IID_ACCESSOR(DOMEventTargetHelper,
   using _class::RemoveEventListener;                \
   NS_FORWARD_NSIDOMEVENTTARGET(_class::)            \
   virtual mozilla::EventListenerManager*            \
-  GetOrCreateListenerManager() MOZ_OVERRIDE {       \
+  GetOrCreateListenerManager() override {       \
     return _class::GetOrCreateListenerManager();    \
   }                                                 \
   virtual mozilla::EventListenerManager*            \
-  GetExistingListenerManager() const MOZ_OVERRIDE { \
+  GetExistingListenerManager() const override { \
     return _class::GetExistingListenerManager();    \
   }
 

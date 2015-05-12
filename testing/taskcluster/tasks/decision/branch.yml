@@ -1,0 +1,78 @@
+---
+metadata:
+  name: 'Task graph used to build {{project}} specific jobs'
+  description: |
+    {{project}} push for {{owner}} with comment: {{comment}}.
+  owner: mozilla-taskcluster-maintenance@mozilla.com
+  source: "{{{source}}}"
+
+scopes:
+  # Note the below scopes are insecure however these get overriden on the server
+  # side to whatever scopes are set by mozilla-taskcluster.
+  - queue:*
+  - docker-worker:*
+  - scheduler:*
+tasks:
+  - taskId: '{{#as_slugid}}decision task{{/as_slugid}}'
+    task:
+      created: '{{now}}'
+      deadline: '{{#from_now}}1 day{{/from_now}}'
+      metadata:
+        owner: mozilla-taskcluster-maintenance@mozilla.com
+        source: {{source}}
+        name: Initial decision task for {{project}} specific graphs
+        description: |
+          This is the single most important task as it decides how all other tasks
+          get built.
+
+      tags:
+        createdForUser: {{owner}}
+
+      workerType: "gecko-decision"
+      provisionerId: "aws-provisioner"
+
+      scopes:
+        - "docker-worker:cache:tc-vcs-public-sources"
+        - "docker-worker:image:quay.io/mozilla/builder:0.3.0"
+
+      payload:
+        env:
+          GECKO_BASE_REPOSITORY: '{{{url}}}'
+          GECKO_HEAD_REPOSITORY: '{{{url}}}'
+          GECKO_HEAD_REF: '{{revision}}'
+          GECKO_HEAD_REV: '{{revision}}'
+
+        cache:
+          # The taskcluster-vcs tooling stores the large clone caches in this
+          # directory and will reuse them for new requests this saves about 20s~ and
+          # is the most generic cache possible.
+          tc-vcs-public-sources: '/home/worker/.tc-vcs/'
+
+        # Note: This task is built server side without the context or tooling that
+        # exist in tree so we must hard code the version
+        image: 'quay.io/mozilla/builder:0.3.0'
+
+        # Virtually no network or other potentially risky operations happen as part
+        # of the task timeout aside from the initial clone. We intentionally have
+        # set this to a lower value _all_ decision tasks should use a root
+        # repository which is cached.
+        maxRunTime: 1800
+
+        command:
+          - /bin/bash
+          - -cx
+          - >
+            source ./bin/decision.sh &&
+            ./mach taskcluster-graph
+            --message='{{comment}}'
+            --project='{{project}}'
+            --owner='{{owner}}'
+            --revision-hash='{{revision_hash}}'
+            --extend-graph > /home/worker/graph.json
+        graphs:
+          - /home/worker/graph.json
+
+      extra:
+        treeherder:
+          symbol: D
+

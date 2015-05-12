@@ -31,6 +31,12 @@ var gAdvancedPane = {
     }
 
 #ifdef MOZ_UPDATER
+    let onUnload = function () {
+      window.removeEventListener("unload", onUnload, false);
+      Services.prefs.removeObserver("app.update.", this);
+    }.bind(this);
+    window.addEventListener("unload", onUnload, false);
+    Services.prefs.addObserver("app.update.", this, false);
     this.updateReadPrefs();
 #endif
     this.updateOfflineApps();
@@ -228,6 +234,24 @@ var gAdvancedPane = {
 #endif
   },
 
+  /**
+   * Set the status of the telemetry controls based on the input argument.
+   * @param {Boolean} aEnabled False disables the controls, true enables them.
+   */
+  setTelemetrySectionEnabled: function (aEnabled)
+  {
+#ifdef MOZ_TELEMETRY_REPORTING
+    // If FHR is disabled, additional data sharing should be disabled as well.
+    let disabled = !aEnabled;
+    document.getElementById("submitTelemetryBox").disabled = disabled;
+    if (disabled) {
+      // If we disable FHR, untick the telemetry checkbox.
+      Services.prefs.setBoolPref("toolkit.telemetry.enabled", false);
+    }
+    document.getElementById("telemetryDataDesc").disabled = disabled;
+#endif
+  },
+
 #ifdef MOZ_SERVICES_HEALTHREPORT
   /**
    * Initialize the health report service reference and checkbox.
@@ -248,6 +272,7 @@ var gAdvancedPane = {
     }
 
     checkbox.checked = policy.healthReportUploadEnabled;
+    this.setTelemetrySectionEnabled(checkbox.checked);
   },
 
   /**
@@ -266,6 +291,7 @@ var gAdvancedPane = {
     let checkbox = document.getElementById("submitHealthReportBox");
     policy.recordHealthReportUploadEnabled(checkbox.checked,
                                            "Checkbox from preferences pane");
+    this.setTelemetrySectionEnabled(checkbox.checked);
   },
 #endif
 
@@ -822,5 +848,15 @@ var gAdvancedPane = {
     document.documentElement.openWindow("mozilla:devicemanager",
                                         "chrome://pippki/content/device_manager.xul",
                                         "", null);
-  }
+  },
+
+#ifdef MOZ_UPDATER
+  observe: function (aSubject, aTopic, aData) {
+    switch(aTopic) {
+      case "nsPref:changed":
+        this.updateReadPrefs();
+        break;
+    }
+  },
+#endif
 };

@@ -47,22 +47,22 @@ public:
   NS_DECL_ISUPPORTS
 
   // nsIStyleRuleProcessor (parts)
-  virtual nsRestyleHint HasStateDependentStyle(StateRuleProcessorData* aData) MOZ_OVERRIDE;
-  virtual nsRestyleHint HasStateDependentStyle(PseudoElementStateRuleProcessorData* aData) MOZ_OVERRIDE;
-  virtual bool HasDocumentStateDependentStyle(StateRuleProcessorData* aData) MOZ_OVERRIDE;
+  virtual nsRestyleHint HasStateDependentStyle(StateRuleProcessorData* aData) override;
+  virtual nsRestyleHint HasStateDependentStyle(PseudoElementStateRuleProcessorData* aData) override;
+  virtual bool HasDocumentStateDependentStyle(StateRuleProcessorData* aData) override;
   virtual nsRestyleHint
-    HasAttributeDependentStyle(AttributeRuleProcessorData* aData) MOZ_OVERRIDE;
-  virtual bool MediumFeaturesChanged(nsPresContext* aPresContext) MOZ_OVERRIDE;
-  virtual void RulesMatching(ElementRuleProcessorData* aData) MOZ_OVERRIDE;
-  virtual void RulesMatching(PseudoElementRuleProcessorData* aData) MOZ_OVERRIDE;
-  virtual void RulesMatching(AnonBoxRuleProcessorData* aData) MOZ_OVERRIDE;
+    HasAttributeDependentStyle(AttributeRuleProcessorData* aData) override;
+  virtual bool MediumFeaturesChanged(nsPresContext* aPresContext) override;
+  virtual void RulesMatching(ElementRuleProcessorData* aData) override;
+  virtual void RulesMatching(PseudoElementRuleProcessorData* aData) override;
+  virtual void RulesMatching(AnonBoxRuleProcessorData* aData) override;
 #ifdef MOZ_XUL
-  virtual void RulesMatching(XULTreeRuleProcessorData* aData) MOZ_OVERRIDE;
+  virtual void RulesMatching(XULTreeRuleProcessorData* aData) override;
 #endif
   virtual size_t SizeOfExcludingThis(mozilla::MallocSizeOf aMallocSizeOf)
-    const MOZ_MUST_OVERRIDE MOZ_OVERRIDE;
+    const MOZ_MUST_OVERRIDE override;
   virtual size_t SizeOfIncludingThis(mozilla::MallocSizeOf aMallocSizeOf)
-    const MOZ_MUST_OVERRIDE MOZ_OVERRIDE;
+    const MOZ_MUST_OVERRIDE override;
 
   /**
    * Notify the manager that the pres context is going away.
@@ -159,16 +159,16 @@ protected:
 /**
  * A style rule that maps property-StyleAnimationValue pairs.
  */
-class AnimValuesStyleRule MOZ_FINAL : public nsIStyleRule
+class AnimValuesStyleRule final : public nsIStyleRule
 {
 public:
   // nsISupports implementation
   NS_DECL_ISUPPORTS
 
   // nsIStyleRule implementation
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
   void AddValue(nsCSSProperty aProperty,
@@ -215,6 +215,7 @@ struct AnimationPlayerCollection : public PRCList
     , mElementProperty(aElementProperty)
     , mManager(aManager)
     , mAnimationGeneration(0)
+    , mCheckGeneration(0)
     , mNeedsRefreshes(true)
 #ifdef DEBUG
     , mCalledPropertyDtor(false)
@@ -225,8 +226,8 @@ struct AnimationPlayerCollection : public PRCList
   }
   ~AnimationPlayerCollection()
   {
-    NS_ABORT_IF_FALSE(mCalledPropertyDtor,
-                      "must call destructor through element property dtor");
+    MOZ_ASSERT(mCalledPropertyDtor,
+               "must call destructor through element property dtor");
     MOZ_COUNT_DTOR(AnimationPlayerCollection);
     PR_REMOVE_LINK(this);
     mManager->ElementCollectionRemoved();
@@ -330,7 +331,6 @@ struct AnimationPlayerCollection : public PRCList
     if (element) {
       nsRestyleHint hint = IsForTransitions() ? eRestyle_CSSTransitions
                                               : eRestyle_CSSAnimations;
-      hint |= eRestyle_ChangeAnimationPhase;
       aPresContext->PresShell()->RestyleForAnimation(element, hint);
     }
   }
@@ -368,6 +368,16 @@ struct AnimationPlayerCollection : public PRCList
   uint64_t mAnimationGeneration;
   // Update mAnimationGeneration to nsCSSFrameConstructor's count
   void UpdateAnimationGeneration(nsPresContext* aPresContext);
+
+  // For CSS transitions only, we also record the most recent generation
+  // for which we've done the transition update, so that we avoid doing
+  // it more than once per style change.  This should be greater than or
+  // equal to mAnimationGeneration, except when the generation counter
+  // cycles, or when animations are updated through the DOM Animation
+  // interfaces.
+  uint64_t mCheckGeneration;
+  // Update mAnimationGeneration to nsCSSFrameConstructor's count
+  void UpdateCheckGeneration(nsPresContext* aPresContext);
 
   // Returns true if there is an animation that has yet to finish.
   bool HasCurrentAnimations() const;

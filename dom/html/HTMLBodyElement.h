@@ -26,15 +26,15 @@ public:
   NS_DECL_ISUPPORTS
 
   // nsIStyleRule interface
-  virtual void MapRuleInfoInto(nsRuleData* aRuleData) MOZ_OVERRIDE;
+  virtual void MapRuleInfoInto(nsRuleData* aRuleData) override;
 #ifdef DEBUG
-  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const MOZ_OVERRIDE;
+  virtual void List(FILE* out = stdout, int32_t aIndent = 0) const override;
 #endif
 
   HTMLBodyElement*  mPart;  // not ref-counted, cleared by content 
 };
 
-class HTMLBodyElement MOZ_FINAL : public nsGenericHTMLElement,
+class HTMLBodyElement final : public nsGenericHTMLElement,
                                   public nsIDOMHTMLBodyElement
 {
 public:
@@ -68,7 +68,7 @@ public:
 #undef WINDOW_EVENT_HELPER
 #undef EVENT
 
-  void GetText(nsString& aText)
+  void GetText(DOMString& aText)
   {
     GetHTMLAttr(nsGkAtoms::text, aText);
   }
@@ -76,7 +76,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::text, aText, aError);
   }
-  void GetLink(nsString& aLink)
+  void GetLink(DOMString& aLink)
   {
     GetHTMLAttr(nsGkAtoms::link, aLink);
   }
@@ -84,7 +84,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::link, aLink, aError);
   }
-  void GetVLink(nsString& aVLink)
+  void GetVLink(DOMString& aVLink)
   {
     GetHTMLAttr(nsGkAtoms::vlink, aVLink);
   }
@@ -92,7 +92,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::vlink, aVLink, aError);
   }
-  void GetALink(nsString& aALink)
+  void GetALink(DOMString& aALink)
   {
     GetHTMLAttr(nsGkAtoms::alink, aALink);
   }
@@ -100,7 +100,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::alink, aALink, aError);
   }
-  void GetBgColor(nsString& aBgColor)
+  void GetBgColor(DOMString& aBgColor)
   {
     GetHTMLAttr(nsGkAtoms::bgcolor, aBgColor);
   }
@@ -108,7 +108,7 @@ public:
   {
     SetHTMLAttr(nsGkAtoms::bgcolor, aBgColor, aError);
   }
-  void GetBackground(nsString& aBackground)
+  void GetBackground(DOMString& aBackground)
   {
     GetHTMLAttr(nsGkAtoms::background, aBackground);
   }
@@ -120,21 +120,21 @@ public:
   virtual bool ParseAttribute(int32_t aNamespaceID,
                               nsIAtom* aAttribute,
                               const nsAString& aValue,
-                              nsAttrValue& aResult) MOZ_OVERRIDE;
+                              nsAttrValue& aResult) override;
   virtual void UnbindFromTree(bool aDeep = true,
-                              bool aNullParent = true) MOZ_OVERRIDE;
-  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const MOZ_OVERRIDE;
-  NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) MOZ_OVERRIDE;
-  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const MOZ_OVERRIDE;
-  virtual already_AddRefed<nsIEditor> GetAssociatedEditor() MOZ_OVERRIDE;
-  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const MOZ_OVERRIDE;
+                              bool aNullParent = true) override;
+  virtual nsMapRuleToAttributesFunc GetAttributeMappingFunction() const override;
+  NS_IMETHOD WalkContentStyleRules(nsRuleWalker* aRuleWalker) override;
+  NS_IMETHOD_(bool) IsAttributeMapped(const nsIAtom* aAttribute) const override;
+  virtual already_AddRefed<nsIEditor> GetAssociatedEditor() override;
+  virtual nsresult Clone(mozilla::dom::NodeInfo *aNodeInfo, nsINode **aResult) const override;
 
-  virtual bool IsEventAttributeName(nsIAtom* aName) MOZ_OVERRIDE;
+  virtual bool IsEventAttributeName(nsIAtom* aName) override;
 
 protected:
   virtual ~HTMLBodyElement();
 
-  virtual JSObject* WrapNode(JSContext *aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapNode(JSContext *aCx) override;
 
   nsRefPtr<BodyRule> mContentStyleRule;
 

@@ -116,7 +116,7 @@ public:
   {
     NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
     return mVideoSource && !mStopped &&
-           mVideoSource->GetMediaSource() == MediaSourceType::Camera &&
+           mVideoSource->GetMediaSource() == dom::MediaSourceEnum::Camera &&
            (!mVideoSource->IsFake() ||
             Preferences::GetBool("media.navigator.permission.fake"));
   }
@@ -131,19 +131,25 @@ public:
   {
     NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
     return mVideoSource && !mStopped && !mVideoSource->IsAvailable() &&
-           mVideoSource->GetMediaSource() == MediaSourceType::Screen;
+           mVideoSource->GetMediaSource() == dom::MediaSourceEnum::Screen;
   }
   bool CapturingWindow()
   {
     NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
     return mVideoSource && !mStopped && !mVideoSource->IsAvailable() &&
-           mVideoSource->GetMediaSource() == MediaSourceType::Window;
+           mVideoSource->GetMediaSource() == dom::MediaSourceEnum::Window;
   }
   bool CapturingApplication()
   {
     NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
     return mVideoSource && !mStopped && !mVideoSource->IsAvailable() &&
-           mVideoSource->GetMediaSource() == MediaSourceType::Application;
+           mVideoSource->GetMediaSource() == dom::MediaSourceEnum::Application;
+  }
+  bool CapturingBrowser()
+  {
+    NS_ASSERTION(NS_IsMainThread(), "Only call on main thread");
+    return mVideoSource && !mStopped && mVideoSource->IsAvailable() &&
+           mVideoSource->GetMediaSource() == dom::MediaSourceEnum::Browser;
   }
 
   void SetStopped()
@@ -180,7 +186,7 @@ public:
 
   // Proxy NotifyPull() to sources
   virtual void
-  NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) MOZ_OVERRIDE
+  NotifyPull(MediaStreamGraph* aGraph, StreamTime aDesiredTime) override
   {
     // Currently audio sources ignore NotifyPull, but they could
     // watch it especially for fake audio.
@@ -194,7 +200,7 @@ public:
 
   virtual void
   NotifyEvent(MediaStreamGraph* aGraph,
-              MediaStreamListener::MediaStreamGraphEvent aEvent) MOZ_OVERRIDE
+              MediaStreamListener::MediaStreamGraphEvent aEvent) override
   {
     switch (aEvent) {
       case EVENT_FINISHED:
@@ -271,7 +277,7 @@ class GetUserMediaNotificationEvent: public nsRunnable
 
     }
 
-    NS_IMETHOD Run() MOZ_OVERRIDE;
+    NS_IMETHOD Run() override;
 
   protected:
     nsRefPtr<GetUserMediaCallbackMediaStreamListener> mListener; // threadsafe
@@ -324,7 +330,7 @@ public:
     DOMMediaStream::OnTracksAvailableCallback* aOnTracksAvailableCallback):
     mStream(aStream),
     mOnTracksAvailableCallback(aOnTracksAvailableCallback) {}
-  NS_IMETHOD Run() MOZ_OVERRIDE {return NS_OK;}
+  NS_IMETHOD Run() override {return NS_OK;}
 private:
   nsRefPtr<DOMMediaStream> mStream;
   nsAutoPtr<DOMMediaStream::OnTracksAvailableCallback> mOnTracksAvailableCallback;
@@ -393,29 +399,25 @@ public:
           NS_ASSERTION(!NS_IsMainThread(), "Never call on main thread");
           nsresult rv;
 
-          source->SetPullEnabled(true);
-
-          DOMMediaStream::TrackTypeHints expectedTracks = 0;
           if (mAudioSource) {
             rv = mAudioSource->Start(source, kAudioTrack);
-            if (NS_SUCCEEDED(rv)) {
-              expectedTracks |= DOMMediaStream::HINT_CONTENTS_AUDIO;
-            } else {
+            if (NS_FAILED(rv)) {
               ReturnCallbackError(rv, "Starting audio failed");
               return;
             }
           }
           if (mVideoSource) {
             rv = mVideoSource->Start(source, kVideoTrack);
-            if (NS_SUCCEEDED(rv)) {
-              expectedTracks |= DOMMediaStream::HINT_CONTENTS_VIDEO;
-            } else {
+            if (NS_FAILED(rv)) {
               ReturnCallbackError(rv, "Starting video failed");
               return;
             }
           }
+          // Start() queued the tracks to be added synchronously to avoid races
+          source->FinishAddTracks();
 
-          mOnTracksAvailableCallback->SetExpectedTracks(expectedTracks);
+          source->SetPullEnabled(true);
+          source->AdvanceKnownTracksTime(STREAM_TIME_MAX);
 
           MM_LOG(("started all sources"));
           // Forward mOnTracksAvailableCallback to GetUserMediaNotificationEvent,
@@ -508,7 +510,7 @@ protected:
   nsString mID;
   bool mHasFacingMode;
   dom::VideoFacingModeEnum mFacingMode;
-  MediaSourceType mMediaSource;
+  dom::MediaSourceEnum mMediaSource;
   nsRefPtr<MediaEngineSource> mSource;
 };
 
@@ -520,7 +522,7 @@ public:
   explicit VideoDevice(Source* aSource);
   NS_IMETHOD GetType(nsAString& aType);
   Source* GetSource();
-  bool SatisfiesConstraintSets(
+  uint32_t GetBestFitnessDistance(
     const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets);
 };
 
@@ -532,7 +534,7 @@ public:
   explicit AudioDevice(Source* aSource);
   NS_IMETHOD GetType(nsAString& aType);
   Source* GetSource();
-  bool SatisfiesConstraintSets(
+  uint32_t GetBestFitnessDistance(
     const nsTArray<const dom::MediaTrackConstraintSet*>& aConstraintSets);
 };
 
@@ -542,7 +544,7 @@ typedef void (*WindowListenerCallback)(MediaManager *aThis,
                                        StreamListeners *aListeners,
                                        void *aData);
 
-class MediaManager MOZ_FINAL : public nsIMediaManagerService,
+class MediaManager final : public nsIMediaManagerService,
                                public nsIObserver
 {
 public:

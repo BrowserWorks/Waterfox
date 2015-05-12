@@ -44,7 +44,7 @@ using namespace layers;
 namespace image {
 
 // Helper-class: SVGRootRenderingObserver
-class SVGRootRenderingObserver MOZ_FINAL : public nsSVGRenderingObserver {
+class SVGRootRenderingObserver final : public nsSVGRenderingObserver {
 public:
   SVGRootRenderingObserver(SVGDocumentWrapper* aDocWrapper,
                            VectorImage*        aVectorImage)
@@ -75,12 +75,12 @@ public:
   }
 
 protected:
-  virtual Element* GetTarget() MOZ_OVERRIDE
+  virtual Element* GetTarget() override
   {
     return mDocWrapper->GetRootSVGElem();
   }
 
-  virtual void DoUpdate() MOZ_OVERRIDE
+  virtual void DoUpdate() override
   {
     Element* elem = GetTarget();
     MOZ_ASSERT(elem, "missing root SVG node");
@@ -112,7 +112,7 @@ protected:
   bool mHonoringInvalidations;
 };
 
-class SVGParseCompleteListener MOZ_FINAL : public nsStubDocumentObserver {
+class SVGParseCompleteListener final : public nsStubDocumentObserver {
 public:
   NS_DECL_ISUPPORTS
 
@@ -139,7 +139,7 @@ private:
   }
 
 public:
-  void EndLoad(nsIDocument* aDocument) MOZ_OVERRIDE
+  void EndLoad(nsIDocument* aDocument) override
   {
     MOZ_ASSERT(aDocument == mDocument, "Got EndLoad for wrong document?");
 
@@ -166,7 +166,7 @@ private:
 
 NS_IMPL_ISUPPORTS(SVGParseCompleteListener, nsIDocumentObserver)
 
-class SVGLoadEventListener MOZ_FINAL : public nsIDOMEventListener {
+class SVGLoadEventListener final : public nsIDOMEventListener {
 public:
   NS_DECL_ISUPPORTS
 
@@ -195,7 +195,7 @@ private:
   }
 
 public:
-  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) MOZ_OVERRIDE
+  NS_IMETHOD HandleEvent(nsIDOMEvent* aEvent) override
   {
     MOZ_ASSERT(mDocument, "Need an SVG document. Received multiple events?");
 
@@ -472,17 +472,14 @@ NS_IMETHODIMP
 VectorImage::GetWidth(int32_t* aWidth)
 {
   if (mError || !mIsFullyLoaded) {
-    *aWidth = 0;
-    return NS_ERROR_FAILURE;
+    *aWidth = -1;
+  } else {
+    SVGSVGElement* rootElem = mSVGDocumentWrapper->GetRootSVGElem();
+    MOZ_ASSERT(rootElem, "Should have a root SVG elem, since we finished "
+                         "loading without errors");
+    *aWidth = rootElem->GetIntrinsicWidth();
   }
-
-  if (!mSVGDocumentWrapper->GetWidthOrHeight(SVGDocumentWrapper::eWidth,
-                                             *aWidth)) {
-    *aWidth = 0;
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
+  return *aWidth >= 0 ? NS_OK : NS_ERROR_FAILURE;
 }
 
 //******************************************************************************
@@ -541,17 +538,14 @@ NS_IMETHODIMP
 VectorImage::GetHeight(int32_t* aHeight)
 {
   if (mError || !mIsFullyLoaded) {
-    *aHeight = 0;
-    return NS_ERROR_FAILURE;
+    *aHeight = -1;
+  } else {
+    SVGSVGElement* rootElem = mSVGDocumentWrapper->GetRootSVGElem();
+    MOZ_ASSERT(rootElem, "Should have a root SVG elem, since we finished "
+                         "loading without errors");
+    *aHeight = rootElem->GetIntrinsicHeight();
   }
-
-  if (!mSVGDocumentWrapper->GetWidthOrHeight(SVGDocumentWrapper::eHeight,
-                                             *aHeight)) {
-    *aHeight = 0;
-    return NS_ERROR_FAILURE;
-  }
-
-  return NS_OK;
+  return *aHeight >= 0 ? NS_OK : NS_ERROR_FAILURE;
 }
 
 //******************************************************************************
@@ -663,17 +657,20 @@ VectorImage::GetFrame(uint32_t aWhichFrame,
   if (aWhichFrame > FRAME_MAX_VALUE)
     return nullptr;
 
-  if (mError)
+  if (mError || !mIsFullyLoaded)
     return nullptr;
 
   // Look up height & width
   // ----------------------
-  nsIntSize imageIntSize;
-  if (!mSVGDocumentWrapper->GetWidthOrHeight(SVGDocumentWrapper::eWidth,
-                                             imageIntSize.width) ||
-      !mSVGDocumentWrapper->GetWidthOrHeight(SVGDocumentWrapper::eHeight,
-                                             imageIntSize.height)) {
-    // We'll get here if our SVG doc has a percent-valued width or height.
+  SVGSVGElement* svgElem = mSVGDocumentWrapper->GetRootSVGElem();
+  MOZ_ASSERT(svgElem, "Should have a root SVG elem, since we finished "
+                      "loading without errors");
+  nsIntSize imageIntSize(svgElem->GetIntrinsicWidth(),
+                         svgElem->GetIntrinsicHeight());
+  
+  if (imageIntSize.IsEmpty()) {
+    // We'll get here if our SVG doc has a percent-valued or negative width or
+    // height.
     return nullptr;
   }
 

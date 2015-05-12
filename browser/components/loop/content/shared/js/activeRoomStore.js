@@ -11,17 +11,15 @@ loop.store.ActiveRoomStore = (function() {
   "use strict";
 
   var sharedActions = loop.shared.actions;
-  var FAILURE_REASONS = loop.shared.utils.FAILURE_REASONS;
+  var FAILURE_DETAILS = loop.shared.utils.FAILURE_DETAILS;
+  var SCREEN_SHARE_STATES = loop.shared.utils.SCREEN_SHARE_STATES;
 
   // Error numbers taken from
   // https://github.com/mozilla-services/loop-server/blob/master/loop/errno.json
-  var SERVER_CODES = loop.store.SERVER_CODES = {
-    INVALID_TOKEN: 105,
-    EXPIRED: 111,
-    ROOM_FULL: 202
-  };
+  var REST_ERRNOS = loop.shared.utils.REST_ERRNOS;
 
   var ROOM_STATES = loop.store.ROOM_STATES;
+
   /**
    * Active room store.
    *
@@ -74,7 +72,11 @@ loop.store.ActiveRoomStore = (function() {
         // session. 'Used' means at least one call has been placed
         // with it. Entering and leaving the room without seeing
         // anyone is not considered as 'used'
-        used: false
+        used: false,
+        localVideoDimensions: {},
+        remoteVideoDimensions: {},
+        screenSharingState: SCREEN_SHARE_STATES.INACTIVE,
+        receivingScreenShare: false
       };
     },
 
@@ -86,11 +88,11 @@ loop.store.ActiveRoomStore = (function() {
     roomFailure: function(actionData) {
       function getReason(serverCode) {
         switch (serverCode) {
-          case SERVER_CODES.INVALID_TOKEN:
-          case SERVER_CODES.EXPIRED:
-            return FAILURE_REASONS.EXPIRED_OR_INVALID;
+          case REST_ERRNOS.INVALID_TOKEN:
+          case REST_ERRNOS.EXPIRED:
+            return FAILURE_DETAILS.EXPIRED_OR_INVALID;
           default:
-            return FAILURE_REASONS.UNKNOWN;
+            return FAILURE_DETAILS.UNKNOWN;
         }
       }
 
@@ -102,7 +104,7 @@ loop.store.ActiveRoomStore = (function() {
         failureReason: getReason(actionData.error.errno)
       });
 
-      this._leaveRoom(actionData.error.errno === SERVER_CODES.ROOM_FULL ?
+      this._leaveRoom(actionData.error.errno === REST_ERRNOS.ROOM_FULL ?
           ROOM_STATES.FULL : ROOM_STATES.FAILED);
     },
 
@@ -121,11 +123,16 @@ loop.store.ActiveRoomStore = (function() {
         "connectedToSdkServers",
         "connectionFailure",
         "setMute",
+        "screenSharingState",
+        "receivingScreenShare",
         "remotePeerDisconnected",
         "remotePeerConnected",
         "windowUnload",
         "leaveRoom",
-        "feedbackComplete"
+        "feedbackComplete",
+        "videoDimensionsChanged",
+        "startScreenShare",
+        "endScreenShare"
       ]);
     },
 
@@ -357,7 +364,7 @@ loop.store.ActiveRoomStore = (function() {
        * we do, this can be removed (bug 1138851), and the sdk should handle it.
        */
       if (this._isDesktop &&
-          actionData.reason === FAILURE_REASONS.UNABLE_TO_PUBLISH_MEDIA &&
+          actionData.reason === FAILURE_DETAILS.UNABLE_TO_PUBLISH_MEDIA &&
           this.getStoreState().videoMuted === false) {
         // We failed to publish with media, so due to the bug, we try again without
         // video.
@@ -385,6 +392,101 @@ loop.store.ActiveRoomStore = (function() {
       var muteState = {};
       muteState[actionData.type + "Muted"] = !actionData.enabled;
       this.setStoreState(muteState);
+    },
+
+    /**
+     * Used to note the current screensharing state.
+     */
+    screenSharingState: function(actionData) {
+      this.setStoreState({screenSharingState: actionData.state});
+
+      this._mozLoop.setScreenShareState(
+        this.getStoreState().windowId,
+        actionData.state === SCREEN_SHARE_STATES.ACTIVE);
+    },
+
+    /**
+     * Used to note the current state of receiving screenshare data.
+     */
+    receivingScreenShare: function(actionData) {
+      this.setStoreState({receivingScreenShare: actionData.receiving});
+    },
+
+    /**
+     * Handles switching browser (aka tab) sharing to a new window. Should
+     * only be used for browser sharing.
+     *
+     * @param {Number} windowId  The new windowId to start sharing.
+     */
+    _handleSwitchBrowserShare: function(err, windowId) {
+      if (err) {
+        console.error("Error getting the windowId: " + err);
+        this.dispatchAction(new sharedActions.ScreenSharingState({
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+        return;
+      }
+
+      var screenSharingState = this.getStoreState().screenSharingState;
+
+      if (screenSharingState === SCREEN_SHARE_STATES.INACTIVE) {
+        // Screen sharing is still pending, so assume that we need to kick it off.
+        var options = {
+          videoSource: "browser",
+          constraints: {
+            browserWindow: windowId,
+            scrollWithPage: true
+          },
+        };
+        this._sdkDriver.startScreenShare(options);
+      } else if (screenSharingState === SCREEN_SHARE_STATES.ACTIVE) {
+        // Just update the current share.
+        this._sdkDriver.switchAcquiredWindow(windowId);
+      } else {
+        console.error("Unexpectedly received windowId for browser sharing when pending");
+      }
+    },
+
+    /**
+     * Initiates a screen sharing publisher.
+     *
+     * @param {sharedActions.StartScreenShare} actionData
+     */
+    startScreenShare: function(actionData) {
+      this.dispatchAction(new sharedActions.ScreenSharingState({
+        state: SCREEN_SHARE_STATES.PENDING
+      }));
+
+      var options = {
+        videoSource: actionData.type
+      };
+      if (options.videoSource === "browser") {
+        this._browserSharingListener = this._handleSwitchBrowserShare.bind(this);
+
+        // Set up a listener for watching screen shares. This will get notified
+        // with the first windowId when it is added, so we start off the sharing
+        // from within the listener.
+        this._mozLoop.addBrowserSharingListener(this._browserSharingListener);
+      } else {
+        this._sdkDriver.startScreenShare(options);
+      }
+    },
+
+    /**
+     * Ends an active screenshare session.
+     */
+    endScreenShare: function() {
+      if (this._browserSharingListener) {
+        // Remove the browser sharing listener as we don't need it now.
+        this._mozLoop.removeBrowserSharingListener(this._browserSharingListener);
+        this._browserSharingListener = null;
+      }
+
+      if (this._sdkDriver.endScreenShare()) {
+        this.dispatchAction(new sharedActions.ScreenSharingState({
+          state: SCREEN_SHARE_STATES.INACTIVE
+        }));
+      }
     },
 
     /**
@@ -431,7 +533,7 @@ loop.store.ActiveRoomStore = (function() {
      * Handles a room being left.
      */
     leaveRoom: function() {
-      this._leaveRoom();
+      this._leaveRoom(ROOM_STATES.ENDED);
     },
 
     /**
@@ -465,14 +567,24 @@ loop.store.ActiveRoomStore = (function() {
      * Handles leaving a room. Clears any membership timeouts, then
      * signals to the server the leave of the room.
      *
-     * @param {ROOM_STATES} nextState Optional; the next state to switch to.
-     *                                Switches to READY if undefined.
+     * @param {ROOM_STATES} nextState The next state to switch to.
      */
     _leaveRoom: function(nextState) {
       if (loop.standaloneMedia) {
         loop.standaloneMedia.multiplexGum.reset();
       }
 
+      this._mozLoop.setScreenShareState(
+        this.getStoreState().windowId,
+        false);
+
+      if (this._browserSharingListener) {
+        // Remove the browser sharing listener as we don't need it now.
+        this._mozLoop.removeBrowserSharingListener(this._browserSharingListener);
+        this._browserSharingListener = null;
+      }
+
+      // We probably don't need to end screen share separately, but lets be safe.
       this._sdkDriver.disconnectSession();
 
       if (this._timeout) {
@@ -488,7 +600,7 @@ loop.store.ActiveRoomStore = (function() {
           this._storeState.sessionToken);
       }
 
-      this.setStoreState({roomState: nextState || ROOM_STATES.ENDED});
+      this.setStoreState({roomState: nextState});
     },
 
     /**
@@ -498,6 +610,23 @@ loop.store.ActiveRoomStore = (function() {
       // Note, that we want some values, such as the windowId, so we don't
       // do a full reset here.
       this.setStoreState(this.getInitialStoreState());
+    },
+
+    /**
+     * Handles a change in dimensions of a video stream and updates the store data
+     * with the new dimensions of a local or remote stream.
+     *
+     * @param {sharedActions.VideoDimensionsChanged} actionData
+     */
+    videoDimensionsChanged: function(actionData) {
+      // NOTE: in the future, when multiple remote video streams are supported,
+      //       we'll need to make this support multiple remotes as well. Good
+      //       starting point for video tiling.
+      var storeProp = (actionData.isLocal ? "local" : "remote") + "VideoDimensions";
+      var nextState = {};
+      nextState[storeProp] = this.getStoreState()[storeProp];
+      nextState[storeProp][actionData.videoType] = actionData.dimensions;
+      this.setStoreState(nextState);
     }
   });
 

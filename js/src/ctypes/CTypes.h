@@ -6,6 +6,8 @@
 #ifndef ctypes_CTypes_h
 #define ctypes_CTypes_h
 
+#include "mozilla/UniquePtr.h"
+
 #include "ffi.h"
 #include "jsalloc.h"
 #include "prlink.h"
@@ -21,39 +23,6 @@ namespace ctypes {
 /*******************************************************************************
 ** Utility classes
 *******************************************************************************/
-
-// Class that takes ownership of a pointer T*, and calls cx->delete_() or
-// cx->array_delete() upon destruction.
-template<class T>
-class AutoPtr {
-private:
-  typedef AutoPtr<T> self_type;
-
-public:
-  AutoPtr() : mPtr(nullptr) { }
-  explicit AutoPtr(T* ptr) : mPtr(ptr) { }
-  ~AutoPtr() { js_delete(mPtr); }
-
-  T*   operator->()         { return mPtr; }
-  bool operator!()          { return mPtr == nullptr; }
-  T&   operator[](size_t i) { return *(mPtr + i); }
-  // Note: we cannot safely provide an 'operator T*()', since this would allow
-  // the compiler to perform implicit conversion from one AutoPtr to another
-  // via the constructor AutoPtr(T*).
-
-  T*   get()         { return mPtr; }
-  void set(T* other) { MOZ_ASSERT(mPtr == nullptr); mPtr = other; }
-  T*   forget()      { T* result = mPtr; mPtr = nullptr; return result; }
-
-  self_type& operator=(T* rhs) { mPtr = rhs; return *this; }
-
-private:
-  // Do not allow copy construction or assignment from another AutoPtr.
-  AutoPtr(AutoPtr<T>&);
-  self_type& operator=(AutoPtr<T>& rhs);
-
-  T* mPtr;
-};
 
 // Container class for Vector, using SystemAllocPolicy.
 template<class T, size_t N = 0>
@@ -72,7 +41,7 @@ typedef Vector<char,     64, SystemAllocPolicy> AutoCString;
 // Convenience functions to append, insert, and compare Strings.
 template <class T, size_t N, class AP, size_t ArrayLength>
 void
-AppendString(Vector<T, N, AP> &v, const char (&array)[ArrayLength])
+AppendString(Vector<T, N, AP>& v, const char (&array)[ArrayLength])
 {
   // Don't include the trailing '\0'.
   size_t alen = ArrayLength - 1;
@@ -86,17 +55,17 @@ AppendString(Vector<T, N, AP> &v, const char (&array)[ArrayLength])
 
 template <class T, size_t N, size_t M, class AP>
 void
-AppendString(Vector<T, N, AP> &v, Vector<T, M, AP> &w)
+AppendString(Vector<T, N, AP>& v, Vector<T, M, AP>& w)
 {
   v.append(w.begin(), w.length());
 }
 
 template <size_t N, class AP>
 void
-AppendString(Vector<char16_t, N, AP> &v, JSString* str)
+AppendString(Vector<char16_t, N, AP>& v, JSString* str)
 {
   MOZ_ASSERT(str);
-  JSLinearString *linear = str->ensureLinear(nullptr);
+  JSLinearString* linear = str->ensureLinear(nullptr);
   if (!linear)
     return;
   JS::AutoCheckCannotGC nogc;
@@ -108,7 +77,7 @@ AppendString(Vector<char16_t, N, AP> &v, JSString* str)
 
 template <size_t N, class AP>
 void
-AppendString(Vector<char, N, AP> &v, JSString* str)
+AppendString(Vector<char, N, AP>& v, JSString* str)
 {
   MOZ_ASSERT(str);
   size_t vlen = v.length();
@@ -116,17 +85,17 @@ AppendString(Vector<char, N, AP> &v, JSString* str)
   if (!v.resize(vlen + alen))
     return;
 
-  JSLinearString *linear = str->ensureLinear(nullptr);
+  JSLinearString* linear = str->ensureLinear(nullptr);
   if (!linear)
     return;
 
   JS::AutoCheckCannotGC nogc;
   if (linear->hasLatin1Chars()) {
-    const Latin1Char *chars = linear->latin1Chars(nogc);
+    const Latin1Char* chars = linear->latin1Chars(nogc);
     for (size_t i = 0; i < alen; ++i)
       v[i + vlen] = char(chars[i]);
   } else {
-    const char16_t *chars = linear->twoByteChars(nogc);
+    const char16_t* chars = linear->twoByteChars(nogc);
     for (size_t i = 0; i < alen; ++i)
       v[i + vlen] = char(chars[i]);
   }
@@ -134,7 +103,7 @@ AppendString(Vector<char, N, AP> &v, JSString* str)
 
 template <class T, size_t N, class AP, size_t ArrayLength>
 void
-PrependString(Vector<T, N, AP> &v, const char (&array)[ArrayLength])
+PrependString(Vector<T, N, AP>& v, const char (&array)[ArrayLength])
 {
   // Don't include the trailing '\0'.
   size_t alen = ArrayLength - 1;
@@ -152,7 +121,7 @@ PrependString(Vector<T, N, AP> &v, const char (&array)[ArrayLength])
 
 template <size_t N, class AP>
 void
-PrependString(Vector<char16_t, N, AP> &v, JSString* str)
+PrependString(Vector<char16_t, N, AP>& v, JSString* str)
 {
   MOZ_ASSERT(str);
   size_t vlen = v.length();
@@ -170,7 +139,7 @@ PrependString(Vector<char16_t, N, AP> &v, JSString* str)
   // Copy data to insert.
   JS::AutoCheckCannotGC nogc;
   if (linear->hasLatin1Chars()) {
-    const Latin1Char *chars = linear->latin1Chars(nogc);
+    const Latin1Char* chars = linear->latin1Chars(nogc);
     for (size_t i = 0; i < alen; i++)
       v[i] = chars[i];
   } else {
@@ -180,13 +149,13 @@ PrependString(Vector<char16_t, N, AP> &v, JSString* str)
 
 template <typename CharT>
 extern size_t
-GetDeflatedUTF8StringLength(JSContext *maybecx, const CharT *chars,
+GetDeflatedUTF8StringLength(JSContext* maybecx, const CharT* chars,
                             size_t charsLength);
 
 template <typename CharT>
 bool
-DeflateStringToUTF8Buffer(JSContext *maybecx, const CharT *src, size_t srclen,
-                          char *dst, size_t *dstlenp);
+DeflateStringToUTF8Buffer(JSContext* maybecx, const CharT* src, size_t srclen,
+                          char* dst, size_t* dstlenp);
 
 
 /*******************************************************************************
@@ -258,21 +227,21 @@ struct FieldHashPolicy : DefaultHasher<JSFlatString*>
   typedef Key Lookup;
 
   template <typename CharT>
-  static uint32_t hash(const CharT *s, size_t n) {
+  static uint32_t hash(const CharT* s, size_t n) {
     uint32_t hash = 0;
     for (; n > 0; s++, n--)
       hash = hash * 33 + *s;
     return hash;
   }
 
-  static uint32_t hash(const Lookup &l) {
+  static uint32_t hash(const Lookup& l) {
     JS::AutoCheckCannotGC nogc;
     return l->hasLatin1Chars()
            ? hash(l->latin1Chars(nogc), l->length())
            : hash(l->twoByteChars(nogc), l->length());
   }
 
-  static bool match(const Key &k, const Lookup &l) {
+  static bool match(const Key& k, const Lookup& l) {
     if (k == l)
       return true;
 
@@ -472,6 +441,8 @@ namespace PointerType {
   JSObject* GetBaseType(JSObject* obj);
 }
 
+typedef mozilla::UniquePtr<ffi_type, JS::DeletePolicy<ffi_type>> UniquePtrFFIType;
+
 namespace ArrayType {
   JSObject* CreateInternal(JSContext* cx, HandleObject baseType, size_t length,
     bool lengthDefined);
@@ -479,21 +450,21 @@ namespace ArrayType {
   JSObject* GetBaseType(JSObject* obj);
   size_t GetLength(JSObject* obj);
   bool GetSafeLength(JSObject* obj, size_t* result);
-  ffi_type* BuildFFIType(JSContext* cx, JSObject* obj);
+  UniquePtrFFIType BuildFFIType(JSContext* cx, JSObject* obj);
 }
 
 namespace StructType {
   bool DefineInternal(JSContext* cx, JSObject* typeObj, JSObject* fieldsObj);
 
   const FieldInfoHash* GetFieldInfo(JSObject* obj);
-  const FieldInfo* LookupField(JSContext* cx, JSObject* obj, JSFlatString *name);
+  const FieldInfo* LookupField(JSContext* cx, JSObject* obj, JSFlatString* name);
   JSObject* BuildFieldsArray(JSContext* cx, JSObject* obj);
-  ffi_type* BuildFFIType(JSContext* cx, JSObject* obj);
+  UniquePtrFFIType BuildFFIType(JSContext* cx, JSObject* obj);
 }
 
 namespace FunctionType {
-  JSObject* CreateInternal(JSContext* cx, jsval abi, jsval rtype,
-    jsval* argtypes, unsigned arglen);
+  JSObject* CreateInternal(JSContext* cx, HandleValue abi, HandleValue rtype,
+    const HandleValueArray& args);
 
   JSObject* ConstructWithObject(JSContext* cx, JSObject* typeObj,
     JSObject* refObj, PRFuncPtr fnptr, JSObject* result);

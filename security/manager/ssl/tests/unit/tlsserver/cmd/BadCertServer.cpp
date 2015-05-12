@@ -28,14 +28,19 @@ struct BadCertHost
 const BadCertHost sBadCertHosts[] =
 {
   { "expired.example.com", "expired" },
+  { "notyetvalid.example.com", "notYetValid" },
+  { "before-epoch.example.com", "beforeEpoch" },
   { "selfsigned.example.com", "selfsigned" },
   { "unknownissuer.example.com", "unknownissuer" },
   { "mismatch.example.com", "mismatch" },
   { "expiredissuer.example.com", "expiredissuer" },
+  { "notyetvalidissuer.example.com", "notYetValidIssuer" },
+  { "before-epoch-issuer.example.com", "beforeEpochIssuer" },
   { "md5signature.example.com", "md5signature" },
   { "untrusted.example.com", "localhostAndExampleCom" },
   { "untrustedissuer.example.com", "untrustedissuer" },
   { "mismatch-expired.example.com", "mismatch-expired" },
+  { "mismatch-notYetValid.example.com", "mismatch-notYetValid" },
   { "mismatch-untrusted.example.com", "mismatch-untrusted" },
   { "untrusted-expired.example.com", "untrusted-expired" },
   { "md5signature-expired.example.com", "md5signature-expired" },
@@ -64,6 +69,7 @@ const BadCertHost sBadCertHosts[] =
   { "end-entity-issued-by-v1-cert.example.com", "eeIssuedByV1Cert" },
   { "end-entity-issued-by-non-CA.example.com", "eeIssuedByNonCA" },
   { "inadequate-key-size-ee.example.com", "inadequateKeySizeEE" },
+  { "badSubjectAltNames.example.com", "badSubjectAltNames" },
   { nullptr, nullptr }
 };
 

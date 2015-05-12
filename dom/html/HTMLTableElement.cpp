@@ -32,16 +32,16 @@ public:
   NS_DECL_CYCLE_COLLECTING_ISUPPORTS
   NS_DECL_NSIDOMHTMLCOLLECTION
 
-  virtual Element* GetElementAt(uint32_t aIndex) MOZ_OVERRIDE;
-  virtual nsINode* GetParentObject() MOZ_OVERRIDE
+  virtual Element* GetElementAt(uint32_t aIndex) override;
+  virtual nsINode* GetParentObject() override
   {
     return mParent;
   }
 
   virtual Element*
-  GetFirstNamedElement(const nsAString& aName, bool& aFound) MOZ_OVERRIDE;
+  GetFirstNamedElement(const nsAString& aName, bool& aFound) override;
   virtual void GetSupportedNames(unsigned aFlags,
-                                 nsTArray<nsString>& aNames) MOZ_OVERRIDE;
+                                 nsTArray<nsString>& aNames) override;
 
   NS_IMETHOD    ParentDestroyed();
 
@@ -49,11 +49,11 @@ public:
 
   // nsWrapperCache
   using nsWrapperCache::GetWrapperPreserveColor;
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 protected:
   virtual ~TableRowsCollection();
 
-  virtual JSObject* GetWrapperPreserveColorInternal() MOZ_OVERRIDE
+  virtual JSObject* GetWrapperPreserveColorInternal() override
   {
     return nsWrapperCache::GetWrapperPreserveColor();
   }
@@ -705,10 +705,10 @@ HTMLTableElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
     if (value && value->Type() == nsAttrValue::eEnum) {
       if (value->GetEnumValue() == NS_STYLE_TEXT_ALIGN_CENTER ||
           value->GetEnumValue() == NS_STYLE_TEXT_ALIGN_MOZ_CENTER) {
-        nsCSSValue* marginLeft = aData->ValueForMarginLeftValue();
+        nsCSSValue* marginLeft = aData->ValueForMarginLeft();
         if (marginLeft->GetUnit() == eCSSUnit_Null)
           marginLeft->SetAutoValue();
-        nsCSSValue* marginRight = aData->ValueForMarginRightValue();
+        nsCSSValue* marginRight = aData->ValueForMarginRight();
         if (marginRight->GetUnit() == eCSSUnit_Null)
           marginRight->SetAutoValue();
       }
@@ -721,10 +721,10 @@ HTMLTableElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
       value = aAttributes->GetAttr(nsGkAtoms::hspace);
 
       if (value && value->Type() == nsAttrValue::eInteger) {
-        nsCSSValue* marginLeft = aData->ValueForMarginLeftValue();
+        nsCSSValue* marginLeft = aData->ValueForMarginLeft();
         if (marginLeft->GetUnit() == eCSSUnit_Null)
           marginLeft->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel); 
-        nsCSSValue* marginRight = aData->ValueForMarginRightValue();
+        nsCSSValue* marginRight = aData->ValueForMarginRight();
         if (marginRight->GetUnit() == eCSSUnit_Null)
           marginRight->SetFloatValue((float)value->GetIntegerValue(), eCSSUnit_Pixel);
       }
@@ -768,10 +768,10 @@ HTMLTableElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
     nscolor color;
     if (value && presContext->UseDocumentColors() &&
         value->GetColorValue(color)) {
-      nsCSSValue* borderLeftColor = aData->ValueForBorderLeftColorValue();
+      nsCSSValue* borderLeftColor = aData->ValueForBorderLeftColor();
       if (borderLeftColor->GetUnit() == eCSSUnit_Null)
         borderLeftColor->SetColorValue(color);
-      nsCSSValue* borderRightColor = aData->ValueForBorderRightColorValue();
+      nsCSSValue* borderRightColor = aData->ValueForBorderRightColor();
       if (borderRightColor->GetUnit() == eCSSUnit_Null)
         borderRightColor->SetColorValue(color);
       nsCSSValue* borderTopColor = aData->ValueForBorderTopColor();
@@ -792,10 +792,10 @@ HTMLTableElement::MapAttributesIntoRule(const nsMappedAttributes* aAttributes,
         borderThickness = borderValue->GetIntegerValue();
 
       // by default, set all border sides to the specified width
-      nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidthValue();
+      nsCSSValue* borderLeftWidth = aData->ValueForBorderLeftWidth();
       if (borderLeftWidth->GetUnit() == eCSSUnit_Null)
         borderLeftWidth->SetFloatValue((float)borderThickness, eCSSUnit_Pixel);
-      nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidthValue();
+      nsCSSValue* borderRightWidth = aData->ValueForBorderRightWidth();
       if (borderRightWidth->GetUnit() == eCSSUnit_Null)
         borderRightWidth->SetFloatValue((float)borderThickness, eCSSUnit_Pixel);
       nsCSSValue* borderTopWidth = aData->ValueForBorderTopWidth();
@@ -854,12 +854,12 @@ MapInheritedTableAttributesIntoRule(const nsMappedAttributes* aAttributes,
       // don't have any set.
       nsCSSValue padVal(float(value->GetIntegerValue()), eCSSUnit_Pixel);
 
-      nsCSSValue* paddingLeft = aData->ValueForPaddingLeftValue();
+      nsCSSValue* paddingLeft = aData->ValueForPaddingLeft();
       if (paddingLeft->GetUnit() == eCSSUnit_Null) {
         *paddingLeft = padVal;
       }
 
-      nsCSSValue* paddingRight = aData->ValueForPaddingRightValue();
+      nsCSSValue* paddingRight = aData->ValueForPaddingRight();
       if (paddingRight->GetUnit() == eCSSUnit_Null) {
         *paddingRight = padVal;
       }

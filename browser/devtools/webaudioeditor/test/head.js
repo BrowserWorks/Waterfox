@@ -16,10 +16,13 @@ let { Promise } = Cu.import("resource://gre/modules/Promise.jsm", {});
 let { gDevTools } = Cu.import("resource:///modules/devtools/gDevTools.jsm", {});
 let { devtools } = Cu.import("resource://gre/modules/devtools/Loader.jsm", {});
 let { DebuggerServer } = Cu.import("resource://gre/modules/devtools/dbg-server.jsm", {});
+let { generateUUID } = Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator);
 
 let { WebAudioFront } = devtools.require("devtools/server/actors/webaudio");
 let TargetFactory = devtools.TargetFactory;
+let mm = null;
 
+const FRAME_SCRIPT_UTILS_URL = "chrome://browser/content/devtools/frame-script-utils.js";
 const EXAMPLE_URL = "http://example.com/browser/browser/devtools/webaudioeditor/test/";
 const SIMPLE_CONTEXT_URL = EXAMPLE_URL + "doc_simple-context.html";
 const COMPLEX_CONTEXT_URL = EXAMPLE_URL + "doc_complex-context.html";
@@ -46,6 +49,15 @@ registerCleanupFunction(() => {
   Services.prefs.setBoolPref("devtools.webaudioeditor.enabled", gToolEnabled);
   Cu.forceGC();
 });
+
+/**
+ * Call manually in tests that use frame script utils after initializing
+ * the web audio editor. Call after init but before navigating to a different page.
+ */
+function loadFrameScripts () {
+  mm = gBrowser.selectedBrowser.messageManager;
+  mm.loadFrameScript(FRAME_SCRIPT_UTILS_URL, false);
+}
 
 function addTab(aUrl, aWindow) {
   info("Adding tab: " + aUrl);
@@ -98,6 +110,7 @@ function once(aTarget, aEventName, aUseCapture = false) {
     if ((add in aTarget) && (remove in aTarget)) {
       aTarget[add](aEventName, function onEvent(...aArgs) {
         aTarget[remove](aEventName, onEvent, aUseCapture);
+        info("Got event: '" + aEventName + "' on " + aTarget + ".");
         deferred.resolve(...aArgs);
       }, aUseCapture);
       break;
@@ -231,7 +244,7 @@ function checkVariableView (view, index, hash, description = "") {
   // If node shouldn't display any properties, ensure that the 'empty' message is
   // visible
   if (!variables.length) {
-    ok(isVisible(scope.window.$("#properties-tabpanel-content-empty")),
+    ok(isVisible(scope.window.$("#properties-empty")),
       description + " should show the empty properties tab.");
     return;
   }
@@ -318,6 +331,12 @@ function mouseOver (win, element) {
   EventUtils.sendMouseEvent({ type: "mouseover" }, element, win);
 }
 
+function command (button) {
+  let ev = button.ownerDocument.createEvent("XULCommandEvent");
+  ev.initCommandEvent("command", true, true, button.ownerDocument.defaultView, 0, false, false, false, false, null);
+  button.dispatchEvent(ev);
+}
+
 function isVisible (element) {
   return !element.getAttribute("hidden");
 }
@@ -334,13 +353,15 @@ function wait (n) {
 
 /**
  * Clicks a graph node based on actorID or passing in an element.
- * Returns a promise that resolves once
- * UI_INSPECTOR_NODE_SET is fired.
+ * Returns a promise that resolves once UI_INSPECTOR_NODE_SET is fired and
+ * the tabs have rendered, completing all RDP requests for the node.
  */
 function clickGraphNode (panelWin, el, waitForToggle = false) {
   let { promise, resolve } = Promise.defer();
   let promises = [
-   once(panelWin, panelWin.EVENTS.UI_INSPECTOR_NODE_SET)
+   once(panelWin, panelWin.EVENTS.UI_INSPECTOR_NODE_SET),
+   once(panelWin, panelWin.EVENTS.UI_PROPERTIES_TAB_RENDERED),
+   once(panelWin, panelWin.EVENTS.UI_AUTOMATION_TAB_RENDERED)
   ];
 
   if (waitForToggle) {
@@ -413,15 +434,52 @@ function checkAutomationValue (values, time, expected) {
    */
   function getValueAt (values, time) {
     for (let i = 0; i < values.length; i++) {
-      if (values[i].t === time) {
+      if (values[i].delta === time) {
         return values[i].value;
       }
-      if (values[i].t > time) {
+      if (values[i].delta > time) {
         return (values[i - 1].value + values[i].value) / 2;
       }
     }
     return values[values.length - 1].value;
   }
+}
+
+/**
+ * Wait for all inspector tabs to complete rendering.
+ */
+function waitForInspectorRender (panelWin, EVENTS) {
+  return Promise.all([
+    once(panelWin, EVENTS.UI_PROPERTIES_TAB_RENDERED),
+    once(panelWin, EVENTS.UI_AUTOMATION_TAB_RENDERED)
+  ]);
+}
+
+/**
+ * Takes a string `script` and evaluates it directly in the content
+ * in potentially a different process.
+ */
+function evalInDebuggee (script) {
+  let deferred = Promise.defer();
+
+  if (!mm) {
+    throw new Error("`loadFrameScripts()` must be called when using MessageManager.");
+  }
+
+  let id = generateUUID().toString();
+  mm.sendAsyncMessage("devtools:test:eval", { script: script, id: id });
+  mm.addMessageListener("devtools:test:eval:response", handler);
+
+  function handler ({ data }) {
+    if (id !== data.id) {
+      return;
+    }
+
+    mm.removeMessageListener("devtools:test:eval:response", handler);
+    deferred.resolve(data.value);
+  }
+
+  return deferred.promise;
 }
 
 /**
@@ -470,7 +528,7 @@ const NODE_DEFAULT_VALUES = {
     "oversample": "none"
   },
   "PannerNode": {
-    "panningModel": "HRTF",
+    "panningModel": "equalpower",
     "distanceModel": "inverse",
     "refDistance": 1,
     "maxDistance": 10000,

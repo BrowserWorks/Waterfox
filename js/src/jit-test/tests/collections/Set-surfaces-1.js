@@ -14,8 +14,7 @@ assertEq(Set.name, "Set");
 
 assertEq(Object.getPrototypeOf(Set.prototype), Object.prototype);
 assertEq(Object.prototype.toString.call(Set.prototype), "[object Set]");
-assertEq(Object.prototype.toString.call(new Set), "[object Set]");
-assertEq(Object.prototype.toString.call(Set()), "[object Set]");
+assertEq(Object.prototype.toString.call(new Set()), "[object Set]");
 assertEq(Object.keys(Set.prototype).join(), "");
 assertEq(Set.prototype.constructor, Set);
 
@@ -45,4 +44,4 @@ checkMethod("clear", 0);
 
 // Set.prototype.keys, .values, and .iterator are the same function object
 assertEq(Set.prototype.keys, Set.prototype.values);
-assertEq(Set.prototype[std_iterator], Set.prototype.values);
+assertEq(Set.prototype[Symbol.iterator], Set.prototype.values);

@@ -10,7 +10,7 @@
 #include "mozilla/Attributes.h"
 #include "mozilla/DOMEventTargetHelper.h"
 #include "mozilla/dom/BluetoothDevice2Binding.h"
-#include "BluetoothCommon.h"
+#include "mozilla/dom/bluetooth/BluetoothCommon.h"
 #include "nsString.h"
 #include "nsCOMPtr.h"
 
@@ -23,12 +23,13 @@ namespace dom {
 BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothClassOfDevice;
+class BluetoothGatt;
 class BluetoothNamedValue;
 class BluetoothValue;
 class BluetoothSignal;
 class BluetoothSocket;
 
-class BluetoothDevice MOZ_FINAL : public DOMEventTargetHelper
+class BluetoothDevice final : public DOMEventTargetHelper
                                 , public BluetoothSignalObserver
 {
 public:
@@ -69,6 +70,8 @@ public:
     return mType;
   }
 
+  BluetoothGatt* GetGatt();
+
   /****************************************************************************
    * Event Handlers
    ***************************************************************************/
@@ -91,18 +94,8 @@ public:
      return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
-  virtual void DisconnectFromOwner() MOZ_OVERRIDE;
-
-  /**
-   * Override operator== for device comparison
-   */
-  bool operator==(BluetoothDevice& aDevice) const
-  {
-    nsString address;
-    aDevice.GetAddress(address);
-    return mAddress.Equals(address);
-  }
+  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual void DisconnectFromOwner() override;
 
 private:
   BluetoothDevice(nsPIDOMWindow* aOwner, const BluetoothValue& aValue);
@@ -183,8 +176,60 @@ private:
    * Type of this device. Can be unknown/classic/le/dual.
    */
   BluetoothDeviceType mType;
+
+  /**
+   * GATT client object to interact with the remote device.
+   */
+  nsRefPtr<BluetoothGatt> mGatt;
 };
 
 END_BLUETOOTH_NAMESPACE
+
+/**
+ * Explicit Specialization of Function Templates
+ *
+ * Allows customizing the template code for a given set of template arguments.
+ * With this function template, nsTArray can handle comparison of
+ * 'nsRefPtr<BluetoothDevice>' properly, including IndexOf() and Contains();
+ */
+template <>
+class nsDefaultComparator <nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>,
+                           nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>> {
+  public:
+
+    bool Equals(
+      const nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>& aDeviceA,
+      const nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>& aDeviceB) const
+    {
+      nsString addressA, addressB;
+      aDeviceA->GetAddress(addressA);
+      aDeviceB->GetAddress(addressB);
+
+      return addressA.Equals(addressB);
+    }
+};
+
+/**
+ * Explicit Specialization of Function Templates
+ *
+ * Allows customizing the template code for a given set of template arguments.
+ * With this function template, nsTArray can handle comparison between
+ * 'nsRefPtr<BluetoothDevice>' and nsString properly, including IndexOf() and
+ * Contains();
+ */
+template <>
+class nsDefaultComparator <nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>,
+                           nsString> {
+public:
+  bool Equals(
+    const nsRefPtr<mozilla::dom::bluetooth::BluetoothDevice>& aDevice,
+    const nsString& aAddress) const
+  {
+    nsString deviceAddress;
+    aDevice->GetAddress(deviceAddress);
+
+    return deviceAddress.Equals(aAddress);
+  }
+};
 
 #endif

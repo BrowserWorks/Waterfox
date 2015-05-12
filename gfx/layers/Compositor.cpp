@@ -9,6 +9,7 @@
 #include "mozilla/layers/Effects.h"     // for Effect, EffectChain, etc
 #include "mozilla/mozalloc.h"           // for operator delete, etc
 #include "gfx2DGlue.h"
+#include "nsAppRunner.h"
 
 namespace mozilla {
 namespace gfx {
@@ -30,11 +31,10 @@ Compositor::GetBackend()
 /* static */ void
 Compositor::SetBackend(LayersBackend backend)
 {
-  if (sBackend != backend &&
+  if (!gIsGtest && sBackend != backend &&
       sBackend != LayersBackend::LAYERS_NONE &&
       backend != LayersBackend::LAYERS_NONE) {
     // Assert this once we figure out bug 972891.
-
 #ifdef XP_MACOSX
     gfxWarning() << "Changing compositor from " << unsigned(sBackend) << " to " << unsigned(backend);
 #endif

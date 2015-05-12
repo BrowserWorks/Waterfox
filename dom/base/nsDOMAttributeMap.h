@@ -140,7 +140,7 @@ public:
   {
     return mContent;
   }
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   // WebIDL
   Attr* GetNamedItem(const nsAString& aAttrName);
@@ -151,6 +151,8 @@ public:
   {
     return SetNamedItemInternal(aAttr, false, aError);
   }
+  already_AddRefed<Attr>
+  RemoveNamedItem(mozilla::dom::NodeInfo* aNodeInfo, ErrorResult& aError);
   already_AddRefed<Attr>
   RemoveNamedItem(const nsAString& aName, ErrorResult& aError);
  

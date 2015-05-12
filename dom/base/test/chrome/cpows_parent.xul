@@ -126,6 +126,14 @@
       ok(j2.a[2] === 3, "JSON array index");
       ok(j2.s === "hello", "JSON string property");
       ok(j2.o.x === 10, "JSON object property");
+
+      let with_proto = message.objects.with_proto;
+      let proto = Object.getPrototypeOf(with_proto);
+      ok(proto.data == 42, "Object.getPrototypeOf works on CPOW");
+
+      let with_null_proto = message.objects.with_null_proto;
+      proto = Object.getPrototypeOf(with_null_proto);
+      ok(proto === null, "Object.getPrototypeOf works on CPOW (null proto)");
     }
 
     function recvAsyncMessage(message) {
@@ -197,6 +205,24 @@
     let savedElement = null;
     function recvDomTest(message) {
       savedElement = message.objects.element;
+
+      // Test to ensure that we don't pass CPOWs to C++-implemented interfaces.
+      // See bug 1072980.
+      if (test_state == "remote") {
+        let walker = Components.classes["@mozilla.org/inspector/deep-tree-walker;1"]
+                               .createInstance(Components.interfaces.inIDeepTreeWalker);
+        const SHOW_ELEMENT = Components.interfaces.nsIDOMNodeFilter.SHOW_ELEMENT;
+        walker.showAnonymousContent = true;
+        walker.showSubDocuments = false;
+
+        try {
+          walker.init(savedElement, SHOW_ELEMENT);
+          ok(false, "expected exception passing CPOW to C++");
+        } catch (e) {
+          is(e.result, Components.results.NS_ERROR_XPC_CANT_PASS_CPOW_TO_NATIVE,
+             "got exception when passing CPOW to C++");
+        }
+      }
     }
 
     function recvDomTestAfterGC(message) {

@@ -17,17 +17,17 @@ namespace js {
 class PropertyName;
 class NativeObject;
 class ArrayObject;
+class GlobalObject;
 class PlainObject;
 class ScriptSourceObject;
 class Shape;
-
-namespace types { struct TypeObject; }
+class ObjectGroup;
 
 // These are internal counterparts to the public types such as HandleObject.
 
 typedef JS::Handle<NativeObject*>      HandleNativeObject;
 typedef JS::Handle<Shape*>             HandleShape;
-typedef JS::Handle<types::TypeObject*> HandleTypeObject;
+typedef JS::Handle<ObjectGroup*>       HandleObjectGroup;
 typedef JS::Handle<JSAtom*>            HandleAtom;
 typedef JS::Handle<JSLinearString*>    HandleLinearString;
 typedef JS::Handle<PropertyName*>      HandlePropertyName;
@@ -41,11 +41,12 @@ typedef JS::MutableHandle<NativeObject*> MutableHandleNativeObject;
 
 typedef JS::Rooted<NativeObject*>      RootedNativeObject;
 typedef JS::Rooted<Shape*>             RootedShape;
-typedef JS::Rooted<types::TypeObject*> RootedTypeObject;
+typedef JS::Rooted<ObjectGroup*>       RootedObjectGroup;
 typedef JS::Rooted<JSAtom*>            RootedAtom;
 typedef JS::Rooted<JSLinearString*>    RootedLinearString;
 typedef JS::Rooted<PropertyName*>      RootedPropertyName;
 typedef JS::Rooted<ArrayObject*>       RootedArrayObject;
+typedef JS::Rooted<GlobalObject*>      RootedGlobalObject;
 typedef JS::Rooted<PlainObject*>       RootedPlainObject;
 typedef JS::Rooted<ScriptSourceObject*> RootedScriptSource;
 

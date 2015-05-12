@@ -8,14 +8,21 @@ directory.
 '''
 
 import os
-import mozpack.path
+import mozpack.path as mozpath
 from mozpack.packager.formats import (
     FlatFormatter,
     JarFormatter,
     OmniJarFormatter,
 )
-from mozpack.packager import SimplePackager
-from mozpack.files import ManifestFile
+from mozpack.packager import (
+    Component,
+    SimplePackager,
+    SimpleManifestSink,
+)
+from mozpack.files import (
+    ComposedFinder,
+    ManifestFile,
+)
 from mozpack.copier import (
     FileCopier,
     Jarrer,
@@ -34,22 +41,52 @@ from createprecomplete import generate_precomplete
 
 class LocaleManifestFinder(object):
     def __init__(self, finder):
-        # Read all manifest entries
-        manifests = dict((p, m) for p, m in finder.find('**/*.manifest')
-                         if is_manifest(p))
-        assert all(isinstance(m, ManifestFile)
-                   for m in manifests.itervalues())
-        self.entries = [e for m in manifests.itervalues()
-                        for e in m if e.localized]
+        entries = self.entries = []
+        bases = self.bases = ['']
+
+        class MockFormatter(object):
+            def add_interfaces(self, path, content):
+                pass
+
+            def add(self, path, content):
+                pass
+
+            def add_manifest(self, entry):
+                if entry.localized:
+                    entries.append(entry)
+
+            def add_base(self, base, addon=False):
+                bases.append(base)
+
+        # SimplePackager rejects "manifest foo.manifest" entries with
+        # additional flags (such as "manifest foo.manifest application=bar").
+        # Those type of entries are used by language packs to work as addons,
+        # but are not necessary for the purpose of l10n repacking. So we wrap
+        # the finder in order to remove those entries.
+        class WrapFinder(object):
+            def __init__(self, finder):
+                self._finder = finder
+
+            def find(self, pattern):
+                for p, f in self._finder.find(pattern):
+                    if isinstance(f, ManifestFile):
+                        unwanted = [
+                            e for e in f._entries
+                            if isinstance(e, Manifest) and e.flags
+                        ]
+                        if unwanted:
+                            f = ManifestFile(
+                                f._base,
+                                [e for e in f._entries if e not in unwanted])
+                    yield p, f
+
+        sink = SimpleManifestSink(WrapFinder(finder), MockFormatter())
+        sink.add(Component(''), '*')
+        sink.close(False)
+
         # Find unique locales used in these manifest entries.
         self.locales = list(set(e.id for e in self.entries
                                 if isinstance(e, ManifestLocale)))
-        # Find all paths whose manifest are included by no other manifest.
-        includes = set(mozpack.path.join(e.base, e.relpath)
-                       for m in manifests.itervalues()
-                       for e in m if isinstance(e, Manifest))
-        self.bases = [mozpack.path.dirname(p)
-                      for p in set(manifests.keys()) - includes]
 
 
 def _repack(app_finder, l10n_finder, copier, formatter, non_chrome=set()):
@@ -72,20 +109,30 @@ def _repack(app_finder, l10n_finder, copier, formatter, non_chrome=set()):
     l10n_paths = {}
     for e in l10n.entries:
         if isinstance(e, ManifestChrome):
-            base = mozpack.path.basedir(e.path, app.bases)
+            base = mozpath.basedir(e.path, app.bases)
             l10n_paths.setdefault(base, {})
             l10n_paths[base][e.name] = e.path
 
     # For chrome and non chrome files or directories, store what langpack path
     # corresponds to a package path.
-    paths = dict((e.path,
-                  l10n_paths[mozpack.path.basedir(e.path, app.bases)][e.name])
-                 for e in app.entries
-                 if isinstance(e, ManifestEntryWithRelPath))
+    paths = {}
+    for e in app.entries:
+        if isinstance(e, ManifestEntryWithRelPath):
+            base = mozpath.basedir(e.path, app.bases)
+            if base not in l10n_paths:
+                errors.fatal("Locale doesn't contain %s/" % base)
+                # Allow errors to accumulate
+                continue
+            if e.name not in l10n_paths[base]:
+                errors.fatal("Locale doesn't have a manifest entry for '%s'" %
+                    e.name)
+                # Allow errors to accumulate
+                continue
+            paths[e.path] = l10n_paths[base][e.name]
 
     for pattern in non_chrome:
         for base in app.bases:
-            path = mozpack.path.join(base, pattern)
+            path = mozpath.join(base, pattern)
             left = set(p for p, f in app_finder.find(path))
             right = set(p for p, f in l10n_finder.find(path))
             for p in right:
@@ -109,10 +156,10 @@ def _repack(app_finder, l10n_finder, copier, formatter, non_chrome=set()):
             if not path:
                 continue
         else:
-            base = mozpack.path.basedir(p, paths.keys())
+            base = mozpath.basedir(p, paths.keys())
             if base:
-                subpath = mozpack.path.relpath(p, base)
-                path = mozpack.path.normpath(mozpack.path.join(paths[base],
+                subpath = mozpath.relpath(p, base)
+                path = mozpath.normpath(mozpath.join(paths[base],
                                                                subpath))
         if path:
             files = [f for p, f in l10n_finder.find(path)]
@@ -129,23 +176,23 @@ def _repack(app_finder, l10n_finder, copier, formatter, non_chrome=set()):
     l10n_manifests = []
     for base in set(e.base for e in l10n.entries):
         m = ManifestFile(base, [e for e in l10n.entries if e.base == base])
-        path = mozpack.path.join(base, 'chrome.%s.manifest' % l10n_locale)
+        path = mozpath.join(base, 'chrome.%s.manifest' % l10n_locale)
         l10n_manifests.append((path, m))
     bases = packager.get_bases()
     for path, m in l10n_manifests:
-        base = mozpack.path.basedir(path, bases)
+        base = mozpath.basedir(path, bases)
         packager.add(path, m)
         # Add a "manifest $path" entry in the top manifest under that base.
         m = ManifestFile(base)
-        m.add(Manifest(base, mozpack.path.relpath(path, base)))
-        packager.add(mozpack.path.join(base, 'chrome.manifest'), m)
+        m.add(Manifest(base, mozpath.relpath(path, base)))
+        packager.add(mozpath.join(base, 'chrome.manifest'), m)
 
     packager.close()
 
     # Add any remaining non chrome files.
     for pattern in non_chrome:
         for base in bases:
-            for p, f in l10n_finder.find(mozpack.path.join(base, pattern)):
+            for p, f in l10n_finder.find(mozpath.join(base, pattern)):
                 if not formatter.contains(p):
                     formatter.add(p, f)
 
@@ -155,9 +202,35 @@ def _repack(app_finder, l10n_finder, copier, formatter, non_chrome=set()):
         copier[path].preload([l.replace(locale, l10n_locale) for l in log])
 
 
-def repack(source, l10n, non_resources=[], non_chrome=set()):
+def repack(source, l10n, extra_l10n={}, non_resources=[], non_chrome=set()):
+    '''
+    Replace localized data from the `source` directory with localized data
+    from `l10n` and `extra_l10n`.
+
+    The `source` argument points to a directory containing a packaged
+    application (in omnijar, jar or flat form).
+    The `l10n` argument points to a directory containing the main localized
+    data (usually in the form of a language pack addon) to use to replace
+    in the packaged application.
+    The `extra_l10n` argument contains a dict associating relative paths in
+    the source to separate directories containing localized data for them.
+    This can be used to point at different language pack addons for different
+    parts of the package application.
+    The `non_resources` argument gives a list of relative paths in the source
+    that should not be added in an omnijar in case the packaged application
+    is in that format.
+    The `non_chrome` argument gives a list of file/directory patterns for
+    localized files that are not listed in a chrome.manifest.
+    '''
     app_finder = UnpackFinder(source)
     l10n_finder = UnpackFinder(l10n)
+    if extra_l10n:
+        finders = {
+            '': l10n_finder,
+        }
+        for base, path in extra_l10n.iteritems():
+            finders[base] = UnpackFinder(path)
+        l10n_finder = ComposedFinder(finders)
     copier = FileCopier()
     if app_finder.kind == 'flat':
         formatter = FlatFormatter(copier)

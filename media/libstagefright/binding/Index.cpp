@@ -9,7 +9,6 @@
 #include "mp4_demuxer/SinfParser.h"
 #include "media/stagefright/MediaSource.h"
 #include "MediaResource.h"
-#include "mozilla/fallible.h"
 
 #include <algorithm>
 #include <limits>
@@ -101,7 +100,7 @@ MP4Sample* SampleIterator::GetNext()
   sample->size = s->mByteRange.Length();
 
   // Do the blocking read
-  sample->data = sample->extra_buffer = new ((fallible_t())) uint8_t[sample->size];
+  sample->data = sample->extra_buffer = new (fallible) uint8_t[sample->size];
   if (!sample->data) {
     return nullptr;
   }
@@ -147,6 +146,10 @@ MP4Sample* SampleIterator::GetNext()
         sample->crypto.plain_sizes.AppendElement(reader.ReadU16());
         sample->crypto.encrypted_sizes.AppendElement(reader.ReadU32());
       }
+    } else {
+      // No subsample information means the entire sample is encrypted.
+      sample->crypto.plain_sizes.AppendElement(0);
+      sample->crypto.encrypted_sizes.AppendElement(sample->size);
     }
   }
 
@@ -225,12 +228,12 @@ SampleIterator::GetNextKeyframeTime()
 }
 
 Index::Index(const stagefright::Vector<MediaSource::Indice>& aIndex,
-             Stream* aSource, uint32_t aTrackId, Monitor* aMonitor)
+             Stream* aSource, uint32_t aTrackId, bool aIsAudio, Monitor* aMonitor)
   : mSource(aSource)
   , mMonitor(aMonitor)
 {
   if (aIndex.isEmpty()) {
-    mMoofParser = new MoofParser(aSource, aTrackId, aMonitor);
+    mMoofParser = new MoofParser(aSource, aTrackId, aIsAudio, aMonitor);
   } else {
     for (size_t i = 0; i < aIndex.size(); i++) {
       const MediaSource::Indice& indice = aIndex[i];

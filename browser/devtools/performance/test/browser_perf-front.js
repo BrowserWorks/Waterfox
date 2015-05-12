@@ -5,23 +5,50 @@
  * Test basic functionality of PerformanceFront, emitting start and endtime values
  */
 
-let WAIT = 1000;
+let WAIT_TIME = 1000;
 
 function spawnTest () {
   let { target, front } = yield initBackend(SIMPLE_URL);
 
-  let { startTime } = yield front.startRecording();
+  let {
+    profilerStartTime,
+    timelineStartTime,
+    memoryStartTime
+  } = yield front.startRecording({
+    withAllocations: true
+  });
 
-  ok(typeof startTime === "number", "front.startRecording() emits start time");
+  ok(typeof profilerStartTime === "number",
+    "The front.startRecording() emits a profiler start time.");
+  ok(typeof timelineStartTime === "number",
+    "The front.startRecording() emits a timeline start time.");
+  ok(typeof memoryStartTime === "number",
+    "The front.startRecording() emits a memory start time.");
 
-  yield busyWait(WAIT);
+  yield busyWait(WAIT_TIME);
 
-  let { endTime } = yield front.stopRecording();
+  let {
+    profilerEndTime,
+    timelineEndTime,
+    memoryEndTime
+  } = yield front.stopRecording({
+    withAllocations: true
+  });
 
-  ok(typeof endTime === "number", "front.stopRecording() emits end time");
-  ok(endTime > startTime, "endTime is after startTime");
+  ok(typeof profilerEndTime === "number",
+    "The front.stopRecording() emits a profiler end time.");
+  ok(typeof timelineEndTime === "number",
+    "The front.stopRecording() emits a timeline end time.");
+  ok(typeof memoryEndTime === "number",
+    "The front.stopRecording() emits a memory end time.");
+
+  ok(profilerEndTime > profilerStartTime,
+    "The profilerEndTime is after profilerStartTime.");
+  ok(timelineEndTime > timelineStartTime,
+    "The timelineEndTime is after timelineStartTime.");
+  ok(memoryEndTime > memoryStartTime,
+    "The memoryEndTime is after memoryStartTime.");
 
   yield removeTab(target.tab);
   finish();
-
 }

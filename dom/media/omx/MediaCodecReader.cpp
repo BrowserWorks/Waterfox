@@ -33,6 +33,7 @@
 #include "MediaStreamSource.h"
 #include "MediaTaskQueue.h"
 #include "MP3FrameParser.h"
+#include "nsMimeTypes.h"
 #include "nsThreadUtils.h"
 #include "ImageContainer.h"
 #include "SharedThreadPool.h"
@@ -40,6 +41,7 @@
 #include "VideoUtils.h"
 
 using namespace android;
+using namespace mozilla::layers;
 
 namespace mozilla {
 
@@ -141,7 +143,6 @@ MediaCodecReader::TrackInputCopier::Copy(MediaBuffer* aSourceBuffer,
 MediaCodecReader::Track::Track(Type type)
   : mType(type)
   , mSourceIsStopped(true)
-  , mDurationLock("MediaCodecReader::Track::mDurationLock")
   , mDurationUs(INT64_C(0))
   , mInputIndex(sInvalidInputIndex)
   , mInputEndOfStream(false)
@@ -150,6 +151,7 @@ MediaCodecReader::Track::Track(Type type)
   , mFlushed(false)
   , mDiscontinuity(false)
   , mTaskQueue(nullptr)
+  , mTrackMonitor("MediaCodecReader::mTrackMonitor")
 {
   MOZ_ASSERT(mType != kUnknown, "Should have a valid Track::Type");
 }
@@ -185,6 +187,7 @@ MediaCodecReader::VorbisInputCopier::Copy(MediaBuffer* aSourceBuffer,
 MediaCodecReader::AudioTrack::AudioTrack()
   : Track(kAudio)
 {
+  mAudioPromise.SetMonitor(&mTrackMonitor);
 }
 
 MediaCodecReader::VideoTrack::VideoTrack()
@@ -196,6 +199,7 @@ MediaCodecReader::VideoTrack::VideoTrack()
   , mColorFormat(0)
   , mRotation(0)
 {
+  mVideoPromise.SetMonitor(&mTrackMonitor);
 }
 
 MediaCodecReader::CodecBufferInfo::CodecBufferInfo()
@@ -323,12 +327,6 @@ MediaCodecReader::UpdateIsWaitingMediaResources()
                         (!mVideoTrack.mCodec->allocated());
 }
 
-bool
-MediaCodecReader::IsDormantNeeded()
-{
-  return mVideoTrack.mSource != nullptr;
-}
-
 void
 MediaCodecReader::ReleaseMediaResources()
 {
@@ -348,8 +346,8 @@ MediaCodecReader::ReleaseMediaResources()
 nsRefPtr<ShutdownPromise>
 MediaCodecReader::Shutdown()
 {
-  MOZ_ASSERT(mAudioPromise.IsEmpty());
-  MOZ_ASSERT(mVideoPromise.IsEmpty());
+  MOZ_ASSERT(mAudioTrack.mAudioPromise.IsEmpty());
+  MOZ_ASSERT(mVideoTrack.mVideoPromise.IsEmpty());
   ReleaseResources();
   return MediaDecoderReader::Shutdown();
 }
@@ -357,7 +355,7 @@ MediaCodecReader::Shutdown()
 void
 MediaCodecReader::DispatchAudioTask()
 {
-  if (mAudioTrack.mTaskQueue && mAudioTrack.mTaskQueue->IsEmpty()) {
+  if (mAudioTrack.mTaskQueue) {
     RefPtr<nsIRunnable> task =
       NS_NewRunnableMethod(this,
                            &MediaCodecReader::DecodeAudioDataTask);
@@ -368,7 +366,7 @@ MediaCodecReader::DispatchAudioTask()
 void
 MediaCodecReader::DispatchVideoTask(int64_t aTimeThreshold)
 {
-  if (mVideoTrack.mTaskQueue && mVideoTrack.mTaskQueue->IsEmpty()) {
+  if (mVideoTrack.mTaskQueue) {
     RefPtr<nsIRunnable> task =
       NS_NewRunnableMethodWithArg<int64_t>(this,
                                            &MediaCodecReader::DecodeVideoFrameTask,
@@ -383,12 +381,12 @@ MediaCodecReader::RequestAudioData()
   MOZ_ASSERT(GetTaskQueue()->IsCurrentThreadIn());
   MOZ_ASSERT(HasAudio());
 
-  nsRefPtr<AudioDataPromise> p = mAudioPromise.Ensure(__func__);
+  MonitorAutoLock al(mAudioTrack.mTrackMonitor);
   if (CheckAudioResources()) {
     DispatchAudioTask();
   }
-
-  return p;
+  MOZ_ASSERT(mAudioTrack.mAudioPromise.IsEmpty());
+  return mAudioTrack.mAudioPromise.Ensure(__func__);
 }
 
 nsRefPtr<MediaDecoderReader::VideoDataPromise>
@@ -398,25 +396,25 @@ MediaCodecReader::RequestVideoData(bool aSkipToNextKeyframe,
   MOZ_ASSERT(GetTaskQueue()->IsCurrentThreadIn());
   MOZ_ASSERT(HasVideo());
 
-  nsRefPtr<VideoDataPromise> p = mVideoPromise.Ensure(__func__);
   int64_t threshold = sInvalidTimestampUs;
   if (aSkipToNextKeyframe && IsValidTimestampUs(aTimeThreshold)) {
-    mVideoTrack.mTaskQueue->Flush();
     threshold = aTimeThreshold;
   }
+
+  MonitorAutoLock al(mVideoTrack.mTrackMonitor);
   if (CheckVideoResources()) {
     DispatchVideoTask(threshold);
   }
-
-  return p;
+  MOZ_ASSERT(mVideoTrack.mVideoPromise.IsEmpty());
+  return mVideoTrack.mVideoPromise.Ensure(__func__);
 }
 
-bool
+void
 MediaCodecReader::DecodeAudioDataSync()
 {
   if (mAudioTrack.mCodec == nullptr || !mAudioTrack.mCodec->allocated() ||
       mAudioTrack.mOutputEndOfStream) {
-    return false;
+    return;
   }
 
   // Get one audio output data from MediaCodec
@@ -439,21 +437,20 @@ MediaCodecReader::DecodeAudioDataSync()
         if (CheckAudioResources()) {
           DispatchAudioTask();
         }
-        return true;
+        return;
       }
       continue; // Try it again now.
     } else if (status == INFO_FORMAT_CHANGED) {
       if (UpdateAudioInfo()) {
         continue; // Try it again now.
       } else {
-        return false;
+        return;
       }
     } else {
-      return false;
+      return;
     }
   }
 
-  bool result = false;
   if (bufferInfo.mBuffer != nullptr && bufferInfo.mSize > 0 &&
       bufferInfo.mBuffer->data() != nullptr) {
     // This is the approximate byte position in the stream.
@@ -462,7 +459,7 @@ MediaCodecReader::DecodeAudioDataSync()
     uint32_t frames = bufferInfo.mSize /
                       (mInfo.mAudio.mChannels * sizeof(AudioDataValue));
 
-    result = mAudioCompactor.Push(
+    mAudioCompactor.Push(
       pos,
       bufferInfo.mTimeUs,
       mInfo.mAudio.mRate,
@@ -480,13 +477,13 @@ MediaCodecReader::DecodeAudioDataSync()
   }
   mAudioTrack.mCodec->releaseOutputBuffer(bufferInfo.mIndex);
 
-  return result;
 }
 
-bool
+void
 MediaCodecReader::DecodeAudioDataTask()
 {
-  bool result = DecodeAudioDataSync();
+  DecodeAudioDataSync();
+  MonitorAutoLock al(mAudioTrack.mTrackMonitor);
   if (AudioQueue().GetSize() > 0) {
     nsRefPtr<AudioData> a = AudioQueue().PopFront();
     if (a) {
@@ -494,19 +491,18 @@ MediaCodecReader::DecodeAudioDataTask()
         a->mDiscontinuity = true;
         mAudioTrack.mDiscontinuity = false;
       }
-      mAudioPromise.Resolve(a, __func__);
+      mAudioTrack.mAudioPromise.Resolve(a, __func__);
     }
+  } else if (AudioQueue().AtEndOfStream()) {
+    mAudioTrack.mAudioPromise.Reject(END_OF_STREAM, __func__);
   }
-  else if (AudioQueue().AtEndOfStream()) {
-    mAudioPromise.Reject(END_OF_STREAM, __func__);
-  }
-  return result;
 }
 
-bool
+void
 MediaCodecReader::DecodeVideoFrameTask(int64_t aTimeThreshold)
 {
-  bool result = DecodeVideoFrameSync(aTimeThreshold);
+  DecodeVideoFrameSync(aTimeThreshold);
+  MonitorAutoLock al(mVideoTrack.mTrackMonitor);
   if (VideoQueue().GetSize() > 0) {
     nsRefPtr<VideoData> v = VideoQueue().PopFront();
     if (v) {
@@ -514,13 +510,11 @@ MediaCodecReader::DecodeVideoFrameTask(int64_t aTimeThreshold)
         v->mDiscontinuity = true;
         mVideoTrack.mDiscontinuity = false;
       }
-      mVideoPromise.Resolve(v, __func__);
+      mVideoTrack.mVideoPromise.Resolve(v, __func__);
     }
+  } else if (VideoQueue().AtEndOfStream()) {
+    mVideoTrack.mVideoPromise.Reject(END_OF_STREAM, __func__);
   }
-  else if (VideoQueue().AtEndOfStream()) {
-    mVideoPromise.Reject(END_OF_STREAM, __func__);
-  }
-  return result;
 }
 
 bool
@@ -652,7 +646,7 @@ MediaCodecReader::ParseDataSegment(const char* aBuffer,
   bool durationUpdateRequired = false;
 
   {
-    MutexAutoLock al(mAudioTrack.mDurationLock);
+    MonitorAutoLock al(mAudioTrack.mTrackMonitor);
     if (duration > mAudioTrack.mDurationUs) {
       mAudioTrack.mDurationUs = duration;
       durationUpdateRequired = true;
@@ -660,7 +654,7 @@ MediaCodecReader::ParseDataSegment(const char* aBuffer,
   }
 
   if (durationUpdateRequired && HasVideo()) {
-    MutexAutoLock al(mVideoTrack.mDurationLock);
+    MonitorAutoLock al(mVideoTrack.mTrackMonitor);
     durationUpdateRequired = duration > mVideoTrack.mDurationUs;
   }
 
@@ -690,7 +684,9 @@ MediaCodecReader::ReadMetadata(MediaInfo* aInfo,
     return NS_ERROR_FAILURE;
   }
 
-  if (!TriggerIncrementalParser()) {
+  bool incrementalParserNeeded =
+    mDecoder->GetResource()->GetContentType().EqualsASCII(AUDIO_MP3);
+  if (incrementalParserNeeded && !TriggerIncrementalParser()) {
     return NS_ERROR_FAILURE;
   }
 
@@ -720,12 +716,12 @@ MediaCodecReader::ReadMetadata(MediaInfo* aInfo,
   // Set the total duration (the max of the audio and video track).
   int64_t audioDuration = INT64_C(-1);
   {
-    MutexAutoLock al(mAudioTrack.mDurationLock);
+    MonitorAutoLock al(mAudioTrack.mTrackMonitor);
     audioDuration = mAudioTrack.mDurationUs;
   }
   int64_t videoDuration = INT64_C(-1);
   {
-    MutexAutoLock al(mVideoTrack.mDurationLock);
+    MonitorAutoLock al(mVideoTrack.mTrackMonitor);
     videoDuration = mVideoTrack.mDurationUs;
   }
   int64_t duration = audioDuration > videoDuration ? audioDuration : videoDuration;
@@ -758,11 +754,19 @@ MediaCodecReader::ResetDecode()
 {
   if (CheckAudioResources()) {
     mAudioTrack.mTaskQueue->Flush();
+    MonitorAutoLock al(mAudioTrack.mTrackMonitor);
+    if (!mAudioTrack.mAudioPromise.IsEmpty()) {
+      mAudioTrack.mAudioPromise.Reject(CANCELED, __func__);
+    }
     FlushCodecData(mAudioTrack);
     mAudioTrack.mDiscontinuity = true;
   }
   if (CheckVideoResources()) {
     mVideoTrack.mTaskQueue->Flush();
+    MonitorAutoLock al(mVideoTrack.mTrackMonitor);
+    if (!mVideoTrack.mVideoPromise.IsEmpty()) {
+      mVideoTrack.mVideoPromise.Reject(CANCELED, __func__);
+    }
     FlushCodecData(mVideoTrack);
     mVideoTrack.mDiscontinuity = true;
   }
@@ -797,11 +801,49 @@ MediaCodecReader::TextureClientRecycleCallback(TextureClient* aClient)
     if (!mTextureClientIndexes.Get(aClient, &index)) {
       return;
     }
+
+#if MOZ_WIDGET_GONK && ANDROID_VERSION >= 17
+    sp<Fence> fence = aClient->GetReleaseFenceHandle().mFence;
+    if (fence.get() && fence->isValid()) {
+      mPendingReleaseItems.AppendElement(ReleaseItem(index, fence));
+    } else {
+      mPendingReleaseItems.AppendElement(ReleaseItem(index, nullptr));
+    }
+#else
+    mPendingReleaseItems.AppendElement(ReleaseItem(index));
+#endif
     mTextureClientIndexes.Remove(aClient);
   }
 
-  if (mVideoTrack.mCodec != nullptr) {
-    mVideoTrack.mCodec->releaseOutputBuffer(index);
+  if (mVideoTrack.mReleaseBufferTaskQueue->IsEmpty()) {
+    RefPtr<nsIRunnable> task =
+      NS_NewRunnableMethod(this,
+                           &MediaCodecReader::WaitFenceAndReleaseOutputBuffer);
+    mVideoTrack.mReleaseBufferTaskQueue->Dispatch(task);
+  }
+}
+
+void
+MediaCodecReader::WaitFenceAndReleaseOutputBuffer()
+{
+  nsTArray<ReleaseItem> releasingItems;
+  {
+    MutexAutoLock autoLock(mTextureClientIndexesLock);
+    releasingItems.AppendElements(mPendingReleaseItems);
+    mPendingReleaseItems.Clear();
+  }
+
+  for (size_t i = 0; i < releasingItems.Length(); i++) {
+#if MOZ_WIDGET_GONK && ANDROID_VERSION >= 17
+    sp<Fence> fence;
+    fence = releasingItems[i].mReleaseFence;
+    if (fence.get() && fence->isValid()) {
+      fence->waitForever("MediaCodecReader");
+    }
+#endif
+    if (mVideoTrack.mCodec != nullptr) {
+      mVideoTrack.mCodec->releaseOutputBuffer(releasingItems[i].mReleaseIndex);
+    }
   }
 }
 
@@ -846,12 +888,12 @@ MediaCodecReader::ReleaseAllTextureClients()
   mTextureClientIndexes.Clear();
 }
 
-bool
+void
 MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
 {
   if (mVideoTrack.mCodec == nullptr || !mVideoTrack.mCodec->allocated() ||
       mVideoTrack.mOutputEndOfStream) {
-    return false;
+    return;
   }
 
   // Get one video output data from MediaCodec
@@ -874,21 +916,20 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
         if (CheckVideoResources()) {
           DispatchVideoTask(aTimeThreshold);
         }
-        return true;
+        return;
       }
       continue; // Try it again now.
     } else if (status == INFO_FORMAT_CHANGED) {
       if (UpdateVideoInfo()) {
         continue; // Try it again now.
       } else {
-        return false;
+        return;
       }
     } else {
-      return false;
+      return;
     }
   }
 
-  bool result = false;
   nsRefPtr<VideoData> v;
   RefPtr<TextureClient> textureClient;
   sp<GraphicBuffer> graphicBuffer;
@@ -930,7 +971,7 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
               crop, yuv420p_buffer) != OK) {
           mVideoTrack.mCodec->releaseOutputBuffer(bufferInfo.mIndex);
           NS_WARNING("Unable to convert color format");
-          return false;
+          return;
         }
 
         stride = mVideoTrack.mWidth;
@@ -977,7 +1018,6 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
     }
 
     if (v) {
-      result = true;
       VideoQueue().Push(v);
     } else {
       NS_WARNING("Unable to create VideoData");
@@ -989,15 +1029,13 @@ MediaCodecReader::DecodeVideoFrameSync(int64_t aTimeThreshold)
     VideoQueue().Finish();
   }
 
-  if (v != nullptr && textureClient != nullptr && graphicBuffer != nullptr && result) {
+  if (v != nullptr && textureClient != nullptr && graphicBuffer != nullptr) {
     MutexAutoLock al(mTextureClientIndexesLock);
     mTextureClientIndexes.Put(textureClient.get(), bufferInfo.mIndex);
     textureClient->SetRecycleCallback(MediaCodecReader::TextureClientRecycleCallback, this);
   } else {
     mVideoTrack.mCodec->releaseOutputBuffer(bufferInfo.mIndex);
   }
-
-  return result;
 }
 
 nsRefPtr<MediaDecoderReader::SeekPromise>
@@ -1041,17 +1079,6 @@ MediaCodecReader::Seek(int64_t aTime, int64_t aEndTime)
       format = nullptr;
     }
     source_buffer->release();
-
-    MOZ_ASSERT(mVideoTrack.mTaskQueue->IsEmpty());
-    DispatchVideoTask(mVideoTrack.mSeekTimeUs);
-
-    if (CheckAudioResources()) {
-      MOZ_ASSERT(mAudioTrack.mTaskQueue->IsEmpty());
-      DispatchAudioTask();
-    }
-  } else if (CheckAudioResources()) {// Audio only
-    MOZ_ASSERT(mAudioTrack.mTaskQueue->IsEmpty());
-    DispatchAudioTask();
   }
   return SeekPromise::CreateAndResolve(aTime, __func__);
 }
@@ -1230,7 +1257,8 @@ MediaCodecReader::CreateMediaSources()
     mAudioOffloadTrack.mSource = mExtractor->getTrack(audioTrackIndex);
   }
 
-  if (videoTrackIndex != invalidTrackIndex && mVideoTrack.mSource == nullptr) {
+  if (videoTrackIndex != invalidTrackIndex && mVideoTrack.mSource == nullptr &&
+      mDecoder->GetImageContainer()) {
     sp<MediaSource> videoSource = mExtractor->getTrack(videoTrackIndex);
     if (videoSource != nullptr && videoSource->start() == OK) {
       mVideoTrack.mSource = videoSource;
@@ -1256,15 +1284,20 @@ MediaCodecReader::DestroyMediaSources()
 void
 MediaCodecReader::ShutdownTaskQueues()
 {
-  if(mAudioTrack.mTaskQueue) {
+  if (mAudioTrack.mTaskQueue) {
     mAudioTrack.mTaskQueue->BeginShutdown();
     mAudioTrack.mTaskQueue->AwaitShutdownAndIdle();
     mAudioTrack.mTaskQueue = nullptr;
   }
-  if(mVideoTrack.mTaskQueue) {
+  if (mVideoTrack.mTaskQueue) {
     mVideoTrack.mTaskQueue->BeginShutdown();
     mVideoTrack.mTaskQueue->AwaitShutdownAndIdle();
     mVideoTrack.mTaskQueue = nullptr;
+  }
+  if (mVideoTrack.mReleaseBufferTaskQueue) {
+    mVideoTrack.mReleaseBufferTaskQueue->BeginShutdown();
+    mVideoTrack.mReleaseBufferTaskQueue->AwaitShutdownAndIdle();
+    mVideoTrack.mReleaseBufferTaskQueue = nullptr;
   }
 }
 
@@ -1280,6 +1313,8 @@ MediaCodecReader::CreateTaskQueues()
       !mVideoTrack.mTaskQueue) {
     mVideoTrack.mTaskQueue = CreateFlushableMediaDecodeTaskQueue();
     NS_ENSURE_TRUE(mVideoTrack.mTaskQueue, false);
+    mVideoTrack.mReleaseBufferTaskQueue = CreateMediaDecodeTaskQueue();
+    NS_ENSURE_TRUE(mVideoTrack.mReleaseBufferTaskQueue, false);
   }
 
   return true;
@@ -1436,10 +1471,10 @@ MediaCodecReader::TriggerIncrementalParser()
     mParsedDataLength = INT64_C(0);
 
     // MP3 file duration
-    mMP3FrameParser = new MP3FrameParser(mDecoder->GetResource()->GetLength());
     const char* mime = nullptr;
     if (mMetaData->findCString(kKeyMIMEType, &mime) &&
         !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG)) {
+      mMP3FrameParser = new MP3FrameParser(mDecoder->GetResource()->GetLength());
       {
         MonitorAutoUnlock monUnlock(mParserMonitor);
         // trigger parsing logic and wait for finishing parsing data in the beginning.
@@ -1453,7 +1488,7 @@ MediaCodecReader::TriggerIncrementalParser()
   }
 
   {
-    MutexAutoLock al(mAudioTrack.mDurationLock);
+    MonitorAutoLock al(mAudioTrack.mTrackMonitor);
     if (duration > mAudioTrack.mDurationUs) {
       mAudioTrack.mDurationUs = duration;
     }
@@ -1471,7 +1506,7 @@ MediaCodecReader::UpdateDuration()
     if (audioFormat != nullptr) {
       int64_t duration = INT64_C(0);
       if (audioFormat->findInt64(kKeyDuration, &duration)) {
-        MutexAutoLock al(mAudioTrack.mDurationLock);
+        MonitorAutoLock al(mAudioTrack.mTrackMonitor);
         if (duration > mAudioTrack.mDurationUs) {
           mAudioTrack.mDurationUs = duration;
         }
@@ -1485,7 +1520,7 @@ MediaCodecReader::UpdateDuration()
     if (videoFormat != nullptr) {
       int64_t duration = INT64_C(0);
       if (videoFormat->findInt64(kKeyDuration, &duration)) {
-        MutexAutoLock al(mVideoTrack.mDurationLock);
+        MonitorAutoLock al(mVideoTrack.mTrackMonitor);
         if (duration > mVideoTrack.mDurationUs) {
           mVideoTrack.mDurationUs = duration;
         }

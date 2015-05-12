@@ -74,6 +74,21 @@ function finishPost(res, content) {
   res.end(content);
 }
 
+var runlater = function() {};
+runlater.prototype = {
+  req : null,
+  resp : null,
+
+  onTimeout : function onTimeout() {
+    this.resp.writeHead(200);
+    this.resp.end("It's all good spdy 750ms.");
+  }
+};
+
+function executeRunLater(arg) {
+  arg.onTimeout();
+}
+
 function handleRequest(req, res) {
   var u = url.parse(req.url);
   var content = getHttpContent(u.pathname);
@@ -83,6 +98,14 @@ function handleRequest(req, res) {
     res.setHeader('X-Spdy-StreamId', '' + req.streamID);
   } else {
     res.setHeader('X-Connection-Spdy', 'no');
+  }
+
+  if (u.pathname === '/750ms') {
+    var rl = new runlater();
+    rl.req = req;
+    rl.resp = res;
+    setTimeout(executeRunLater, 750, rl);
+    return;
   }
 
   if (u.pathname == '/exit') {
@@ -109,26 +132,22 @@ function handleRequest(req, res) {
       res.setHeader("X-Received-Test-Header", val);
     }
   } else if (u.pathname == "/push") {
-    res.push('/push.js',
+    var stream = res.push('/push.js',
      { 'content-type': 'application/javascript',
        'pushed' : 'yes',
        'content-length' : 11,
-       'X-Connection-Spdy': 'yes'},
-     function(err, stream) {
-       if (err) return;
-         stream.end('// comments');
-       });
+       'X-Connection-Spdy': 'yes'});
+      stream.on('error', function(){});
+      stream.end('// comments');
       content = '<head> <script src="push.js"/></head>body text';
   } else if (u.pathname == "/push2") {
-      res.push('/push2.js',
+      var stream = res.push('/push2.js',
        { 'content-type': 'application/javascript',
 	 'pushed' : 'yes',
 	 // no content-length
-	 'X-Connection-Spdy': 'yes'},
-       function(err, stream) {
-        if (err) return;
-         stream.end('// comments');
-       });
+	 'X-Connection-Spdy': 'yes'});
+      stream.on('error', function(){});
+      stream.end('// comments');
       content = '<head> <script src="push2.js"/></head>body text';
   } else if (u.pathname == "/big") {
     content = getHugeContent(128 * 1024);
@@ -163,8 +182,11 @@ var options = {
   windowSize: 16000000,
 };
 
-spdy.createServer(options, handleRequest).listen(4443);
-console.log('SPDY server listening on port 4443');
+function listenok() {
+  console.log('SPDY server listening on port ' + webServer.address().port);
+}
+
+var webServer = spdy.createServer(options, handleRequest).listen(-1, "0.0.0.0", 200, listenok);
 
 // Set up to exit when the user finishes our stdin
 process.stdin.resume();

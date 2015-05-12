@@ -319,11 +319,11 @@
     "n_buckets": 50,
     "description": "Time spent sweeping slowest compartment SCC (ms)"
   },
-  "GEOLOCATION_ACCURACY": {
+  "GEOLOCATION_ACCURACY_EXPONENTIAL": {
     "expires_in_version": "default",
-    "kind": "linear",
-    "high": "18000",
-    "n_buckets": 200,
+    "kind": "exponential",
+    "high": "100000",
+    "n_buckets": 50,
     "description": "Location accuracy"
   },
   "GEOLOCATION_ERROR": {
@@ -331,14 +331,19 @@
     "kind": "flag",
     "description": "Has seen location error"
   },
+  "GEOLOCATION_OSX_SOURCE_IS_MLS": {
+    "expires_in_version": "default",
+    "kind": "boolean",
+    "description": "Geolocation on OS X is either MLS or CoreLocation"
+  },
   "JS_DEPRECATED_LANGUAGE_EXTENSIONS_IN_CONTENT": {
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 10,
-    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5"
+    "description": "Use of SpiderMonkey's deprecated language extensions in web content: ForEach=0, DestructuringForIn=1, LegacyGenerator=2, ExpressionClosure=3, LetBlock=4, LetExpression=5, NoSuchMethod=6"
   },
   "TELEMETRY_PING": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -346,7 +351,7 @@
     "description": "Time taken to submit telemetry info (ms)"
   },
   "TELEMETRY_SUCCESS": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "Successful telemetry submission"
   },
@@ -1215,6 +1220,11 @@
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Whether a HTTP transaction routed via Alt-Svc was scheme=http"
+  },
+  "HTTP_WAP_CONTENT_TYPE_RECEIVED": {
+    "expires_in_version": "40",
+    "kind": "boolean",
+    "description": "Whether a WAP content type response is served to the browser."
   },
   "SSL_HANDSHAKE_VERSION": {
     "expires_in_version": "never",
@@ -2234,13 +2244,13 @@
     "extended_statistics_ok": true,
     "description": "Number of times nsINetworkPredictor::Learn doesn't continue because the queue is full"
   },
-  "PREDICTOR_PREDICT_WAIT_TIME": {
+  "PREDICTOR_WAIT_TIME": {
     "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
     "extended_statistics_ok": true,
-    "description": "Amount of time a predict event waits in the queue (ms)"
+    "description": "Amount of time a predictor event waits in the queue (ms)"
   },
   "PREDICTOR_PREDICT_WORK_TIME": {
     "expires_in_version": "never",
@@ -2249,14 +2259,6 @@
     "n_buckets": 10,
     "extended_statistics_ok": true,
     "description": "Amount of time spent doing the work for predict (ms)"
-  },
-  "PREDICTOR_LEARN_WAIT_TIME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "high": "3000",
-    "n_buckets": 10,
-    "extended_statistics_ok": true,
-    "description": "Amount of time a learn event waits in the queue (ms)"
   },
   "PREDICTOR_LEARN_WORK_TIME": {
     "expires_in_version": "never",
@@ -2439,6 +2441,21 @@
     "n_buckets": 50,
     "extended_statistics_ok": true,
     "description": "How many speculative connections are made needlessly"
+  },
+  "URL_PATH_ENDS_IN_EXCLAMATION": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "The URL path ends in !"
+  },
+  "URL_PATH_CONTAINS_EXCLAMATION_SLASH": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "The URL path contains !/"
+  },
+  "URL_PATH_CONTAINS_EXCLAMATION_DOUBLE_SLASH": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "The URL path contains !//"
   },
   "FIND_PLUGINS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
@@ -4151,6 +4168,11 @@
     "kind": "boolean",
     "description": "DOM: Ranges that are detached on destruction (bug 702948)"
   },
+  "DOM_WINDOW_SHOWMODALDIALOG_USED": {
+    "expires_in_version": "41",
+    "kind": "flag",
+    "description": "Whether Window.showModalDialog was used in this session"
+  },
   "LOCALDOMSTORAGE_INIT_DATABASE_MS": {
     "expires_in_version": "40",
     "kind": "exponential",
@@ -4282,7 +4304,7 @@
   },
   "RANGE_CHECKSUM_ERRORS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4291,7 +4313,7 @@
   },
   "BUCKET_ORDER_ERRORS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4300,7 +4322,7 @@
   },
   "TOTAL_COUNT_HIGH_ERRORS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4309,7 +4331,7 @@
   },
   "TOTAL_COUNT_LOW_ERRORS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "exponential",
     "high": "3000",
     "n_buckets": 10,
@@ -4317,32 +4339,58 @@
     "description": "Number of histograms with total count low errors"
   },
   "TELEMETRY_FILES_EVICTED": {
-    "alert_emails": ["rvitillo@mozilla.com"],
-    "expires_in_version": "36",
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com", "rvitillo@mozilla.com"],
+    "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 30,
     "description": "Number of telemetry pings evicted at startup"
   },
   "TELEMETRY_TEST_FLAG": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_COUNT": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "count",
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_KEYED_FLAG": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "flag",
     "keyed": true,
     "description": "a testing histogram; not meant to be touched"
   },
   "TELEMETRY_TEST_KEYED_COUNT": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "count",
     "keyed": true,
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_RELEASE_OPTOUT": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "releaseChannelCollection": "opt-out",
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_RELEASE_OPTIN": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "releaseChannelCollection": "opt-in",
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_KEYED_RELEASE_OPTIN": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "keyed": true,
+    "releaseChannelCollection": "opt-in",
+    "description": "a testing histogram; not meant to be touched"
+  },
+  "TELEMETRY_TEST_KEYED_RELEASE_OPTOUT": {
+    "expires_in_version": "never",
+    "kind": "flag",
+    "keyed": true,
+    "releaseChannelCollection": "opt-out",
     "description": "a testing histogram; not meant to be touched"
   },
   "STARTUP_CRASH_DETECTED": {
@@ -4493,15 +4541,6 @@
     "kind": "enumerated",
     "n_values": 4,
     "description": "The way the GeckoApp was launched. (Normal, URL, Prefetch, Redirector)",
-    "cpp_guard": "ANDROID"
-  },
-  "FENNEC_STARTUP_TIME_ABOUTHOME": {
-    "expires_in_version": "never",
-    "kind": "exponential",
-    "low": 100,
-    "high": "10000",
-    "n_buckets": 20,
-    "description": "Time for the about:home page to be displayed (ms)",
     "cpp_guard": "ANDROID"
   },
   "FENNEC_STARTUP_TIME_GECKOREADY": {
@@ -4658,7 +4697,7 @@
   },
   "READ_SAVED_PING_SUCCESS": {
     "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "Successfully reading a saved ping file"
   },
@@ -6697,7 +6736,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": "36",
-    "description": "ECDHE KEA (TLS_ECDHE_*) curve (1=P-256, 2=P-384, 3=P-521) in full handshake"
+    "description": "ECDHE KEA (TLS_ECDHE_*) curve (23=P-256, 24=P-384, 25=P-521) in full handshake"
   },
   "SSL_AUTH_ALGORITHM_FULL": {
     "expires_in_version": "never",
@@ -6721,7 +6760,7 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": "36",
-    "description": "ECDSA signature curve for TLS_*_ECDSA_* in full handshake (1=P-256, 2=P-384, 3=P-521)"
+    "description": "ECDSA signature curve for TLS_*_ECDSA_* in full handshake (23=P-256, 24=P-384, 25=P-521)"
   },
   "SSL_SYMMETRIC_CIPHER_FULL": {
     "expires_in_version": "never",
@@ -6764,6 +6803,13 @@
     "kind": "enumerated",
     "n_values": 24,
     "description": "Was a certificate error overridden on this handshake? What was it? (0=unknown error (indicating bug), 1=no, >1=a specific error)"
+  },
+  "SSL_CERT_VERIFICATION_ERRORS": {
+    "alert_emails": ["seceng@mozilla.org"],
+    "expires_in_version": "default",
+    "kind": "enumerated",
+    "n_values": 100,
+    "description": "If certificate verification failed in a TLS handshake, what was the error? (see mapping in SSLServerCertVerification.cpp)"
   },
   "SSL_PERMANENT_CERT_ERROR_OVERRIDES": {
     "alert_emails": ["seceng@mozilla.org"],
@@ -6869,13 +6915,19 @@
     "n_values": 512,
     "description": "Certificate pinning test results by host for Mozilla operational sites"
   },
+  "CERT_CHAIN_KEY_SIZE_STATUS": {
+    "expires_in_version": "default",
+    "kind": "enumerated",
+    "n_values": 4,
+    "description": "Does enforcing a larger minimum RSA key size cause verification failures? 1 = no, 2 = yes, 3 = another error prevented finding a verified chain"
+  },
   "WEAVE_CONFIGURED": {
     "expires_in_version": "default",
     "kind": "boolean",
     "description": "If any version of Firefox Sync is configured for this device"
   },
   "WEAVE_CONFIGURED_MASTER_PASSWORD": {
-    "expires_in_version": "default",
+    "expires_in_version": "never",
     "kind": "boolean",
     "description": "If both Firefox Sync and Master Password are configured for this device"
   },
@@ -6946,7 +6998,7 @@
     "description": "Algorithms used with WebCrypto (see table in WebCryptoTask.cpp)"
   },
   "MASTER_PASSWORD_ENABLED": {
-    "expires_in_version": "40",
+    "expires_in_version": "never",
     "kind": "flag",
     "description": "If a master-password is enabled for this profile"
   },
@@ -7054,13 +7106,20 @@
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 4,
-    "description": "Tracking protection shield (0 = not shown, 1 = blocked, 2 = loaded, 3 = due to mixed content"
+    "description": "Tracking protection shield (0 = not shown, 1 = loaded, 2 = blocked, 3 = due to mixed content"
   },
   "TRACKING_PROTECTION_EVENTS": {
     "expires_in_version": "never",
     "kind": "enumerated",
     "n_values": 3,
     "description": "Doorhanger shown = 0, Disable = 1, Enable = 2"
+  },
+  "SERVICE_WORKER_REGISTRATION_LOADING": {
+    "expires_in_version": "never",
+    "kind": "exponential",
+    "high": "5000",
+    "n_buckets": 20,
+    "description": "Tracking how ServiceWorkerRegistrar loads data before the first content is shown"
   },
   "LOOP_CLIENT_CALL_URL_REQUESTS_SUCCESS": {
     "expires_in_version": "never",
@@ -7071,6 +7130,14 @@
     "expires_in_version": "never",
     "kind": "boolean",
     "description": "Stores 1 every time the URL is copied or shared."
+  },
+  "LOOP_SHARING_STATE_CHANGE": {
+    "alert_emails": ["firefox-dev@mozilla.org", "mdeboer@mozilla.com"],
+    "expires_in_version": "43",
+    "kind": "count",
+    "keyed": true,
+    "releaseChannelCollection": "opt-in",
+    "description": "Number of times the sharing feature has been enabled and disabled"
   },
   "E10S_AUTOSTART": {
     "expires_in_version": "never",
@@ -7230,11 +7297,134 @@
     "n_buckets": 16,
     "description": "The number of entries in persistent DataStorage (HSTS and HPKP data, basically)"
   },
+  "VIDEO_EME_PLAY_SUCCESS": {
+    "expires_in_version": "45",
+    "kind": "boolean",
+    "description": "EME video playback success or failure"
+  },
+  "VIDEO_MSE_JOIN_LATENCY_MS" : {
+    "expires_in_version": "45",
+    "description": "Time in MS between MSE video load and playback",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 50
+  },
+  "VIDEO_MSE_PLAY_TIME_MS" : {
+    "expires_in_version": "45",
+    "description": "Total time spent playing MSE video",
+    "kind": "exponential",
+    "high": "7200000",
+    "n_buckets": 100
+  },
+  "VIDEO_MSE_BUFFERING_COUNT" : {
+    "expires_in_version": "45",
+    "description": "Count of times that MSE video was buffering",
+    "kind": "count"
+  },
   "VIDEO_MSE_UNLOAD_STATE": {
     "expires_in_version": "45",
     "kind": "enumerated",
     "n_values": 5,
     "description": "MSE video state when unloading. ended = 0, paused = 1, stalled = 2, seeking = 3, other = 4"
+  },
+  "FX_SANITIZE_TOTAL": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Total time it takes to sanitize (ms)"
+  },
+  "FX_SANITIZE_CACHE": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize the cache (ms)"
+  },
+  "FX_SANITIZE_COOKIES": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize cookies (ms)"
+  },
+  "FX_SANITIZE_OFFLINEAPPS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize stored offline app data (ms)"
+  },
+  "FX_SANITIZE_HISTORY": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize history (ms)"
+  },
+  "FX_SANITIZE_FORMDATA": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize stored form data (ms)"
+  },
+  "FX_SANITIZE_DOWNLOADS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize recent downloads (ms)"
+  },
+  "FX_SANITIZE_PASSWORDS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize saved passwords (ms)"
+  },
+  "FX_SANITIZE_SESSIONS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize saved sessions (ms)"
+  },
+  "FX_SANITIZE_SITESETTINGS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize site-specific settings (ms)"
+  },
+  "FX_SANITIZE_OPENWINDOWS": {
+    "alert_emails": ["firefox-dev@mozilla.org", "gavin@mozilla.com"],
+    "expires_in_version": "40",
+    "kind": "exponential",
+    "high": "30000",
+    "n_buckets": 20,
+    "extended_statistics_ok": true,
+    "description": "Sanitize: Time it takes to sanitize the open windows list (ms)"
   },
   "PWMGR_BLOCKLIST_NUM_SITES": {
     "expires_in_version": "never",
@@ -7278,6 +7468,23 @@
     "n_buckets" : 40,
     "description": "Time in days each saved login was last used"
   },
+  "PWMGR_PASSWORD_INPUT_IN_FORM": {
+    "expires_in_version": "never",
+    "kind": "boolean",
+    "description": "Whether an <input type=password> is associated with a <form> when it is added to a document"
+  },
+  "PWMGR_PROMPT_REMEMBER_ACTION" : {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 5,
+    "description": "Action taken by user through prompt for creating a login. (0=Prompt displayed [always recorded], 1=Add login, 2=Don't save now, 3=Never save)"
+  },
+  "PWMGR_PROMPT_UPDATE_ACTION" : {
+    "expires_in_version": "never",
+    "kind": "enumerated",
+    "n_values": 5,
+    "description": "Action taken by user through prompt for modifying a login. (0=Prompt displayed [always recorded], 1=Update login)"
+  },
   "PWMGR_SAVING_ENABLED": {
     "expires_in_version": "never",
     "kind": "boolean",
@@ -7314,5 +7521,31 @@
     "expires_in_version": "45",
     "kind": "count",
     "description": "The number of Sync 1.5 migrations completed by Android Sync."
+  },
+  "SLOW_SCRIPT_NOTICE_COUNT": {
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count slow script notices"
+  },
+  "PLUGIN_HANG_NOTICE_COUNT": {
+    "alert_emails": ["perf-telemetry-alerts@mozilla.com"],
+    "expires_in_version": "never",
+    "kind": "count",
+    "description": "Count plugin hang notices in e10s"
+  },
+  "UDP_SOCKET_PARALLEL_CLOSE_COUNT": {
+    "expires_in_version": "41",
+    "kind": "linear",
+    "high": "20",
+    "n_buckets": 19,
+    "description": "Number of concurrent UDP socket closing threads"
+  },
+  "UDP_SOCKET_CLOSE_TIME": {
+    "expires_in_version": "45",
+    "kind": "exponential",
+    "high": "60000",
+    "n_buckets": 30,
+    "description": "Time PR_Close of a UDP socket taken (ms)"
   }
 }

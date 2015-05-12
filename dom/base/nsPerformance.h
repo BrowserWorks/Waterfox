@@ -21,13 +21,14 @@ class nsPerformance;
 class nsIHttpChannel;
 
 namespace mozilla {
+class ErrorResult;
 namespace dom {
   class PerformanceEntry;
 }
 }
 
 // Script "performance.timing" object
-class nsPerformanceTiming MOZ_FINAL : public nsWrapperCache
+class nsPerformanceTiming final : public nsWrapperCache
 {
 public:
   typedef mozilla::TimeStamp TimeStamp;
@@ -116,7 +117,7 @@ public:
     return duration.ToMilliseconds() + mZeroTime;
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
 
   // PerformanceNavigation WebIDL methods
   DOMTimeMilliSec NavigationStart() const {
@@ -255,7 +256,7 @@ private:
 };
 
 // Script "performance.navigation" object
-class nsPerformanceNavigation MOZ_FINAL : public nsWrapperCache
+class nsPerformanceNavigation final : public nsWrapperCache
 {
 public:
   explicit nsPerformanceNavigation(nsPerformance* aPerformance);
@@ -270,7 +271,7 @@ public:
     return mPerformance;
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
 
   // PerformanceNavigation WebIDL methods
   uint16_t Type() const {
@@ -286,7 +287,7 @@ private:
 };
 
 // Script "performance" object
-class nsPerformance MOZ_FINAL : public mozilla::DOMEventTargetHelper
+class nsPerformance final : public mozilla::DOMEventTargetHelper
 {
 public:
   typedef mozilla::dom::PerformanceEntry PerformanceEntry;
@@ -318,7 +319,7 @@ public:
     return mWindow.get();
   }
 
-  virtual JSObject* WrapObject(JSContext *cx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext *cx) override;
 
   // Performance WebIDL methods
   DOMHighResTimeStamp Now();
@@ -335,12 +336,26 @@ public:
                 nsITimedChannel* timedChannel);
   void ClearResourceTimings();
   void SetResourceTimingBufferSize(uint64_t maxSize);
+  void Mark(const nsAString& aName, mozilla::ErrorResult& aRv);
+  void ClearMarks(const mozilla::dom::Optional<nsAString>& aName);
+  void Measure(const nsAString& aName,
+               const mozilla::dom::Optional<nsAString>& aStartMark,
+               const mozilla::dom::Optional<nsAString>& aEndMark,
+               mozilla::ErrorResult& aRv);
+  void ClearMeasures(const mozilla::dom::Optional<nsAString>& aName);
+
   IMPL_EVENT_HANDLER(resourcetimingbufferfull)
 
 private:
   ~nsPerformance();
+  bool IsPerformanceTimingAttribute(const nsAString& aName);
+  DOMHighResTimeStamp ResolveTimestampFromName(const nsAString& aName, mozilla::ErrorResult& aRv);
+  DOMTimeMilliSec GetPerformanceTimingFromString(const nsAString& aTimingName);
+  DOMHighResTimeStamp ConvertDOMMilliSecToHighRes(const DOMTimeMilliSec aTime);
   void DispatchBufferFullEvent();
-
+  void InsertPerformanceEntry(PerformanceEntry* aEntry, bool aShouldPrint);
+  void ClearEntries(const mozilla::dom::Optional<nsAString>& aEntryName,
+                    const nsAString& aEntryType);
   nsCOMPtr<nsPIDOMWindow> mWindow;
   nsRefPtr<nsDOMNavigationTiming> mDOMTiming;
   nsCOMPtr<nsITimedChannel> mChannel;

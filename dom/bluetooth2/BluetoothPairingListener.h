@@ -16,7 +16,7 @@ BEGIN_BLUETOOTH_NAMESPACE
 class BluetoothDevice;
 class BluetoothSignal;
 
-class BluetoothPairingListener MOZ_FINAL : public DOMEventTargetHelper
+class BluetoothPairingListener final : public DOMEventTargetHelper
                                          , public BluetoothSignalObserver
 {
 public:
@@ -36,8 +36,9 @@ public:
     return GetOwner();
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
-  virtual void DisconnectFromOwner() MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
+  virtual void DisconnectFromOwner() override;
+  virtual void EventListenerAdded(nsIAtom* aType) override;
 
   IMPL_EVENT_HANDLER(displaypasskeyreq);
   IMPL_EVENT_HANDLER(enterpincodereq);
@@ -47,6 +48,21 @@ public:
 private:
   BluetoothPairingListener(nsPIDOMWindow* aWindow);
   ~BluetoothPairingListener();
+
+  /**
+   * Listen to bluetooth signal if all pairing event handlers are ready.
+   *
+   * Listen to bluetooth signal only if all pairing event handlers have been
+   * attached. All pending pairing requests queued in BluetoothService would be
+   * fired when pairing listener starts listening to bluetooth signal.
+   */
+  void TryListeningToBluetoothSignal();
+
+  /**
+   * Indicate whether or not this pairing listener has started listening to
+   * Bluetooth signal.
+   */
+  bool mHasListenedToSignal;
 };
 
 END_BLUETOOTH_NAMESPACE

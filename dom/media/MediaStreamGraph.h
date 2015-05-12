@@ -177,6 +177,13 @@ public:
                                         StreamTime aTrackOffset,
                                         uint32_t aTrackEvents,
                                         const MediaSegment& aQueuedMedia) {}
+
+  /**
+   * Notify that all new tracks this iteration have been created.
+   * This is to ensure that tracks added atomically to MediaStreamGraph
+   * are also notified of atomically to MediaStreamListeners.
+   */
+  virtual void NotifyFinishedTrackCreation(MediaStreamGraph* aGraph) {}
 };
 
 /**
@@ -240,6 +247,7 @@ class AudioNodeEngine;
 class AudioNodeExternalInputStream;
 class AudioNodeStream;
 struct AudioChunk;
+class CameraPreviewMediaStream;
 
 /**
  * A stream of synchronized audio and video data. All (not blocked) streams
@@ -418,6 +426,7 @@ public:
   virtual SourceMediaStream* AsSourceStream() { return nullptr; }
   virtual ProcessedMediaStream* AsProcessedStream() { return nullptr; }
   virtual AudioNodeStream* AsAudioNodeStream() { return nullptr; }
+  virtual CameraPreviewMediaStream* AsCameraPreviewStream() { return nullptr; }
 
   // media graph thread only
   void Init();
@@ -693,10 +702,10 @@ public:
     mNeedsMixing(false)
   {}
 
-  virtual SourceMediaStream* AsSourceStream() MOZ_OVERRIDE { return this; }
+  virtual SourceMediaStream* AsSourceStream() override { return this; }
 
   // Media graph thread only
-  virtual void DestroyImpl() MOZ_OVERRIDE;
+  virtual void DestroyImpl() override;
 
   // Call these on any thread.
   /**
@@ -718,25 +727,35 @@ public:
   void AddDirectListener(MediaStreamDirectListener* aListener);
   void RemoveDirectListener(MediaStreamDirectListener* aListener);
 
+  enum {
+    ADDTRACK_QUEUED    = 0x01 // Queue track add until FinishAddTracks()
+  };
   /**
    * Add a new track to the stream starting at the given base time (which
    * must be greater than or equal to the last time passed to
    * AdvanceKnownTracksTime). Takes ownership of aSegment. aSegment should
    * contain data starting after aStart.
    */
-  void AddTrack(TrackID aID, StreamTime aStart, MediaSegment* aSegment)
+  void AddTrack(TrackID aID, StreamTime aStart, MediaSegment* aSegment,
+                uint32_t aFlags = 0)
   {
-    AddTrackInternal(aID, GraphRate(), aStart, aSegment);
+    AddTrackInternal(aID, GraphRate(), aStart, aSegment, aFlags);
   }
 
   /**
    * Like AddTrack, but resamples audio from aRate to the graph rate.
    */
   void AddAudioTrack(TrackID aID, TrackRate aRate, StreamTime aStart,
-                     AudioSegment* aSegment)
+                     AudioSegment* aSegment, uint32_t aFlags = 0)
   {
-    AddTrackInternal(aID, aRate, aStart, aSegment);
+    AddTrackInternal(aID, aRate, aStart, aSegment, aFlags);
   }
+
+  /**
+   * Call after a series of AddTrack or AddAudioTrack calls to implement
+   * any pending track adds.
+   */
+  void FinishAddTracks();
 
   /**
    * Append media data to a track. Ownership of aSegment remains with the caller,
@@ -790,7 +809,7 @@ public:
 
   // Overriding allows us to hold the mMutex lock while changing the track enable status
   virtual void
-  SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) MOZ_OVERRIDE {
+  SetTrackEnabledImpl(TrackID aTrackID, bool aEnabled) override {
     MutexAutoLock lock(mMutex);
     MediaStream::SetTrackEnabledImpl(aTrackID, aEnabled);
   }
@@ -798,7 +817,7 @@ public:
   // Overriding allows us to ensure mMutex is locked while changing the track enable status
   virtual void
   ApplyTrackDisabling(TrackID aTrackID, MediaSegment* aSegment,
-                      MediaSegment* aRawSegment = nullptr) MOZ_OVERRIDE {
+                      MediaSegment* aRawSegment = nullptr) override {
     mMutex.AssertCurrentThreadOwns();
     MediaStream::ApplyTrackDisabling(aTrackID, aSegment, aRawSegment);
   }
@@ -872,7 +891,8 @@ protected:
   void ResampleAudioToGraphSampleRate(TrackData* aTrackData, MediaSegment* aSegment);
 
   void AddTrackInternal(TrackID aID, TrackRate aRate,
-                        StreamTime aStart, MediaSegment* aSegment);
+                        StreamTime aStart, MediaSegment* aSegment,
+                        uint32_t aFlags);
 
   TrackData* FindDataForTrack(TrackID aID)
   {
@@ -903,6 +923,7 @@ protected:
   // protected by mMutex
   StreamTime mUpdateKnownTracksTime;
   nsTArray<TrackData> mUpdateTracks;
+  nsTArray<TrackData> mPendingTracks;
   nsTArray<nsRefPtr<MediaStreamDirectListener> > mDirectListeners;
   bool mPullEnabled;
   bool mUpdateFinished;
@@ -926,7 +947,7 @@ protected:
  * the Destroy message is processed on the graph manager thread we disconnect
  * the port and drop the graph's reference, destroying the object.
  */
-class MediaInputPort MOZ_FINAL {
+class MediaInputPort final {
 private:
   // Do not call this constructor directly. Instead call aDest->AllocateInputPort.
   MediaInputPort(MediaStream* aSource, ProcessedMediaStream* aDest,
@@ -1069,7 +1090,7 @@ public:
    */
   void SetAutofinish(bool aAutofinish);
 
-  virtual ProcessedMediaStream* AsProcessedStream() MOZ_OVERRIDE { return this; }
+  virtual ProcessedMediaStream* AsProcessedStream() override { return this; }
 
   friend class MediaStreamGraphImpl;
 
@@ -1087,7 +1108,7 @@ public:
   {
     return mInputs.Length();
   }
-  virtual void DestroyImpl() MOZ_OVERRIDE;
+  virtual void DestroyImpl() override;
   /**
    * This gets called after we've computed the blocking states for all
    * streams (mBlocked is up to date up to mStateComputedTime).
@@ -1120,7 +1141,7 @@ public:
   // true for echo loops, only for muted cycles.
   bool InMutedCycle() const { return mCycleMarker; }
 
-  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfExcludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     size_t amount = MediaStream::SizeOfExcludingThis(aMallocSizeOf);
     // Not owned:
@@ -1129,7 +1150,7 @@ public:
     return amount;
   }
 
-  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const MOZ_OVERRIDE
+  virtual size_t SizeOfIncludingThis(MallocSizeOf aMallocSizeOf) const override
   {
     return aMallocSizeOf(this) + SizeOfExcludingThis(aMallocSizeOf);
   }
@@ -1160,7 +1181,7 @@ public:
   //
 
   // Main thread only
-  static MediaStreamGraph* GetInstance(DOMMediaStream::TrackTypeHints aHint = DOMMediaStream::HINT_CONTENTS_UNKNOWN,
+  static MediaStreamGraph* GetInstance(bool aStartWithAudioDriver = false,
                                        dom::AudioChannel aChannel = dom::AudioChannel::Normal);
   static MediaStreamGraph* CreateNonRealtimeInstance(TrackRate aSampleRate);
   // Idempotent

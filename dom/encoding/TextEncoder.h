@@ -16,7 +16,7 @@ class ErrorResult;
 
 namespace dom {
 
-class TextEncoder MOZ_FINAL : public NonRefcountedDOMObject
+class TextEncoder final : public NonRefcountedDOMObject
 {
 public:
   // The WebIDL constructor.
@@ -42,9 +42,9 @@ public:
   ~TextEncoder()
   {}
 
-  JSObject* WrapObject(JSContext* aCx, bool* aTookOwnership)
+  bool WrapObject(JSContext* aCx, JS::MutableHandle<JSObject*> aReflector)
   {
-    return TextEncoderBinding::Wrap(aCx, this, aTookOwnership);
+    return TextEncoderBinding::Wrap(aCx, this, aReflector);
   }
 
 protected:

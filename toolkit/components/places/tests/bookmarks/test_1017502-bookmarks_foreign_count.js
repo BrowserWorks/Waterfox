@@ -12,7 +12,7 @@ added or removed and also the maintenance task to fix wrong counts.
 const T_URI = NetUtil.newURI("https://www.mozilla.org/firefox/nightly/firstrun/");
 
 function* getForeignCountForURL(conn, url) {
-  yield promiseAsyncUpdates();
+  yield PlacesTestUtils.promiseAsyncUpdates();
   url = url instanceof Ci.nsIURI ? url.spec : url;
   let rows = yield conn.executeCached(
       "SELECT foreign_count FROM moz_places WHERE url = :t_url ", { t_url: url });
@@ -27,7 +27,7 @@ add_task(function* add_remove_change_bookmark_test() {
   let conn = yield PlacesUtils.promiseDBConnection();
 
   // Simulate a visit to the url
-  yield promiseAddVisits(T_URI);
+  yield PlacesTestUtils.addVisits(T_URI);
   Assert.equal((yield getForeignCountForURL(conn, T_URI)), 0);
 
   // Add 1st bookmark which should increment foreign_count by 1
@@ -63,7 +63,7 @@ add_task(function* maintenance_foreign_count_test() {
   let conn = yield PlacesUtils.promiseDBConnection();
 
   // Simulate a visit to the url
-  yield promiseAddVisits(T_URI);
+  yield PlacesTestUtils.addVisits(T_URI);
 
   // Adjust the foreign_count for the added entry to an incorrect value
   let deferred = Promise.defer();
@@ -93,7 +93,7 @@ add_task(function* maintenance_foreign_count_test() {
 add_task(function* add_remove_tags_test(){
   let conn = yield PlacesUtils.promiseDBConnection();
 
-  yield promiseAddVisits(T_URI);
+  yield PlacesTestUtils.addVisits(T_URI);
   Assert.equal((yield getForeignCountForURL(conn, T_URI)), 0);
 
   // Check foreign count incremented by 1 for a single tag

@@ -30,7 +30,7 @@ function test() {
 
       let item = gSources.getItemForAttachment(e => e.label.indexOf("> eval") !== -1);
       ok(item, "Source label is incorrect.");
-      is(item.attachment.group, 'evals',
+      is(item.attachment.group, gDebugger.L10N.getStr('evalGroupLabel'),
          'Source group is incorrect');
 
       yield closeDebuggerAndFinish(gPanel);

@@ -20,11 +20,10 @@ let TEST_PAGES = [
       title: "Article title",
       byline: "by Jane Doe",
       excerpt: "This is the article description.",
-      length: 1931
     }
   },
   {
-    url: URL_PREFIX + "addons.mozilla.org/en-US/firefox/index.html",
+    url: URL_PREFIX + "not_an_article.html",
     expected: null
   },
   {
@@ -33,14 +32,12 @@ let TEST_PAGES = [
       title: "Building XULRunner | MDN",
       byline: null,
       excerpt: "XULRunner is built using basically the same process as Firefox or other applications. Please read and follow the general Build Documentation for instructions on how to get sources and set up build prerequisites.",
-      length: 2300
     }
   },
 ];
 
 add_task(function* test_article_not_found() {
-  let uri = Services.io.newURI(TEST_PAGES[0].url, null, null);
-  let article = yield ReaderMode.getArticleFromCache(uri);
+  let article = yield ReaderMode.getArticleFromCache(TEST_PAGES[0].url);
   do_check_eq(article, null);
 });
 
@@ -52,18 +49,15 @@ add_task(function* test_store_article() {
     title: TEST_PAGES[0].expected.title,
     byline: TEST_PAGES[0].expected.byline,
     excerpt: TEST_PAGES[0].expected.excerpt,
-    length: TEST_PAGES[0].expected.length
   });
 
-  let uri = Services.io.newURI(TEST_PAGES[0].url, null, null);
-  let article = yield ReaderMode.getArticleFromCache(uri);
+  let article = yield ReaderMode.getArticleFromCache(TEST_PAGES[0].url);
   checkArticle(article, TEST_PAGES[0]);
 });
 
 add_task(function* test_remove_article() {
-  let uri = Services.io.newURI(TEST_PAGES[0].url, null, null);
-  yield ReaderMode.removeArticleFromCache(uri);
-  let article = yield ReaderMode.getArticleFromCache(uri);
+  yield ReaderMode.removeArticleFromCache(TEST_PAGES[0].url);
+  let article = yield ReaderMode.getArticleFromCache(TEST_PAGES[0].url);
   do_check_eq(article, null);
 });
 
@@ -100,7 +94,6 @@ add_task(function* test_migrate_cache() {
       title: TEST_PAGES[0].expected.title,
       byline: TEST_PAGES[0].expected.byline,
       excerpt: TEST_PAGES[0].expected.excerpt,
-      length: TEST_PAGES[0].expected.length
     });
     request.onerror = event => reject(request.error);
     request.onsuccess = event => resolve();
@@ -110,8 +103,7 @@ add_task(function* test_migrate_cache() {
   yield Reader.migrateCache();
 
   // Check to make sure the article made it into the new cache.
-  let uri = Services.io.newURI(TEST_PAGES[0].url, null, null);
-  let article = yield ReaderMode.getArticleFromCache(uri);
+  let article = yield ReaderMode.getArticleFromCache(TEST_PAGES[0].url);
   checkArticle(article, TEST_PAGES[0]);
 });
 
@@ -127,7 +119,6 @@ function checkArticle(article, testcase) {
   do_check_eq(article.title, testcase.expected.title);
   do_check_eq(article.byline, testcase.expected.byline);
   do_check_eq(article.excerpt, testcase.expected.excerpt);
-  do_check_eq(article.length, testcase.expected.length);
 }
 
 run_next_test();

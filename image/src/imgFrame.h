@@ -10,7 +10,6 @@
 #include "mozilla/MemoryReporting.h"
 #include "mozilla/Monitor.h"
 #include "mozilla/Move.h"
-#include "mozilla/TypedEnum.h"
 #include "mozilla/VolatileBuffer.h"
 #include "gfxDrawable.h"
 #include "imgIContainer.h"
@@ -23,7 +22,7 @@ class ImageRegion;
 class DrawableFrameRef;
 class RawAccessFrameRef;
 
-MOZ_BEGIN_ENUM_CLASS(BlendMethod, int8_t)
+enum class BlendMethod : int8_t {
   // All color components of the frame, including alpha, overwrite the current
   // contents of the frame's output buffer region.
   SOURCE,
@@ -31,20 +30,20 @@ MOZ_BEGIN_ENUM_CLASS(BlendMethod, int8_t)
   // The frame should be composited onto the output buffer based on its alpha,
   // using a simple OVER operation.
   OVER
-MOZ_END_ENUM_CLASS(BlendMethod)
+};
 
-MOZ_BEGIN_ENUM_CLASS(DisposalMethod, int8_t)
+enum class DisposalMethod : int8_t {
   CLEAR_ALL = -1,  // Clear the whole image, revealing what's underneath.
   NOT_SPECIFIED,   // Leave the frame and let the new frame draw on top.
   KEEP,            // Leave the frame and let the new frame draw on top.
   CLEAR,           // Clear the frame's area, revealing what's underneath.
   RESTORE_PREVIOUS // Restore the previous (composited) frame.
-MOZ_END_ENUM_CLASS(DisposalMethod)
+};
 
-MOZ_BEGIN_ENUM_CLASS(Opacity, uint8_t)
+enum class Opacity : uint8_t {
   OPAQUE,
   SOME_TRANSPARENCY
-MOZ_END_ENUM_CLASS(Opacity)
+};
 
 
 /**
@@ -295,7 +294,7 @@ private: // methods
 
   uint32_t PaletteDataLength() const
   {
-    return mPaletteDepth ? (1 << mPaletteDepth) * sizeof(uint32_t)
+    return mPaletteDepth ? (size_t(1) << mPaletteDepth) * sizeof(uint32_t)
                          : 0;
   }
 
@@ -385,12 +384,8 @@ private: // data
  * allowing drawing. If you have a DrawableFrameRef |ref| and |if (ref)| returns
  * true, then calls to Draw() and GetSurface() are guaranteed to succeed.
  */
-class DrawableFrameRef MOZ_FINAL
+class DrawableFrameRef final
 {
-  // Implementation details for safe boolean conversion.
-  typedef void (DrawableFrameRef::* ConvertibleToBool)(float*****, double*****);
-  void nonNull(float*****, double*****) {}
-
 public:
   DrawableFrameRef() { }
 
@@ -417,10 +412,7 @@ public:
     return *this;
   }
 
-  operator ConvertibleToBool() const
-  {
-    return bool(mFrame) ? &DrawableFrameRef::nonNull : 0;
-  }
+  explicit operator bool() const { return bool(mFrame); }
 
   imgFrame* operator->()
   {
@@ -460,12 +452,8 @@ private:
  * so only use this when you need to read or write the raw underlying image data
  * that the imgFrame holds.
  */
-class RawAccessFrameRef MOZ_FINAL
+class RawAccessFrameRef final
 {
-  // Implementation details for safe boolean conversion.
-  typedef void (RawAccessFrameRef::* ConvertibleToBool)(float*****, double*****);
-  void nonNull(float*****, double*****) {}
-
 public:
   RawAccessFrameRef() { }
 
@@ -504,10 +492,7 @@ public:
     return *this;
   }
 
-  operator ConvertibleToBool() const
-  {
-    return bool(mFrame) ? &RawAccessFrameRef::nonNull : 0;
-  }
+  explicit operator bool() const { return bool(mFrame); }
 
   imgFrame* operator->()
   {

@@ -146,8 +146,13 @@
     <!-- for url bar autocomplete -->
     <panel type="autocomplete-richlistbox" id="PopupAutoCompleteRichResult" noautofocus="true" hidden="true"/>
 
-    <!-- for select dropdowns -->
-    <menupopup id="ContentSelectDropdown" rolluponmousewheel="true" hidden="true"/>
+    <!-- for select dropdowns. The menupopup is what shows the list of options,
+         and the popuponly menulist makes things like the menuactive attributes
+         work correctly on the menupopup. ContentSelectDropdown expects the
+         popuponly menulist to be its immediate parent. -->
+    <menulist popuponly="true" id="ContentSelectDropdown" hidden="true">
+      <menupopup rolluponmousewheel="true"/>
+    </menulist>
 
     <!-- for invalid form error message -->
     <panel id="invalid-form-popup" type="arrow" orient="vertical" noautofocus="true" hidden="true" level="parent">
@@ -240,41 +245,6 @@
            mousethrough="always">
       <box id="UITourHighlight"></box>
     </panel>
-    <!-- Used to highlight the new search experience -->
-    <panel id="SearchHighlight1"
-           class="SearchHighlight"
-           type="arrow"
-           hidden="true"
-           noautofocus="true"
-           noautohide="true"
-           orient="vertical"
-           align="stretch">
-      <label class="SearchHighlightTitle">&SearchHighlight1.title;</label>
-      <description class="SearchHighlightText" flex="1">&SearchHighlight1.text;</description>
-      <hbox class="SearchHighlightFooter" align="center">
-        <spacer class="dot filled"/>
-        <spacer class="dot"/>
-        <spacer flex="1"/>
-        <button label="&SearchHighlightNext;"/>
-      </hbox>
-    </panel>
-    <panel id="SearchHighlight2"
-           class="SearchHighlight"
-           type="arrow"
-           hidden="true"
-           noautofocus="true"
-           noautohide="true"
-           orient="vertical"
-           align="stretch">
-      <label class="SearchHighlightTitle">&SearchHighlight2.title;</label>
-      <description class="SearchHighlightText" flex="1">&SearchHighlight2.text;</description>
-      <hbox class="SearchHighlightFooter" align="center">
-        <spacer class="dot"/>
-        <spacer class="dot filled"/>
-        <spacer flex="1"/>
-        <button label="&SearchHighlightClose;"/>
-      </hbox>
-    </panel>
 
     <panel id="abouthome-search-panel" orient="vertical" type="arrow" hidden="true"
            onclick="this.hidePopup()">
@@ -333,6 +303,26 @@
            type="arrow"
            orient="horizontal"
            hidden="true"/>
+
+    <menupopup id="processHangOptions"
+               onpopupshowing="ProcessHangMonitor.refreshMenu(window);">
+      <menuitem id="processHangTerminateScript"
+                oncommand="ProcessHangMonitor.terminateScript(window)"
+                accesskey="&processHang.terminateScript.accessKey;"
+                label="&processHang.terminateScript.label;"/>
+      <menuitem id="processHangDebugScript"
+                oncommand="ProcessHangMonitor.debugScript(window)"
+                accesskey="&processHang.debugScript.accessKey;"
+                label="&processHang.debugScript.label;"/>
+      <menuitem id="processHangTerminatePlugin"
+                oncommand="ProcessHangMonitor.terminatePlugin(window)"
+                accesskey="&processHang.terminatePlugin.accessKey;"
+                label="&processHang.terminatePlugin.label;"/>
+      <menuitem id="processHangTerminateProcess"
+                oncommand="ProcessHangMonitor.terminateProcess(window)"
+                accesskey="&processHang.terminateProcess.accessKey;"
+                label="&processHang.terminateProcess.label;"/>
+    </menupopup>
 
     <menupopup id="toolbar-context-menu"
                onpopupshowing="onViewToolbarsPopupShowing(event, document.getElementById('viewToolbarsMenuSeparator'));">
@@ -580,12 +570,12 @@
 
     <menupopup id="emeNotificationsPopup">
       <menuitem id="emeNotificationsNotNow"
-                label="Not now"
-                acceskey="N"
+                label="&emeNotificationsNotNow.label;"
+                acceskey="&emeNotificationsNotNow.accesskey;"
                 oncommand="gEMEHandler.onNotNow(this);"/>
       <menuitem id="emeNotificationsDontAskAgain"
-                label="Don't ask me again"
-                acceskey="D"
+                label="&emeNotificationsDontAskAgain.label;"
+                acceskey="&emeNotificationsDontAskAgain.accesskey;"
                 oncommand="gEMEHandler.onDontAskAgain(this);"/>
     </menupopup>
   </popupset>
@@ -837,6 +827,14 @@
                        hidden="true"
                        tooltiptext="&pageReportIcon.tooltip;"
                        onclick="gPopupBlockerObserver.onReportButtonClick(event);"/>
+                <image id="readinglist-addremove-button"
+                       class="urlbar-icon"
+                       hidden="true"
+                       onclick="ReadingListUI.togglePageByBrowser(gBrowser.selectedBrowser);"/>
+                <image id="reader-mode-button"
+                       class="urlbar-icon"
+                       hidden="true"
+                       onclick="ReaderParent.buttonClick(event);"/>
               </hbox>
               <toolbarbutton id="urlbar-go-button"
                              class="chromeclass-toolbar-additional"
@@ -890,7 +888,7 @@
                       class="subviewbutton"
                       label="&viewBookmarksSidebar2.label;"
                       type="checkbox"
-                      oncommand="toggleSidebar('viewBookmarksSidebar');">
+                      oncommand="SidebarUI.toggle('viewBookmarksSidebar');">
               <observes element="viewBookmarksSidebar" attribute="checked"/>
             </menuitem>
             <!-- NB: temporary solution for bug 985024, this should go away soon. -->
@@ -954,6 +952,22 @@
                          onpopupshowing="if (!this.parentNode._placesView)
                                            new PlacesMenu(event, 'place:folder=UNFILED_BOOKMARKS',
                                                           PlacesUIUtils.getViewForNode(this.parentNode.parentNode).options);"/>
+            </menu>
+            <menuseparator>
+              <observes element="readingListSidebar" attribute="hidden"/>
+            </menuseparator>
+            <menu id="BMB_readingList"
+                  class="menu-iconic bookmark-item subviewbutton"
+                  label="&readingList.label;"
+                  container="true">
+              <observes element="readingListSidebar" attribute="hidden"/>
+              <menupopup id="BMB_readingListPopup"
+                         placespopup="true"
+                         onpopupshowing="ReadingListUI.onReadingListPopupShowing(this);">
+                <menuitem id="BMB_viewReadingListSidebar" class="subviewbutton"
+                          oncommand="SidebarUI.show('readingListSidebar');"
+                          label="&readingList.showSidebar.label;"/>
+              </menupopup>
             </menu>
             <menuseparator/>
             <!-- Bookmarks menu items will go here -->
@@ -1143,10 +1157,10 @@
         <sidebarheader id="sidebar-header" align="center">
           <label id="sidebar-title" persist="value" flex="1" crop="end" control="sidebar"/>
           <image id="sidebar-throbber"/>
-          <toolbarbutton class="close-icon tabbable" tooltiptext="&sidebarCloseButton.tooltip;" oncommand="toggleSidebar();"/>
+          <toolbarbutton class="close-icon tabbable" tooltiptext="&sidebarCloseButton.tooltip;" oncommand="SidebarUI.hide();"/>
         </sidebarheader>
         <browser id="sidebar" flex="1" autoscroll="false" disablehistory="true"
-                  style="min-width: 14em; width: 18em; max-width: 36em;"/>
+                  style="min-width: 14em; width: 18em; max-width: 36em;" tooltip="aHTMLTooltip"/>
       </vbox>
 
       <splitter id="sidebar-splitter" class="chromeclass-extrachrome sidebar-splitter" hidden="true"/>
@@ -1157,7 +1171,7 @@
                     tabcontainer="tabbrowser-tabs"
                     contentcontextmenu="contentAreaContextMenu"
                     autocompletepopup="PopupAutoComplete"
-                    selectpopup="ContentSelectDropdown"/>
+                    selectmenulist="ContentSelectDropdown"/>
         <chatbar id="pinnedchats" layer="true" mousethrough="always" hidden="true"/>
       </vbox>
       <splitter id="social-sidebar-splitter"

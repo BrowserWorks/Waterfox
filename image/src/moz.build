@@ -38,6 +38,8 @@ UNIFIED_SOURCES += [
     'SVGDocumentWrapper.cpp',
     'VectorImage.cpp',
 ]
+if CONFIG['MOZ_ENABLE_SKIA']:
+    UNIFIED_SOURCES += [ 'Downscaler.cpp']
 
 # These files can't be unified because of ImageLogging.h #include order issues.
 SOURCES += [
@@ -58,12 +60,14 @@ LOCAL_INCLUDES += [
     # Because SVGDocumentWrapper.cpp includes "mozilla/dom/SVGSVGElement.h"
     '/dom/base',
     '/dom/svg',
+    # Access to Skia headers for Downscaler
+    '/gfx/2d',
     # We need to instantiate the decoders
     '/image/decoders',
     # Because VectorImage.cpp includes nsSVGUtils.h and nsSVGEffects.h
     '/layout/svg',
     # For URI-related functionality
-    '/netwerk/base/src',
+    '/netwerk/base',
 ]
 
 # Because imgFrame.cpp includes "cairo.h"

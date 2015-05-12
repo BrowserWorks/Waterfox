@@ -132,6 +132,9 @@ window.addEventListener('ContentStart', function() {
     GlobalSimulatorScreen.width = width;
     GlobalSimulatorScreen.height = height;
 
+    Services.prefs.setCharPref('layout.css.devPixelsPerPx',
+                               ratio == 1 ? -1 : ratio);
+
     // In order to do rescaling, we set the <browser> tag to the specified
     // width and height, and then use a CSS transform to scale it so that
     // it appears at the correct size on the host display.  We also set
@@ -148,7 +151,8 @@ window.addEventListener('ContentStart', function() {
     let chromewidth = window.outerWidth - window.innerWidth;
     let chromeheight = window.outerHeight - window.innerHeight + controlsHeight;
     if (isMulet) {
-      let responsive = browserWindow.gBrowser.selectedTab.__responsiveUI;
+      let tab = browserWindow.gBrowser.selectedTab;
+      let responsive = ResponsiveUIManager.getResponsiveUIForTab(tab);
       responsive.setSize((Math.round(width * scale) + 16*2),
                         (Math.round(height * scale) + controlsHeight + 61));
     } else {
@@ -174,8 +178,6 @@ window.addEventListener('ContentStart', function() {
       style.transform +=
         ' rotate(0.25turn) translate(-' + shift + 'px, -' + shift + 'px)';
     }
-
-    Services.prefs.setCharPref('layout.css.devPixelsPerPx', ratio);
   }
 
   // Resize on startup

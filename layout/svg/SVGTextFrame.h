@@ -34,6 +34,7 @@ class TextRenderedRunIterator;
 
 namespace dom {
 class SVGIRect;
+class SVGPathElement;
 }
 
 /**
@@ -144,16 +145,16 @@ protected:
 public:
   already_AddRefed<gfxPattern> GetFillPattern(const DrawTarget* aDrawTarget,
                                               float aOpacity,
-                                              const gfxMatrix& aCTM) MOZ_OVERRIDE;
+                                              const gfxMatrix& aCTM) override;
   already_AddRefed<gfxPattern> GetStrokePattern(const DrawTarget* aDrawTarget,
                                                 float aOpacity,
-                                                const gfxMatrix& aCTM) MOZ_OVERRIDE;
+                                                const gfxMatrix& aCTM) override;
 
   void SetFillOpacity(float aOpacity) { mFillOpacity = aOpacity; }
-  float GetFillOpacity() MOZ_OVERRIDE { return mFillOpacity; }
+  float GetFillOpacity() override { return mFillOpacity; }
 
   void SetStrokeOpacity(float aOpacity) { mStrokeOpacity = aOpacity; }
-  float GetStrokeOpacity() MOZ_OVERRIDE { return mStrokeOpacity; }
+  float GetStrokeOpacity() override { return mStrokeOpacity; }
 
   struct Paint {
     Paint() : mPaintType(eStyleSVGPaintType_None) {}
@@ -244,7 +245,7 @@ public:
  * itself do the painting.  Otherwise, a DrawPathCallback is passed to
  * PaintText so that we can fill the text geometry with SVG paint servers.
  */
-class SVGTextFrame MOZ_FINAL : public SVGTextFrameBase
+class SVGTextFrame final : public SVGTextFrameBase
 {
   friend nsIFrame*
   NS_NewSVGTextFrame(nsIPresShell* aPresShell, nsStyleContext* aContext);
@@ -283,58 +284,58 @@ public:
   // nsIFrame:
   virtual void Init(nsIContent*       aContent,
                     nsContainerFrame* aParent,
-                    nsIFrame*         aPrevInFlow) MOZ_OVERRIDE;
+                    nsIFrame*         aPrevInFlow) override;
 
   virtual nsresult AttributeChanged(int32_t aNamespaceID,
                                     nsIAtom* aAttribute,
-                                    int32_t aModType) MOZ_OVERRIDE;
+                                    int32_t aModType) override;
 
-  virtual nsContainerFrame* GetContentInsertionFrame() MOZ_OVERRIDE
+  virtual nsContainerFrame* GetContentInsertionFrame() override
   {
     return GetFirstPrincipalChild()->GetContentInsertionFrame();
   }
 
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) MOZ_OVERRIDE;
+                                const nsDisplayListSet& aLists) override;
 
   /**
    * Get the "type" of the frame
    *
    * @see nsGkAtoms::svgTextFrame
    */
-  virtual nsIAtom* GetType() const MOZ_OVERRIDE;
+  virtual nsIAtom* GetType() const override;
 
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const MOZ_OVERRIDE
+  virtual nsresult GetFrameName(nsAString& aResult) const override
   {
     return MakeFrameName(NS_LITERAL_STRING("SVGText"), aResult);
   }
 #endif
 
-  virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) MOZ_OVERRIDE;
+  virtual void DidSetStyleContext(nsStyleContext* aOldStyleContext) override;
 
   /**
    * Finds the nsTextFrame for the closest rendered run to the specified point.
    */
   virtual void FindCloserFrameForSelection(nsPoint aPoint,
-                                          FrameWithDistance* aCurrentBestFrame) MOZ_OVERRIDE;
+                                          FrameWithDistance* aCurrentBestFrame) override;
 
 
 
   // nsISVGChildFrame interface:
-  virtual void NotifySVGChanged(uint32_t aFlags) MOZ_OVERRIDE;
+  virtual void NotifySVGChanged(uint32_t aFlags) override;
   virtual nsresult PaintSVG(gfxContext& aContext,
                             const gfxMatrix& aTransform,
-                            const nsIntRect* aDirtyRect = nullptr) MOZ_OVERRIDE;
-  virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) MOZ_OVERRIDE;
-  virtual void ReflowSVG() MOZ_OVERRIDE;
-  virtual nsRect GetCoveredRegion() MOZ_OVERRIDE;
+                            const nsIntRect* aDirtyRect = nullptr) override;
+  virtual nsIFrame* GetFrameForPoint(const gfxPoint& aPoint) override;
+  virtual void ReflowSVG() override;
+  virtual nsRect GetCoveredRegion() override;
   virtual SVGBBox GetBBoxContribution(const Matrix& aToBBoxUserspace,
-                                      uint32_t aFlags) MOZ_OVERRIDE;
+                                      uint32_t aFlags) override;
 
   // nsSVGContainerFrame methods:
-  virtual gfxMatrix GetCanvasTM() MOZ_OVERRIDE;
+  virtual gfxMatrix GetCanvasTM() override;
   
   // SVG DOM text methods:
   uint32_t GetNumberOfChars(nsIContent* aContent);
@@ -444,7 +445,7 @@ private:
    * Mutation observer used to watch for text positioning attribute changes
    * on descendent text content elements (like <tspan>s).
    */
-  class MutationObserver MOZ_FINAL : public nsStubMutationObserver {
+  class MutationObserver final : public nsStubMutationObserver {
   public:
     explicit MutationObserver(SVGTextFrame* aFrame)
       : mFrame(aFrame)
@@ -515,15 +516,18 @@ private:
    * Recursive helper for ResolvePositions below.
    *
    * @param aContent The current node.
-   * @param aIndex The current character index.
+   * @param aIndex (in/out) The current character index.
    * @param aInTextPath Whether we are currently under a <textPath> element.
-   * @param aForceStartOfChunk Whether the next character we find should start a
-   *   new anchored chunk.
-   * @return The character index we got up to.
+   * @param aForceStartOfChunk (in/out) Whether the next character we find
+   *   should start a new anchored chunk.
+   * @param aDeltas (in/out) Receives the resolved dx/dy values for each
+   *   character.
+   * @return false if we discover that mPositions did not have enough
+   *   elements; true otherwise.
    */
-  uint32_t ResolvePositions(nsIContent* aContent, uint32_t aIndex,
-                            bool aInTextPath, bool& aForceStartOfChunk,
-                            nsTArray<gfxPoint>& aDeltas);
+  bool ResolvePositionsForNode(nsIContent* aContent, uint32_t& aIndex,
+                               bool aInTextPath, bool& aForceStartOfChunk,
+                               nsTArray<gfxPoint>& aDeltas);
 
   /**
    * Initializes mPositions with character position information based on
@@ -531,9 +535,13 @@ private:
    * was not given for that character.  Also fills aDeltas with values based on
    * dx/dy attributes.
    *
+   * @param aDeltas (in/out) Receives the resolved dx/dy values for each
+   *   character.
    * @param aRunPerGlyph Whether mPositions should record that a new run begins
    *   at each glyph.
-   * @return True if we recorded any positions.
+   * @return false if we did not record any positions (due to having no
+   *   displayed characters) or if we discover that mPositions did not have
+   *   enough elements; true otherwise.
    */
   bool ResolvePositions(nsTArray<gfxPoint>& aDeltas, bool aRunPerGlyph);
 
@@ -595,7 +603,8 @@ private:
   bool ShouldRenderAsPath(nsTextFrame* aFrame, bool& aShouldPaintSVGGlyphs);
 
   // Methods to get information for a <textPath> frame.
-  nsIFrame* GetTextPathPathFrame(nsIFrame* aTextPathFrame);
+  mozilla::dom::SVGPathElement*
+  GetTextPathPathElement(nsIFrame* aTextPathFrame);
   mozilla::TemporaryRef<Path> GetTextPath(nsIFrame* aTextPathFrame);
   gfxFloat GetOffsetScale(nsIFrame* aTextPathFrame);
   gfxFloat GetStartOffset(nsIFrame* aTextPathFrame);

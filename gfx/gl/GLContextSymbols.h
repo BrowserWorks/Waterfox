@@ -308,7 +308,7 @@ struct GLContextSymbols
     PFNGETSHADERPRECISIONFORMAT fGetShaderPrecisionFormat;
     typedef void (GLAPIENTRY * PFNGLGETSHADERSOURCEPROC) (GLint obj, GLsizei maxLength, GLsizei* length, GLchar* source);
     PFNGLGETSHADERSOURCEPROC fGetShaderSource;
-    typedef void (GLAPIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar** strings, const GLint* lengths);
+    typedef void (GLAPIENTRY * PFNGLSHADERSOURCEPROC) (GLuint shader, GLsizei count, const GLchar* const* strings, const GLint* lengths);
     PFNGLSHADERSOURCEPROC fShaderSource;
 
     typedef void (GLAPIENTRY * PFNGLBINDFRAMEBUFFER) (GLenum target, GLuint framebuffer);
@@ -666,6 +666,10 @@ struct GLContextSymbols
                                                               GLsizei width, GLsizei height, GLsizei depth,
                                                               GLenum format, GLsizei imageSize, const GLvoid* data);
     PFNGLCOMPRESSEDTEXSUBIMAGE3D fCompressedTexSubImage3D;
+
+    // get_string_indexed
+    typedef const GLubyte* (GLAPIENTRY * pfnGLGetStringiT)(GLenum name, GLuint index);
+    pfnGLGetStringiT fGetStringi;
 };
 
 }

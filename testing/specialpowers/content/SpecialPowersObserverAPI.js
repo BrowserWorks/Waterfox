@@ -16,13 +16,15 @@ if (typeof(Cc) == 'undefined') {
 /**
  * Special Powers Exception - used to throw exceptions nicely
  **/
-function SpecialPowersException(aMsg) {
+this.SpecialPowersException = function SpecialPowersException(aMsg) {
   this.message = aMsg;
   this.name = "SpecialPowersException";
 }
 
-SpecialPowersException.prototype.toString = function() {
-  return this.name + ': "' + this.message + '"';
+SpecialPowersException.prototype = {
+  toString: function SPE_toString() {
+    return this.name + ': "' + this.message + '"';
+  }
 };
 
 this.SpecialPowersObserverAPI = function SpecialPowersObserverAPI() {
@@ -367,6 +369,13 @@ SpecialPowersObserverAPI.prototype = {
               utils.AppsUtils.allowUnsignedAddons = true;
               return;
             }
+          case "debug-customizations":
+            {
+              let scope = {};
+              Components.utils.import("resource://gre/modules/UserCustomizations.jsm", scope);
+              scope.UserCustomizations._debug = aMessage.json.value;
+              return;
+            }
           default:
             throw new SpecialPowersException("Invalid operation for SPWebAppsService");
         }
@@ -408,6 +417,7 @@ SpecialPowersObserverAPI.prototype = {
         sb.addMessageListener = (name, listener) => {
           this._chromeScriptListeners.push({ id: id, name: name, listener: listener });
         };
+        sb.browserElement = aMessage.target;
 
         // Also expose assertion functions
         let reporter = function (err, message, stack) {

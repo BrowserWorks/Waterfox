@@ -25,7 +25,7 @@ enum OptimizationLevel
 };
 
 #ifdef DEBUG
-inline const char *
+inline const char*
 OptimizationLevelString(OptimizationLevel level)
 {
     switch (level) {
@@ -107,6 +107,9 @@ class OptimizationInfo
     // are compiled.
     uint32_t compilerWarmUpThreshold_;
 
+    // Default compiler warmup threshold, unless it is overridden.
+    static const uint32_t CompilerWarmupThreshold = 1000;
+
     // How many invocations or loop iterations are needed before calls
     // are inlined, as a fraction of compilerWarmUpThreshold.
     double inliningWarmUpThresholdFactor_;
@@ -134,7 +137,7 @@ class OptimizationInfo
         return inlineNative_ && !js_JitOptions.disableInlining;
     }
 
-    uint32_t compilerWarmUpThreshold(JSScript *script, jsbytecode *pc = nullptr) const;
+    uint32_t compilerWarmUpThreshold(JSScript* script, jsbytecode* pc = nullptr) const;
 
     bool gvnEnabled() const {
         return gvn_ && !js_JitOptions.disableGvn;
@@ -173,9 +176,9 @@ class OptimizationInfo
     }
 
     IonRegisterAllocator registerAllocator() const {
-        if (!js_JitOptions.forceRegisterAllocator)
-            return registerAllocator_;
-        return js_JitOptions.forcedRegisterAllocator;
+        if (js_JitOptions.forcedRegisterAllocator.isSome())
+            return js_JitOptions.forcedRegisterAllocator.ref();
+        return registerAllocator_;
     }
 
     bool scalarReplacementEnabled() const {
@@ -186,7 +189,7 @@ class OptimizationInfo
         return smallFunctionMaxInlineDepth_;
     }
 
-    bool isSmallFunction(JSScript *script) const;
+    bool isSmallFunction(JSScript* script) const;
 
     uint32_t maxInlineDepth() const {
         return maxInlineDepth_;
@@ -202,8 +205,8 @@ class OptimizationInfo
 
     uint32_t inliningWarmUpThreshold() const {
         uint32_t compilerWarmUpThreshold = compilerWarmUpThreshold_;
-        if (js_JitOptions.forceDefaultIonWarmUpThreshold)
-            compilerWarmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold;
+        if (js_JitOptions.forcedDefaultIonWarmUpThreshold.isSome())
+            compilerWarmUpThreshold = js_JitOptions.forcedDefaultIonWarmUpThreshold.ref();
         return compilerWarmUpThreshold * inliningWarmUpThresholdFactor_;
     }
 
@@ -220,7 +223,7 @@ class OptimizationInfos
   public:
     OptimizationInfos();
 
-    const OptimizationInfo *get(OptimizationLevel level) const {
+    const OptimizationInfo* get(OptimizationLevel level) const {
         MOZ_ASSERT(level < Optimization_Count);
         MOZ_ASSERT(level != Optimization_DontCompile);
 
@@ -230,7 +233,7 @@ class OptimizationInfos
     OptimizationLevel nextLevel(OptimizationLevel level) const;
     OptimizationLevel firstLevel() const;
     bool isLastLevel(OptimizationLevel level) const;
-    OptimizationLevel levelForScript(JSScript *script, jsbytecode *pc = nullptr) const;
+    OptimizationLevel levelForScript(JSScript* script, jsbytecode* pc = nullptr) const;
 };
 
 extern OptimizationInfos js_IonOptimizations;

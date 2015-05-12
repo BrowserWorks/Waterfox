@@ -115,8 +115,6 @@ pref("dom.quotaManager.testing", false);
 
 // Whether or not indexedDB is enabled.
 pref("dom.indexedDB.enabled", true);
-// Space to allow indexedDB databases before prompting (in MB).
-pref("dom.indexedDB.warningQuota", 50);
 // Whether or not indexedDB experimental features are enabled.
 pref("dom.indexedDB.experimental", true);
 // Enable indexedDB logging.
@@ -135,11 +133,7 @@ pref("dom.workers.maxPerDomain", 20);
 pref("dom.workers.sharedWorkers.enabled", true);
 
 // WebSocket in workers are disabled by default.
-#ifdef RELEASE_BUILD
 pref("dom.workers.websocket.enabled", true);
-#else
-pref("dom.workers.websocket.enabled", true);
-#endif
 
 // Service workers
 pref("dom.serviceWorkers.enabled", true);
@@ -150,6 +144,12 @@ pref("dom.enable_performance", true);
 // Whether resource timing will be gathered and returned by performance.GetEntries*
 pref("dom.enable_resource_timing", true);
 
+// Enable high-resolution timing markers for users
+pref("dom.enable_user_timing", true);
+
+// Enable printing performance marks/measures to log
+pref("dom.performance.enable_user_timing_logging", false);
+
 // Whether the Gamepad API is enabled
 pref("dom.gamepad.enabled", true);
 #ifdef RELEASE_BUILD
@@ -159,17 +159,22 @@ pref("dom.gamepad.non_standard_events.enabled", true);
 #endif
 
 // Whether the KeyboardEvent.code is enabled
-#ifdef RELEASE_BUILD
 pref("dom.keyboardevent.code.enabled", true);
-#else
-pref("dom.keyboardevent.code.enabled", true);
-#endif
+
+// If this is true, TextEventDispatcher dispatches keydown and keyup events
+// even during composition (keypress events are never fired during composition
+// even if this is true).
+pref("dom.keyboardevent.dispatch_during_composition", false);
 
 // Whether the WebCrypto API is enabled
 pref("dom.webcrypto.enabled", true);
 
 // Whether the UndoManager API is enabled
 pref("dom.undo_manager.enabled", false);
+
+// Whether URL,nsLocation,Link::GetHash should be percent encoded
+// in setter and percent decoded in getter (old behaviour = true)
+pref("dom.url.encode_decode_hash", true);
 
 // Whether to run add-on code in different compartments from browser code. This
 // causes a separate compartment for each (addon, global) combination, which may
@@ -186,6 +191,8 @@ pref("browser.sessionhistory.max_total_viewers", -1);
 
 pref("ui.use_native_colors", true);
 pref("ui.click_hold_context_menus", false);
+// Duration of timeout of incremental search in menus (ms).  0 means infinite.
+pref("ui.menu.incremental_search.timeout", 1000);
 pref("browser.display.use_document_fonts",  1);  // 0 = never, 1 = quick, 2 = always
 // 0 = default: always, except in high contrast mode
 // 1 = always
@@ -265,7 +272,7 @@ pref("media.wakelock_timeout", 2000);
 pref("media.play-stand-alone", true);
 
 #if defined(XP_WIN)
-pref("media.decoder.heuristic.dormant.enabled", false);
+pref("media.decoder.heuristic.dormant.enabled", true);
 pref("media.decoder.heuristic.dormant.timeout", 60000);
 #endif
 
@@ -367,7 +374,7 @@ pref("media.peerconnection.video.start_bitrate", 300);
 pref("media.peerconnection.video.max_bitrate", 2000);
 #endif
 pref("media.navigator.permission.disabled", false);
-pref("media.peerconnection.default_iceservers", "[{\"url\": \"stun:stun.services.mozilla.com\"}]");
+pref("media.peerconnection.default_iceservers", "[{\"urls\": [\"stun:stun.services.mozilla.com\"]}]");
 pref("media.peerconnection.ice.loopback", false); // Set only for testing in offline environments.
 pref("media.peerconnection.use_document_iceservers", true);
 // Do not enable identity before ensuring that the UX cannot be spoofed
@@ -439,34 +446,24 @@ pref("media.track.enabled", true);
 // We want to enable on non-release  builds and on release windows and mac
 // but on release builds restrict to YouTube. We don't enable for other
 // configurations because code for those platforms isn't ready yet.
-#if defined(XP_WIN) || !defined(RELEASE_BUILD)
+#if defined(XP_WIN) || defined(XP_MACOSX)
 pref("media.mediasource.enabled", true);
 #else
-pref("media.mediasource.enabled", false);
+pref("media.mediasource.enabled", true);
 #endif
 
 #ifdef RELEASE_BUILD
-pref("media.mediasource.youtubeonly", false);
+pref("media.mediasource.whitelist", false);
 #else
-pref("media.mediasource.youtubeonly", false);
+pref("media.mediasource.whitelist", false);
 #endif // RELEASE_BUILD
 
-#ifdef MOZ_WIDGET_GONK
-pref("media.mediasource.mp4.enabled", false);
-pref("media.mediasource.webm.enabled", false);
-#else
-#if defined(XP_WIN) || defined(XP_MACOSX)
 pref("media.mediasource.mp4.enabled", true);
 pref("media.mediasource.webm.enabled", true);
-#else
-pref("media.mediasource.mp4.enabled", true);
-pref("media.mediasource.webm.enabled", true);
-#endif
-#endif
 
 #ifdef MOZ_WEBSPEECH
-pref("media.webspeech.recognition.enable", false);
-pref("media.webspeech.synth.enabled", false);
+pref("media.webspeech.recognition.enable", true);
+pref("media.webspeech.synth.enabled", true);
 #endif
 #ifdef MOZ_WEBM_ENCODER
 pref("media.encoder.webm.enabled", true);
@@ -553,15 +550,12 @@ pref("apz.y_stationary_size_multiplier", "3.5");
 pref("apz.zoom_animation_duration_ms", 250);
 
 #ifdef XP_MACOSX
-// Layerize scrollable subframes to allow async panning
-pref("apz.subframe.enabled", true);
 pref("apz.fling_repaint_interval", 16);
 pref("apz.smooth_scroll_repaint_interval", 16);
 pref("apz.pan_repaint_interval", 16);
 pref("apz.x_skate_size_multiplier", "2.5");
 pref("apz.y_skate_size_multiplier", "3.5");
 #else
-pref("apz.subframe.enabled", false);
 pref("apz.fling_repaint_interval", 75);
 pref("apz.smooth_scroll_repaint_interval", 75);
 pref("apz.pan_repaint_interval", 250);
@@ -578,6 +572,12 @@ pref("apz.test.logging_enabled", false);
 //   == 1 : hidpi supported if all screens share the same backingScaleFactor
 //   >= 2 : hidpi supported even with mixed backingScaleFactors (somewhat broken)
 pref("gfx.hidpi.enabled", 2);
+#endif
+
+#if !defined(MOZ_WIDGET_GONK) && !defined(MOZ_WIDGET_ANDROID)
+// Containerless scrolling for root frames does not yet pass tests on Android
+// or B2G.
+pref("layout.scroll.root-frame-containers", false);
 #endif
 
 // Whether to enable LayerScope tool and default listening port
@@ -717,6 +717,8 @@ pref("canvas.path.enabled", true);
 // further checks.
 pref("accessibility.force_disabled", 0);
 
+pref("accessibility.ipc_architecture.enabled", true);
+
 #ifdef XP_WIN
 // Some accessibility tools poke at windows in the plugin process during setup
 // which can cause hangs.  To hack around this set accessibility.delay_plugins
@@ -799,6 +801,7 @@ pref("devtools.chrome.enabled", false);
 
 // Disable remote debugging protocol logging
 pref("devtools.debugger.log", false);
+pref("devtools.debugger.log.verbose", false);
 // Disable remote debugging connections
 #ifdef MOZ_DEV_EDITION
 pref("devtools.debugger.remote-enabled", true);
@@ -1059,6 +1062,7 @@ pref("javascript.options.mem.max", -1);
 pref("javascript.options.mem.gc_per_compartment", true);
 pref("javascript.options.mem.gc_incremental", true);
 pref("javascript.options.mem.gc_incremental_slice_ms", 10);
+pref("javascript.options.mem.gc_compacting", true);
 pref("javascript.options.mem.log", false);
 pref("javascript.options.mem.notify", false);
 pref("javascript.options.gc_on_memory_pressure", true);
@@ -1319,6 +1323,7 @@ pref("network.http.spdy.ping-timeout", 8);
 pref("network.http.spdy.send-buffer-size", 131072);
 pref("network.http.spdy.allow-push", true);
 pref("network.http.spdy.push-allowance", 131072);
+pref("network.http.spdy.default-concurrent", 100);
 
 // alt-svc allows separation of transport routing from
 // the origin host without using a proxy.
@@ -1591,7 +1596,7 @@ pref("network.dir.format", 2);
 pref("network.prefetch-next", true);
 
 // enables the predictive service
-pref("network.predictor.enabled", false);
+pref("network.predictor.enabled", true);
 pref("network.predictor.enable-hover-on-ssl", false);
 pref("network.predictor.page-degradation.day", 0);
 pref("network.predictor.page-degradation.week", 5);
@@ -1606,9 +1611,8 @@ pref("network.predictor.subresource-degradation.max", 100);
 pref("network.predictor.preconnect-min-confidence", 90);
 pref("network.predictor.preresolve-min-confidence", 60);
 pref("network.predictor.redirect-likely-confidence", 75);
-pref("network.predictor.max-queue-size", 50);
-pref("network.predictor.max-db-size", 157286400); // bytes
-pref("network.predictor.preserve", 80); // percentage of predictor data to keep when cleaning up
+pref("network.predictor.max-resources-per-entry", 100);
+pref("network.predictor.cleaned-up", false);
 
 // The following prefs pertain to the negotiate-auth extension (see bug 17578),
 // which provides transparent Kerberos or NTLM authentication using the SPNEGO
@@ -2173,7 +2177,7 @@ pref("layout.css.grid.enabled", false);
 // in nsLayoutStylesheetCache::EnsureGlobal and the invalidation of
 // mUASheet in nsLayoutStylesheetCache::DependentPrefChanged (if it's not
 // otherwise needed) are removed.
-pref("layout.css.ruby.enabled", false);
+pref("layout.css.ruby.enabled", true);
 
 // Is support for CSS display:contents enabled?
 pref("layout.css.display-contents.enabled", true);
@@ -2286,6 +2290,7 @@ pref("editor.positioning.offset",            0);
 
 pref("dom.use_watchdog", true);
 pref("dom.max_chrome_script_run_time", 20);
+pref("dom.max_child_script_run_time", 10);
 pref("dom.max_script_run_time", 10);
 
 // If true, ArchiveReader will be enabled
@@ -2332,6 +2337,9 @@ pref("dom.ipc.plugins.timeoutSecs", 45);
 // to a synchronous request before terminating itself. After this
 // point the child assumes the parent is hung. Currently disabled.
 pref("dom.ipc.plugins.parentTimeoutSecs", 0);
+// How long a plugin in e10s is allowed to process a synchronous IPC
+// message before we notify the chrome process of a hang.
+pref("dom.ipc.plugins.contentTimeoutSecs", 45);
 // How long a plugin launch is allowed to take before
 // we consider it failed.
 pref("dom.ipc.plugins.processLaunchTimeoutSecs", 45);
@@ -2349,6 +2357,7 @@ pref("dom.ipc.tabs.shutdownTimeoutSecs", 5);
 #else
 // No timeout in DEBUG builds
 pref("dom.ipc.plugins.timeoutSecs", 0);
+pref("dom.ipc.plugins.contentTimeoutSecs", 0);
 pref("dom.ipc.plugins.processLaunchTimeoutSecs", 0);
 pref("dom.ipc.plugins.parentTimeoutSecs", 0);
 #ifdef XP_WIN
@@ -2389,12 +2398,6 @@ pref("svg.paint-order.enabled", true);
 
 // Is support for the <marker orient="auto-start-reverse"> feature enabled?
 pref("svg.marker-improvements.enabled", true);
-
-#ifdef RELEASE_BUILD
-pref("svg.svg-iframe.enabled", false);
-#else
-pref("svg.svg-iframe.enabled", false);
-#endif
 
 // Is support for the new getBBox method from SVG 2 enabled?
 // See https://svgwg.org/svg2-draft/single-page.html#types-SVGBoundingBoxOptions
@@ -2728,10 +2731,11 @@ pref("font.name.monospace.x-western", "Courier New");
 pref("font.name.cursive.x-western", "Comic Sans MS");
 
 pref("font.name.serif.zh-CN", "SimSun");
-pref("font.name.sans-serif.zh-CN", "SimSun");
+pref("font.name.sans-serif.zh-CN", "Microsoft YaHei");
 pref("font.name.monospace.zh-CN", "SimSun");
+pref("font.name.cursive.zh-CN", "KaiTi");
 pref("font.name-list.serif.zh-CN", "MS Song, SimSun, SimSun-ExtB");
-pref("font.name-list.sans-serif.zh-CN", "MS Song, SimSun, SimSun-ExtB");
+pref("font.name-list.sans-serif.zh-CN", "Microsoft YaHei, SimHei, Arial Unicode MS");
 pref("font.name-list.monospace.zh-CN", "MS Song, SimSun, SimSun-ExtB");
 
 // Per Taiwanese users' demand. They don't want to use TC fonts for
@@ -3795,7 +3799,7 @@ pref("image.mem.discardable", true);
 
 // Prevents images from automatically being decoded on load, instead allowing
 // them to be decoded on demand when they are drawn.
-pref("image.mem.decodeondraw", false);
+pref("image.mem.decodeondraw", true);
 
 // Allows image locking of decoded image data in content processes.
 pref("image.mem.allow_locking_in_content_processes", true);
@@ -3805,7 +3809,7 @@ pref("image.mem.decode_bytes_at_a_time", 16384);
 
 // Minimum timeout for expiring unused images from the surface cache, in
 // milliseconds. This controls how long we store cached temporary surfaces.
-pref("image.mem.surfacecache.min_expiration_ms", 60000); // 60ms
+pref("image.mem.surfacecache.min_expiration_ms", 60000); // 60s
 
 // Maximum size for the surface cache, in kilobytes.
 pref("image.mem.surfacecache.max_size_kb", 1048576); // 1GB
@@ -3844,7 +3848,6 @@ pref("gl.msaa-level", 2);
 #endif
 pref("webgl.force-enabled", false);
 pref("webgl.disabled", false);
-pref("webgl.shader_validator", true);
 pref("webgl.disable-angle", false);
 pref("webgl.min_capability_mode", false);
 pref("webgl.disable-extensions", false);
@@ -3858,6 +3861,8 @@ pref("webgl.restore-context-when-visible", true);
 pref("webgl.max-warnings-per-context", 32);
 pref("webgl.enable-draft-extensions", false);
 pref("webgl.enable-privileged-extensions", false);
+pref("webgl.bypass-shader-validation", false);
+pref("webgl.enable-prototype-webgl2", false);
 #ifdef XP_WIN
 pref("webgl.angle.try-d3d11", true);
 pref("webgl.angle.force-d3d11", false);
@@ -3913,6 +3918,9 @@ pref("layers.dump", false);
 #ifdef MOZ_DUMP_PAINTING
 // If we're dumping layers, also dump the texture data
 pref("layers.dump-texture", false);
+pref("layers.dump-decision", false);
+pref("layers.dump-client-layers", false);
+pref("layers.dump-host-layers", false);
 #endif
 pref("layers.draw-borders", false);
 pref("layers.draw-tile-borders", false);
@@ -4349,6 +4357,9 @@ pref("dom.voicemail.enabled", false);
 // parameter omitted.
 pref("dom.voicemail.defaultServiceId", 0);
 
+// DOM BroadcastChannel API.
+pref("dom.broadcastChannel.enabled", true);
+
 // DOM Inter-App Communication API.
 pref("dom.inter-app-communication-api.enabled", false);
 
@@ -4425,6 +4436,9 @@ pref("dom.udpsocket.enabled", false);
 // Disable before keyboard events and after keyboard events by default.
 pref("dom.beforeAfterKeyboardEvent.enabled", false);
 
+// Presentation API
+pref("dom.presentation.enabled", false);
+
 // Use raw ICU instead of CoreServices API in Unicode collation
 #ifdef XP_MACOSX
 pref("intl.collation.mac.use_icu", true);
@@ -4449,6 +4463,9 @@ pref("dom.mozSettings.SettingsService.verbose.enabled", false);
 // IndexedDB transactions to be opened as readonly or keep everything as
 // readwrite.
 pref("dom.mozSettings.allowForceReadOnly", false);
+
+// RequestSync API is disabled by default.
+pref("dom.requestSync.enabled", false);
 
 // Search service settings
 pref("browser.search.log", false);
@@ -4503,8 +4520,57 @@ pref("media.gmp-manager.certs.1.issuerName", "CN=DigiCert Secure Server CA,O=Dig
 pref("media.gmp-manager.certs.1.commonName", "aus4.mozilla.org");
 pref("media.gmp-manager.certs.2.issuerName", "CN=Thawte SSL CA,O=\"Thawte, Inc.\",C=US");
 pref("media.gmp-manager.certs.2.commonName", "aus4.mozilla.org");
-
-// Adobe EME is currently pref'd off by default and hidden in the addon manager.
-pref("media.gmp-eme-adobe.hidden", true);
 #endif
 
+// Whether or not to perform reader mode article parsing on page load.
+// If this pref is disabled, we will never show a reader mode icon in the toolbar.
+pref("reader.parse-on-load.enabled", true);
+
+// After what size document we don't bother running Readability on it
+// because it'd slow things down too much
+pref("reader.parse-node-limit", 3000);
+
+// Force-enables reader mode parsing, even on low-memory platforms, where it
+// is disabled by default.
+pref("reader.parse-on-load.force-enabled", false);
+
+// The default relative font size in reader mode (1-9)
+pref("reader.font_size", 5);
+
+// The default color scheme in reader mode (light, dark, sepia, auto)
+// auto = color automatically adjusts according to ambient light level
+// (auto only works on platforms where the 'devicelight' event is enabled)
+pref("reader.color_scheme", "light");
+
+// Color scheme values available in reader mode UI.
+pref("reader.color_scheme.values", "[\"light\",\"dark\",\"sepia\"]");
+
+// The font type in reader (sans-serif, serif)
+pref("reader.font_type", "sans-serif");
+
+// Whether or not the user has interacted with the reader mode toolbar.
+// This is used to show a first-launch tip in reader mode.
+pref("reader.has_used_toolbar", false);
+
+// Whether to use a vertical or horizontal toolbar.
+pref("reader.toolbar.vertical", true);
+
+#if defined(XP_LINUX) && defined(MOZ_GMP_SANDBOX)
+// Whether to allow, on a Linux system that doesn't support the necessary sandboxing
+// features, loading Gecko Media Plugins unsandboxed.  However, EME CDMs will not be
+// loaded without sandboxing even if this pref is changed.
+pref("media.gmp.insecure.allow", false);
+#endif
+
+// Use vsync aligned rendering. b2g prefs are in b2g.js
+// Only supported on windows, os x, and b2g
+#if defined(XP_WIN) || defined(XP_MACOSX)
+pref("gfx.vsync.hw-vsync.enabled", false);
+pref("gfx.vsync.compositor", false);
+pref("gfx.vsync.refreshdriver", false);
+#endif
+
+// Secure Element API
+#ifdef MOZ_SECUREELEMENT
+pref("dom.secureelement.enabled", false);
+#endif

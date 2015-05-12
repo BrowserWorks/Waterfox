@@ -6,7 +6,9 @@
 #include "mozilla/dom/Console.h"
 #include "mozilla/dom/ConsoleBinding.h"
 
+#include "mozilla/dom/BlobBinding.h"
 #include "mozilla/dom/Exceptions.h"
+#include "mozilla/dom/File.h"
 #include "mozilla/dom/ToJSValue.h"
 #include "mozilla/Maybe.h"
 #include "nsCycleCollectionParticipant.h"
@@ -41,15 +43,22 @@
 // console.trace().
 #define DEFAULT_MAX_STACKTRACE_DEPTH 200
 
-// This tag is used in the Structured Clone Algorithm to move js values from
+// This tags are used in the Structured Clone Algorithm to move js values from
 // worker thread to main thread
-#define CONSOLE_TAG JS_SCTAG_USER_MIN
+#define CONSOLE_TAG_BLOB   JS_SCTAG_USER_MIN
 
 using namespace mozilla::dom::exceptions;
 using namespace mozilla::dom::workers;
 
 namespace mozilla {
 namespace dom {
+
+struct
+ConsoleStructuredCloneData
+{
+  nsCOMPtr<nsISupports> mParent;
+  nsTArray<nsRefPtr<FileImpl>> mFiles;
+};
 
 /**
  * Console API in workers uses the Structured Clone Algorithm to move any value
@@ -63,29 +72,31 @@ namespace dom {
 static JSObject*
 ConsoleStructuredCloneCallbacksRead(JSContext* aCx,
                                     JSStructuredCloneReader* /* unused */,
-                                    uint32_t aTag, uint32_t aData,
+                                    uint32_t aTag, uint32_t aIndex,
                                     void* aClosure)
 {
   AssertIsOnMainThread();
+  ConsoleStructuredCloneData* data =
+    static_cast<ConsoleStructuredCloneData*>(aClosure);
+  MOZ_ASSERT(data);
 
-  if (aTag != CONSOLE_TAG) {
-    return nullptr;
+  if (aTag == CONSOLE_TAG_BLOB) {
+    MOZ_ASSERT(data->mFiles.Length() > aIndex);
+
+    JS::Rooted<JS::Value> val(aCx);
+    {
+      nsRefPtr<File> file =
+        new File(data->mParent, data->mFiles.ElementAt(aIndex));
+      if (!GetOrCreateDOMReflector(aCx, file, &val)) {
+        return nullptr;
+      }
+    }
+
+    return &val.toObject();
   }
 
-  nsTArray<nsString>* strings = static_cast<nsTArray<nsString>*>(aClosure);
-  MOZ_ASSERT(strings->Length() > aData);
-
-  JS::Rooted<JS::Value> value(aCx);
-  if (!xpc::StringToJsval(aCx, strings->ElementAt(aData), &value)) {
-    return nullptr;
-  }
-
-  JS::Rooted<JSObject*> obj(aCx);
-  if (!JS_ValueToObject(aCx, value, &obj)) {
-    return nullptr;
-  }
-
-  return obj;
+  MOZ_CRASH("No other tags are supported.");
+  return nullptr;
 }
 
 // This method is called by the Structured Clone Algorithm when some data has
@@ -96,24 +107,30 @@ ConsoleStructuredCloneCallbacksWrite(JSContext* aCx,
                                      JS::Handle<JSObject*> aObj,
                                      void* aClosure)
 {
+  ConsoleStructuredCloneData* data =
+    static_cast<ConsoleStructuredCloneData*>(aClosure);
+  MOZ_ASSERT(data);
+
+  nsRefPtr<File> file;
+  if (NS_SUCCEEDED(UNWRAP_OBJECT(Blob, aObj, file)) &&
+      file->Impl()->MayBeClonedToOtherThreads()) {
+    if (!JS_WriteUint32Pair(aWriter, CONSOLE_TAG_BLOB, data->mFiles.Length())) {
+      return false;
+    }
+
+    data->mFiles.AppendElement(file->Impl());
+    return true;
+  }
+
   JS::Rooted<JS::Value> value(aCx, JS::ObjectOrNullValue(aObj));
   JS::Rooted<JSString*> jsString(aCx, JS::ToString(aCx, value));
   if (!jsString) {
     return false;
   }
 
-  nsAutoJSString string;
-  if (!string.init(aCx, jsString)) {
+  if (!JS_WriteString(aWriter, jsString)) {
     return false;
   }
-
-  nsTArray<nsString>* strings = static_cast<nsTArray<nsString>*>(aClosure);
-
-  if (!JS_WriteUint32Pair(aWriter, CONSOLE_TAG, strings->Length())) {
-    return false;
-  }
-
-  strings->AppendElement(string);
 
   return true;
 }
@@ -131,7 +148,7 @@ static const JSStructuredCloneCallbacks gConsoleCallbacks = {
   ConsoleStructuredCloneCallbacksError
 };
 
-class ConsoleCallData MOZ_FINAL
+class ConsoleCallData final
 {
 public:
   ConsoleCallData()
@@ -377,7 +394,7 @@ private:
 
 // This runnable appends a CallData object into the Console queue running on
 // the main-thread.
-class ConsoleCallDataRunnable MOZ_FINAL : public ConsoleRunnable
+class ConsoleCallDataRunnable final : public ConsoleRunnable
 {
 public:
   ConsoleCallDataRunnable(Console* aConsole,
@@ -391,7 +408,7 @@ private:
   { }
 
   bool
-  PreDispatch(JSContext* aCx) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx) override
   {
     mWorkerPrivate->AssertIsOnWorkerThread();
 
@@ -414,7 +431,7 @@ private:
 
     JS::Rooted<JS::Value> value(aCx, JS::ObjectValue(*arguments));
 
-    if (!mArguments.write(aCx, value, &gConsoleCallbacks, &mStrings)) {
+    if (!mArguments.write(aCx, value, &gConsoleCallbacks, &mData)) {
       return false;
     }
 
@@ -424,7 +441,7 @@ private:
 
   void
   RunConsole(JSContext* aCx, nsPIDOMWindow* aOuterWindow,
-             nsPIDOMWindow* aInnerWindow) MOZ_OVERRIDE
+             nsPIDOMWindow* aInnerWindow) override
   {
     MOZ_ASSERT(NS_IsMainThread());
 
@@ -451,8 +468,13 @@ private:
       mCallData->SetIDs(id, frame.mFilename);
     }
 
+    // Now we could have the correct window (if we are not window-less).
+    mData.mParent = aInnerWindow;
+
     ProcessCallData(aCx);
     mCallData->CleanupJSObjects();
+
+    mData.mParent = nullptr;
   }
 
 private:
@@ -462,7 +484,7 @@ private:
     ClearException ce(aCx);
 
     JS::Rooted<JS::Value> argumentsValue(aCx);
-    if (!mArguments.read(aCx, &argumentsValue, &gConsoleCallbacks, &mStrings)) {
+    if (!mArguments.read(aCx, &argumentsValue, &gConsoleCallbacks, &mData)) {
       return;
     }
 
@@ -494,11 +516,11 @@ private:
   ConsoleCallData* mCallData;
 
   JSAutoStructuredCloneBuffer mArguments;
-  nsTArray<nsString> mStrings;
+  ConsoleStructuredCloneData mData;
 };
 
 // This runnable calls ProfileMethod() on the console on the main-thread.
-class ConsoleProfileRunnable MOZ_FINAL : public ConsoleRunnable
+class ConsoleProfileRunnable final : public ConsoleRunnable
 {
 public:
   ConsoleProfileRunnable(Console* aConsole, const nsAString& aAction,
@@ -512,7 +534,7 @@ public:
 
 private:
   bool
-  PreDispatch(JSContext* aCx) MOZ_OVERRIDE
+  PreDispatch(JSContext* aCx) override
   {
     ClearException ce(aCx);
 
@@ -539,7 +561,7 @@ private:
 
     JS::Rooted<JS::Value> value(aCx, JS::ObjectValue(*arguments));
 
-    if (!mBuffer.write(aCx, value, &gConsoleCallbacks, &mStrings)) {
+    if (!mBuffer.write(aCx, value, &gConsoleCallbacks, &mData)) {
       return false;
     }
 
@@ -548,12 +570,18 @@ private:
 
   void
   RunConsole(JSContext* aCx, nsPIDOMWindow* aOuterWindow,
-             nsPIDOMWindow* aInnerWindow) MOZ_OVERRIDE
+             nsPIDOMWindow* aInnerWindow) override
   {
     ClearException ce(aCx);
 
+    // Now we could have the correct window (if we are not window-less).
+    mData.mParent = aInnerWindow;
+
     JS::Rooted<JS::Value> argumentsValue(aCx);
-    if (!mBuffer.read(aCx, &argumentsValue, &gConsoleCallbacks, &mStrings)) {
+    bool ok = mBuffer.read(aCx, &argumentsValue, &gConsoleCallbacks, &mData);
+    mData.mParent = nullptr;
+
+    if (!ok) {
       return;
     }
 
@@ -585,7 +613,7 @@ private:
   Sequence<JS::Value> mArguments;
 
   JSAutoStructuredCloneBuffer mBuffer;
-  nsTArray<nsString> mStrings;
+  ConsoleStructuredCloneData mData;
 };
 
 NS_IMPL_CYCLE_COLLECTION_CLASS(Console)
@@ -906,7 +934,7 @@ public:
     }
   }
 
-  virtual bool Equals(const TimelineMarker* aOther)
+  virtual bool Equals(const TimelineMarker* aOther) override
   {
     if (!TimelineMarker::Equals(aOther)) {
       return false;
@@ -915,7 +943,7 @@ public:
     return GetCause() == aOther->GetCause();
   }
 
-  virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker)
+  virtual void AddDetails(mozilla::dom::ProfileTimelineMarker& aMarker) override
   {
     if (GetMetaData() == TRACING_INTERVAL_START) {
       aMarker.mCauseName.Construct(GetCause());
@@ -1129,8 +1157,8 @@ Console::ProcessCallData(ConsoleCallData* aData)
     event.mInnerID.Value().SetAsString() = aData->mInnerIDString;
   } else {
     MOZ_ASSERT(aData->mIDType == ConsoleCallData::eNumber);
-    event.mID.Value().SetAsUnsignedLong() = aData->mOuterIDNumber;
-    event.mInnerID.Value().SetAsUnsignedLong() = aData->mInnerIDNumber;
+    event.mID.Value().SetAsUnsignedLongLong() = aData->mOuterIDNumber;
+    event.mInnerID.Value().SetAsUnsignedLongLong() = aData->mInnerIDNumber;
   }
 
   event.mLevel = aData->mMethodString;
@@ -1268,7 +1296,7 @@ Console::ProcessCallData(ConsoleCallData* aData)
     innerID.AppendInt(aData->mInnerIDNumber);
   }
 
-  if (NS_FAILED(mStorage->RecordPendingEvent(innerID, outerID, eventValue))) {
+  if (NS_FAILED(mStorage->RecordEvent(innerID, outerID, eventValue))) {
     NS_WARNING("Failed to record a console event.");
   }
 }

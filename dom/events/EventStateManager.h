@@ -7,7 +7,6 @@
 #define mozilla_EventStateManager_h_
 
 #include "mozilla/EventForwards.h"
-#include "mozilla/TypedEnum.h"
 
 #include "nsIObserver.h"
 #include "nsWeakReference.h"
@@ -44,7 +43,7 @@ class Element;
 class TabParent;
 } // namespace dom
 
-class OverOutElementsWrapper MOZ_FINAL : public nsISupports
+class OverOutElementsWrapper final : public nsISupports
 {
   ~OverOutElementsWrapper();
 
@@ -222,8 +221,9 @@ public:
   static void SetFullScreenState(dom::Element* aElement, bool aIsFullScreen);
 
   static bool IsRemoteTarget(nsIContent* aTarget);
-  static LayoutDeviceIntPoint GetChildProcessOffset(nsFrameLoader* aFrameLoader,
-                                                    const WidgetEvent& aEvent);
+
+  // Returns true if the given WidgetWheelEvent will resolve to a scroll action.
+  static bool WheelEventIsScrollAction(WidgetWheelEvent* aEvent);
 
   // Holds the point in screen coords that a mouse event was dispatched to,
   // before we went into pointer lock mode. This is constantly updated while
@@ -231,7 +231,7 @@ public:
   // locked. This is used by dom::Event::GetScreenCoords() to make mouse
   // events' screen coord appear frozen at the last mouse position while
   // the pointer is locked.
-  static nsIntPoint sLastScreenPoint;
+  static LayoutDeviceIntPoint sLastScreenPoint;
 
   // Holds the point in client coords of the last mouse event. Used by
   // dom::Event::GetClientCoords() to make mouse events' client coords appear
@@ -429,7 +429,7 @@ protected:
     /**
      * Computes the default action for the aEvent with the prefs.
      */
-    enum Action MOZ_ENUM_TYPE(uint8_t)
+    enum Action : uint8_t
     {
       ACTION_NONE = 0,
       ACTION_SCROLL,
@@ -815,6 +815,9 @@ private:
   static PLDHashOperator ResetLastOverForContent(const uint32_t& aIdx,
                                                  nsRefPtr<OverOutElementsWrapper>& aChunk,
                                                  void* aClosure);
+  void PostHandleKeyboardEvent(WidgetKeyboardEvent* aKeyboardEvent,
+                               nsEventStatus& aStatus,
+                               bool dispatchedToContentProcess);
 
   int32_t     mLockCursor;
 

@@ -14,6 +14,7 @@
 
 namespace mozilla {
 template <class T> class LinkedList;
+class LogicalPoint;
 }
 
 nsContainerFrame* NS_NewFlexContainerFrame(nsIPresShell* aPresShell,
@@ -40,21 +41,21 @@ public:
   // nsIFrame overrides
   virtual void BuildDisplayList(nsDisplayListBuilder*   aBuilder,
                                 const nsRect&           aDirtyRect,
-                                const nsDisplayListSet& aLists) MOZ_OVERRIDE;
+                                const nsDisplayListSet& aLists) override;
 
   virtual void Reflow(nsPresContext*           aPresContext,
                       nsHTMLReflowMetrics&     aDesiredSize,
                       const nsHTMLReflowState& aReflowState,
-                      nsReflowStatus&          aStatus) MOZ_OVERRIDE;
+                      nsReflowStatus&          aStatus) override;
 
   virtual nscoord
-    GetMinISize(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+    GetMinISize(nsRenderingContext* aRenderingContext) override;
   virtual nscoord
-    GetPrefISize(nsRenderingContext* aRenderingContext) MOZ_OVERRIDE;
+    GetPrefISize(nsRenderingContext* aRenderingContext) override;
 
-  virtual nsIAtom* GetType() const MOZ_OVERRIDE;
+  virtual nsIAtom* GetType() const override;
 #ifdef DEBUG_FRAME_DUMP
-  virtual nsresult GetFrameName(nsAString& aResult) const MOZ_OVERRIDE;
+  virtual nsresult GetFrameName(nsAString& aResult) const override;
 #endif
   // Flexbox-specific public methods
   bool IsHorizontal();
@@ -169,6 +170,45 @@ protected:
                            const FlexboxAxisTracker& aAxisTracker,
                            nsHTMLReflowState& aChildReflowState,
                            FlexItem& aItem);
+
+  /**
+   * Moves the given flex item's frame to the given LogicalPosition (modulo any
+   * relative positioning).
+   *
+   * This can be used in cases where we've already done a "measuring reflow"
+   * for the flex item at the correct size, and hence can skip its final reflow
+   * (but still need to move it to the right final position).
+   *
+   * @param aReflowState    The flex container's reflow state.
+   * @param aItem           The flex item whose frame should be moved.
+   * @param aFramePos       The position where the flex item's frame should
+   *                        be placed. (pre-relative positioning)
+   * @param aContainerWidth The flex container's width (required by some methods
+   *                        that we call, to interpret aFramePos correctly).
+   */
+  void MoveFlexItemToFinalPosition(const nsHTMLReflowState& aReflowState,
+                                   const FlexItem& aItem,
+                                   mozilla::LogicalPoint& aFramePos,
+                                   nscoord aContainerWidth);
+  /**
+   * Helper-function to reflow a child frame, at its final position determined
+   * by flex layout.
+   *
+   * @param aPresContext    The presentation context being used in reflow.
+   * @param aAxisTracker    A FlexboxAxisTracker with the flex container's axes.
+   * @param aReflowState    The flex container's reflow state.
+   * @param aItem           The flex item to be reflowed.
+   * @param aFramePos       The position where the flex item's frame should
+   *                        be placed. (pre-relative positioning)
+   * @param aContainerWidth The flex container's width (required by some methods
+   *                        that we call, to interpret aFramePos correctly).
+   */
+  void ReflowFlexItem(nsPresContext* aPresContext,
+                      const FlexboxAxisTracker& aAxisTracker,
+                      const nsHTMLReflowState& aReflowState,
+                      const FlexItem& aItem,
+                      mozilla::LogicalPoint& aFramePos,
+                      nscoord aContainerWidth);
 
   bool mChildrenHaveBeenReordered; // Have we ever had to reorder our kids
                                    // to satisfy their 'order' values?

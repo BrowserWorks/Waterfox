@@ -9,6 +9,7 @@
 #include "mp4_demuxer/ByteWriter.h"
 #include "mp4_demuxer/H264.h"
 #include <media/stagefright/foundation/ABitReader.h>
+#include <limits>
 
 using namespace mozilla;
 
@@ -73,7 +74,12 @@ private:
 SPSData::SPSData()
 {
   PodZero(this);
+  // Default values when they aren't defined as per ITU-T H.264 (2014/02).
   chroma_format_idc = 1;
+  video_format = 5;
+  colour_primaries = 2;
+  transfer_characteristics = 2;
+  sample_ratio = 1.0;
 }
 
 /* static */ already_AddRefed<ByteBuffer>
@@ -108,19 +114,27 @@ H264::DecodeNALUnit(const ByteBuffer* aNAL)
   if (!reader.Read(nalUnitHeaderBytes - 1)) {
     return nullptr;
   }
-  uint32_t zeros = 0;
+  uint32_t lastbytes = 0xffff;
   while (reader.Remaining()) {
     uint8_t byte = reader.ReadU8();
-    if (zeros < 2 || byte == 0x03) {
+    if ((lastbytes & 0xffff) == 0 && byte == 0x03) {
+      // reset last two bytes, to detect the 0x000003 sequence again.
+      lastbytes = 0xffff;
+    } else {
       rbsp->AppendElement(byte);
     }
-    if (byte == 0) {
-      zeros++;
-    } else {
-      zeros = 0;
-    }
+    lastbytes = (lastbytes << 8) | byte;
   }
   return rbsp.forget();
+}
+
+static int32_t
+ConditionDimension(float aValue)
+{
+  // This will exclude NaNs and too-big values.
+  if (aValue > 1.0 && aValue <= INT32_MAX)
+    return int32_t(aValue);
+  return 0;
 }
 
 /* static */ bool
@@ -170,6 +184,11 @@ H264::DecodeSPS(const ByteBuffer* aSPS, SPSData& aDest)
         }
       }
     }
+  } else if (aDest.profile_idc == 183) {
+      aDest.chroma_format_idc = 0;
+  } else {
+    // default value if chroma_format_idc isn't set.
+    aDest.chroma_format_idc = 1;
   }
   aDest.log2_max_frame_num = br.ReadUE() + 4;
   aDest.pic_order_cnt_type = br.ReadUE();
@@ -202,9 +221,13 @@ H264::DecodeSPS(const ByteBuffer* aSPS, SPSData& aDest)
     aDest.frame_crop_bottom_offset = br.ReadUE();
   }
 
-  // Calculate common values.
+  aDest.sample_ratio = 1.0f;
+  aDest.vui_parameters_present_flag = br.ReadBit();
+  if (aDest.vui_parameters_present_flag) {
+    vui_parameters(br, aDest);
+  }
 
-  // FFmpeg and VLC ignore the left and top cropping. Do the same here.
+  // Calculate common values.
 
   uint8_t ChromaArrayType =
     aDest.separate_colour_plane_flag ? 0 : aDest.chroma_format_idc;
@@ -214,18 +237,49 @@ H264::DecodeSPS(const ByteBuffer* aSPS, SPSData& aDest)
   if (ChromaArrayType != 0) {
     CropUnitX = SubWidthC;
   }
-  uint32_t cropX = CropUnitX * aDest.frame_crop_right_offset;
-  aDest.pic_width = aDest.pic_width_in_mbs * 16 - cropX;
 
   // Calculate Height
   uint32_t CropUnitY = 2 - aDest.frame_mbs_only_flag;
   uint32_t SubHeightC = aDest.chroma_format_idc <= 1 ? 2 : 1;
-  if (ChromaArrayType != 0)
+  if (ChromaArrayType != 0) {
     CropUnitY *= SubHeightC;
-  uint32_t cropY = CropUnitY * aDest.frame_crop_bottom_offset;
-  aDest.pic_height = aDest.pic_height_in_map_units * 16 - cropY;
+  }
+
+  uint32_t width = aDest.pic_width_in_mbs * 16;
+  uint32_t height = aDest.pic_height_in_map_units * 16;
+  if (aDest.frame_crop_left_offset <= std::numeric_limits<int32_t>::max() / 4 / CropUnitX &&
+      aDest.frame_crop_right_offset <= std::numeric_limits<int32_t>::max() / 4 / CropUnitX &&
+      aDest.frame_crop_top_offset <= std::numeric_limits<int32_t>::max() / 4 / CropUnitY &&
+      aDest.frame_crop_bottom_offset <= std::numeric_limits<int32_t>::max() / 4 / CropUnitY &&
+      (aDest.frame_crop_left_offset + aDest.frame_crop_right_offset) * CropUnitX < width &&
+      (aDest.frame_crop_top_offset + aDest.frame_crop_bottom_offset) * CropUnitY < height) {
+    aDest.crop_left = aDest.frame_crop_left_offset * CropUnitX;
+    aDest.crop_right = aDest.frame_crop_right_offset * CropUnitX;
+    aDest.crop_top = aDest.frame_crop_top_offset * CropUnitY;
+    aDest.crop_bottom = aDest.frame_crop_bottom_offset * CropUnitY;
+  } else {
+    // Nonsensical value, ignore them.
+    aDest.crop_left = aDest.crop_right = aDest.crop_top = aDest.crop_bottom = 0;
+  }
+
+  aDest.pic_width = width - aDest.crop_left - aDest.crop_right;
+  aDest.pic_height = height - aDest.crop_top - aDest.crop_bottom;
 
   aDest.interlaced = !aDest.frame_mbs_only_flag;
+
+  // Determine display size.
+  if (aDest.sample_ratio > 1.0) {
+    // Increase the intrinsic width
+    aDest.display_width =
+      ConditionDimension(aDest.pic_width * aDest.sample_ratio);
+    aDest.display_height = aDest.pic_height;
+  } else {
+    // Increase the intrinsic height
+    aDest.display_width = aDest.pic_width;
+    aDest.display_height =
+      ConditionDimension(aDest.pic_height / aDest.sample_ratio);
+  }
+
   return true;
 }
 
@@ -233,23 +287,155 @@ H264::DecodeSPS(const ByteBuffer* aSPS, SPSData& aDest)
 H264::vui_parameters(BitReader& aBr, SPSData& aDest)
 {
   aDest.aspect_ratio_info_present_flag = aBr.ReadBit();
-  if (aDest.aspect_ratio_info_present_flag)
-  {
+  if (aDest.aspect_ratio_info_present_flag) {
     aDest.aspect_ratio_idc = aBr.ReadBits(8);
-
-    if (aDest.aspect_ratio_idc == 255 /* EXTENDED_SAR */) {
-      aDest.sar_width  = aBr.ReadBits(16);
-      aDest.sar_height = aBr.ReadBits(16);
-    }
-  }
-  else {
     aDest.sar_width = aDest.sar_height = 0;
+
+    // From E.2.1 VUI parameters semantics (ITU-T H.264 02/2014)
+    switch (aDest.aspect_ratio_idc)  {
+      case 0:
+        // Unspecified
+        break;
+      case 1:
+        /*
+          1:1
+         7680x4320 16:9 frame without horizontal overscan
+         3840x2160 16:9 frame without horizontal overscan
+         1280x720 16:9 frame without horizontal overscan
+         1920x1080 16:9 frame without horizontal overscan (cropped from 1920x1088)
+         640x480 4:3 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 1.0f;
+        break;
+      case 2:
+        /*
+          12:11
+         720x576 4:3 frame with horizontal overscan
+         352x288 4:3 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 12.0 / 11.0;
+        break;
+      case 3:
+        /*
+          10:11
+         720x480 4:3 frame with horizontal overscan
+         352x240 4:3 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 10.0 / 11.0;
+        break;
+      case 4:
+        /*
+          16:11
+         720x576 16:9 frame with horizontal overscan
+         528x576 4:3 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 16.0 / 11.0;
+        break;
+      case 5:
+        /*
+          40:33
+         720x480 16:9 frame with horizontal overscan
+         528x480 4:3 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 40.0 / 33.0;
+        break;
+      case 6:
+        /*
+          24:11
+         352x576 4:3 frame without horizontal overscan
+         480x576 16:9 frame with horizontal overscan
+         */
+        aDest.sample_ratio = 24.0 / 11.0;
+        break;
+      case 7:
+        /*
+          20:11
+         352x480 4:3 frame without horizontal overscan
+         480x480 16:9 frame with horizontal overscan
+         */
+        aDest.sample_ratio = 20.0 / 11.0;
+        break;
+      case 8:
+        /*
+          32:11
+         352x576 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 32.0 / 11.0;
+        break;
+      case 9:
+        /*
+          80:33
+         352x480 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 80.0 / 33.0;
+        break;
+      case 10:
+        /*
+          18:11
+         480x576 4:3 frame with horizontal overscan
+         */
+        aDest.sample_ratio = 18.0 / 11.0;
+        break;
+      case 11:
+        /*
+          15:11
+         480x480 4:3 frame with horizontal overscan
+         */
+        aDest.sample_ratio = 15.0 / 11.0;
+        break;
+      case 12:
+        /*
+          64:33
+         528x576 16:9 frame with horizontal overscan
+         */
+        aDest.sample_ratio = 64.0 / 33.0;
+        break;
+      case 13:
+        /*
+          160:99
+         528x480 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 160.0 / 99.0;
+        break;
+      case 14:
+        /*
+          4:3
+         1440x1080 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 4.0 / 3.0;
+        break;
+      case 15:
+        /*
+          3:2
+         1280x1080 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 3.2 / 2.0;
+        break;
+      case 16:
+        /*
+          2:1
+         960x1080 16:9 frame without horizontal overscan
+         */
+        aDest.sample_ratio = 2.0 / 1.0;
+        break;
+      case 255:
+        /* Extended_SAR */
+        aDest.sar_width  = aBr.ReadBits(16);
+        aDest.sar_height = aBr.ReadBits(16);
+        if (aDest.sar_width && aDest.sar_height) {
+          aDest.sample_ratio = float(aDest.sar_width) / float(aDest.sar_height);
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   if (aBr.ReadBit()) { //overscan_info_present_flag
     aDest.overscan_appropriate_flag = aBr.ReadBit();
   }
-  if (aBr.ReadBit()) { //video_signal_type_present_flag
+
+  if (aBr.ReadBit()) { // video_signal_type_present_flag
     aDest.video_format = aBr.ReadBits(3);
     aDest.video_full_range_flag = aBr.ReadBit();
     aDest.colour_description_present_flag = aBr.ReadBit();
@@ -259,59 +445,19 @@ H264::vui_parameters(BitReader& aBr, SPSData& aDest)
       aDest.matrix_coefficients = aBr.ReadBits(8);
     }
   }
-  aDest.chroma_loc_info_present_flag = aBr.ReadBit();
 
+  aDest.chroma_loc_info_present_flag = aBr.ReadBit();
   if (aDest.chroma_loc_info_present_flag) {
     aDest.chroma_sample_loc_type_top_field = aBr.ReadUE();
     aDest.chroma_sample_loc_type_bottom_field = aBr.ReadUE();
   }
 
-  if (aBr.ReadBit()) { //timing_info_present_flag
+  aDest.timing_info_present_flag = aBr.ReadBit();
+  if (aDest.timing_info_present_flag ) {
     aDest.num_units_in_tick = aBr.ReadBits(32);
     aDest.time_scale = aBr.ReadBits(32);
     aDest.fixed_frame_rate_flag = aBr.ReadBit();
   }
-
-  bool hrd_present = false;
-  if (aBr.ReadBit()) { // nal_hrd_parameters_present_flag
-    hrd_parameters(aBr);
-    hrd_present = true;
-  }
-  if (aBr.ReadBit()) { // vcl_hrd_parameters_present_flag
-    hrd_parameters(aBr);
-    hrd_present = true;
-  }
-  if (hrd_present) {
-    aBr.ReadBit(); // low_delay_hrd_flag
-  }
-  aDest.pic_struct_present_flag = aBr.ReadBit();
-  aDest.bitstream_restriction_flag = aBr.ReadBit();
-  if (aDest.bitstream_restriction_flag) {
-    aDest.motion_vectors_over_pic_boundaries_flag = aBr.ReadBit();
-    aDest.max_bytes_per_pic_denom = aBr.ReadUE();
-    aDest.max_bits_per_mb_denom = aBr.ReadUE();
-    aDest.log2_max_mv_length_horizontal = aBr.ReadUE();
-    aDest.log2_max_mv_length_vertical = aBr.ReadUE();
-    aDest.max_num_reorder_frames = aBr.ReadUE();
-    aDest.max_dec_frame_buffering = aBr.ReadUE();
-  }
-}
-
-/* static */ void
-H264::hrd_parameters(BitReader& aBr)
-{
-  uint32_t cpb_cnt_minus1 = aBr.ReadUE();
-  aBr.ReadBits(4); // bit_rate_scale
-  aBr.ReadBits(4); // cpb_size_scale
-  for (uint32_t SchedSelIdx = 0; SchedSelIdx <= cpb_cnt_minus1; SchedSelIdx++) {
-    aBr.ReadUE(); // bit_rate_value_minus1[ SchedSelIdx ]
-    aBr.ReadUE(); // cpb_size_value_minus1[ SchedSelIdx ]
-    aBr.ReadBit(); // cbr_flag[ SchedSelIdx ]
-  }
-  aBr.ReadBits(5); // initial_cpb_removal_delay_length_minus1
-  aBr.ReadBits(5); // cpb_removal_delay_length_minus1
-  aBr.ReadBits(5); // dpb_output_delay_length_minus1
-  aBr.ReadBits(5); // time_offset_length
 }
 
 /* static */ bool
@@ -352,6 +498,29 @@ H264::DecodeSPSFromExtraData(const ByteBuffer* aExtraData, SPSData& aDest)
   reader.DiscardRemaining();
 
   return DecodeSPS(sps, aDest);
+}
+
+/* static */ bool
+H264::EnsureSPSIsSane(SPSData& aSPS)
+{
+  bool valid = true;
+  static const float default_aspect = 4.0f / 3.0f;
+  if (aSPS.sample_ratio <= 0.0f || aSPS.sample_ratio > 6.0f) {
+    if (aSPS.pic_width && aSPS.pic_height) {
+      aSPS.sample_ratio =
+        (float) aSPS.pic_width / (float) aSPS.pic_height;
+    } else {
+      aSPS.sample_ratio = default_aspect;
+    }
+    aSPS.display_width = aSPS.pic_width;
+    aSPS.display_height = aSPS.pic_height;
+    valid = false;
+  }
+  if (aSPS.max_num_ref_frames > 16) {
+    aSPS.max_num_ref_frames = 16;
+    valid = false;
+  }
+  return valid;
 }
 
 } // namespace mp4_demuxer

@@ -18,6 +18,7 @@
 
 #include "nsThreadUtils.h"
 #include "nsAutoPtr.h"
+#include "nsPromiseFlatString.h"
 
 #include <jni.h>
 #include <string.h>
@@ -28,14 +29,10 @@ using namespace mozilla::widget::sdk;
 
 namespace mozilla {
 
-static MediaCodec::LocalRef CreateDecoder(const char* aMimeType)
+static MediaCodec::LocalRef CreateDecoder(const nsACString& aMimeType)
 {
-  if (!aMimeType) {
-    return nullptr;
-  }
-
   MediaCodec::LocalRef codec;
-  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(aMimeType, &codec), nullptr);
+  NS_ENSURE_SUCCESS(MediaCodec::CreateDecoderByType(PromiseFlatCString(aMimeType).get(), &codec), nullptr);
   return codec;
 }
 
@@ -51,7 +48,7 @@ public:
 
   }
 
-  nsresult Init() MOZ_OVERRIDE {
+  nsresult Init() override {
     mSurfaceTexture = AndroidSurfaceTexture::Create();
     if (!mSurfaceTexture) {
       NS_WARNING("Failed to create SurfaceTexture for video decode\n");
@@ -61,11 +58,11 @@ public:
     return InitDecoder(mSurfaceTexture->JavaSurface());
   }
 
-  void Cleanup() MOZ_OVERRIDE {
+  void Cleanup() override {
     mGLContext = nullptr;
   }
 
-  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) MOZ_OVERRIDE {
+  virtual nsresult Input(mp4_demuxer::MP4Sample* aSample) override {
     if (!mp4_demuxer::AnnexB::ConvertSampleToAnnexB(aSample)) {
       return NS_ERROR_OUT_OF_MEMORY;
     }
@@ -103,7 +100,7 @@ public:
     return eglImage;
   }
 
-  virtual nsresult PostOutput(BufferInfo::Param aInfo, MediaFormat::Param aFormat, Microseconds aDuration) MOZ_OVERRIDE {
+  virtual nsresult PostOutput(BufferInfo::Param aInfo, MediaFormat::Param aFormat, Microseconds aDuration) override {
     if (!EnsureGLContext()) {
       return NS_ERROR_FAILURE;
     }
@@ -182,7 +179,7 @@ protected:
       return true;
     }
 
-    mGLContext = GLContextProvider::CreateHeadless();
+    mGLContext = GLContextProvider::CreateHeadless(false);
     return mGLContext;
   }
 
@@ -205,7 +202,7 @@ public:
     jni::Object::LocalRef buffer(env);
     NS_ENSURE_SUCCESS_VOID(aFormat->GetByteBuffer(NS_LITERAL_STRING("csd-0"), &buffer));
 
-    if (!buffer) {
+    if (!buffer && aConfig.audio_specific_config->Length() >= 2) {
       csd0[0] = (*aConfig.audio_specific_config)[0];
       csd0[1] = (*aConfig.audio_specific_config)[1];
 
@@ -251,7 +248,7 @@ public:
 };
 
 
-bool AndroidDecoderModule::SupportsAudioMimeType(const char* aMimeType) {
+bool AndroidDecoderModule::SupportsAudioMimeType(const nsACString& aMimeType) {
   return static_cast<bool>(CreateDecoder(aMimeType));
 }
 
@@ -299,18 +296,12 @@ AndroidDecoderModule::CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& 
 
 }
 
-
-nsresult AndroidDecoderModule::Shutdown()
-{
-  return NS_OK;
-}
-
 MediaCodecDataDecoder::MediaCodecDataDecoder(MediaData::Type aType,
-                                             const char* aMimeType,
+                                             const nsACString& aMimeType,
                                              MediaFormat::Param aFormat,
                                              MediaDataDecoderCallback* aCallback)
   : mType(aType)
-  , mMimeType(strdup(aMimeType))
+  , mMimeType(aMimeType)
   , mFormat(aFormat)
   , mCallback(aCallback)
   , mInputBuffers(nullptr)

@@ -7,6 +7,7 @@
 #ifndef mozilla_dom_bluetooth_bluetoothpairinghandle_h
 #define mozilla_dom_bluetooth_bluetoothpairinghandle_h
 
+#include "BluetoothCommon.h"
 #include "nsWrapperCache.h"
 
 namespace mozilla {
@@ -20,7 +21,7 @@ BEGIN_BLUETOOTH_NAMESPACE
 
 class BluetoothDevice;
 
-class BluetoothPairingHandle MOZ_FINAL : public nsISupports,
+class BluetoothPairingHandle final : public nsISupports,
                                          public nsWrapperCache
 {
 public:
@@ -38,7 +39,7 @@ public:
     return mOwner;
   }
 
-  virtual JSObject* WrapObject(JSContext* aCx) MOZ_OVERRIDE;
+  virtual JSObject* WrapObject(JSContext* aCx) override;
 
   void GetPasskey(nsString& aPasskey) const
   {

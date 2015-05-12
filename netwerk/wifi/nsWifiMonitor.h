@@ -13,6 +13,7 @@
 #include "nsIRunnable.h"
 #include "nsCOMArray.h"
 #include "nsIWifiListener.h"
+#include "mozilla/Atomics.h"
 #include "mozilla/ReentrantMonitor.h"
 #include "prlog.h"
 #include "nsIObserver.h"
@@ -50,7 +51,7 @@ class nsWifiListener
 };
 
 #ifndef MOZ_WIDGET_GONK
-class nsWifiMonitor MOZ_FINAL : nsIRunnable, nsIWifiMonitor, nsIObserver
+class nsWifiMonitor final : nsIRunnable, nsIWifiMonitor, nsIObserver
 {
  public:
   NS_DECL_THREADSAFE_ISUPPORTS
@@ -68,7 +69,8 @@ class nsWifiMonitor MOZ_FINAL : nsIRunnable, nsIWifiMonitor, nsIObserver
   nsresult CallWifiListeners(const nsCOMArray<nsWifiAccessPoint> &aAccessPoints,
                              bool aAccessPointsChanged);
 
-  bool mKeepGoing;
+  mozilla::Atomic<bool> mKeepGoing;
+  mozilla::Atomic<bool> mThreadComplete;
   nsCOMPtr<nsIThread> mThread;
 
   nsTArray<nsWifiListener> mListeners;
@@ -81,7 +83,7 @@ class nsWifiMonitor MOZ_FINAL : nsIRunnable, nsIWifiMonitor, nsIObserver
 };
 #else
 #include "nsIWifi.h"
-class nsWifiMonitor MOZ_FINAL : nsIWifiMonitor, nsIWifiScanResultsReady, nsIObserver
+class nsWifiMonitor final : nsIWifiMonitor, nsIWifiScanResultsReady, nsIObserver
 {
  public:
   NS_DECL_ISUPPORTS

@@ -22,69 +22,71 @@ describe("loop.shared.utils", function() {
     sandbox.restore();
   });
 
-  describe("Helper", function() {
-    var helper;
-
-    beforeEach(function() {
-      helper = new sharedUtils.Helper();
+  describe("#getUnsupportedPlatform", function() {
+    it("should detect iOS", function() {
+      expect(sharedUtils.getUnsupportedPlatform("iPad")).eql('ios');
+      expect(sharedUtils.getUnsupportedPlatform("iPod")).eql('ios');
+      expect(sharedUtils.getUnsupportedPlatform("iPhone")).eql('ios');
+      expect(sharedUtils.getUnsupportedPlatform("iPhone Simulator")).eql('ios');
     });
 
-    describe("#isIOS", function() {
-      it("should detect iOS", function() {
-        expect(helper.isIOS("iPad")).eql(true);
-        expect(helper.isIOS("iPod")).eql(true);
-        expect(helper.isIOS("iPhone")).eql(true);
-        expect(helper.isIOS("iPhone Simulator")).eql(true);
+    it("should detect Windows Phone", function() {
+      expect(sharedUtils.getUnsupportedPlatform("Windows Phone"))
+        .eql('windows_phone');
+    });
+
+    it("should detect BlackBerry", function() {
+      expect(sharedUtils.getUnsupportedPlatform("BlackBerry"))
+        .eql('blackberry');
+    });
+
+    it("shouldn't detect other platforms", function() {
+      expect(sharedUtils.getUnsupportedPlatform("MacIntel")).eql(null);
+    });
+  });
+
+  describe("#isFirefox", function() {
+    it("should detect Firefox", function() {
+      expect(sharedUtils.isFirefox("Firefox")).eql(true);
+      expect(sharedUtils.isFirefox("Gecko/Firefox")).eql(true);
+      expect(sharedUtils.isFirefox("Firefox/Gecko")).eql(true);
+      expect(sharedUtils.isFirefox("Gecko/Firefox/Chuck Norris")).eql(true);
+    });
+
+    it("shouldn't detect Firefox with other platforms", function() {
+      expect(sharedUtils.isFirefox("Opera")).eql(false);
+    });
+  });
+
+  describe("#isFirefoxOS", function() {
+    describe("without mozActivities", function() {
+      it("shouldn't detect FirefoxOS on mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("mobi")).eql(false);
       });
 
-      it("shouldn't detect iOS with other platforms", function() {
-        expect(helper.isIOS("MacIntel")).eql(false);
+      it("shouldn't detect FirefoxOS on non mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("whatever")).eql(false);
       });
     });
 
-    describe("#isFirefox", function() {
-      it("should detect Firefox", function() {
-        expect(helper.isFirefox("Firefox")).eql(true);
-        expect(helper.isFirefox("Gecko/Firefox")).eql(true);
-        expect(helper.isFirefox("Firefox/Gecko")).eql(true);
-        expect(helper.isFirefox("Gecko/Firefox/Chuck Norris")).eql(true);
+    describe("with mozActivities", function() {
+      var realMozActivity;
+
+      before(function() {
+        realMozActivity = window.MozActivity;
+        window.MozActivity = {};
       });
 
-      it("shouldn't detect Firefox with other platforms", function() {
-        expect(helper.isFirefox("Opera")).eql(false);
-      });
-    });
-
-    describe("#isFirefoxOS", function() {
-      describe("without mozActivities", function() {
-        it("shouldn't detect FirefoxOS on mobile platform", function() {
-          expect(helper.isFirefoxOS("mobi")).eql(false);
-        });
-
-        it("shouldn't detect FirefoxOS on non mobile platform", function() {
-          expect(helper.isFirefoxOS("whatever")).eql(false);
-        });
+      after(function() {
+        window.MozActivity = realMozActivity;
       });
 
-      describe("with mozActivities", function() {
-        var realMozActivity;
+      it("should detect FirefoxOS on mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("mobi")).eql(true);
+      });
 
-        before(function() {
-          realMozActivity = window.MozActivity;
-          window.MozActivity = {};
-        });
-
-        after(function() {
-          window.MozActivity = realMozActivity;
-        });
-
-        it("should detect FirefoxOS on mobile platform", function() {
-          expect(helper.isFirefoxOS("mobi")).eql(true);
-        });
-
-        it("shouldn't detect FirefoxOS on non mobile platform", function() {
-          expect(helper.isFirefoxOS("whatever")).eql(false);
-        });
+      it("shouldn't detect FirefoxOS on non mobile platform", function() {
+        expect(sharedUtils.isFirefoxOS("whatever")).eql(false);
       });
     });
   });
@@ -150,8 +152,8 @@ describe("loop.shared.utils", function() {
       // fake mozL10n
       sandbox.stub(navigator.mozL10n, "get", function(id) {
         switch(id) {
-          case "share_email_subject4": return "subject";
-          case "share_email_body4":    return "body";
+          case "share_email_subject5": return "subject";
+          case "share_email_body5":    return "body";
         }
       });
       composeEmail = sandbox.spy();
@@ -167,6 +169,81 @@ describe("loop.shared.utils", function() {
       sinon.assert.calledOnce(composeEmail);
       sinon.assert.calledWith(composeEmail,
                               "subject", "body", "fake@invalid.tld");
+    });
+  });
+
+  describe("#getOS", function() {
+    it("should recognize the OSX userAgent string", function() {
+      var UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:37.0) Gecko/20100101 Firefox/37.0";
+      var result = sharedUtils.getOS(UA);
+
+      expect(result).eql("intel mac os x");
+    });
+
+    it("should recognize the OSX userAgent string with version", function() {
+      var UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:37.0) Gecko/20100101 Firefox/37.0";
+      var result = sharedUtils.getOS(UA, true);
+
+      expect(result).eql("intel mac os x 10.10");
+    });
+
+    it("should recognize the Windows userAgent string with version", function() {
+      var UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getOS(UA, true);
+
+      expect(result).eql("windows nt 6.1");
+    });
+
+    it("should recognize the Linux userAgent string", function() {
+      var UA = "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getOS(UA);
+
+      expect(result).eql("linux i686 on x86_64");
+    });
+
+    it("should recognize the OSX oscpu string", function() {
+      var oscpu = "Intel Mac OS X 10.10";
+      var result = sharedUtils.getOS(oscpu, true);
+
+      expect(result).eql("intel mac os x 10.10");
+    });
+
+    it("should recognize the Windows oscpu string", function() {
+      var oscpu = "Windows NT 5.3; Win64; x64";
+      var result = sharedUtils.getOS(oscpu, true);
+
+      expect(result).eql("windows nt 5.3");
+    });
+  });
+
+  describe("#getOSVersion", function() {
+    it("should fetch the correct version info for OSX", function() {
+      var UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:37.0) Gecko/20100101 Firefox/37.0";
+      var result = sharedUtils.getOSVersion(UA);
+
+      expect(result).eql({ major: 10, minor: 10 });
+    });
+
+    it("should fetch the correct version info for Windows", function() {
+      var UA = "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getOSVersion(UA);
+
+      expect(result).eql({ major: 6, minor: 1 });
+    });
+
+    it("should fetch the correct version info for Windows XP", function() {
+      var oscpu = "Windows XP";
+      var result = sharedUtils.getOSVersion(oscpu);
+
+      expect(result).eql({ major: 5, minor: 2 });
+    });
+
+    it("should fetch the correct version info for Linux", function() {
+      var UA = "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:10.0) Gecko/20100101 Firefox/10.0";
+      var result = sharedUtils.getOSVersion(UA);
+
+      // Linux version can't be determined correctly.
+      expect(result).eql({ major: Infinity, minor: 0 });
     });
   });
 });

@@ -1123,10 +1123,10 @@ Compressor.prototype.compress = function compress(headers) {
     //   separate header fields, each with one or more cookie-pairs.
     if (name == 'cookie') {
       if (!(value instanceof Array)) {
-        value = [value]
+        value = [value];
       }
       value = Array.prototype.concat.apply([], value.map(function(cookie) {
-        return String(cookie).split(';').map(trim)
+        return String(cookie).split(';').map(trim);
       }));
     }
 
@@ -1163,7 +1163,11 @@ Compressor.prototype._transform = function _transform(frame, encoding, done) {
   if (frame.type === 'HEADERS' || frame.type === 'PUSH_PROMISE') {
     var buffer = this.compress(frame.headers);
 
-    var chunks = cut(buffer, MAX_HTTP_PAYLOAD_SIZE);
+    // This will result in CONTINUATIONs from a PUSH_PROMISE being 4 bytes shorter than they could
+    // be, but that's not the end of the world, and it prevents us from going over MAX_HTTP_PAYLOAD_SIZE
+    // on the initial PUSH_PROMISE frame.
+    var adjustment = frame.type === 'PUSH_PROMISE' ? 4 : 0;
+    var chunks = cut(buffer, MAX_HTTP_PAYLOAD_SIZE - adjustment);
 
     for (var i = 0; i < chunks.length; i++) {
       var chunkFrame;
@@ -1256,7 +1260,7 @@ Decompressor.prototype.decompress = function decompress(block) {
   //   into a single octet string using the two octet delimiter of 0x3B, 0x20 (the ASCII
   //   string "; ").
   if (('cookie' in headers) && (headers['cookie'] instanceof Array)) {
-    headers['cookie'] = headers['cookie'].join('; ')
+    headers['cookie'] = headers['cookie'].join('; ');
   }
 
   return headers;
@@ -1340,5 +1344,5 @@ function cut(buffer, size) {
 }
 
 function trim(string) {
-  return string.trim()
+  return string.trim();
 }

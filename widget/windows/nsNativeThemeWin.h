@@ -68,13 +68,19 @@ public:
 
   bool WidgetIsContainer(uint8_t aWidgetType);
 
-  bool ThemeDrawsFocusForWidget(uint8_t aWidgetType) MOZ_OVERRIDE;
+  bool ThemeDrawsFocusForWidget(uint8_t aWidgetType) override;
 
   bool ThemeNeedsComboboxDropmarker();
 
-  virtual bool WidgetAppearanceDependsOnWindowFocus(uint8_t aWidgetType) MOZ_OVERRIDE;
+  virtual bool WidgetAppearanceDependsOnWindowFocus(uint8_t aWidgetType) override;
 
-  virtual bool ShouldHideScrollbars() MOZ_OVERRIDE;
+  enum {
+    eThemeGeometryTypeWindowButtons = eThemeGeometryTypeUnknown + 1
+  };
+  virtual ThemeGeometryType ThemeGeometryTypeForWidget(nsIFrame* aFrame,
+                                                       uint8_t aWidgetType) override;
+
+  virtual bool ShouldHideScrollbars() override;
 
   nsNativeThemeWin();
 

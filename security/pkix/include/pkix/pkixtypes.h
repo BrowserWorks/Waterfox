@@ -22,8 +22,8 @@
  * limitations under the License.
  */
 
-#ifndef mozilla_pkix__pkixtypes_h
-#define mozilla_pkix__pkixtypes_h
+#ifndef mozilla_pkix_pkixtypes_h
+#define mozilla_pkix_pkixtypes_h
 
 #include "pkix/Input.h"
 #include "pkix/Time.h"
@@ -39,54 +39,31 @@ enum class DigestAlgorithm
   sha1 = 4,
 };
 
-// Named ECC Curves:
-//   * secp521r1 (OID 1.3.132.0.35, RFC 5480)
-//   * secp384r1 (OID 1.3.132.0.34, RFC 5480)
-//   * secp256r1 (OID 1.2.840.10045.3.17, RFC 5480)
-enum class SignatureAlgorithm
+enum class NamedCurve
 {
-  // ecdsa-with-SHA512 (OID 1.2.840.10045.4.3.4, RFC 5758 Section 3.2)
-  ecdsa_with_sha512 = 1,
+  // secp521r1 (OID 1.3.132.0.35, RFC 5480)
+  secp521r1 = 1,
 
-  // ecdsa-with-SHA384 (OID 1.2.840.10045.4.3.3, RFC 5758 Section 3.2)
-  ecdsa_with_sha384 = 4,
+  // secp384r1 (OID 1.3.132.0.34, RFC 5480)
+  secp384r1 = 2,
 
-  // ecdsa-with-SHA256 (OID 1.2.840.10045.4.3.2, RFC 5758 Section 3.2)
-  ecdsa_with_sha256 = 7,
-
-  // ecdsa-with-SHA1 (OID 1.2.840.10045.4.1, RFC 3279 Section 2.2.3)
-  ecdsa_with_sha1 = 10,
-
-  // sha512WithRSAEncryption (OID 1.2.840.113549.1.1.13, RFC 4055 Section 5)
-  rsa_pkcs1_with_sha512 = 13,
-
-  // sha384WithRSAEncryption (OID 1.2.840.113549.1.1.12, RFC 4055 Section 5)
-  rsa_pkcs1_with_sha384 = 14,
-
-  // sha256WithRSAEncryption (OID 1.2.840.113549.1.1.11, RFC 4055 Section 5)
-  rsa_pkcs1_with_sha256 = 15,
-
-  // sha-1WithRSAEncryption (OID 1.2.840.113549.1.1.5, RFC 3279 Section 2.2.1)
-  rsa_pkcs1_with_sha1 = 16,
-
-  // Used to indicate any unsupported algorithm.
-  unsupported_algorithm = 19,
+  // secp256r1 (OID 1.2.840.10045.3.1.7, RFC 5480)
+  secp256r1 = 3,
 };
 
-struct SignedDataWithSignature
+struct SignedDigest final
 {
-public:
-  Input data;
-  SignatureAlgorithm algorithm;
+  Input digest;
+  DigestAlgorithm digestAlgorithm;
   Input signature;
 
-private:
-  void operator=(const SignedDataWithSignature&) /*= delete*/;
+  void operator=(const SignedDigest&) = delete;
 };
 
 enum class EndEntityOrCA { MustBeEndEntity = 0, MustBeCA = 1 };
 
-enum class KeyUsage : uint8_t {
+enum class KeyUsage : uint8_t
+{
   digitalSignature = 0,
   nonRepudiation   = 1,
   keyEncipherment  = 2,
@@ -99,7 +76,8 @@ enum class KeyUsage : uint8_t {
   noParticularKeyUsageRequired = 0xff,
 };
 
-enum class KeyPurposeId {
+enum class KeyPurposeId
+{
   anyExtendedKeyUsage = 0,
   id_kp_serverAuth = 1,           // id-kp-serverAuth
   id_kp_clientAuth = 2,           // id-kp-clientAuth
@@ -108,7 +86,8 @@ enum class KeyPurposeId {
   id_kp_OCSPSigning = 9,          // id-kp-OCSPSigning
 };
 
-struct CertPolicyId {
+struct CertPolicyId final
+{
   uint16_t numBytes;
   static const uint16_t MAX_BYTES = 24;
   uint8_t bytes[MAX_BYTES];
@@ -118,7 +97,8 @@ struct CertPolicyId {
   static const CertPolicyId anyPolicy;
 };
 
-enum class TrustLevel {
+enum class TrustLevel
+{
   TrustAnchor = 1,        // certificate is a trusted root CA certificate or
                           // equivalent *for the given policy*.
   ActivelyDistrusted = 2, // certificate is known to be bad
@@ -136,7 +116,7 @@ enum class TrustLevel {
 // field from the issuer's certificate. serialNumber is the entire DER-encoded
 // serial number from the subject certificate (the certificate for which we are
 // checking the revocation status).
-struct CertID
+struct CertID final
 {
 public:
   CertID(Input issuer, Input issuerSubjectPublicKeyInfo, Input serialNumber)
@@ -148,8 +128,8 @@ public:
   const Input issuer;
   const Input issuerSubjectPublicKeyInfo;
   const Input serialNumber;
-private:
-  void operator=(const CertID&) /*= delete*/;
+
+  void operator=(const CertID&) = delete;
 };
 
 class DERArray
@@ -209,9 +189,9 @@ public:
   protected:
     IssuerChecker();
     virtual ~IssuerChecker();
-  private:
-    IssuerChecker(const IssuerChecker&) /*= delete*/;
-    void operator=(const IssuerChecker&) /*= delete*/;
+
+    IssuerChecker(const IssuerChecker&) = delete;
+    void operator=(const IssuerChecker&) = delete;
   };
 
   // Search for a CA certificate with the given name. The implementation must
@@ -265,7 +245,7 @@ public:
 
   // Called as soon as we think we have a valid chain but before revocation
   // checks are done. This function can be used to compute additional checks,
-  // especilaly checks that require the entire certificate chain. This callback
+  // especially checks that require the entire certificate chain. This callback
   // can also be used to save a copy of the built certificate chain for later
   // use.
   //
@@ -291,45 +271,65 @@ public:
                     /*optional*/ const Input* stapledOCSPresponse,
                     /*optional*/ const Input* aiaExtension) = 0;
 
-  // Check that the key size, algorithm, and parameters of the given public key
-  // are acceptable.
+  // Check that the RSA public key size is acceptable.
   //
-  // VerifySignedData() should do the same checks that this function does, but
-  // mainly for efficiency, some keys are not passed to VerifySignedData().
-  // This function is called instead for those keys.
-  virtual Result CheckPublicKey(Input subjectPublicKeyInfo) = 0;
+  // Return Success if the key size is acceptable,
+  // Result::ERROR_INADEQUATE_KEY_SIZE if the key size is not acceptable,
+  // or another error code if another error occurred.
+  virtual Result CheckRSAPublicKeyModulusSizeInBits(
+                   EndEntityOrCA endEntityOrCA,
+                   unsigned int modulusSizeInBits) = 0;
 
-  // Verify the given signature using the given public key.
+  // Verify the given RSA PKCS#1.5 signature on the given digest using the
+  // given RSA public key.
   //
-  // Most implementations of this function should probably forward the call
-  // directly to mozilla::pkix::VerifySignedData.
-  //
-  // In any case, the implementation must perform checks on the public key
-  // similar to how mozilla::pkix::CheckPublicKey() does.
-  virtual Result VerifySignedData(const SignedDataWithSignature& signedData,
-                                  Input subjectPublicKeyInfo) = 0;
+  // CheckRSAPublicKeyModulusSizeInBits will be called before calling this
+  // function, so it is not necessary to repeat those checks here. However,
+  // VerifyRSAPKCS1SignedDigest *is* responsible for doing the mathematical
+  // verification of the public key validity as specified in NIST SP 800-56A.
+  virtual Result VerifyRSAPKCS1SignedDigest(
+                   const SignedDigest& signedDigest,
+                   Input subjectPublicKeyInfo) = 0;
 
-  // Compute the SHA-1 hash of the data in the current item.
+  // Check that the given named ECC curve is acceptable for ECDSA signatures.
+  //
+  // Return Success if the curve is acceptable,
+  // Result::ERROR_UNSUPPORTED_ELLIPTIC_CURVE if the curve is not acceptable,
+  // or another error code if another error occurred.
+  virtual Result CheckECDSACurveIsAcceptable(EndEntityOrCA endEntityOrCA,
+                                             NamedCurve curve) = 0;
+
+  // Verify the given ECDSA signature on the given digest using the given ECC
+  // public key.
+  //
+  // CheckECDSACurveIsAcceptable will be called before calling this function,
+  // so it is not necessary to repeat that check here. However,
+  // VerifyECDSASignedDigest *is* responsible for doing the mathematical
+  // verification of the public key validity as specified in NIST SP 800-56A.
+  virtual Result VerifyECDSASignedDigest(const SignedDigest& signedDigest,
+                                         Input subjectPublicKeyInfo) = 0;
+
+  // Compute a digest of the data in item using the given digest algorithm.
   //
   // item contains the data to hash.
-  // digestBuf must point to a buffer to where the SHA-1 hash will be written.
-  // digestBufLen must be DIGEST_LENGTH (20, the length of a SHA-1 hash).
+  // digestBuf points to a buffer to where the digest will be written.
+  // digestBufLen will be the size of the digest output (20 for SHA-1,
+  // 32 for SHA-256, etc.).
   //
-  // TODO(bug 966856): Add SHA-2 support
   // TODO: Taking the output buffer as (uint8_t*, size_t) is counter to our
   // other, extensive, memory safety efforts in mozilla::pkix, and we should
   // find a way to provide a more-obviously-safe interface.
-  static const size_t DIGEST_LENGTH = 20; // length of SHA-1 digest
-  virtual Result DigestBuf(Input item, /*out*/ uint8_t* digestBuf,
+  virtual Result DigestBuf(Input item,
+                           DigestAlgorithm digestAlg,
+                           /*out*/ uint8_t* digestBuf,
                            size_t digestBufLen) = 0;
 protected:
   TrustDomain() { }
 
-private:
-  TrustDomain(const TrustDomain&) /* = delete */;
-  void operator=(const TrustDomain&) /* = delete */;
+  TrustDomain(const TrustDomain&) = delete;
+  void operator=(const TrustDomain&) = delete;
 };
 
 } } // namespace mozilla::pkix
 
-#endif // mozilla_pkix__pkixtypes_h
+#endif // mozilla_pkix_pkixtypes_h

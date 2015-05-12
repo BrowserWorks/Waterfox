@@ -352,7 +352,7 @@ IsDivValid(T aX, T aY)
          !(IsSigned<T>::value && aX == MinValue<T>::value && aY == T(-1));
 }
 
-template<typename T, bool IsSigned = IsSigned<T>::value>
+template<typename T, bool IsTSigned = IsSigned<T>::value>
 struct IsModValidImpl;
 
 template<typename T>
@@ -394,7 +394,7 @@ struct IsModValidImpl<T, true>
   }
 };
 
-template<typename T, bool IsTSigned = IsSigned<T>::value>
+template<typename T, bool IsSigned = IsSigned<T>::value>
 struct NegateImpl;
 
 template<typename T>

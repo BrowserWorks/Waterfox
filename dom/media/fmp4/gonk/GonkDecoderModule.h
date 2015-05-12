@@ -16,22 +16,19 @@ public:
   GonkDecoderModule();
   virtual ~GonkDecoderModule();
 
-  // Called when the decoders have shutdown.
-  virtual nsresult Shutdown() MOZ_OVERRIDE;
-
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
   CreateVideoDecoder(const mp4_demuxer::VideoDecoderConfig& aConfig,
                      mozilla::layers::LayersBackend aLayersBackend,
                      mozilla::layers::ImageContainer* aImageContainer,
                      FlushableMediaTaskQueue* aVideoTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+                     MediaDataDecoderCallback* aCallback) override;
 
   // Decode thread.
   virtual already_AddRefed<MediaDataDecoder>
   CreateAudioDecoder(const mp4_demuxer::AudioDecoderConfig& aConfig,
                      FlushableMediaTaskQueue* aAudioTaskQueue,
-                     MediaDataDecoderCallback* aCallback) MOZ_OVERRIDE;
+                     MediaDataDecoderCallback* aCallback) override;
 
   static void Init();
 };

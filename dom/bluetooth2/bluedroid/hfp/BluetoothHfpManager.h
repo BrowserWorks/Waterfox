@@ -114,28 +114,45 @@ public:
   //
 
   void ConnectionStateNotification(BluetoothHandsfreeConnectionState aState,
-                                   const nsAString& aBdAddress) MOZ_OVERRIDE;
+                                   const nsAString& aBdAddress) override;
   void AudioStateNotification(BluetoothHandsfreeAudioState aState,
-                              const nsAString& aBdAddress) MOZ_OVERRIDE;
-  void AnswerCallNotification() MOZ_OVERRIDE;
-  void HangupCallNotification() MOZ_OVERRIDE;
+                              const nsAString& aBdAddress) override;
+  void AnswerCallNotification() override;
+  void HangupCallNotification() override;
   void VolumeNotification(BluetoothHandsfreeVolumeType aType,
-                          int aVolume) MOZ_OVERRIDE;
-  void DtmfNotification(char aDtmf) MOZ_OVERRIDE;
-  void CallHoldNotification(BluetoothHandsfreeCallHoldType aChld) MOZ_OVERRIDE;
-  void DialCallNotification(const nsAString& aNumber) MOZ_OVERRIDE;
-  void CnumNotification() MOZ_OVERRIDE;
-  void CindNotification() MOZ_OVERRIDE;
-  void CopsNotification() MOZ_OVERRIDE;
-  void ClccNotification() MOZ_OVERRIDE;
-  void UnknownAtNotification(const nsACString& aAtString) MOZ_OVERRIDE;
-  void KeyPressedNotification() MOZ_OVERRIDE;
+                          int aVolume) override;
+  void DtmfNotification(char aDtmf) override;
+  void CallHoldNotification(BluetoothHandsfreeCallHoldType aChld) override;
+  void DialCallNotification(const nsAString& aNumber) override;
+  void CnumNotification() override;
+  void CindNotification() override;
+  void CopsNotification() override;
+  void ClccNotification() override;
+  void UnknownAtNotification(const nsACString& aAtString) override;
+  void KeyPressedNotification() override;
 
 private:
+  class AtResponseResultHandler;
   class GetVolumeTask;
+  class CindResponseResultHandler;
+  class ClccResponseResultHandler;
+  class CleanupResultHandler;
+  class CleanupInitResultHandler;
   class CloseScoTask;
   class CloseScoRunnable;
+  class ConnectAudioResultHandler;
+  class ConnectResultHandler;
+  class CopsResponseResultHandler;
+  class DeinitResultHandlerRunnable;
+  class DeviceStatusNotificationResultHandler;
+  class DisconnectAudioResultHandler;
+  class DisconnectResultHandler;
+  class FormattedAtResponseResultHandler;
+  class InitResultHandlerRunnable;
+  class OnErrorProfileResultHandlerRunnable;
+  class PhoneStateChangeResultHandler;
   class RespondToBLDNTask;
+  class VolumeControlResultHandler;
 
   friend class BluetoothHfpManagerObserver;
   friend class GetVolumeTask;
